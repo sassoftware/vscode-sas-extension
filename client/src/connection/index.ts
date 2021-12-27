@@ -18,6 +18,7 @@ export interface RunResult {
 export interface Session {
   setup(): Promise<void>;
   run(code: string, onLog?: (logs: LogLine[]) => void): Promise<RunResult>;
+  cancel?(): Promise<void>;
   close(): Promise<void> | void;
   sessionId?(): string | undefined;
 }

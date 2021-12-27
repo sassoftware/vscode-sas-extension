@@ -6,7 +6,8 @@
   "categories": [
     "Programming Languages",
     "Data Science",
-    "Machine Learning"
+    "Machine Learning",
+    "Notebooks"
   ],
   "publisher": "SAS",
   "license": "SAS Code Extension Terms",
@@ -15,7 +16,8 @@
     "vscode": "^1.71.0"
   },
   "activationEvents": [
-    "onLanguage:sas"
+    "onLanguage:sas",
+    "onNotebook:sas-notebook"
   ],
   "main": "./client/dist/node/extension",
   "browser": "./client/dist/browser/extension",
@@ -367,6 +369,12 @@
         "command": "SAS.deleteTable",
         "title": "%commands.SAS.deleteTable%",
         "category": "SAS"
+      },
+      {
+        "command": "SAS.notebook.new",
+        "shortTitle": "%commands.SAS.notebook.new.short%",
+        "title": "%commands.SAS.notebook.new%",
+        "category": "SAS Notebook"
       }
     ],
     "keybindings": [
@@ -523,6 +531,12 @@
           "when": "false",
           "command": "SAS.deleteTable"
         }
+      ],
+      "file/newFile": [
+        {
+          "command": "SAS.notebook.new",
+          "group": "notebook"
+        }
       ]
     },
     "languages": [
@@ -615,6 +629,35 @@
         "view": "sas-content-invalid-connection",
         "when": "SAS.connectionType != rest",
         "contents": "%views.SAS.unsupportedConnection%"
+      }
+    ],
+    "notebooks": [
+      {
+        "type": "sas-notebook",
+        "displayName": "SAS Notebook",
+        "selector": [
+          {
+            "filenamePattern": "*.sasnb"
+          }
+        ]
+      }
+    ],
+    "notebookRenderer": [
+      {
+        "id": "sas-log-renderer",
+        "displayName": "SAS Log Renderer",
+        "entrypoint": "./client/dist/notebook/LogRenderer.js",
+        "mimeTypes": [
+          "application/vnd.sas.compute.log.lines"
+        ]
+      },
+      {
+        "id": "sas-html-renderer",
+        "displayName": "SAS HTML Renderer",
+        "entrypoint": "./client/dist/notebook/HTMLRenderer.js",
+        "mimeTypes": [
+          "application/vnd.sas.ods.html5"
+        ]
       }
     ]
   },

@@ -158,7 +158,7 @@ class ContentNavigator implements SubscriptionProvider {
           );
 
           if (newUri) {
-            await window.showTextDocument(newUri);
+            await commands.executeCommand("vscode.open", newUri);
           }
         }
       ),
