@@ -2,13 +2,14 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS code",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "categories": [
     "Programming Languages",
     "Data Science",
     "Machine Learning"
   ],
   "publisher": "SAS",
+  "license": "SAS Code Extension Terms",
   "icon": "icons/sas.png",
   "engines": {
     "vscode": "^1.66.0"
@@ -152,7 +153,6 @@
     "url": "https://github.com/sassoftware/vscode-sas-extension/issues"
   },
   "homepage": "https://www.sas.com",
-  "license": "SEE LICENSE IN https://github.com/sassoftware/vscode-sas-extension/blob/main/Code_Extension_Agreement.pdf",
   "qna": "https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp&ssr=false#qna",
   "scripts": {
     "vscode:prepublish": "npm run lint && npm run compile && npm run compile-browser",
