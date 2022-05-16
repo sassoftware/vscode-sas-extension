@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS code",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "categories": [
     "Programming Languages",
     "Data Science",
