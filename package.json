@@ -1,7 +1,7 @@
 {
   "name": "sas-lsp",
   "displayName": "SAS",
-  "description": "Provides support for the SAS language",
+  "description": "Official SAS Language Extension for VS code",
   "version": "0.0.1",
   "categories": [
     "Programming Languages",
