@@ -1,0 +1,20 @@
+{
+  "name": "sas-lsp-client",
+  "description": "VS Code client for SAS language server",
+  "author": "SAS Institute Inc.",
+  "license": "SAS Code Extension Terms",
+  "version": "0.0.1",
+  "publisher": "SAS",
+  "engines": {
+    "vscode": "^1.66.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^7.0.0",
+    "@sassoftware/restaf": "^3.4.0",
+    "@sassoftware/restaflib": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.66.0",
+    "@vscode/test-electron": "^1.6.2"
+  }
+}

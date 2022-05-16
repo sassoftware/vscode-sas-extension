@@ -1,0 +1,1 @@
+{"Keywords":{"Keyword":[{"Name":"_NUMERIC_","Type":"S","Help":{"#cdata":"Specifies all numeric variables."}},{"Name":"_CHARACTER_","Type":"S","Help":{"#cdata":"Specifies all character variables."}},{"Name":"_ALL_","Type":"V","Help":{"#cdata":"Specifies all variables."}},{"Name":"_TEMPORARY_","Type":"S","Help":{"#cdata":"Creates a list of temporary data elements."}}]}}

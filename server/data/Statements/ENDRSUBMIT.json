@@ -1,0 +1,1 @@
+{"Keywords":{"Keyword":{"Name":"CANCEL","Type":"S","Help":{"#cdata":"Terminates the block of statements without executing the statements. This option \nis useful in an interactive line mode session if you see an error in a previously \nentered statement, and you want to cancel the step."}}}}

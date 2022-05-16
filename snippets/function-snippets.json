@@ -1,0 +1,1563 @@
+{
+  "abs": {
+    "prefix": "abs",
+    "body": [
+      "abs(${1})"
+    ],
+    "description": "This function provides the absolute value of the inserted variable."
+  },
+  "addr": {
+    "prefix": "addr",
+    "body": [
+      "addr(${1})"
+    ],
+    "description": "This function returns the memory address of a variable on a 32-bit platform."
+  },
+  "addrlong": {
+    "prefix": "addrlong",
+    "body": [
+      "addrlong(${1})"
+    ],
+    "description": "Returns the memory address of variables on 32 and 64-bit platforms."
+  },
+  "airy": {
+    "prefix": "airy",
+    "body": [
+      "airy(${1})"
+    ],
+    "description": "Returns the value of the airy function on the variable."
+  },
+  "allcomb": {
+    "prefix": "allcomb",
+    "body": [
+      "allcomb(${1:count}, ${2:k}, ${3:variable})"
+    ],
+    "description": "Generates all combinations of the values of n variables taken k at a time in a minimal change order."
+  },
+  "allperm": {
+    "prefix": "allperm",
+    "body": [
+      "allperm(${1:count}, of ${2:variable}"
+    ],
+    "description": "Generates all permutations of the values of several variables in a minimal change order."
+  },
+  "anorm420": {
+    "prefix": "anorm420",
+    "body": [
+      "anorm420(${1})"
+    ],
+    "description": "Returns a normalized string from an input string encoded in EBCDIC420."
+  },
+  "anyalnum": {
+    "prefix": "anyalnum",
+    "body": [
+      "anyalnum(${1:string}, ${2:start})"
+    ],
+    "description": "Searches a character string for an alphanumeric character, and returns the first character position at which the character is found."
+  },
+  "anyalpha": {
+    "prefix": "anyalpha",
+    "body": [
+      "anyalpha(${1:string}, ${2:start})"
+    ],
+    "description": "Searches a character string for an alphabetic character, and returns the first character position at which the character is found."
+  },
+  "anycntrl": {
+    "prefix": "anycntrl",
+    "body": [
+      "anycntrl(${1:string}, ${2:start})"
+    ],
+    "description": "Searches a character string for a control character, and returns the first character position at which that character is found."
+  },
+  "anydigit": {
+    "prefix": "anydigit",
+    "body": [
+      "anydigit(${1:string}, ${2:start})"
+    ],
+    "description": "Searches a character string for a digit, and returns the first position at which the digit is found."
+  },
+  "anyfirst": {
+    "prefix": "anyfirst",
+    "body": [
+      "anyfirst(${1:string}, ${2:start})"
+    ],
+    "description": "Searches a character string for a character that is valid as the first character in a SAS variable name under VALIDVARNAME=V7, and returns the first character position at which that character is found."
+  },
+  "anygraph": {
+    "prefix": "anygraph",
+    "body": [
+      "anygraph(${1:string}, ${2:start})"
+    ],
+    "description": "Searches a character string for a graphical character, and returns the first position at which that character is found."
+  },
+  "anylower": {
+    "prefix": "anylower",
+    "body": [
+      "anylower(${1:string}, ${2:start})"
+    ],
+    "description": "Searches a character string for a lowercase letter, and returns the first character position at which the letter is found."
+  },
+  "anyname": {
+    "prefix": "anyname",
+    "body": [
+      "anyname(${1:string}, ${2:start})"
+    ],
+    "description": "Searches a character string for a character that is valid in a SAS variable name under VALIDVARNAME=V7, and returns the first character position at which that character is found."
+  },
+  "anyprint": {
+    "prefix": "anyprint",
+    "body": [
+      "anyprint(${1:string}, ${2:start})"
+    ],
+    "description": "Searches a character string for a printable character, and returns the first character position at which that character is found."
+  },
+  "anypunct": {
+    "prefix": "anypunct",
+    "body": [
+      "anypunct(${1:string}, ${2:start})"
+    ],
+    "description": "Searches a character string for a punctuation character, and returns the first character position at which that character is found."
+  },
+  "anyspace": {
+    "prefix": "anyspace",
+    "body": [
+      "anyspace(${1:string}, ${2:start})"
+    ],
+    "description": "Searches a character string for a whitespace character (blank, horizontal and vertical tab, carriage return, line feed, and form feed), and returns the first character position at which that character is found."
+  },
+  "anyupper": {
+    "prefix": "anyupper",
+    "body": [
+      "anyupper(${1:string}, ${2:start})"
+    ],
+    "description": "Searches a character string for an uppercase letter, and returns the first character position at which the letter is found."
+  },
+  "anyxdigit": {
+    "prefix": "anyxdigit",
+    "body": [
+      "anyxdigit(${1:string}, ${2:start})"
+    ],
+    "description": "Searches a character string for a hexadecimal character that represents a digit, and returns the first character position at which that character is found."
+  },
+  "arcos": {
+    "prefix": "arcos",
+    "body": [
+      "arcos(${1})"
+    ],
+    "description": "Returns the arccosine in radians."
+  },
+  "arcosh": {
+    "prefix": "arcosh",
+    "body": [
+      "arcosh(${1})"
+    ],
+    "description": "Returns the inverse hyperbolic cosine."
+  },
+  "arsin": {
+    "prefix": "arsin",
+    "body": [
+      "arsin(${1})"
+    ],
+    "description": "Returns the arcsine in radians."
+  },
+  "arsinh": {
+    "prefix": "arsinh",
+    "body": [
+      "arsinh(${1})"
+    ],
+    "description": "Returns the inverse hyperbolic sine."
+  },
+  "artanh": {
+    "prefix": "artanh",
+    "body": [
+      "artanh(${1})"
+    ],
+    "description": "Returns the inverse hyperbolic tangent."
+  },
+  "atan": {
+    "prefix": "atan",
+    "body": [
+      "atan(${1})"
+    ],
+    "description": "Returns the arctangent in radians."
+  },
+  "atan2": {
+    "prefix": "atan2",
+    "body": [
+      "atan2(${1:x}, ${2:y})"
+    ],
+    "description": "Returns the arctangent of the x and y coordinates of a right triangle, in radians."
+  },
+  "attrc": {
+    "prefix": "attrc",
+    "body": [
+      "attrc(${1})"
+    ],
+    "description": "Returns the value of a character attribute for a SAS data set."
+  },
+  "attrn": {
+    "prefix": "attrn",
+    "body": [
+      "attrn(${1})"
+    ],
+    "description": "Returns the value of a numeric attribute for a SAS data set."
+  },
+  "avg": {
+    "prefix": "avg",
+    "body": [
+      "select avg(${1:column}) from ${2:table};"
+    ],
+    "description": "Returns the average of all values in a column."
+  },
+  "band": {
+    "prefix": "band",
+    "body": [
+      "band(${1}, ${2})"
+    ],
+    "description": "Returns the bitwise logical AND of two arguments."
+  },
+  "beta": {
+    "prefix": "beta",
+    "body": [
+      "beta(${1:a}, ${2:b})"
+    ],
+    "description": "Returns the value of the beta function."
+  },
+  "betainv": {
+    "prefix": "betainv",
+    "body": [
+      "betainv(${1:p}, ${2:a}, ${3:b})"
+    ],
+    "description": "Returns a quantile from the beta distribution."
+  },
+  "blshift": {
+    "prefix": "blshift",
+    "body": [
+      "blshift(${1}, ${2})"
+    ],
+    "description": "Returns the bitwise logical left shift of two arguments."
+  },
+  "bnot": {
+    "prefix": "bnot",
+    "body": [
+      "bnot(${1})"
+    ],
+    "description": "Returns the bitwise logical NOT of an argument."
+  },
+  "bor": {
+    "prefix": "bor",
+    "body": [
+      "bor(${1}, ${2})"
+    ],
+    "description": "Returns the bitwise logical OR of two arguments."
+  },
+  "brshift": {
+    "prefix": "brshift",
+    "body": [
+      "brshift(${1}, ${2})"
+    ],
+    "description": "Returns the bitwise logical right shift of two arguments."
+  },
+  "bxor": {
+    "prefix": "bxor",
+    "body": [
+      "bxor(${1}, ${2})"
+    ],
+    "description": "Returns the bitwise logical EXCLUSIVE OR of two arguments."
+  },
+  "byte": {
+    "prefix": "byte",
+    "body": [
+      "byte(${1})"
+    ],
+    "description": "Returns one character in the ASCII or the EBCDIC collating sequence."
+  },
+  "cat": {
+    "prefix": "cat",
+    "body": [
+      "cat(${1})"
+    ],
+    "description": "Does not remove leading or trailing blanks, and returns a concatenated character string."
+  },
+  "catq": {
+    "prefix": "catq",
+    "body": [
+      "catq(${1})"
+    ],
+    "description": "Concatenates character or numeric values by using a delimiter to separate items and by adding quotation marks to strings that contain the delimiter."
+  },
+  "cats": {
+    "prefix": "cats",
+    "body": [
+      "cats(${1})"
+    ],
+    "description": "Removes leading and trailing blanks, and returns a concatenated character string."
+  },
+  "catt": {
+    "prefix": "catt",
+    "body": [
+      "catt(${1})"
+    ],
+    "description": "Removes trailing blanks, and returns a concatenated character string."
+  },
+  "catx": {
+    "prefix": "catx",
+    "body": [
+      "catx(${1})"
+    ],
+    "description": "Removes leading and trailing blanks, inserts delimiters, and returns a concatenated character string."
+  },
+  "ceil": {
+    "prefix": "ceil",
+    "body": [
+      "ceil(${1})"
+    ],
+    "description": "Returns the smallest integer greater than or equal to a numeric value expression."
+  },
+  "ceilz": {
+    "prefix": "ceilz",
+    "body": [
+      "ceilz(${1})"
+    ],
+    "description": "Returns the smallest integer that is greater than or equal to the argument, using zero fuzzing."
+  },
+  "cexist": {
+    "prefix": "cexist",
+    "body": [
+      "cexist(${1})"
+    ],
+    "description": "Verifies the existence of a SAS catalog or SAS catalog entry."
+  },
+  "char": {
+    "prefix": "char",
+    "body": [
+      "char(${1:string}, ${2:position})"
+    ],
+    "description": "Returns a single character from a specified position in a character string."
+  },
+  "char_length": {
+    "prefix": "char_length",
+    "body": [
+      "character_length(${1})"
+    ],
+    "description": "description"
+  },
+  "close": {
+    "prefix": "close",
+    "body": [
+      "close(${1})"
+    ],
+    "description": "Closes a SAS data set."
+  },
+  "cmiss": {
+    "prefix": "cmiss",
+    "body": [
+      "cmiss(${1})"
+    ],
+    "description": "Counts the number of missing arguments."
+  },
+  "cmp": {
+    "prefix": "cmp",
+    "body": [
+      "cmp(${1:string-1}, ${2:string-2})"
+    ],
+    "description": "Compares two character strings including trailing blanks."
+  },
+  "cmpt": {
+    "prefix": "cmpt",
+    "body": [
+      "cmpt(${1:string-1}, ${2:string-2})"
+    ],
+    "description": "Compares two character strings excluding trailing blanks."
+  },
+  "coalesce": {
+    "prefix": "coalesce",
+    "body": [
+      "coalesce(${1})"
+    ],
+    "description": "Returns the first non-null or nonmissing value from a list of numeric arguments."
+  },
+  "coalescec": {
+    "prefix": "coalescec",
+    "body": [
+      "coalescec(${1})"
+    ],
+    "description": "Returns the first non-null or nonmissing value from a list of character arguments."
+  },
+  "compare": {
+    "prefix": "compare",
+    "body": [
+      "compare(${1:string-1}, ${2:string-2})"
+    ],
+    "description": "Returns the position of the leftmost character by which two strings differ, or returns 0 if there is no difference."
+  },
+  "compbl": {
+    "prefix": "compbl",
+    "body": [
+      "compbl(${1})"
+    ],
+    "description": "Removes multiple blanks from a character string."
+  },
+  "compged": {
+    "prefix": "compged",
+    "body": [
+      "compged(${1:string-1}, ${2:string-2})"
+    ],
+    "description": "Returns the generalized edit distance between two strings."
+  },
+  "complev": {
+    "prefix": "complev",
+    "body": [
+      "complev(${1:string-1}, ${2:string-2})"
+    ],
+    "description": "Returns the Levenshtein edit distance between two strings."
+  },
+  "compound": {
+    "prefix": "compound",
+    "body": [
+      "compound(${1:init-amt}, ${2:future-amt}, ${3:interest-rate}, {4:num-periods})"
+    ],
+    "description": "Returns compound interest parameters. Calculates the missing perameter."
+  },
+  "compress": {
+    "prefix": "compress",
+    "body": [
+      "compress(${1})"
+    ],
+    "description": "Returns a character string with specified characters removed from the original string."
+  },
+  "cos": {
+    "prefix": "cos",
+    "body": [
+      "cos(${1}"
+    ],
+    "description": "Returns the cosine in radians."
+  },
+  "cosh": {
+    "prefix": "cosh",
+    "body": [
+      "cosh(${1})"
+    ],
+    "description": "Returns the hyperbolic cosine in radians."
+  },
+  "cot": {
+    "prefix": "cot",
+    "body": [
+      "cot(${1})"
+    ],
+    "description": "Returns the cotangent."
+  },
+  "count": {
+    "prefix": "count",
+    "body": [
+      "count(${1:string}, ${2:substring})"
+    ],
+    "description": "Counts the number of times that a specified substring appears within a character string."
+  },
+  "countc": {
+    "prefix": "countc",
+    "body": [
+      "countc(${1:string}, ${2:char-list})"
+    ],
+    "description": "Counts the number of characters in a string that appear or do not appear in a list of characters."
+  },
+  "countw": {
+    "prefix": "countw",
+    "body": [
+      "countw(${1})"
+    ],
+    "description": "Counts the number of words in a character string."
+  },
+  "csc": {
+    "prefix": "csc",
+    "body": [
+      "csc(${1})"
+    ],
+    "description": "Returns the cosecant."
+  },
+  "css": {
+    "prefix": "css",
+    "body": [
+      "css(${1})"
+    ],
+    "description": "Returns the corrected sum of squares."
+  },
+  "date": {
+    "prefix": "date",
+    "body": [
+      "date()"
+    ],
+    "description": "Returns the current date as a SAS date value."
+  },
+  "datetime": {
+    "prefix": "datetime",
+    "body": [
+      "datetime()"
+    ],
+    "description": "Returns the current date and time of day as a SAS datetime value."
+  },
+  "day": {
+    "prefix": "day",
+    "body": [
+      "day(${1})"
+    ],
+    "description": "Returns the day of the month from a SAS date value."
+  },
+  "degrees": {
+    "prefix": "degrees",
+    "body": [
+      "degrees(${1})"
+    ],
+    "description": "Returns the number of degrees for an angle in radians."
+  },
+  "dim": {
+    "prefix": "dim",
+    "body": [
+      "dim(${1:array-name})"
+    ],
+    "description": "Returns the number of elements in an array."
+  },
+  "divide": {
+    "prefix": "divide",
+    "body": [
+      "divide(${1:x}, ${2:y})"
+    ],
+    "description": "Returns the result of a division that handles special missing values for ODS output."
+  },
+  "dsname": {
+    "prefix": "dsname",
+    "body": [
+      "dsname(${1:data-set-id})"
+    ],
+    "description": "Returns the SAS data set name that is associated with a data set identifier."
+  },
+  "exist": {
+    "prefix": "exist",
+    "body": [
+      "exist(${1})"
+    ],
+    "description": "Verifies the existence of a SAS library member."
+  },
+  "exp": {
+    "prefix": "exp",
+    "body": [
+      "exp(${1})"
+    ],
+    "description": "Returns the value of the e constant raised to a specified power."
+  },
+  "fclose": {
+    "prefix": "fclose",
+    "body": [
+      "fclose(${1:file-id})"
+    ],
+    "description": "Closes an external file, directory, or directory member."
+  },
+  "fetch": {
+    "prefix": "fetch",
+    "body": [
+      "fetch(${1})"
+    ],
+    "description": "Reads the next non-deleted observation from a SAS data set into the Data Set Data Vector (DDV)"
+  },
+  "fileexist": {
+    "prefix": "fileexist",
+    "body": [
+      "fileexist(${1})"
+    ],
+    "description": "Verifies the existence of an external file by its physical name."
+  },
+  "filename": {
+    "prefix": "filename",
+    "body": [
+      "filename(${1})"
+    ],
+    "description": "Assigns or deassigns a fileref to an external file, directory, or output device."
+  },
+  "fileref": {
+    "prefix": "fileref",
+    "body": [
+      "fileref(${1})"
+    ],
+    "description": "Verifies whether a fileref has been assigned for the current SAS session."
+  },
+  "find": {
+    "prefix": "find",
+    "body": [
+      "find(${1:string}, ${2:substring})"
+    ],
+    "description": "Searches for a specific substring of characters within a character string."
+  },
+  "findc": {
+    "prefix": "findc",
+    "body": [
+      "findc(${1:string}, ${2:char-list})"
+    ],
+    "description": "Searches a string for any character in a list of characters."
+  },
+  "findw": {
+    "prefix": "findw",
+    "body": [
+      "findw(${1:string}, ${2:word})"
+    ],
+    "description": "Returns the character position of a word in a string, or returns the number of the word in a string."
+  },
+  "finfo": {
+    "prefix": "finfo",
+    "body": [
+      "finfo(${1:file-id}, ${2:information-item})"
+    ],
+    "description": "Returns the value of a file information item."
+  },
+  "finv": {
+    "prefix": "finv",
+    "body": [
+      "finv(${1:p}, ${2:ndf}, ${3:ddf})"
+    ],
+    "description": "Returns a quantile from the F distribution."
+  },
+  "floor": {
+    "prefix": "floor",
+    "body": [
+      "floor(${1})"
+    ],
+    "description": "Returns the largest integer less than or equal to a numeric value expression."
+  },
+  "floorz": {
+    "prefix": "floorz",
+    "body": [
+      "floorz(${1})"
+    ],
+    "description": "Returns the largest integer that is less than or equal to the argument, using zero fuzzing."
+  },
+  "fopen": {
+    "prefix": "fopen",
+    "body": [
+      "fopen(${1:file-ref})"
+    ],
+    "description": "Opens an external file and returns a file identifier value."
+  },
+  "gcd": {
+    "prefix": "gcd",
+    "body": [
+      "gcd(${1}, ${2})"
+    ],
+    "description": "description"
+  },
+  "hour": {
+    "prefix": "hour",
+    "body": [
+      "hour(${1})"
+    ],
+    "description": "Returns the hour from a SAS time or datetime value."
+  },
+  "ifc": {
+    "prefix": "ifc",
+    "body": [
+      "ifc(${1})"
+    ],
+    "description": "Returns a character value based on whether an expression is true, false, or missing."
+  },
+  "ifn": {
+    "prefix": "ifn",
+    "body": [
+      "ifn(${1})"
+    ],
+    "description": "Returns a numeric value based on whether an expression is true, false, or missing."
+  },
+  "index": {
+    "prefix": "index",
+    "body": [
+      "index(${1:target-expression}, ${2:search-expression})"
+    ],
+    "description": "Searches a character expression for a string of characters, and returns the position of the string's first character for the first occurrence of the string."
+  },
+  "indexc": {
+    "prefix": "indexc",
+    "body": [
+      "indexc(${1:target-expression}, ${2:search-expression})"
+    ],
+    "description": "Searches a character expression for specified characters and returns the position of the first occurrence of any of the characters."
+  },
+  "indexw": {
+    "prefix": "indexw",
+    "body": [
+      "indexw(${1:target-expression}, ${2:search-expression})"
+    ],
+    "description": "Searches a character expression for a string that is specified as a word, and returns the position of the first character in the word."
+  },
+  "input": {
+    "prefix": "input",
+    "body": [
+      "input(${1})"
+    ],
+    "description": "input-function"
+  },
+  "inputc": {
+    "prefix": "inputc",
+    "body": [
+      "inputc(${1})"
+    ],
+    "description": "inputc-function"
+  },
+  "inputn": {
+    "prefix": "inputn",
+    "body": [
+      "inputn(${1})"
+    ],
+    "description": "inputn-function"
+  },
+  "int": {
+    "prefix": "int",
+    "body": [
+      "int(${1})"
+    ],
+    "description": "int-function"
+  },
+  "intck": {
+    "prefix": "intck",
+    "body": [
+      "intck(${1})"
+    ],
+    "description": "intck-function"
+  },
+  "intnx": {
+    "prefix": "intnx",
+    "body": [
+      "intnx(${1})"
+    ],
+    "description": "intnx-function"
+  },
+  "is8601_convert": {
+    "prefix": "is8601_convert",
+    "body": [
+      "call is8601_convert(${1})"
+    ],
+    "description": "is8601_convert-function"
+  },
+  "left": {
+    "prefix": "left",
+    "body": [
+      "left(${1})"
+    ],
+    "description": "left-function"
+  },
+  "length": {
+    "prefix": "length",
+    "body": [
+      "length(${1})"
+    ],
+    "description": "length-function"
+  },
+  "lengthc": {
+    "prefix": "lengthc",
+    "body": [
+      "lengthc(${1})"
+    ],
+    "description": "lengthc-function"
+  },
+  "lengthm": {
+    "prefix": "lengthm",
+    "body": [
+      "lengthm(${1})"
+    ],
+    "description": "lengthm-function"
+  },
+  "lengthn": {
+    "prefix": "lengthn",
+    "body": [
+      "lengthn(${1})"
+    ],
+    "description": "lengthn-function"
+  },
+  "log": {
+    "prefix": "log",
+    "body": [
+      "log(${1})"
+    ],
+    "description": "log-function"
+  },
+  "log10": {
+    "prefix": "log10",
+    "body": [
+      "log10(${1})"
+    ],
+    "description": "log10-function"
+  },
+  "log1px": {
+    "prefix": "log1px",
+    "body": [
+      "log1px(${1})"
+    ],
+    "description": "log1px-function"
+  },
+  "log2": {
+    "prefix": "log2",
+    "body": [
+      "log2(${1})"
+    ],
+    "description": "log2-function"
+  },
+  "logbeta": {
+    "prefix": "logbeta",
+    "body": [
+      "logbeta(${1})"
+    ],
+    "description": "logbeta-function"
+  },
+  "max": {
+    "prefix": "max",
+    "body": [
+      "max(${1})"
+    ],
+    "description": "max-function"
+  },
+  "mdy": {
+    "prefix": "mdy",
+    "body": [
+      "mdy(${1})"
+    ],
+    "description": "mdy-function"
+  },
+  "mean": {
+    "prefix": "mean",
+    "body": [
+      "mean(${1})"
+    ],
+    "description": "mean-function"
+  },
+  "median": {
+    "prefix": "median",
+    "body": [
+      "median(${1})"
+    ],
+    "description": "median-function"
+  },
+  "min": {
+    "prefix": "min",
+    "body": [
+      "min(${1})"
+    ],
+    "description": "min-function"
+  },
+  "minute": {
+    "prefix": "minute",
+    "body": [
+      "minute(${1})"
+    ],
+    "description": "minute-function"
+  },
+  "missing": {
+    "prefix": "missing",
+    "body": [
+      "call missing(${1})"
+    ],
+    "description": "missing-function"
+  },
+  "missing2": {
+    "prefix": "missing2",
+    "body": [
+      "missing(${1})"
+    ],
+    "description": "missing2-function"
+  },
+  "mod": {
+    "prefix": "mod",
+    "body": [
+      "mod(${1})"
+    ],
+    "description": "mod-function"
+  },
+  "n": {
+    "prefix": "n",
+    "body": [
+      "n(${1})"
+    ],
+    "description": "n-function"
+  },
+  "nmiss": {
+    "prefix": "nmiss",
+    "body": [
+      "nmiss(${1})"
+    ],
+    "description": "nmiss-function"
+  },
+  "open": {
+    "prefix": "open",
+    "body": [
+      "open(${1})"
+    ],
+    "description": "open-function"
+  },
+  "ordinal": {
+    "prefix": "ordinal",
+    "body": [
+      "ordinal(${1})"
+    ],
+    "description": "ordinal-function"
+  },
+  "propcase": {
+    "prefix": "propcase",
+    "body": [
+      "propcase(${1})"
+    ],
+    "description": "propcase-function"
+  },
+  "prxchange2": {
+    "prefix": "prxchange2",
+    "body": [
+      "call prxchange(${1})"
+    ],
+    "description": "prxchange2-function"
+  },
+  "prxchange": {
+    "prefix": "prxchange",
+    "body": [
+      "prxchange(${1})"
+    ],
+    "description": "prxchange-function"
+  },
+  "prxdebug": {
+    "prefix": "prxdebug",
+    "body": [
+      "call prxdebug(${1})"
+    ],
+    "description": "prxdebug-function"
+  },
+  "prxfree": {
+    "prefix": "prxfree",
+    "body": [
+      "call prxfree(${1})"
+    ],
+    "description": "prxfree-function"
+  },
+  "prxmatch": {
+    "prefix": "prxmatch",
+    "body": [
+      "prxmatch(${1})"
+    ],
+    "description": "prxmatch-function"
+  },
+  "prxnext": {
+    "prefix": "prxnext",
+    "body": [
+      "call prxnext(${1})"
+    ],
+    "description": "prxnext-function"
+  },
+  "prxparen": {
+    "prefix": "prxparen",
+    "body": [
+      "prxparen(${1})"
+    ],
+    "description": "prxparen-function"
+  },
+  "prxparse": {
+    "prefix": "prxparse",
+    "body": [
+      "prxparse(${1})"
+    ],
+    "description": "prxparse-function"
+  },
+  "prxposn2": {
+    "prefix": "prxposn2",
+    "body": [
+      "call prxposn(${1})"
+    ],
+    "description": "prxposn2-function"
+  },
+  "prxposn": {
+    "prefix": "prxposn",
+    "body": [
+      "prxposn(${1})"
+    ],
+    "description": "prxposn-function"
+  },
+  "prxsubstr": {
+    "prefix": "prxsubstr",
+    "body": [
+      "call prxsubstr(${1})"
+    ],
+    "description": "prxsubstr-function"
+  },
+  "ptrlongadd": {
+    "prefix": "ptrlongadd",
+    "body": [
+      "ptrlongadd(${1})"
+    ],
+    "description": "ptrlongadd-function"
+  },
+  "put": {
+    "prefix": "put",
+    "body": [
+      "put(${1})"
+    ],
+    "description": "put-function"
+  },
+  "putc": {
+    "prefix": "putc",
+    "body": [
+      "putc(${1})"
+    ],
+    "description": "putc-function"
+  },
+  "putn": {
+    "prefix": "putn",
+    "body": [
+      "putn(${1})"
+    ],
+    "description": "putn-function"
+  },
+  "rank": {
+    "prefix": "rank",
+    "body": [
+      "rank(${1})"
+    ],
+    "description": "rank-function"
+  },
+  "ranuni": {
+    "prefix": "ranuni",
+    "body": [
+      "ranuni(${1})"
+    ],
+    "description": "ranuni-function"
+  },
+  "rename": {
+    "prefix": "rename",
+    "body": [
+      "rename(${1})"
+    ],
+    "description": "rename-function"
+  },
+  "round": {
+    "prefix": "round",
+    "body": [
+      "round(${1})"
+    ],
+    "description": "round-function"
+  },
+  "rounde": {
+    "prefix": "rounde",
+    "body": [
+      "rounde(${1})"
+    ],
+    "description": "rounde-function"
+  },
+  "roundz": {
+    "prefix": "roundz",
+    "body": [
+      "roundz(${1})"
+    ],
+    "description": "roundz-function"
+  },
+  "saving": {
+    "prefix": "saving",
+    "body": [
+      "saving(${1})"
+    ],
+    "description": "saving-function"
+  },
+  "scan2": {
+    "prefix": "scan2",
+    "body": [
+      "call scan(${1})"
+    ],
+    "description": "scan2-function"
+  },
+  "scan": {
+    "prefix": "scan",
+    "body": [
+      "scan(${1})"
+    ],
+    "description": "scan-function"
+  },
+  "sortc": {
+    "prefix": "sortc",
+    "body": [
+      "call sortc(${1})"
+    ],
+    "description": "sortc-function"
+  },
+  "sortn": {
+    "prefix": "sortn",
+    "body": [
+      "call sortn(${1})"
+    ],
+    "description": "sortn-function"
+  },
+  "soundex": {
+    "prefix": "soundex",
+    "body": [
+      "soundex(${1})"
+    ],
+    "description": "soundex-function"
+  },
+  "spedis": {
+    "prefix": "spedis",
+    "body": [
+      "spedis(${1})"
+    ],
+    "description": "spedis-function"
+  },
+  "sqrt": {
+    "prefix": "sqrt",
+    "body": [
+      "sqrt(${1})"
+    ],
+    "description": "sqrt-function"
+  },
+  "std": {
+    "prefix": "std",
+    "body": [
+      "std(${1})"
+    ],
+    "description": "std-function"
+  },
+  "stderr": {
+    "prefix": "stderr",
+    "body": [
+      "stderr(${1})"
+    ],
+    "description": "stderr-function"
+  },
+  "strip": {
+    "prefix": "strip",
+    "body": [
+      "strip(${1})"
+    ],
+    "description": "strip-function"
+  },
+  "substr": {
+    "prefix": "substr",
+    "body": [
+      "substr(${1})"
+    ],
+    "description": "substr-function"
+  },
+  "substrn": {
+    "prefix": "substrn",
+    "body": [
+      "substrn(${1})"
+    ],
+    "description": "substrn-function"
+  },
+  "sum": {
+    "prefix": "sum",
+    "body": [
+      "sum(${1})"
+    ],
+    "description": "sum-function"
+  },
+  "symget": {
+    "prefix": "symget",
+    "body": [
+      "symget(${1})"
+    ],
+    "description": "symget-function"
+  },
+  "symglobl": {
+    "prefix": "symglobl",
+    "body": [
+      "symglobl(${1})"
+    ],
+    "description": "symglobl-function"
+  },
+  "symlocal": {
+    "prefix": "symlocal",
+    "body": [
+      "symlocal(${1})"
+    ],
+    "description": "symlocal-function"
+  },
+  "symput": {
+    "prefix": "symput",
+    "body": [
+      "call symput(${1})"
+    ],
+    "description": "symput-function"
+  },
+  "symputx": {
+    "prefix": "symputx",
+    "body": [
+      "call symputx(${1})"
+    ],
+    "description": "symputx-function"
+  },
+  "sysexist": {
+    "prefix": "sysexist",
+    "body": [
+      "sysexist(${1})"
+    ],
+    "description": "sysexist-function"
+  },
+  "sysget": {
+    "prefix": "sysget",
+    "body": [
+      "sysget(${1})"
+    ],
+    "description": "sysget-function"
+  },
+  "today": {
+    "prefix": "today",
+    "body": [
+      "today(${1})"
+    ],
+    "description": "today-function"
+  },
+  "translate": {
+    "prefix": "translate",
+    "body": [
+      "translate(${1})"
+    ],
+    "description": "translate-function"
+  },
+  "transtrn": {
+    "prefix": "transtrn",
+    "body": [
+      "transtrn(${1})"
+    ],
+    "description": "transtrn-function"
+  },
+  "tranwrd": {
+    "prefix": "tranwrd",
+    "body": [
+      "tranwrd(${1})"
+    ],
+    "description": "tranwrd-function"
+  },
+  "trim": {
+    "prefix": "trim",
+    "body": [
+      "trim(${1})"
+    ],
+    "description": "trim-function"
+  },
+  "trimn": {
+    "prefix": "trimn",
+    "body": [
+      "trimn(${1})"
+    ],
+    "description": "trimn-function"
+  },
+  "trunc": {
+    "prefix": "trunc",
+    "body": [
+      "trunc(${1})"
+    ],
+    "description": "trunc-function"
+  },
+  "upcase": {
+    "prefix": "upcase",
+    "body": [
+      "upcase(${1})"
+    ],
+    "description": "upcase-function"
+  },
+  "varlen": {
+    "prefix": "varlen",
+    "body": [
+      "varlen(${1})"
+    ],
+    "description": "varlen-function"
+  },
+  "varname": {
+    "prefix": "varname",
+    "body": [
+      "varname(${1})"
+    ],
+    "description": "varname-function"
+  },
+  "varnum": {
+    "prefix": "varnum",
+    "body": [
+      "varnum(${1})"
+    ],
+    "description": "varnum-function"
+  },
+  "varray": {
+    "prefix": "varray",
+    "body": [
+      "varray(${1})"
+    ],
+    "description": "varray-function"
+  },
+  "varrayx": {
+    "prefix": "varrayx",
+    "body": [
+      "varrayx(${1})"
+    ],
+    "description": "varrayx-function"
+  },
+  "vartype": {
+    "prefix": "vartype",
+    "body": [
+      "vartype(${1})"
+    ],
+    "description": "vartype-function"
+  },
+  "verify": {
+    "prefix": "verify",
+    "body": [
+      "verify(${1})"
+    ],
+    "description": "verify-function"
+  },
+  "vformat": {
+    "prefix": "vformat",
+    "body": [
+      "vformat(${1})"
+    ],
+    "description": "vformat-function"
+  },
+  "vformatd": {
+    "prefix": "vformatd",
+    "body": [
+      "vformatd(${1})"
+    ],
+    "description": "vformatd-function"
+  },
+  "vformatdx": {
+    "prefix": "vformatdx",
+    "body": [
+      "vformatdx(${1})"
+    ],
+    "description": "vformatdx-function"
+  },
+  "vformatn": {
+    "prefix": "vformatn",
+    "body": [
+      "vformatn(${1})"
+    ],
+    "description": "vformatn-function"
+  },
+  "vformatnx": {
+    "prefix": "vformatnx",
+    "body": [
+      "vformatnx(${1})"
+    ],
+    "description": "vformatnx-function"
+  },
+  "vformatw": {
+    "prefix": "vformatw",
+    "body": [
+      "vformatw(${1})"
+    ],
+    "description": "vformatw-function"
+  },
+  "vformatwx": {
+    "prefix": "vformatwx",
+    "body": [
+      "vformatwx(${1})"
+    ],
+    "description": "vformatwx-function"
+  },
+  "vformatx": {
+    "prefix": "vformatx",
+    "body": [
+      "vformatx(${1})"
+    ],
+    "description": "vformatx-function"
+  },
+  "vinarray": {
+    "prefix": "vinarray",
+    "body": [
+      "vinarray(${1})"
+    ],
+    "description": "vinarray-function"
+  },
+  "vinarrayx": {
+    "prefix": "vinarrayx",
+    "body": [
+      "vinarrayx(${1})"
+    ],
+    "description": "vinarrayx-function"
+  },
+  "vinformat": {
+    "prefix": "vinformat",
+    "body": [
+      "vinformat(${1})"
+    ],
+    "description": "vinformat-function"
+  },
+  "vinformatd": {
+    "prefix": "vinformatd",
+    "body": [
+      "vinformatd(${1})"
+    ],
+    "description": "vinformatd-function"
+  },
+  "vinformatdx": {
+    "prefix": "vinformatdx",
+    "body": [
+      "vinformatdx(${1})"
+    ],
+    "description": "vinformatdx-function"
+  },
+  "vinformatn": {
+    "prefix": "vinformatn",
+    "body": [
+      "vinformatn(${1})"
+    ],
+    "description": "vinformatn-function"
+  },
+  "vinformatnx": {
+    "prefix": "vinformatnx",
+    "body": [
+      "vinformatnx(${1})"
+    ],
+    "description": "vinformatnx-function"
+  },
+  "vinformatw": {
+    "prefix": "vinformatw",
+    "body": [
+      "vinformatw(${1})"
+    ],
+    "description": "vinformatw-function"
+  },
+  "vinformatwx": {
+    "prefix": "vinformatwx",
+    "body": [
+      "vinformatwx(${1})"
+    ],
+    "description": "vinformatwx-function"
+  },
+  "vinformatx": {
+    "prefix": "vinformatx",
+    "body": [
+      "vinformatx(${1})"
+    ],
+    "description": "vinformatx-function"
+  },
+  "vlabel": {
+    "prefix": "vlabel",
+    "body": [
+      "vlabel(${1})"
+    ],
+    "description": "vlabel-function"
+  },
+  "vlabelx": {
+    "prefix": "vlabelx",
+    "body": [
+      "vlabelx(${1})"
+    ],
+    "description": "vlabelx-function"
+  },
+  "vlength": {
+    "prefix": "vlength",
+    "body": [
+      "vlength(${1})"
+    ],
+    "description": "vlength-function"
+  },
+  "vlengthx": {
+    "prefix": "vlengthx",
+    "body": [
+      "vlengthx(${1})"
+    ],
+    "description": "vlengthx-function"
+  },
+  "vname2": {
+    "prefix": "vname2",
+    "body": [
+      "call vname(${1})"
+    ],
+    "description": "vname2-function"
+  },
+  "vname": {
+    "prefix": "vname",
+    "body": [
+      "vname(${1})"
+    ],
+    "description": "vname-function"
+  },
+  "vnamex": {
+    "prefix": "vnamex",
+    "body": [
+      "vnamex(${1})"
+    ],
+    "description": "vnamex-function"
+  },
+  "vnext": {
+    "prefix": "vnext",
+    "body": [
+      "call vnext(${1})"
+    ],
+    "description": "vnext-function"
+  },
+  "vtype": {
+    "prefix": "vtype",
+    "body": [
+      "vtype(${1})"
+    ],
+    "description": "vtype-function"
+  },
+  "vtypex": {
+    "prefix": "vtypex",
+    "body": [
+      "vtypex(${1})"
+    ],
+    "description": "vtypex-function"
+  },
+  "vvalue": {
+    "prefix": "vvalue",
+    "body": [
+      "vvalue(${1})"
+    ],
+    "description": "vvalue-function"
+  },
+  "vvaluex": {
+    "prefix": "vvaluex",
+    "body": [
+      "vvaluex(${1})"
+    ],
+    "description": "vvaluex-function"
+  },
+  "week": {
+    "prefix": "week",
+    "body": [
+      "week(${1})"
+    ],
+    "description": "week-function"
+  },
+  "weekday": {
+    "prefix": "weekday",
+    "body": [
+      "weekday(${1})"
+    ],
+    "description": "weekday-function"
+  },
+  "whichc": {
+    "prefix": "whichc",
+    "body": [
+      "whichc(${1})"
+    ],
+    "description": "whichc-function"
+  },
+  "whichn": {
+    "prefix": "whichn",
+    "body": [
+      "whichn(${1})"
+    ],
+    "description": "whichn-function"
+  },
+  "year": {
+    "prefix": "year",
+    "body": [
+      "year(${1})"
+    ],
+    "description": "year-function"
+  },
+  "yieldp": {
+    "prefix": "yieldp",
+    "body": [
+      "yieldp(${1})"
+    ],
+    "description": "yieldp-function"
+  },
+  "yrdif": {
+    "prefix": "yrdif",
+    "body": [
+      "yrdif(${1})"
+    ],
+    "description": "yrdif-function"
+  }
+}

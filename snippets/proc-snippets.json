@@ -1,0 +1,42 @@
+{
+  "proc print": {
+    "prefix": "print",
+    "body": ["proc print data=$1;", "run;\n"],
+    "description": "PROC PRINT template"
+  },
+  "proc import": {
+    "prefix": "import",
+    "body": ["proc import datafile=$1 out=$2 dbms=$3;", "run;\n"],
+    "description": "PROC IMPORT template"
+  },
+  "proc export": {
+    "prefix": "export",
+    "body": ["proc export data=$1 outfile=$2 dbms=$3;", "run;\n"],
+    "description": "PROC EXPORT template"
+  },
+  "proc ds2": {
+    "prefix": "ds2",
+    "body": [
+      "proc ds2;",
+      "data;\n",
+      "\tmethod init();",
+      "\t\t$1",
+      "\tend;\n",
+      "enddata;",
+      "run;",
+      "quit;\n"
+    ],
+    "description": "PROC DS2 template"
+  },
+  "proc sql": {
+    "prefix": "sql",
+    "body": [
+      "proc sql;",
+      "\tselect $1;",
+      "\tfrom $2;",
+      "\twhere $3;",
+      "run;\n"
+    ],
+    "description": "PROC SQL template"
+  }
+}

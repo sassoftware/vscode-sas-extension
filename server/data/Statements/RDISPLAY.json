@@ -1,0 +1,1 @@
+{"Keywords":{"Keyword":{"Name":"CONNECTREMOTE=|CREMOTE=|PROCESS=|REMOTE=","Type":"S","Help":{"#cdata":"[Syntax: CONNECTREMOTE=server-ID] \n    \nCreates a Log window to display the lines from the log and an Output window to list \nthe output generated from the execution of the statements within an asynchronous \nRSUBMIT block."}}}}

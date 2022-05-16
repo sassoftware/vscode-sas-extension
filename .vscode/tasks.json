@@ -1,0 +1,56 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "watch",
+      "isBackground": true,
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "never"
+      },
+      "problemMatcher": {
+        "source": "esbuild",
+        "owner": "typescript",
+        "fileLocation": "relative",
+        "pattern": {
+          "regexp": "^(.*)$",
+          "file": 1
+        },
+        "background": {
+          "beginsPattern": {
+            "regexp": "start"
+          },
+          "endsPattern": {
+            "regexp": "end"
+          }
+        }
+      }
+    },
+    {
+      "type": "npm",
+      "script": "compile-browser",
+      "group": "build",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "never"
+      },
+      "problemMatcher": ["$ts-webpack", "$tslint-webpack"]
+    },
+    {
+      "type": "npm",
+      "script": "watch-browser",
+      "isBackground": true,
+      "group": "build",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "never"
+      },
+      "problemMatcher": ["$ts-webpack-watch", "$tslint-webpack-watch"]
+    }
+  ]
+}

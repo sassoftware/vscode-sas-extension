@@ -1,0 +1,15 @@
+.vscode/**
+**/src/**
+**/test/**
+**/testFixture/**
+**/out/**
+**/*.ts
+**/*.map
+**/node_modules/**
+tools
+.gitignore
+.prettierignore
+**/tsconfig.json
+contributing.md
+ContributorAgreement.txt
+.travis.yml
