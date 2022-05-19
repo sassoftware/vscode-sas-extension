@@ -107,7 +107,7 @@ Before you can run SAS code, you must configure the SAS extension to access a SA
 
 To configure the SAS extension:
 
-1. Open the Settings editor for the SAS extension by selecting `File > Preferences > Settings`. Expand the Extensions folder and select SAS. Specify your client ID, client secret, SAS Viya server URL and username. For information about your client ID and client secret, contact your SAS administrator. (SAS administrator can refers to this [documentation](https://go.documentation.sas.com/doc/en/sasadmincdc/v_022/calauthmdl/n1iyx40th7exrqn1ej8t12gfhm88.htm#n0brttsp1nuzzkn1njvr535txk86) for how to generate client IDs.) _Tip_: You can also specify the full path for a token file to authenticate with your SAS Viya server.
+1. Open the Settings editor for the SAS extension by selecting `File > Preferences > Settings`. Expand the Extensions folder and select SAS. Specify your client ID, client secret, SAS Viya server URL and username. For information about your client ID and client secret, contact your SAS administrator. _Tip_: You can also specify the full path for a token file to authenticate with your SAS Viya server.
 
 2. If you do not want to generate results in HTML format, clear the Get ODS HTML5 Output option. This option is selected by default.
 
@@ -128,6 +128,7 @@ To run a SAS program:
 - Currently, only HTML output is supported. By default, the ODS HTML5 statement is added to the code that you are submitting. You can clear the Get ODS HTML5 Output option in the Settings editor for the SAS extension to disable this output.
 - When you click `Run`, the code in the active tab in the editor is submitted. Make sure that the correct tab is active when you run your program.
 - To reset your connection to the SAS Viya server, run the `Close current session` command in VS code or click the `Close current session` button next to the Run button.
+- Please check the [FAQ](https://github.com/sassoftware/vscode-sas-extension/wiki/FAQ) page for some common questions.
 
 ## Contributing to the SAS Extension
 

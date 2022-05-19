@@ -1,8 +1,8 @@
 {
   "name": "sas-lsp",
   "displayName": "SAS",
-  "description": "Official SAS Language Extension for VS code",
-  "version": "0.0.3",
+  "description": "Official SAS Language Extension for VS Code",
+  "version": "0.0.4",
   "categories": [
     "Programming Languages",
     "Data Science",
@@ -31,7 +31,6 @@
       "properties": {
         "SAS.session.host": {
           "type": "string",
-          "format": "hostname",
           "description": "%configuration.SAS.session.host%"
         },
         "SAS.session.user": {
