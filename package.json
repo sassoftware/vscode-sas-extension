@@ -26,36 +26,48 @@
     "virtualWorkspaces": true
   },
   "contributes": {
-    "configuration": {
-      "title": "SAS",
-      "properties": {
-        "SAS.session.host": {
-          "type": "string",
-          "description": "%configuration.SAS.session.host%"
-        },
-        "SAS.session.user": {
-          "type": "string",
-          "description": "%configuration.SAS.session.user%"
-        },
-        "SAS.session.clientId": {
-          "type": "string",
-          "description": "%configuration.SAS.session.clientId%"
-        },
-        "SAS.session.clientSecret": {
-          "type": "string",
-          "description": "%configuration.SAS.session.clientSecret%"
-        },
-        "SAS.session.tokenFile": {
-          "type": "string",
-          "description": "%configuration.SAS.session.tokenFile%"
-        },
-        "SAS.session.outputHtml": {
-          "type": "boolean",
-          "default": true,
-          "description": "%configuration.SAS.session.outputHtml%"
+    "configuration": [
+      {
+        "title": "%configuration.SAS.session.title.general%",
+        "properties": {
+          "SAS.session.host": {
+            "type": "string",
+            "description": "%configuration.SAS.session.host%"
+          },
+          "SAS.session.outputHtml": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.session.outputHtml%"
+          }
+        }
+      },
+      {
+        "title": "%configuration.SAS.session.title.password%",
+        "properties": {
+          "SAS.session.user": {
+            "type": "string",
+            "description": "%configuration.SAS.session.user%"
+          },
+          "SAS.session.clientId": {
+            "type": "string",
+            "description": "%configuration.SAS.session.clientId%"
+          },
+          "SAS.session.clientSecret": {
+            "type": "string",
+            "description": "%configuration.SAS.session.clientSecret%"
+          }
+        }
+      },
+      {
+        "title": "%configuration.SAS.session.title.token%",
+        "properties": {
+          "SAS.session.tokenFile": {
+            "type": "string",
+            "description": "%configuration.SAS.session.tokenFile%"
+          }
         }
       }
-    },
+    ],
     "commands": [
       {
         "command": "SAS.session.run",

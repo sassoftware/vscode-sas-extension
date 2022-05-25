@@ -107,7 +107,13 @@ Before you can run SAS code, you must configure the SAS extension to access a SA
 
 To configure the SAS extension:
 
-1. Open the Settings editor for the SAS extension by selecting `File > Preferences > Settings`. Expand the Extensions folder and select SAS. Specify your client ID, client secret, SAS Viya server URL and username. For information about your client ID and client secret, contact your SAS administrator. _Tip_: You can also specify the full path for a token file to authenticate with your SAS Viya server.
+1. Open the Settings editor for the SAS extension by selecting `File > Preferences > Settings`. Expand the Extensions folder and select SAS. Specify your SAS Viya server URL.
+
+   - To authenticate with password, specify client ID, client secret, and user name. For information about your client ID and client secret, contact your SAS administrator.
+
+   - To authenticate with access token, specify the full path for a token file to authenticate with your SAS Viya server.
+
+   For more information about the authentication process, please see the blog post [Authentication to SAS Viya: a couple of approaches](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/).
 
 2. If you do not want to generate results in HTML format, clear the Get ODS HTML5 Output option. This option is selected by default.
 
@@ -124,10 +130,10 @@ To run a SAS program:
 
 **Note**:
 
-- A new session must be created the first time you run SAS code, which can take 10 - 60 seconds, depending on the server connection.
+- A new session must be created the first time you run SAS code. Connection time will vary depending on the server connection.
 - Currently, only HTML output is supported. By default, the ODS HTML5 statement is added to the code that you are submitting. You can clear the Get ODS HTML5 Output option in the Settings editor for the SAS extension to disable this output.
 - When you click `Run`, the code in the active tab in the editor is submitted. Make sure that the correct tab is active when you run your program.
-- To reset your connection to the SAS Viya server, run the `Close current session` command in VS code or click the `Close current session` button next to the Run button.
+- To reset your connection to the SAS Viya server, run the `Close current session` command in VS code or click the `Close current session` button next to the `Run` button.
 - Please check the [FAQ](https://github.com/sassoftware/vscode-sas-extension/wiki/FAQ) page for some common questions.
 
 ## Contributing to the SAS Extension
