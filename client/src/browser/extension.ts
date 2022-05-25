@@ -6,6 +6,8 @@ import { LanguageClientOptions } from "vscode-languageclient";
 
 import { LanguageClient } from "vscode-languageclient/browser";
 
+let client: LanguageClient;
+
 // this method is called when vs code is activated
 export function activate(context: ExtensionContext): void {
   // Options to control the language client
@@ -14,9 +16,9 @@ export function activate(context: ExtensionContext): void {
     documentSelector: [{ language: "sas" }],
   };
 
-  const client = createWorkerLanguageClient(context, clientOptions);
+  client = createWorkerLanguageClient(context, clientOptions);
 
-  context.subscriptions.push(client.start());
+  client.start();
 }
 
 function createWorkerLanguageClient(
@@ -37,4 +39,11 @@ function createWorkerLanguageClient(
     clientOptions,
     worker
   );
+}
+
+export function deactivate(): Thenable<void> | undefined {
+  if (!client) {
+    return undefined;
+  }
+  return client.stop();
 }

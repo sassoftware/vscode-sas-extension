@@ -9,9 +9,9 @@
     "vscode": "^1.66.0"
   },
   "dependencies": {
-    "vscode-languageclient": "^7.0.0",
-    "@sassoftware/restaf": "^3.4.0",
-    "@sassoftware/restaflib": "^3.4.0"
+    "vscode-languageclient": "^8.0.1",
+    "@sassoftware/restaf": "^4.1.0",
+    "@sassoftware/restaflib": "^4.1.0"
   },
   "devDependencies": {
     "@types/vscode": "^1.66.0",
