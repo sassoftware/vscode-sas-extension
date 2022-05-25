@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "categories": [
     "Programming Languages",
     "Data Science",
@@ -32,12 +32,18 @@
         "properties": {
           "SAS.session.host": {
             "type": "string",
+            "order": 0,
             "description": "%configuration.SAS.session.host%"
           },
           "SAS.session.outputHtml": {
             "type": "boolean",
             "default": true,
             "description": "%configuration.SAS.session.outputHtml%"
+          },
+          "SAS.session.computeContext": {
+            "type": "string",
+            "default": "SAS Job Execution compute context",
+            "description": "%configuration.SAS.session.computeContext%"
           }
         }
       },

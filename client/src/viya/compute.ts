@@ -8,6 +8,7 @@ import {
   computeResults,
 } from "@sassoftware/restaflib";
 import { getAuthConfig } from "./auth";
+import { workspace } from "vscode";
 
 const store = initStore();
 
@@ -30,19 +31,17 @@ async function computeSetup(store, contextName, payload) {
     await store.logon(payload);
   }
   const { compute } = await store.addServices("compute");
-  const contexts = await store.apiCall(compute.links("contexts"));
-  if (contextName === null) {
-    contextName = "Job Execution compute";
+  if (!contextName) {
+    contextName = "SAS Job Execution compute context";
   }
-  contextName = contextName.toLowerCase();
-  const index = contexts
-    .itemsList()
-    .findIndex((c) => c.toLowerCase().indexOf(contextName) >= 0);
-  if (index === -1) {
+  const contexts = await store.apiCall(compute.links("contexts"), {
+    qs: { filter: `eq(name,'${contextName}')` },
+  });
+  if (contexts.details().get("count") === 0) {
     throw { Error: "Compute Context not found: " + contextName };
   }
   const createSession = contexts.itemsCmd(
-    contexts.itemsList(index),
+    contexts.itemsList(0),
     "createSession"
   );
   const locale = JSON.parse(process.env.VSCODE_NLS_CONFIG).locale;
@@ -62,7 +61,10 @@ export async function setup(): Promise<void> {
     });
   }
   if (!computeSession) {
-    computeSession = await computeSetup(store, null, authConfig).catch(
+    const contextName = workspace
+      .getConfiguration("SAS.session")
+      .get("computeContext");
+    computeSession = await computeSetup(store, contextName, authConfig).catch(
       (err) => {
         authConfig = undefined;
         store.logoff();
