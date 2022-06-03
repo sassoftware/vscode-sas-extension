@@ -30,37 +30,14 @@
       {
         "title": "%configuration.SAS.session.title.general%",
         "properties": {
-          "SAS.session.host": {
+          "SAS.session.configFile": {
             "type": "string",
-            "order": 0,
-            "description": "%configuration.SAS.session.host%"
+            "description": "%configuration.SAS.session.configFile%"
           },
           "SAS.session.outputHtml": {
             "type": "boolean",
             "default": true,
             "description": "%configuration.SAS.session.outputHtml%"
-          },
-          "SAS.session.computeContext": {
-            "type": "string",
-            "default": "SAS Job Execution compute context",
-            "description": "%configuration.SAS.session.computeContext%"
-          }
-        }
-      },
-      {
-        "title": "%configuration.SAS.session.title.password%",
-        "properties": {
-          "SAS.session.user": {
-            "type": "string",
-            "description": "%configuration.SAS.session.user%"
-          },
-          "SAS.session.clientId": {
-            "type": "string",
-            "description": "%configuration.SAS.session.clientId%"
-          },
-          "SAS.session.clientSecret": {
-            "type": "string",
-            "description": "%configuration.SAS.session.clientSecret%"
           }
         }
       },

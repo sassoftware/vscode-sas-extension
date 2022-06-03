@@ -4,6 +4,7 @@
   "configuration.SAS.session.title.token": "Session - Authentication with access token",
   "configuration.SAS.session.host": "Full URL of your viya server",
   "configuration.SAS.session.computeContext": "Compute context name",
+  "configuration.SAS.session.configFile": "Configuration file for SAS profiles",
   "configuration.SAS.session.user": "User name for authentication with password flow",
   "configuration.SAS.session.clientId": "Client ID for authentication with password flow. Get from your SAS administrator.",
   "configuration.SAS.session.clientSecret": "Client secret for authentication with password flow. Get from your SAS administrator.",

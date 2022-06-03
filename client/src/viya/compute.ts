@@ -61,9 +61,7 @@ export async function setup(): Promise<void> {
     });
   }
   if (!computeSession) {
-    const contextName = workspace
-      .getConfiguration("SAS.session")
-      .get("computeContext");
+    const contextName = authConfig.computeContext;
     computeSession = await computeSetup(store, contextName, authConfig).catch(
       (err) => {
         authConfig = undefined;
