@@ -5,6 +5,9 @@ import { readFileSync, readFile, writeFileSync, existsSync, mkdirSync } from "fs
 import { ConfigurationTarget, QuickPickItem, window, workspace } from "vscode";
 import os from 'os';
 import path from 'path';
+import { ProfileConfig, Profile } from './profile';
+import { fs } from '../utils/fs';
+import { profile } from 'console';
 
 export const PROFILE_TITLE = 'Enter a New Profile Name, or choose from current profile list!';
 
@@ -34,20 +37,20 @@ export const NEW_CONFIG_FILE_PLACEHOLDER = 'Enter Config File Location...';
 
 export type AuthConfig =
   | {
-      authType: "server";
-      host: string;
-      token: string;
-      tokenType: "bearer";
-    }
+    authType: "server";
+    host: string;
+    token: string;
+    tokenType: "bearer";
+  }
   | {
-      authType: "password";
-      host: string;
-      clientID: string;
-      clientSecret: string;
-      user: string;
-      password: string;
-      computeContext: string;
-    };
+    authType: "password";
+    host: string;
+    clientID: string;
+    clientSecret: string;
+    user: string;
+    password: string;
+    computeContext: string;
+  };
 
 export async function getAuthConfig(): Promise<AuthConfig> {
   // flag for New Profile
@@ -59,7 +62,7 @@ export async function getAuthConfig(): Promise<AuthConfig> {
   //Get configuration file from settings
   let configFile: string = config.get("configFile");
   //If nothing is stored, assume first time use
-  if(configFile === ''){
+  if (configFile === '') {
     configFile = await createInputTextBox(NEW_CONFIG_FILE_PLACEHOLDER, NEW_CONFIG_FILE_TITLE, path.join(os.homedir(), '.sas', 'vs-config.json'));
     //Persist config file location
     config.update("configFile", configFile, ConfigurationTarget.Global).then(() => {
@@ -67,7 +70,7 @@ export async function getAuthConfig(): Promise<AuthConfig> {
     });
   }
   //If file doesn't exist
-  if(!existsSync(configFile)){
+  if (!existsSync(configFile)) {
     //Create path and file if it doesn't exist
     mkdirSync(path.dirname(configFile), { recursive: true });
     writeFileSync(configFile, '', 'utf8');
@@ -75,17 +78,30 @@ export async function getAuthConfig(): Promise<AuthConfig> {
     window.showInformationMessage(`Created config file: ${configFile}`);
   }
 
+  // try out config file
+  const profileConfig = new ProfileConfig(path.join(os.homedir(), '.sas', 'vs-profile.json'), function () {
+    return {};
+  });
+  await profileConfig.get(); // initializes the file
+  const testProfile: Profile = {
+    'sas-endpoint': 'https://sas-test-endpoint.sas.com',
+    'client-id': 'sas.ec',
+    'client-secret': '',
+    'compute-context': 'SOMETHING SAUCY'
+  };
+  await profileConfig.upsertProfile("test", testProfile);
+
 
   // Read Config Data
   const configFileData = readFileSync(configFile, 'utf8');
 
   let configData = {};
-  if(!(configFileData.length === 0)){
+  if (!(configFileData.length === 0)) {
     configData = JSON.parse(configFileData);
   }
 
   // Search if the the configuration is valid
-  if(Object.keys(configData).length){
+  if (Object.keys(configData).length) {
     for (const [key, obj] of Object.entries(configData)) {
       profileList.push({
         label: key,
@@ -94,6 +110,7 @@ export async function getAuthConfig(): Promise<AuthConfig> {
       })
     }
   }
+
   // If new profile, prompt user to create new profile, else, load profiles to view
   const selectedProfile = newProfile ? await createInputTextBox(NEW_PROFILE_PLACEHOLDER, NEW_PROFILE_TITLE) : await createQuickPickInput(profileList, PROFILE_TITLE);
   let host = '';
@@ -101,18 +118,18 @@ export async function getAuthConfig(): Promise<AuthConfig> {
   let clientSecret = '';
   let computeContext = '';
   // If profile doesn't exist, add it
-  if(!Object.keys(configData).includes(selectedProfile)){
+  if (!Object.keys(configData).includes(selectedProfile)) {
     host = await createInputTextBox(NEW_HOSTNAME_PLACEHOLDER, NEW_HOSTNAME_TITLE);
     clientID = await createInputTextBox(CLIENT_ID_PLACEHOLDER, CLIENT_ID_TITLE);
-    if(clientID === ''){
+    if (clientID === '') {
       clientID = ''
     }
     clientSecret = await createInputTextBox(CLIENT_SECRET_PLACEHOLDER, CLIENT_SECRET_TITLE);
-    if(!clientSecret){
+    if (!clientSecret) {
       clientSecret = '';
     }
     computeContext = await createInputTextBox(COMPUTE_CONTEXT_PLACEHOLDER, COMPUTE_CONTEXT_TITLE, 'SAS Job Execution compute context');
-    if(!computeContext){
+    if (!computeContext) {
       computeContext = '';
     }
     const newProfile = {
@@ -128,19 +145,19 @@ export async function getAuthConfig(): Promise<AuthConfig> {
     writeFileSync(configFile, JSON.stringify(configData, null, 2));
   } else {
     // If profile exists, but no options, update the options
-    if(configData[selectedProfile]['sas-endpoint'] === undefined){
+    if (configData[selectedProfile]['sas-endpoint'] === undefined) {
       configData[selectedProfile]['sas-endpoint'] = await createInputTextBox(UPDATE_HOSTNAME_PLACEHOLDER, UPDATE_HOSTNAME_TITLE);
       writeFileSync(configFile, JSON.stringify(configData, null, 2));
     }
-    if(configData[selectedProfile]['client-id'] === undefined){
+    if (configData[selectedProfile]['client-id'] === undefined) {
       configData[selectedProfile]['client-id'] = await createInputTextBox(CLIENT_ID_PLACEHOLDER, CLIENT_ID_TITLE);
       writeFileSync(configFile, JSON.stringify(configData, null, 2));
     }
-    if(configData[selectedProfile]['client-secret'] === undefined){ 
+    if (configData[selectedProfile]['client-secret'] === undefined) {
       configData[selectedProfile]['client-secret'] = await createInputTextBox(CLIENT_SECRET_PLACEHOLDER, CLIENT_SECRET_TITLE);
       writeFileSync(configFile, JSON.stringify(configData, null, 2));
     }
-    if(configData[selectedProfile]['compute-context'] === undefined){ 
+    if (configData[selectedProfile]['compute-context'] === undefined) {
       configData[selectedProfile]['compute-context'] = await createInputTextBox(COMPUTE_CONTEXT_PLACEHOLDER, COMPUTE_CONTEXT_TITLE, 'SAS Job Execution compute context');
       writeFileSync(configFile, JSON.stringify(configData, null, 2));
     }
@@ -150,9 +167,9 @@ export async function getAuthConfig(): Promise<AuthConfig> {
     computeContext = configData[selectedProfile]['compute-context'];
   }
 
-  
+
   const user: string = await createInputTextBox(USERNAME_PLACEHOLDER, USERNAME_TITLE, config.get("user"));
- 
+
   return new Promise((resolve, reject) => {
     if (host === "") {
       reject("SAS server hostname could not be found.");
@@ -215,24 +232,24 @@ async function createQuickPickInput(options, title) {
     quickPick.title = title;
 
     quickPick.onDidChangeValue(() => {
-        if (!quickPick.value){
-          quickPick.items = DEFAULT_ITEMS;
-        } 
-        else if (!options.includes(quickPick.value)){
-          quickPick.items = [{label: quickPick.value}, ...options].map(option => ({ label: option.label, description: option.description ? option.description : "Create New", detail: option.detail }));
-        } 
+      if (!quickPick.value) {
+        quickPick.items = DEFAULT_ITEMS;
+      }
+      else if (!options.includes(quickPick.value)) {
+        quickPick.items = [{ label: quickPick.value }, ...options].map(option => ({ label: option.label, description: option.description ? option.description : "Create New", detail: option.detail }));
+      }
     })
 
     quickPick.onDidAccept(() => {
-        const selection = quickPick.activeItems[0];
-        resolve(selection.label)
-        quickPick.hide()
+      const selection = quickPick.activeItems[0];
+      resolve(selection.label)
+      quickPick.hide()
     })
     quickPick.show();
   })
 }
 
-async function createInputTextBox(placeHolder, title, defaultValue=null) {
+async function createInputTextBox(placeHolder, title, defaultValue = null) {
   return window.showInputBox({
     title,
     ignoreFocusOut: true,
