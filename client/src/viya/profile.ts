@@ -26,7 +26,7 @@ export interface Profile {
   'client-secret': string;
   'compute-context': string;
   'user'?: string;
-  'selected': boolean;
+  'active': boolean;
 }
 
 export interface ProfileDetail {
@@ -47,12 +47,12 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
     return Object.keys(this.value);
   }
 
-  async getSelectedProfile(): Promise<ProfileDetail | undefined> {
+  async getActiveProfile(): Promise<ProfileDetail | undefined> {
     const profileList = this.value;
-    const selected = Object.keys(this.value).find(function (name) {
-      return name in profileList && profileList['selected'];
+    const active = Object.keys(this.value).find(function (name) {
+      return name in profileList && profileList['active'];
     });
-    return <ProfileDetail>{ name: selected, profile: profileList[selected] };
+    return <ProfileDetail>{ name: active, profile: profileList[active] };
   }
 
   async getProfileByName(name: string): Promise<Profile> {
