@@ -69,6 +69,11 @@
           "dark": "icons/dark/disconnect.svg"
         },
         "category": "SAS Session"
+      },
+      {
+        "command": "SAS.session.switchProfile",
+        "title": "%commands.SAS.session.switchProfile%",
+        "category": "SAS Session"
       }
     ],
     "menus": {

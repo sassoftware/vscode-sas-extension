@@ -2,9 +2,12 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import * as path from "path";
-import { commands, ExtensionContext, languages } from "vscode";
+import { commands, ExtensionContext, languages, StatusBarAlignment, StatusBarItem, window } from "vscode";
 import { run } from "../commands/run";
 import { closeSession } from "../commands/closeSession";
+import { switchProfile } from "../commands/switchProfile";
+import { create as activeProfileTrackerCreate } from '../components/profilemanager/active-profile-tracker';
+import { getSelectedProfile } from "../viya/profile";
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -12,6 +15,8 @@ import {
   TransportKind,
 } from "vscode-languageclient/node";
 import { LogTokensProvider, legend } from "../LogViewer";
+
+const activeProfileTracker = activeProfileTrackerCreate();
 
 let client: LanguageClient;
 
@@ -49,18 +54,40 @@ export function activate(context: ExtensionContext): void {
     clientOptions
   );
 
+  // Create Profile status bar item
+  const activeProfileStatusBarIcon = window.createStatusBarItem(StatusBarAlignment.Left, 0);
+  activeProfileStatusBarIcon.command = 'SAS.session.switchProfile';
+
   // Start the client. This will also launch the server
   client.start();
 
   context.subscriptions.push(
     commands.registerCommand("SAS.session.run", run),
     commands.registerCommand("SAS.session.close", closeSession),
+    commands.registerCommand("SAS.session.switchProfile", switchProfile),
     languages.registerDocumentSemanticTokensProvider(
       { language: "sas-log" },
       LogTokensProvider,
       legend
-    )
+    ),
+    activeProfileStatusBarIcon
   );
+
+  activeContextTracker.activeChanged(async (profile) => {
+    const currentContext = await getCurrentProfile();
+    if (!currentContext) { return; }
+    updateStatusBarItem(activeProfileStatusBarIcon, profile!, `${currentContext.contextName}\nCluster: ${currentContext.clusterName}`, !config.isContextStatusBarDisabled());
+  });
+}
+
+function updateStatusBarItem(statusBarItem: StatusBarItem, text: string, tooltip: string, show: boolean): void {
+  statusBarItem.text = text;
+  statusBarItem.tooltip = tooltip;
+if (show) {
+  statusBarItem.show();
+} else {
+  statusBarItem.hide();
+}
 }
 
 export function deactivate(): Thenable<void> | undefined {
