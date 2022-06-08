@@ -44,8 +44,8 @@ class ActiveValueTrackerImpl<T> implements ActiveValueTracker<T> {
     private async pollActive(): Promise<never> {
         // eslint-disable-next-line no-constant-condition
         while (true) {
-            const activeContext = await this.getActiveValue();
-            this.setActive(activeContext);
+            const activeProfile = await this.getActiveValue();
+            this.setActive(activeProfile);
             await sleep(this.pollIntervalMS);
         }
     }

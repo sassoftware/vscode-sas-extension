@@ -2,12 +2,11 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import * as path from "path";
-import { commands, ExtensionContext, languages, StatusBarAlignment, StatusBarItem, window } from "vscode";
+import { commands, ExtensionContext, languages, StatusBarAlignment, StatusBarItem, window, workspace } from "vscode";
 import { run } from "../commands/run";
 import { closeSession } from "../commands/closeSession";
-import { switchProfile } from "../commands/switchProfile";
 import { create as activeProfileTrackerCreate } from '../components/profilemanager/active-profile-tracker';
-import { getSelectedProfile } from "../viya/profile";
+import { ProfileConfig } from "../viya/profile";
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -15,8 +14,16 @@ import {
   TransportKind,
 } from "vscode-languageclient/node";
 import { LogTokensProvider, legend } from "../LogViewer";
+import os from 'os';
 
-const activeProfileTracker = activeProfileTrackerCreate();
+//const config = workspace.getConfiguration("SAS.session");
+
+//Get configuration file from settings
+// const configFile: string = config.get("configFile");
+// const profileConfig = new ProfileConfig(configFile ? configFile : path.join(os.homedir(), '.sas', 'vs-config.json'), function () { return {}; });
+
+const profileConfig = new ProfileConfig(path.join(os.homedir(), '.sas', 'vs-config.json'), function () { return {}; });
+const activeProfileTracker = activeProfileTrackerCreate(profileConfig);
 
 let client: LanguageClient;
 
@@ -73,21 +80,41 @@ export function activate(context: ExtensionContext): void {
     activeProfileStatusBarIcon
   );
 
-  activeContextTracker.activeChanged(async (profile) => {
-    const currentContext = await getCurrentProfile();
-    if (!currentContext) { return; }
-    updateStatusBarItem(activeProfileStatusBarIcon, profile!, `${currentContext.contextName}\nCluster: ${currentContext.clusterName}`, !config.isContextStatusBarDisabled());
+  profileConfig.getActiveProfile().then(function(currentProfile) {
+    updateStatusBarItem(activeProfileStatusBarIcon, `${currentProfile.name}`, `SAS Profile: ${currentProfile.name}\n${currentProfile.profile['sas-endpoint']}`, true);
+  });
+
+  activeProfileTracker.activeChanged(async () => {
+    const currentProfile = await profileConfig.getActiveProfile();
+    if (!currentProfile) { return; }
+    updateStatusBarItem(activeProfileStatusBarIcon, `${currentProfile.name}`, `SAS Profile: ${currentProfile.name}\n${currentProfile.profile['sas-endpoint']}`, true);
   });
 }
 
 function updateStatusBarItem(statusBarItem: StatusBarItem, text: string, tooltip: string, show: boolean): void {
   statusBarItem.text = text;
   statusBarItem.tooltip = tooltip;
-if (show) {
-  statusBarItem.show();
-} else {
-  statusBarItem.hide();
+  if (show) {
+    statusBarItem.show();
+  } else {
+    statusBarItem.hide();
+  }
 }
+
+async function switchProfile() {
+  profileConfig.listProfile().then( async function(list){
+    const selected = await window.showQuickPick(
+      list,
+      { placeHolder: 'Select SAS profile' }
+    );
+    if (selected) {
+      setProfile(selected);
+    }
+  });
+}
+
+async function setProfile(targetProfile: string) {
+  await profileConfig.setActiveProfile(targetProfile).then( () => activeProfileTracker.setActive(targetProfile));
 }
 
 export function deactivate(): Thenable<void> | undefined {

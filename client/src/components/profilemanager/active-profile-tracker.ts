@@ -1,20 +1,21 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
+import { ProfileConfig } from '../../viya/profile';
 import * as activeValueTracker from "./active-value-tracker";
 import { ActiveValueTracker } from "./active-value-tracker";
-import { getSelectedProfile } from "../../viya/profile";
 
-const ACTIVE_CONTEXT_POLL_INTERVAL_MS = 60 * 1000;
+const ACTIVE_PROFILE_POLL_INTERVAL_MS = 60 * 1000;
 
-export function create(): ActiveValueTracker<string | null> {
-    return activeValueTracker.create(() => getActiveProfileName(), ACTIVE_CONTEXT_POLL_INTERVAL_MS);
+export function create(profileConfig: ProfileConfig): ActiveValueTracker<string | null> {
+  return activeValueTracker.create(() => getActiveProfileName(profileConfig), ACTIVE_PROFILE_POLL_INTERVAL_MS);
 }
 
-async function getActiveProfileName(): Promise<string | null> {
-    const name, profile = await getSelectedProfile();
-    if (!name || !profile) {
+async function getActiveProfileName(profileConfig: ProfileConfig): Promise<string | null> {
+    await profileConfig.get(reload=true);
+    const profile = await profileConfig.getActiveProfile();
+    if (!profile.profile || !profile.name) {
         return null;
     }
-    return name;
+    return profile.name;
 }

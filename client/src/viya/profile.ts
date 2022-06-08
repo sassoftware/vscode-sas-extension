@@ -1,8 +1,6 @@
 import { Dictionary } from '../utils/dictionary';
 import { ConfigFile } from '../utils/configFile'
 import { window } from 'vscode';
-import { profile } from 'console';
-
 
 export const NEW_HOSTNAME_TITLE = 'Hostname for new profile (e.g. https://daily.plover-m1.unx.sas.com)';
 export const NEW_HOSTNAME_PLACEHOLDER = 'Enter hostname...';
@@ -26,7 +24,7 @@ export interface Profile {
   'client-secret': string;
   'compute-context': string;
   'user'?: string;
-  'active': boolean;
+  'active'?: boolean;
 }
 
 export interface ProfileDetail {
@@ -49,8 +47,8 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
 
   async getActiveProfile(): Promise<ProfileDetail | undefined> {
     const profileList = this.value;
-    const active = Object.keys(this.value).find(function (name) {
-      return name in profileList && profileList['active'];
+    const active = Object.keys(profileList).find(function (name) {
+      return name in profileList && 'active' in profileList[name] && profileList[name]['active'];
     });
     return <ProfileDetail>{ name: active, profile: profileList[active] };
   }
@@ -61,12 +59,20 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
       'client-id': '',
       'client-secret': '',
       'compute-context': '',
-      'selected': false,
+      'active': false,
     }
     if (name in this.value) {
       profile = this.value[name];
     }
     return profile;
+  }
+
+  async setActiveProfile(name: string): Promise<void> {
+    const profileList = this.value;
+    Object.keys(profileList).forEach(function (key) {
+      profileList[key]['active'] = name === key;
+    });
+    await this.update(profileList);
   }
 
   async upsertProfile(name: string, profile: Profile): Promise<void> {
@@ -82,7 +88,7 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
   }
 
   async prompt(name: string, setDefault = false): Promise<Profile> {
-    const profile = name in this.value ? this.value[name] : <Profile>{ "sas-endpoint": "", "client-id": "", "client-secret": "", "compute-context": "" }
+    const profile = name in this.value ? this.value[name] : <Profile>{ "sas-endpoint": "", "client-id": "", "client-secret": "", "compute-context": "", "active": false }
 
     if (!profile['sas-endpoint'] || setDefault) {
       profile['sas-endpoint'] = await this.createInputTextBox(NEW_HOSTNAME_PLACEHOLDER, NEW_HOSTNAME_TITLE, profile['sas-endpoint']);

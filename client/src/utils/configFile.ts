@@ -9,10 +9,15 @@ export class ConfigFile<T> {
   constructor(
     private readonly filename: string,
     private readonly defaultValue: () => T) {
+      this.getSync();
   }
 
-  async get(): Promise<T> {
-    if (this.value) {
+  async get(reload = false): Promise<T> {
+    return this.getSync(reload);
+  }
+
+  getSync(reload = false): T {
+    if (this.value && !reload) {
       return this.value;
     }
 
@@ -25,7 +30,7 @@ export class ConfigFile<T> {
 
     // if file does not exist, set default and 
     // update, which in turn creates the file.
-    await this.update(this.defaultValue());
+    this.updateSync(this.defaultValue());
     return this.value;
   }
 
@@ -34,6 +39,10 @@ export class ConfigFile<T> {
    * @param value 
    */
   async update(value: T): Promise<void> {
+    this.updateSync(value);
+  }
+
+  updateSync(value: T): void {
     this.value = value;
     const text = JSON.stringify(this.value, undefined, 2);
     writeFileSync(this.filename, text);
