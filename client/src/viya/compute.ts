@@ -8,11 +8,12 @@ import {
   computeResults,
 } from "@sassoftware/restaflib";
 import { getAuthConfig } from "./auth";
-import { workspace } from "vscode";
+import * as configuration from '../components/config/config';
+import { ProfileConfig } from './profile';
 
 const store = initStore();
 
-let authConfig, computeSession;
+let authConfig, computeSession, profileConfig;
 
 export interface LogLine {
   type: string;
@@ -52,8 +53,11 @@ async function computeSetup(store, contextName, payload) {
 }
 
 export async function setup(): Promise<void> {
+  if(!profileConfig){
+    profileConfig = new ProfileConfig(configuration.getConfigFile(), function () { return {}; });
+  }
   if (!authConfig) {
-    authConfig = await getAuthConfig();
+    authConfig = await getAuthConfig(profileConfig);
   }
   if (computeSession) {
     await store.apiCall(computeSession.links("state")).catch(() => {

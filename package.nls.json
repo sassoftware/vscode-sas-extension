@@ -13,5 +13,7 @@
 
   "commands.SAS.session.run": "Run SAS code",
   "commands.SAS.session.close": "Close current session",
-  "commands.SAS.session.switchProfile": "Switch current profile"
+  "commands.SAS.session.switchProfile": "Switch current SAS profile",
+  "commands.SAS.session.addProfile": "Add new SAS profile",
+  "commands.SAS.session.deleteProfile": "Delete SAS profile"
 }

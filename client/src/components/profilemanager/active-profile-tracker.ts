@@ -5,16 +5,16 @@ import { ProfileConfig } from '../../viya/profile';
 import * as activeValueTracker from "./active-value-tracker";
 import { ActiveValueTracker } from "./active-value-tracker";
 
-const ACTIVE_PROFILE_POLL_INTERVAL_MS = 60 * 1000;
+const ACTIVE_PROFILE_POLL_INTERVAL_MS = 1000;
 
 export function create(profileConfig: ProfileConfig): ActiveValueTracker<string | null> {
   return activeValueTracker.create(() => getActiveProfileName(profileConfig), ACTIVE_PROFILE_POLL_INTERVAL_MS);
 }
 
 async function getActiveProfileName(profileConfig: ProfileConfig): Promise<string | null> {
-    await profileConfig.get(reload=true);
+    await profileConfig.get(true);
     const profile = await profileConfig.getActiveProfile();
-    if (!profile.profile || !profile.name) {
+    if (!profile) {
         return null;
     }
     return profile.name;

@@ -74,6 +74,16 @@
         "command": "SAS.session.switchProfile",
         "title": "%commands.SAS.session.switchProfile%",
         "category": "SAS Session"
+      },
+      {
+        "command": "SAS.session.addProfile",
+        "title": "%commands.SAS.session.addProfile%",
+        "category": "SAS Session"
+      },
+      {
+        "command": "SAS.session.deleteProfile",
+        "title": "%commands.SAS.session.deleteProfile%",
+        "category": "SAS Session"
       }
     ],
     "menus": {
