@@ -1,28 +1,12 @@
 import { Dictionary } from '../utils/dictionary';
 import { ConfigFile } from '../utils/configFile'
-import { createInputTextBox, NEW_PROFILE_TITLE, NEW_PROFILE_PLACEHOLDER } from '../utils/userInput';
+import * as properties from '../utils/userInput';
 import { readFileSync } from "fs";
-
-export const NEW_HOSTNAME_TITLE = 'Hostname for new profile (e.g. https://daily.plover-m1.unx.sas.com)';
-export const NEW_HOSTNAME_PLACEHOLDER = 'Enter hostname...';
-export const UPDATE_HOSTNAME_TITLE = 'Hostname for profile';
-export const UPDATE_HOSTNAME_PLACEHOLDER = 'Enter hostname...';
-export const CLIENT_ID_TITLE = 'Client ID';
-export const CLIENT_ID_PLACEHOLDER = 'Enter Client ID...';
-export const CLIENT_SECRET_TITLE = 'Client Secret';
-export const CLIENT_SECRET_PLACEHOLDER = 'Enter Client Secret...';
-export const COMPUTE_CONTEXT_TITLE = 'Compute Context';
-export const COMPUTE_CONTEXT_PLACEHOLDER = 'Enter Compute Context...';
-export const USERNAME_TITLE = 'SAS Username';
-export const USERNAME_PLACEHOLDER = 'Enter a SAS Username...';
-export const NEW_CONFIG_FILE_TITLE = 'SAS Profile Config Path';
-export const NEW_CONFIG_FILE_PLACEHOLDER = 'Enter Config File Path...';
-export const TOKEN_FILE_TITLE = 'SAS Token File Path'
-export const TOKEN_FILE_PLACEHOLDER = 'Enter Token File Path...';
-const DEFAULT_COMPUTE_CONTEXT = 'SAS Job Execution compute context';
 
 export const VALIDATION_PROFILE_TOKEN = 'token-file';
 export const VALIDATION_PROFILE_PASSWORD = 'password';
+
+const DEFAULT_COMPUTE_CONTEXT = 'SAS Job Execution compute context';
 
 export enum ProfileType {
   TokenFile = 'token-file',
@@ -140,7 +124,7 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
   async updateActiveProfile(): Promise<void> {
     const profileList = this.value;
     if(await this.length() === 0){
-      const newProfile = await createInputTextBox(NEW_PROFILE_PLACEHOLDER, NEW_PROFILE_TITLE);
+      const newProfile = await properties.createInputTextBox(properties.ProfilePromptType.NewProfile);
       await this.prompt(newProfile);
     }
     await this.update(profileList);
@@ -150,20 +134,20 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
     const profile = name in this.value ? this.value[name] : <Profile>{ "sas-endpoint": "", "client-id": "", "client-secret": "", "compute-context": "", "active": false }
 
     if (!profile['sas-endpoint'] || forceUpdate) {
-      profile['sas-endpoint'] = await createInputTextBox(NEW_HOSTNAME_PLACEHOLDER, NEW_HOSTNAME_TITLE, profile['sas-endpoint']);
+      profile['sas-endpoint'] = await properties.createInputTextBox(properties.ProfilePromptType.HostName, profile['sas-endpoint']);
     }
     if (!profile['compute-context'] || forceUpdate) {
       profile['compute-context'] = DEFAULT_COMPUTE_CONTEXT;
-      profile['compute-context'] = await createInputTextBox(COMPUTE_CONTEXT_PLACEHOLDER, COMPUTE_CONTEXT_TITLE, profile['compute-context']);
+      profile['compute-context'] = await properties.createInputTextBox(properties.ProfilePromptType.ComputeContext, profile['compute-context']);
     }
     if ((!profile['client-id'] || !profile['token-file']) || forceUpdate) {
-      profile['client-id'] = await createInputTextBox(CLIENT_ID_PLACEHOLDER, CLIENT_ID_TITLE, profile['client-id']);
+      profile['client-id'] = await properties.createInputTextBox(properties.ProfilePromptType.ClientId, profile['client-id']);
     }
     if ((!profile['client-secret'] || !profile['token-file']) || forceUpdate) {
-      profile['client-secret'] = await createInputTextBox(CLIENT_SECRET_PLACEHOLDER, CLIENT_SECRET_TITLE, profile['client-secret']);
+      profile['client-secret'] = await properties.createInputTextBox(properties.ProfilePromptType.ClientId, profile['client-secret']);
     }
     if ((!profile['token-file'] || forceUpdate) && !profile['client-id']) {
-      profile['token-file'] = await createInputTextBox(TOKEN_FILE_PLACEHOLDER, TOKEN_FILE_TITLE, profile['token-file']);
+      profile['token-file'] = await properties.createInputTextBox(properties.ProfilePromptType.TokenFile, profile['token-file']);
     }
     if(profile['client-id']) {
       delete profile['token-file'];

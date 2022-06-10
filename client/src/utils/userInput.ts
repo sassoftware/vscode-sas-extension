@@ -1,36 +1,52 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 import { window } from 'vscode';
-export const PROFILE_TITLE = 'Enter a New Profile Name, or choose from current profile list!';
 
-export const NEW_PROFILE_TITLE = 'Please enter new Profile Name';
-export const NEW_PROFILE_PLACEHOLDER = 'Enter New Profile Name...';
+export interface ProfilePrompt {
+  title: string;  
+  placeholder: string;
+}
+export enum ProfilePromptType {
+  Profile = 'profile',
+  NewProfile = 'new-profile',
+  ClientId = 'client-id',
+  HostName = 'hostname',
+  UpdateHostname = 'update-hostname',
+  ComputeContext = 'compute-context',
+  ClientSecret = 'client-secret',
+  Username = 'username',
+  Password = 'password',
+  ConfigFile = 'config-file',
+  TokenFile = 'token-file'
+}
 
-export const NEW_HOSTNAME_TITLE = 'Hostname for new profile (e.g. https://daily.plover-m1.unx.sas.com)';
-export const NEW_HOSTNAME_PLACEHOLDER = 'Enter hostname...';
+export type ProfilePromptInput = {
+  [key in ProfilePromptType]: ProfilePrompt;
+}
 
-export const UPDATE_HOSTNAME_TITLE = 'Hostname for profile';
-export const UPDATE_HOSTNAME_PLACEHOLDER = 'Enter hostname...';
+export const input: ProfilePromptInput = {
+  [ProfilePromptType.Profile]: { title: "Enter a New Profile Name, or choose from current profile list!", placeholder: "Enter Profile Name..."},
+  [ProfilePromptType.NewProfile]: { title: "Please enter new Profile Name", placeholder: "Enter New Profile Name..."},
+  [ProfilePromptType.HostName]: { title: "Hostname for new profile (e.g. https://example.sas.com)", placeholder: "Enter hostname..."},
+  [ProfilePromptType.UpdateHostname]: { title: "Hostname for profile", placeholder: "Enter hostname..."},
+  [ProfilePromptType.ComputeContext]: { title: "Compute Context", placeholder: "Enter Compute Context..."},
+  [ProfilePromptType.ClientId]: { title: "Client ID", placeholder: "Enter New Client ID..."},
+  [ProfilePromptType.ClientSecret]: { title: "Client Secret", placeholder: "Enter Client Secret..."},
+  [ProfilePromptType.Username]: { title: "SAS Username", placeholder: "Enter a SAS Username..."},
+  [ProfilePromptType.Password]: { title: "SAS Password", placeholder: "Enter a SAS Password..."},
+  [ProfilePromptType.ConfigFile]: { title: "SAS Profile Config Path", placeholder: "Enter Config File Path..."},
+  [ProfilePromptType.TokenFile]: { title: "SAS Token File Path", placeholder: "Enter Token File Path..."}
+}
 
-export const COMPUTE_CONTEXT_TITLE = 'Compute Context';
-export const COMPUTE_CONTEXT_PLACEHOLDER = 'Enter Compute Context...';
+export function getProfilePrompt(type: ProfilePromptType): ProfilePrompt {
+  return input[type];
+}
 
-export const CLIENT_ID_TITLE = 'Client ID (Leave blank to use tokenFile)';
-export const CLIENT_ID_PLACEHOLDER = 'Enter Client ID...';
-
-export const CLIENT_SECRET_TITLE = 'Client Secret';
-export const CLIENT_SECRET_PLACEHOLDER = 'Enter Client Secret...';
-
-export const USERNAME_TITLE = 'SAS Username';
-export const USERNAME_PLACEHOLDER = 'Enter a SAS Username...';
-
-export const PASSWORD_PLACEHOLDER = 'Enter a SAS Username...';
-
-
-export async function createInputTextBox(placeHolder: string, title: string, defaultValue = null, password = false) : Promise<Thenable<string | undefined>> {
+export async function createInputTextBox(profilePromptType: ProfilePromptType, defaultValue = null, password = false) : Promise<Thenable<string | undefined>> {
+  const profilePrompt: ProfilePrompt = input[profilePromptType];
   return window.showInputBox({
-    title,
-    placeHolder,
+    title: profilePrompt.title,
+    placeHolder: profilePrompt.placeholder,
     password,
     value: defaultValue,
     ignoreFocusOut: true

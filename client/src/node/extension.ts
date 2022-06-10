@@ -15,7 +15,7 @@ import {
   TransportKind,
 } from "vscode-languageclient/node";
 import { LogTokensProvider, legend } from "../LogViewer";
-import { createInputTextBox, NEW_PROFILE_TITLE, NEW_PROFILE_PLACEHOLDER } from '../utils/userInput';
+import * as properties  from '../utils/userInput';
 
 const profileConfig = new ProfileConfig(config.getConfigFile(), function () { return {}; });
 const activeProfileTracker = activeProfileTrackerCreate(profileConfig);
@@ -107,7 +107,7 @@ function resetStatusBarItem(statusBarItem: StatusBarItem): void {
 }
 
 async function addProfile() {
-  const profileName = await createInputTextBox(NEW_PROFILE_PLACEHOLDER, NEW_PROFILE_TITLE);
+  const profileName = await properties.createInputTextBox(properties.ProfilePromptType.NewProfile);
   if(!profileName){
     addProfile();
     return;

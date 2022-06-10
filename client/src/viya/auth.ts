@@ -2,7 +2,7 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import { ProfileConfig, ProfileType } from './profile';
-import { USERNAME_TITLE, USERNAME_PLACEHOLDER, PASSWORD_PLACEHOLDER, createInputTextBox } from '../utils/userInput';
+import * as properties from '../utils/userInput';
 
 export type AuthConfig =
   | {
@@ -28,8 +28,8 @@ export async function getAuthConfig(profileConfig: ProfileConfig): Promise<AuthC
   let user = '';
   let password = '';
   if(validProfile.type === ProfileType.Password){
-    user = await createInputTextBox(USERNAME_PLACEHOLDER, USERNAME_TITLE, null, false) || user;
-    password = await createInputTextBox(PASSWORD_PLACEHOLDER, `Password for ${user}`, null, true) || password;
+    user = await properties.createInputTextBox(properties.ProfilePromptType.Username, null, false) || user;
+    password = await properties.createInputTextBox(properties.ProfilePromptType.Password, null, true) || password;
   }
 
   return new Promise((resolve, reject) => {
