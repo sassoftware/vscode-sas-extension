@@ -40,15 +40,6 @@
             "description": "%configuration.SAS.session.outputHtml%"
           }
         }
-      },
-      {
-        "title": "%configuration.SAS.session.title.token%",
-        "properties": {
-          "SAS.session.tokenFile": {
-            "type": "string",
-            "description": "%configuration.SAS.session.tokenFile%"
-          }
-        }
       }
     ],
     "commands": [
@@ -83,6 +74,11 @@
       {
         "command": "SAS.session.deleteProfile",
         "title": "%commands.SAS.session.deleteProfile%",
+        "category": "SAS Session"
+      },
+      {
+        "command": "SAS.session.updateProfile",
+        "title": "%commands.SAS.session.updateProfile%",
         "category": "SAS Session"
       }
     ],

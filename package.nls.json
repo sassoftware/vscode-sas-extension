@@ -15,5 +15,6 @@
   "commands.SAS.session.close": "Close current session",
   "commands.SAS.session.switchProfile": "Switch current SAS profile",
   "commands.SAS.session.addProfile": "Add new SAS profile",
-  "commands.SAS.session.deleteProfile": "Delete SAS profile"
+  "commands.SAS.session.deleteProfile": "Delete SAS profile",
+  "commands.SAS.session.updateProfile": "Update SAS profile"
 }

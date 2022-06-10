@@ -15,7 +15,7 @@ export const UPDATE_HOSTNAME_PLACEHOLDER = 'Enter hostname...';
 export const COMPUTE_CONTEXT_TITLE = 'Compute Context';
 export const COMPUTE_CONTEXT_PLACEHOLDER = 'Enter Compute Context...';
 
-export const CLIENT_ID_TITLE = 'Client ID';
+export const CLIENT_ID_TITLE = 'Client ID (Leave blank to use tokenFile)';
 export const CLIENT_ID_PLACEHOLDER = 'Enter Client ID...';
 
 export const CLIENT_SECRET_TITLE = 'Client Secret';
@@ -24,12 +24,15 @@ export const CLIENT_SECRET_PLACEHOLDER = 'Enter Client Secret...';
 export const USERNAME_TITLE = 'SAS Username';
 export const USERNAME_PLACEHOLDER = 'Enter a SAS Username...';
 
+export const PASSWORD_PLACEHOLDER = 'Enter a SAS Username...';
 
-export async function createInputTextBox(placeHolder: string, title: string, defaultValue = null) : Promise<Thenable<string | undefined>> {
+
+export async function createInputTextBox(placeHolder: string, title: string, defaultValue = null, password = false) : Promise<Thenable<string | undefined>> {
   return window.showInputBox({
     title,
-    ignoreFocusOut: true,
-    placeHolder: placeHolder,
-    value: defaultValue
+    placeHolder,
+    password,
+    value: defaultValue,
+    ignoreFocusOut: true
   });
 }
