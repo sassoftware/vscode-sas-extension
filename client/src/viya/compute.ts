@@ -53,7 +53,7 @@ async function computeSetup(store, contextName, payload) {
 }
 
 export async function setup(): Promise<void> {
-  if(!profileConfig){
+  if (!profileConfig) {
     profileConfig = new ProfileConfig(configuration.getConfigFile(), function () { return {}; });
   }
   if (!authConfig) {

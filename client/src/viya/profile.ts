@@ -240,7 +240,6 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
     }
 
     this.upsertProfile(name, profile);
-    // If you are prompted, set as active profile
     this.setActiveProfile(name);
   }
 }
