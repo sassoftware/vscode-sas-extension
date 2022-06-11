@@ -3,21 +3,6 @@
 import { window } from 'vscode';
 
 
-const input: ProfilePromptInput = {
-  [ProfilePromptType.Profile]: { title: "Enter a New Profile Name, or choose from current profile list!", placeholder: "Enter Profile Name..." },
-  [ProfilePromptType.NewProfile]: { title: "Please enter new Profile Name", placeholder: "Enter New Profile Name..." },
-  [ProfilePromptType.HostName]: { title: "Hostname for new profile (e.g. https://example.sas.com)", placeholder: "Enter hostname..." },
-  [ProfilePromptType.UpdateHostname]: { title: "Hostname for profile", placeholder: "Enter hostname..." },
-  [ProfilePromptType.ComputeContext]: { title: "Compute Context", placeholder: "Enter Compute Context..." },
-  [ProfilePromptType.ClientId]: { title: "Client ID", placeholder: "Enter New Client ID..." },
-  [ProfilePromptType.ClientSecret]: { title: "Client Secret", placeholder: "Enter Client Secret..." },
-  [ProfilePromptType.Username]: { title: "SAS Username", placeholder: "Enter a SAS Username..." },
-  [ProfilePromptType.Password]: { title: "SAS Password", placeholder: "Enter a SAS Password..." },
-  [ProfilePromptType.ConfigFile]: { title: "SAS Profile Config Path", placeholder: "Enter Config File Path..." },
-  [ProfilePromptType.TokenFile]: { title: "SAS Token File Path", placeholder: "Enter Token File Path..." }
-}
-
-
 /**
  * Define an object to represent the values needed for prompting a window.showInputBox
  */
@@ -77,4 +62,21 @@ export async function createInputTextBox(profilePromptType: ProfilePromptType, d
     value: defaultValue,
     ignoreFocusOut: true
   });
+}
+
+/**
+ * Mapped {@link ProfilePrompt} to an enum of {@link ProfilePromptType}. 
+ */
+const input: ProfilePromptInput = {
+  [ProfilePromptType.Profile]: { title: "Enter a New Profile Name, or choose from current profile list!", placeholder: "Enter Profile Name..." },
+  [ProfilePromptType.NewProfile]: { title: "Please enter new Profile Name", placeholder: "Enter New Profile Name..." },
+  [ProfilePromptType.HostName]: { title: "Hostname for new profile (e.g. https://example.sas.com)", placeholder: "Enter hostname..." },
+  [ProfilePromptType.UpdateHostname]: { title: "Hostname for profile", placeholder: "Enter hostname..." },
+  [ProfilePromptType.ComputeContext]: { title: "Compute Context", placeholder: "Enter Compute Context..." },
+  [ProfilePromptType.ClientId]: { title: "Client ID", placeholder: "Enter New Client ID..." },
+  [ProfilePromptType.ClientSecret]: { title: "Client Secret", placeholder: "Enter Client Secret..." },
+  [ProfilePromptType.Username]: { title: "SAS Username", placeholder: "Enter a SAS Username..." },
+  [ProfilePromptType.Password]: { title: "SAS Password", placeholder: "Enter a SAS Password..." },
+  [ProfilePromptType.ConfigFile]: { title: "SAS Profile Config Path", placeholder: "Enter Config File Path..." },
+  [ProfilePromptType.TokenFile]: { title: "SAS Token File Path", placeholder: "Enter Token File Path..." }
 }
