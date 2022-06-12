@@ -232,14 +232,23 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
     if ((!profile['token-file'] || forceUpdate) && !profile['client-id']) {
       profile['token-file'] = await createInputTextBox(ProfilePromptType.TokenFile, profile['token-file']);
     }
+    this.sanitize(profile);
+
+    this.upsertProfile(name, profile);
+    this.setActiveProfile(name);
+  }
+
+  /**
+   * Sanitize a {@link Profile} object that is passed by reference.
+   *
+   * @param profile {@link Profile} object
+   */
+  private sanitize(profile: Profile) {
     if (profile['client-id']) {
       delete profile['token-file'];
     } else {
       delete profile['client-id'];
       delete profile['client-secret'];
     }
-
-    this.upsertProfile(name, profile);
-    this.setActiveProfile(name);
   }
 }
