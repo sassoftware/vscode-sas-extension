@@ -88,7 +88,6 @@ describe('Validate ProfileConfig operations', async function () {
     expect(testProfile).to.not.have.any.keys('token-file');
   });
 
-
   it('delete a profile', async function () {
     await profileConfig.deleteProfile('test');
     const profiles = await profileConfig.listProfile();
