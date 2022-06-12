@@ -227,13 +227,12 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
       profile['client-id'] = await createInputTextBox(ProfilePromptType.ClientId, profile['client-id']);
     }
     if ((!profile['client-secret'] || !profile['token-file']) || forceUpdate) {
-      profile['client-secret'] = await createInputTextBox(ProfilePromptType.ClientId, profile['client-secret']);
+      profile['client-secret'] = await createInputTextBox(ProfilePromptType.ClientSecret, profile['client-secret']);
     }
     if ((!profile['token-file'] || forceUpdate) && !profile['client-id']) {
       profile['token-file'] = await createInputTextBox(ProfilePromptType.TokenFile, profile['token-file']);
     }
     this.sanitize(profile);
-
     this.upsertProfile(name, profile);
     this.setActiveProfile(name);
   }
