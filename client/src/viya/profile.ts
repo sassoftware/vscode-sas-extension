@@ -174,6 +174,7 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
    * @param profile {@link Profile} object
    */
   async upsertProfile(name: string, profile: Profile): Promise<void> {
+    this.sanitize(profile);
     this.value[name] = profile;
     await this.update(this.value);
   }
@@ -232,7 +233,6 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
     if ((!profile['token-file'] || forceUpdate) && !profile['client-id']) {
       profile['token-file'] = await createInputTextBox(ProfilePromptType.TokenFile, profile['token-file']);
     }
-    this.sanitize(profile);
     this.upsertProfile(name, profile);
     this.setActiveProfile(name);
   }
