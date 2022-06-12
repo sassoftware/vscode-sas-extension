@@ -50,14 +50,14 @@ function promptCredentials(): Credentials {
   }
 
   // prompt for the username
-  createInputTextBox(ProfilePromptType.Username, null, false).then(function (v) {
+  createInputTextBox(ProfilePromptType.Username, undefined, false).then(function (v) {
     v.then(function (value) {
       if (value) credentials.user = value;
     });
   });
 
   // prompt for the password
-  createInputTextBox(ProfilePromptType.Password, null, true).then(function (v) {
+  createInputTextBox(ProfilePromptType.Password, undefined, true).then(function (v) {
     v.then(function (value) {
       if (value) credentials.password = value;
     });

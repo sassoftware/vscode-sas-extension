@@ -39,7 +39,7 @@ export type ProfilePromptInput = {
  * Retrieves the {@link ProfilePrompt} by the enum {@link ProfilePromptType}
  * 
  * @param type {@link ProfilePromptType} 
- * @returns {@link Profile}
+ * @returns ProfilePrompt object
  */
 export function getProfilePrompt(type: ProfilePromptType): ProfilePrompt {
   return input[type];

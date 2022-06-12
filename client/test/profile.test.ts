@@ -1,5 +1,5 @@
-import { AuthType, Profile, ProfileConfig, ProfileDetail } from '../src/viya/profile';
-import { unlinkSync } from 'fs';
+import { Profile, ProfileConfig } from '../src/viya/profile';
+import { existsSync, unlinkSync } from 'fs';
 import { expect } from 'chai';
 import path = require('path');
 
@@ -17,7 +17,9 @@ before(async () => {
 });
 
 after(async () => {
-  unlinkSync(testProfile);
+  if (existsSync(testProfile)) { 
+    unlinkSync(testProfile);
+  }
 });
 
 
