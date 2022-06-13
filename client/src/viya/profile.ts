@@ -1,12 +1,85 @@
-import { Dictionary } from '../utils/dictionary';
-import { ConfigFile } from '../utils/configFile'
-import { createInputTextBox, ProfilePromptType } from '../utils/userInput';
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "fs";
+import { window } from 'vscode';
+
 
 /**
  * The default compute context that will be used to create a SAS session.
  */
 const DEFAULT_COMPUTE_CONTEXT = 'SAS Job Execution compute context';
+
+
+/**
+ * Dictionary is a type that maps a generic object with a string key.
+ */
+type Dictionary<T> = {
+  [key: string]: T;
+};
+
+
+/**
+ * ConfigFile is a configuration file manager that supports marshaling
+ * a generic interface.
+ */
+class ConfigFile<T> {
+  protected value: T | undefined;
+
+  constructor(
+    private readonly filename: string,
+    private readonly defaultValue: () => T) {
+    this.getSync();
+  }
+
+  /**
+   * Retreives the configuration {@link T}
+   * 
+   * @param reload {@link Boolean} reloads file before returning {@link T}
+   * @returns Promise<T>
+   */
+  async get(reload = false): Promise<T> {
+    return this.getSync(reload);
+  }
+
+  /**
+   * Synchronous get with optional reload if value is already set 
+   * @param reload {@link Boolean} reloading configuration file
+   * @returns T
+   */
+  getSync(reload = false): T {
+    if (this.value && !reload) {
+      return this.value;
+    }
+
+    // if file exists, parse and set value
+    if (existsSync(this.filename)) {
+      const text = readFileSync(this.filename, 'utf-8');
+      this.value = JSON.parse(text);
+      return this.value;
+    }
+
+    // if file does not exist, set default and 
+    // update, which in turn creates the file.
+    this.updateSync(this.defaultValue());
+    return this.value;
+  }
+
+  /**
+   * Marshal's configuration file based on the T value
+   * @param value 
+   */
+  async update(value: T): Promise<void> {
+    this.updateSync(value);
+  }
+
+  /**
+  * Marshal's configuration file based on the T value
+  * @param value
+  */
+  updateSync(value: T): void {
+    this.value = value;
+    const text = JSON.stringify(this.value, undefined, 2);
+    writeFileSync(this.filename, text);
+  }
+}
 
 /**
  * Enum that represents the authentication type for a profile.
@@ -50,7 +123,6 @@ export interface ProfileValidation {
   'data'?: string;
   'profile': Profile;
 }
-
 
 /**
  * ProfileConfig extends {@link ConfigFile} to manage a configuration file
@@ -250,4 +322,82 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
       delete profile['client-secret'];
     }
   }
+}
+
+/**
+ * Define an object to represent the values needed for prompting a window.showInputBox
+ */
+export interface ProfilePrompt {
+  title: string;
+  placeholder: string;
+}
+
+/**
+ * An enum representing the types of prompts that can be returned for  window.showInputBox
+ */
+export enum ProfilePromptType {
+  Profile = 0,
+  NewProfile,
+  ClientId,
+  HostName,
+  UpdateHostname,
+  ComputeContext,
+  ClientSecret,
+  Username,
+  Password,
+  ConfigFile,
+  TokenFile
+}
+
+/**
+ * An interface that will map an enum of {@link ProfilePromptType} to an interface of {@link ProfilePrompt}.
+ */
+export type ProfilePromptInput = {
+  [key in ProfilePromptType]: ProfilePrompt;
+}
+
+/**
+ * Retrieves the {@link ProfilePrompt} by the enum {@link ProfilePromptType}
+ * 
+ * @param type {@link ProfilePromptType} 
+ * @returns ProfilePrompt object
+ */
+export function getProfilePrompt(type: ProfilePromptType): ProfilePrompt {
+  return input[type];
+}
+
+/**
+ * Helper method to generate a window.ShowInputBox with using a defined set of {@link ProfilePrompt}s.
+ * 
+ * @param profilePromptType {@link ProfilePromptType}
+ * @param defaultValue the {@link String} of the default value that will be represented in the input box. Defaults to null
+ * @param maskValue the {@link boolean} if the input value will be masked
+ * @returns Thenable<{@link String}> of the users input
+ */
+export async function createInputTextBox(profilePromptType: ProfilePromptType, defaultValue: string | undefined = null, maskValue = false): Promise<Thenable<string | undefined>> {
+  const profilePrompt = getProfilePrompt(profilePromptType);
+  return window.showInputBox({
+    title: profilePrompt.title,
+    placeHolder: profilePrompt.placeholder,
+    password: maskValue,
+    value: defaultValue,
+    ignoreFocusOut: true
+  });
+}
+
+/**
+ * Mapped {@link ProfilePrompt} to an enum of {@link ProfilePromptType}. 
+ */
+const input: ProfilePromptInput = {
+  [ProfilePromptType.Profile]: { title: "Enter a New Profile Name, or choose from current profile list!", placeholder: "Enter Profile Name..." },
+  [ProfilePromptType.NewProfile]: { title: "Please enter new Profile Name", placeholder: "Enter New Profile Name..." },
+  [ProfilePromptType.HostName]: { title: "Hostname for new profile (e.g. https://example.sas.com)", placeholder: "Enter hostname..." },
+  [ProfilePromptType.UpdateHostname]: { title: "Hostname for profile", placeholder: "Enter hostname..." },
+  [ProfilePromptType.ComputeContext]: { title: "Compute Context", placeholder: "Enter Compute Context..." },
+  [ProfilePromptType.ClientId]: { title: "Client ID", placeholder: "Enter New Client ID..." },
+  [ProfilePromptType.ClientSecret]: { title: "Client Secret", placeholder: "Enter Client Secret..." },
+  [ProfilePromptType.Username]: { title: "SAS Username", placeholder: "Enter a SAS Username..." },
+  [ProfilePromptType.Password]: { title: "SAS Password", placeholder: "Enter a SAS Password..." },
+  [ProfilePromptType.ConfigFile]: { title: "SAS Profile Config Path", placeholder: "Enter Config File Path..." },
+  [ProfilePromptType.TokenFile]: { title: "SAS Token File Path", placeholder: "Enter Token File Path..." }
 }

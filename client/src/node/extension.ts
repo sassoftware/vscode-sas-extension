@@ -15,7 +15,7 @@ import {
   TransportKind,
 } from "vscode-languageclient/node";
 import { LogTokensProvider, legend } from "../LogViewer";
-import * as properties  from '../utils/userInput';
+import { createInputTextBox, ProfilePromptType } from '../viya/profile';
 
 const profileConfig = new ProfileConfig(config.getConfigFile(), function () { return {}; });
 const activeProfileTracker = activeProfileTrackerCreate(profileConfig);
@@ -88,9 +88,9 @@ export function activate(context: ExtensionContext): void {
 
 async function updateStatusBarProfile(profileStatusBarIcon: StatusBarItem) {
   const currentProfile = await profileConfig.getActiveProfile();
-  if (!currentProfile) { 
+  if (!currentProfile) {
     resetStatusBarItem(profileStatusBarIcon);
-    return; 
+    return;
   }
   updateStatusBarItem(profileStatusBarIcon, `${currentProfile.name}`, `SAS Profile: ${currentProfile.name}\n${currentProfile.profile['sas-endpoint']}`);
 }
@@ -107,47 +107,47 @@ function resetStatusBarItem(statusBarItem: StatusBarItem): void {
 }
 
 async function addProfile() {
-  const profileName = await properties.createInputTextBox(properties.ProfilePromptType.NewProfile);
-  if(!profileName){
+  const profileName = await createInputTextBox(ProfilePromptType.NewProfile);
+  if (!profileName) {
     addProfile();
     return;
   }
-  await profileConfig.prompt(profileName).then( () => { activeProfileTracker.setActive(profileName); closeSession(true); });
+  await profileConfig.prompt(profileName).then(() => { activeProfileTracker.setActive(profileName); closeSession(true); });
 }
 
 async function updateProfile() {
   const profileList = await profileConfig.listProfile();
-  if(profileList.length === 0){
+  if (profileList.length === 0) {
     addProfile();
     return;
   }
-  const selected = await window.showQuickPick(profileList,{ placeHolder: 'Update SAS profile' });  
+  const selected = await window.showQuickPick(profileList, { placeHolder: 'Update SAS profile' });
   if (selected) {
-    await profileConfig.prompt(selected, true).then( () => { activeProfileTracker.setActive(selected); closeSession(true); });
+    await profileConfig.prompt(selected, true).then(() => { activeProfileTracker.setActive(selected); closeSession(true); });
   }
 }
 
 async function switchProfile() {
   const profileList = await profileConfig.listProfile();
-  if(profileList.length === 0){
+  if (profileList.length === 0) {
     addProfile();
     return;
   }
-  const selected = await window.showQuickPick(profileList,{ placeHolder: 'Select SAS profile' });  
+  const selected = await window.showQuickPick(profileList, { placeHolder: 'Select SAS profile' });
   if (selected) {
-    await profileConfig.setActiveProfile(selected).then( () => { activeProfileTracker.setActive(selected); closeSession(true); });
+    await profileConfig.setActiveProfile(selected).then(() => { activeProfileTracker.setActive(selected); closeSession(true); });
   }
 }
 
 async function deleteProfile() {
   const profileList = await profileConfig.listProfile();
-  if(profileList.length === 0){
+  if (profileList.length === 0) {
     window.showErrorMessage("No Profiles available to delete");
     return;
   }
-  const selected = await window.showQuickPick(profileList,{ placeHolder: 'Delete SAS profile' });  
+  const selected = await window.showQuickPick(profileList, { placeHolder: 'Delete SAS profile' });
   if (selected) {
-    await profileConfig.deleteProfile(selected).then( () => {
+    await profileConfig.deleteProfile(selected).then(() => {
       window.showInformationMessage(`SAS Profile ${selected} removed from the configuration`);
       closeSession(true);
     });
