@@ -313,7 +313,7 @@ describe('profile', async function () {
   });
 
 
-  describe('get profile input prompt', async function () {
+  describe('get input prompts', async function () {
     it('Valid Profile Input', function () {
       // Setup
       // Execute
@@ -326,9 +326,7 @@ describe('profile', async function () {
 
       // Teardown
     });
-  });
-
-  describe('get new profile input prompt', async function () {
+  
     it('Valid New Profile Input', function () {
       // Setup
       // Execute
@@ -341,9 +339,7 @@ describe('profile', async function () {
 
       // Teardown
     });
-  });
-
-  describe('get hostname input prompt', async function () {
+  
     it('Valid Hostname Input', function () {
       // Setup
       // Execute
@@ -356,9 +352,7 @@ describe('profile', async function () {
 
       // Teardown
     });
-  });
-
-  describe('get profile input prompt', async function () {
+  
     it('Valid Profile Input', function () {
       // Setup
       // Execute
@@ -371,9 +365,7 @@ describe('profile', async function () {
 
       // Teardown
     });
-  });
-
-  describe('get compute context input prompt', async function () {
+  
     it('Valid Compute Context Input', function () {
       // Setup
       // Execute
@@ -386,9 +378,7 @@ describe('profile', async function () {
 
       // Teardown
     });
-  });
-
-  describe('get client id input prompt', async function () {
+ 
     it('Valid Client Id Input', function () {
       // Setup
       // Execute
@@ -401,9 +391,7 @@ describe('profile', async function () {
 
       // Teardown
     });
-  });
-
-  describe('get client secret input prompt', async function () {
+  
     it('Valid Client Secret Input', function () {
       // Setup
       // Execute
@@ -416,9 +404,7 @@ describe('profile', async function () {
 
       // Teardown
     });
-  });
-
-  describe('get username input prompt', async function () {
+  
     it('Valid Username Input', function () {
       // Setup
       // Execute
@@ -431,9 +417,7 @@ describe('profile', async function () {
 
       // Teardown
     });
-  });
-
-  describe('get password input prompt', async function () {
+  
     it('Valid Password Input', function () {
       // Setup
       // Execute
@@ -446,9 +430,7 @@ describe('profile', async function () {
 
       // Teardown
     });
-  });
-
-  describe('get config file input prompt', async function () {
+  
     it('Valid Config File Input', function () {
       // Setup
       // Execute
@@ -461,9 +443,7 @@ describe('profile', async function () {
 
       // Teardown
     });
-  });
-
-  describe('get token file input prompt', async function () {
+  
     it('Valid Token File Input', function () {
       // Setup
       // Execute
