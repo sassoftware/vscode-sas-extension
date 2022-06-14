@@ -389,8 +389,8 @@ export async function createInputTextBox(profilePromptType: ProfilePromptType, d
  * Mapped {@link ProfilePrompt} to an enum of {@link ProfilePromptType}. 
  */
 const input: ProfilePromptInput = {
-  [ProfilePromptType.Profile]: { title: "Enter a New Profile Name, or choose from current profile list!", placeholder: "Enter Profile Name..." },
-  [ProfilePromptType.NewProfile]: { title: "Please enter new Profile Name", placeholder: "Enter New Profile Name..." },
+  [ProfilePromptType.Profile]: { title: "Select a profile", placeholder: "Select Profile Name..." },
+  [ProfilePromptType.NewProfile]: { title: "Please enter new profile name", placeholder: "Enter New Profile Name..." },
   [ProfilePromptType.HostName]: { title: "Hostname for new profile (e.g. https://example.sas.com)", placeholder: "Enter hostname..." },
   [ProfilePromptType.UpdateHostname]: { title: "Hostname for profile", placeholder: "Enter hostname..." },
   [ProfilePromptType.ComputeContext]: { title: "Compute Context", placeholder: "Enter Compute Context..." },
