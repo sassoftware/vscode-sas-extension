@@ -9,7 +9,9 @@ let testToken: string;
 let profileConfig: ProfileConfig;
 let testProfileClientId: Profile;
 let testProfileTokenFile: Profile;
+let testOverloadedProfile: Profile;
 let testEmptyProfile: Profile;
+let testEmptyItemsProfile: Profile;
 
 before(async () => {
   testProfile = path.resolve(path.join(__dirname, '..', '..', 'testFixture', 'testProfile.json'));
@@ -26,6 +28,20 @@ before(async () => {
     "compute-context": "SAS Studio context"
   };
   testEmptyProfile = <Profile>{};
+  testEmptyItemsProfile = <Profile>{
+    "sas-endpoint": "",
+    "token-file": "",
+    "compute-context": "",
+    "client-id": "",
+    "client-secret": ""
+  };
+  testOverloadedProfile = <Profile>{
+    "sas-endpoint": "https://test-host.sas.com",
+    "token-file": testToken,
+    "compute-context": "SAS Studio context",
+    "client-id": "sas.test",
+    "client-secret": ""
+  };
   
   profileConfig = new ProfileConfig(testProfile, function () {
     return {};
@@ -65,7 +81,7 @@ describe('profile', async function () {
 
       // Check
       expect(profiles).to.have.length(1, 'A single profile should be in the list');
-      expect(profiles).to.include('test', 'Profile test should exist');
+      expect(profiles).to.include(profileName, 'Profile test should exist');
 
       // Teardown
       await profileConfig.deleteProfile(profileName);
@@ -250,7 +266,7 @@ describe('profile', async function () {
       const testProfile = await profileConfig.getProfileByName(profileName);
       expect(testProfile['active']).to.equal(true, 'Active profile not successfully set');
 
-      //Teardown
+      // Teardown
       await profileConfig.deleteProfile(profileName);
     });
 
@@ -312,6 +328,66 @@ describe('profile', async function () {
     await profileConfig.deleteProfile(profileName);
   });
 
+  it('validate overloaded file profile', async function () {
+    // Setup
+    const profileName = 'test';
+    const profileToUse = testOverloadedProfile;
+    await profileConfig.upsertProfile(profileName, profileToUse);
+    const testProfile = await profileConfig.getProfileByName(profileName);
+
+    // Execute
+    const validateProfile = await profileConfig.validateProfile({name: profileName, profile: testProfile});
+
+    // Check
+    // Overloaded file should take token as precedence
+    expect(validateProfile.data).to.equal(undefined);
+    expect(validateProfile.type).to.equal(AuthType.Password, "validate client overloaded file profile did not return correct AuthType");
+    expect(validateProfile.error).to.equal('', "validate overloaded file profile should not return error");
+
+    // Teardown
+    await profileConfig.deleteProfile(profileName);
+  });
+
+  it('validate bad path for token file profile', async function () {
+    // Setup
+    const profileName = 'test';
+    const profileToUse = testProfileTokenFile;
+    profileToUse['token-file'] = '/fake/path/to/token.txt';
+    await profileConfig.upsertProfile(profileName, profileToUse);
+    const testProfile = await profileConfig.getProfileByName(profileName);
+
+    // Execute
+    const validateProfile = await profileConfig.validateProfile({name: profileName, profile: testProfile});
+
+    // Check
+    // Overloaded file should take token as precedence
+    expect(validateProfile.data).to.equal(undefined);
+    expect(validateProfile.type).to.equal(AuthType.Error, "validate bad token path profile did not return correct AuthType");
+    expect(validateProfile.error).to.equal(`Please update profile (${profileName}): ENOENT: no such file or directory, open '${profileToUse['token-file']}'`, "validate overloaded file profile should return error");
+
+    // Teardown
+    await profileConfig.deleteProfile(profileName);
+  });
+
+  it('validate all empty items for profile', async function () {
+    // Setup
+    const profileName = 'test';
+    const profileToUse = testEmptyItemsProfile;
+    await profileConfig.upsertProfile(profileName, profileToUse);
+    const testProfile = await profileConfig.getProfileByName(profileName);
+
+    // Execute
+    const validateProfile = await profileConfig.validateProfile({name: profileName, profile: testProfile});
+
+    // Check
+    // Overloaded file should take token as precedence
+    expect(validateProfile.data).to.equal(undefined);
+    expect(validateProfile.type).to.equal(AuthType.Error, "validate empty item profile did not return correct AuthType");
+    expect(validateProfile.error).to.equal('No token or client found', "validate empty item should return error");
+
+    // Teardown
+    await profileConfig.deleteProfile(profileName);
+  });
 
   describe('get input prompts', async function () {
     it('Valid Profile Input', function () {
@@ -457,6 +533,5 @@ describe('profile', async function () {
       // Teardown
     });
   });
-
 
 });

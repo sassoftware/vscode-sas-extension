@@ -223,7 +223,10 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
       return pv;
     }
     pv.profile = profileDetail.profile;
-    if (profileDetail.profile['token-file']) {
+    if (profileDetail.profile['client-id']) {
+      pv.type = AuthType.Password;
+    }
+    else if (profileDetail.profile['token-file']) {
       pv.type = AuthType.TokenFile;
       try {
         pv.data = readFileSync(profileDetail.profile['token-file'], 'utf-8');
@@ -231,8 +234,6 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
         pv.error = `Please update profile (${profileDetail.name}): ${err.message}`;
         pv.type = AuthType.Error;
       }
-    } else if (profileDetail.profile['client-id']) {
-      pv.type = AuthType.Password;
     } else {
       pv.error = "No token or client found";
     }
