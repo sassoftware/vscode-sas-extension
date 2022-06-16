@@ -1,0 +1,7 @@
+{
+  "testProfile": {
+    "sas-endpoint": "https://test-host.sas.com",
+    "token-file": "path/to/token.txt",
+    "compute-context": "SAS Studio context"
+  }
+}

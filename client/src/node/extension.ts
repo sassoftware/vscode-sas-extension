@@ -21,6 +21,8 @@ const profileConfig = new ProfileConfig(config.getConfigFile(), function () { re
 const activeProfileTracker = activeProfileTrackerCreate(profileConfig);
 
 let client: LanguageClient;
+// Create Profile status bar item
+const activeProfileStatusBarIcon = window.createStatusBarItem(StatusBarAlignment.Left, 0);
 
 export function activate(context: ExtensionContext): void {
   // The server is implemented in node
@@ -56,8 +58,6 @@ export function activate(context: ExtensionContext): void {
     clientOptions
   );
 
-  // Create Profile status bar item
-  const activeProfileStatusBarIcon = window.createStatusBarItem(StatusBarAlignment.Left, 0);
   activeProfileStatusBarIcon.command = 'SAS.session.switchProfile';
 
   // Start the client. This will also launch the server
