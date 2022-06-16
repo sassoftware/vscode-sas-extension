@@ -89,7 +89,7 @@ export async function getAuthConfig(profileConfig: ProfileConfig): Promise<AuthC
       });
     }
     else if (validProfile.type === AuthType.Password) {
-      const creds = promptCredentials()
+      const creds = promptCredentials();
       if (!creds.user || !creds.password) {
         reject("Please enter username and password");
       }

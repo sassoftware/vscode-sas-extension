@@ -1,0 +1,9 @@
+{
+  "testProfile": {
+    "sas-endpoint": "",
+    "token-file": "",
+    "compute-context": "",
+    "client-id": "",
+    "client-secret": ""
+  }
+}
