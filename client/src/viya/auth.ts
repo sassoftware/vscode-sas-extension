@@ -74,16 +74,8 @@ export async function getAuthConfig(
   const validProfile = await profileConfig.validateProfile(activeProfile);
 
   return new Promise((resolve, reject) => {
-    if (validProfile.type === AuthType.Error) {
-      reject(validProfile.error);
-    } else if (validProfile.type === AuthType.TokenFile) {
-      resolve({
-        authType: "server",
-        host: validProfile.profile["sas-endpoint"],
-        token: validProfile.data ?? "",
-        tokenType: "bearer",
-      });
-    } else if (validProfile.type === AuthType.Password) {
+    // If password flow is recognized
+    if (validProfile.type === AuthType.Password) {
       promptCredentials().then((creds) => {
         if (!creds.user || !creds.password) {
           reject("Please enter username and password");
@@ -98,6 +90,19 @@ export async function getAuthConfig(
           password: creds.password,
         });
       });
+    }
+    // If TokenFile flow is recognized
+    if (validProfile.type === AuthType.TokenFile) {
+      resolve({
+        authType: "server",
+        host: validProfile.profile["sas-endpoint"],
+        token: validProfile.data ?? "",
+        tokenType: "bearer",
+      });
+    }
+    // If Error is found
+    if (validProfile.type === AuthType.Error) {
+      reject(validProfile.error);
     }
   });
 }
