@@ -1,5 +1,6 @@
 {
   "name": "SAS Light",
+  "include": "./light_plus.json",
   "semanticHighlighting": true,
   "semanticTokenColors": {
     "sep": { "foreground": "#686868" },

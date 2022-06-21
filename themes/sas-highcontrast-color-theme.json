@@ -1,5 +1,6 @@
 {
   "name": "SAS High Contrast",
+  "include": "./hc_black.json",
   "semanticHighlighting": true,
   "semanticTokenColors": {
     "sep": { "foreground": "#fff" },
