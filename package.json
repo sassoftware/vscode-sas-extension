@@ -188,11 +188,5 @@
 	},
 	"dependencies": {
 		"path-browserify": "^1.0.1"
-	},
-	"__metadata": {
-		"id": "ced8e7e0-9fd3-4acc-9743-1287b8910faa",
-		"publisherDisplayName": "SAS Institute Inc.",
-		"publisherId": "41d1af91-80fe-4f57-b3da-6b27a168e8f7",
-		"isPreReleaseVersion": false
 	}
 }
