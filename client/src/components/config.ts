@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { ConfigurationTarget } from 'vscode';
 import path from 'path';
 import os from 'os';
 
@@ -22,7 +21,7 @@ export async function addValueToGlobalConfig(configKey: string, value: string): 
  * 
  * @param configKey {@link String} the setting key
  * @param value {@link String} the value for the key
- * @param scope {@link ConfigurationTarget} scope of the vscode setting
+ * @param scope {@link vscode.ConfigurationTarget} scope of the vscode setting
  */
 async function addValueToConfigAtScope(configKey: string, value: string, scope: vscode.ConfigurationTarget): Promise<void> {
   await vscode.workspace.getConfiguration(EXTENSION_CONFIG_KEY).update(configKey, value, scope);

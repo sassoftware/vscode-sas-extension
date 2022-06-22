@@ -2,7 +2,6 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import * as path from "path";
-import * as configuration from "../components/config";
 import {
   commands,
   ExtensionContext,
@@ -13,8 +12,6 @@ import {
 } from "vscode";
 import { run } from "../commands/run";
 import { closeSession } from "../commands/closeSession";
-import { create as activeProfileTrackerCreate } from "../components/profilemanager/active-profile-tracker";
-import { ProfileConfig } from "../viya/profile";
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -22,12 +19,14 @@ import {
   TransportKind,
 } from "vscode-languageclient/node";
 import { LogTokensProvider, legend } from "../LogViewer";
-import { createInputTextBox, ProfilePromptType } from "../viya/profile";
-
-const profileConfig = new ProfileConfig(configuration.getConfigFile(), function () {
-  return {};
-});
-const activeProfileTracker = activeProfileTrackerCreate(profileConfig);
+import {
+  profileConfig,
+  activeProfileTracker,
+  addProfile,
+  updateProfile,
+  switchProfile,
+  deleteProfile
+} from '../commands/profile';
 
 let client: LanguageClient;
 // Create Profile status bar item
@@ -35,6 +34,7 @@ const activeProfileStatusBarIcon = window.createStatusBarItem(
   StatusBarAlignment.Left,
   0
 );
+
 
 export function activate(context: ExtensionContext): void {
   // The server is implemented in node
@@ -124,71 +124,6 @@ function updateStatusBarItem(
 function resetStatusBarItem(statusBarItem: StatusBarItem): void {
   statusBarItem.text = "No Active Profiles Found";
   statusBarItem.show();
-}
-
-async function addProfile() {
-  const profileName = await createInputTextBox(ProfilePromptType.NewProfile);
-  if (!profileName) {
-    addProfile();
-    return;
-  }
-  await profileConfig.prompt(profileName).then(() => {
-    activeProfileTracker.setActive(profileName);
-    closeSession(true);
-  });
-}
-
-async function updateProfile() {
-  const profileList = await profileConfig.listProfile();
-  if (profileList.length === 0) {
-    addProfile();
-    return;
-  }
-  const selected = await window.showQuickPick(profileList, {
-    placeHolder: "Update SAS profile",
-  });
-  if (selected) {
-    await profileConfig.prompt(selected, true).then(() => {
-      activeProfileTracker.setActive(selected);
-      closeSession(true);
-    });
-  }
-}
-
-async function switchProfile() {
-  const profileList = await profileConfig.listProfile();
-  if (profileList.length === 0) {
-    addProfile();
-    return;
-  }
-  const selected = await window.showQuickPick(profileList, {
-    placeHolder: "Select SAS profile",
-  });
-  if (selected) {
-    await profileConfig.setActiveProfile(selected).then(() => {
-      activeProfileTracker.setActive(selected);
-      closeSession(true);
-    });
-  }
-}
-
-async function deleteProfile() {
-  const profileList = await profileConfig.listProfile();
-  if (profileList.length === 0) {
-    window.showErrorMessage("No Profiles available to delete");
-    return;
-  }
-  const selected = await window.showQuickPick(profileList, {
-    placeHolder: "Delete SAS profile",
-  });
-  if (selected) {
-    await profileConfig.deleteProfile(selected).then(() => {
-      window.showInformationMessage(
-        `SAS Profile ${selected} removed from the configuration`
-      );
-      closeSession(true);
-    });
-  }
 }
 
 export function deactivate(): Thenable<void> | undefined {
