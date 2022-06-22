@@ -11,7 +11,7 @@ export interface ActiveValueTracker<T> {
 export function create<T>(
   getActiveValue: () => Promise<T>,
   pollIntervalMS: number
-) {
+): ActiveValueTracker<T> {
   return new ActiveValueTrackerImpl<T>(getActiveValue, pollIntervalMS);
 }
 

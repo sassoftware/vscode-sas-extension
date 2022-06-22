@@ -2,7 +2,7 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import * as path from "path";
-import * as config from "../components/config/config";
+import * as configuration from "../components/config";
 import {
   commands,
   ExtensionContext,
@@ -24,7 +24,7 @@ import {
 import { LogTokensProvider, legend } from "../LogViewer";
 import { createInputTextBox, ProfilePromptType } from "../viya/profile";
 
-const profileConfig = new ProfileConfig(config.getConfigFile(), function () {
+const profileConfig = new ProfileConfig(configuration.getConfigFile(), function () {
   return {};
 });
 const activeProfileTracker = activeProfileTrackerCreate(profileConfig);

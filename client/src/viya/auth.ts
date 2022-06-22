@@ -2,7 +2,7 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import {
-  ProfileConfig,
+  ProfileValidation,
   AuthType,
   ProfilePromptType,
   createInputTextBox,
@@ -17,20 +17,19 @@ import {
  */
 export type AuthConfig =
   | {
-      authType: "server";
-      host: string;
-      token: string;
-      tokenType: "bearer";
-    }
+    authType: "server";
+    host: string;
+    token: string;
+    tokenType: "bearer";
+  }
   | {
-      authType: "password";
-      host: string;
-      clientID: string;
-      clientSecret: string;
-      user: string;
-      password: string;
-      computeContext: string;
-    };
+    authType: "password";
+    host: string;
+    clientID: string;
+    clientSecret: string;
+    user: string;
+    password: string;
+  };
 
 /**
  * Credentials is an interface that will represent the user credentials
@@ -68,10 +67,8 @@ async function promptCredentials(): Promise<Credentials> {
  * @returns the Authentication configuration object
  */
 export async function getAuthConfig(
-  profileConfig: ProfileConfig
+  validProfile: ProfileValidation
 ): Promise<AuthConfig> {
-  const activeProfile = await profileConfig.getActiveProfile();
-  const validProfile = await profileConfig.validateProfile(activeProfile);
 
   return new Promise((resolve, reject) => {
     // If password flow is recognized
@@ -85,7 +82,6 @@ export async function getAuthConfig(
           host: validProfile.profile["sas-endpoint"],
           clientID: validProfile.profile["client-id"] ?? "",
           clientSecret: validProfile.profile["client-secret"] ?? "",
-          computeContext: validProfile.profile["compute-context"],
           user: creds.user,
           password: creds.password,
         });

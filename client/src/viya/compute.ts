@@ -8,12 +8,12 @@ import {
   computeResults,
 } from "@sassoftware/restaflib";
 import { getAuthConfig } from "./auth";
-import * as configuration from '../components/config/config';
 import { ProfileConfig } from './profile';
+import * as configuration from '../components/config';
 
 const store = initStore();
 
-let authConfig, computeSession, profileConfig;
+let authConfig, profileConfig, computeSession;
 
 export interface LogLine {
   type: string;
@@ -31,10 +31,11 @@ async function computeSetup(store, contextName, payload) {
   if (payload !== null) {
     await store.logon(payload);
   }
-  const { compute } = await store.addServices("compute");
   if (!contextName) {
     contextName = "SAS Job Execution compute context";
   }
+  const { compute } = await store.addServices("compute");
+
   const contexts = await store.apiCall(compute.links("contexts"), {
     qs: { filter: `eq(name,'${contextName}')` },
   });
@@ -45,7 +46,7 @@ async function computeSetup(store, contextName, payload) {
     contexts.itemsList(0),
     "createSession"
   );
-  const locale = JSON.parse(process.env.VSCODE_NLS_CONFIG).locale;
+  const locale = JSON.parse(process.env.VSCODE_NLS_CONFIG ?? "").locale;
   const session = await store.apiCall(createSession, {
     headers: { "accept-language": locale },
   });
@@ -56,8 +57,12 @@ export async function setup(): Promise<void> {
   if (!profileConfig) {
     profileConfig = new ProfileConfig(configuration.getConfigFile(), function () { return {}; });
   }
+  // retrieve active & valid profile
+  const activeProfile = await profileConfig.getActiveProfile();
+  const validProfile = await profileConfig.validateProfile(activeProfile);
+
   if (!authConfig) {
-    authConfig = await getAuthConfig(profileConfig);
+    authConfig = await getAuthConfig(validProfile);
   }
   if (computeSession) {
     await store.apiCall(computeSession.links("state")).catch(() => {
@@ -65,8 +70,7 @@ export async function setup(): Promise<void> {
     });
   }
   if (!computeSession) {
-    const contextName = authConfig.computeContext;
-    computeSession = await computeSetup(store, contextName, authConfig).catch(
+    computeSession = await computeSetup(store, validProfile.computeContext, authConfig).catch(
       (err) => {
         authConfig = undefined;
         store.logoff();
@@ -87,7 +91,7 @@ export async function run(code: string): Promise<Results> {
   };
 }
 
-export function closeSession(): Promise<void> {
+export function closeSession(): void {
   authConfig = undefined;
   if (computeSession)
     return store.apiCall(computeSession.links("delete")).finally(() => {
