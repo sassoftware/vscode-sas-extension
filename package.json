@@ -28,101 +28,100 @@
   "contributes": {
     "semanticTokenTypes": [
       {
-				"id": "date",
-				"superType": "string",
-				"description": "Date"
-			},
-			{
-				"id": "time",
-				"superType": "string",
-				"description": "Time"
-			},
-			{
-				"id": "dt",
-				"superType": "string",
-				"description": "DateTime"
-			},
-			{
-				"id": "format",
-				"superType": "string",
-				"description": "Format"
-			},
-			{
-				"id": "numeric",
-				"superType": "number",
-				"description": "Numeric"
-			},
-			{
-				"id": "bitmask",
-				"superType": "number",
-				"description": "Bitmask"
-			},
-			{
-				"id": "namebit",
-				"superType": "number",
-				"description": "Namebit"
-			},
-			{
-				"id": "hex",
-				"superType": "number",
-				"description": "Hex"
-			},
-			{
-				"id": "sep",
-				"superType": "operator",
-				"description": "Separator"
-			},
-			{
-				"id": "macro-sec-keyword",
-				"superType": "operator",
-				"description": "SAS Macro Secondary Keyword"
-			},
-			{
-				"id": "macro-ref",
-				"superType": "operator",
-				"description": "SAS Macro Reference"
-			},
-			{
-				"id": "macro-keyword",
-				"superType": "keyword",
-				"description": "SAS Macro Keyword"
-			},
-			{
-				"id": "macro-comment",
-				"superType": "comment",
-				"description": "Macro Comment"
-			},
-
-			{
-				"id": "sec-keyword",
-				"superType": "method",
-				"description": "SAS Secondary keyword"
-			},
-			{
-				"id": "proc-name",
-				"superType": "method",
-				"description": "Name of the proc"
-			},			
-			{
-				"id": "cards-data",
-				"superType": "parameter",
-				"description": "Card data"
-			},
-			{
-				"id": "error",
-				"superType": "event",
-				"description": "Error event"
-			},
-			{
-				"id": "warning",
-				"superType": "event",
-				"description": "Warning event"
-			},
-			{
-				"id": "note",
-				"superType": "event",
-				"description": "Note"
-			}
+        "id": "date",
+        "superType": "string",
+        "description": "Date"
+      },
+      {
+        "id": "time",
+        "superType": "string",
+        "description": "Time"
+      },
+      {
+        "id": "dt",
+        "superType": "string",
+        "description": "DateTime"
+      },
+      {
+        "id": "format",
+        "superType": "string",
+        "description": "Format"
+      },
+      {
+        "id": "numeric",
+        "superType": "number",
+        "description": "Numeric"
+      },
+      {
+        "id": "bitmask",
+        "superType": "number",
+        "description": "Bitmask"
+      },
+      {
+        "id": "namebit",
+        "superType": "number",
+        "description": "Namebit"
+      },
+      {
+        "id": "hex",
+        "superType": "number",
+        "description": "Hex"
+      },
+      {
+        "id": "sep",
+        "superType": "operator",
+        "description": "Separator"
+      },
+      {
+        "id": "macro-sec-keyword",
+        "superType": "operator",
+        "description": "SAS Macro Secondary Keyword"
+      },
+      {
+        "id": "macro-ref",
+        "superType": "operator",
+        "description": "SAS Macro Reference"
+      },
+      {
+        "id": "macro-keyword",
+        "superType": "keyword",
+        "description": "SAS Macro Keyword"
+      },
+      {
+        "id": "macro-comment",
+        "superType": "comment",
+        "description": "Macro Comment"
+      },
+      {
+        "id": "sec-keyword",
+        "superType": "method",
+        "description": "SAS Secondary keyword"
+      },
+      {
+        "id": "proc-name",
+        "superType": "method",
+        "description": "Name of the proc"
+      },
+      {
+        "id": "cards-data",
+        "superType": "parameter",
+        "description": "Card data"
+      },
+      {
+        "id": "error",
+        "superType": "event",
+        "description": "Error event"
+      },
+      {
+        "id": "warning",
+        "superType": "event",
+        "description": "Warning event"
+      },
+      {
+        "id": "note",
+        "superType": "event",
+        "description": "Note"
+      }
     ],
     "configuration": [
       {
