@@ -8,8 +8,8 @@ import {
   computeResults,
 } from "@sassoftware/restaflib";
 import { getAuthConfig } from "./auth";
-import * as configuration from '../components/config/config';
 import { ProfileConfig } from './profile';
+import * as configuration from '../components/config';
 
 const store = initStore();
 
@@ -46,7 +46,7 @@ async function computeSetup(store, contextName, payload) {
     contexts.itemsList(0),
     "createSession"
   );
-  const locale = JSON.parse(process.env.VSCODE_NLS_CONFIG).locale;
+  const locale = JSON.parse(process.env.VSCODE_NLS_CONFIG ?? "").locale;
   const session = await store.apiCall(createSession, {
     headers: { "accept-language": locale },
   });
@@ -91,7 +91,7 @@ export async function run(code: string): Promise<Results> {
   };
 }
 
-export function closeSession(): Promise<void> {
+export function closeSession(): void {
   authConfig = undefined;
   if (computeSession)
     return store.apiCall(computeSession.links("delete")).finally(() => {

@@ -1,4 +1,5 @@
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import * as path from 'path';
 import { window } from 'vscode';
 
 
@@ -77,6 +78,9 @@ class ConfigFile<T> {
   updateSync(value: T): void {
     this.value = value;
     const text = JSON.stringify(this.value, undefined, 2);
+
+    const dirname = path.dirname(this.filename);
+    mkdirSync(dirname, { recursive: true });
     writeFileSync(this.filename, text);
   }
 }
