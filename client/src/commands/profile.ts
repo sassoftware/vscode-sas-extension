@@ -9,7 +9,7 @@ import { window } from "vscode";
 export const profileConfig = new ProfileConfig(configuration.getConfigFile(), function () {
   return {};
 });
-const activeProfileTracker = activeProfileTrackerCreate(profileConfig);
+export const activeProfileTracker = activeProfileTrackerCreate(profileConfig);
 
 
 /**
