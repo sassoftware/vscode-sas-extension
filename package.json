@@ -26,26 +26,41 @@
     "virtualWorkspaces": true
   },
   "contributes": {
+    "semanticTokenScopes": [
+      {
+        "language": "sas",
+        "scopes": {
+          "date": [
+            "entity."
+          ]
+        }
+      }
+    ],
     "semanticTokenTypes": [
       {
         "id": "date",
-        "superType": "string",
+        "superType": "decorator",
         "description": "Date"
       },
       {
         "id": "time",
-        "superType": "string",
+        "superType": "decorator",
         "description": "Time"
       },
       {
         "id": "dt",
-        "superType": "string",
+        "superType": "decorator",
         "description": "DateTime"
       },
       {
         "id": "format",
-        "superType": "string",
+        "superType": "decorator",
         "description": "Format"
+      },
+      {
+        "id": "namelit",
+        "superType": "decorator",
+        "description": "Name literal"
       },
       {
         "id": "numeric",
@@ -55,17 +70,12 @@
       {
         "id": "bitmask",
         "superType": "number",
-        "description": "Bitmask"
-      },
-      {
-        "id": "namebit",
-        "superType": "number",
-        "description": "Namebit"
+        "description": "Bit mask"
       },
       {
         "id": "hex",
         "superType": "number",
-        "description": "Hex"
+        "description": "Hexadecimal notation"
       },
       {
         "id": "sep",
@@ -74,12 +84,12 @@
       },
       {
         "id": "macro-sec-keyword",
-        "superType": "operator",
+        "superType": "function",
         "description": "SAS Macro Secondary Keyword"
       },
       {
         "id": "macro-ref",
-        "superType": "operator",
+        "superType": "variable",
         "description": "SAS Macro Reference"
       },
       {
@@ -90,37 +100,22 @@
       {
         "id": "macro-comment",
         "superType": "comment",
-        "description": "Macro Comment"
+        "description": "SAS Macro Comment"
       },
       {
         "id": "sec-keyword",
-        "superType": "method",
+        "superType": "function",
         "description": "SAS Secondary keyword"
       },
       {
         "id": "proc-name",
-        "superType": "method",
+        "superType": "function",
         "description": "Name of the proc"
       },
       {
         "id": "cards-data",
         "superType": "parameter",
         "description": "Card data"
-      },
-      {
-        "id": "error",
-        "superType": "event",
-        "description": "Error event"
-      },
-      {
-        "id": "warning",
-        "superType": "event",
-        "description": "Warning event"
-      },
-      {
-        "id": "note",
-        "superType": "event",
-        "description": "Note"
       }
     ],
     "configuration": [
