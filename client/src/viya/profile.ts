@@ -397,7 +397,7 @@ const input: ProfilePromptInput = {
   [ProfilePromptType.NewProfile]: { title: "Please enter new profile name", placeholder: "Enter New Profile Name..." },
   [ProfilePromptType.HostName]: { title: "Hostname for new profile (e.g. https://example.sas.com)", placeholder: "Enter hostname..." },
   [ProfilePromptType.ComputeContext]: { title: "Compute Context", placeholder: "Enter Compute Context..." },
-  [ProfilePromptType.ClientId]: { title: "Client ID", placeholder: "Enter New Client ID..." },
+  [ProfilePromptType.ClientId]: { title: "Client ID (Leave empty for token flow)", placeholder: "Enter New Client ID..." },
   [ProfilePromptType.ClientSecret]: { title: "Client Secret", placeholder: "Enter Client Secret..." },
   [ProfilePromptType.Username]: { title: "SAS Username", placeholder: "Enter a SAS Username..." },
   [ProfilePromptType.Password]: { title: "SAS Password", placeholder: "Enter a SAS Password..." },
