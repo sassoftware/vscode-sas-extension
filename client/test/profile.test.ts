@@ -892,23 +892,6 @@ describe("Profiles", async function () {
       );
     });
 
-    it("Valid Profile Input", function () {
-      // Arrange
-      // Act
-      const result = getProfilePrompt(ProfilePromptType.UpdateHostname);
-
-      // Assert
-      expect(result).to.not.equal(undefined);
-      expect(result["title"]).to.equal(
-        "Hostname for profile",
-        "UpdateHostname title does not match expected"
-      );
-      expect(result["placeholder"]).to.equal(
-        "Enter hostname...",
-        "UpdateHostname placeholder does not match expected"
-      );
-    });
-
     it("Valid Compute Context Input", function () {
       // Arrange
       // Act
