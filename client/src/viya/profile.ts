@@ -1,3 +1,6 @@
+// Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+// Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
+
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import * as path from 'path';
 import { window } from 'vscode';
