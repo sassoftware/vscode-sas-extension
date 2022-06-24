@@ -59,7 +59,7 @@
       },
       {
         "id": "bitmask",
-        "superType": "number",
+        "superType": "string",
         "description": "Bit mask"
       },
       {
