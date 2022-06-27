@@ -26,6 +26,88 @@
     "virtualWorkspaces": true
   },
   "contributes": {
+    "semanticTokenTypes": [
+      {
+        "id": "date",
+        "superType": "numeric",
+        "description": "Date"
+      },
+      {
+        "id": "time",
+        "superType": "numeric",
+        "description": "Time"
+      },
+      {
+        "id": "dt",
+        "superType": "numeric",
+        "description": "DateTime"
+      },
+      {
+        "id": "format",
+        "superType": "decorator",
+        "description": "Format"
+      },
+      {
+        "id": "namelit",
+        "superType": "string",
+        "description": "Name literal"
+      },
+      {
+        "id": "numeric",
+        "superType": "number",
+        "description": "Numeric"
+      },
+      {
+        "id": "bitmask",
+        "superType": "string",
+        "description": "Bit mask"
+      },
+      {
+        "id": "hex",
+        "superType": "number",
+        "description": "Hexadecimal notation"
+      },
+      {
+        "id": "sep",
+        "superType": "operator",
+        "description": "Separator"
+      },
+      {
+        "id": "macro-sec-keyword",
+        "superType": "macro",
+        "description": "SAS Macro Section Keyword"
+      },
+      {
+        "id": "macro-ref",
+        "superType": "variable",
+        "description": "SAS Macro Reference"
+      },
+      {
+        "id": "macro-keyword",
+        "superType": "keyword",
+        "description": "SAS Macro Keyword"
+      },
+      {
+        "id": "macro-comment",
+        "superType": "comment",
+        "description": "SAS Macro Comment"
+      },
+      {
+        "id": "sec-keyword",
+        "superType": "function",
+        "description": "SAS Section keyword"
+      },
+      {
+        "id": "proc-name",
+        "superType": "function",
+        "description": "Name of the proc"
+      },
+      {
+        "id": "cards-data",
+        "superType": "parameter",
+        "description": "Card data"
+      }
+    ],
     "configuration": [
       {
         "title": "%configuration.SAS.session.title.general%",

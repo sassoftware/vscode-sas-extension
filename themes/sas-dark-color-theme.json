@@ -17,7 +17,7 @@
     "time": { "foreground": "#0caca4", "bold": true },
     "dt": { "foreground": "#0caca4", "bold": true },
     "bitmask": { "foreground": "#ff3dff", "bold": true },
-    "namebit": { "foreground": "#ff3dff", "bold": true },
+    "namelit": { "foreground": "#ff3dff", "bold": true },
     "hex": { "foreground": "#ff3dff", "bold": true },
     "numeric": { "foreground": "#0caca4", "bold": true },
     "format": { "foreground": "#0caca4" },
