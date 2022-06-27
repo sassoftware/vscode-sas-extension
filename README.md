@@ -93,7 +93,7 @@ To access the list of snippets for a function or procedure:
 
 ### Code Folding and Code Outline
 
-Regions of code are identified in your SAS program as blocks of code that can be collapsed and expanded. You can also view an outline of your program that identifies DATA steps, procedures, macro sections, and user-defined regions of code.
+Regions of code are identified in your SAS program as blocks of code that can be collapsed and expanded. You can also view an outline of your program that identifies DATA steps, procedures, macro sections, and user-defined regions of code.  
   <img src="doc/images/vsCodeFoldAndOutline.gif"/>
 
 
@@ -140,7 +140,7 @@ To run a SAS program:
 2. The results are displayed in the application.
 3. The SAS output log and error information are displayed in the applicaiton.
 
-<img src="doc/images/sasProgramOutput.PNG"/>
+<img src="doc/images/sasProgramOutput2.png"/>
 
 **Notes**:
 - A new session must be created the first time you run SAS code. Connection time will vary depending on the server connection.
