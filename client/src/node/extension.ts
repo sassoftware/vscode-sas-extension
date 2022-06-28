@@ -9,9 +9,12 @@ import {
   StatusBarAlignment,
   StatusBarItem,
   window,
+  workspace,
 } from "vscode";
 import { run } from "../commands/run";
 import { closeSession } from "../commands/closeSession";
+import * as configuration from "../components/config";
+import { create as activeProfileTrackerCreate } from "../components/activeProfileTracker";
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -21,12 +24,11 @@ import {
 import { LogTokensProvider, legend } from "../LogViewer";
 import {
   profileConfig,
-  activeProfileTracker,
   addProfile,
   updateProfile,
   switchProfile,
-  deleteProfile
-} from '../commands/profile';
+  deleteProfile,
+} from "../commands/profile";
 
 let client: LanguageClient;
 // Create Profile status bar item
@@ -34,7 +36,6 @@ const activeProfileStatusBarIcon = window.createStatusBarItem(
   StatusBarAlignment.Left,
   0
 );
-
 
 export function activate(context: ExtensionContext): void {
   // The server is implemented in node
@@ -93,9 +94,9 @@ export function activate(context: ExtensionContext): void {
   // First iteration
   updateStatusBarProfile(activeProfileStatusBarIcon);
   // Set watcher to update if profile changes
-  activeProfileTracker.activeChanged(async () => {
-    updateStatusBarProfile(activeProfileStatusBarIcon);
-  });
+  activeProfileTrackerCreate(profileConfig, configuration.getConfigFile(), () =>
+    updateStatusBarProfile(activeProfileStatusBarIcon)
+  );
 }
 
 async function updateStatusBarProfile(profileStatusBarIcon: StatusBarItem) {

@@ -917,7 +917,7 @@ describe("Profiles", async function () {
       // Assert
       expect(result).to.not.equal(undefined);
       expect(result["title"]).to.equal(
-        "Client ID",
+        "Client ID (Leave empty for token flow)",
         "ClientId title does not match expected"
       );
       expect(result["placeholder"]).to.equal(

@@ -2,19 +2,17 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import { createInputTextBox, ProfilePromptType } from "../viya/profile";
-import { create as activeProfileTrackerCreate } from "../components/profilemanager/active-profile-tracker";
 import { ProfileConfig } from "../viya/profile";
 import * as configuration from "../components/config";
 import { closeSession } from "../commands/closeSession";
 import { window } from "vscode";
 
-
-export const profileConfig = new ProfileConfig(configuration.getConfigFile(), function () {
-  return {};
-});
-export const activeProfileTracker = activeProfileTrackerCreate(profileConfig);
-
-
+export const profileConfig = new ProfileConfig(
+  configuration.getConfigFile(),
+  function () {
+    return {};
+  }
+);
 /**
  * Add profile command prompts the user to create a profile by a given name
  * and then proceeds to prompt the user for profile values to be initialied.
@@ -28,7 +26,7 @@ export async function addProfile(): Promise<void> {
     return;
   }
   await profileConfig.prompt(profileName).then(() => {
-    activeProfileTracker.setActive(profileName);
+    profileConfig.setActiveProfile(profileName);
     closeSession(true);
   });
 }
@@ -50,7 +48,7 @@ export async function updateProfile(): Promise<void> {
   });
   if (selected) {
     await profileConfig.prompt(selected, true).then(() => {
-      activeProfileTracker.setActive(selected);
+      profileConfig.setActiveProfile(selected);
       closeSession(true);
     });
   }
@@ -71,7 +69,7 @@ export async function switchProfile(): Promise<void> {
   });
   if (selected) {
     await profileConfig.setActiveProfile(selected).then(() => {
-      activeProfileTracker.setActive(selected);
+      profileConfig.setActiveProfile(selected);
       closeSession(true);
     });
   }
