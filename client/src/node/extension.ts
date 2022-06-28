@@ -9,7 +9,6 @@ import {
   StatusBarAlignment,
   StatusBarItem,
   window,
-  workspace,
 } from "vscode";
 import { run } from "../commands/run";
 import { closeSession } from "../commands/closeSession";
@@ -94,8 +93,13 @@ export function activate(context: ExtensionContext): void {
   // First iteration
   updateStatusBarProfile(activeProfileStatusBarIcon);
   // Set watcher to update if profile changes
-  activeProfileTrackerCreate(profileConfig, configuration.getConfigFile(), () =>
-    updateStatusBarProfile(activeProfileStatusBarIcon)
+  activeProfileTrackerCreate(
+    profileConfig,
+    configuration.getConfigFile(),
+    () => {
+      closeSession(true);
+      updateStatusBarProfile(activeProfileStatusBarIcon);
+    }
   );
 }
 
