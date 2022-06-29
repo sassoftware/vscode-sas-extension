@@ -17,19 +17,19 @@ import {
  */
 export type AuthConfig =
   | {
-    authType: "server";
-    host: string;
-    token: string;
-    tokenType: "bearer";
-  }
+      authType: "server";
+      host: string;
+      token: string;
+      tokenType: "bearer";
+    }
   | {
-    authType: "password";
-    host: string;
-    clientID: string;
-    clientSecret: string;
-    user: string;
-    password: string;
-  };
+      authType: "password";
+      host: string;
+      clientID: string;
+      clientSecret: string;
+      user: string;
+      password: string;
+    };
 
 /**
  * Credentials is an interface that will represent the user credentials
@@ -45,15 +45,20 @@ interface Credentials {
  *
  * @returns the credentials interface of an object
  */
-async function promptCredentials(): Promise<Credentials> {
+async function promptCredentials(
+  currentUsername: string
+): Promise<Credentials> {
   // set the default values for credentials
   const credentials = {
     user: "",
     password: "",
   };
   credentials.user =
-    (await createInputTextBox(ProfilePromptType.Username, undefined, false)) ??
-    "";
+    (await createInputTextBox(
+      ProfilePromptType.Username,
+      currentUsername,
+      false
+    )) ?? "";
   credentials.password =
     (await createInputTextBox(ProfilePromptType.Password, undefined, true)) ??
     "";
@@ -69,23 +74,25 @@ async function promptCredentials(): Promise<Credentials> {
 export async function getAuthConfig(
   validProfile: ProfileValidation
 ): Promise<AuthConfig> {
-
   return new Promise((resolve, reject) => {
     // If password flow is recognized
     if (validProfile.type === AuthType.Password) {
-      promptCredentials().then((creds) => {
-        if (!creds.user || !creds.password) {
-          reject("Please enter username and password");
+      // The user-name value in the profile will not change, only display to be used
+      promptCredentials(validProfile.profile["user-name"] ?? "").then(
+        (creds) => {
+          if (!creds.user || !creds.password) {
+            reject("Please enter username and password");
+          }
+          resolve({
+            authType: "password",
+            host: validProfile.profile["sas-endpoint"],
+            clientID: validProfile.profile["client-id"] ?? "",
+            clientSecret: validProfile.profile["client-secret"] ?? "",
+            user: creds.user,
+            password: creds.password,
+          });
         }
-        resolve({
-          authType: "password",
-          host: validProfile.profile["sas-endpoint"],
-          clientID: validProfile.profile["client-id"] ?? "",
-          clientSecret: validProfile.profile["client-secret"] ?? "",
-          user: creds.user,
-          password: creds.password,
-        });
-      });
+      );
     }
     // If TokenFile flow is recognized
     if (validProfile.type === AuthType.TokenFile) {

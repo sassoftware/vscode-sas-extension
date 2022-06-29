@@ -118,6 +118,7 @@ export interface Profile {
   "client-id"?: string;
   "client-secret"?: string;
   "compute-context": string;
+  "user-name"?: string;
   "token-file"?: string;
   active?: boolean;
 }
@@ -318,6 +319,7 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
             "client-id": "",
             "client-secret": "",
             "compute-context": "",
+            "user-name": "",
             active: false,
           };
 
@@ -350,6 +352,13 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
       profile["token-file"] = await createInputTextBox(
         ProfilePromptType.TokenFile,
         profile["token-file"]
+      );
+    }
+    // The user-name field will only appear for non-token files, and will only update if the user runs the update profile command
+    if ((!profile["user-name"] || forceUpdate) && !profile["token-file"]) {
+      profile["user-name"] = await createInputTextBox(
+        ProfilePromptType.Username,
+        profile["user-name"]
       );
     }
     this.upsertProfile(name, profile);

@@ -3,6 +3,7 @@
     "sas-endpoint": "",
     "token-file": "",
     "compute-context": "",
+    "user-name": "",
     "client-id": "",
     "client-secret": ""
   }

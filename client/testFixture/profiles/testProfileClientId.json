@@ -3,6 +3,7 @@
     "sas-endpoint": "https://test-host.sas.com",
     "client-id": "sas.test",
     "client-secret": "",
-    "compute-context": "SAS Studio context"
+    "compute-context": "SAS Studio context",
+    "user-name": "sastest"
   }
 }
