@@ -4,16 +4,18 @@
 import * as path from "path";
 import {
   commands,
+  ConfigurationChangeEvent,
   ExtensionContext,
   languages,
   StatusBarAlignment,
   StatusBarItem,
   window,
+  workspace,
 } from "vscode";
 import { run } from "../commands/run";
 import { closeSession } from "../commands/closeSession";
 import * as configuration from "../components/config";
-import { create as activeProfileTrackerCreate } from "../components/activeProfileTracker";
+import { createOrReplaceWatcher } from "../components/activeProfileTracker";
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -28,8 +30,10 @@ import {
   switchProfile,
   deleteProfile,
 } from "../commands/profile";
+import { FSWatcher } from "fs";
 
 let client: LanguageClient;
+let profileConfigFileWatcher: FSWatcher;
 // Create Profile status bar item
 const activeProfileStatusBarIcon = window.createStatusBarItem(
   StatusBarAlignment.Left,
@@ -77,7 +81,9 @@ export function activate(context: ExtensionContext): void {
 
   context.subscriptions.push(
     commands.registerCommand("SAS.session.run", run),
-    commands.registerCommand("SAS.session.close", () => closeSession(false)),
+    commands.registerCommand("SAS.session.close", () =>
+      closeSession("Session Closed!")
+    ),
     commands.registerCommand("SAS.session.switchProfile", switchProfile),
     commands.registerCommand("SAS.session.addProfile", addProfile),
     commands.registerCommand("SAS.session.deleteProfile", deleteProfile),
@@ -92,15 +98,32 @@ export function activate(context: ExtensionContext): void {
 
   // First iteration
   updateStatusBarProfile(activeProfileStatusBarIcon);
-  // Set watcher to update if profile changes
-  activeProfileTrackerCreate(
-    profileConfig,
+
+  // Set initial watcher to update if user manually updates configuration file
+  profileConfigFileWatcher = createOrReplaceWatcher(
+    profileConfigFileWatcher,
     configuration.getConfigFile(),
     () => {
-      closeSession(true);
       updateStatusBarProfile(activeProfileStatusBarIcon);
     }
   );
+
+  // If configFile setting is changed, update watcher to watch new configuration file
+  workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
+    if (event.affectsConfiguration("SAS.session.configFile")) {
+      const newConfigFile = configuration.getConfigFile();
+      closeSession("Configuration changed, session closed!");
+      profileConfig.updateFile(newConfigFile);
+      updateStatusBarProfile(activeProfileStatusBarIcon);
+      profileConfigFileWatcher = createOrReplaceWatcher(
+        profileConfigFileWatcher,
+        newConfigFile,
+        () => {
+          updateStatusBarProfile(activeProfileStatusBarIcon);
+        }
+      );
+    }
+  });
 }
 
 async function updateStatusBarProfile(profileStatusBarIcon: StatusBarItem) {

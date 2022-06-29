@@ -1,36 +1,28 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import { ProfileConfig } from "../viya/profile";
-import { FSWatcher, watch } from "fs";
+import { FSWatcher } from "fs";
+import { watch } from "chokidar";
+import { closeSession } from "../viya/compute";
 
-let watcher: FSWatcher;
-
-export function create(
-  profileConfig: ProfileConfig,
+/**
+ * Creates or replaces an {@link FSWatcher} to be used
+ * for file watching.
+ * @param watcher {@link FSWatcher} if an active watcher exists
+ * @param configFile {@link string} used for new watcher location
+ * @returns new {@link FSWatcher}
+ */
+export function createOrReplaceWatcher(
+  watcher: FSWatcher,
   configFile: string,
   updateStatusBar: () => void
-): void {
+): FSWatcher {
   if (watcher) {
     watcher.close();
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  watcher = watch(configFile, (eventType, _) => {
-    if (eventType === "rename") {
-      // Do nothing
-    } else {
-      getActiveProfileName(profileConfig);
-      updateStatusBar();
-    }
+  return watch(configFile).on("change", () => {
+    // Do not alert user for profile switch
+    closeSession();
+    updateStatusBar();
   });
-}
-
-async function getActiveProfileName(
-  profileConfig: ProfileConfig
-): Promise<string | null> {
-  const profile = await profileConfig.getActiveProfile();
-  if (!profile) {
-    return null;
-  }
-  return profile.name;
 }

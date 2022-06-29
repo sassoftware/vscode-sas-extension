@@ -4,7 +4,6 @@
 import { createInputTextBox, ProfilePromptType } from "../viya/profile";
 import { ProfileConfig } from "../viya/profile";
 import * as configuration from "../components/config";
-import { closeSession } from "../commands/closeSession";
 import { window } from "vscode";
 
 export const profileConfig = new ProfileConfig(
@@ -27,7 +26,6 @@ export async function addProfile(): Promise<void> {
   }
   await profileConfig.prompt(profileName).then(() => {
     profileConfig.setActiveProfile(profileName);
-    closeSession(true);
   });
 }
 
@@ -49,7 +47,6 @@ export async function updateProfile(): Promise<void> {
   if (selected) {
     await profileConfig.prompt(selected, true).then(() => {
       profileConfig.setActiveProfile(selected);
-      closeSession(true);
     });
   }
 }
@@ -68,10 +65,7 @@ export async function switchProfile(): Promise<void> {
     placeHolder: "Select SAS profile",
   });
   if (selected) {
-    await profileConfig.setActiveProfile(selected).then(() => {
-      profileConfig.setActiveProfile(selected);
-      closeSession(true);
-    });
+    await profileConfig.setActiveProfile(selected);
   }
 }
 
@@ -94,7 +88,6 @@ export async function deleteProfile(): Promise<void> {
       window.showInformationMessage(
         `SAS Profile ${selected} removed from the configuration`
       );
-      closeSession(true);
     });
   }
 }
