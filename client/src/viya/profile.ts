@@ -325,7 +325,7 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
 
     if (!profile["sas-endpoint"] || forceUpdate) {
       profile["sas-endpoint"] = await createInputTextBox(
-        ProfilePromptType.HostName,
+        ProfilePromptType.Endpoint,
         profile["sas-endpoint"]
       );
     }
@@ -395,7 +395,7 @@ export enum ProfilePromptType {
   Profile = 0,
   NewProfile,
   ClientId,
-  HostName,
+  Endpoint,
   ComputeContext,
   ClientSecret,
   Username,
@@ -456,9 +456,9 @@ const input: ProfilePromptInput = {
     title: "Please enter new profile name",
     placeholder: "Enter New Profile Name...",
   },
-  [ProfilePromptType.HostName]: {
-    title: "Hostname for new profile (e.g. https://example.sas.com)",
-    placeholder: "Enter hostname...",
+  [ProfilePromptType.Endpoint]: {
+    title: "Endpoint for new profile (e.g. https://example.sas.com)",
+    placeholder: "Enter endpoint...",
   },
   [ProfilePromptType.ComputeContext]: {
     title: "Compute Context",

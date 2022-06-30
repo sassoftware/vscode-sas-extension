@@ -20,13 +20,11 @@ export const profileConfig = new ProfileConfig(
  */
 export async function addProfile(): Promise<void> {
   const profileName = await createInputTextBox(ProfilePromptType.NewProfile);
-  if (!profileName) {
-    addProfile();
-    return;
+  if (profileName) {
+    await profileConfig.prompt(profileName).then(() => {
+      profileConfig.setActiveProfile(profileName);
+    });
   }
-  await profileConfig.prompt(profileName).then(() => {
-    profileConfig.setActiveProfile(profileName);
-  });
 }
 
 /**

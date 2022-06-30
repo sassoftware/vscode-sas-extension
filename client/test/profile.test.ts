@@ -875,20 +875,20 @@ describe("Profiles", async function () {
       );
     });
 
-    it("Valid Hostname Input", function () {
+    it("Valid Endpoint Input", function () {
       // Arrange
       // Act
-      const result = getProfilePrompt(ProfilePromptType.HostName);
+      const result = getProfilePrompt(ProfilePromptType.Endpoint);
 
       // Assert
       expect(result).to.not.equal(undefined);
       expect(result["title"]).to.equal(
-        "Hostname for new profile (e.g. https://example.sas.com)",
-        "Hostname title does not match expected"
+        "Endpoint for new profile (e.g. https://example.sas.com)",
+        "Endpoint title does not match expected"
       );
       expect(result["placeholder"]).to.equal(
-        "Enter hostname...",
-        "Hostname placeholder does not match expected"
+        "Enter endpoint...",
+        "Endpoint placeholder does not match expected"
       );
     });
 

@@ -141,17 +141,17 @@ The following commands are supported for profiles:
 | Name                    | Description                           | Additional Notes                                                                                                                                                                                                  |
 | ----------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Name**                | Name of the profile                   | This will display on the status bar                                                                                                                                                                               |
-| **Hostname**            | Viya hostname                         | This will appear when hovering over the status bar                                                                                                                                                                |
+| **Endpoint**            | Viya endpoint                         | This will appear when hovering over the status bar                                                                                                                                                                |
 | **Compute Context**     | Context for Compute Server            | Please see [SAS Documentation](https://go.documentation.sas.com/doc/en/sasadmincdc/v_014/evfun/p1dkdadd9rkbmdn1fpv562l2p5vy.htm) for more information                                                             |
 | **Client ID**           | Registered Client ID for SAS Viya     | Please see your SAS administrator, or follow the [SAS Documentation](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/) on how to register a client <br /> _Leave empty to use token file_ |
 | **Client Secret**       | Registered Client Secret for SAS Viya | Please see your SAS administrator, or follow the [SAS Documentation](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/) on how to register a client <br /> _Leave empty to use token file_ |
-| **SAS Token File Path** | Full Path to Token File               | File must contain only a bearer token to authenticate with the above hostname <br /> _Will not be used with password flow_                                                                                        |
+| **SAS Token File Path** | Full Path to Token File               | File must contain only a bearer token to authenticate with the above endpoint <br /> _Will not be used with password flow_                                                                                        |
 
 #### Add New SAS Profile
 
 After executing the `SAS.session.addProfile` command:
 
-1. Enter a Name, Hostname, and Compute Context, please review [Profile Anatomy](#profile-anatomy) for more information.
+1. Enter a Name, Endpoint, and Compute Context, please review [Profile Anatomy](#profile-anatomy) for more information.
 2. Select an authentication method from the options below.
 
    - **Password Authentication:** Specify client ID and client secret. For information about your client ID and client secret, contact your SAS administrator.
