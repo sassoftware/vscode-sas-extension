@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "vscode-languageclient": "^8.0.1",
+    "chokidar": "^3.5.3",
     "@sassoftware/restaf": "^4.1.0",
     "@sassoftware/restaflib": "^4.1.0"
   },

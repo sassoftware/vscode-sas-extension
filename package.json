@@ -103,6 +103,23 @@
         }
       ]
     },
+    "themes": [
+      {
+        "label": "SAS Light",
+        "uiTheme": "vs",
+        "path": "./themes/sas-light-color-theme.json"
+      },
+      {
+        "label": "SAS Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/sas-dark-color-theme.json"
+      },
+      {
+        "label": "SAS High Contrast",
+        "uiTheme": "hc-black",
+        "path": "./themes/sas-highcontrast-color-theme.json"
+      }
+    ],
     "languages": [
       {
         "id": "sas",
@@ -159,21 +176,13 @@
     "@typescript-eslint/eslint-plugin": "^4.23.0",
     "@typescript-eslint/parser": "^4.23.0",
     "chai": "^4.3.6",
-    "chokidar": "^3.5.3",
     "esbuild": "^0.13.15",
     "eslint": "^7.26.0",
     "mocha": "^10.0.0",
     "path-browserify": "^1.0.1",
-    "sinon": "^14.0.0",
     "ts-loader": "^9.2.3",
     "typescript": "^4.4.3",
     "webpack": "^5.44.0",
     "webpack-cli": "^4.7.2"
-  },
-  "__metadata": {
-    "id": "ced8e7e0-9fd3-4acc-9743-1287b8910faa",
-    "publisherDisplayName": "SAS Institute Inc.",
-    "publisherId": "41d1af91-80fe-4f57-b3da-6b27a168e8f7",
-    "isPreReleaseVersion": false
   }
 }
