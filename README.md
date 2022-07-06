@@ -51,7 +51,7 @@ The SAS extension highlights these syntax elements in your program, just as they
 
 ### Color Themes
 
-You can choose among theree different color themes that control the color of the application and syntax elements. The SAS Light, SAS Dark and SAS High Contrast options mirror the themes available in SAS Studio.
+You can choose among three SAS-related color themes that control the color of the application and syntax elements. The SAS Light, SAS Dark and SAS High Contrast options mirror the themes available in SAS Studio.
 
 To specify the color theme:
 
@@ -79,8 +79,9 @@ To view the syntax help:
 
 In the following example, the help panel displays syntax help for the DATA= option in the PROC PRINT statement.
 
-_Tip_: Click the links in the syntax help window to navigate to the SAS online help.  
-<img src="doc/images/syntaxAssist.gif"/>
+<img src="doc/images/vsCodeSyntaxAssist2.gif"/>
+
+_Tip_: Click the links in the syntax help window to navigate to the SAS online help.
 
 ### Snippets
 
@@ -89,15 +90,18 @@ Snippets are lines of commonly used code or text that you can insert into your p
 To access the list of snippets for a function or procedure:
 
 - Type the name of a function or procedure in your SAS program. This example shows a snippet for the PROC DS2.  
-  <img src="doc/images/vsCodeSnippets.gif"/>
+
+<img src="doc/images/vsCodeSnippets.gif"/>
 
 ### Code Folding and Code Outline
 
 Regions of code are identified in your SAS program as blocks of code that can be collapsed and expanded. You can also view an outline of your program that identifies DATA steps, procedures, macro sections, and user-defined regions of code.  
-  <img src="doc/images/vsCodeFoldAndOutline.gif"/>
+
+<img src="doc/images/vsCodeFoldAndOutline.gif"/>
 
 
 _Tip_: You can define a custom region by adding `/*region*/` and `/*endregion*/` tags to the start and end of the block of code.  
+
 <img src="doc/images/vsCodeRegionFunction.gif"/>
 
 ### Configuring the SAS Extension
@@ -118,7 +122,7 @@ General parameter settings for the extension
 | Parameter | Description | Sample Value |
 |---|----|---|
 |Client ID|Registered client|myapp.client|
-|Client Secret|Compute context name|myapp.secret|
+|Client Secret|Provide secret for client ID|myapp.secret|
 |User|SAS Viya username |john_doe|
 
 **Session - Token authentication**
