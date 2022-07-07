@@ -8,7 +8,7 @@ import { window } from "vscode";
 /**
  * The default compute context that will be used to create a SAS session.
  */
-const DEFAULT_COMPUTE_CONTEXT = "SAS Job Execution compute context";
+export const DEFAULT_COMPUTE_CONTEXT = "SAS Job Execution compute context";
 
 /**
  * Dictionary is a type that maps a generic object with a string key.
@@ -54,7 +54,14 @@ class ConfigFile<T> {
     // if file exists, parse and set value
     if (existsSync(this.filename)) {
       const text = readFileSync(this.filename, "utf-8");
-      this.value = JSON.parse(text);
+      try {
+        this.value = JSON.parse(text.replace(/\\n$/g, ""));
+      } catch (e) {
+        window.showErrorMessage(
+          "Could not parse SAS Configuration, Please check your configuration file"
+        );
+      }
+
       return this.value;
     }
 
@@ -117,7 +124,7 @@ export interface Profile {
   "sas-endpoint": string;
   "client-id"?: string;
   "client-secret"?: string;
-  "compute-context": string;
+  "compute-context"?: string;
   "user-name"?: string;
   "token-file"?: string;
   active?: boolean;
@@ -435,13 +442,14 @@ export async function createInputTextBox(
   maskValue = false
 ): Promise<Thenable<string | undefined>> {
   const profilePrompt = getProfilePrompt(profilePromptType);
-  return window.showInputBox({
+  const entered = await window.showInputBox({
     title: profilePrompt.title,
     placeHolder: profilePrompt.placeholder,
     password: maskValue,
     value: defaultValue,
     ignoreFocusOut: true,
   });
+  return entered ?? defaultValue;
 }
 
 /**

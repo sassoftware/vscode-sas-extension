@@ -12,7 +12,6 @@ import {
   window,
   workspace,
 } from "vscode";
-import { run } from "../commands/run";
 import { closeSession } from "../commands/closeSession";
 import * as configuration from "../components/config";
 import { createOrReplaceWatcher } from "../components/activeProfileTracker";
@@ -29,6 +28,7 @@ import {
   updateProfile,
   switchProfile,
   deleteProfile,
+  validateProfileAndRun,
 } from "../commands/profile";
 import { FSWatcher } from "fs";
 
@@ -80,7 +80,7 @@ export function activate(context: ExtensionContext): void {
   client.start();
 
   context.subscriptions.push(
-    commands.registerCommand("SAS.session.run", run),
+    commands.registerCommand("SAS.session.run", validateProfileAndRun),
     commands.registerCommand("SAS.session.close", () =>
       closeSession("Session Closed!")
     ),
@@ -96,7 +96,9 @@ export function activate(context: ExtensionContext): void {
     activeProfileStatusBarIcon
   );
 
-  // First iteration
+  // Reset first to set "No Active Profiles"
+  resetStatusBarItem(activeProfileStatusBarIcon);
+  // Update status bar if profile can be recognized
   updateStatusBarProfile(activeProfileStatusBarIcon);
 
   // Set initial watcher to update if user manually updates configuration file
@@ -112,7 +114,7 @@ export function activate(context: ExtensionContext): void {
   workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
     if (event.affectsConfiguration("SAS.session.configFile")) {
       const newConfigFile = configuration.getConfigFile();
-      closeSession("Configuration changed, session closed!");
+      closeSession("SAS Config File location changed");
       profileConfig.updateFile(newConfigFile);
       updateStatusBarProfile(activeProfileStatusBarIcon);
       profileConfigFileWatcher = createOrReplaceWatcher(
@@ -151,6 +153,7 @@ function updateStatusBarItem(
 
 function resetStatusBarItem(statusBarItem: StatusBarItem): void {
   statusBarItem.text = "No Active Profiles Found";
+  statusBarItem.tooltip = "";
   statusBarItem.show();
 }
 

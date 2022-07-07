@@ -8,8 +8,8 @@ import {
   computeResults,
 } from "@sassoftware/restaflib";
 import { getAuthConfig } from "./auth";
-import { ProfileConfig } from './profile';
-import * as configuration from '../components/config';
+import { DEFAULT_COMPUTE_CONTEXT, ProfileConfig } from "./profile";
+import * as configuration from "../components/config";
 
 const store = initStore();
 
@@ -55,7 +55,12 @@ async function computeSetup(store, contextName, payload) {
 
 export async function setup(): Promise<void> {
   if (!profileConfig) {
-    profileConfig = new ProfileConfig(configuration.getConfigFile(), function () { return {}; });
+    profileConfig = new ProfileConfig(
+      configuration.getConfigFile(),
+      function () {
+        return {};
+      }
+    );
   }
   // retrieve active & valid profile
   const activeProfile = await profileConfig.getActiveProfile();
@@ -70,13 +75,15 @@ export async function setup(): Promise<void> {
     });
   }
   if (!computeSession) {
-    computeSession = await computeSetup(store, validProfile.computeContext, authConfig).catch(
-      (err) => {
-        authConfig = undefined;
-        store.logoff();
-        throw err;
-      }
-    );
+    computeSession = await computeSetup(
+      store,
+      validProfile.computeContext ?? DEFAULT_COMPUTE_CONTEXT,
+      authConfig
+    ).catch((err) => {
+      authConfig = undefined;
+      store.logoff();
+      throw err;
+    });
   }
 }
 

@@ -1,5 +1,5 @@
 {
-  "configuration.SAS.session.title.general": "Session - General",
+  "configuration.SAS.session.title.general": "SAS",
   "configuration.SAS.session.configFile": "Configuration file for SAS profiles",
   "configuration.SAS.session.outputHtml": "Get ODS HTML5 output",
 
