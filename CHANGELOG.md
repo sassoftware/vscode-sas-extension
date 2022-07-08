@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.0.6 (8 Jul 2022)
+
+### Fix
+
+- It now recovers from syntax check mode on each run
+- Correct syntax highlighting for name literal
+
+### Themes
+
+- SAS themes provide default colors to non-SAS languages
+- SAS syntax have basic type colors in non-SAS themes
+
+### Doc
+
+- Update README to show animated gifs
+
 ## v0.0.5 (26 May 2022)
 
 ### Fix

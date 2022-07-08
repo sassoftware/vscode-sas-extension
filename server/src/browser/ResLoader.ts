@@ -14,4 +14,7 @@ export const ResLoader = {
       if (index > 0) cb(require(`../../pubsdata/${url.slice(index + 10)}`));
     }
   },
+  getBundle: function (locale: string): string {
+    return require(`../../messagebundle_${locale}.properties`);
+  },
 };

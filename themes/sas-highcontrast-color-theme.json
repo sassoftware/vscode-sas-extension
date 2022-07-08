@@ -1,5 +1,6 @@
 {
   "name": "SAS High Contrast",
+  "include": "./hc_black.json",
   "semanticHighlighting": true,
   "semanticTokenColors": {
     "sep": { "foreground": "#fff" },
@@ -17,7 +18,7 @@
     "time": { "foreground": "#28e6d1", "bold": true },
     "dt": { "foreground": "#28e6d1", "bold": true },
     "bitmask": { "foreground": "#ffb9c5", "bold": true },
-    "namebit": { "foreground": "#ffb9c5", "bold": true },
+    "namelit": { "foreground": "#ffb9c5", "bold": true },
     "hex": { "foreground": "#ff3dff", "bold": true },
     "numeric": { "foreground": "#28e6d1", "bold": true },
     "format": { "foreground": "#28e6d1" },

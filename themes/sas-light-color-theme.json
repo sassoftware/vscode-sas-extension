@@ -1,5 +1,6 @@
 {
   "name": "SAS Light",
+  "include": "./light_plus.json",
   "semanticHighlighting": true,
   "semanticTokenColors": {
     "sep": { "foreground": "#686868" },
@@ -17,7 +18,7 @@
     "time": { "foreground": "#08726d", "bold": true },
     "dt": { "foreground": "#08726d", "bold": true },
     "bitmask": { "foreground": "#800080", "bold": true },
-    "namebit": { "foreground": "#800080", "bold": true },
+    "namelit": { "foreground": "#800080", "bold": true },
     "hex": { "foreground": "#800080", "bold": true },
     "numeric": { "foreground": "#08726d", "bold": true },
     "format": { "foreground": "#08726d" },

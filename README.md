@@ -19,18 +19,23 @@ Welcome to the SAS Extension for Visual Studio Code! This extension provides sup
       - [Switch Current SAS Profile](#switch-current-sas-profile)
       - [Update SAS Profile](#update-sas-profile)
     - [Running SAS Code](#running-sas-code)
+  - [Support](#support)
+    - [SAS Communities](#sas-communities)
+    - [SAS Programming Documentation](#sas-programming-documentation)
+    - [FAQs](#faqs)
+    - [GitHub Issues](#github-issues)
   - [Contributing to the SAS Extension](#contributing-to-the-sas-extension)
   - [License](#license)
 
 ## Installation
 
-To install the SAS extension, open the Extensions view by clicking the Extensions icon in the Activity Bar on the left side of the Visual Studio Code window. Search for the SAS extension, and click the Install button. Once the installation is complete, the Install button changes to the Manage button.
+To install the SAS extension, open the Extensions view by clicking the Extensions icon in the Activity Bar on the left side of the Visual Studio Code window. Search for the 'Official' SAS extension, and click the Install button. Once the installation is complete, the Install button changes to the Manage button.
 
 ## Features
 
 ### SAS Syntax Highlighting
 
-The SAS extension highlights these syntax elements in your program:
+The SAS extension highlights these syntax elements in your program, just as they would appear in a SAS editor:
 
 - Global statements
 - SAS procedures
@@ -52,27 +57,19 @@ The SAS extension highlights these syntax elements in your program:
 
 ### Color Themes
 
-You can choose from among different color themes that control the color of the application and syntax elements.
+You can choose among three SAS-related color themes that control the color of the application and syntax elements. The SAS Light, SAS Dark and SAS High Contrast options mirror the themes available in SAS Studio.
 
 To specify the color theme:
 
-- Select `File > Preferences > Color Theme` and select the theme that you want to use. The SAS extension includes three color themes: SAS Light, SAS Dark, and SAS High Contrast.
+- Select `File > Preferences > Color Theme` and select the theme, by name. The image below demonstrates the process changing from SAS Light to SAS Dark.
 
-- SAS Light
-
-<img src="doc/images/Illuminate.PNG"/>
-
-- SAS Dark
-
-<img src="doc/images/Ignite.PNG"/>
-
-- SAS High Contrast
-
-<img src="doc/images/HighContrast.PNG"/>
+<img src="doc/images/vsCodeChangeTheme2.gif"/>
 
 ### Code Completion
 
-The SAS extension includes automatic code completion and pop-up syntax help for SAS keywords. The autocomplete, or code completion, feature in the code editor can predict the next word that you want to enter in your SAS program before you enter it completely.
+The SAS extension includes automatic code completion and pop-up syntax help for SAS keywords. The autocomplete, or code completion, feature in the code editor can predict the next word that you want to enter in your SAS program. See code completion in action below.
+
+<img src="doc/images/vsCodeTypeAhead.gif"/>
 
 To use the autocomplete feature:
 
@@ -80,7 +77,7 @@ To use the autocomplete feature:
 
 ### Pop-up Syntax Help
 
-The syntax help can get you started with a hint about the syntax or a brief description of the keyword. You can get additional help by clicking the links in the syntax help window.
+The syntax help gets you started with a hint about the syntax or a brief description of the keyword. You can get additional help by clicking the links in the syntax help window.
 
 To view the syntax help:
 
@@ -88,30 +85,33 @@ To view the syntax help:
 
 In the following example, the help panel displays syntax help for the DATA= option in the PROC PRINT statement.
 
+<img src="doc/images/vsCodeSyntaxAssist2.gif"/>
+
 _Tip_: Click the links in the syntax help window to navigate to the SAS online help.
-<img src="doc/images/CodeCompletion.PNG"/>
 
 ### Snippets
 
-Snippets are lines of commonly used code or text that you can insert into your program. The SAS extension includes a few snippets for SAS functions and procedures to help you write SAS programs more quickly.
+Snippets are lines of commonly used code or text that you can insert into your program. The SAS extension includes snippets for SAS functions and procedures to facilitate writing your SAS programs.
 
 To access the list of snippets for a function or procedure:
 
 - Type the name of a function or procedure in your SAS program. This example shows a snippet for the PROC DS2.
-  <img src="doc/images/Snippets.PNG"/>
+
+<img src="doc/images/vsCodeSnippets.gif"/>
 
 ### Code Folding and Code Outline
 
 Regions of code are identified in your SAS program as blocks of code that can be collapsed and expanded. You can also view an outline of your program that identifies DATA steps, procedures, macro sections, and user-defined regions of code.
 
+<img src="doc/images/vsCodeFoldAndOutline.gif"/>
+
 _Tip_: You can define a custom region by adding `/*region*/` and `/*endregion*/` tags to the start and end of the block of code.
-<img src="doc/images/Folding.PNG"/>
+
+<img src="doc/images/vsCodeRegionFunction.gif"/>
 
 ### Configuring the SAS Extension
 
-Before you can run SAS code, you must configure the SAS extension to access a SAS Viya server. You must license SAS Viya to run SAS code.
-
-To configure the SAS extension:
+Before running SAS code, you must configure the SAS extension to access a SAS Viya server. You must license SAS Viya to run SAS code.
 
 1. When first configuring, open up a file with the SAS language. "No Active Profiles Found" can be located on the Status Bar located at the bottom left of your VSCode window
    ![No Active Profiles Found](doc/images/NoActiveProfilesStatusBar.png)
@@ -187,22 +187,42 @@ To update the name of a profile, please delete and recreate it.
 
 ### Running SAS Code
 
-After you configure the SAS extension, you can run your SAS program and view the log and results.
+After configuring the SAS extension for your SAS environment, run your SAS program and view the log and results.
 
 To run a SAS program:
 
-1. Click `Run` in the upper right corner of your SAS program window.
-2. When you are prompted, enter your password. Your SAS log and any results are displayed in the application.
+1. Click `Run` (running man icon) in the upper right corner of your SAS program window.
+   1.a. If prompted, enter your password (for password authentication).
+2. The results are displayed in the application.
+3. The SAS output log and error information are displayed in the applicaiton.
 
-<img src="doc/images/RunResult.PNG"/>
+<img src="doc/images/sasProgramOutput2.png"/>
 
-**Note**:
+**Notes**:
 
 - A new session must be created the first time you run SAS code. Connection time will vary depending on the server connection.
-- Currently, only HTML output is supported. By default, the ODS HTML5 statement is added to the code that you are submitting. You can clear the Get ODS HTML5 Output option in the Settings editor for the SAS extension to disable this output.
+- Currently, only HTML output is supported. By default, the ODS HTML5 statement is added to the submitted code. Clear the Get ODS HTML5 Output option in the Settings editor for the SAS extension to disable this output.
 - When you click `Run`, the code in the active tab in the editor is submitted. Make sure that the correct tab is active when you run your program.
+- Selecting individual code blocks is not currently supported.
 - To reset your connection to the SAS Viya server, run the `Close current session` command in VS code or click the `Close current session` button next to the `Run` button.
-- Please check the [FAQ](https://github.com/sassoftware/vscode-sas-extension/wiki/FAQ) page for some common questions.
+
+## Support
+
+### SAS Communities
+
+Ask, Find, and Share on the VS Code SAS Extension on the [SAS Programmers Community site](https://communities.sas.com/t5/SAS-Programming/bd-p/programming).
+
+### SAS Programming Documentation
+
+[SAS Programming documentation](https://go.documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/lrcon/titlepage.htm)
+
+### FAQs
+
+Please check the [FAQ](https://github.com/sassoftware/vscode-sas-extension/wiki/FAQ) page for some common questions.
+
+### GitHub Issues
+
+See the [SUPPORT.md](SUPPORT.md) file for information on how to open an issue against this repository.
 
 ## Contributing to the SAS Extension
 

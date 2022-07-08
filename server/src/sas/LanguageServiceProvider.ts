@@ -24,7 +24,7 @@ export const legend = {
     "time",
     "dt",
     "bitmask",
-    "namebit",
+    "namelit",
     "hex",
     "numeric",
     "format", //, 'text', 'blank'

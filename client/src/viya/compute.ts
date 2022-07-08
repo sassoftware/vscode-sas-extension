@@ -70,9 +70,23 @@ export async function setup(): Promise<void> {
     authConfig = await getAuthConfig(validProfile);
   }
   if (computeSession) {
-    await store.apiCall(computeSession.links("state")).catch(() => {
-      computeSession = undefined;
-    });
+    const state = await store
+      .apiCall(computeSession.links("state"))
+      .catch(() => {
+        computeSession = undefined;
+      });
+    if (state) {
+      // Recover syntaxcheck mode
+      await store
+        .apiCall(computeSession.links("cancel"), {
+          headers: {
+            "if-Match": state.headers("etag"),
+          },
+        })
+        .catch((err) => {
+          console.log(JSON.stringify(err));
+        });
+    }
   }
   if (!computeSession) {
     computeSession = await computeSetup(
