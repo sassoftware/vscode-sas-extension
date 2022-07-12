@@ -8,11 +8,12 @@ import {
   computeResults,
 } from "@sassoftware/restaflib";
 import { getAuthConfig } from "./auth";
-import { workspace } from "vscode";
+import { DEFAULT_COMPUTE_CONTEXT, ProfileConfig } from "./profile";
+import * as configuration from "../components/config";
 
-const store = initStore();
+let authConfig, profileConfig, computeSession;
 
-let authConfig, computeSession;
+let store = initStore();
 
 export interface LogLine {
   type: string;
@@ -26,14 +27,15 @@ export interface Results {
 
 // copied from restaflib
 // inject VSCode locale when create session
-async function computeSetup(store, contextName, payload) {
+async function computeSetup(contextName, payload) {
   if (payload !== null) {
     await store.logon(payload);
   }
-  const { compute } = await store.addServices("compute");
   if (!contextName) {
     contextName = "SAS Job Execution compute context";
   }
+  const { compute } = await store.addServices("compute");
+
   const contexts = await store.apiCall(compute.links("contexts"), {
     qs: { filter: `eq(name,'${contextName}')` },
   });
@@ -44,7 +46,7 @@ async function computeSetup(store, contextName, payload) {
     contexts.itemsList(0),
     "createSession"
   );
-  const locale = JSON.parse(process.env.VSCODE_NLS_CONFIG).locale;
+  const locale = JSON.parse(process.env.VSCODE_NLS_CONFIG ?? "").locale;
   const session = await store.apiCall(createSession, {
     headers: { "accept-language": locale },
   });
@@ -52,8 +54,20 @@ async function computeSetup(store, contextName, payload) {
 }
 
 export async function setup(): Promise<void> {
+  if (!profileConfig) {
+    profileConfig = new ProfileConfig(
+      configuration.getConfigFile(),
+      function () {
+        return {};
+      }
+    );
+  }
+  // retrieve active & valid profile
+  const activeProfile = await profileConfig.getActiveProfile();
+  const validProfile = await profileConfig.validateProfile(activeProfile);
+
   if (!authConfig) {
-    authConfig = await getAuthConfig();
+    authConfig = await getAuthConfig(validProfile);
   }
   if (computeSession) {
     const state = await store
@@ -75,16 +89,14 @@ export async function setup(): Promise<void> {
     }
   }
   if (!computeSession) {
-    const contextName = workspace
-      .getConfiguration("SAS.session")
-      .get("computeContext");
-    computeSession = await computeSetup(store, contextName, authConfig).catch(
-      (err) => {
-        authConfig = undefined;
-        store.logoff();
-        throw err;
-      }
-    );
+    computeSession = await computeSetup(
+      validProfile.computeContext ?? DEFAULT_COMPUTE_CONTEXT,
+      authConfig
+    ).catch((err) => {
+      authConfig = undefined;
+      store = initStore();
+      throw err;
+    });
   }
 }
 
@@ -99,12 +111,12 @@ export async function run(code: string): Promise<Results> {
   };
 }
 
-export function closeSession(): Promise<void> {
+export function closeSession(): void {
   authConfig = undefined;
   if (computeSession)
     return store.apiCall(computeSession.links("delete")).finally(() => {
-      store.logoff();
+      store = initStore();
       computeSession = undefined;
     });
-  store.logoff();
+  store = initStore();
 }

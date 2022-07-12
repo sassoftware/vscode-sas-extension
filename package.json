@@ -3,20 +3,14 @@
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
   "version": "0.0.6",
-  "categories": [
-    "Programming Languages",
-    "Data Science",
-    "Machine Learning"
-  ],
+  "categories": ["Programming Languages", "Data Science", "Machine Learning"],
   "publisher": "SAS",
   "license": "SAS Code Extension Terms",
   "icon": "icons/sas.png",
   "engines": {
     "vscode": "^1.66.0"
   },
-  "activationEvents": [
-    "onLanguage:sas"
-  ],
+  "activationEvents": ["onLanguage:sas"],
   "main": "./client/dist/node/extension",
   "browser": "./client/dist/browser/extension",
   "capabilities": {
@@ -112,46 +106,14 @@
       {
         "title": "%configuration.SAS.session.title.general%",
         "properties": {
-          "SAS.session.host": {
+          "SAS.session.configFile": {
             "type": "string",
-            "order": 0,
-            "description": "%configuration.SAS.session.host%"
+            "description": "%configuration.SAS.session.configFile%"
           },
           "SAS.session.outputHtml": {
             "type": "boolean",
             "default": true,
             "description": "%configuration.SAS.session.outputHtml%"
-          },
-          "SAS.session.computeContext": {
-            "type": "string",
-            "default": "SAS Job Execution compute context",
-            "description": "%configuration.SAS.session.computeContext%"
-          }
-        }
-      },
-      {
-        "title": "%configuration.SAS.session.title.password%",
-        "properties": {
-          "SAS.session.user": {
-            "type": "string",
-            "description": "%configuration.SAS.session.user%"
-          },
-          "SAS.session.clientId": {
-            "type": "string",
-            "description": "%configuration.SAS.session.clientId%"
-          },
-          "SAS.session.clientSecret": {
-            "type": "string",
-            "description": "%configuration.SAS.session.clientSecret%"
-          }
-        }
-      },
-      {
-        "title": "%configuration.SAS.session.title.token%",
-        "properties": {
-          "SAS.session.tokenFile": {
-            "type": "string",
-            "description": "%configuration.SAS.session.tokenFile%"
           }
         }
       }
@@ -173,6 +135,26 @@
           "light": "icons/light/disconnect.svg",
           "dark": "icons/dark/disconnect.svg"
         },
+        "category": "SAS Session"
+      },
+      {
+        "command": "SAS.session.switchProfile",
+        "title": "%commands.SAS.session.switchProfile%",
+        "category": "SAS Session"
+      },
+      {
+        "command": "SAS.session.addProfile",
+        "title": "%commands.SAS.session.addProfile%",
+        "category": "SAS Session"
+      },
+      {
+        "command": "SAS.session.deleteProfile",
+        "title": "%commands.SAS.session.deleteProfile%",
+        "category": "SAS Session"
+      },
+      {
+        "command": "SAS.session.updateProfile",
+        "title": "%commands.SAS.session.updateProfile%",
         "category": "SAS Session"
       }
     ],
@@ -200,12 +182,8 @@
     "languages": [
       {
         "id": "sas",
-        "aliases": [
-          "SAS"
-        ],
-        "extensions": [
-          ".sas"
-        ],
+        "aliases": ["SAS"],
+        "extensions": [".sas"],
         "icon": {
           "dark": "icons/dark/sasProgramFile.svg",
           "light": "icons/light/sasProgramFile.svg"
@@ -269,6 +247,7 @@
     "@types/node": "^12.12.0",
     "@typescript-eslint/eslint-plugin": "^4.23.0",
     "@typescript-eslint/parser": "^4.23.0",
+    "chai": "^4.3.6",
     "esbuild": "^0.13.15",
     "eslint": "^7.26.0",
     "mocha": "^10.0.0",

@@ -37,7 +37,7 @@ Please make sure your submission passed the `lint` and `test` tasks clean.
             └── server.ts // Language Server entry point for electron
 ```
 
-## Get start
+## Get started
 
 - Run `npm install` in this folder. This installs all necessary npm modules in both the client and server folder
 - Open VS Code on this folder.
