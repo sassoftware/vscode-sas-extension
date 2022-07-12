@@ -11,9 +11,9 @@ import { getAuthConfig } from "./auth";
 import { DEFAULT_COMPUTE_CONTEXT, ProfileConfig } from "./profile";
 import * as configuration from "../components/config";
 
-const store = initStore();
-
 let authConfig, profileConfig, computeSession;
+
+let store = initStore();
 
 export interface LogLine {
   type: string;
@@ -27,7 +27,7 @@ export interface Results {
 
 // copied from restaflib
 // inject VSCode locale when create session
-async function computeSetup(store, contextName, payload) {
+async function computeSetup(contextName, payload) {
   if (payload !== null) {
     await store.logon(payload);
   }
@@ -90,12 +90,11 @@ export async function setup(): Promise<void> {
   }
   if (!computeSession) {
     computeSession = await computeSetup(
-      store,
       validProfile.computeContext ?? DEFAULT_COMPUTE_CONTEXT,
       authConfig
     ).catch((err) => {
       authConfig = undefined;
-      store.logoff();
+      store = initStore();
       throw err;
     });
   }
@@ -116,8 +115,8 @@ export function closeSession(): void {
   authConfig = undefined;
   if (computeSession)
     return store.apiCall(computeSession.links("delete")).finally(() => {
-      store.logoff();
+      store = initStore();
       computeSession = undefined;
     });
-  store.logoff();
+  store = initStore();
 }
