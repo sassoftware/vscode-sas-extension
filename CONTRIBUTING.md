@@ -37,13 +37,13 @@ Please make sure your submission passed the `lint` and `test` tasks clean.
             └── server.ts // Language Server entry point for electron
 ```
 
-## Get start
+## Get started
 
-- Run `npm install` in this folder. This installs all necessary npm modules in both the client and server folder
+- Run `npm install` in this folder. This installs all necessary npm modules in both the client and server folder.
 - Open VS Code on this folder.
 - Press Ctrl+Shift+B to compile the client and server.
 - Switch to the Debug viewlet.
 - Select `Launch Client` from the drop down.
 - Run the launch config.
-- If you want to debug the server as well use the launch configuration `Attach to Server`
+- If you want to debug the server as well use the launch configuration `Attach to Server`.
 - In the [Extension Development Host] instance of VSCode, open a SAS file.

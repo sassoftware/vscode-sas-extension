@@ -13,7 +13,7 @@ Welcome to the SAS Extension for Visual Studio Code! This extension provides sup
     - [Code Folding and Code Outline](#code-folding-and-code-outline)
     - [Configuring the SAS Extension](#configuring-the-sas-extension)
     - [Running SAS Code](#running-sas-code)
-  - [Support](#support) 
+  - [Support](#support)
     - [SAS Communities](#sas-communities)
     - [SAS Programming Documentation](#sas-programming-documentation)
     - [FAQs](#faqs)
@@ -89,49 +89,52 @@ Snippets are lines of commonly used code or text that you can insert into your p
 
 To access the list of snippets for a function or procedure:
 
-- Type the name of a function or procedure in your SAS program. This example shows a snippet for the PROC DS2.  
+- Type the name of a function or procedure in your SAS program. This example shows a snippet for the PROC DS2.
 
 <img src="doc/images/vsCodeSnippets.gif"/>
 
 ### Code Folding and Code Outline
 
-Regions of code are identified in your SAS program as blocks of code that can be collapsed and expanded. You can also view an outline of your program that identifies DATA steps, procedures, macro sections, and user-defined regions of code.  
+Regions of code are identified in your SAS program as blocks of code that can be collapsed and expanded. You can also view an outline of your program that identifies DATA steps, procedures, macro sections, and user-defined regions of code.
 
 <img src="doc/images/vsCodeFoldAndOutline.gif"/>
 
-
-_Tip_: You can define a custom region by adding `/*region*/` and `/*endregion*/` tags to the start and end of the block of code.  
+_Tip_: You can define a custom region by adding `/*region*/` and `/*endregion*/` tags to the start and end of the block of code.
 
 <img src="doc/images/vsCodeRegionFunction.gif"/>
 
 ### Configuring the SAS Extension
+
 Before running SAS code, you must configure the SAS extension to access a SAS Viya server. You must license SAS Viya to run SAS code.
 
-To configure the SAS extension, open the Settings editor for the SAS extension by selecting `File > Preferences > Settings`. Expand the Extensions folder and select SAS. 
+To configure the SAS extension, open the Settings editor for the SAS extension by selecting `File > Preferences > Settings`. Expand the Extensions folder and select SAS.
 
 **Session - General**
 General parameter settings for the extension
-| Parameter | Description | Sample Value |
-|---|----|---|
-|Host|Full URL of SAS Viya server|https://sasserver.sas.com|
-|Compute Context|Compute context name|SAS Job Execution compute context|
-|Output HTML|Generates results in HTML format|Default is 'On'|
 
-**Session - Password authentication**  
- To authenticate with password, specify client ID, client secret, and user name.
-| Parameter | Description | Sample Value |
-|---|----|---|
-|Client ID|Registered client|myapp.client|
-|Client Secret|Provide secret for client ID|myapp.secret|
-|User|SAS Viya username |john_doe|
+| Parameter       | Description                      | Sample Value                      |
+| --------------- | -------------------------------- | --------------------------------- |
+| Host            | Full URL of SAS Viya server      | https://sasserver.sas.com         |
+| Compute Context | Compute context name             | SAS Job Execution compute context |
+| Output HTML     | Generates results in HTML format | Default is 'On'                   |
+
+**Session - Password authentication**
+To authenticate with password, specify client ID, client secret, and user name.
+
+| Parameter     | Description                  | Sample Value |
+| ------------- | ---------------------------- | ------------ |
+| Client ID     | Registered client            | myapp.client |
+| Client Secret | Provide secret for client ID | myapp.secret |
+| User          | SAS Viya username            | john_doe     |
 
 **Session - Token authentication**
- To authenticate with an access token, specify the full path for a token file.
-| Parameter | Description | Sample Value |
-|---|----|---|
-|Token File|SAS access token value stored in a local file|C:\Users\johndoe\SAS\access_token|
+To authenticate with an access token, specify the full path for a token file.
 
- For more information about the authentication process, please see the blog post [Authentication to SAS Viya: a couple of approaches](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/).
+| Parameter  | Description                                   | Sample Value                      |
+| ---------- | --------------------------------------------- | --------------------------------- |
+| Token File | SAS access token value stored in a local file | C:\Users\johndoe\SAS\access_token |
+
+For more information about the authentication process, please see the blog post [Authentication to SAS Viya: a couple of approaches](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/).
 
 ### Running SAS Code
 
@@ -140,35 +143,42 @@ After configuring the SAS extension for your SAS environment, run your SAS progr
 To run a SAS program:
 
 1. Click `Run` (running man icon) in the upper right corner of your SAS program window.
-1.a. If prompted, enter your password (for password authentication).
+   1.a. If prompted, enter your password (for password authentication).
 2. The results are displayed in the application.
 3. The SAS output log and error information are displayed in the applicaiton.
 
 <img src="doc/images/sasProgramOutput2.png"/>
 
 **Notes**:
+
 - A new session must be created the first time you run SAS code. Connection time will vary depending on the server connection.
 - Currently, only HTML output is supported. By default, the ODS HTML5 statement is added to the submitted code. Clear the Get ODS HTML5 Output option in the Settings editor for the SAS extension to disable this output.
 - When you click `Run`, the code in the active tab in the editor is submitted. Make sure that the correct tab is active when you run your program.
 - Selecting individual code blocks is not currently supported.
 - To reset your connection to the SAS Viya server, run the `Close current session` command in VS code or click the `Close current session` button next to the `Run` button.
 
-## Support  
-### SAS Communities  
+## Support
+
+### SAS Communities
+
 Ask, Find, and Share on the VS Code SAS Extension on the [SAS Programmers Community site](https://communities.sas.com/t5/SAS-Programming/bd-p/programming).
 
-### SAS Programming Documentation 
-[SAS Programming documentation](https://go.documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/lrcon/titlepage.htm) 
+### SAS Programming Documentation
+
+[SAS Programming documentation](https://go.documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/lrcon/titlepage.htm)
 
 ### FAQs
+
 Please check the [FAQ](https://github.com/sassoftware/vscode-sas-extension/wiki/FAQ) page for some common questions.
 
-### GitHub Issues  
+### GitHub Issues
+
 See the [SUPPORT.md](SUPPORT.md) file for information on how to open an issue against this repository.
 
 ## Contributing to the SAS Extension
 
 We welcome your contributions! Please read [CONTRIBUTING.md](/CONTRIBUTING.md) for details on how to submit contributions to this project.
 
-## License  
+## License
+
 This project is subject to the SAS Code Extension Terms, a copy of which is included as [Code_Extension_Agreement.pdf](/Code_Extension_Agreement.pdf)
