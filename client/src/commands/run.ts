@@ -1,28 +1,25 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import {
-  OutputChannel,
-  ProgressLocation,
-  ViewColumn,
-  window,
-  workspace,
-} from "vscode";
+import { OutputChannel, ProgressLocation, ViewColumn, window, workspace, Range } from "vscode";
 import { appendLog } from "../LogViewer";
 import { setup, run as computeRun } from "../viya/compute";
 
 let outputChannel: OutputChannel;
 
-function getCode(outputHtml: boolean): string {
-  const code = window.activeTextEditor.document.getText();
+function getCode(outputHtml: boolean, selected = false): string {
+  const editor = window.activeTextEditor;
+  const doc = editor?.document;
+  const code = selected
+    ? doc.getText(new Range(editor?.selection.start, editor?.selection.end))
+    : doc.getText();
+  window.showInformationMessage(code);
   return outputHtml ? "ods html5;\n" + code + "\n;quit;ods html5 close;" : code;
 }
 
-async function _run() {
-  const outputHtml: boolean = workspace
-    .getConfiguration("SAS.session")
-    .get("outputHtml");
-  const code = getCode(outputHtml);
+async function _run(selected: boolean) {
+  const outputHtml: boolean = workspace.getConfiguration("SAS.session").get("outputHtml");
+  const code = getCode(outputHtml, selected);
 
   await window.withProgress(
     {
@@ -39,8 +36,7 @@ async function _run() {
     },
     () =>
       computeRun(code).then((results) => {
-        if (!outputChannel)
-          outputChannel = window.createOutputChannel("SAS Log", "sas-log");
+        if (!outputChannel) outputChannel = window.createOutputChannel("SAS Log", "sas-log");
         outputChannel.show();
         for (const line of results.log) {
           appendLog(line.type);
@@ -61,6 +57,12 @@ async function _run() {
 
 export function run(): void {
   _run().catch((err) => {
+    window.showErrorMessage(JSON.stringify(err));
+  });
+}
+
+export function runSelected(): void {
+  _run(true).catch((err) => {
     window.showErrorMessage(JSON.stringify(err));
   });
 }

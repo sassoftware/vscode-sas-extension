@@ -11,5 +11,6 @@
   "configuration.SAS.session.outputHtml": "Get ODS HTML5 output",
 
   "commands.SAS.session.run": "Run SAS code",
+  "commands.SAS.session.runSelected": "Run Selected SAS code",
   "commands.SAS.session.close": "Close current session"
 }
