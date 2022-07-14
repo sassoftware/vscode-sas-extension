@@ -18,7 +18,7 @@ function getCode(outputHtml: boolean, selected = false): string {
   const code = selected
     ? doc.getText(new Range(editor.selection.start, editor.selection.end))
     : doc.getText();
-  window.showInformationMessage(code);
+
   return outputHtml ? "ods html5;\n" + code + "\n;quit;ods html5 close;" : code;
 }
 
