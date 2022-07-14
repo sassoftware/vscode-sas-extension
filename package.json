@@ -190,10 +190,6 @@
         {
           "when": "editorFocus && editorLangId == sas && !isWeb",
           "command": "SAS.session.run"
-        },
-        {
-          "when": "editorHasSelection && !editorHasMultipleSelections && editorLangId == sas && !isWeb",
-          "command": "SAS.session.runSelected"
         }
       ],
       "editor/context": [
@@ -206,7 +202,6 @@
           "when": "editorHasSelection && !editorHasMultipleSelections && editorLangId == sas && !isWeb",
           "command": "SAS.session.runSelected",
           "group": "navigation"
-
         }
       ],
       "editor/title": [

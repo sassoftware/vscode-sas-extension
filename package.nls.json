@@ -10,7 +10,7 @@
   "configuration.SAS.session.tokenFile": "Full path to a token file for authentication. Otherwise take password flow.",
   "configuration.SAS.session.outputHtml": "Get ODS HTML5 output",
 
-  "commands.SAS.session.run": "Run SAS code",
-  "commands.SAS.session.runSelected": "Run Selected SAS code",
-  "commands.SAS.session.close": "Close current session"
+  "commands.SAS.session.run": "Run SAS Code",
+  "commands.SAS.session.runSelected": "Run Selected SAS Code",
+  "commands.SAS.session.close": "Close Current Session"
 }
