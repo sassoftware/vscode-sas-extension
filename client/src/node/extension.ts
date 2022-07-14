@@ -17,7 +17,9 @@ let client: LanguageClient;
 
 export function activate(context: ExtensionContext): void {
   // The server is implemented in node
-  const serverModule = context.asAbsolutePath(path.join("server", "dist", "node", "server.js"));
+  const serverModule = context.asAbsolutePath(
+    path.join("server", "dist", "node", "server.js")
+  );
   // The debug options for the server
   // --inspect=6009: runs the server in Node's Inspector mode so VS Code can attach to the server for debugging
   const debugOptions = { execArgv: ["--nolazy", "--inspect=6009"] };
@@ -40,7 +42,12 @@ export function activate(context: ExtensionContext): void {
   };
 
   // Create the language client and start the client.
-  client = new LanguageClient("sas-lsp", "SAS Language Server", serverOptions, clientOptions);
+  client = new LanguageClient(
+    "sas-lsp",
+    "SAS Language Server",
+    serverOptions,
+    clientOptions
+  );
 
   // Start the client. This will also launch the server
   client.start();
