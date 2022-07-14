@@ -10,13 +10,14 @@ let outputChannel: OutputChannel;
 function getCode(outputHtml: boolean, selected = false): string {
   const editor = window.activeTextEditor;
   const doc = editor?.document;
+
   if (!editor || !doc) {
     return "";
   }
 
   const code = selected
-    ? doc?.getText(new Range(editor.selection.start, editor.selection.end))
-    : doc?.getText();
+    ? doc.getText(new Range(editor.selection.start, editor.selection.end))
+    : doc.getText();
   window.showInformationMessage(code);
   return outputHtml ? "ods html5;\n" + code + "\n;quit;ods html5 close;" : code;
 }
