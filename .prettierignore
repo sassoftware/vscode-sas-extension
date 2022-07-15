@@ -6,5 +6,8 @@ dist/
 # git files
 .git/
 
+# data files
+server/**/*.json
+
 # VSCode history
 .history/

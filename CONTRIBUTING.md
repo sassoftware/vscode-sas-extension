@@ -14,7 +14,7 @@ use GitHub pull requests for this purpose. Consult
 [GitHub Help](https://help.github.com/articles/about-pull-requests/) for more
 information on using pull requests.
 
-Please make sure your submission passed the `lint` and `test` tasks clean.
+Please make sure your submission passed the `lint`, `format:check` and `test` tasks clean.
 
 # Development
 

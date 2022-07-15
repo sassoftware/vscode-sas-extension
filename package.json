@@ -254,12 +254,14 @@
   "homepage": "https://www.sas.com",
   "qna": "https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp&ssr=false#qna",
   "scripts": {
-    "vscode:prepublish": "npm run lint && npm run compile && npm run compile-browser",
+    "vscode:prepublish": "npm run lint && npm run format:check && npm run compile && npm run compile-browser",
     "lint": "node node_modules/eslint/bin/eslint.js ./client/src/**/*.ts ./server/src/**/*.ts",
     "compile": "node ./tools/build.js",
     "watch": "node ./tools/build.js dev",
     "compile-browser": "webpack --mode production",
     "watch-browser": "webpack --watch",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
     "pretest": "npm run compile && tsc -p ./client",
     "test": "node ./client/out/test/runTest.js",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd .."
@@ -272,6 +274,7 @@
     "esbuild": "^0.13.15",
     "eslint": "^7.26.0",
     "mocha": "^10.0.0",
+    "prettier": "^2.7.1",
     "path-browserify": "^1.0.1",
     "ts-loader": "^9.2.3",
     "typescript": "^4.4.3",
