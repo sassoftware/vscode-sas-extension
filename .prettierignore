@@ -2,6 +2,7 @@
 package-lock.json
 out/
 dist/
+.vscode-test/
 
 # git files
 .git/

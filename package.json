@@ -254,7 +254,7 @@
   "homepage": "https://www.sas.com",
   "qna": "https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp&ssr=false#qna",
   "scripts": {
-    "vscode:prepublish": "npm run lint && npm run format:check && npm run compile && npm run compile-browser",
+    "vscode:prepublish": "npm run lint && npm run compile && npm run compile-browser",
     "lint": "node node_modules/eslint/bin/eslint.js ./client/src/**/*.ts ./server/src/**/*.ts",
     "compile": "node ./tools/build.js",
     "watch": "node ./tools/build.js dev",

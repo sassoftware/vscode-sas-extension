@@ -17,6 +17,7 @@ jobs:
           node-version: 16.14
           cache: "npm"
       - run: npm ci
+      - run: npm run format:check
       - run: xvfb-run -a npm run test
         if: runner.os == 'Linux'
       - run: npx vsce package
