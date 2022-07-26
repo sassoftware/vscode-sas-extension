@@ -13,16 +13,23 @@ import { setup, run as computeRun } from "../viya/compute";
 
 let outputChannel: OutputChannel;
 
-function getCode(outputHtml: boolean): string {
-  const code = window.activeTextEditor.document.getText();
-  return outputHtml ? "ods html5;\n" + code + "\n;quit;ods html5 close;" : code;
+function getCode(outputHtml: boolean, selected = false): string {
+  const editor = window.activeTextEditor;
+  const doc = editor?.document;
+  const code = selected ? doc?.getText(editor?.selection) : doc?.getText();
+
+  return code
+    ? outputHtml
+      ? "ods html5;\n" + code + "\n;quit;ods html5 close;"
+      : code
+    : "";
 }
 
-async function _run() {
-  const outputHtml: boolean = workspace
+async function _run(selected = false) {
+  const outputHtml = !!workspace
     .getConfiguration("SAS.session")
     .get("outputHtml");
-  const code = getCode(outputHtml);
+  const code = getCode(outputHtml, selected);
 
   await window.withProgress(
     {
@@ -61,6 +68,12 @@ async function _run() {
 
 export function run(): void {
   _run().catch((err) => {
+    window.showErrorMessage(JSON.stringify(err));
+  });
+}
+
+export function runSelected(): void {
+  _run(true).catch((err) => {
     window.showErrorMessage(JSON.stringify(err));
   });
 }

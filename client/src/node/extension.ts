@@ -3,7 +3,7 @@
 
 import * as path from "path";
 import { commands, ExtensionContext, languages } from "vscode";
-import { run } from "../commands/run";
+import { run, runSelected } from "../commands/run";
 import { closeSession } from "../commands/closeSession";
 import {
   LanguageClient,
@@ -54,6 +54,7 @@ export function activate(context: ExtensionContext): void {
 
   context.subscriptions.push(
     commands.registerCommand("SAS.session.run", run),
+    commands.registerCommand("SAS.session.runSelected", runSelected),
     commands.registerCommand("SAS.session.close", closeSession),
     languages.registerDocumentSemanticTokensProvider(
       { language: "sas-log" },
