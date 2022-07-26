@@ -143,18 +143,24 @@ After configuring the SAS extension for your SAS environment, run your SAS progr
 To run a SAS program:
 
 1. Click `Run` (running man icon) in the upper right corner of your SAS program window.
+
    1.a. If prompted, enter your password (for password authentication).
+
 2. The results are displayed in the application.
 3. The SAS output log and error information are displayed in the applicaiton.
 
 <img src="doc/images/sasProgramOutput2.png"/>
+
+To run a piece of SAS code:
+
+1. Select a piece of code in your SAS program
+2. Open context menu and select `Run Selected SAS Code`
 
 **Notes**:
 
 - A new session must be created the first time you run SAS code. Connection time will vary depending on the server connection.
 - Currently, only HTML output is supported. By default, the ODS HTML5 statement is added to the submitted code. Clear the Get ODS HTML5 Output option in the Settings editor for the SAS extension to disable this output.
 - When you click `Run`, the code in the active tab in the editor is submitted. Make sure that the correct tab is active when you run your program.
-- Selecting individual code blocks is not currently supported.
 - To reset your connection to the SAS Viya server, run the `Close current session` command in VS code or click the `Close current session` button next to the `Run` button.
 
 ## Support
