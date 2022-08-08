@@ -179,8 +179,8 @@
         "command": "SAS.session.close",
         "title": "%commands.SAS.session.close%",
         "icon": {
-          "light": "icons/light/disconnect.svg",
-          "dark": "icons/dark/disconnect.svg"
+          "light": "icons/light/connectorNodeIndicator.svg",
+          "dark": "icons/dark/connectorNodeIndicator.svg"
         },
         "category": "SAS Session"
       }
