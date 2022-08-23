@@ -493,14 +493,14 @@ export class CompletionProvider {
         break;
       case ZONE_TYPE.GBL_STMT:
         this.loader.getGlobalStatements((data) => {
-          // if (this.popupContext.prefix.startsWith("%")) {
-          //   //_setCurrentZone(ZONE_TYPE.MACRO_STMT);
-          //   this.loader.getMacroStatements((macroStmt: any) => {
-          //     cb(_distinctList(macroStmt.concat(data)));
-          //   });
-          // } else {
-          cb(data);
-          // }
+          if (this.popupContext.prefix.startsWith("%")) {
+            //this.popupContext.zone = ZONE_TYPE.MACRO_STMT;
+            this.loader.getMacroStatements((macroStmt: any) => {
+              cb(_distinctList(macroStmt.concat(data)));
+            });
+          } else {
+            cb(data);
+          }
         });
         break;
       case ZONE_TYPE.GBL_STMT_OPT:
@@ -613,6 +613,7 @@ export class CompletionProvider {
         });
         break;
       default:
+        cb();
         return false;
     }
     return true;

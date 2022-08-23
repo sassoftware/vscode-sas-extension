@@ -26,5 +26,6 @@
   "indentationRules": {
     "increaseIndentPattern": "^\\s*(data|proc|%macro)\\b.*;$",
     "decreaseIndentPattern": "^\\s*(run;|quit;|%mend;)$"
-  }
+  },
+  "wordPattern": "(-?\\d*\\.\\d\\w*)|(\\%*[^\\`\\~\\!\\@\\#\\%\\^\\&\\*\\(\\)\\-\\=\\+\\[\\{\\]\\}\\\\\\|\\;\\:\\'\\\"\\,\\.\\<\\>\\/\\?\\s]+)"
 }
