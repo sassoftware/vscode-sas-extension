@@ -494,7 +494,7 @@ export class CompletionProvider {
       case ZONE_TYPE.GBL_STMT:
         this.loader.getGlobalStatements((data) => {
           if (this.popupContext.prefix.startsWith("%")) {
-            //this.popupContext.zone = ZONE_TYPE.MACRO_STMT;
+            this.popupContext.zone = ZONE_TYPE.MACRO_STMT;
             this.loader.getMacroStatements((macroStmt: any) => {
               cb(_distinctList(macroStmt.concat(data)));
             });
