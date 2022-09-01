@@ -1,5 +1,17 @@
 # Changelog
 
+## TBD
+
+### Breaking Change
+
+- "Authorization code" grant is applied now. Password and token file approach has been removed. Your client ID need to be registered with "authorization_code" and "refresh_token" grant type now.
+
+### Feature
+
+- Login with SASLogon with PKCE
+- Refresh your access token with refresh token
+- Built-in client ID for Viya4 2022.11 and later
+
 ## v0.1.0 (8 Oct 2022)
 
 ### Breaking Change

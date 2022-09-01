@@ -1,9 +1,8 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import { readFileSync } from "fs";
 import { window, workspace, ConfigurationTarget } from "vscode";
-import { closeSession } from "../viya/compute";
+import { closeSession } from "../commands/closeSession";
 
 export const EXTENSION_CONFIG_KEY = "SAS";
 export const EXTENSION_DEFINE_PROFILES_CONFIG_KEY = "connectionProfiles";
@@ -26,8 +25,7 @@ export type Dictionary<T> = {
  * Enum that represents the authentication type for a profile.
  */
 export enum AuthType {
-  TokenFile = "tokenFile",
-  Password = "password",
+  AuthCode = "authorization_code",
   Error = "error",
 }
 
@@ -41,8 +39,6 @@ export interface Profile {
   clientId?: string;
   clientSecret?: string;
   context?: string;
-  username?: string;
-  tokenFile?: string;
 }
 
 /**
@@ -212,7 +208,7 @@ export class ProfileConfig {
    *
    * @returns Optional ProfileDetail
    */
-  async getActiveProfileDetail(): Promise<ProfileDetail | undefined> {
+  getActiveProfileDetail(): ProfileDetail | undefined {
     const activeProfileName = this.getActiveProfile();
 
     const profileList = this.getAllProfiles();
@@ -233,7 +229,6 @@ export class ProfileConfig {
    * @param profile {@link Profile} object
    */
   async upsertProfile(name: string, profile: Profile): Promise<void> {
-    this.sanitize(profile);
     const profileList = this.getAllProfiles();
     // Cannot mutate VSCode Config Object, create a clone and add that to settings.json
     const newProfileList = JSON.parse(JSON.stringify(profileList));
@@ -270,33 +265,23 @@ export class ProfileConfig {
    * @param profileDetail
    * @returns ProfileValidation object
    */
-  async validateProfile(
-    profileDetail?: ProfileDetail
-  ): Promise<ProfileValidation> {
+  validateProfile(profileDetail?: ProfileDetail): ProfileValidation {
     const pv: ProfileValidation = {
       type: AuthType.Error,
       error: "",
       profile: <Profile>{},
     };
     //Validate active profile, return early if not valid
-    if (!profileDetail.profile) {
+    if (!profileDetail?.profile) {
       pv.error = "No Active Profile";
       return pv;
     }
-    pv.profile = profileDetail.profile;
-    if (profileDetail.profile["clientId"]) {
-      pv.type = AuthType.Password;
-    } else if (profileDetail.profile["tokenFile"]) {
-      pv.type = AuthType.TokenFile;
-      try {
-        pv.data = readFileSync(profileDetail.profile["tokenFile"], "utf-8");
-      } catch (err) {
-        pv.error = `Please update profile (${profileDetail.name}): ${err.message}`;
-        pv.type = AuthType.Error;
-      }
-    } else {
-      pv.error = "No token or client found";
+    if (!profileDetail.profile.endpoint) {
+      pv.error = "Missing endpoint in active profile.";
+      return pv;
     }
+    pv.profile = profileDetail.profile;
+    pv.type = AuthType.AuthCode;
     return pv;
   }
 
@@ -304,92 +289,50 @@ export class ProfileConfig {
    * Requests users input on updating or adding a new profile.
    *
    * @param name the {@link String} represntation of the name of the profile
-   * @param forceUpdate the {@link Boolean} of whether to prompt the user when value is already defined
    */
-  async prompt(name: string, forceUpdate = false): Promise<void> {
+  async prompt(name: string): Promise<void> {
     const profile = this.getProfileByName(name);
     // Cannot mutate VSCode Config Object, create a clone and upsert
     let profileClone = { ...profile };
     if (!profile) {
       profileClone = <Profile>{
         endpoint: "",
-        clientId: "",
-        clientSecret: "",
-        context: "",
-        username: "",
-        tokenFile: "",
       };
     }
 
-    if (!profileClone["endpoint"] || forceUpdate) {
-      profileClone["endpoint"] = await createInputTextBox(
-        ProfilePromptType.Endpoint,
-        profileClone["endpoint"]
-      );
-    }
-    if (!profileClone["context"] || forceUpdate) {
-      profileClone["context"] = DEFAULT_COMPUTE_CONTEXT;
-      profileClone["context"] = await createInputTextBox(
-        ProfilePromptType.ComputeContext,
-        profileClone["context"]
-      );
-    }
+    profileClone["endpoint"] = await createInputTextBox(
+      ProfilePromptType.Endpoint,
+      profileClone["endpoint"]
+    );
+    if (!profileClone["endpoint"]) return;
+
+    profileClone["context"] = await createInputTextBox(
+      ProfilePromptType.ComputeContext,
+      profileClone["context"] || DEFAULT_COMPUTE_CONTEXT
+    );
     if (
-      !profileClone["clientId"] ||
-      !profileClone["tokenFile"] ||
-      forceUpdate
+      profileClone["context"] === "" ||
+      profileClone["context"] === DEFAULT_COMPUTE_CONTEXT
     ) {
-      profileClone["clientId"] = await createInputTextBox(
-        ProfilePromptType.ClientId,
-        profileClone["clientId"]
-      );
+      delete profileClone["context"];
     }
-    if (
-      (!profileClone["clientSecret"] ||
-        !profileClone["tokenFile"] ||
-        forceUpdate) &&
+
+    profileClone["clientId"] = await createInputTextBox(
+      ProfilePromptType.ClientId,
       profileClone["clientId"]
-    ) {
+    );
+    if (profileClone["clientId"] === "") {
+      delete profileClone["clientId"];
+    }
+
+    if (profileClone["clientId"]) {
       profileClone["clientSecret"] = await createInputTextBox(
         ProfilePromptType.ClientSecret,
         profileClone["clientSecret"]
       );
     }
-    if (
-      (!profileClone["tokenFile"] || forceUpdate) &&
-      !profileClone["clientId"]
-    ) {
-      profileClone["tokenFile"] = await createInputTextBox(
-        ProfilePromptType.TokenFile,
-        profileClone["tokenFile"]
-      );
-    }
-    // The username field will only appear for non-token files, and will only update if the user runs the update profile command
-    if (
-      (!profileClone["username"] || forceUpdate) &&
-      profileClone["clientId"]
-    ) {
-      profileClone["username"] = await createInputTextBox(
-        ProfilePromptType.Username,
-        profileClone["username"]
-      );
-    }
-    await this.upsertProfile(name, profileClone);
-  }
 
-  /**
-   * Sanitize a {@link Profile} object that is passed by reference.
-   *
-   * @param profile {@link Profile} object
-   */
-  private sanitize(profile: Profile) {
-    if (profile["clientId"]) {
-      delete profile["tokenFile"];
-    } else {
-      delete profile["clientId"];
-      delete profile["clientSecret"];
-      delete profile["username"];
-    }
+    await this.upsertProfile(name, profileClone);
   }
 }
 
@@ -412,9 +355,6 @@ export enum ProfilePromptType {
   Endpoint,
   ComputeContext,
   ClientSecret,
-  Username,
-  Password,
-  TokenFile,
 }
 
 /**
@@ -446,25 +386,19 @@ export function getProfilePrompt(type: ProfilePromptType): ProfilePrompt {
 export async function createInputTextBox(
   profilePromptType: ProfilePromptType,
   defaultValue: string | undefined = null,
-  maskValue = false,
-  username: string | undefined = null
-): Promise<Thenable<string | undefined>> {
+  maskValue = false
+): Promise<string> {
   const profilePrompt = getProfilePrompt(profilePromptType);
-  let placeHolderText = profilePrompt.placeholder;
-  let descriptionText = profilePrompt.description;
-  if (profilePromptType === ProfilePromptType.Password) {
-    placeHolderText += `${username}`;
-    descriptionText += `${username}.`;
-  }
+
   const entered = await window.showInputBox({
     title: profilePrompt.title,
-    placeHolder: placeHolderText,
-    prompt: descriptionText,
+    placeHolder: profilePrompt.placeholder,
+    prompt: profilePrompt.description,
     password: maskValue,
     value: defaultValue,
     ignoreFocusOut: true,
   });
-  return entered ?? defaultValue;
+  return entered;
 }
 
 /**
@@ -496,28 +430,11 @@ const input: ProfilePromptInput = {
   [ProfilePromptType.ClientId]: {
     title: "Client ID",
     placeholder: "Enter a client ID",
-    description:
-      "Enter the registered client ID. An example is myapp.client. If using a token file, leave field blank.",
+    description: "Enter the registered client ID. An example is myapp.client.",
   },
   [ProfilePromptType.ClientSecret]: {
     title: "Client Secret",
     placeholder: "Enter a client secret",
     description: "Enter secret for client ID. An example is myapp.secret.",
-  },
-  [ProfilePromptType.Username]: {
-    title: "SAS User ID",
-    placeholder: "Enter your SAS User ID",
-    description: "Enter your SAS User ID.",
-  },
-  [ProfilePromptType.Password]: {
-    title: "SAS Password",
-    placeholder: "Enter your SAS Password for the User ID ",
-    description: "Enter your SAS Password for the User ID ",
-  },
-  [ProfilePromptType.TokenFile]: {
-    title: "SAS Access Token",
-    placeholder: "Enter the path to the SAS token file",
-    description:
-      "Enter the path for the local file that contains the SAS access token value. If using a client ID and client secret, leave field blank.",
   },
 };

@@ -19,16 +19,15 @@ import {
   ServerOptions,
   TransportKind,
 } from "vscode-languageclient/node";
-import { LogTokensProvider, legend } from "../LogViewer";
+import { LogTokensProvider, legend } from "../components/LogViewer";
 import {
   profileConfig,
   addProfile,
   updateProfile,
   switchProfile,
   deleteProfile,
-  validateProfileAndRun,
-  validateProfileAndRunSelected,
 } from "../commands/profile";
+import { run, runSelected } from "../commands/run";
 
 let client: LanguageClient;
 // Create Profile status bar item
@@ -77,8 +76,8 @@ export function activate(context: ExtensionContext): void {
   client.start();
 
   context.subscriptions.push(
-    commands.registerCommand("SAS.run", validateProfileAndRun),
-    commands.registerCommand("SAS.runSelected", validateProfileAndRunSelected),
+    commands.registerCommand("SAS.run", run),
+    commands.registerCommand("SAS.runSelected", runSelected),
     commands.registerCommand("SAS.close", () =>
       closeSession("The SAS session has closed.")
     ),
@@ -147,5 +146,6 @@ export function deactivate(): Thenable<void> | undefined {
   if (!client) {
     return undefined;
   }
+  closeSession();
   return client.stop();
 }

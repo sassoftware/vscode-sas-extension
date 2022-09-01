@@ -9,8 +9,9 @@ import {
   workspace,
   commands,
 } from "vscode";
-import { appendLog } from "../LogViewer";
-import { setup, run as computeRun } from "../viya/compute";
+import { appendLog } from "../components/LogViewer";
+import { getSession } from "../session";
+import { profileConfig, switchProfile } from "./profile";
 
 let outputChannel: OutputChannel;
 let running = false;
@@ -27,18 +28,25 @@ function getCode(outputHtml: boolean, selected = false): string {
     : "";
 }
 
-async function runCode(selected) {
+async function runCode(selected?: boolean) {
+  if (profileConfig.getActiveProfile() === "") {
+    switchProfile();
+    return;
+  }
+
   const outputHtml = !!workspace
     .getConfiguration("SAS")
     .get("session.outputHtml");
   const code = getCode(outputHtml, selected);
+
+  const session = getSession();
 
   await window.withProgress(
     {
       location: ProgressLocation.Notification,
       title: "Connecting to SAS session...",
     },
-    setup
+    session.setup
   );
 
   await window.withProgress(
@@ -47,24 +55,27 @@ async function runCode(selected) {
       title: "SAS code running...",
     },
     () =>
-      computeRun(code).then((results) => {
-        if (!outputChannel)
-          outputChannel = window.createOutputChannel("SAS Log", "sas-log");
-        outputChannel.show();
-        for (const line of results.log) {
-          appendLog(line.type);
-          outputChannel.appendLine(line.line);
-        }
-        if (outputHtml) {
-          const odsResult = window.createWebviewPanel(
-            "SASSession", // Identifies the type of the webview. Used internally
-            "Result", // Title of the panel displayed to the user
-            ViewColumn.Two, // Editor column to show the new webview panel in.
-            {} // Webview options. More on these later.
-          );
-          odsResult.webview.html = results.ods;
-        }
-      })
+      session
+        .run(code, (logs) => {
+          if (!outputChannel)
+            outputChannel = window.createOutputChannel("SAS Log", "sas-log");
+          outputChannel.show();
+          for (const line of logs) {
+            appendLog(line.type);
+            outputChannel.appendLine(line.line);
+          }
+        })
+        .then((results) => {
+          if (outputHtml && results.html5) {
+            const odsResult = window.createWebviewPanel(
+              "SASSession", // Identifies the type of the webview. Used internally
+              "Result", // Title of the panel displayed to the user
+              ViewColumn.Two, // Editor column to show the new webview panel in.
+              {} // Webview options. More on these later.
+            );
+            odsResult.webview.html = results.html5;
+          }
+        })
   );
 }
 
@@ -75,7 +86,10 @@ function _run(selected = false) {
 
   runCode(selected)
     .catch((err) => {
-      window.showErrorMessage(JSON.stringify(err));
+      console.dir(err);
+      window.showErrorMessage(
+        err.response?.data ? JSON.stringify(err.response.data) : err.message
+      );
     })
     .finally(() => {
       running = false;
