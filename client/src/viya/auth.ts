@@ -53,15 +53,24 @@ async function promptCredentials(
     user: "",
     password: "",
   };
-  credentials.user =
-    (await createInputTextBox(
-      ProfilePromptType.Username,
-      currentUsername,
-      false
-    )) ?? "";
+  // If username is already set, do not prompt user for username
+  if (currentUsername) {
+    credentials.user = currentUsername;
+  } else {
+    credentials.user =
+      (await createInputTextBox(
+        ProfilePromptType.Username,
+        currentUsername,
+        false
+      )) ?? "";
+  }
   credentials.password =
-    (await createInputTextBox(ProfilePromptType.Password, undefined, true)) ??
-    "";
+    (await createInputTextBox(
+      ProfilePromptType.Password,
+      undefined,
+      true,
+      credentials.user
+    )) ?? "";
   return credentials;
 }
 
@@ -77,17 +86,17 @@ export async function getAuthConfig(
   return new Promise((resolve, reject) => {
     // If password flow is recognized
     if (validProfile.type === AuthType.Password) {
-      // The user-name value in the profile will not change, only display to be used
-      promptCredentials(validProfile.profile["user-name"] ?? "").then(
+      // The username value in the profile will not change, only display to be used
+      promptCredentials(validProfile.profile["username"] ?? "").then(
         (creds) => {
           if (!creds.user || !creds.password) {
             reject("Please enter username and password");
           }
           resolve({
             authType: "password",
-            host: validProfile.profile["sas-endpoint"],
-            clientID: validProfile.profile["client-id"] ?? "",
-            clientSecret: validProfile.profile["client-secret"] ?? "",
+            host: validProfile.profile["endpoint"],
+            clientID: validProfile.profile["clientId"] ?? "",
+            clientSecret: validProfile.profile["clientSecret"] ?? "",
             user: creds.user,
             password: creds.password,
           });
@@ -98,7 +107,7 @@ export async function getAuthConfig(
     if (validProfile.type === AuthType.TokenFile) {
       resolve({
         authType: "server",
-        host: validProfile.profile["sas-endpoint"],
+        host: validProfile.profile["endpoint"],
         token: validProfile.data ?? "",
         tokenType: "bearer",
       });

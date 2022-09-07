@@ -2,16 +2,11 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import { initStore } from "@sassoftware/restaf";
-import {
-  //computeSetup,
-  computeRun,
-  computeResults,
-} from "@sassoftware/restaflib";
+import { computeRun, computeResults } from "@sassoftware/restaflib";
 import { getAuthConfig } from "./auth";
 import { DEFAULT_COMPUTE_CONTEXT, ProfileConfig } from "./profile";
-import * as configuration from "../components/config";
 
-let authConfig, profileConfig, computeSession;
+let authConfig, profileConfig: ProfileConfig, computeSession;
 
 let store = initStore();
 
@@ -55,15 +50,10 @@ async function computeSetup(contextName, payload) {
 
 export async function setup(): Promise<void> {
   if (!profileConfig) {
-    profileConfig = new ProfileConfig(
-      configuration.getConfigFile(),
-      function () {
-        return {};
-      }
-    );
+    profileConfig = new ProfileConfig();
   }
   // retrieve active & valid profile
-  const activeProfile = await profileConfig.getActiveProfile();
+  const activeProfile = await profileConfig.getActiveProfileDetail();
   const validProfile = await profileConfig.validateProfile(activeProfile);
 
   if (!authConfig) {
@@ -90,7 +80,7 @@ export async function setup(): Promise<void> {
   }
   if (!computeSession) {
     computeSession = await computeSetup(
-      validProfile.computeContext ?? DEFAULT_COMPUTE_CONTEXT,
+      validProfile.profile.context ?? DEFAULT_COMPUTE_CONTEXT,
       authConfig
     ).catch((err) => {
       authConfig = undefined;

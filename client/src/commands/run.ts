@@ -20,8 +20,8 @@ function getCode(outputHtml: boolean): string {
 
 async function _run() {
   const outputHtml: boolean = workspace
-    .getConfiguration("SAS.session")
-    .get("outputHtml");
+    .getConfiguration("SAS.oDS")
+    .get("output");
   const code = getCode(outputHtml);
 
   await window.withProgress(

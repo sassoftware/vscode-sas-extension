@@ -1,9 +1,18 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
-import * as path from "path";
-import { window } from "vscode";
+import { readFileSync } from "fs";
+import { window, workspace, ConfigurationTarget } from "vscode";
+import { closeSession } from "../viya/compute";
+
+export const EXTENSION_CONFIG_KEY = "SAS";
+export const EXTENSION_DEFINE_PROFILES_CONFIG_KEY = "defineConnectionProfiles";
+export const EXTENSION_PROFILES_CONFIG_KEY = "profiles";
+export const EXTENSION_ACTIVE_PROFILE_CONFIG_KEY = "activeProfile";
+export const EMPTY_PROFILE: Profile = {
+  endpoint: "",
+  context: "",
+};
 
 /**
  * The default compute context that will be used to create a SAS session.
@@ -13,121 +22,31 @@ export const DEFAULT_COMPUTE_CONTEXT = "SAS Job Execution compute context";
 /**
  * Dictionary is a type that maps a generic object with a string key.
  */
-type Dictionary<T> = {
+export type Dictionary<T> = {
   [key: string]: T;
 };
-
-/**
- * ConfigFile is a configuration file manager that supports marshaling
- * a generic interface.
- */
-class ConfigFile<T> {
-  protected value: T | undefined;
-
-  constructor(
-    private filename: string,
-    private readonly defaultValue: () => T
-  ) {
-    this.getSync();
-  }
-
-  /**
-   * Retreives the configuration {@link T}
-   *
-   * @param reload {@link Boolean} reloads file before returning {@link T}
-   * @returns Promise<T>
-   */
-  async get(reload = false): Promise<T> {
-    return this.getSync(reload);
-  }
-
-  /**
-   * Synchronous get with optional reload if value is already set
-   * @param reload {@link Boolean} reloading configuration file
-   * @returns T
-   */
-  getSync(reload = false): T {
-    if (this.value && !reload) {
-      return this.value;
-    }
-
-    // if file exists, parse and set value
-    if (existsSync(this.filename)) {
-      const text = readFileSync(this.filename, "utf-8");
-      try {
-        this.value = JSON.parse(text.replace(/\\n$/g, ""));
-      } catch (e) {
-        window.showErrorMessage(
-          "Could not parse SAS Configuration, Please check your configuration file"
-        );
-      }
-
-      return this.value;
-    }
-
-    // if file does not exist, set default and
-    // update, which in turn creates the file.
-    this.updateSync(this.defaultValue());
-    return this.value;
-  }
-
-  /**
-   * Marshal's configuration file based on the T value
-   * @param value
-   */
-  async update(value: T): Promise<void> {
-    this.updateSync(value);
-  }
-
-  /**
-   * Marshal's configuration file based on the T value
-   * @param value
-   */
-  updateSync(value: T): void {
-    this.value = value;
-    const text = JSON.stringify(this.value, undefined, 2);
-
-    const dirname = path.dirname(this.filename);
-    mkdirSync(dirname, { recursive: true });
-    writeFileSync(this.filename, text);
-  }
-
-  /**
-   * Update the filename of the profileConfig.
-   *
-   * Due to a settings change, the profile configuration needs to reconfigure
-   * itself to a new file instead of recreating the profile configuration.
-   *
-   * @param filename {@link String} of the absolute path to configuration file
-   */
-  updateFile(filename: string) {
-    this.filename = filename;
-    this.getSync(true);
-  }
-}
 
 /**
  * Enum that represents the authentication type for a profile.
  */
 export enum AuthType {
-  TokenFile = "token-file",
+  TokenFile = "token",
   Password = "password",
   Error = "error",
 }
 
 /**
  * Profile is an interface that represents a users profile.  Currently
- * supports two different authentication flows, token-file and password
- * flow with the client-id and client-secret.
+ * supports two different authentication flows, token and password
+ * flow with the clientId and clientSecret.
  */
 export interface Profile {
-  "sas-endpoint": string;
-  "client-id"?: string;
-  "client-secret"?: string;
-  "compute-context"?: string;
-  "user-name"?: string;
-  "token-file"?: string;
-  active?: boolean;
+  endpoint: string;
+  clientId?: string;
+  clientSecret?: string;
+  context?: string;
+  username?: string;
+  token?: string;
 }
 
 /**
@@ -152,16 +71,114 @@ export interface ProfileValidation {
 
 /**
  * ProfileConfig extends {@link ConfigFile} to manage a configuration file
- * of {@link Profile}s.  Profiles are designed to keep track of multiple
+ * of {@link Profile}s. Connection Profiles are designed to keep track of multiple
  * configurations of SAS Connections.
  */
-export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
-  constructor(fn: string, df: () => Dictionary<Profile>) {
-    super(fn, df);
+export class ProfileConfig {
+  /**
+   * Validates settings.json to confirm that SAS.defineConnectionProfiles exists
+   * as a key, and updates it, if the setting does not exists
+   *
+   * @returns Boolean for pass or fail
+   */
+  validateSettings(): boolean {
+    const profileList: Dictionary<Profile> = workspace
+      .getConfiguration(EXTENSION_CONFIG_KEY)
+      .get(EXTENSION_DEFINE_PROFILES_CONFIG_KEY)[EXTENSION_PROFILES_CONFIG_KEY];
+    if (!profileList) {
+      workspace
+        .getConfiguration(EXTENSION_CONFIG_KEY)
+        .update(
+          EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+          {},
+          ConfigurationTarget.Global
+        );
+      return false;
+    }
+    return true;
   }
 
-  async length(): Promise<number> {
-    return Object.keys(this.value).length;
+  /**
+   * Get the active profile from the vscode settings.
+   *
+   * @returns String name to the configuration file
+   */
+  getActiveProfile(): string {
+    if (!this.validateSettings()) {
+      return "";
+    }
+    const activeProfile: string = workspace
+      .getConfiguration(EXTENSION_CONFIG_KEY)
+      .get(EXTENSION_DEFINE_PROFILES_CONFIG_KEY)[
+      EXTENSION_ACTIVE_PROFILE_CONFIG_KEY
+    ];
+    return activeProfile;
+  }
+
+  /**
+   * Gets all profiles from the vscode settings.
+   *
+   * @returns Dictionary of profiles
+   */
+  getAllProfiles(): Dictionary<Profile> {
+    if (!this.validateSettings()) {
+      return {};
+    }
+    const profileList: Dictionary<Profile> = workspace
+      .getConfiguration(EXTENSION_CONFIG_KEY)
+      .get(EXTENSION_DEFINE_PROFILES_CONFIG_KEY)[EXTENSION_PROFILES_CONFIG_KEY];
+
+    return profileList;
+  }
+
+  /**
+   * Update VSCode settings with profile dictionary
+   *
+   * @param profileDict {@link Dictionary<Profile>} the value for the key
+   */
+  async updateProfileSetting(profileDict: Dictionary<Profile>): Promise<void> {
+    const currentActiveProfile = this.getActiveProfile();
+    const profiles = {
+      activeProfile: currentActiveProfile,
+      profiles: profileDict,
+    };
+    await workspace
+      .getConfiguration(EXTENSION_CONFIG_KEY)
+      .update(
+        EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+        profiles,
+        ConfigurationTarget.Global
+      );
+  }
+
+  /**
+   * Update VSCode settings with active profile
+   *
+   * @param activeProfileParam {@link String} the value for the key
+   */
+  async updateActiveProfileSetting(activeProfileParam: string): Promise<void> {
+    const profileList = this.getAllProfiles();
+    closeSession();
+    const profiles = {
+      activeProfile: activeProfileParam,
+      profiles: profileList,
+    };
+    await workspace
+      .getConfiguration(EXTENSION_CONFIG_KEY)
+      .update(
+        EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+        profiles,
+        ConfigurationTarget.Global
+      );
+  }
+
+  /**
+   * Determines the number of profiles found in settings
+   *
+   * @returns number of profiles found in vscode settings
+   */
+  length(): number {
+    return Object.keys(this.getAllProfiles()).length;
   }
 
   /**
@@ -169,28 +186,8 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
    *
    * @returns List of profile names
    */
-  async listProfile(): Promise<string[]> {
-    return Object.keys(this.value);
-  }
-
-  /**
-   * Retrieves the {@link ProfileDetail} of the active profile set in the profile
-   * configurations.
-   *
-   * @returns Optional ProfileDetail
-   */
-  async getActiveProfile(): Promise<ProfileDetail | undefined> {
-    await this.get(true);
-    const profileList = this.value;
-    const active = Object.keys(profileList).find(function (name) {
-      return (
-        name in profileList &&
-        "active" in profileList[name] &&
-        profileList[name]["active"]
-      );
-    });
-    if (!active) return undefined;
-    return <ProfileDetail>{ name: active, profile: profileList[active] };
+  listProfile(): string[] {
+    return Object.keys(this.getAllProfiles());
   }
 
   /**
@@ -200,33 +197,66 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
    * @param name {@link String} of the profile name
    * @returns Profile object
    */
-  async getProfileByName(name: string): Promise<Profile> {
-    let profile: Profile = {
-      "sas-endpoint": "",
-      "compute-context": "",
-      active: false,
-    };
-    if (name in this.value) {
-      profile = this.value[name];
+  getProfileByName(name: string): Profile {
+    let profile = EMPTY_PROFILE;
+    const profileList = this.getAllProfiles();
+    if (name in profileList) {
+      profile = profileList[name];
     }
     return profile;
   }
 
   /**
-   * Sets the active profile by profile name in the profile configuration.
+   * Retrieves the {@link ProfileDetail} of the active profile set in the profile
+   * configurations.
    *
-   * Updates the profile configuration by enabling active on a specific profile and
-   * disabling active on all other profiles.  Once updated, the updated configuration
-   * will be marshaled.
+   * @returns Optional ProfileDetail
+   */
+  async getActiveProfileDetail(): Promise<ProfileDetail | undefined> {
+    const activeProfileName = this.getActiveProfile();
+
+    const profileList = this.getAllProfiles();
+    if (activeProfileName in profileList) {
+      return <ProfileDetail>{
+        name: activeProfileName,
+        profile: profileList[activeProfileName],
+      };
+    } else {
+      return undefined;
+    }
+  }
+
+  /**
+   * Upsert allows for add or update the new {@link Profile} into vscode settings.
+   *
+   * @param name {@link String} of the name of the profile
+   * @param profile {@link Profile} object
+   */
+  async upsertProfile(name: string, profile: Profile): Promise<void> {
+    this.sanitize(profile);
+    const profileList = this.getAllProfiles();
+    // Cannot mutate VSCode Config Object, create a clone and add that to settings.json
+    const newProfileList = { ...profileList };
+    newProfileList[name] = profile;
+    await this.updateProfileSetting(newProfileList);
+  }
+
+  /**
+   * Deletes a profile from the vscode settings.
    *
    * @param name {@link String} of the name of the profile
    */
-  async setActiveProfile(name: string): Promise<void> {
-    const profileList = this.value;
-    Object.keys(profileList).forEach(function (key) {
-      profileList[key]["active"] = name === key;
-    });
-    await this.update(profileList);
+  async deleteProfile(name: string): Promise<void> {
+    const profileList = this.getAllProfiles();
+    if (name in profileList) {
+      // Cannot mutate VSCode Config Object, create a clone and add that to settings.json
+      const newProfileList = { ...profileList };
+      delete newProfileList[name];
+      await this.updateProfileSetting(newProfileList);
+      if (name === this.getActiveProfile()) {
+        await this.updateActiveProfileSetting("");
+      }
+    }
   }
 
   /**
@@ -254,12 +284,12 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
       return pv;
     }
     pv.profile = profileDetail.profile;
-    if (profileDetail.profile["client-id"]) {
+    if (profileDetail.profile["clientId"]) {
       pv.type = AuthType.Password;
-    } else if (profileDetail.profile["token-file"]) {
+    } else if (profileDetail.profile["token"]) {
       pv.type = AuthType.TokenFile;
       try {
-        pv.data = readFileSync(profileDetail.profile["token-file"], "utf-8");
+        pv.data = readFileSync(profileDetail.profile["token"], "utf-8");
       } catch (err) {
         pv.error = `Please update profile (${profileDetail.name}): ${err.message}`;
         pv.type = AuthType.Error;
@@ -271,105 +301,63 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
   }
 
   /**
-   * Upsert allows for add or update the new {@link Profile} into the current profile confiugration.
-   *
-   * @param name {@link String} of the name of the profile
-   * @param profile {@link Profile} object
-   */
-  async upsertProfile(name: string, profile: Profile): Promise<void> {
-    this.sanitize(profile);
-    this.value[name] = profile;
-    await this.update(this.value);
-  }
-
-  /**
-   * Deletes a profile from the profile configuration.
-   *
-   * @param name {@link String} of the name of the profile
-   */
-  async deleteProfile(name: string): Promise<void> {
-    if (name in this.value) {
-      if (this.value[name]["active"]) {
-        this.updateActiveProfile();
-      }
-      delete this.value[name];
-      await this.update(this.value);
-    }
-  }
-
-  /**
-   * Updates the current active profile in the profile configuration by prompting
-   * the user for updated information.  The user prompts will provide the current
-   * object values to allow the user override any values needed to change.
-   */
-  async updateActiveProfile(): Promise<void> {
-    const profileList = this.value;
-    if ((await this.length()) === 0) {
-      const newProfile = await createInputTextBox(ProfilePromptType.NewProfile);
-      await this.prompt(newProfile);
-    }
-    await this.update(profileList);
-  }
-
-  /**
    * Requests users input on updating or adding a new profile.
    *
    * @param name the {@link String} represntation of the name of the profile
    * @param forceUpdate the {@link Boolean} of whether to prompt the user when value is already defined
    */
   async prompt(name: string, forceUpdate = false): Promise<void> {
+    const profileList = this.getAllProfiles();
     const profile =
-      name in this.value
-        ? this.value[name]
+      name in profileList
+        ? profileList[name]
         : <Profile>{
-            "sas-endpoint": "",
-            "client-id": "",
-            "client-secret": "",
-            "compute-context": "",
-            "user-name": "",
-            active: false,
+            endpoint: "",
+            clientId: "",
+            clientSecret: "",
+            context: "",
+            username: "",
           };
 
-    if (!profile["sas-endpoint"] || forceUpdate) {
-      profile["sas-endpoint"] = await createInputTextBox(
+    if (!profile["endpoint"] || forceUpdate) {
+      profile["endpoint"] = await createInputTextBox(
         ProfilePromptType.Endpoint,
-        profile["sas-endpoint"]
+        profile["endpoint"]
       );
     }
-    if (!profile["compute-context"] || forceUpdate) {
-      profile["compute-context"] = DEFAULT_COMPUTE_CONTEXT;
-      profile["compute-context"] = await createInputTextBox(
+    if (!profile["context"] || forceUpdate) {
+      profile["context"] = DEFAULT_COMPUTE_CONTEXT;
+      profile["context"] = await createInputTextBox(
         ProfilePromptType.ComputeContext,
-        profile["compute-context"]
+        profile["context"]
       );
     }
-    if (!profile["client-id"] || !profile["token-file"] || forceUpdate) {
-      profile["client-id"] = await createInputTextBox(
+    if (!profile["clientId"] || !profile["token"] || forceUpdate) {
+      profile["clientId"] = await createInputTextBox(
         ProfilePromptType.ClientId,
-        profile["client-id"]
+        profile["clientId"]
       );
     }
-    if (!profile["client-secret"] || !profile["token-file"] || forceUpdate) {
-      profile["client-secret"] = await createInputTextBox(
+    if (!profile["clientSecret"] || !profile["token"] || forceUpdate) {
+      profile["clientSecret"] = await createInputTextBox(
         ProfilePromptType.ClientSecret,
-        profile["client-secret"]
+        profile["clientSecret"]
       );
     }
-    if ((!profile["token-file"] || forceUpdate) && !profile["client-id"]) {
-      profile["token-file"] = await createInputTextBox(
+    if ((!profile["token"] || forceUpdate) && !profile["clientId"]) {
+      profile["token"] = await createInputTextBox(
         ProfilePromptType.TokenFile,
-        profile["token-file"]
+        profile["token"]
       );
     }
-    // The user-name field will only appear for non-token files, and will only update if the user runs the update profile command
-    if ((!profile["user-name"] || forceUpdate) && !profile["token-file"]) {
-      profile["user-name"] = await createInputTextBox(
+    // The username field will only appear for non-token files, and will only update if the user runs the update profile command
+    if ((!profile["username"] || forceUpdate) && !profile["token"]) {
+      profile["username"] = await createInputTextBox(
         ProfilePromptType.Username,
-        profile["user-name"]
+        profile["username"]
       );
     }
-    this.upsertProfile(name, profile);
-    this.setActiveProfile(name);
+    await this.upsertProfile(name, profile);
   }
 
   /**
@@ -378,11 +366,12 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
    * @param profile {@link Profile} object
    */
   private sanitize(profile: Profile) {
-    if (profile["client-id"]) {
-      delete profile["token-file"];
+    if (profile["clientId"]) {
+      delete profile["token"];
     } else {
-      delete profile["client-id"];
-      delete profile["client-secret"];
+      delete profile["clientId"];
+      delete profile["clientSecret"];
+      delete profile["username"];
     }
   }
 }
@@ -393,6 +382,7 @@ export class ProfileConfig extends ConfigFile<Dictionary<Profile>> {
 export interface ProfilePrompt {
   title: string;
   placeholder: string;
+  description: string;
 }
 
 /**
@@ -407,7 +397,6 @@ export enum ProfilePromptType {
   ClientSecret,
   Username,
   Password,
-  ConfigFile,
   TokenFile,
 }
 
@@ -434,17 +423,26 @@ export function getProfilePrompt(type: ProfilePromptType): ProfilePrompt {
  * @param profilePromptType {@link ProfilePromptType}
  * @param defaultValue the {@link String} of the default value that will be represented in the input box. Defaults to null
  * @param maskValue the {@link boolean} if the input value will be masked
+ * @param username the {@link String} of the SAS User ID
  * @returns Thenable<{@link String}> of the users input
  */
 export async function createInputTextBox(
   profilePromptType: ProfilePromptType,
   defaultValue: string | undefined = null,
-  maskValue = false
+  maskValue = false,
+  username: string | undefined = null
 ): Promise<Thenable<string | undefined>> {
   const profilePrompt = getProfilePrompt(profilePromptType);
+  let placeHolderText = profilePrompt.placeholder;
+  let descriptionText = profilePrompt.description;
+  if (profilePromptType === ProfilePromptType.Password) {
+    placeHolderText += `${username}`;
+    descriptionText += `${username}.`;
+  }
   const entered = await window.showInputBox({
     title: profilePrompt.title,
-    placeHolder: profilePrompt.placeholder,
+    placeHolder: placeHolderText,
+    prompt: descriptionText,
     password: maskValue,
     value: defaultValue,
     ignoreFocusOut: true,
@@ -457,43 +455,52 @@ export async function createInputTextBox(
  */
 const input: ProfilePromptInput = {
   [ProfilePromptType.Profile]: {
-    title: "Select a profile",
-    placeholder: "Select Profile Name...",
+    title: "Switch Current SAS Profile",
+    placeholder: "Select a SAS connection profile",
+    description: "",
   },
   [ProfilePromptType.NewProfile]: {
-    title: "Please enter new profile name",
-    placeholder: "Enter New Profile Name...",
+    title: "New SAS Connection Profile Name",
+    placeholder: "Enter connection name",
+    description:
+      "You can also specify connection profile using the settings.json file.",
   },
   [ProfilePromptType.Endpoint]: {
-    title: "Endpoint for new profile (e.g. https://example.sas.com)",
-    placeholder: "Enter endpoint...",
+    title: "SAS Viya Server",
+    placeholder: "Enter the URL",
+    description:
+      "Enter the URL for the SAS Viya server. An example is https://example.sas.com.",
   },
   [ProfilePromptType.ComputeContext]: {
-    title: "Compute Context",
-    placeholder: "Enter Compute Context...",
+    title: "SAS Compute Context",
+    placeholder: "Enter the SAS compute context",
+    description: "Enter the SAS compute context.",
   },
   [ProfilePromptType.ClientId]: {
-    title: "Client ID (Leave empty for token flow)",
-    placeholder: "Enter New Client ID...",
+    title: "Client ID",
+    placeholder: "Enter a client ID",
+    description:
+      "Enter the registered client ID. An example is myapp.client. If using a token file, leave field blank.",
   },
   [ProfilePromptType.ClientSecret]: {
     title: "Client Secret",
-    placeholder: "Enter Client Secret...",
+    placeholder: "Enter a client secret",
+    description: "Enter secret for client ID. An example is myapp.secret.",
   },
   [ProfilePromptType.Username]: {
-    title: "SAS Username",
-    placeholder: "Enter a SAS Username...",
+    title: "SAS User ID",
+    placeholder: "Enter your SAS User ID",
+    description: "Enter your SAS User ID.",
   },
   [ProfilePromptType.Password]: {
     title: "SAS Password",
-    placeholder: "Enter a SAS Password...",
-  },
-  [ProfilePromptType.ConfigFile]: {
-    title: "SAS Profile Config Path",
-    placeholder: "Enter Config File Path...",
+    placeholder: "Enter your SAS Password for the User ID ",
+    description: "Enter your SAS Password for the User ID ",
   },
   [ProfilePromptType.TokenFile]: {
-    title: "SAS Token File Path",
-    placeholder: "Enter Token File Path...",
+    title: "SAS Access Token",
+    placeholder: "Enter the path to the SAS token file",
+    description:
+      "Enter the path for the local file that contains the SAS access token value. If using a client ID and client secret, leave field blank.",
   },
 };

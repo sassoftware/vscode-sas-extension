@@ -13,8 +13,6 @@ import {
   workspace,
 } from "vscode";
 import { closeSession } from "../commands/closeSession";
-import * as configuration from "../components/config";
-import { createOrReplaceWatcher } from "../components/activeProfileTracker";
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -30,10 +28,8 @@ import {
   deleteProfile,
   validateProfileAndRun,
 } from "../commands/profile";
-import { FSWatcher } from "fs";
 
 let client: LanguageClient;
-let profileConfigFileWatcher: FSWatcher;
 // Create Profile status bar item
 const activeProfileStatusBarIcon = window.createStatusBarItem(
   StatusBarAlignment.Left,
@@ -74,20 +70,20 @@ export function activate(context: ExtensionContext): void {
     clientOptions
   );
 
-  activeProfileStatusBarIcon.command = "SAS.session.switchProfile";
+  activeProfileStatusBarIcon.command = "SAS.switchProfile";
 
   // Start the client. This will also launch the server
   client.start();
 
   context.subscriptions.push(
-    commands.registerCommand("SAS.session.run", validateProfileAndRun),
-    commands.registerCommand("SAS.session.close", () =>
-      closeSession("Session Closed!")
+    commands.registerCommand("SAS.run", validateProfileAndRun),
+    commands.registerCommand("SAS.close", () =>
+      closeSession("The SAS session has closed.")
     ),
-    commands.registerCommand("SAS.session.switchProfile", switchProfile),
-    commands.registerCommand("SAS.session.addProfile", addProfile),
-    commands.registerCommand("SAS.session.deleteProfile", deleteProfile),
-    commands.registerCommand("SAS.session.updateProfile", updateProfile),
+    commands.registerCommand("SAS.switchProfile", switchProfile),
+    commands.registerCommand("SAS.addProfile", addProfile),
+    commands.registerCommand("SAS.deleteProfile", deleteProfile),
+    commands.registerCommand("SAS.updateProfile", updateProfile),
     languages.registerDocumentSemanticTokensProvider(
       { language: "sas-log" },
       LogTokensProvider,
@@ -98,47 +94,29 @@ export function activate(context: ExtensionContext): void {
 
   // Reset first to set "No Active Profiles"
   resetStatusBarItem(activeProfileStatusBarIcon);
-  // Update status bar if profile can be recognized
+  // Update status bar if profile is found
   updateStatusBarProfile(activeProfileStatusBarIcon);
-
-  // Set initial watcher to update if user manually updates configuration file
-  profileConfigFileWatcher = createOrReplaceWatcher(
-    profileConfigFileWatcher,
-    configuration.getConfigFile(),
-    () => {
-      updateStatusBarProfile(activeProfileStatusBarIcon);
-    }
-  );
 
   // If configFile setting is changed, update watcher to watch new configuration file
   workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-    if (event.affectsConfiguration("SAS.session.configFile")) {
-      const newConfigFile = configuration.getConfigFile();
-      closeSession("SAS Config File location changed");
-      profileConfig.updateFile(newConfigFile);
+    if (event.affectsConfiguration("SAS.defineConnectionProfiles")) {
       updateStatusBarProfile(activeProfileStatusBarIcon);
-      profileConfigFileWatcher = createOrReplaceWatcher(
-        profileConfigFileWatcher,
-        newConfigFile,
-        () => {
-          updateStatusBarProfile(activeProfileStatusBarIcon);
-        }
-      );
     }
   });
 }
 
 async function updateStatusBarProfile(profileStatusBarIcon: StatusBarItem) {
-  const currentProfile = await profileConfig.getActiveProfile();
-  if (!currentProfile) {
+  const activeProfileName = profileConfig.getActiveProfile();
+  const activeProfile = profileConfig.getProfileByName(activeProfileName);
+  if (activeProfileName === "") {
     resetStatusBarItem(profileStatusBarIcon);
-    return;
+  } else {
+    updateStatusBarItem(
+      profileStatusBarIcon,
+      `${activeProfileName}`,
+      `${activeProfileName}\n${activeProfile.endpoint}`
+    );
   }
-  updateStatusBarItem(
-    profileStatusBarIcon,
-    `${currentProfile.name}`,
-    `SAS Profile: ${currentProfile.name}\n${currentProfile.profile["sas-endpoint"]}`
-  );
 }
 
 function updateStatusBarItem(
@@ -146,14 +124,14 @@ function updateStatusBarItem(
   text: string,
   tooltip: string
 ): void {
-  statusBarItem.text = text;
+  statusBarItem.text = `$(account) ${text}`;
   statusBarItem.tooltip = tooltip;
   statusBarItem.show();
 }
 
 function resetStatusBarItem(statusBarItem: StatusBarItem): void {
-  statusBarItem.text = "No Active Profiles Found";
-  statusBarItem.tooltip = "";
+  statusBarItem.text = "$(debug-disconnect) No Profile";
+  statusBarItem.tooltip = "No SAS Connection Profile";
   statusBarItem.show();
 }
 

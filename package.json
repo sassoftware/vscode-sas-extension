@@ -3,14 +3,20 @@
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
   "version": "0.0.6",
-  "categories": ["Programming Languages", "Data Science", "Machine Learning"],
+  "categories": [
+    "Programming Languages",
+    "Data Science",
+    "Machine Learning"
+  ],
   "publisher": "SAS",
   "license": "SAS Code Extension Terms",
   "icon": "icons/sas.png",
   "engines": {
     "vscode": "^1.66.0"
   },
-  "activationEvents": ["onLanguage:sas"],
+  "activationEvents": [
+    "onLanguage:sas"
+  ],
   "main": "./client/dist/node/extension",
   "browser": "./client/dist/browser/extension",
   "capabilities": {
@@ -104,86 +110,139 @@
     ],
     "configuration": [
       {
-        "title": "%configuration.SAS.session.title.general%",
+        "title": "%configuration.SAS.title%",
+        "order": 0,
+        "id": "connectionProfiles",
         "properties": {
-          "SAS.session.configFile": {
-            "type": "string",
-            "description": "%configuration.SAS.session.configFile%"
-          },
-          "SAS.session.outputHtml": {
+          "SAS.oDS.output": {
+            "order": 0,
             "type": "boolean",
             "default": true,
-            "description": "%configuration.SAS.session.outputHtml%"
+            "description": "%configuration.SAS.oDS.output%"
+          },
+          "SAS.defineConnectionProfiles": {
+            "order": 1,
+            "type": "object",
+            "description": "%configuration.SAS.defineConnectionProfiles%",
+            "scope": "application",
+            "properties": {
+              "activeProfile": {
+                "order": 0,
+                "type": "string",
+                "description": "%configuration.SAS.profiles.activeProfile%",
+                "default": ""
+              },
+              "profiles": {
+                "order": 1,
+                "type": "object",
+                "description": "%configuration.SAS.profiles.profiles%",
+                "properties": {
+                  "endpoint": {
+                    "type": "string",
+                    "default": "",
+                    "description": "SAS Viya Connection Profile Endpoint"
+                  },
+                  "username": {
+                    "type": "string",
+                    "default": "",
+                    "description": "SAS Viya User ID"
+                  },
+                  "token": {
+                    "type": "string",
+                    "default": ""
+                  },
+                  "context": {
+                    "type": "string",
+                    "default": "SAS Job Execution compute context",
+                    "description": "SAS Viya Context"
+                  },
+                  "clientId": {
+                    "type": "string",
+                    "default": "",
+                    "description": "SAS Viya Client ID"
+                  },
+                  "clientSecret": {
+                    "type": "string",
+                    "default": "",
+                    "description": "SAS Viya Client Secret"
+                  }
+                }
+              }
+            }
           }
         }
       }
     ],
     "commands": [
       {
-        "command": "SAS.session.run",
-        "title": "%commands.SAS.session.run%",
+        "command": "SAS.run",
+        "title": "%commands.SAS.run%",
         "icon": {
           "light": "icons/light/submitSASCode.svg",
           "dark": "icons/dark/submitSASCode.svg"
         },
-        "category": "SAS Session"
+        "category": "SAS"
       },
       {
-        "command": "SAS.session.close",
-        "title": "%commands.SAS.session.close%",
+        "command": "SAS.close",
+        "title": "%commands.SAS.close%",
         "icon": {
           "light": "icons/light/disconnect.svg",
           "dark": "icons/dark/disconnect.svg"
         },
-        "category": "SAS Session"
+        "category": "SAS"
       },
       {
-        "command": "SAS.session.switchProfile",
-        "title": "%commands.SAS.session.switchProfile%",
-        "category": "SAS Session"
+        "command": "SAS.switchProfile",
+        "title": "%commands.SAS.switchProfile%",
+        "category": "SAS"
       },
       {
-        "command": "SAS.session.addProfile",
-        "title": "%commands.SAS.session.addProfile%",
-        "category": "SAS Session"
+        "command": "SAS.addProfile",
+        "title": "%commands.SAS.addProfile%",
+        "category": "SAS"
       },
       {
-        "command": "SAS.session.deleteProfile",
-        "title": "%commands.SAS.session.deleteProfile%",
-        "category": "SAS Session"
+        "command": "SAS.deleteProfile",
+        "title": "%commands.SAS.deleteProfile%",
+        "category": "SAS"
       },
       {
-        "command": "SAS.session.updateProfile",
-        "title": "%commands.SAS.session.updateProfile%",
-        "category": "SAS Session"
+        "command": "SAS.updateProfile",
+        "title": "%commands.SAS.updateProfile%",
+        "category": "SAS"
       }
     ],
     "menus": {
       "editor/title/run": [
         {
           "when": "editorFocus && editorLangId == sas && !isWeb",
-          "command": "SAS.session.run"
+          "command": "SAS.run"
         }
       ],
       "editor/title": [
         {
           "when": "editorLangId == sas && !isWeb",
-          "command": "SAS.session.close",
+          "command": "SAS.close",
           "group": "navigation"
         }
       ],
       "commandPalette": [
         {
           "when": "editorLangId == sas && !isWeb",
-          "command": "SAS.session.run"
+          "command": "SAS.run"
         }
       ]
     },
     "languages": [
       {
         "id": "sas",
-        "aliases": ["SAS"],
-        "extensions": [".sas"],
+        "aliases": [
+          "SAS"
+        ],
+        "extensions": [
+          ".sas"
+        ],
         "icon": {
           "dark": "icons/dark/sasProgramFile.svg",
           "light": "icons/light/sasProgramFile.svg"
