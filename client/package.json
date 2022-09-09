@@ -1,21 +1,319 @@
 {
-  "name": "sas-lsp-client",
-  "description": "VS Code client for SAS language server",
-  "author": "SAS Institute Inc.",
-  "license": "SAS Code Extension Terms",
-  "version": "0.0.1",
+  "name": "sas-lsp",
+  "displayName": "SAS",
+  "description": "Official SAS Language Extension for VS Code",
+  "version": "0.0.6",
+  "categories": [
+    "Programming Languages",
+    "Data Science",
+    "Machine Learning"
+  ],
   "publisher": "SAS",
+  "license": "SAS Code Extension Terms",
+  "icon": "icons/sas.png",
   "engines": {
     "vscode": "^1.66.0"
   },
-  "dependencies": {
-    "vscode-languageclient": "^8.0.1",
-    "chokidar": "^3.5.3",
-    "@sassoftware/restaf": "^4.1.0",
-    "@sassoftware/restaflib": "^4.1.0"
+  "activationEvents": [
+    "onLanguage:sas"
+  ],
+  "main": "./client/dist/node/extension",
+  "browser": "./client/dist/browser/extension",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": true
+  },
+  "contributes": {
+    "semanticTokenTypes": [
+      {
+        "id": "date",
+        "superType": "numeric",
+        "description": "Date"
+      },
+      {
+        "id": "time",
+        "superType": "numeric",
+        "description": "Time"
+      },
+      {
+        "id": "dt",
+        "superType": "numeric",
+        "description": "DateTime"
+      },
+      {
+        "id": "format",
+        "superType": "decorator",
+        "description": "Format"
+      },
+      {
+        "id": "namelit",
+        "superType": "string",
+        "description": "Name literal"
+      },
+      {
+        "id": "numeric",
+        "superType": "number",
+        "description": "Numeric"
+      },
+      {
+        "id": "bitmask",
+        "superType": "string",
+        "description": "Bit mask"
+      },
+      {
+        "id": "hex",
+        "superType": "number",
+        "description": "Hexadecimal notation"
+      },
+      {
+        "id": "sep",
+        "superType": "operator",
+        "description": "Separator"
+      },
+      {
+        "id": "macro-sec-keyword",
+        "superType": "macro",
+        "description": "SAS Macro Section Keyword"
+      },
+      {
+        "id": "macro-ref",
+        "superType": "variable",
+        "description": "SAS Macro Reference"
+      },
+      {
+        "id": "macro-keyword",
+        "superType": "keyword",
+        "description": "SAS Macro Keyword"
+      },
+      {
+        "id": "macro-comment",
+        "superType": "comment",
+        "description": "SAS Macro Comment"
+      },
+      {
+        "id": "sec-keyword",
+        "superType": "function",
+        "description": "SAS Section keyword"
+      },
+      {
+        "id": "proc-name",
+        "superType": "function",
+        "description": "Name of the proc"
+      },
+      {
+        "id": "cards-data",
+        "superType": "parameter",
+        "description": "Card data"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "%configuration.SAS.title%",
+        "order": 0,
+        "id": "connectionProfiles",
+        "properties": {
+          "SAS.oDS.output": {
+            "order": 0,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.oDS.output%"
+          },
+          "SAS.defineConnectionProfiles": {
+            "order": 1,
+            "type": "object",
+            "description": "%configuration.SAS.defineConnectionProfiles%",
+            "scope": "application",
+            "properties": {
+              "activeProfile": {
+                "order": 0,
+                "type": "string",
+                "description": "%configuration.SAS.profiles.activeProfile%",
+                "default": ""
+              },
+              "profiles": {
+                "order": 1,
+                "type": "object",
+                "description": "%configuration.SAS.profiles.profiles%",
+                "properties": {
+                  "endpoint": {
+                    "type": "string",
+                    "default": "",
+                    "description": "SAS Viya Connection Profile Endpoint"
+                  },
+                  "username": {
+                    "type": "string",
+                    "default": "",
+                    "description": "SAS Viya User ID"
+                  },
+                  "token": {
+                    "type": "string",
+                    "default": ""
+                  },
+                  "context": {
+                    "type": "string",
+                    "default": "SAS Job Execution compute context",
+                    "description": "SAS Viya Context"
+                  },
+                  "clientId": {
+                    "type": "string",
+                    "default": "",
+                    "description": "SAS Viya Client ID"
+                  },
+                  "clientSecret": {
+                    "type": "string",
+                    "default": "",
+                    "description": "SAS Viya Client Secret"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ],
+    "commands": [
+      {
+        "command": "SAS.run",
+        "title": "%commands.SAS.run%",
+        "icon": {
+          "light": "icons/light/submitSASCode.svg",
+          "dark": "icons/dark/submitSASCode.svg"
+        },
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.close",
+        "title": "%commands.SAS.close%",
+        "icon": {
+          "light": "icons/light/disconnect.svg",
+          "dark": "icons/dark/disconnect.svg"
+        },
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.switchProfile",
+        "title": "%commands.SAS.switchProfile%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.addProfile",
+        "title": "%commands.SAS.addProfile%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.deleteProfile",
+        "title": "%commands.SAS.deleteProfile%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.updateProfile",
+        "title": "%commands.SAS.updateProfile%",
+        "category": "SAS"
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "when": "editorFocus && editorLangId == sas && !isWeb",
+          "command": "SAS.run"
+        }
+      ],
+      "editor/title": [
+        {
+          "when": "editorLangId == sas && !isWeb",
+          "command": "SAS.close",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "when": "editorLangId == sas && !isWeb",
+          "command": "SAS.run"
+        }
+      ]
+    },
+    "languages": [
+      {
+        "id": "sas",
+        "aliases": [
+          "SAS"
+        ],
+        "extensions": [
+          ".sas"
+        ],
+        "icon": {
+          "dark": "icons/dark/sasProgramFile.svg",
+          "light": "icons/light/sasProgramFile.svg"
+        },
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "sas-log"
+      }
+    ],
+    "themes": [
+      {
+        "label": "SAS Light",
+        "uiTheme": "vs",
+        "path": "./themes/sas-light-color-theme.json"
+      },
+      {
+        "label": "SAS Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/sas-dark-color-theme.json"
+      },
+      {
+        "label": "SAS High Contrast",
+        "uiTheme": "hc-black",
+        "path": "./themes/sas-highcontrast-color-theme.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "sas",
+        "path": "./snippets/proc-snippets.json"
+      },
+      {
+        "language": "sas",
+        "path": "./snippets/function-snippets.json"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sassoftware/vscode-sas-extension"
+  },
+  "bugs": {
+    "url": "https://github.com/sassoftware/vscode-sas-extension/issues"
+  },
+  "homepage": "https://www.sas.com",
+  "qna": "https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp&ssr=false#qna",
+  "scripts": {
+    "vscode:prepublish": "npm run lint && npm run compile && npm run compile-browser",
+    "lint": "node node_modules/eslint/bin/eslint.js ./client/src/**/*.ts ./server/src/**/*.ts",
+    "compile": "node ./tools/build.js",
+    "watch": "node ./tools/build.js dev",
+    "compile-browser": "webpack --mode production",
+    "watch-browser": "webpack --watch",
+    "pretest": "npm run compile && tsc -p ./client",
+    "test": "node ./client/out/test/runTest.js",
+    "postinstall": "cd client && npm install && cd ../server && npm install && cd .."
   },
   "devDependencies": {
-    "@types/vscode": "^1.66.0",
-    "@vscode/test-electron": "^1.6.2"
+    "@types/mocha": "^8.2.2",
+    "@types/node": "^12.12.0",
+    "@typescript-eslint/eslint-plugin": "^4.23.0",
+    "@typescript-eslint/parser": "^4.23.0",
+    "chai": "^4.3.6",
+    "esbuild": "^0.13.15",
+    "eslint": "^7.26.0",
+    "mocha": "^10.0.0",
+    "path-browserify": "^1.0.1",
+    "ts-loader": "^9.2.3",
+    "typescript": "^4.4.3",
+    "webpack": "^5.44.0",
+    "webpack-cli": "^4.7.2"
   }
 }
