@@ -12,5 +12,5 @@ export async function openDoc(docUri: vscode.Uri): Promise<void> {
 }
 
 async function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

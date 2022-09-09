@@ -1,0 +1,2 @@
+// take default
+module.exports = {};

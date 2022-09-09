@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.0.7 (26 Jul 2022)
+
+### Feature
+
+- Support run selected SAS code
+
 ## v0.0.6 (8 Jul 2022)
 
 ### Fix

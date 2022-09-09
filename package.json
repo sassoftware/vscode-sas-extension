@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "categories": [
     "Programming Languages",
     "Data Science",
@@ -184,11 +184,20 @@
         "category": "SAS"
       },
       {
-        "command": "SAS.close",
-        "title": "%commands.SAS.close%",
+        "command": "SAS.session.runSelected",
+        "title": "%commands.SAS.session.runSelected%",
         "icon": {
-          "light": "icons/light/disconnect.svg",
-          "dark": "icons/dark/disconnect.svg"
+          "light": "icons/light/submitSASCode.svg",
+          "dark": "icons/dark/submitSASCode.svg"
+        },
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.session.close",
+        "title": "%commands.SAS.session.close%",
+        "icon": {
+          "light": "icons/light/connectorNodeIndicator.svg",
+          "dark": "icons/dark/connectorNodeIndicator.svg"
         },
         "category": "SAS"
       },
@@ -220,6 +229,18 @@
           "command": "SAS.run"
         }
       ],
+      "editor/context": [
+        {
+          "when": "editorFocus && editorLangId == sas && !isWeb",
+          "command": "SAS.session.run",
+          "group": "navigation"
+        },
+        {
+          "when": "editorHasSelection && !editorHasMultipleSelections && editorLangId == sas && !isWeb",
+          "command": "SAS.session.runSelected",
+          "group": "navigation"
+        }
+      ],
       "editor/title": [
         {
           "when": "editorLangId == sas && !isWeb",
@@ -231,6 +252,10 @@
         {
           "when": "editorLangId == sas && !isWeb",
           "command": "SAS.run"
+        },
+        {
+          "when": "editorHasSelection && !editorHasMultipleSelections && editorLangId == sas && !isWeb",
+          "command": "SAS.runSelected"
         }
       ]
     },
@@ -297,6 +322,8 @@
     "watch": "node ./tools/build.js dev",
     "compile-browser": "webpack --mode production",
     "watch-browser": "webpack --watch",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
     "pretest": "npm run compile && tsc -p ./client",
     "test": "node ./client/out/test/runTest.js",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd .."
@@ -310,6 +337,7 @@
     "esbuild": "^0.13.15",
     "eslint": "^7.26.0",
     "mocha": "^10.0.0",
+    "prettier": "^2.7.1",
     "path-browserify": "^1.0.1",
     "ts-loader": "^9.2.3",
     "typescript": "^4.4.3",
