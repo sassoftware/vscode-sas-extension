@@ -56,7 +56,7 @@ export async function setup(): Promise<void> {
   const activeProfile = await profileConfig.getActiveProfileDetail();
   const validProfile = await profileConfig.validateProfile(activeProfile);
 
-  if (!authConfig) {
+  if (!authConfig && validProfile) {
     authConfig = await getAuthConfig(validProfile);
   }
   if (computeSession) {

@@ -6,6 +6,10 @@ import {
   AuthType,
   ProfilePromptType,
   createInputTextBox,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  Profile,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  ProfileConfig
 } from "./profile";
 
 /**

@@ -108,7 +108,7 @@ export function activate(context: ExtensionContext): void {
 async function updateStatusBarProfile(profileStatusBarIcon: StatusBarItem) {
   const activeProfileName = profileConfig.getActiveProfile();
   const activeProfile = profileConfig.getProfileByName(activeProfileName);
-  if (activeProfileName === "") {
+  if (!activeProfile) {
     resetStatusBarItem(profileStatusBarIcon);
   } else {
     updateStatusBarItem(

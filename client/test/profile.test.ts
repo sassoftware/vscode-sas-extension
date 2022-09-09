@@ -4,117 +4,95 @@ import {
   getProfilePrompt,
   ProfilePromptType,
   AuthType,
+  EXTENSION_CONFIG_KEY,
+  EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
 } from "../src/viya/profile";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import { expect } from "chai";
 import path = require("path");
+import { ConfigurationTarget, workspace } from "vscode";
 
 let testProfileName: string;
 let testProfileNewName: string;
 let testProfile: string;
 let testToken: string;
 let profileConfig: ProfileConfig;
-let testProfileClientId: ProfileConfig;
-let testProfileTokenFile: ProfileConfig;
-let testOverloadedProfile: ProfileConfig;
-let testEmptyProfile: ProfileConfig;
-let testEmptyItemsProfile: ProfileConfig;
+let testProfileClientId;
+let testProfileTokenFile;
+let testOverloadedProfile;
+let testEmptyProfile;
+let testEmptyItemsProfile;
 
 async function initProfile(): Promise<void> {
-  profileConfig = new ProfileConfig(testProfile, function () {
-    return {};
-  });
-  // initializes profileConfig
-  await profileConfig.get();
+  profileConfig = new ProfileConfig();
 }
 
 describe("Profiles", async function () {
   before(async () => {
-    testProfile = path.join(
-      __dirname,
-      "..",
-      "..",
-      "testFixture",
-      "testProfile.json"
-    );
+    await workspace
+      .getConfiguration(EXTENSION_CONFIG_KEY)
+      .update(
+        EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+        undefined,
+        ConfigurationTarget.Global
+      );
     testToken = path.resolve(
       path.join(__dirname, "..", "..", "testFixture", "TestToken.txt")
     );
-    testProfileClientId = <ProfileConfig>(
-      (<undefined>(
-        readFileSync(
-          path.join(
-            __dirname,
-            "..",
-            "..",
-            "testFixture",
-            "profiles",
-            "testProfileClientId.json"
-          ),
-          { encoding: "utf-8" }
-        )
-      ))
-    );
-    testProfileTokenFile = <ProfileConfig>(
-      (<undefined>(
-        readFileSync(
-          path.join(
-            __dirname,
-            "..",
-            "..",
-            "testFixture",
-            "profiles",
-            "testProfileTokenFile.json"
-          ),
-          { encoding: "utf-8" }
-        )
-      ))
-    );
-    testEmptyProfile = <ProfileConfig>(
-      (<undefined>(
-        readFileSync(
-          path.join(
-            __dirname,
-            "..",
-            "..",
-            "testFixture",
-            "profiles",
-            "testEmptyProfile.json"
-          ),
-          { encoding: "utf-8" }
-        )
-      ))
-    );
-    testEmptyItemsProfile = <ProfileConfig>(
-      (<undefined>(
-        readFileSync(
-          path.join(
-            __dirname,
-            "..",
-            "..",
-            "testFixture",
-            "profiles",
-            "testEmptyItemsProfile.json"
-          ),
-          { encoding: "utf-8" }
-        )
-      ))
-    );
-    testOverloadedProfile = <ProfileConfig>(
-      (<undefined>(
-        readFileSync(
-          path.join(
-            __dirname,
-            "..",
-            "..",
-            "testFixture",
-            "profiles",
-            "testOverloadedProfile.json"
-          ),
-          { encoding: "utf-8" }
-        )
-      ))
-    );
+    testProfileClientId = {
+      "activeProfile": "",
+      "profiles": {
+        "testProfile": {
+          "endpoint": "https://test-host.sas.com",
+          "clientId": "sas.test",
+          "clientSecret": "",
+          "context": "SAS Studio context",
+          "username": "sastest"
+        }
+      }
+    };
+    testProfileTokenFile = {
+      "activeProfile": "",
+      "profiles": {
+        "testProfile": {
+          "endpoint": "https://test-host.sas.com",
+          "context": "SAS Studio context",
+          "token": "path/to/token.txt"
+        }
+      }
+    };
+    testEmptyProfile = {
+      "activeProfile": "",
+      "profiles": {
+        "testProfile": {}
+      }
+    };
+    testEmptyItemsProfile = {
+      "activeProfile": "",
+      "profiles": {
+        "testProfile": {
+          "endpoint": "",
+          "token": "",
+          "context": "",
+          "username": "",
+          "clientId": "",
+          "clientSecret": ""
+        }
+      }
+    };
+    testOverloadedProfile = {
+      "activeProfile": "",
+      "profiles": {
+        "testProfile": {
+          "endpoint": "https://test-host.sas.com",
+          "clientId": "sas.test",
+          "clientSecret": "",
+          "context": "SAS Studio context",
+          "username": "sastest",
+          "token": "path/to/token.txt"
+        }
+      }
+    };
   });
 
   afterEach(async () => {
@@ -123,9 +101,6 @@ describe("Profiles", async function () {
     }
     if (testProfileNewName) {
       testProfileNewName = "";
-    }
-    if (existsSync(testProfile)) {
-      unlinkSync(testProfile);
     }
   });
 
@@ -147,9 +122,9 @@ describe("Profiles", async function () {
       it("add a new profile", async function () {
         // Arrange
         // Act
-        profileConfig.upsertProfile(testProfileNewName, <Profile>{
-          "compute-context": "https://test-host.sas.com",
-          "sas-endpoint": "SAS Studio context",
+        await profileConfig.upsertProfile(testProfileNewName, <Profile>{
+          endpoint: "https://test-host.sas.com",
+          context: "SAS Studio context",
         });
         const profiles = await profileConfig.listProfile();
 
@@ -170,16 +145,22 @@ describe("Profiles", async function () {
     beforeEach(async () => {
       testProfileName = "testProfile";
       testProfileNewName = "testProfile2";
-      writeFileSync(testProfile, testProfileClientId);
-      initProfile();
+      await initProfile();
+      await workspace
+        .getConfiguration(EXTENSION_CONFIG_KEY)
+        .update(
+          EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+          testProfileClientId,
+          ConfigurationTarget.Global
+        );
     });
     describe("CRUD Operations", async function () {
       it("add a new profile", async function () {
         // Arrange
         // Act
-        profileConfig.upsertProfile(testProfileNewName, <Profile>{
-          "compute-context": "https://test-host.sas.com",
-          "sas-endpoint": "SAS Studio context",
+        await profileConfig.upsertProfile(testProfileNewName, <Profile>{
+          endpoint: "https://test-host.sas.com",
+          context: "SAS Studio context",
         });
         const profiles = await profileConfig.listProfile();
 
@@ -207,7 +188,7 @@ describe("Profiles", async function () {
       it("list the expected profiles", async function () {
         // Arrange
         // Act
-        const profileList = await profileConfig.listProfile();
+        const profileList = profileConfig.listProfile();
 
         // Assert
         expect(profileList).to.eql(
@@ -224,19 +205,19 @@ describe("Profiles", async function () {
         );
 
         // Assert
-        expect(testProfile["sas-endpoint"]).to.equal(
+        expect(testProfile["endpoint"]).to.equal(
           "https://test-host.sas.com",
           "Host is not matching"
         );
-        expect(testProfile["client-id"]).to.equal(
+        expect(testProfile["clientId"]).to.equal(
           "sas.test",
           "Client ID is not matching"
         );
-        expect(testProfile["client-secret"]).to.equal(
+        expect(testProfile["clientSecret"]).to.equal(
           "",
           "Client Secret is not matching"
         );
-        expect(testProfile["compute-context"]).to.equal(
+        expect(testProfile["context"]).to.equal(
           "SAS Studio context",
           "Compute Context is not matching"
         );
@@ -248,35 +229,47 @@ describe("Profiles", async function () {
 
         // Act
         // update profile manually
-        testProfile["sas-endpoint"] = "https://test2-host.sas.com";
+        testProfile["endpoint"] = "https://test2-host.sas.com";
+        await profileConfig.upsertProfile(testProfileName, testProfile);
         testProfile = await profileConfig.getProfileByName(testProfileName);
 
         // Assert
-        // validate host has changed and client-id and token-file is still empty
-        expect(testProfile["sas-endpoint"]).to.equal(
-          "https://test2-host.sas.com"
-        );
-        expect(testProfile["client-id"]).to.equal("sas.test");
-        expect(testProfile).to.not.have.any.keys("token-file");
+        // validate host has changed and clientId and token is still empty
+        expect(testProfile["endpoint"]).to.equal("https://test2-host.sas.com");
+        expect(testProfile["clientId"]).to.equal("sas.test");
+        expect(testProfile).to.not.have.any.keys("token");
       });
 
-      it("update profile from client-id to token", async function () {
+      it("update profile from clientId to token", async function () {
         // Arrange
-        const testProfile = await profileConfig.getProfileByName(
-          testProfileName
-        );
+        await profileConfig.upsertProfile(testProfileNewName, <Profile>{
+          endpoint: "https://test-host2.sas.com",
+          context: "SAS Studio context",
+        });
+        let testProfile = await profileConfig.getProfileByName(testProfileName);
+        const profileClone = { ...testProfile };
 
         // Act
         // update a profile to a new token file
-        testProfile["client-id"] = "";
-        testProfile["token-file"] = "path/to/token.txt";
+        profileClone["clientId"] = "";
+        profileClone["token"] = "path/to/token.txt";
         // Call to sanitize input
-        await profileConfig.upsertProfile(testProfileName, testProfile);
+        await profileConfig.upsertProfile(testProfileName, profileClone);
+        testProfile = await profileConfig.getProfileByName(testProfileName);
 
         // Assert
-        // validate that the client id and secret have been removed and the token-file exists
-        expect(testProfile).to.not.have.any.keys("client-id", "client-secret");
-        expect(testProfile).to.have.any.keys("token-file");
+        // validate that the client id and secret have been removed and the token exists
+        expect(testProfile).to.not.have.any.keys("clientId", "clientSecret");
+        expect(testProfile).to.have.any.keys("token");
+
+        // validate that the newly inserted profile still exists
+        const testProfileNew = await profileConfig.getProfileByName(
+          testProfileNewName
+        );
+        expect(testProfileNew["endpoint"]).to.equal(
+          "https://test-host2.sas.com",
+          "Host is not matching"
+        );
       });
     });
 
@@ -284,14 +277,12 @@ describe("Profiles", async function () {
       it("set active profile", async function () {
         // Arrange
         // Act
-        await profileConfig.setActiveProfile(testProfileName);
+        await profileConfig.updateActiveProfileSetting(testProfileName);
 
         // Assert
-        const testProfile = await profileConfig.getProfileByName(
-          testProfileName
-        );
-        expect(testProfile["active"]).to.equal(
-          true,
+        const testProfile = profileConfig.getActiveProfile();
+        expect(testProfileName).to.equal(
+          testProfile,
           "Active profile not successfully set"
         );
       });
@@ -299,16 +290,17 @@ describe("Profiles", async function () {
       it("get active profile", async function () {
         // Arrange
         // Act
-        await profileConfig.setActiveProfile(testProfileName);
-        const activeProfile = await profileConfig.getActiveProfile();
+        await profileConfig.updateActiveProfileSetting(testProfileName);
+        const activeProfileName = profileConfig.getActiveProfile();
+        const activeProfile = profileConfig.getProfileByName(activeProfileName);
 
         // Assert
-        expect(activeProfile["name"]).to.equal(
+        expect(activeProfileName).to.equal(
           testProfileName,
           "Active profile has not been set"
         );
         expect(
-          activeProfile["profile"]["sas-endpoint"],
+          activeProfile["endpoint"],
           "https://test-host.sas.com",
           "Active profile endpoint not expected"
         );
@@ -316,9 +308,7 @@ describe("Profiles", async function () {
 
       it("validate client id/secret profile", async function () {
         // Arrange
-        const profileByName = await profileConfig.getProfileByName(
-          testProfileName
-        );
+        const profileByName = profileConfig.getProfileByName(testProfileName);
 
         // Act
         const validateProfile = await profileConfig.validateProfile({
@@ -344,18 +334,24 @@ describe("Profiles", async function () {
     beforeEach(async () => {
       testProfileName = "testProfile";
       testProfileNewName = "testProfile2";
-      writeFileSync(testProfile, testProfileTokenFile);
-      initProfile();
+      await initProfile();
+      await workspace
+        .getConfiguration(EXTENSION_CONFIG_KEY)
+        .update(
+          EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+          testProfileTokenFile,
+          ConfigurationTarget.Global
+        );
     });
     describe("CRUD Operations", async function () {
       it("add a new profile", async function () {
         // Arrange
         // Act
-        profileConfig.upsertProfile(testProfileNewName, <Profile>{
-          "compute-context": "https://test-host.sas.com",
-          "sas-endpoint": "SAS Studio context",
+        await profileConfig.upsertProfile(testProfileNewName, <Profile>{
+          endpoint: "https://test-host.sas.com",
+          context: "SAS Studio context",
         });
-        const profiles = await profileConfig.listProfile();
+        const profiles = profileConfig.listProfile();
 
         // Assert
         expect(profiles).to.have.length(
@@ -374,24 +370,22 @@ describe("Profiles", async function () {
         await profileConfig.deleteProfile(testProfileName);
 
         // Assert
-        const profiles = await profileConfig.listProfile();
+        const profiles = profileConfig.listProfile();
         expect(profiles).to.have.length(0);
       });
 
       it("get profile by name", async function () {
         // Arrange
         // Act
-        const testProfile = await profileConfig.getProfileByName(
-          testProfileName
-        );
+        const testProfile = profileConfig.getProfileByName(testProfileName);
 
         // Assert
-        expect(testProfile["sas-endpoint"]).to.equal(
+        expect(testProfile["endpoint"]).to.equal(
           "https://test-host.sas.com",
           "Host is not matching"
         );
-        expect(testProfile["token-file"]).to.equal("path/to/token.txt");
-        expect(testProfile["compute-context"]).to.equal(
+        expect(testProfile["token"]).to.equal("path/to/token.txt");
+        expect(testProfile["context"]).to.equal(
           "SAS Studio context",
           "Compute Context is not matching"
         );
@@ -400,7 +394,7 @@ describe("Profiles", async function () {
       it("list the expected profiles", async function () {
         // Arrange
         // Act
-        const profileList = await profileConfig.listProfile();
+        const profileList = profileConfig.listProfile();
 
         // Assert
         expect(profileList).to.eql(
@@ -411,57 +405,82 @@ describe("Profiles", async function () {
 
       it("update single element of the profile", async function () {
         // Arrange
-        let testProfile = await profileConfig.getProfileByName(testProfileName);
+        let testProfile = profileConfig.getProfileByName(testProfileName);
 
         // Act
         // update profile manually
-        testProfile["sas-endpoint"] = "https://test2-host.sas.com";
-        testProfile = await profileConfig.getProfileByName(testProfileName);
+        const newProfileSetting = testProfileTokenFile;
+        newProfileSetting['profiles'][testProfileName]['endpoint'] = "https://test2-host.sas.com";
+        await workspace
+          .getConfiguration(EXTENSION_CONFIG_KEY)
+          .update(
+            EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+            newProfileSetting,
+            ConfigurationTarget.Global
+          );
+        // get profile after settings update
+        testProfile = profileConfig.getProfileByName(testProfileName);
 
         // Assert
-        // validate host has changed and token-file hasn't changed and the client-id still doesn't exist
-        expect(testProfile["sas-endpoint"]).to.equal(
-          "https://test2-host.sas.com"
-        );
-        expect(testProfile["token-file"]).to.equal("path/to/token.txt");
-        expect(testProfile).to.not.have.any.keys("client-id");
+        // validate host has changed, token hasn't changed, and the clientId still doesn't exist
+        expect(testProfile["endpoint"]).to.equal("https://test2-host.sas.com");
+        expect(testProfile["token"]).to.equal("path/to/token.txt");
+        expect(testProfile).to.not.have.any.keys("clientId");
       });
 
       it("update profile from token to client id/secret", async function () {
         // Arrange
+        await profileConfig.upsertProfile(testProfileNewName, <Profile>{
+          endpoint: "https://test-host2.sas.com",
+          context: "SAS Studio context",
+        });
         let testProfile = await profileConfig.getProfileByName(testProfileName);
+        const profileClone = { ...testProfile };
 
         // Act
-        // update profile back to client-id
-        testProfile["client-id"] = "sas.test";
+        // update profile back to clientId
+        profileClone["clientId"] = "sas.test";
         // Call to sanitize
-        await profileConfig.upsertProfile(testProfileName, testProfile);
+        await profileConfig.upsertProfile(testProfileName, profileClone);
         testProfile = await profileConfig.getProfileByName(testProfileName);
 
         // Verify
-        // validate that the token-file have been removed and the client id/secret exists
-        expect(testProfile).to.have.any.keys("client-id", "client-secret");
-        expect(testProfile).to.not.have.any.keys("token-file");
+        // validate that the token have been removed and the client id/secret exists
+        expect(testProfile).to.have.any.keys("clientId", "clientSecret");
+        expect(testProfile).to.not.have.any.keys("token");
+
+        // validate that the newly inserted profile still exists
+        const testProfileNew = await profileConfig.getProfileByName(
+          testProfileNewName
+        );
+        expect(testProfileNew["endpoint"]).to.equal(
+          "https://test-host2.sas.com",
+          "Host is not matching"
+        );
       });
     });
 
     describe("Validate Profile", async function () {
       beforeEach(async () => {
         testProfileName = "testProfile";
-        writeFileSync(testProfile, testProfileTokenFile);
-        initProfile();
+        await initProfile();
+        await workspace
+          .getConfiguration(EXTENSION_CONFIG_KEY)
+          .update(
+            EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+            testProfileTokenFile,
+            ConfigurationTarget.Global
+          );
       });
       it("set active profile", async function () {
         // Arrange
         // Act
-        await profileConfig.setActiveProfile(testProfileName);
+        await profileConfig.updateActiveProfileSetting(testProfileName);
 
         // Assert
-        const testProfile = await profileConfig.getProfileByName(
-          testProfileName
-        );
-        expect(testProfile["active"]).to.equal(
-          true,
+        const testProfile = profileConfig.getActiveProfile();
+        expect(testProfileName).to.equal(
+          testProfile,
           "Active profile not successfully set"
         );
       });
@@ -469,16 +488,17 @@ describe("Profiles", async function () {
       it("get active profile", async function () {
         // Arrange
         // Act
-        await profileConfig.setActiveProfile(testProfileName);
-        const activeProfile = await profileConfig.getActiveProfile();
+        await profileConfig.updateActiveProfileSetting(testProfileName);
+        const activeProfileName = profileConfig.getActiveProfile();
+        const activeProfile = profileConfig.getProfileByName(activeProfileName);
 
         // Assert
-        expect(activeProfile["name"]).to.equal(
+        expect(activeProfileName).to.equal(
           testProfileName,
           "Active profile has not been set"
         );
         expect(
-          activeProfile["profile"]["sas-endpoint"],
+          activeProfile["endpoint"],
           "https://test-host.sas.com",
           "Active profile endpoint not expected"
         );
@@ -486,16 +506,14 @@ describe("Profiles", async function () {
 
       it("validate token file profile", async function () {
         // Arrange
-        const testProfile = await profileConfig.getProfileByName(
-          testProfileName
-        );
+        const profileByName = profileConfig.getProfileByName(testProfileName);
         // Inject valid token file from testFixture/TestToken.txt to profile
-        testProfile["token-file"] = testToken;
+        profileByName["token"] = testToken;
 
         // Act
         const validateProfile = await profileConfig.validateProfile({
           name: testProfileName,
-          profile: testProfile,
+          profile: profileByName,
         });
 
         // Assert
@@ -513,9 +531,7 @@ describe("Profiles", async function () {
       it("validate bad path for token file profile", async function () {
         // Arrange
         // Profile already has incorrect token file
-        const testProfile = await profileConfig.getProfileByName(
-          testProfileName
-        );
+        const testProfile = profileConfig.getProfileByName(testProfileName);
 
         // Act
         const validateProfile = await profileConfig.validateProfile({
@@ -530,7 +546,7 @@ describe("Profiles", async function () {
           "Bad token path profile did not return correct AuthType"
         );
         expect(validateProfile.error).to.equal(
-          `Please update profile (${testProfileName}): ENOENT: no such file or directory, open '${testProfile["token-file"]}'`,
+          `Please update profile (${testProfileName}): ENOENT: no such file or directory, open '${testProfile["token"]}'`,
           "Bad token path profile should return error"
         );
       });
@@ -541,18 +557,24 @@ describe("Profiles", async function () {
     beforeEach(async () => {
       testProfileName = "testProfile";
       testProfileNewName = "testProfile2";
-      writeFileSync(testProfile, testEmptyProfile);
-      initProfile();
+      await initProfile();
+      await workspace
+        .getConfiguration(EXTENSION_CONFIG_KEY)
+        .update(
+          EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+          testEmptyProfile,
+          ConfigurationTarget.Global
+        );
     });
     describe("CRUD Operations", async function () {
       it("add a new profile", async function () {
         // Arrange
         // Act
-        profileConfig.upsertProfile(testProfileNewName, <Profile>{
-          "compute-context": "https://test-host.sas.com",
-          "sas-endpoint": "SAS Studio context",
+        await profileConfig.upsertProfile(testProfileNewName, <Profile>{
+          endpoint: "https://test-host.sas.com",
+          context: "SAS Studio context",
         });
-        const profiles = await profileConfig.listProfile();
+        const profiles = profileConfig.listProfile();
 
         // Assert
         expect(profiles).to.have.length(
@@ -571,23 +593,21 @@ describe("Profiles", async function () {
         await profileConfig.deleteProfile(testProfileName);
 
         // Assert
-        const profiles = await profileConfig.listProfile();
+        const profiles = profileConfig.listProfile();
         expect(profiles).to.have.length(0);
       });
 
       it("get profile by name", async function () {
         // Arrange
         // Act
-        const testProfile = await profileConfig.getProfileByName(
-          testProfileName
-        );
+        const testProfile = profileConfig.getProfileByName(testProfileName);
 
         // Assert
-        expect(testProfile["sas-endpoint"]).to.equal(
+        expect(testProfile["endpoint"]).to.equal(
           undefined,
           "Host is not matching"
         );
-        expect(testProfile["compute-context"]).to.equal(
+        expect(testProfile["context"]).to.equal(
           undefined,
           "Compute Context is not matching"
         );
@@ -596,7 +616,7 @@ describe("Profiles", async function () {
       it("list the expected profiles", async function () {
         // Arrange
         // Act
-        const profileList = await profileConfig.listProfile();
+        const profileList = profileConfig.listProfile();
 
         // Assert
         expect(profileList).to.eql(
@@ -607,25 +627,30 @@ describe("Profiles", async function () {
 
       it("update single element of the profile", async function () {
         // Arrange
-        let testProfile = await profileConfig.getProfileByName(testProfileName);
+        let testProfile = profileConfig.getProfileByName(testProfileName);
 
         // Act
         // update profile manually
-        testProfile["sas-endpoint"] = "https://test2-host.sas.com";
-        testProfile = await profileConfig.getProfileByName(testProfileName);
+        const newProfileSetting = testEmptyProfile;
+        newProfileSetting['profiles'][testProfileName]['endpoint'] = "https://test2-host.sas.com";
+        await workspace
+          .getConfiguration(EXTENSION_CONFIG_KEY)
+          .update(
+            EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+            newProfileSetting,
+            ConfigurationTarget.Global
+          );
+        // get profile after settings update
+        testProfile = profileConfig.getProfileByName(testProfileName);
 
         // Assert
-        // validate that sas-endpoint was added
-        expect(testProfile["sas-endpoint"]).to.equal(
-          "https://test2-host.sas.com"
-        );
+        // validate that endpoint was added
+        expect(testProfile["endpoint"]).to.equal("https://test2-host.sas.com");
       });
 
       it("validate no active profile when empty", async function () {
         // Arrange
-        const testProfile = await profileConfig.getProfileByName(
-          testProfileName
-        );
+        const testProfile = profileConfig.getProfileByName(testProfileName);
 
         // Act
         const validateProfile = await profileConfig.validateProfile({
@@ -670,7 +695,8 @@ describe("Profiles", async function () {
       it("get active profile when no profile active", async function () {
         // Arrange
         // Act
-        const activeProfile = await profileConfig.getActiveProfile();
+        const activeProfileName = profileConfig.getActiveProfile();
+        const activeProfile = profileConfig.getProfileByName(activeProfileName);
 
         // Assert
         expect(activeProfile).to.be.equal(
@@ -683,21 +709,25 @@ describe("Profiles", async function () {
   describe("Overloaded Profile", async function () {
     beforeEach(async () => {
       testProfileName = "testProfile";
-      writeFileSync(testProfile, testOverloadedProfile);
-      initProfile();
+      await initProfile();
+        await workspace
+          .getConfiguration(EXTENSION_CONFIG_KEY)
+          .update(
+            EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+            testOverloadedProfile,
+            ConfigurationTarget.Global
+          );
     });
     describe("Validate Profiles", async function () {
       it("set active profile", async function () {
         // Arrange
         // Act
-        await profileConfig.setActiveProfile(testProfileName);
+        await profileConfig.updateActiveProfileSetting(testProfileName);
+        const activeProfile = profileConfig.getActiveProfile(); 
 
         // Assert
-        const testProfile = await profileConfig.getProfileByName(
-          testProfileName
-        );
-        expect(testProfile["active"]).to.equal(
-          true,
+        expect(activeProfile).to.equal(
+          testProfileName,
           "Active profile not successfully set"
         );
       });
@@ -705,16 +735,17 @@ describe("Profiles", async function () {
       it("get active profile", async function () {
         // Arrange
         // Act
-        await profileConfig.setActiveProfile(testProfileName);
-        const activeProfile = await profileConfig.getActiveProfile();
+        await profileConfig.updateActiveProfileSetting(testProfileName);
+        const activeProfileName = profileConfig.getActiveProfile();
+        const activeProfile = profileConfig.getProfileByName(activeProfileName);
 
         // Assert
-        expect(activeProfile["name"]).to.equal(
+        expect(activeProfileName).to.equal(
           testProfileName,
           "Active profile has not been set"
         );
         expect(
-          activeProfile["profile"]["sas-endpoint"],
+          activeProfile["endpoint"],
           "https://test-host.sas.com",
           "Active profile endpoint not expected"
         );
@@ -722,20 +753,16 @@ describe("Profiles", async function () {
 
       it("validate overloaded file profile", async function () {
         // Arrange
-        const testProfile = await profileConfig.getProfileByName(
-          testProfileName
-        );
-        // Inject valid token file from testFixture/TestToken.txt to profile
-        testProfile["token-file"] = testToken;
+        const profileByName = profileConfig.getProfileByName(testProfileName);
 
         // Act
         const validateProfile = await profileConfig.validateProfile({
           name: testProfileName,
-          profile: testProfile,
+          profile: profileByName,
         });
 
         // Assert
-        // Overloaded file should take token as precedence
+        // Overloaded file should take password as precedence
         expect(validateProfile.data).to.equal(undefined);
         expect(validateProfile.type).to.equal(
           AuthType.Password,
@@ -752,21 +779,25 @@ describe("Profiles", async function () {
   describe("Empty Item Profile", async function () {
     beforeEach(async () => {
       testProfileName = "testProfile";
-      writeFileSync(testProfile, testEmptyItemsProfile);
-      initProfile();
+      await initProfile();
+        await workspace
+          .getConfiguration(EXTENSION_CONFIG_KEY)
+          .update(
+            EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+            testEmptyItemsProfile,
+            ConfigurationTarget.Global
+          );
     });
     describe("Validate Profiles", async function () {
       it("set active profile", async function () {
         // Arrange
         // Act
-        await profileConfig.setActiveProfile(testProfileName);
+        await profileConfig.updateActiveProfileSetting(testProfileName); 
+        const testProfile = profileConfig.getActiveProfile();
 
         // Assert
-        const testProfile = await profileConfig.getProfileByName(
-          testProfileName
-        );
-        expect(testProfile["active"]).to.equal(
-          true,
+        expect(testProfile).to.equal(
+          testProfileName,
           "Active profile not successfully set"
         );
       });
@@ -774,26 +805,25 @@ describe("Profiles", async function () {
       it("get active profile", async function () {
         // Arrange
         // Act
-        await profileConfig.setActiveProfile(testProfileName);
-        const activeProfile = await profileConfig.getActiveProfile();
+        await profileConfig.updateActiveProfileSetting(testProfileName);
+        const activeProfileName = profileConfig.getActiveProfile();
+        const activeProfile = profileConfig.getProfileByName(activeProfileName);
 
         // Assert
-        expect(activeProfile["name"]).to.equal(
+        expect(activeProfileName).to.equal(
           testProfileName,
           "Active profile has not been set"
         );
         expect(
-          activeProfile["profile"]["sas-endpoint"],
-          "https://test-host.sas.com",
+          activeProfile["endpoint"],
+          "",
           "Active profile endpoint not expected"
         );
       });
 
       it("validate empty file profile", async function () {
         // Arrange
-        const testProfile = await profileConfig.getProfileByName(
-          testProfileName
-        );
+        const testProfile = profileConfig.getProfileByName(testProfileName);
 
         // Act
         const validateProfile = await profileConfig.validateProfile({
@@ -815,9 +845,7 @@ describe("Profiles", async function () {
 
       it("validate all empty items for profile", async function () {
         // Arrange
-        const testProfile = await profileConfig.getProfileByName(
-          testProfileName
-        );
+        const testProfile = profileConfig.getProfileByName(testProfileName);
 
         // Act
         const validateProfile = await profileConfig.validateProfile({
@@ -849,11 +877,11 @@ describe("Profiles", async function () {
       // Assert
       expect(result).to.not.equal(undefined);
       expect(result["title"]).to.equal(
-        "Select a profile",
+        "Switch Current SAS Profile",
         "Profile title does not match expected"
       );
       expect(result["placeholder"]).to.equal(
-        "Select Profile Name...",
+        "Select a SAS connection profile",
         "Profile placeholder does not match expected"
       );
     });
@@ -866,11 +894,11 @@ describe("Profiles", async function () {
       // Assert
       expect(result).to.not.equal(undefined);
       expect(result["title"]).to.equal(
-        "Please enter new profile name",
+        "New SAS Connection Profile Name",
         "NewProfile title does not match expected"
       );
       expect(result["placeholder"]).to.equal(
-        "Enter New Profile Name...",
+        "Enter connection name",
         "NewProfile placeholder does not match expected"
       );
     });
@@ -883,11 +911,11 @@ describe("Profiles", async function () {
       // Assert
       expect(result).to.not.equal(undefined);
       expect(result["title"]).to.equal(
-        "Endpoint for new profile (e.g. https://example.sas.com)",
+        "SAS Viya Server",
         "Endpoint title does not match expected"
       );
       expect(result["placeholder"]).to.equal(
-        "Enter endpoint...",
+        "Enter the URL",
         "Endpoint placeholder does not match expected"
       );
     });
@@ -900,11 +928,11 @@ describe("Profiles", async function () {
       // Assert
       expect(result).to.not.equal(undefined);
       expect(result["title"]).to.equal(
-        "Compute Context",
+        "SAS Compute Context",
         "ComputeContext title does not match expected"
       );
       expect(result["placeholder"]).to.equal(
-        "Enter Compute Context...",
+        "Enter the SAS compute context",
         "ComputeContext placeholder does not match expected"
       );
     });
@@ -917,11 +945,11 @@ describe("Profiles", async function () {
       // Assert
       expect(result).to.not.equal(undefined);
       expect(result["title"]).to.equal(
-        "Client ID (Leave empty for token flow)",
+        "Client ID",
         "ClientId title does not match expected"
       );
       expect(result["placeholder"]).to.equal(
-        "Enter New Client ID...",
+        "Enter a client ID",
         "ClientId placeholder does not match expected"
       );
     });
@@ -938,7 +966,7 @@ describe("Profiles", async function () {
         "ClientSecret title does not match expected"
       );
       expect(result["placeholder"]).to.equal(
-        "Enter Client Secret...",
+        "Enter a client secret",
         "ClientSecret placeholder does not match expected"
       );
     });
@@ -951,11 +979,11 @@ describe("Profiles", async function () {
       // Assert
       expect(result).to.not.equal(undefined);
       expect(result["title"]).to.equal(
-        "SAS Username",
+        "SAS User ID",
         "Username title does not match expected"
       );
       expect(result["placeholder"]).to.equal(
-        "Enter a SAS Username...",
+        "Enter your SAS User ID",
         "Username placeholder does not match expected"
       );
     });
@@ -972,25 +1000,8 @@ describe("Profiles", async function () {
         "Password title does not match expected"
       );
       expect(result["placeholder"]).to.equal(
-        "Enter a SAS Password...",
+        "Enter your SAS Password for the User ID ",
         "Password placeholder does not match expected"
-      );
-    });
-
-    it("Valid Config File Input", function () {
-      // Arrange
-      // Act
-      const result = getProfilePrompt(ProfilePromptType.ConfigFile);
-
-      // Assert
-      expect(result).to.not.equal(undefined);
-      expect(result["title"]).to.equal(
-        "SAS Profile Config Path",
-        "ConfigFile title does not match expected"
-      );
-      expect(result["placeholder"]).to.equal(
-        "Enter Config File Path...",
-        "ConfigFile placeholder does not match expected"
       );
     });
 
@@ -1002,11 +1013,11 @@ describe("Profiles", async function () {
       // Assert
       expect(result).to.not.equal(undefined);
       expect(result["title"]).to.equal(
-        "SAS Token File Path",
+        "SAS Access Token",
         "TokenFile title does not match expected"
       );
       expect(result["placeholder"]).to.equal(
-        "Enter Token File Path...",
+        "Enter the path to the SAS token file",
         "TokenFile placeholder does not match expected"
       );
     });

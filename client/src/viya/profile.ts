@@ -9,10 +9,6 @@ export const EXTENSION_CONFIG_KEY = "SAS";
 export const EXTENSION_DEFINE_PROFILES_CONFIG_KEY = "defineConnectionProfiles";
 export const EXTENSION_PROFILES_CONFIG_KEY = "profiles";
 export const EXTENSION_ACTIVE_PROFILE_CONFIG_KEY = "activeProfile";
-export const EMPTY_PROFILE: Profile = {
-  endpoint: "",
-  context: "",
-};
 
 /**
  * The default compute context that will be used to create a SAS session.
@@ -70,8 +66,8 @@ export interface ProfileValidation {
 }
 
 /**
- * ProfileConfig extends {@link ConfigFile} to manage a configuration file
- * of {@link Profile}s. Connection Profiles are designed to keep track of multiple
+ * ProfileConfig manages a list of {@link Profile}s that are located in vscode settings. 
+ * Connection Profiles are designed to keep track of multiple
  * configurations of SAS Connections.
  */
 export class ProfileConfig {
@@ -101,7 +97,7 @@ export class ProfileConfig {
   /**
    * Get the active profile from the vscode settings.
    *
-   * @returns String name to the configuration file
+   * @returns String name to the active profile
    */
   getActiveProfile(): string {
     if (!this.validateSettings()) {
@@ -158,11 +154,15 @@ export class ProfileConfig {
    */
   async updateActiveProfileSetting(activeProfileParam: string): Promise<void> {
     const profileList = this.getAllProfiles();
-    closeSession();
     const profiles = {
       activeProfile: activeProfileParam,
       profiles: profileList,
     };
+    if(activeProfileParam in profileList){
+      closeSession();
+    } else {
+      profiles.activeProfile = '';
+    }
     await workspace
       .getConfiguration(EXTENSION_CONFIG_KEY)
       .update(
@@ -198,7 +198,7 @@ export class ProfileConfig {
    * @returns Profile object
    */
   getProfileByName(name: string): Profile {
-    let profile = EMPTY_PROFILE;
+    let profile: Profile = undefined;
     const profileList = this.getAllProfiles();
     if (name in profileList) {
       profile = profileList[name];
@@ -307,57 +307,59 @@ export class ProfileConfig {
    * @param forceUpdate the {@link Boolean} of whether to prompt the user when value is already defined
    */
   async prompt(name: string, forceUpdate = false): Promise<void> {
-    const profileList = this.getAllProfiles();
-    const profile =
-      name in profileList
-        ? profileList[name]
-        : <Profile>{
-            endpoint: "",
-            clientId: "",
-            clientSecret: "",
-            context: "",
-            username: "",
-          };
+    const profile = this.getProfileByName(name);
+    // Cannot mutate VSCode Config Object, create a clone and upsert
+    let profileClone = { ...profile };
+    if(!profile){
+      profileClone = <Profile>{
+        endpoint: "",
+        clientId: "",
+        clientSecret: "",
+        context: "",
+        username: "",
+        token: "",
+      }
+    } 
 
-    if (!profile["endpoint"] || forceUpdate) {
-      profile["endpoint"] = await createInputTextBox(
+    if (!profileClone["endpoint"] || forceUpdate) {
+      profileClone["endpoint"] = await createInputTextBox(
         ProfilePromptType.Endpoint,
-        profile["endpoint"]
+        profileClone["endpoint"]
       );
     }
-    if (!profile["context"] || forceUpdate) {
-      profile["context"] = DEFAULT_COMPUTE_CONTEXT;
-      profile["context"] = await createInputTextBox(
+    if (!profileClone["context"] || forceUpdate) {
+      profileClone["context"] = DEFAULT_COMPUTE_CONTEXT;
+      profileClone["context"] = await createInputTextBox(
         ProfilePromptType.ComputeContext,
-        profile["context"]
+        profileClone["context"]
       );
     }
-    if (!profile["clientId"] || !profile["token"] || forceUpdate) {
-      profile["clientId"] = await createInputTextBox(
+    if (!profileClone["clientId"] || !profileClone["token"] || forceUpdate) {
+      profileClone["clientId"] = await createInputTextBox(
         ProfilePromptType.ClientId,
-        profile["clientId"]
+        profileClone["clientId"]
       );
     }
-    if (!profile["clientSecret"] || !profile["token"] || forceUpdate) {
-      profile["clientSecret"] = await createInputTextBox(
+    if ((!profileClone["clientSecret"] || !profileClone["token"] || forceUpdate) && profileClone["clientId"]) {
+      profileClone["clientSecret"] = await createInputTextBox(
         ProfilePromptType.ClientSecret,
-        profile["clientSecret"]
+        profileClone["clientSecret"]
       );
     }
-    if ((!profile["token"] || forceUpdate) && !profile["clientId"]) {
-      profile["token"] = await createInputTextBox(
+    if ((!profileClone["token"] || forceUpdate) && !profileClone["clientId"]) {
+      profileClone["token"] = await createInputTextBox(
         ProfilePromptType.TokenFile,
-        profile["token"]
+        profileClone["token"]
       );
     }
     // The username field will only appear for non-token files, and will only update if the user runs the update profile command
-    if ((!profile["username"] || forceUpdate) && !profile["token"]) {
-      profile["username"] = await createInputTextBox(
+    if ((!profileClone["username"] || forceUpdate) && profileClone["clientId"]) {
+      profileClone["username"] = await createInputTextBox(
         ProfilePromptType.Username,
-        profile["username"]
+        profileClone["username"]
       );
     }
-    await this.upsertProfile(name, profile);
+    await this.upsertProfile(name, profileClone);
   }
 
   /**
