@@ -4,7 +4,7 @@
 import { createInputTextBox, ProfilePromptType } from "../viya/profile";
 import { ProfileConfig } from "../viya/profile";
 import { window } from "vscode";
-import { run } from "../commands/run";
+import { run, runSelected } from "../commands/run";
 
 export const profileConfig = new ProfileConfig();
 /**
@@ -71,6 +71,19 @@ export async function validateProfileAndRun(): Promise<void> {
     return;
   }
   run();
+}
+
+/**
+ * validateProfileAndRunSelected command validates that at least one profile exists
+ * before attempting to run
+ */
+ export async function validateProfileAndRunSelected(): Promise<void> {
+  const profileList = await profileConfig.listProfile();
+  if (profileList.length === 0) {
+    addProfile();
+    return;
+  }
+  runSelected();
 }
 
 /**

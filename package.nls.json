@@ -12,5 +12,5 @@
   "commands.SAS.addProfile": "Add New Connection Profile",
   "commands.SAS.deleteProfile": "Delete Connection Profile",
   "commands.SAS.updateProfile": "Update Connection Profile",
-  "commands.SAS.session.runSelected": "Run Selected SAS Code",
+  "commands.SAS.runSelected": "Run Selected SAS Code"
 }

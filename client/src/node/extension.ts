@@ -27,7 +27,9 @@ import {
   switchProfile,
   deleteProfile,
   validateProfileAndRun,
+  validateProfileAndRunSelected,
 } from "../commands/profile";
+import { runSelected } from '../commands/run';
 
 let client: LanguageClient;
 // Create Profile status bar item
@@ -77,6 +79,7 @@ export function activate(context: ExtensionContext): void {
 
   context.subscriptions.push(
     commands.registerCommand("SAS.run", validateProfileAndRun),
+    commands.registerCommand("SAS.runSelected", validateProfileAndRunSelected),
     commands.registerCommand("SAS.close", () =>
       closeSession("The SAS session has closed.")
     ),

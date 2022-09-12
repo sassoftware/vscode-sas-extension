@@ -113,39 +113,39 @@ _Tip_: You can define a custom region by adding `/*region*/` and `/*endregion*/`
 
 Before running SAS code, you must configure the SAS extension to access a SAS Viya server. You must license SAS Viya to run SAS code.
 
-1. When first configuring, open up a file with the SAS language. "No Active Profiles Found" can be located on the Status Bar located at the bottom left of your VSCode window
+1. When first configuring, open up a file with the SAS language. "No Profile" can be located on the Status Bar located at the bottom left of your VSCode window
    ![No Active Profiles Found](doc/images/NoActiveProfilesStatusBar.png)
-2. Either select the "No Active Profiles Found" Status Bar Item or open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX) and locate `SAS Session: Add new SAS Profile`
-3. Please refer to the [Add New SAS Profile](#add-new-sas-profile) section below to add a profile
+2. Either select the "No Profile" Status Bar Item or open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX) and locate `SAS: Add New Connection Profile`
+3. Please refer to the [Add SAS Connection Profile](#add-new-sas-profile) section below to add a profile
 4. After a profile is created, the Status Bar Item will be changed from "No Active Profiles Found" to the name of the new profile.
    ![Status Bar Profile](doc/images/StatusBarProfileItem.png)
-5. If you do not want to generate results in HTML format, clear the Get ODS HTML5 Output option. This option is selected by default.
+5. If you do not want to generate results in HTML format, clear the `ODS: Output` setting. This option is enabled by default.
 
 ### Profiles
 
 Profiles are easy ways to switch between multiple Viya deployments and Compute Contexts. There is no limit to the amount of profiles that can be stored.
 
-Profiles will be stored into a configuration file. This file will be automatically set to `$HOME/.sas/vs-config.json` after first profile creation, this location can be modified by updating to `Settings -> Settings -> SAS Session: Config File`.
+Profiles will be stored into the VSCode settings.json file, and can be modified by hand, if needed.
 
 The following commands are supported for profiles:
 
-| Command                     | Title                                   |
-| --------------------------- | --------------------------------------- |
-| `SAS.session.addProfile`    | SAS Session: Add new SAS profile        |
-| `SAS.session.switchProfile` | SAS Session: Switch current SAS profile |
-| `SAS.session.updateProfile` | SAS Session: Update SAS profile         |
-| `SAS.session.deleteProfile` | SAS Session: Delete SAS profile         |
+| Command             | Title                                  |
+| ------------------- | -------------------------------------- |
+| `SAS.addProfile`    | SAS: Add New Connection Profile        |
+| `SAS.switchProfile` | SAS: Switch Current Connection profile |
+| `SAS.updateProfile` | SAS: Update Connection profile         |
+| `SAS.deleteProfile` | SAS: Delete Connection profile         |
 
 #### Profile Anatomy
 
-| Name                    | Description                           | Additional Notes                                                                                                                                                                                                  |
-| ----------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**                | Name of the profile                   | This will display on the status bar                                                                                                                                                                               |
-| **Endpoint**            | Viya endpoint                         | This will appear when hovering over the status bar                                                                                                                                                                |
-| **Compute Context**     | Context for Compute Server            | Please see [SAS Documentation](https://go.documentation.sas.com/doc/en/sasadmincdc/v_014/evfun/p1dkdadd9rkbmdn1fpv562l2p5vy.htm) for more information                                                             |
-| **Client ID**           | Registered Client ID for SAS Viya     | Please see your SAS administrator, or follow the [SAS Documentation](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/) on how to register a client <br /> _Leave empty to use token file_ |
-| **Client Secret**       | Registered Client Secret for SAS Viya | Please see your SAS administrator, or follow the [SAS Documentation](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/) on how to register a client <br /> _Leave empty to use token file_ |
-| **SAS Token File Path** | Full Path to Token File               | File must contain only a bearer token to authenticate with the above endpoint <br /> _Will not be used with password flow_                                                                                        |
+| Name                | Description                           | Additional Notes                                                                                                                                                                                                  |
+| ------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Name**            | Name of the profile                   | This will display on the status bar                                                                                                                                                                               |
+| **Endpoint**        | Viya endpoint                         | This will appear when hovering over the status bar                                                                                                                                                                |
+| **Compute Context** | Context for Compute Server            | Please see [SAS Documentation](https://go.documentation.sas.com/doc/en/sasadmincdc/v_014/evfun/p1dkdadd9rkbmdn1fpv562l2p5vy.htm) for more information                                                             |
+| **Client ID**       | Registered Client ID for SAS Viya     | Please see your SAS administrator, or follow the [SAS Documentation](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/) on how to register a client <br /> _Leave empty to use token file_ |
+| **Client Secret**   | Registered Client Secret for SAS Viya | Please see your SAS administrator, or follow the [SAS Documentation](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/) on how to register a client                                        |
+| **Token File Path** | Full Path to Token File               | File must contain only a bearer token to authenticate with the above endpoint <br /> _Will not be used with password flow_                                                                                        |
 
 #### Add New SAS Profile
 
@@ -169,26 +169,26 @@ To authenticate with an access token, specify the full path for a token file.
 
 For more information about the authentication process, please see the blog post [Authentication to SAS Viya: a couple of approaches](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/).
 
-#### Delete SAS Profile
+#### Delete Connection Profile
 
-After executing the `SAS.session.deleteProfile` command:
+After executing the `SAS.deleteProfile` command:
 
 1. Select profile to delete from the list of profiles
 2. A notification message will pop up on successful deletion
 
-#### Switch Current SAS Profile
+#### Switch Current Connection Profile
 
-After executing the `SAS.session.switchProfile` command:
+After executing the `SAS.switchProfile` command:
 
 1. If no profiles can be found, the extension will ask to [create a new profile](#add-new-sas-profile)
 2. Select profile to set active from the list of profiles
 3. The StatusBar Item will update to display the name of the selected profile
 
-#### Update SAS Profile
+#### Update Connection Profile
 
 Update profile gives the ability to modify existing profiles, including updating from password to token flow and vice versa.
 
-After executing the `SAS.session.updateProfile` command:
+After executing the `SAS.updateProfile` command:
 
 1. Select profile to update from the list of profiles
 2. Complete the prompts to update profile
@@ -203,7 +203,7 @@ To run a SAS program:
 
 1. Click `Run` (running man icon) in the upper right corner of your SAS program window.
 
-   1.a. If prompted, enter your password (for password authentication).
+   a. If prompted, enter your password (for password authentication).
 
 2. The results are displayed in the application.
 3. The SAS output log and error information are displayed in the applicaiton.
