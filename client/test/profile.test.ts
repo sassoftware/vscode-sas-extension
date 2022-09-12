@@ -7,14 +7,13 @@ import {
   EXTENSION_CONFIG_KEY,
   EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
 } from "../src/viya/profile";
-import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
+import { readFileSync } from "fs";
 import { expect } from "chai";
 import path = require("path");
 import { ConfigurationTarget, workspace } from "vscode";
 
 let testProfileName: string;
 let testProfileNewName: string;
-let testProfile: string;
 let testToken: string;
 let profileConfig: ProfileConfig;
 let testProfileClientId;
@@ -162,16 +161,20 @@ describe("Profiles", async function () {
           endpoint: "https://test-host.sas.com",
           context: "SAS Studio context",
         });
-        const profiles = await profileConfig.listProfile();
+        const profilesList = await profileConfig.listProfile();
 
         // Assert
-        expect(profiles).to.have.length(
+        expect(profilesList).to.have.length(
           2,
           "A second profile should be in the list"
         );
-        expect(profiles).to.include(
+        expect(profilesList).to.include(
           testProfileNewName,
           `Profile ${testProfileNewName} should exist`
+        );
+        expect(profilesList).to.include(
+          testProfileName,
+          `Profile ${testProfileName} should exist`
         );
       });
 

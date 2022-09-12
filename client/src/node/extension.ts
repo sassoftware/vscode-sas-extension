@@ -29,7 +29,6 @@ import {
   validateProfileAndRun,
   validateProfileAndRunSelected,
 } from "../commands/profile";
-import { runSelected } from '../commands/run';
 
 let client: LanguageClient;
 // Create Profile status bar item

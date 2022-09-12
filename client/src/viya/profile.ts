@@ -236,7 +236,7 @@ export class ProfileConfig {
     this.sanitize(profile);
     const profileList = this.getAllProfiles();
     // Cannot mutate VSCode Config Object, create a clone and add that to settings.json
-    const newProfileList = { ...profileList };
+    const newProfileList = JSON.parse(JSON.stringify(profileList));
     newProfileList[name] = profile;
     await this.updateProfileSetting(newProfileList);
   }
@@ -250,7 +250,7 @@ export class ProfileConfig {
     const profileList = this.getAllProfiles();
     if (name in profileList) {
       // Cannot mutate VSCode Config Object, create a clone and add that to settings.json
-      const newProfileList = { ...profileList };
+      const newProfileList = JSON.parse(JSON.stringify(profileList));
       delete newProfileList[name];
       await this.updateProfileSetting(newProfileList);
       if (name === this.getActiveProfile()) {
