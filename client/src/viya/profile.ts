@@ -334,7 +334,11 @@ export class ProfileConfig {
         profileClone["context"]
       );
     }
-    if (!profileClone["clientId"] || !profileClone["tokenFile"] || forceUpdate) {
+    if (
+      !profileClone["clientId"] ||
+      !profileClone["tokenFile"] ||
+      forceUpdate
+    ) {
       profileClone["clientId"] = await createInputTextBox(
         ProfilePromptType.ClientId,
         profileClone["clientId"]
@@ -351,7 +355,10 @@ export class ProfileConfig {
         profileClone["clientSecret"]
       );
     }
-    if ((!profileClone["tokenFile"] || forceUpdate) && !profileClone["clientId"]) {
+    if (
+      (!profileClone["tokenFile"] || forceUpdate) &&
+      !profileClone["clientId"]
+    ) {
       profileClone["tokenFile"] = await createInputTextBox(
         ProfilePromptType.TokenFile,
         profileClone["tokenFile"]
