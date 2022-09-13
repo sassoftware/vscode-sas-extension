@@ -114,11 +114,11 @@
         "order": 0,
         "id": "connectionProfiles",
         "properties": {
-          "SAS.oDS.output": {
+          "SAS.output.HTML5": {
             "order": 0,
             "type": "boolean",
             "default": true,
-            "description": "%configuration.SAS.oDS.output%"
+            "description": "%configuration.SAS.output.HTML5%"
           },
           "SAS.defineConnectionProfiles": {
             "order": 1,
@@ -147,7 +147,7 @@
                     "default": "",
                     "description": "SAS Viya User ID"
                   },
-                  "token": {
+                  "tokenFile": {
                     "type": "string",
                     "default": ""
                   },

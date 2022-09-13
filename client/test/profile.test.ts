@@ -56,7 +56,7 @@ describe("Profiles", async function () {
         testProfile: {
           endpoint: "https://test-host.sas.com",
           context: "SAS Studio context",
-          token: "path/to/token.txt",
+          tokenFile: "path/to/token.txt",
         },
       },
     };
@@ -71,7 +71,7 @@ describe("Profiles", async function () {
       profiles: {
         testProfile: {
           endpoint: "",
-          token: "",
+          tokenFile: "",
           context: "",
           username: "",
           clientId: "",
@@ -88,7 +88,7 @@ describe("Profiles", async function () {
           clientSecret: "",
           context: "SAS Studio context",
           username: "sastest",
-          token: "path/to/token.txt",
+          tokenFile: "path/to/token.txt",
         },
       },
     };
@@ -240,7 +240,7 @@ describe("Profiles", async function () {
         // validate host has changed and clientId and token is still empty
         expect(testProfile["endpoint"]).to.equal("https://test2-host.sas.com");
         expect(testProfile["clientId"]).to.equal("sas.test");
-        expect(testProfile).to.not.have.any.keys("token");
+        expect(testProfile).to.not.have.any.keys("tokenFile");
       });
 
       it("update profile from clientId to token", async function () {
@@ -255,7 +255,7 @@ describe("Profiles", async function () {
         // Act
         // update a profile to a new token file
         profileClone["clientId"] = "";
-        profileClone["token"] = "path/to/token.txt";
+        profileClone["tokenFile"] = "path/to/token.txt";
         // Call to sanitize input
         await profileConfig.upsertProfile(testProfileName, profileClone);
         testProfile = await profileConfig.getProfileByName(testProfileName);
@@ -263,7 +263,7 @@ describe("Profiles", async function () {
         // Assert
         // validate that the client id and secret have been removed and the token exists
         expect(testProfile).to.not.have.any.keys("clientId", "clientSecret");
-        expect(testProfile).to.have.any.keys("token");
+        expect(testProfile).to.have.any.keys("tokenFile");
 
         // validate that the newly inserted profile still exists
         const testProfileNew = await profileConfig.getProfileByName(
@@ -387,7 +387,7 @@ describe("Profiles", async function () {
           "https://test-host.sas.com",
           "Host is not matching"
         );
-        expect(testProfile["token"]).to.equal("path/to/token.txt");
+        expect(testProfile["tokenFile"]).to.equal("path/to/token.txt");
         expect(testProfile["context"]).to.equal(
           "SAS Studio context",
           "Compute Context is not matching"
@@ -428,7 +428,7 @@ describe("Profiles", async function () {
         // Assert
         // validate host has changed, token hasn't changed, and the clientId still doesn't exist
         expect(testProfile["endpoint"]).to.equal("https://test2-host.sas.com");
-        expect(testProfile["token"]).to.equal("path/to/token.txt");
+        expect(testProfile["tokenFile"]).to.equal("path/to/token.txt");
         expect(testProfile).to.not.have.any.keys("clientId");
       });
 
@@ -451,7 +451,7 @@ describe("Profiles", async function () {
         // Verify
         // validate that the token have been removed and the client id/secret exists
         expect(testProfile).to.have.any.keys("clientId", "clientSecret");
-        expect(testProfile).to.not.have.any.keys("token");
+        expect(testProfile).to.not.have.any.keys("tokenFile");
 
         // validate that the newly inserted profile still exists
         const testProfileNew = await profileConfig.getProfileByName(
@@ -512,7 +512,7 @@ describe("Profiles", async function () {
         // Arrange
         const profileByName = profileConfig.getProfileByName(testProfileName);
         // Inject valid token file from testFixture/TestToken.txt to profile
-        profileByName["token"] = testToken;
+        profileByName["tokenFile"] = testToken;
 
         // Act
         const validateProfile = await profileConfig.validateProfile({
@@ -550,7 +550,7 @@ describe("Profiles", async function () {
           "Bad token path profile did not return correct AuthType"
         );
         expect(validateProfile.error).to.equal(
-          `Please update profile (${testProfileName}): ENOENT: no such file or directory, open '${testProfile["token"]}'`,
+          `Please update profile (${testProfileName}): ENOENT: no such file or directory, open '${testProfile["tokenFile"]}'`,
           "Bad token path profile should return error"
         );
       });

@@ -1,7 +1,7 @@
 {
   "configuration.SAS.title": "SAS",
 
-  "configuration.SAS.oDS.output": "Enable/disable ODS HTML5 output",
+  "configuration.SAS.output.HTML5": "Enable/disable ODS HTML5 output",
   "configuration.SAS.defineConnectionProfiles": "Define the connection profiles to connect to SAS Viya servers. If you define more than one profile, you can switch between them.",
   "configuration.SAS.profiles.activeProfile": "Active SAS Connection Profile",
   "configuration.SAS.profiles.profiles": "SAS Connection Profiles",

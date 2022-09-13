@@ -26,7 +26,7 @@ export type Dictionary<T> = {
  * Enum that represents the authentication type for a profile.
  */
 export enum AuthType {
-  TokenFile = "token",
+  TokenFile = "tokenFile",
   Password = "password",
   Error = "error",
 }
@@ -42,7 +42,7 @@ export interface Profile {
   clientSecret?: string;
   context?: string;
   username?: string;
-  token?: string;
+  tokenFile?: string;
 }
 
 /**
@@ -286,10 +286,10 @@ export class ProfileConfig {
     pv.profile = profileDetail.profile;
     if (profileDetail.profile["clientId"]) {
       pv.type = AuthType.Password;
-    } else if (profileDetail.profile["token"]) {
+    } else if (profileDetail.profile["tokenFile"]) {
       pv.type = AuthType.TokenFile;
       try {
-        pv.data = readFileSync(profileDetail.profile["token"], "utf-8");
+        pv.data = readFileSync(profileDetail.profile["tokenFile"], "utf-8");
       } catch (err) {
         pv.error = `Please update profile (${profileDetail.name}): ${err.message}`;
         pv.type = AuthType.Error;
@@ -317,7 +317,7 @@ export class ProfileConfig {
         clientSecret: "",
         context: "",
         username: "",
-        token: "",
+        tokenFile: "",
       };
     }
 
@@ -334,7 +334,7 @@ export class ProfileConfig {
         profileClone["context"]
       );
     }
-    if (!profileClone["clientId"] || !profileClone["token"] || forceUpdate) {
+    if (!profileClone["clientId"] || !profileClone["tokenFile"] || forceUpdate) {
       profileClone["clientId"] = await createInputTextBox(
         ProfilePromptType.ClientId,
         profileClone["clientId"]
@@ -342,7 +342,7 @@ export class ProfileConfig {
     }
     if (
       (!profileClone["clientSecret"] ||
-        !profileClone["token"] ||
+        !profileClone["tokenFile"] ||
         forceUpdate) &&
       profileClone["clientId"]
     ) {
@@ -351,10 +351,10 @@ export class ProfileConfig {
         profileClone["clientSecret"]
       );
     }
-    if ((!profileClone["token"] || forceUpdate) && !profileClone["clientId"]) {
-      profileClone["token"] = await createInputTextBox(
+    if ((!profileClone["tokenFile"] || forceUpdate) && !profileClone["clientId"]) {
+      profileClone["tokenFile"] = await createInputTextBox(
         ProfilePromptType.TokenFile,
-        profileClone["token"]
+        profileClone["tokenFile"]
       );
     }
     // The username field will only appear for non-token files, and will only update if the user runs the update profile command
@@ -377,7 +377,7 @@ export class ProfileConfig {
    */
   private sanitize(profile: Profile) {
     if (profile["clientId"]) {
-      delete profile["token"];
+      delete profile["tokenFile"];
     } else {
       delete profile["clientId"];
       delete profile["clientSecret"];
