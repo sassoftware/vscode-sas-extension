@@ -9,7 +9,7 @@ import {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Profile,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  ProfileConfig
+  ProfileConfig,
 } from "./profile";
 
 /**

@@ -66,7 +66,7 @@ export interface ProfileValidation {
 }
 
 /**
- * ProfileConfig manages a list of {@link Profile}s that are located in vscode settings. 
+ * ProfileConfig manages a list of {@link Profile}s that are located in vscode settings.
  * Connection Profiles are designed to keep track of multiple
  * configurations of SAS Connections.
  */
@@ -158,10 +158,10 @@ export class ProfileConfig {
       activeProfile: activeProfileParam,
       profiles: profileList,
     };
-    if(activeProfileParam in profileList){
+    if (activeProfileParam in profileList) {
       closeSession();
     } else {
-      profiles.activeProfile = '';
+      profiles.activeProfile = "";
     }
     await workspace
       .getConfiguration(EXTENSION_CONFIG_KEY)
@@ -310,7 +310,7 @@ export class ProfileConfig {
     const profile = this.getProfileByName(name);
     // Cannot mutate VSCode Config Object, create a clone and upsert
     let profileClone = { ...profile };
-    if(!profile){
+    if (!profile) {
       profileClone = <Profile>{
         endpoint: "",
         clientId: "",
@@ -318,8 +318,8 @@ export class ProfileConfig {
         context: "",
         username: "",
         token: "",
-      }
-    } 
+      };
+    }
 
     if (!profileClone["endpoint"] || forceUpdate) {
       profileClone["endpoint"] = await createInputTextBox(
@@ -340,7 +340,12 @@ export class ProfileConfig {
         profileClone["clientId"]
       );
     }
-    if ((!profileClone["clientSecret"] || !profileClone["token"] || forceUpdate) && profileClone["clientId"]) {
+    if (
+      (!profileClone["clientSecret"] ||
+        !profileClone["token"] ||
+        forceUpdate) &&
+      profileClone["clientId"]
+    ) {
       profileClone["clientSecret"] = await createInputTextBox(
         ProfilePromptType.ClientSecret,
         profileClone["clientSecret"]
@@ -353,7 +358,10 @@ export class ProfileConfig {
       );
     }
     // The username field will only appear for non-token files, and will only update if the user runs the update profile command
-    if ((!profileClone["username"] || forceUpdate) && profileClone["clientId"]) {
+    if (
+      (!profileClone["username"] || forceUpdate) &&
+      profileClone["clientId"]
+    ) {
       profileClone["username"] = await createInputTextBox(
         ProfilePromptType.Username,
         profileClone["username"]

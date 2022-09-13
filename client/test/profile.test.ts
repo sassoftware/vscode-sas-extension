@@ -39,58 +39,58 @@ describe("Profiles", async function () {
       path.join(__dirname, "..", "..", "testFixture", "TestToken.txt")
     );
     testProfileClientId = {
-      "activeProfile": "",
-      "profiles": {
-        "testProfile": {
-          "endpoint": "https://test-host.sas.com",
-          "clientId": "sas.test",
-          "clientSecret": "",
-          "context": "SAS Studio context",
-          "username": "sastest"
-        }
-      }
+      activeProfile: "",
+      profiles: {
+        testProfile: {
+          endpoint: "https://test-host.sas.com",
+          clientId: "sas.test",
+          clientSecret: "",
+          context: "SAS Studio context",
+          username: "sastest",
+        },
+      },
     };
     testProfileTokenFile = {
-      "activeProfile": "",
-      "profiles": {
-        "testProfile": {
-          "endpoint": "https://test-host.sas.com",
-          "context": "SAS Studio context",
-          "token": "path/to/token.txt"
-        }
-      }
+      activeProfile: "",
+      profiles: {
+        testProfile: {
+          endpoint: "https://test-host.sas.com",
+          context: "SAS Studio context",
+          token: "path/to/token.txt",
+        },
+      },
     };
     testEmptyProfile = {
-      "activeProfile": "",
-      "profiles": {
-        "testProfile": {}
-      }
+      activeProfile: "",
+      profiles: {
+        testProfile: {},
+      },
     };
     testEmptyItemsProfile = {
-      "activeProfile": "",
-      "profiles": {
-        "testProfile": {
-          "endpoint": "",
-          "token": "",
-          "context": "",
-          "username": "",
-          "clientId": "",
-          "clientSecret": ""
-        }
-      }
+      activeProfile: "",
+      profiles: {
+        testProfile: {
+          endpoint: "",
+          token: "",
+          context: "",
+          username: "",
+          clientId: "",
+          clientSecret: "",
+        },
+      },
     };
     testOverloadedProfile = {
-      "activeProfile": "",
-      "profiles": {
-        "testProfile": {
-          "endpoint": "https://test-host.sas.com",
-          "clientId": "sas.test",
-          "clientSecret": "",
-          "context": "SAS Studio context",
-          "username": "sastest",
-          "token": "path/to/token.txt"
-        }
-      }
+      activeProfile: "",
+      profiles: {
+        testProfile: {
+          endpoint: "https://test-host.sas.com",
+          clientId: "sas.test",
+          clientSecret: "",
+          context: "SAS Studio context",
+          username: "sastest",
+          token: "path/to/token.txt",
+        },
+      },
     };
   });
 
@@ -413,7 +413,8 @@ describe("Profiles", async function () {
         // Act
         // update profile manually
         const newProfileSetting = testProfileTokenFile;
-        newProfileSetting['profiles'][testProfileName]['endpoint'] = "https://test2-host.sas.com";
+        newProfileSetting["profiles"][testProfileName]["endpoint"] =
+          "https://test2-host.sas.com";
         await workspace
           .getConfiguration(EXTENSION_CONFIG_KEY)
           .update(
@@ -635,7 +636,8 @@ describe("Profiles", async function () {
         // Act
         // update profile manually
         const newProfileSetting = testEmptyProfile;
-        newProfileSetting['profiles'][testProfileName]['endpoint'] = "https://test2-host.sas.com";
+        newProfileSetting["profiles"][testProfileName]["endpoint"] =
+          "https://test2-host.sas.com";
         await workspace
           .getConfiguration(EXTENSION_CONFIG_KEY)
           .update(
@@ -713,20 +715,20 @@ describe("Profiles", async function () {
     beforeEach(async () => {
       testProfileName = "testProfile";
       await initProfile();
-        await workspace
-          .getConfiguration(EXTENSION_CONFIG_KEY)
-          .update(
-            EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
-            testOverloadedProfile,
-            ConfigurationTarget.Global
-          );
+      await workspace
+        .getConfiguration(EXTENSION_CONFIG_KEY)
+        .update(
+          EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+          testOverloadedProfile,
+          ConfigurationTarget.Global
+        );
     });
     describe("Validate Profiles", async function () {
       it("set active profile", async function () {
         // Arrange
         // Act
         await profileConfig.updateActiveProfileSetting(testProfileName);
-        const activeProfile = profileConfig.getActiveProfile(); 
+        const activeProfile = profileConfig.getActiveProfile();
 
         // Assert
         expect(activeProfile).to.equal(
@@ -783,19 +785,19 @@ describe("Profiles", async function () {
     beforeEach(async () => {
       testProfileName = "testProfile";
       await initProfile();
-        await workspace
-          .getConfiguration(EXTENSION_CONFIG_KEY)
-          .update(
-            EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
-            testEmptyItemsProfile,
-            ConfigurationTarget.Global
-          );
+      await workspace
+        .getConfiguration(EXTENSION_CONFIG_KEY)
+        .update(
+          EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+          testEmptyItemsProfile,
+          ConfigurationTarget.Global
+        );
     });
     describe("Validate Profiles", async function () {
       it("set active profile", async function () {
         // Arrange
         // Act
-        await profileConfig.updateActiveProfileSetting(testProfileName); 
+        await profileConfig.updateActiveProfileSetting(testProfileName);
         const testProfile = profileConfig.getActiveProfile();
 
         // Assert

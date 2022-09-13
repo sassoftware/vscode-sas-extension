@@ -77,7 +77,7 @@ export async function validateProfileAndRun(): Promise<void> {
  * validateProfileAndRunSelected command validates that at least one profile exists
  * before attempting to run
  */
- export async function validateProfileAndRunSelected(): Promise<void> {
+export async function validateProfileAndRunSelected(): Promise<void> {
   const profileList = await profileConfig.listProfile();
   if (profileList.length === 0) {
     addProfile();
