@@ -129,42 +129,47 @@
               "activeProfile": {
                 "order": 0,
                 "type": "string",
-                "description": "%configuration.SAS.profiles.activeProfile%",
+                "description": "%configuration.SAS.defineConnectionProfiles.activeProfile%",
                 "default": ""
               },
               "profiles": {
                 "order": 1,
                 "type": "object",
-                "description": "%configuration.SAS.profiles.profiles%",
-                "properties": {
-                  "endpoint": {
-                    "type": "string",
-                    "default": "",
-                    "description": "SAS Viya Connection Profile Endpoint"
-                  },
-                  "username": {
-                    "type": "string",
-                    "default": "",
-                    "description": "SAS Viya User ID"
-                  },
-                  "tokenFile": {
-                    "type": "string",
-                    "default": ""
-                  },
-                  "context": {
-                    "type": "string",
-                    "default": "SAS Job Execution compute context",
-                    "description": "SAS Viya Context"
-                  },
-                  "clientId": {
-                    "type": "string",
-                    "default": "",
-                    "description": "SAS Viya Client ID"
-                  },
-                  "clientSecret": {
-                    "type": "string",
-                    "default": "",
-                    "description": "SAS Viya Client Secret"
+                "description": "%configuration.SAS.defineConnectionProfiles.profiles%",
+                "additionalProperties": {
+                  "type": "object",
+                  "description": "%configuration.SAS.defineConnectionProfiles.profiles.name%",
+                  "properties": {
+                    "endpoint": {
+                      "type": "string",
+                      "default": "",
+                      "description": "%configuration.SAS.defineConnectionProfiles.profiles.endpoint%"
+                    },
+                    "username": {
+                      "type": "string",
+                      "default": "",
+                      "description": "%configuration.SAS.defineConnectionProfiles.profiles.username%"
+                    },
+                    "tokenFile": {
+                      "type": "string",
+                      "default": "",
+                      "description": "%configuration.SAS.defineConnectionProfiles.profiles.tokenFile%"
+                    },
+                    "context": {
+                      "type": "string",
+                      "default": "SAS Job Execution compute context",
+                      "description": "%configuration.SAS.defineConnectionProfiles.profiles.context%"
+                    },
+                    "clientId": {
+                      "type": "string",
+                      "default": "",
+                      "description": "%configuration.SAS.defineConnectionProfiles.profiles.clientId%"
+                    },
+                    "clientSecret": {
+                      "type": "string",
+                      "default": "",
+                      "description": "%configuration.SAS.defineConnectionProfiles.profiles.clientSecret%"
+                    }
                   }
                 }
               }
