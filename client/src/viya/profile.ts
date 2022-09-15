@@ -6,7 +6,7 @@ import { window, workspace, ConfigurationTarget } from "vscode";
 import { closeSession } from "../viya/compute";
 
 export const EXTENSION_CONFIG_KEY = "SAS";
-export const EXTENSION_DEFINE_PROFILES_CONFIG_KEY = "defineConnectionProfiles";
+export const EXTENSION_DEFINE_PROFILES_CONFIG_KEY = "connectionProfiles";
 export const EXTENSION_PROFILES_CONFIG_KEY = "profiles";
 export const EXTENSION_ACTIVE_PROFILE_CONFIG_KEY = "activeProfile";
 
@@ -72,7 +72,7 @@ export interface ProfileValidation {
  */
 export class ProfileConfig {
   /**
-   * Validates settings.json to confirm that SAS.defineConnectionProfiles exists
+   * Validates settings.json to confirm that SAS.connectionProfiles exists
    * as a key, and updates it, if the setting does not exists
    *
    * @returns Boolean for pass or fail

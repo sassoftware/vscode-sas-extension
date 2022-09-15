@@ -114,61 +114,61 @@
         "order": 0,
         "id": "connectionProfiles",
         "properties": {
-          "SAS.output.HTML5": {
+          "SAS.session.outputHtml": {
             "order": 0,
             "type": "boolean",
             "default": true,
-            "description": "%configuration.SAS.output.HTML5%"
+            "description": "%configuration.SAS.session.outputHtml%"
           },
-          "SAS.defineConnectionProfiles": {
+          "SAS.connectionProfiles": {
             "order": 1,
             "type": "object",
-            "description": "%configuration.SAS.defineConnectionProfiles%",
-            "scope": "application",
+            "description": "%configuration.SAS.connectionProfiles%",
+            "scope": "window",
             "properties": {
               "activeProfile": {
                 "order": 0,
                 "type": "string",
-                "description": "%configuration.SAS.defineConnectionProfiles.activeProfile%",
+                "description": "%configuration.SAS.connectionProfiles.activeProfile%",
                 "default": ""
               },
               "profiles": {
                 "order": 1,
                 "type": "object",
-                "description": "%configuration.SAS.defineConnectionProfiles.profiles%",
+                "description": "%configuration.SAS.connectionProfiles.profiles%",
                 "additionalProperties": {
                   "type": "object",
-                  "description": "%configuration.SAS.defineConnectionProfiles.profiles.name%",
+                  "description": "%configuration.SAS.connectionProfiles.profiles.name%",
                   "properties": {
                     "endpoint": {
                       "type": "string",
                       "default": "",
-                      "description": "%configuration.SAS.defineConnectionProfiles.profiles.endpoint%"
+                      "description": "%configuration.SAS.connectionProfiles.profiles.endpoint%"
                     },
                     "username": {
                       "type": "string",
                       "default": "",
-                      "description": "%configuration.SAS.defineConnectionProfiles.profiles.username%"
+                      "description": "%configuration.SAS.connectionProfiles.profiles.username%"
                     },
                     "tokenFile": {
                       "type": "string",
                       "default": "",
-                      "description": "%configuration.SAS.defineConnectionProfiles.profiles.tokenFile%"
+                      "description": "%configuration.SAS.connectionProfiles.profiles.tokenFile%"
                     },
                     "context": {
                       "type": "string",
                       "default": "SAS Job Execution compute context",
-                      "description": "%configuration.SAS.defineConnectionProfiles.profiles.context%"
+                      "description": "%configuration.SAS.connectionProfiles.profiles.context%"
                     },
                     "clientId": {
                       "type": "string",
                       "default": "",
-                      "description": "%configuration.SAS.defineConnectionProfiles.profiles.clientId%"
+                      "description": "%configuration.SAS.connectionProfiles.profiles.clientId%"
                     },
                     "clientSecret": {
                       "type": "string",
                       "default": "",
-                      "description": "%configuration.SAS.defineConnectionProfiles.profiles.clientSecret%"
+                      "description": "%configuration.SAS.connectionProfiles.profiles.clientSecret%"
                     }
                   }
                 }
