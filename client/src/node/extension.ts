@@ -102,7 +102,13 @@ export function activate(context: ExtensionContext): void {
   // If configFile setting is changed, update watcher to watch new configuration file
   workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
     if (event.affectsConfiguration("SAS.connectionProfiles")) {
-      updateStatusBarProfile(activeProfileStatusBarIcon);
+      const profileList = profileConfig.getAllProfiles();
+      const activeProfileName = profileConfig.getActiveProfile();
+      if (activeProfileName in profileList || activeProfileName === "") {
+        updateStatusBarProfile(activeProfileStatusBarIcon);
+      } else {
+        profileConfig.updateActiveProfileSetting("");
+      }
     }
   });
 }

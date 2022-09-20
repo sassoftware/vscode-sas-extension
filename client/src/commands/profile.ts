@@ -62,7 +62,7 @@ export async function switchProfile(): Promise<void> {
 
 /**
  * validateProfileAndRun command validates that at least one profile exists
- * before attempting to run
+ * and that there is an active profile before attempting to run
  */
 export async function validateProfileAndRun(): Promise<void> {
   const profileList = await profileConfig.listProfile();
@@ -70,17 +70,25 @@ export async function validateProfileAndRun(): Promise<void> {
     addProfile();
     return;
   }
+  if (profileConfig.getActiveProfile() === "") {
+    switchProfile();
+    return;
+  }
   run();
 }
 
 /**
  * validateProfileAndRunSelected command validates that at least one profile exists
- * before attempting to run
+ * and that there is an active profile before attempting to run
  */
 export async function validateProfileAndRunSelected(): Promise<void> {
   const profileList = await profileConfig.listProfile();
   if (profileList.length === 0) {
     addProfile();
+    return;
+  }
+  if (profileConfig.getActiveProfile() === "") {
+    switchProfile();
     return;
   }
   runSelected();
