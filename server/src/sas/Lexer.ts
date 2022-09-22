@@ -419,7 +419,9 @@ export class Lexer {
               if (qm === text[i]) {
                 //found end mark
                 i++;
-                if (qm === text[i]) {
+                if (this.quoting > 0 && text[i - 2] === "%") {
+                  // for escape, e.g. %str('Jim%'s office');
+                } else if (qm === text[i]) {
                   i++; // for escape, e.g. name='Tom''s'; name="Tom""s";
                 } else {
                   //check if this is date, time, datatime
