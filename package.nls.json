@@ -1,16 +1,23 @@
 {
-  "configuration.SAS.session.title.general": "Session - General",
-  "configuration.SAS.session.title.password": "Session - Authentication with password",
-  "configuration.SAS.session.title.token": "Session - Authentication with access token",
-  "configuration.SAS.session.host": "Full URL of your viya server",
-  "configuration.SAS.session.computeContext": "Compute context name",
-  "configuration.SAS.session.user": "User name for authentication with password flow",
-  "configuration.SAS.session.clientId": "Client ID for authentication with password flow. Get from your SAS administrator.",
-  "configuration.SAS.session.clientSecret": "Client secret for authentication with password flow. Get from your SAS administrator.",
-  "configuration.SAS.session.tokenFile": "Full path to a token file for authentication. Otherwise take password flow.",
-  "configuration.SAS.session.outputHtml": "Get ODS HTML5 output",
+  "configuration.SAS.title": "SAS",
 
-  "commands.SAS.session.run": "Run SAS Code",
-  "commands.SAS.session.runSelected": "Run Selected SAS Code",
-  "commands.SAS.session.close": "Close Current Session"
+  "configuration.SAS.session.outputHtml": "Enable/disable ODS HTML5 output",
+  "configuration.SAS.connectionProfiles": "Define the connection profiles to connect to SAS Viya servers. If you define more than one profile, you can switch between them.",
+  "configuration.SAS.connectionProfiles.activeProfile": "Active SAS Connection Profile",
+  "configuration.SAS.connectionProfiles.profiles": "SAS Connection Profiles",
+  "configuration.SAS.connectionProfiles.profiles.name": "SAS Connection Profile Name",
+  "configuration.SAS.connectionProfiles.profiles.endpoint": "SAS Viya Connection Profile Endpoint",
+  "configuration.SAS.connectionProfiles.profiles.username": "SAS Viya User ID",
+  "configuration.SAS.connectionProfiles.profiles.tokenFile": "SAS Viya Token File",
+  "configuration.SAS.connectionProfiles.profiles.context": "SAS Viya Context",
+  "configuration.SAS.connectionProfiles.profiles.clientId": "SAS Viya Client ID",
+  "configuration.SAS.connectionProfiles.profiles.clientSecret": "SAS Viya Client Secret",
+
+  "commands.SAS.run": "Run SAS code",
+  "commands.SAS.close": "Close Current Session",
+  "commands.SAS.switchProfile": "Switch Current Connection Profile",
+  "commands.SAS.addProfile": "Add New Connection Profile",
+  "commands.SAS.deleteProfile": "Delete Connection Profile",
+  "commands.SAS.updateProfile": "Update Connection Profile",
+  "commands.SAS.runSelected": "Run Selected SAS Code"
 }

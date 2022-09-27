@@ -4,7 +4,9 @@
 import { window } from "vscode";
 import { closeSession as computeCloseSession } from "../viya/compute";
 
-export async function closeSession(): Promise<void> {
+export async function closeSession(message: string): Promise<void> {
   await computeCloseSession();
-  window.showInformationMessage("Session closed!");
+  if (message) {
+    window.showInformationMessage(message);
+  }
 }

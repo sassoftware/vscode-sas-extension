@@ -27,8 +27,8 @@ function getCode(outputHtml: boolean, selected = false): string {
 
 async function _run(selected = false) {
   const outputHtml = !!workspace
-    .getConfiguration("SAS.session")
-    .get("outputHtml");
+    .getConfiguration("SAS")
+    .get("session.outputHtml");
   const code = getCode(outputHtml, selected);
 
   await window.withProgress(
