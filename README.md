@@ -119,7 +119,7 @@ Before running SAS code, you must configure the SAS extension to access a SAS Vi
 3. Please refer to the [Add SAS Connection Profile](#add-new-sas-profile) section below to add a profile
 4. After a profile is created, the Status Bar Item will be changed from "No Active Profiles Found" to the name of the new profile.
    ![Status Bar Profile](doc/images/StatusBarProfileItem.png)
-5. If you do not want to generate results in HTML format, clear the `ODS: Output` setting. This option is enabled by default.
+5. If you do not want to generate results in HTML format, clear the `Enable/disable ODS HTML5 output` setting. This option is enabled by default.
 
 ### Profiles
 
@@ -149,7 +149,7 @@ The following commands are supported for profiles:
 
 #### Add New SAS Profile
 
-After executing the `SAS.session.addProfile` command:
+After executing the `SAS.addProfile` command:
 
 **Session - Password authentication**
 To authenticate with password, specify client ID, client secret, and user name.
@@ -218,9 +218,9 @@ To run a piece of SAS code:
 **Notes**:
 
 - A new session must be created the first time you run SAS code. Connection time will vary depending on the server connection.
-- Currently, only HTML output is supported. By default, the ODS HTML5 statement is added to the submitted code. Clear the Get ODS HTML5 Output option in the Settings editor for the SAS extension to disable this output.
+- Currently, only HTML output is supported. By default, the ODS HTML5 statement is added to the submitted code. Clear the `Enable/disable ODS HTML5 output` option in the Settings editor for the SAS extension to disable this output.
 - When you click `Run`, the code in the active tab in the editor is submitted. Make sure that the correct tab is active when you run your program.
-- To reset your connection to the SAS Viya server, run the `Close current session` command in VS code or click the `Close current session` button next to the `Run` button.
+- To reset your connection to the SAS Viya server, run the `Close Current Session` command in VS code or click the `Close Current Session` button next to the `Run` button.
 
 ## Support
 

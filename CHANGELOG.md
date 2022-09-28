@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.1.0 (TBD)
+
+### Breaking Change
+
+- Command ID `SAS.session.run` and `SAS.session.runSelected` changed to `SAS.run` and `SAS.runSelected`
+- Settings `SAS.session.host`, `SAS.session.clientId`, etc. migrated to `SAS.connectionProfiles`
+
+### Feature
+
+- Support connection profiles
+
+### Fix
+
+- Improve macro statement autocomplete
+- Percentage sign should escape quotes in %str
+- PROC SQL snippet syntax
+
 ## v0.0.7 (26 Jul 2022)
 
 ### Feature
