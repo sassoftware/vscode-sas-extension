@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.1.0 (TBD)
+## v0.1.0 (8 Oct 2022)
 
 ### Breaking Change
 

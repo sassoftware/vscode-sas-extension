@@ -1,4 +1,5 @@
 .vscode/**
+.github/**
 **/src/**
 **/test/**
 **/testFixture/**
@@ -9,6 +10,7 @@
 tools
 .gitignore
 .prettierignore
+prettier.config.js
 **/tsconfig.json
 contributing.md
 ContributorAgreement.txt
