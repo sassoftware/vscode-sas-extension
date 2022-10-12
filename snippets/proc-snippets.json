@@ -30,7 +30,7 @@
   },
   "proc sql": {
     "prefix": "sql",
-    "body": ["proc sql;", "\tselect $1", "\tfrom $2", "\twhere $3;", "run;\n"],
+    "body": ["proc sql;", "\tselect $1", "\tfrom $2", "\twhere $3;", "quit;\n"],
     "description": "PROC SQL template"
   }
 }
