@@ -11,7 +11,7 @@ import {
 import { Position } from "vscode-languageserver-textdocument";
 import { CodeZoneManager } from "./CodeZoneManager";
 import { Model } from "./Model";
-import { HelpData, OptionValues } from "./SyntaxDataProvider";
+import { HelpData, LibCompleteItem, OptionValues } from "./SyntaxDataProvider";
 import { SyntaxProvider } from "./SyntaxProvider";
 import { arrayToMap, getText } from "./utils";
 
@@ -194,12 +194,15 @@ function _getContextMain(zone: number, keyword: string) {
   return context;
 }
 
-function getItemKind(zone: number) {
+function getItemKind(zone: number | LibCompleteItem["type"]) {
   if (zone === ZONE_TYPE.COLOR) {
     return CompletionItemKind.Color;
   }
   if (zone === ZONE_TYPE.MACRO_VAR) {
     return CompletionItemKind.Variable;
+  }
+  if (zone === "LIBRARY") {
+    return CompletionItemKind.Folder;
   }
   return CompletionItemKind.Keyword;
 }
@@ -262,11 +265,22 @@ export class CompletionProvider {
   getCompleteItems(position: Position): Promise<CompletionItem[] | undefined> {
     return new Promise((resolve) => {
       this._getZone(position);
-      this._loadAutoCompleteItems(this.popupContext.zone, (data?: string[]) => {
+      this._loadAutoCompleteItems(this.popupContext.zone, (data) => {
         resolve(
           data?.map((item) => ({
-            label: item.toLowerCase(),
-            kind: getItemKind(this.popupContext.zone),
+            label: (typeof item === "string" ? item : item.name).toLowerCase(),
+            kind: getItemKind(
+              typeof item === "string" ? this.popupContext.zone : item.type
+            ),
+            insertText:
+              typeof item === "string" ||
+              !/\W/.test(item.name) ||
+              (this.popupContext.datasetList &&
+                this.popupContext.datasetList.some((i: LibCompleteItem) => {
+                  return item.name.toLowerCase() === i.name.toLowerCase();
+                }))
+                ? undefined
+                : `'${item.name.replace(/'/g, "''")}'n`,
           }))
         );
       });
@@ -292,7 +306,10 @@ export class CompletionProvider {
     });
   }
 
-  private _loadAutoCompleteItems(zone: number, cb: (data?: string[]) => void) {
+  private _loadAutoCompleteItems(
+    zone: number,
+    cb: (data?: (string | LibCompleteItem)[]) => void
+  ) {
     let stmtName = _cleanUpKeyword(this.czMgr.getStmtName());
     const optName = _cleanUpKeyword(this.czMgr.getOptionName()),
       procName = _cleanUpKeyword(this.czMgr.getProcName());
@@ -419,17 +436,21 @@ export class CompletionProvider {
       case ZONE_TYPE.OPT_VALUE:
         break;
       case ZONE_TYPE.DATA_STEP_STMT_OPT:
-        // if (stmtName === 'SET' && (firstOptForSET || libref)) {
-        //     this.loader.getLibraryList(function(data){
-        //         if (data.values.length === 0) { // no service
-        //             _notify(function(data){
-        //                 _notifyOptValue(cb, data, optName);
-        //             }, data);
-        //         } else {
-        //             _notifyOptValue(cb, data, optName);
-        //         }
-        //     }, 'DV');
-        // } else {
+        if (stmtName === "SET") {
+          const pos = this.popupContext.position;
+          const lineText = this.model.getLine(pos.line);
+          const firstOptForSET =
+            lineText
+              .slice(lineText.toUpperCase().indexOf("SET") + 3, pos.character)
+              .search(/\S/) === -1;
+          const libref = this._findLibRef();
+          if (firstOptForSET || libref) {
+            this.loader.getLibraryList((data: OptionValues) => {
+              this._notifyOptValue(cb, data, optName);
+            }, "DV");
+            break;
+          }
+        }
         this.loader.getStatementOptions("datastep", stmtName, (data) => {
           if (!data) {
             this.loader.getProcedureStatementOptions("DATA", stmtName, cb);
@@ -437,7 +458,6 @@ export class CompletionProvider {
             cb(data);
           }
         });
-        //}
         break;
       case ZONE_TYPE.DATA_STEP_STMT_OPT_VALUE:
         this.loader.getStatementOptionValues(
@@ -1282,7 +1302,7 @@ export class CompletionProvider {
   }
 
   private _notifyOptValue(
-    cb: (data?: string[]) => void,
+    cb: (data?: (string | LibCompleteItem)[]) => void,
     data: OptionValues,
     optName: string
   ) {
@@ -1290,36 +1310,42 @@ export class CompletionProvider {
       if (this.loader.isColorType(data.type)) {
         this.popupContext.zone = ZONE_TYPE.COLOR;
         data.values = data.values.map((value: string) => value.slice(0, -9));
-      }
-      // if (loader.isColorType(data.type)) {
-      //   _setCurrentZone(ZONE_TYPE.COLOR);
-      // } else if (loader.isDataSetType(data.type)) {
-      //   if (optName !== popupContext.optName) return;
-      //   _setCurrentZone(ZONE_TYPE.LIB);
-      //   if (libref) {
-      //     libref = libref.toUpperCase();
-      //     for (var i = 0; i < data.values.length; i++) {
-      //       if (libref === data.values[i].name.toUpperCase()) {
-      //         loader.getDataSetNames(data.values[i].id, cb);
-      //         break;
-      //       }
-      //     }
-      //   } else {
-      //     _getDatasetNames();
-      //     cb(data.values.concat(datasetList));
-      //   }
-      //   return;
-      // } else if (!loader.isDataSetType(data.type) && libref) {
-      //   // wrong guess, should not popup
-      //   return;
-      // }
+      } else if (this.loader.isDataSetType(data.type)) {
+        if (optName !== this.popupContext.optName) {
+          cb(undefined);
+          return;
+        }
+        this.popupContext.zone = ZONE_TYPE.LIB;
+        let libref = this._findLibRef();
+        if (libref) {
+          libref = libref.toUpperCase();
+          for (let i = 0; i < data.values.length; i++) {
+            const libItem: LibCompleteItem = data.values[i] as any;
+            if (libref === libItem.name.toUpperCase()) {
+              this.loader.getDataSetNames(libItem.id, cb);
+              return;
+            }
+          }
+          data.values = [];
+        } else {
+          const datasetList = this._getDatasetNames() as any;
+          this.popupContext.datasetList = datasetList;
+          data.values = data.values.concat(datasetList);
+        }
+      } // else if (!this.loader.isDataSetType(data.type) && libref) {
+      // wrong guess, should not popup
+      //  cb(undefined);
+      //  return;
+      //}
       cb(data.values);
+      this.popupContext.datasetList = undefined;
     } else {
       cb(undefined);
     }
   }
 
   private _getZone(position: Position) {
+    this.popupContext.position = position;
     this.popupContext.prefix = this._getPrefix(position);
     const zone = this.czMgr.getCurrentZone(position.line, position.character);
     this.popupContext.zone =
@@ -1340,6 +1366,82 @@ export class CompletionProvider {
     return lastWorldStart === -1
       ? ""
       : textBeforeCaret.substring(lastWorldStart);
+  }
+
+  private _findLibRef() {
+    const pos = this.popupContext.position;
+    const syntax = this.syntaxProvider.getSyntax(pos.line),
+      count = syntax.length;
+    let end, libref;
+    for (let i = count - 1; i > 0; i--) {
+      if (syntax[i].start < pos.character) {
+        const line = this.model.getLine(pos.line);
+        if (!syntax[i + 1]) {
+          end = line.length - 1;
+        } else {
+          end = syntax[i + 1].start - 1;
+        }
+        if (syntax[i].style === "format") {
+          // data=<libref>.
+          libref = line.slice(syntax[i].start, end);
+        } else {
+          // data=<libref>.|...
+          const dotIndex = line.slice(syntax[i].start, end).indexOf(".");
+          if (
+            dotIndex > 0 &&
+            syntax[i].start + dotIndex < pos.character &&
+            line.slice(pos.character - 1, pos.character) !== " "
+          ) {
+            libref = line.slice(syntax[i].start, syntax[i].start + dotIndex);
+          }
+        }
+        break;
+      }
+    }
+    return libref;
+  }
+
+  private _getDatasetNames() {
+    const datasetList = [];
+    let flag = 0;
+    for (let line = 0; line < this.model.getLineCount(); line++) {
+      const syntax = this.syntaxProvider.getSyntax(line),
+        lineText = this.model.getLine(line),
+        count = syntax.length;
+      for (let i = 0; i < count; i++) {
+        const token =
+          i + 1 < count
+            ? lineText.slice(syntax[i].start, syntax[i + 1].start)
+            : lineText.slice(syntax[i].start);
+        if (
+          syntax[i].style === "comment" ||
+          syntax[i].style === "macro-comment" || // just comment, do nothing
+          (syntax[i].style === "text" &&
+            (token === "" || token.search(/\s/) !== -1))
+        ) {
+          // just blanks, do nothing
+        } else if (
+          flag === 0 &&
+          syntax[i].style === "sec-keyword" &&
+          token.toUpperCase() === "DATA"
+        ) {
+          flag = 1; // found data
+        } else if (
+          flag === 1 &&
+          syntax[i].style === "text" &&
+          token.toUpperCase() !== "_NULL_"
+        ) {
+          datasetList.push({ name: token, type: "DATA" });
+        } else if (flag === 1 && syntax[i].style === "sep" && token === "(") {
+          flag = 2; // dataset options
+        } else if (flag === 2) {
+          if (syntax[i].style === "sep" && token === ")") flag = 1;
+        } else {
+          flag = 0;
+        }
+      }
+    }
+    return datasetList;
   }
 
   private _getMacroVar() {

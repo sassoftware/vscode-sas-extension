@@ -6,6 +6,7 @@ import { SyntaxProvider } from "./SyntaxProvider";
 import { Model } from "./Model";
 import { CompletionProvider } from "./CompletionProvider";
 import { DocumentSymbol, SymbolKind } from "vscode-languageserver-types";
+import type { LibService } from "./SyntaxDataProvider";
 
 export const legend = {
   tokenTypes: [
@@ -164,6 +165,10 @@ export class LanguageServiceProvider {
       }
     }
     return result;
+  }
+
+  setLibService(fn: LibService): void {
+    return this.syntaxProvider.lexer.syntaxDb.setLibService(fn);
   }
 
   private _getProcName(line: number) {

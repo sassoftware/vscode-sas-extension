@@ -29,6 +29,17 @@ export interface OptionValues {
   values: string[];
 }
 
+export interface LibCompleteItem {
+  id: string;
+  name: string;
+  type: "DATA" | "VIEW" | "LIBRARY";
+}
+
+export type LibService = (
+  libId: string | null,
+  resolve: (items: LibCompleteItem[]) => void
+) => void;
+
 interface SupportSiteInformation {
   docsetId: string;
   docsetVersion: string;
@@ -139,7 +150,7 @@ const db: any = {
     "DEFINE_TAGSET",
     "DEFINE_EVENT",
   ]);
-let libService: (arg0: any, arg1: (data: any) => void) => void;
+let libService: LibService;
 
 // Utilities
 function _uniq(arr: any[]) {
@@ -1749,7 +1760,7 @@ export class SyntaxDataProvider {
   /* ************************************************************************
    * PUBLIC INTERFACES
    * ************************************************************************/
-  setLibService(fn: any) {
+  setLibService(fn: LibService) {
     libService = fn;
   }
   /*
@@ -2496,7 +2507,7 @@ export class SyntaxDataProvider {
   }
   getLibraryList(cb: any, type: string) {
     if (typeof libService === "function") {
-      libService(null, function (data: any) {
+      libService(null, function (data) {
         _notify(cb, { values: data, type: type });
       });
     } else {
@@ -2505,13 +2516,15 @@ export class SyntaxDataProvider {
   }
   getDataSetNames(libId: any, cb: any) {
     if (libId && typeof libService === "function") {
-      libService(libId, function (data: any) {
+      libService(libId, function (data) {
         if (data && data.length !== 0) {
           _notify(cb, data);
           return;
         }
         _notify(cb, null);
       });
+    } else {
+      _notify(cb, null);
     }
   }
   getDocumentVariables() {

@@ -12,17 +12,27 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 import { LanguageServiceProvider, legend } from "./sas/LanguageServiceProvider";
 import { CompletionProvider } from "./sas/CompletionProvider";
+import type { LibCompleteItem } from "./sas/SyntaxDataProvider";
 
 const servicePool: Record<string, LanguageServiceProvider> = {};
 const documentPool: Record<string, TextDocument> = {};
 
 let completionProvider: CompletionProvider;
+let connection: Connection;
+let supportSASGetLibList = false;
 
 // Create a simple text document manager.
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
-export const init = (connection: Connection): void => {
-  connection.onInitialize(() => {
+export const init = (conn: Connection): void => {
+  connection = conn;
+  connection.onInitialize((params) => {
+    if (
+      params.initializationOptions &&
+      params.initializationOptions.supportSASGetLibList
+    ) {
+      supportSASGetLibList = true;
+    }
     const result: InitializeResult = {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Incremental,
@@ -102,6 +112,14 @@ function getLanguageService(uri: string) {
   if (documentPool[uri]) {
     // re-create LanguageServer if document changed
     servicePool[uri] = new LanguageServiceProvider(documentPool[uri]);
+
+    if (supportSASGetLibList) {
+      servicePool[uri].setLibService((libId, resolve) =>
+        connection
+          .sendRequest<LibCompleteItem[]>("sas/getLibList", { libId: libId })
+          .then(resolve)
+      );
+    }
     delete documentPool[uri];
   }
   return servicePool[uri];

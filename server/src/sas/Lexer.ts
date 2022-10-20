@@ -13,7 +13,7 @@ let macroKwMap: Record<string, 1> | undefined = undefined;
 //     + unicode.packages.Mn + unicode.packages.Mc
 //     + unicode.packages.Nd
 //     + unicode.packages.Pc + "\\$_]+$");
-const wordReg = /[$\w]+$/;
+const wordReg = /[^`~!@#%^&*()\-=+[{\]}\\|;:'",.<>/?\s]/;
 
 const DAYS = {
   JAN: 31,
