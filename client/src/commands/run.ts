@@ -7,11 +7,13 @@ import {
   ViewColumn,
   window,
   workspace,
+  commands,
 } from "vscode";
 import { appendLog } from "../LogViewer";
 import { setup, run as computeRun } from "../viya/compute";
 
 let outputChannel: OutputChannel;
+let running = false;
 
 function getCode(outputHtml: boolean, selected = false): string {
   const editor = window.activeTextEditor;
@@ -25,7 +27,7 @@ function getCode(outputHtml: boolean, selected = false): string {
     : "";
 }
 
-async function _run(selected = false) {
+async function runCode(selected) {
   const outputHtml = !!workspace
     .getConfiguration("SAS")
     .get("session.outputHtml");
@@ -66,14 +68,25 @@ async function _run(selected = false) {
   );
 }
 
+function _run(selected = false) {
+  if (running) return;
+  running = true;
+  commands.executeCommand("setContext", "SAS.hideRunMenuItem", true);
+
+  runCode(selected)
+    .catch((err) => {
+      window.showErrorMessage(JSON.stringify(err));
+    })
+    .finally(() => {
+      running = false;
+      commands.executeCommand("setContext", "SAS.hideRunMenuItem", false);
+    });
+}
+
 export function run(): void {
-  _run().catch((err) => {
-    window.showErrorMessage(JSON.stringify(err));
-  });
+  _run();
 }
 
 export function runSelected(): void {
-  _run(true).catch((err) => {
-    window.showErrorMessage(JSON.stringify(err));
-  });
+  _run(true);
 }

@@ -230,18 +230,18 @@
     "menus": {
       "editor/title/run": [
         {
-          "when": "editorFocus && editorLangId == sas && !isWeb",
+          "when": "editorFocus && editorLangId == sas && !isWeb && !SAS.hideRunMenuItem",
           "command": "SAS.run"
         }
       ],
       "editor/context": [
         {
-          "when": "editorFocus && editorLangId == sas && !isWeb",
+          "when": "editorFocus && editorLangId == sas && !isWeb && !SAS.hideRunMenuItem",
           "command": "SAS.run",
           "group": "navigation"
         },
         {
-          "when": "editorHasSelection && !editorHasMultipleSelections && editorLangId == sas && !isWeb",
+          "when": "editorHasSelection && !editorHasMultipleSelections && editorLangId == sas && !isWeb && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected",
           "group": "navigation"
         }
