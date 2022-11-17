@@ -72,7 +72,10 @@ async function setup() {
       computeSession = (
         await requestLink(link, {
           method: link.method,
-          headers: { "accept-language": locale },
+          headers: {
+            "accept-language": locale,
+            "Content-Type": "application/vnd.sas.compute.session.request+json",
+          },
         })
       ).data;
     }
@@ -147,7 +150,9 @@ async function run(code: string, onLog?: (logs: LogLine[]) => void) {
       sessionId: computeSession.id,
       jobId: job.id,
     })
-  ).data.items.find((result) => result.type === "ODS");
+  ).data.items
+    .reverse()
+    .find((result) => result.type === "ODS");
 
   const html5 = result?.links?.[0].href
     ? (await requestLink<string>(result.links[0])).data

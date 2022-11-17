@@ -114,11 +114,15 @@ _Tip_: You can define a custom region by adding `/*region*/` and `/*endregion*/`
 Before running SAS code, you must configure the SAS extension to access a SAS Viya server. You must license SAS Viya to run SAS code.
 
 1. When first configuring, open up a file with the SAS language. "No Profile" can be located on the Status Bar located at the bottom left of your VSCode window
+
    ![No Active Profiles Found](doc/images/NoActiveProfilesStatusBar.png)
+
 2. Either select the "No Profile" Status Bar Item or open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX) and locate `SAS: Add New Connection Profile`
 3. Please refer to the [Add SAS Connection Profile](#add-new-sas-profile) section below to add a profile
 4. After a profile is created, the Status Bar Item will be changed from "No Profile" to the name of the new profile.
+
    ![Status Bar Profile](doc/images/StatusBarProfileItem.png)
+
 5. If you do not want to generate results in HTML format, clear the `Enable/disable ODS HTML5 output` setting. This option is enabled by default.
 
 ### Profiles
@@ -148,12 +152,12 @@ The following commands are supported for profiles:
 
 #### Add New SAS Profile
 
-After executing the `SAS.addProfile` command, complete the prompts to create a new profile.
+Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, complete the prompts to create a new profile. Depending on your SAS version, the values for the prompts differ slightly.
 
-- For Viya4 2022.11 and later, you can leave Client ID and Client Secret empty and simply press Enter.
-- For Viya4 2022.10 and before, Client ID and secret are required.
+- For SAS Viya 2022.11 and later, you can leave Client ID and Client Secret prompts empty and simply press Enter.
+- For SAS Viya 2022.10 and before (including SAS Viya 3.5), you need to provide a Client ID and secret.
 
-For more information about the authentication process, please see the blog post [Authentication to SAS Viya: a couple of approaches](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/). SAS administrator can follow the Step 1 and 2 in it to register a new client.
+For more information about Client IDs and the authentication process, please see the blog post [Authentication to SAS Viya: a couple of approaches](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/). A SAS administrator can follow the Steps 1 and 2 in the post to register a new client.
 
 #### Delete Connection Profile
 
@@ -187,16 +191,23 @@ After configuring the SAS extension for your SAS environment, run your SAS progr
 
 To run a SAS program:
 
-1. Click `Run` (running man icon) in the upper right corner of your SAS program window.
+1. Click `Run` (running man icon) in the upper right corner of your SAS program window. For a secure connection to SAS Viya we use authorization code for authentication. Complete these steps to connect.
 
-   1.1. Open the generated URL in browser and log in.
+   1.1. VS Code may prompt you about opening an external web site. Click 'Open'.
 
-   1.2. Copy the generated authorization code from browser and paste it back to the prompt in VS Code.
+   1.2. This will take you to a SAS Logon prompt. Log in with your SAS credentials.
 
-2. The results are displayed in the application.
-3. The SAS output log and error information are displayed in the applicaiton.
+   1.3 SAS returns an authorization code. Copy this code.
 
-<img src="doc/images/sasProgramOutput2.png"/>
+   1.4 Paste the authorization code in VS Code where indicated at the top of the screen.
+
+2. VS Code connects to SAS Viya and runs the code.
+3. The results are displayed in the application.
+4. The SAS output log and error information are displayed in the applicaiton.
+
+**Note:** You do not need a new authorization code for every command you run. The connection will persist and you can run more commands using the same connection.
+
+<img src="doc/images/runCode.png"/>
 
 To run a piece of SAS code:
 
