@@ -147,7 +147,7 @@ The following commands are supported for profiles:
 | **Name**            | Name of the profile                   | This will display on the status bar                                                                                                                   |
 | **Endpoint**        | Viya endpoint                         | This will appear when hovering over the status bar                                                                                                    |
 | **Compute Context** | Context for Compute Server            | Please see [SAS Documentation](https://go.documentation.sas.com/doc/en/sasadmincdc/v_014/evfun/p1dkdadd9rkbmdn1fpv562l2p5vy.htm) for more information |
-| **Client ID**       | Registered Client ID for SAS Viya     | Please see your SAS administrator. "authorization_code" and "refresh_token" grant types are required.<br /> _Leave empty for Viya4 2022.11 and later_ |
+| **Client ID**       | Registered Client ID for SAS Viya     | Please see your SAS administrator. `authorization_code` and `refresh_token` grant types are required.<br /> _Leave empty for Viya4 2022.11 and later_ |
 | **Client Secret**   | Registered Client Secret for SAS Viya | Please see your SAS administrator.<br /> _Leave empty for Viya4 2022.11 and later_                                                                    |
 
 #### Add New SAS Profile
