@@ -1,7 +1,7 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import { ExtensionContext, Uri } from "vscode";
+import { commands, ExtensionContext, Uri } from "vscode";
 import { LanguageClientOptions } from "vscode-languageclient";
 
 import { LanguageClient } from "vscode-languageclient/browser";
@@ -10,6 +10,8 @@ let client: LanguageClient;
 
 // this method is called when vs code is activated
 export function activate(context: ExtensionContext): void {
+  commands.executeCommand("setContext", "SAS.hideRunMenuItem", true);
+
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
     // Register the server for sas file

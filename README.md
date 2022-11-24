@@ -114,11 +114,15 @@ _Tip_: You can define a custom region by adding `/*region*/` and `/*endregion*/`
 Before running SAS code, you must configure the SAS extension to access a SAS Viya server. You must license SAS Viya to run SAS code.
 
 1. When first configuring, open up a file with the SAS language. "No Profile" can be located on the Status Bar located at the bottom left of your VSCode window
+
    ![No Active Profiles Found](doc/images/NoActiveProfilesStatusBar.png)
+
 2. Either select the "No Profile" Status Bar Item or open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX) and locate `SAS: Add New Connection Profile`
 3. Please refer to the [Add SAS Connection Profile](#add-new-sas-profile) section below to add a profile
-4. After a profile is created, the Status Bar Item will be changed from "No Active Profiles Found" to the name of the new profile.
+4. After a profile is created, the Status Bar Item will be changed from "No Profile" to the name of the new profile.
+
    ![Status Bar Profile](doc/images/StatusBarProfileItem.png)
+
 5. If you do not want to generate results in HTML format, clear the `Enable/disable ODS HTML5 output` setting. This option is enabled by default.
 
 ### Profiles
@@ -138,36 +142,22 @@ The following commands are supported for profiles:
 
 #### Profile Anatomy
 
-| Name                | Description                           | Additional Notes                                                                                                                                                                                                  |
-| ------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**            | Name of the profile                   | This will display on the status bar                                                                                                                                                                               |
-| **Endpoint**        | Viya endpoint                         | This will appear when hovering over the status bar                                                                                                                                                                |
-| **Compute Context** | Context for Compute Server            | Please see [SAS Documentation](https://go.documentation.sas.com/doc/en/sasadmincdc/v_014/evfun/p1dkdadd9rkbmdn1fpv562l2p5vy.htm) for more information                                                             |
-| **Client ID**       | Registered Client ID for SAS Viya     | Please see your SAS administrator, or follow the [SAS Documentation](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/) on how to register a client <br /> _Leave empty to use token file_ |
-| **Client Secret**   | Registered Client Secret for SAS Viya | Please see your SAS administrator, or follow the [SAS Documentation](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/) on how to register a client                                        |
-| **Token File Path** | Full Path to Token File               | File must contain only a bearer token to authenticate with the above endpoint <br /> _Will not be used with password flow_                                                                                        |
+| Name                | Description                           | Additional Notes                                                                                                                                      |
+| ------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Name**            | Name of the profile                   | This will display on the status bar                                                                                                                   |
+| **Endpoint**        | Viya endpoint                         | This will appear when hovering over the status bar                                                                                                    |
+| **Compute Context** | Context for Compute Server            | Please see [SAS Documentation](https://go.documentation.sas.com/doc/en/sasadmincdc/v_014/evfun/p1dkdadd9rkbmdn1fpv562l2p5vy.htm) for more information |
+| **Client ID**       | Registered Client ID for SAS Viya     | Please see your SAS administrator. `authorization_code` and `refresh_token` grant types are required.<br /> _Leave empty for Viya4 2022.11 and later_ |
+| **Client Secret**   | Registered Client Secret for SAS Viya | Please see your SAS administrator.<br /> _Leave empty for Viya4 2022.11 and later_                                                                    |
 
 #### Add New SAS Profile
 
-After executing the `SAS.addProfile` command:
+Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, complete the prompts to create a new profile. Depending on your SAS version, the values for the prompts differ slightly.
 
-**Session - Password authentication**
-To authenticate with password, specify client ID, client secret, and user name.
+- For SAS Viya 2022.11 and later, you can leave Client ID and Client Secret prompts empty and simply press Enter.
+- For SAS Viya 2022.10 and before (including SAS Viya 3.5), you need to provide a Client ID and secret.
 
-| Parameter     | Description                  | Sample Value |
-| ------------- | ---------------------------- | ------------ |
-| Client ID     | Registered client            | myapp.client |
-| Client Secret | Provide secret for client ID | myapp.secret |
-| User          | SAS Viya username            | john_doe     |
-
-**Session - Token authentication**
-To authenticate with an access token, specify the full path for a token file.
-
-| Parameter  | Description                                   | Sample Value                      |
-| ---------- | --------------------------------------------- | --------------------------------- |
-| Token File | SAS access token value stored in a local file | C:\Users\johndoe\SAS\access_token |
-
-For more information about the authentication process, please see the blog post [Authentication to SAS Viya: a couple of approaches](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/).
+For more information about Client IDs and the authentication process, please see the blog post [Authentication to SAS Viya: a couple of approaches](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/). A SAS administrator can follow the Steps 1 and 2 in the post to register a new client.
 
 #### Delete Connection Profile
 
@@ -201,14 +191,23 @@ After configuring the SAS extension for your SAS environment, run your SAS progr
 
 To run a SAS program:
 
-1. Click `Run` (running man icon) in the upper right corner of your SAS program window.
+1. Click `Run` (running man icon) in the upper right corner of your SAS program window. For a secure connection to SAS Viya we use authorization code for authentication. Complete these steps to connect.
 
-   a. If prompted, enter your password (for password authentication).
+   1.1. VS Code may prompt you about opening an external web site. Click 'Open'.
 
-2. The results are displayed in the application.
-3. The SAS output log and error information are displayed in the applicaiton.
+   1.2. This will take you to a SAS Logon prompt. Log in with your SAS credentials.
 
-<img src="doc/images/sasProgramOutput2.png"/>
+   1.3 SAS returns an authorization code. Copy this code.
+
+   1.4 Paste the authorization code in VS Code where indicated at the top of the screen.
+
+2. VS Code connects to SAS Viya and runs the code.
+3. The results are displayed in the application.
+4. The SAS output log and error information are displayed in the applicaiton.
+
+**Note:** You do not need a new authorization code for every command you run. The connection will persist and you can run more commands using the same connection.
+
+<img src="doc/images/runCode.png"/>
 
 To run a piece of SAS code:
 
@@ -220,7 +219,7 @@ To run a piece of SAS code:
 - A new session must be created the first time you run SAS code. Connection time will vary depending on the server connection.
 - Currently, only HTML output is supported. By default, the ODS HTML5 statement is added to the submitted code. Clear the `Enable/disable ODS HTML5 output` option in the Settings editor for the SAS extension to disable this output.
 - When you click `Run`, the code in the active tab in the editor is submitted. Make sure that the correct tab is active when you run your program.
-- To reset your connection to the SAS Viya server, run the `Close Current Session` command in VS code or click the `Close Current Session` button next to the `Run` button.
+- To reset your connection to the SAS Viya server, run the `Close Current Session` command in VS Code or click the `Close Current Session` button next to the `Run` button.
 
 ## Support
 

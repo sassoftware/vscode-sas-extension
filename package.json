@@ -110,9 +110,6 @@
     ],
     "configuration": [
       {
-        "title": "%configuration.SAS.title%",
-        "order": 0,
-        "id": "connectionProfiles",
         "properties": {
           "SAS.session.outputHtml": {
             "order": 0,
@@ -124,7 +121,6 @@
             "order": 1,
             "type": "object",
             "description": "%configuration.SAS.connectionProfiles%",
-            "scope": "window",
             "properties": {
               "activeProfile": {
                 "order": 0,
@@ -139,21 +135,14 @@
                 "additionalProperties": {
                   "type": "object",
                   "description": "%configuration.SAS.connectionProfiles.profiles.name%",
+                  "required": [
+                    "endpoint"
+                  ],
                   "properties": {
                     "endpoint": {
                       "type": "string",
                       "default": "",
                       "description": "%configuration.SAS.connectionProfiles.profiles.endpoint%"
-                    },
-                    "username": {
-                      "type": "string",
-                      "default": "",
-                      "description": "%configuration.SAS.connectionProfiles.profiles.username%"
-                    },
-                    "tokenFile": {
-                      "type": "string",
-                      "default": "",
-                      "description": "%configuration.SAS.connectionProfiles.profiles.tokenFile%"
                     },
                     "context": {
                       "type": "string",
@@ -230,36 +219,36 @@
     "menus": {
       "editor/title/run": [
         {
-          "when": "editorFocus && editorLangId == sas && !isWeb && !SAS.hideRunMenuItem",
+          "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.run"
         }
       ],
       "editor/context": [
         {
-          "when": "editorFocus && editorLangId == sas && !isWeb && !SAS.hideRunMenuItem",
+          "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.run",
           "group": "navigation"
         },
         {
-          "when": "editorHasSelection && !editorHasMultipleSelections && editorLangId == sas && !isWeb && !SAS.hideRunMenuItem",
+          "when": "editorHasSelection && !editorHasMultipleSelections && editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected",
           "group": "navigation"
         }
       ],
       "editor/title": [
         {
-          "when": "editorLangId == sas && !isWeb",
+          "when": "editorLangId == sas",
           "command": "SAS.close",
           "group": "navigation"
         }
       ],
       "commandPalette": [
         {
-          "when": "editorLangId == sas && !isWeb",
+          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.run"
         },
         {
-          "when": "editorHasSelection && !editorHasMultipleSelections && editorLangId == sas && !isWeb",
+          "when": "editorHasSelection && !editorHasMultipleSelections && editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected"
         }
       ]

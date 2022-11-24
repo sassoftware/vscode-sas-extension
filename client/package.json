@@ -10,8 +10,7 @@
   },
   "dependencies": {
     "vscode-languageclient": "^8.0.1",
-    "@sassoftware/restaf": "4.5.5",
-    "@sassoftware/restaflib": "4.5.5"
+    "axios": "^0.27.2"
   },
   "devDependencies": {
     "@types/vscode": "^1.66.0",

@@ -1,10 +1,12 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import { createInputTextBox, ProfilePromptType } from "../viya/profile";
-import { ProfileConfig } from "../viya/profile";
+import {
+  createInputTextBox,
+  ProfilePromptType,
+  ProfileConfig,
+} from "../components/profile";
 import { window } from "vscode";
-import { run, runSelected } from "../commands/run";
 
 export const profileConfig = new ProfileConfig();
 /**
@@ -38,7 +40,7 @@ export async function updateProfile(): Promise<void> {
     placeHolder: "Select a SAS connection profile",
   });
   if (selected) {
-    await profileConfig.prompt(selected, true);
+    await profileConfig.prompt(selected);
   }
 }
 
@@ -58,40 +60,6 @@ export async function switchProfile(): Promise<void> {
   if (selected) {
     profileConfig.updateActiveProfileSetting(selected);
   }
-}
-
-/**
- * validateProfileAndRun command validates that at least one profile exists
- * and that there is an active profile before attempting to run
- */
-export async function validateProfileAndRun(): Promise<void> {
-  const profileList = await profileConfig.listProfile();
-  if (profileList.length === 0) {
-    addProfile();
-    return;
-  }
-  if (profileConfig.getActiveProfile() === "") {
-    switchProfile();
-    return;
-  }
-  run();
-}
-
-/**
- * validateProfileAndRunSelected command validates that at least one profile exists
- * and that there is an active profile before attempting to run
- */
-export async function validateProfileAndRunSelected(): Promise<void> {
-  const profileList = await profileConfig.listProfile();
-  if (profileList.length === 0) {
-    addProfile();
-    return;
-  }
-  if (profileConfig.getActiveProfile() === "") {
-    switchProfile();
-    return;
-  }
-  runSelected();
 }
 
 /**
