@@ -1,6 +1,6 @@
 # Changelog
 
-## TBD
+## v0.1.1 (24 Nov 2022)
 
 ### Breaking Change
 
