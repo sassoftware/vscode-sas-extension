@@ -14,7 +14,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-
+// I've added a change
 import { Configuration } from "./configuration";
 import { AxiosResponse, AxiosRequestConfig } from "axios";
 // URLSearchParams not necessarily used
