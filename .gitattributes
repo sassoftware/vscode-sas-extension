@@ -1,1 +1,3 @@
-client/src/session/rest/api/ linguist-generated=true
+client/src/session/rest/api/common.ts linguist-generated=true
+client/src/session/rest/api/compute.ts linguist-generated=true
+client/src/session/rest/api/configuration.ts linguist-generated=true
