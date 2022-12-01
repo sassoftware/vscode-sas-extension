@@ -154,7 +154,7 @@ The following commands are supported for profiles:
 
 Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, complete the prompts to create a new profile. Depending on your SAS version, the values for the prompts differ slightly.
 
-- For SAS Viya 2022.11 and later, you can leave Client ID and Client Secret prompts empty and simply press Enter.
+- For SAS Viya 2022.11 and later, you can leave Client ID and Client Secret prompts empty and simply press Enter. (The built-in Client ID `vscode` will be used.)
 - For SAS Viya 2022.10 and before (including SAS Viya 3.5), you need to provide a Client ID and secret.
 
 For more information about Client IDs and the authentication process, please see the blog post [Authentication to SAS Viya: a couple of approaches](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/). A SAS administrator can follow the Steps 1 and 2 in the post to register a new client.
