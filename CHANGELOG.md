@@ -1,8 +1,16 @@
 # Changelog
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## [Unreleased]
 
-## [v0.1.1] - 24 Nov 2022
+### Added
+
+- `.gitattributes` to suppress display of generated files.
+
+### Changed
+
+- Changed `CHANGELOG.md` to better match https://keepachangelog.com/en/1.0.0/. Further discussion is needed to determine version note changes for past releases.
+
+## [v0.1.1] - 2022-11-24
 
 ### Breaking Change
 
@@ -14,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Refresh your access token with refresh token
 - Built-in client ID for Viya4 2022.11 and later
 
-## [v0.1.0] - 8 Oct 2022
+## [v0.1.0] - 2022-10-08
 
 ### Breaking Change
 
@@ -31,13 +39,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Percentage sign should escape quotes in %str
 - PROC SQL snippet syntax
 
-## [v0.0.7] - 26 Jul 2022
+## [v0.0.7] - 2022-07-26
 
 ### Feature
 
 - Support run selected SAS code
 
-## [v0.0.6] - 8 Jul 2022
+## [v0.0.6] - 2022-07-08
 
 ### Fix
 
@@ -53,7 +61,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Update README to show animated gifs
 
-## [v0.0.5] - 26 May 2022
+## [v0.0.5] - 2022-05-26
 
 ### Fix
 
@@ -64,7 +72,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Rearrange settings fields
 - Update dependencies versions
 
-## [v0.0.4] - 19 May 2022
+## [v0.0.4] - 2022-05-19
 
 ### Fix
 
@@ -74,6 +82,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Update README.md to link to wiki
 
-## [v0.0.3] - 17 May 2022
+## [v0.0.3] - 2022-05-17
 
 Initial release

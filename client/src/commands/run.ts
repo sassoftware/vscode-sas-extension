@@ -86,6 +86,7 @@ function _run(selected = false) {
 
   runCode(selected)
     .catch((err) => {
+      console.dir(err);
       window.showErrorMessage(
         err.response?.data ? JSON.stringify(err.response.data) : err.message
       );
