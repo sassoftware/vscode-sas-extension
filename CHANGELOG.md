@@ -1,15 +1,5 @@
 # Changelog
 
-## [Unreleased]
-
-### Added
-
-- `.gitattributes` to suppress display of generated files.
-
-### Changed
-
-- Changed `CHANGELOG.md` to better match https://keepachangelog.com/en/1.0.0/. Further discussion is needed to determine version note changes for past releases.
-
 ## [v0.1.1] - 2022-11-24
 
 ### Breaking Change
