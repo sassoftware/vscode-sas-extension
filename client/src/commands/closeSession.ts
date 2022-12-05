@@ -2,7 +2,7 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import { window } from "vscode";
-import { getSession, Session } from "../session";
+import { getSession, Session } from "../connection";
 
 export async function closeSession(message?: string): Promise<void> {
   let session: Session;
