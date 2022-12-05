@@ -70,8 +70,8 @@ async function runCode(selected?: boolean) {
           if (outputHtml && results.html5) {
             const odsResult = window.createWebviewPanel(
               "SASSession", // Identifies the type of the webview. Used internally
-              "Result", // Title of the panel displayed to the user
-              ViewColumn.Two, // Editor column to show the new webview panel in.
+              results.title, // Title of the panel displayed to the user
+              { preserveFocus: true, viewColumn: ViewColumn.Beside }, // Editor column to show the new webview panel in.
               {} // Webview options. More on these later.
             );
             odsResult.webview.html = results.html5;

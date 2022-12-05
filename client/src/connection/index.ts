@@ -6,6 +6,7 @@ let profileConfig: ProfileConfig;
 
 export interface RunResult {
   html5?: string;
+  title?: string;
 }
 
 export interface Session {
