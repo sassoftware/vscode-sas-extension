@@ -1,21 +1,7 @@
-import { AxiosRequestConfig, AxiosResponse } from "axios";
-import { Session } from "..";
-import { createRequestFunction } from "./api/common";
-import {
-  ContextsApi,
-  JobLogCollection,
-  JobsApi,
-  Link,
-  LogLine,
-  LogsApi,
-  LogsApiGetJobLogRequest,
-  ResultsApi,
-  ServersApi,
-  Session as ComputeSession,
-  SessionsApi,
-} from "./api/compute";
-import { Configuration } from "./api/configuration";
+import { RunResult, Session } from "..";
+import { ContextsApi, LogLine } from "./api/compute";
 import { clearTokens, getAccessToken } from "./auth";
+import { ComputeState, getApiConfig } from "./common";
 
 export interface Config {
   endpoint: string;
@@ -25,193 +11,131 @@ export interface Config {
   serverId?: string;
 }
 
-const apiConfig = new Configuration();
+import { ComputeServer } from "./server";
+import { ComputeSession } from "./session";
+import { ComputeJob } from "./job";
+
 let config: Config;
 let computeSession: ComputeSession | undefined;
 
 async function setup() {
+  const apiConfig = getApiConfig();
   if (!config.serverId) {
     apiConfig.accessToken = await getAccessToken(config);
   }
 
-  if (computeSession && computeSession.id) {
-    const sessionsApi = SessionsApi(apiConfig);
-    const state = await sessionsApi
-      .getSessionState({ sessionId: computeSession.id })
+  if (computeSession && computeSession.sessionId) {
+    const state = await computeSession
+      .getState()
       .catch(() => (computeSession = undefined));
-
-    if (state?.data) {
-      // Recover syntaxcheck mode
-      await sessionsApi
-        .updateSessionState(
-          {
-            sessionId: computeSession.id,
-            value: "canceled",
-            ifMatch: state.headers["etag"],
-          },
-          // has to override axios' default Content-Type
-          { headers: { "Content-Type": "" } }
-        )
-        .catch((err) => console.dir(err));
+    if (state === ComputeState.Error) {
+      await computeSession.cancel();
+    } else {
+      //This might look weird, but I dont know how to detect the session being in
+      //syntax check mode right now so we need to send the cancel every time to make
+      //sure the session is in a good state.
+      await computeSession.cancel();
     }
   }
 
   if (computeSession) return;
 
+  //Set the locale in the base options so it appears on all api calls
   const locale = JSON.parse(process.env.VSCODE_NLS_CONFIG ?? "{}").locale;
+  apiConfig.baseOptions["headers"] = { "Accept-Language": locale };
 
   if (config.serverId) {
-    // PuP
-    const serverApi = ServersApi(apiConfig);
-    const server = (await serverApi.getServer({ serverId: config.serverId }))
-      .data;
-    const link = server.links.find(
-      (l) => l.rel.toLowerCase() === "createsession"
-    );
-    if (link) {
-      computeSession = (
-        await requestLink(link, {
-          method: link.method,
-          headers: {
-            "accept-language": locale,
-            "Content-Type": "application/vnd.sas.compute.session.request+json",
-          },
-        })
-      ).data;
-    }
+    const server1 = new ComputeServer(config.serverId);
+    computeSession = await server1.getSession();
+
+    //Maybe wait for session to be initialized?
     return;
+  } else {
+    //Create session from context
+    const contextsApi = ContextsApi(apiConfig);
+    const contextName = config.context || "SAS Job Execution compute context";
+    const context = (
+      await contextsApi.getContexts({
+        filter: `eq(name,'${contextName}')`,
+      })
+    ).data.items[0];
+    if (!context?.id)
+      throw new Error("Compute Context not found: " + contextName);
+
+    const sess = (
+      await contextsApi.createSession(
+        { contextId: context.id },
+        { headers: { "accept-language": locale } }
+      )
+    ).data;
+    computeSession = ComputeSession.fromInterface(sess);
   }
+}
 
-  const contextsApi = ContextsApi(apiConfig);
-  const contextName = config.context || "SAS Job Execution compute context";
-  const context = (
-    await contextsApi.getContexts({
-      filter: `eq(name,'${contextName}')`,
-    })
-  ).data.items[0];
-  if (!context?.id)
-    throw new Error("Compute Context not found: " + contextName);
-
-  computeSession = (
-    await contextsApi.createSession(
-      { contextId: context.id },
-      { headers: { "accept-language": locale } }
-    )
-  ).data;
+/*
+Prints the job log in an async manner.
+*/
+async function printLog(job: ComputeJob, onLog?: (logs: LogLine[]) => void) {
+  const log = await job.getLogStream();
+  for await (const line of log) {
+    onLog([line]);
+  }
 }
 
 async function run(code: string, onLog?: (logs: LogLine[]) => void) {
-  if (!computeSession?.id) throw new Error();
+  if (!computeSession?.sessionId) throw new Error();
 
-  const jobsApi = JobsApi(apiConfig);
+  //Get the job
+  const job = await computeSession.execute({ code: [code] });
+  let state = await job.getState();
 
-  const resultsApi = ResultsApi(apiConfig);
+  const retLog = printLog(job, onLog);
 
-  const job = (
-    await jobsApi.createJob({
-      sessionId: computeSession.id,
-      jobRequest: { code: [code] },
-    })
-  ).data;
-  if (!job.id) throw new Error();
+  //Wait until the job is complete
+  do {
+    state = await job.getState({ onChange: true, wait: 2 });
+  } while (await job.isDone(state));
 
-  const state = await jobsApi.getJobState({
-    sessionId: computeSession.id,
-    jobId: job.id,
-  });
-  let logOffset = 0;
-  if (state.data === "running" || state.data === "pending") {
-    await getLogs({ sessionId: computeSession.id, jobId: job.id }, (logs) => {
-      logOffset += logs.length;
-      onLog?.(logs);
-    });
-    await jobsApi
-      .getJobState({
-        sessionId: computeSession.id,
-        jobId: job.id,
-        wait: 60,
-        ifNoneMatch: state.headers["etag"],
-      })
-      .catch((err) => {
-        if (err.response?.status === 304) {
-          throw new Error("Job did not complete in 60 seconds.");
-        }
-        throw err;
-      });
-  }
+  //Clear out the logs
+  await retLog;
 
-  getLogs(
-    { sessionId: computeSession.id, jobId: job.id, start: logOffset },
-    onLog
-  );
+  //Now get the results
+  const results = await job.results();
 
-  const result = (
-    await resultsApi.getJobResults({
-      sessionId: computeSession.id,
-      jobId: job.id,
-    })
-  ).data.items
-    .reverse()
-    .find((result) => result.type === "ODS");
-
-  const html5 = result?.links?.[0].href
-    ? (await requestLink<string>(result.links[0])).data
-    : "";
-
-  return {
-    html5,
+  const res: RunResult = {
+    html5: "",
+    title: "",
   };
-}
 
-async function getLogs(
-  requestParameters: LogsApiGetJobLogRequest,
-  onLog?: (logs: LogLine[]) => void
-) {
-  const logsApi = LogsApi(apiConfig);
-  let logCollection = (await logsApi.getJobLog(requestParameters)).data;
-  let logs = logCollection.items;
-  if (logs.length) {
-    onLog?.(logs);
-  }
-  let nextLink = logCollection.links?.find((link) => link.rel === "next");
-  while (nextLink) {
-    logCollection = (await requestLink<JobLogCollection>(nextLink)).data;
-    logs = logCollection.items;
-    if (logs.length) {
-      onLog?.(logs);
+  /*
+    We can return more than just html, but for right now we are only returning
+    the last HTML file that we get.
+    The last one is returned so that the one created from the vscode injected ods statement is
+    always returned.
+  */
+  for (const result of results.reverse()) {
+    const link = result.links[0];
+    if (link.type === "text/html") {
+      res.html5 = (await job.requestLink<string>(link)).data;
+      res.title = result.name;
+      break;
     }
-    nextLink = logCollection.links?.find((link) => link.rel === "next");
   }
-}
 
-async function requestLink<T>(
-  link: Link,
-  options?: AxiosRequestConfig
-): Promise<AxiosResponse<T>> {
-  if (!link.href) throw new Error();
-  return createRequestFunction<T>(
-    {
-      url: link.href.slice("/compute".length),
-      options: options ?? { headers: {} },
-    },
-    apiConfig
-  );
+  return res;
 }
 
 async function close() {
   clearTokens();
-  if (computeSession && computeSession.id) {
-    const sessionsApi = SessionsApi(apiConfig);
-    await sessionsApi
-      .deleteSession({ sessionId: computeSession.id })
-      .finally(() => (computeSession = undefined));
+  if (computeSession && computeSession.sessionId) {
+    computeSession.delete();
   }
 }
 
 export function getSession(c: Config): Session {
   config = { ...c };
   config.endpoint = config.endpoint.replace(/\/$/, "");
-  apiConfig.basePath = config.endpoint + "/compute";
+  getApiConfig().basePath = config.endpoint + "/compute";
 
   return {
     setup,
