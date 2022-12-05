@@ -1,0 +1,3 @@
+client/src/session/rest/api/* linguist-generated=true
+server/data/* linguist-generated=true
+server/pubsdata/* linguist-generated=true
