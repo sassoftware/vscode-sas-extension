@@ -85,10 +85,11 @@ export function getText(key: string, arg?: string): string {
           .split("\n")
           .forEach((pair: string) => {
             const [key, value] = pair.split("=");
-            if (key && value)
+            if (key && value) {
               bundle[key] = value.replace(/\\u(.{4})/g, (_, p1) =>
                 String.fromCodePoint(parseInt(p1, 16))
               );
+            }
           });
       }
     }

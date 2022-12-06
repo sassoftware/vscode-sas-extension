@@ -234,8 +234,11 @@ export class CodeZoneManager {
       end = token.text;
     }
     line = start.substr(0, 2);
-    if (end.length <= 2) line += end;
-    else line += end.substr(end.length - 2, 2);
+    if (end.length <= 2) {
+      line += end;
+    } else {
+      line += end.substr(end.length - 2, 2);
+    }
 
     if (Lexer.isComment[token.type] || Lexer.isLiteral[token.type]) {
       reg = regs[token.type];
@@ -573,24 +576,40 @@ export class CodeZoneManager {
       return 3;
     } else if (l2 === l1) {
       // token in a line
-      if (cursor.col < c1) return 3;
-      else if (cursor.col === c1) return 2;
-      else if (cursor.col === c2) return 0;
-      else if (cursor.col > c2) return -1;
-      else return 1;
+      if (cursor.col < c1) {
+        return 3;
+      } else if (cursor.col === c1) {
+        return 2;
+      } else if (cursor.col === c2) {
+        return 0;
+      } else if (cursor.col > c2) {
+        return -1;
+      } else {
+        return 1;
+      }
     } else {
       // token cross multiple lines
       if (cursor.line === l1) {
         //start line
-        if (cursor.col < c1) return 3;
-        else if (cursor.col === c1) return 2;
-        else return 1;
+        if (cursor.col < c1) {
+          return 3;
+        } else if (cursor.col === c1) {
+          return 2;
+        } else {
+          return 1;
+        }
       } else if (cursor.line === l2) {
         //end line
-        if (cursor.col > c2) return -1;
-        else if (cursor.col === c2) return 0;
-        else return 1;
-      } else return 1;
+        if (cursor.col > c2) {
+          return -1;
+        } else if (cursor.col === c2) {
+          return 0;
+        } else {
+          return 1;
+        }
+      } else {
+        return 1;
+      }
     }
   }
   /*
@@ -650,11 +669,13 @@ export class CodeZoneManager {
       token = this._getPrev(context);
       if (token && token.text) {
         word = token.text.toUpperCase();
-        if (_isBlockEnd[word]) return true;
-        else if (word === "CANCEL") {
+        if (_isBlockEnd[word]) {
+          return true;
+        } else if (word === "CANCEL") {
           token = this._getPrev(context);
-          if (token && token.text && _isBlockEnd[token.text.toUpperCase()])
+          if (token && token.text && _isBlockEnd[token.text.toUpperCase()]) {
             return true;
+          }
         }
       }
     }
@@ -895,7 +916,9 @@ export class CodeZoneManager {
           default: {
             if (this._isStatgraph(context.block, context.cursor, text)) {
               this._procName = "STATGRAPH";
-            } else this._procName = this._blockName(context.block);
+            } else {
+              this._procName = this._blockName(context.block);
+            }
             return this._procStmt(context, token);
           }
         }
@@ -956,7 +979,9 @@ export class CodeZoneManager {
       len = root.length;
       for (; i < len; i++) {
         found = this._context(root[i], stack, { type: "argitem", argIndex: i });
-        if (found) break;
+        if (found) {
+          break;
+        }
         stack.pop();
       }
     } else if (root instanceof Object) {
@@ -1164,7 +1189,9 @@ export class CodeZoneManager {
       token2 = this._getNextEx(context);
       //adjust statement name
       opts.push({ op: token, op1: this._stmt(context, token2) });
-      if (token.pos >= 0) this._stmtName = stmt.text;
+      if (token.pos >= 0) {
+        this._stmtName = stmt.text;
+      }
     } else {
       opts.push(token);
     }
@@ -1250,8 +1277,9 @@ export class CodeZoneManager {
     }
     const opts = this._stmtOptions(context, stmt, nameType, optType);
     const opt = this._firstToken(opts);
-    if (this._stmtName === "ODS" && opt.pos >= 0)
+    if (this._stmtName === "ODS" && opt.pos >= 0) {
       this._emit(opt, CodeZoneManager.ZONE_TYPE.ODS_STMT);
+    }
     return { op: stmt, op1: opts };
   }
   private _traverse(
@@ -1281,10 +1309,13 @@ export class CodeZoneManager {
   private _firstToken(opt: any): any {
     if (opt instanceof Array) {
       return this._firstToken(opt[0]);
-    } else if (opt.op === undefined) return opt;
-    else if (opt.op2 === undefined) {
+    } else if (opt.op === undefined) {
+      return opt;
+    } else if (opt.op2 === undefined) {
       return this._firstToken(opt.op);
-    } else return this._firstToken(opt.op1);
+    } else {
+      return this._firstToken(opt.op1);
+    }
   }
   private _isNormalStmt(stmt: { text: string }) {
     //TODO: we should improve this when we get enough information about SAS language
@@ -1372,8 +1403,12 @@ export class CodeZoneManager {
   private _emitArgList(list: any[], ltype: number, rtype: number) {
     let i = 1;
     const count = list.length - 1;
-    if (list[0].pos === 0) this._emit(list[0], ltype);
-    if (list[count].pos >= 2) this._emit(list[count], ltype);
+    if (list[0].pos === 0) {
+      this._emit(list[0], ltype);
+    }
+    if (list[count].pos >= 2) {
+      this._emit(list[count], ltype);
+    }
     for (; i < count; i++) {
       if (list[i].op === undefined) {
         //only a token, no value
@@ -1419,17 +1454,20 @@ export class CodeZoneManager {
       (opt.o && opt.o.op && opt.o.op.text === "STYLE")
     ) {
       // special for style
-      if (!this._styleOptionAllowed()) return;
+      if (!this._styleOptionAllowed()) {
+        return;
+      }
       if (curr.t === CodeZoneManager.ZONE_TYPE.OPT_ITEM) {
         if (expr.op1) {
           //having options
           this._emit(expr.op, type);
-          if (expr.op1 instanceof Array)
+          if (expr.op1 instanceof Array) {
             this._emitArgList(
               expr.op1,
               CodeZoneManager.ZONE_TYPE.STYLE_LOC,
               CodeZoneManager.ZONE_TYPE.RESTRICTED
             );
+          }
         } else {
           this._emit(expr, type);
         }
@@ -1509,11 +1547,14 @@ export class CodeZoneManager {
       exit = false;
     const opts = [];
 
-    if (!nameType)
+    if (!nameType) {
       nameType = this._needOptionDelimiter()
         ? CodeZoneManager.ZONE_TYPE.OPT_NAME_REQ
         : CodeZoneManager.ZONE_TYPE.OPT_NAME;
-    if (!valType) valType = CodeZoneManager.ZONE_TYPE.OPT_VALUE;
+    }
+    if (!valType) {
+      valType = CodeZoneManager.ZONE_TYPE.OPT_VALUE;
+    }
     for (;;) {
       // option name
       tmpContext = this._cloneContext(context);
@@ -1523,7 +1564,9 @@ export class CodeZoneManager {
         opts.push(name);
         exit = true;
       } else if (name.text === ";") {
-        if (name.pos >= 2) this._emit(name, nameType);
+        if (name.pos >= 2) {
+          this._emit(name, nameType);
+        }
         opts.push(name);
         exit = true;
       } else {
@@ -1617,8 +1660,12 @@ export class CodeZoneManager {
       rmark = marks[lmark],
       ends: Record<string, 1> = {};
 
-    if (!nameType) nameType = CodeZoneManager.ZONE_TYPE.SUB_OPT_NAME;
-    if (!valType) valType = CodeZoneManager.ZONE_TYPE.SUB_OPT_VALUE;
+    if (!nameType) {
+      nameType = CodeZoneManager.ZONE_TYPE.SUB_OPT_NAME;
+    }
+    if (!valType) {
+      valType = CodeZoneManager.ZONE_TYPE.SUB_OPT_VALUE;
+    }
     ends[rmark] = 1;
     this._emit1(
       token,
@@ -1647,13 +1694,15 @@ export class CodeZoneManager {
       exit = true;
       switch (lopd.text) {
         case rmark:
-          if (lopd.pos < 2)
+          if (lopd.pos < 2) {
             this._emit(lopd, CodeZoneManager.ZONE_TYPE.RESTRICTED);
+          }
           this._copyContext(tmpContext, context);
           break;
         case ";":
-          if (lopd.pos < 2)
+          if (lopd.pos < 2) {
             this._emit(lopd, CodeZoneManager.ZONE_TYPE.RESTRICTED);
+          }
           break;
         case "":
           break;
@@ -1676,7 +1725,9 @@ export class CodeZoneManager {
           exit = true;
           break;
         case ";":
-          if (token.pos >= 2) this._emit(token, nameType);
+          if (token.pos >= 2) {
+            this._emit(token, nameType);
+          }
           items.push(lopd, token);
           exit = true;
           break;
@@ -1810,7 +1861,9 @@ export class CodeZoneManager {
             return this._dataStmt(context, token);
         }
       }
-    } else return this._dataStmt(context, token);
+    } else {
+      return this._dataStmt(context, token);
+    }
   }
   private _dataDef(context: Context, stmt: TokenWithPos) {
     let token1, token2, tmpContext, viewOrPrg: any, name;
@@ -2020,8 +2073,9 @@ export class CodeZoneManager {
           //optVal = _getNextEx(context);
           optVal = this._expr(context);
           simpleVal = this._firstToken(optVal);
-          if (simpleVal.pos >= 0)
+          if (simpleVal.pos >= 0) {
             this._emit(simpleVal, CodeZoneManager.ZONE_TYPE.DATA_SET_OPT_VALUE);
+          }
           if (token1.text === "DROP" || token1.text === "KEEP") {
             moreVals = this._tryGetMoreVals(
               context,
@@ -2184,7 +2238,9 @@ export class CodeZoneManager {
             context.col = context.cursor.col - 1;
             if (embeddedBlock.type === SEC_TYPE.PROC) {
               return this._procSec(context);
-            } else return this._dataSec(context);
+            } else {
+              return this._dataSec(context);
+            }
           }
         }
         if (text[0] === "%") {
@@ -2211,12 +2267,18 @@ export class CodeZoneManager {
               context.col = context.cursor.col - 1;
               if (embeddedBlock.type === SEC_TYPE.PROC) {
                 return this._procSec(context);
-              } else return this._dataSec(context);
-            } else return this._macroStmt(context, token);
+              } else {
+                return this._dataSec(context);
+              }
+            } else {
+              return this._macroStmt(context, token);
+            }
           }
         }
       }
-    } else return this._macroStmt(context, token);
+    } else {
+      return this._macroStmt(context, token);
+    }
   }
   private _macroDef(context: Context) {
     let token;
@@ -2263,7 +2325,9 @@ export class CodeZoneManager {
     if (embeddedBlock) {
       if (this._isStatgraph(context.block, context.cursor, stmt.text)) {
         this._procName = "STATGRAPH";
-      } else this._procName = this._blockName(context.block);
+      } else {
+        this._procName = this._blockName(context.block);
+      }
       return this._procStmt(context, stmt);
     } else if (stmt.text[0] === "%") {
       name = stmt.text.substring(1);
@@ -2362,10 +2426,18 @@ export class CodeZoneManager {
       //&& (SasLexer.isComment[type] || SasLexer.isLiteral[type])
       ///*|| SasLexer.isComment[type] || SasLexer.isLiteral[type]*/) {
       //return ZONE_TYPE.RESTRCITED;
-      if (Lexer.isComment[type]) return CodeZoneManager.ZONE_TYPE.COMMENT;
-      if (type === "string") return CodeZoneManager.ZONE_TYPE.QUOTED_STR;
-      if (type === "cards-data") return CodeZoneManager.ZONE_TYPE.DATALINES;
-      if (Lexer.isLiteral[type]) return CodeZoneManager.ZONE_TYPE.LITERAL;
+      if (Lexer.isComment[type]) {
+        return CodeZoneManager.ZONE_TYPE.COMMENT;
+      }
+      if (type === "string") {
+        return CodeZoneManager.ZONE_TYPE.QUOTED_STR;
+      }
+      if (type === "cards-data") {
+        return CodeZoneManager.ZONE_TYPE.DATALINES;
+      }
+      if (Lexer.isLiteral[type]) {
+        return CodeZoneManager.ZONE_TYPE.LITERAL;
+      }
     }
     context = {
       block: block,

@@ -25,8 +25,9 @@ export function getSession(): Session {
   if (validProfile.type === AuthType.Error) {
     throw new Error(validProfile.error);
   }
-  if (/^https*:/.test(validProfile.profile.endpoint))
+  if (/^https*:/.test(validProfile.profile.endpoint)) {
     return getRestSession(validProfile.profile);
+  }
 
   throw new Error("Invalid endpoint");
 }

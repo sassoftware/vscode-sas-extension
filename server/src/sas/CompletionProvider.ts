@@ -627,8 +627,9 @@ export class CompletionProvider {
       case ZONE_TYPE.MACRO_VAR:
         this.loader.getAutoVariables((autoVar) => {
           const macroVarList = this._getMacroVar();
-          if (macroVarList.length)
+          if (macroVarList.length) {
             autoVar = _distinctList(autoVar.concat(macroVarList));
+          }
           cb(autoVar);
         });
         break;
@@ -682,7 +683,9 @@ export class CompletionProvider {
         );
         break;
       case ZONE_TYPE.PROC_STMT:
-        if (type === "hint") keyword = _cleanUpKeyword(context.stmtName); //not use the real parameter value for hint
+        if (type === "hint") {
+          keyword = _cleanUpKeyword(context.stmtName);
+        } //not use the real parameter value for hint
         if (context.procName === "ODS") {
           keyword = "ODS " + keyword;
         }
@@ -976,7 +979,9 @@ export class CompletionProvider {
         break;
       case ZONE_TYPE.GBL_STMT_OPT:
       case ZONE_TYPE.GBL_STMT_SUB_OPT_NAME:
-        if (zone === ZONE_TYPE.GBL_STMT_SUB_OPT_NAME) keyword = context.optName;
+        if (zone === ZONE_TYPE.GBL_STMT_SUB_OPT_NAME) {
+          keyword = context.optName;
+        }
         contextText = getText("ce_ac_statement.fmt", context.stmtName);
         linkTail =
           "%22SYSTEM+" + context.stmtName.toUpperCase() + "%22+" + keyword;
@@ -1028,7 +1033,9 @@ export class CompletionProvider {
         break;
       case ZONE_TYPE.PROC_STMT_OPT:
       case ZONE_TYPE.PROC_STMT_SUB_OPT:
-        if (zone === ZONE_TYPE.PROC_STMT_SUB_OPT) keyword = context.optName;
+        if (zone === ZONE_TYPE.PROC_STMT_SUB_OPT) {
+          keyword = context.optName;
+        }
         if (content.isGlobal) {
           contextText = getText("ce_ac_statement.fmt", context.stmtName);
           linkTail = "%22" + context.stmtName + "+STATEMENT%22";
@@ -1435,7 +1442,9 @@ export class CompletionProvider {
         } else if (flag === 1 && syntax[i].style === "sep" && token === "(") {
           flag = 2; // dataset options
         } else if (flag === 2) {
-          if (syntax[i].style === "sep" && token === ")") flag = 1;
+          if (syntax[i].style === "sep" && token === ")") {
+            flag = 1;
+          }
         } else {
           flag = 0;
         }

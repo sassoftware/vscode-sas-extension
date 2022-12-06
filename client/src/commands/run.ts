@@ -57,8 +57,9 @@ async function runCode(selected?: boolean) {
     () =>
       session
         .run(code, (logs) => {
-          if (!outputChannel)
+          if (!outputChannel) {
             outputChannel = window.createOutputChannel("SAS Log", "sas-log");
+          }
           outputChannel.show();
           for (const line of logs) {
             appendLog(line.type);
@@ -80,7 +81,9 @@ async function runCode(selected?: boolean) {
 }
 
 function _run(selected = false) {
-  if (running) return;
+  if (running) {
+    return;
+  }
   running = true;
   commands.executeCommand("setContext", "SAS.hideRunMenuItem", true);
 
