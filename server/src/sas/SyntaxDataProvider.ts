@@ -407,8 +407,8 @@ function _iterateKeywords(
 ) {
   const count = keywords.length;
   for (let i = 0; i < count; i++) {
-    if (!keywords[i]["Name"]) continue;
-    const names = keywords[i]["Name"].split("|");
+    if (!keywords[i].Name) continue;
+    const names = keywords[i].Name.split("|");
     for (let j = 0; j < names.length; j++) {
       cb(i, names[j], keywords[i]);
     }
@@ -545,13 +545,13 @@ function _loadProceduresFromPubs(cb?: () => void) {
     url,
     function (data?: string[]) {
       if (data && data.length) {
-        if (db.kwPool["proc"] === undefined) {
-          db.kwPool["proc"] = {};
+        if (db.kwPool.proc === undefined) {
+          db.kwPool.proc = {};
         }
         data.forEach(function (item) {
-          db.kwPool["proc"][item] = {};
+          db.kwPool.proc[item] = {};
         });
-        db.kwPool["proc"][ID_KEYWORDS] = data;
+        db.kwPool.proc[ID_KEYWORDS] = data;
         if (cb) cb();
       }
     },
@@ -1237,8 +1237,8 @@ function _setProcedureOptions(procName: string, data: any[]) {
     let keywords: string[] = [];
     if (!(data instanceof Array)) data = [data];
     for (let i = 0; i < data.length; i++) {
-      if (!data[i]["ProcedureOptionName"]) continue;
-      const names = data[i]["ProcedureOptionName"].split("|");
+      if (!data[i].ProcedureOptionName) continue;
+      const names = data[i].ProcedureOptionName.split("|");
       if (names[names.length - 1] === "") names.pop();
       for (let j = 0; j < names.length; j++) {
         _setProcedureOption(procName, names[j], data[i]);
@@ -1624,7 +1624,7 @@ function _setProcedureStatementOptions(
     let keywords: string[] = [];
     if (!(data instanceof Array)) data = [data];
     for (let i = 0; i < data.length; i++) {
-      let names = data[i]["StatementOptionName"];
+      let names = data[i].StatementOptionName;
       if (!names) continue;
       names = names.split("|");
       if (names[names.length - 1] === "") names.pop();
@@ -1701,7 +1701,7 @@ function _setProcedureStatements(procName: string, data: any[]) {
     let keywords: string[] = [];
     if (!(data instanceof Array)) data = [data];
     for (let i = 0; i < data.length; i++) {
-      let names = data[i]["StatementName"];
+      let names = data[i].StatementName;
       if (!names) continue;
       names = names.split("|");
       if (names[names.length - 1] === "") names.pop();
@@ -2462,7 +2462,7 @@ export class SyntaxDataProvider {
   }
   getFunctions(cb?: (data: string[]) => void) {
     return _tryToLoadFunctionsFromPubs("base", cb, function () {
-      const data = db.functions["base"][ID_KEYWORDS];
+      const data = db.functions.base[ID_KEYWORDS];
       return data;
     });
   }
@@ -2471,7 +2471,7 @@ export class SyntaxDataProvider {
   }
   getMacroFunctions(cb?: (data: string[]) => void) {
     return _tryToLoadFunctionsFromPubs("macro", cb, function () {
-      const data = db.functions["macro"][ID_KEYWORDS];
+      const data = db.functions.macro[ID_KEYWORDS];
       return data;
     });
   }
@@ -2656,7 +2656,7 @@ export class SyntaxDataProvider {
   }
   isSasFunction(name: string) {
     return _tryToLoadFunctionsFromPubs("base", null, function () {
-      return db.functions["base"][ID_KEYWORDS].indexOf(name) !== -1;
+      return db.functions.base[ID_KEYWORDS].indexOf(name) !== -1;
     });
   }
   isDataSetType(type: string) {
