@@ -13,5 +13,6 @@ module.exports = {
   rules: {
     eqeqeq: "error",
     "prefer-const": "error",
+    "dot-notation": "error"
   },
 };
