@@ -2,7 +2,7 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion,
-@typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any */
+@typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any, @typescript-eslint/dot-notation */
 import { arrayToMap } from "./utils";
 import { LexerEx } from "./LexerEx";
 import { Lexer, Token } from "./Lexer";
@@ -504,8 +504,8 @@ export class CodeZoneManager {
         text: token.text,
       };
       if (token.start.line !== token.end.line) {
-        nToken.endLine = token.end.line;
-        nToken.endCol = token.end.column;
+        nToken["endLine"] = token.end.line;
+        nToken["endCol"] = token.end.column;
       }
       return nToken;
     }
@@ -1221,7 +1221,7 @@ export class CodeZoneManager {
         CodeZoneManager.ZONE_TYPE.RESTRICTED,
         CodeZoneManager.ZONE_TYPE.STYLE_ATTR
       );
-      ret.op1 = {
+      ret["op1"] = {
         op: token,
         op1: op1,
         op2: this._stmtOptions(
@@ -1232,7 +1232,7 @@ export class CodeZoneManager {
         ),
       };
     } else {
-      ret.op1 = styleElemNames;
+      ret["op1"] = styleElemNames;
     }
     return ret;
   }
@@ -1850,14 +1850,14 @@ export class CodeZoneManager {
           opts.push(viewOrPrg);
           this._copyContext(tmpContext, context);
           token1 = this._getNextEx(context); // view name or program name
-          viewOrPrg.op2 = token1;
+          viewOrPrg["op2"]= token1;
           if (Lexer.isWord[token1.type]) {
             this._emit(token1, CodeZoneManager.ZONE_TYPE.VIEW_OR_PGM_NAME);
             tmpContext = this._cloneContext(context);
             token2 = this._getNextEx(tmpContext);
             if (token2.text === "(") {
               this._emit(token1, CodeZoneManager.ZONE_TYPE.OBJECT);
-              viewOrPrg.op2 = {
+              viewOrPrg["op2"] = {
                 op: token1,
                 op1: this._argList(
                   context,

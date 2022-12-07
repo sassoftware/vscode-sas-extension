@@ -4,6 +4,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 6,
     sourceType: "module",
+    project: ["./tsconfig.json", "./client/tsconfig.json", "./server/tsconfig.json"]
   },
   env: {
     node: true,
@@ -13,6 +14,6 @@ module.exports = {
   rules: {
     eqeqeq: "error",
     "prefer-const": "error",
-    "dot-notation": "error",
+    "@typescript-eslint/dot-notation": "error",
   },
 };
