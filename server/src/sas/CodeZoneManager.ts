@@ -1850,7 +1850,7 @@ export class CodeZoneManager {
           opts.push(viewOrPrg);
           this._copyContext(tmpContext, context);
           token1 = this._getNextEx(context); // view name or program name
-          viewOrPrg["op2"]= token1;
+          viewOrPrg["op2"] = token1;
           if (Lexer.isWord[token1.type]) {
             this._emit(token1, CodeZoneManager.ZONE_TYPE.VIEW_OR_PGM_NAME);
             tmpContext = this._cloneContext(context);

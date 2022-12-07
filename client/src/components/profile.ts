@@ -300,7 +300,7 @@ export class ProfileConfig {
       };
     }
 
-    profileClone["endpoint"] = await createInputTextBox(
+    profileClone.endpoint = await createInputTextBox(
       ProfilePromptType.Endpoint,
       profileClone.endpoint
     );
