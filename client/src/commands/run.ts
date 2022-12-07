@@ -19,7 +19,16 @@ let running = false;
 function getCode(outputHtml: boolean, selected = false): string {
   const editor = window.activeTextEditor;
   const doc = editor?.document;
-  const code = selected ? doc?.getText(editor?.selection) : doc?.getText();
+  let code: string;
+  if (selected) {
+    // run selected code if there is a selection, otherwise run all code
+    code = doc?.getText(editor?.selection);
+    if (code.trim().length === 0) {
+      code = doc?.getText();
+    }
+  } else {
+    code = doc?.getText();
+  }
 
   return code
     ? outputHtml
