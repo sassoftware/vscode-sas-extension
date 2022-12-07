@@ -11,11 +11,11 @@
   "configuration.SAS.connectionProfiles.profiles.clientId": "SAS Viya Client ID",
   "configuration.SAS.connectionProfiles.profiles.clientSecret": "SAS Viya Client Secret",
 
-  "commands.SAS.run": "Run SAS code",
+  "commands.SAS.run": "Run All SAS Code",
   "commands.SAS.close": "Close Current Session",
   "commands.SAS.switchProfile": "Switch Current Connection Profile",
   "commands.SAS.addProfile": "Add New Connection Profile",
   "commands.SAS.deleteProfile": "Delete Connection Profile",
   "commands.SAS.updateProfile": "Update Connection Profile",
-  "commands.SAS.runSelected": "Run Selected SAS Code"
+  "commands.SAS.runSelected": "Run Selected or All SAS Code"
 }
