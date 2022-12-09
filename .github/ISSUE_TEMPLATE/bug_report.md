@@ -24,8 +24,9 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Version: [e.g. 22]
+Client OS: [e.g. Windows 11]
+Extension version: [e.g. v0.1.1]
+SAS version: [e.g. 2022.11]
 
 
 **Additional context**
