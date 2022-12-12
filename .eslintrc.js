@@ -19,5 +19,6 @@ module.exports = {
     eqeqeq: "error",
     "prefer-const": "error",
     "@typescript-eslint/dot-notation": "error",
+    curly: "error",
   },
 };

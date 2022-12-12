@@ -365,7 +365,9 @@ function _getSubOptKeywords(obj: any, data: string) {
         : item !== null
         ? String(item).trim()
         : "";
-    if (item === "") return;
+    if (item === "") {
+      return;
+    }
     obj[_removeEqu(item)] = true;
     list.push(item);
   });
@@ -407,7 +409,9 @@ function _iterateKeywords(
 ) {
   const count = keywords.length;
   for (let i = 0; i < count; i++) {
-    if (!keywords[i]["Name"]) continue;
+    if (!keywords[i]["Name"]) {
+      continue;
+    }
     const names = keywords[i].Name.split("|");
     for (let j = 0; j < names.length; j++) {
       cb(i, names[j], keywords[i]);
@@ -452,7 +456,9 @@ function _loadColors(cb: () => void) {
     function (data: { Color: { Values: any } }) {
       if (data && data.Color) {
         _setColors(data.Color.Values);
-        if (cb) cb();
+        if (cb) {
+          cb();
+        }
       }
     },
     !!cb
@@ -513,7 +519,9 @@ function _loadFunctionsFromPubs(context: string, cb?: () => void) {
     function (data?: FunctionData[]) {
       if (data && data.length) {
         _setFunctionsFromPubs(data, context);
-        if (cb) cb();
+        if (cb) {
+          cb();
+        }
       }
     },
     !!cb
@@ -552,7 +560,9 @@ function _loadProceduresFromPubs(cb?: () => void) {
           db.kwPool["proc"][item] = {};
         });
         db.kwPool["proc"][ID_KEYWORDS] = data;
-        if (cb) cb();
+        if (cb) {
+          cb();
+        }
       }
     },
     !!cb
@@ -670,16 +680,22 @@ function _setStatementOptions(stmtName: string, keywords: any) {
 
 function _loadStatementOptions(stmtName: string, cb: () => void) {
   let url = getBaseUrl() + "/data/";
-  if (stmtName === "DATA-SET") url += "SASDataSetOptions";
-  else if (stmtName === "DATA-STEP") url += "SASDataStepOptions";
-  else url += "Statements/" + stmtName.toUpperCase();
+  if (stmtName === "DATA-SET") {
+    url += "SASDataSetOptions";
+  } else if (stmtName === "DATA-STEP") {
+    url += "SASDataStepOptions";
+  } else {
+    url += "Statements/" + stmtName.toUpperCase();
+  }
   url += ".json";
   ResLoader.get(
     url,
     function (data: { Keywords: { Keyword: any } }) {
       if (data && data.Keywords) {
         _setStatementOptions(stmtName, data.Keywords.Keyword);
-        if (cb) cb();
+        if (cb) {
+          cb();
+        }
       }
     },
     !!cb
@@ -769,7 +785,9 @@ function _loadStatementsFromPubs(context: string, cb?: () => void) {
     function (data?: Statement[]) {
       if (data && data.length) {
         _setStatementsFromPubs(data, context);
-        if (cb) cb();
+        if (cb) {
+          cb();
+        }
       }
     },
     !!cb
@@ -837,7 +855,9 @@ function _loadKeywords(type: string, cb: any) {
     function (data: { Keywords: { Keyword: any } }) {
       if (data && data.Keywords) {
         _setKeywords(type, data.Keywords.Keyword);
-        if (cb) cb();
+        if (cb) {
+          cb();
+        }
       }
     },
     !!cb
@@ -1066,7 +1086,9 @@ function _setProcedureOptionSubOptKeywordsFromPubs(
     list[ID_KEYWORDS] = [];
   }
   data.forEach(function (arg) {
-    if (arg.placeholder || arg.type === "standalone") return;
+    if (arg.placeholder || arg.type === "standalone") {
+      return;
+    }
     const name = arg.name;
     list[ID_KEYWORDS].push(name);
     list[_removeEqu(name)] = true;
@@ -1119,7 +1141,9 @@ function _setProcedureOptionValuesFromPubs(
 ) {
   const list: string[] = [];
   values.forEach(function (val) {
-    if (val.placeholder || val.type !== "standalone") return;
+    if (val.placeholder || val.type !== "standalone") {
+      return;
+    }
     const name = val.name;
     list.push(name);
     _setProcedureOptionValueFromPubs(procName, optName, val);
@@ -1235,11 +1259,17 @@ function _setProcedureOptionsFromPubs(
 function _setProcedureOptions(procName: string, data: any[]) {
   if (data) {
     let keywords: string[] = [];
-    if (!(data instanceof Array)) data = [data];
+    if (!(data instanceof Array)) {
+      data = [data];
+    }
     for (let i = 0; i < data.length; i++) {
-      if (!data[i]["ProcedureOptionName"]) continue;
+      if (!data[i]["ProcedureOptionName"]) {
+        continue;
+      }
       const names = data[i]["ProcedureOptionName"].split("|");
-      if (names[names.length - 1] === "") names.pop();
+      if (names[names.length - 1] === "") {
+        names.pop();
+      }
       for (let j = 0; j < names.length; j++) {
         _setProcedureOption(procName, names[j], data[i]);
       }
@@ -1449,7 +1479,9 @@ function _setProcedureStatementSubOptKeywordsFromPubs(
     list[ID_KEYWORDS] = [];
   }
   data.forEach(function (arg) {
-    if (arg.placeholder || arg.type === "standalone") return;
+    if (arg.placeholder || arg.type === "standalone") {
+      return;
+    }
     const name = arg.name;
     list[ID_KEYWORDS].push(name);
     list[_removeEqu(name)] = true;
@@ -1526,7 +1558,9 @@ function _setProcedureStatementOptionValuesFromPubs(
 ) {
   const list: string[] = [];
   values.forEach(function (val) {
-    if (val.placeholder || val.type !== "standalone") return;
+    if (val.placeholder || val.type !== "standalone") {
+      return;
+    }
     const name = val.name;
     list.push(name);
     _setProcedureStatementOptionValueFromPubs(procName, stmtName, optName, val);
@@ -1622,12 +1656,18 @@ function _setProcedureStatementOptions(
 ) {
   if (data) {
     let keywords: string[] = [];
-    if (!(data instanceof Array)) data = [data];
+    if (!(data instanceof Array)) {
+      data = [data];
+    }
     for (let i = 0; i < data.length; i++) {
       let names = data[i]["StatementOptionName"];
-      if (!names) continue;
+      if (!names) {
+        continue;
+      }
       names = names.split("|");
-      if (names[names.length - 1] === "") names.pop();
+      if (names[names.length - 1] === "") {
+        names.pop();
+      }
       for (let j = 0; j < names.length; j++) {
         _setProcedureStatementOption(procName, stmtName, names[j], data[i]);
       }
@@ -1699,12 +1739,18 @@ function _setProcedureStatementsFromPubs(procName: string, data: Statement[]) {
 function _setProcedureStatements(procName: string, data: any[]) {
   if (data) {
     let keywords: string[] = [];
-    if (!(data instanceof Array)) data = [data];
+    if (!(data instanceof Array)) {
+      data = [data];
+    }
     for (let i = 0; i < data.length; i++) {
       let names = data[i]["StatementName"];
-      if (!names) continue;
+      if (!names) {
+        continue;
+      }
       names = names.split("|");
-      if (names[names.length - 1] === "") names.pop();
+      if (names[names.length - 1] === "") {
+        names.pop();
+      }
       for (let j = 0; j < names.length; j++) {
         _setProcedureStatement(
           procName,
@@ -1718,19 +1764,25 @@ function _setProcedureStatements(procName: string, data: any[]) {
   }
 }
 function _loadProcedureImmediately(procName: string) {
-  if (_procOptObj(procName)) return; //for performance
+  if (_procOptObj(procName)) {
+    return;
+  } //for performance
   _tryToLoadProcedure(procName, null, function () {
     return _procOptObj(procName);
   });
 }
 function _loadKeywordsImmediately(type: string) {
-  if (_keywordObj(type)) return;
+  if (_keywordObj(type)) {
+    return;
+  }
   _tryToLoadKeywords(type, null, function () {
     return _keywordObj(type);
   });
 }
 function _tryToLoadStatementOptionsImmediately(stmtName: string) {
-  if (_stmtObj(stmtName)) return;
+  if (_stmtObj(stmtName)) {
+    return;
+  }
   _tryToLoadStatementOptions(stmtName, null, function () {
     return _stmtObj(stmtName);
   });
@@ -1960,7 +2012,9 @@ export class SyntaxDataProvider {
         };
       } else {
         data = this.getKeywordHelp(stmtName, null, "gbl-proc-stmt");
-        if (data) data.isGlobal = true;
+        if (data) {
+          data.isGlobal = true;
+        }
       }
       return data;
     });
@@ -2116,7 +2170,9 @@ export class SyntaxDataProvider {
     optName: string,
     cb: (data: OptionValues) => void
   ) {
-    if (!optName) return null;
+    if (!optName) {
+      return null;
+    }
     stmtName = stmtName.toUpperCase();
     procName = procName.toUpperCase();
     optName = optName.toUpperCase();

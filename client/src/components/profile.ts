@@ -304,7 +304,10 @@ export class ProfileConfig {
       ProfilePromptType.Endpoint,
       profileClone.endpoint
     );
-    if (!profileClone.endpoint) return;
+
+    if (!profileClone.endpoint) {
+      return;
+    }
 
     profileClone.context = await createInputTextBox(
       ProfilePromptType.ComputeContext,
