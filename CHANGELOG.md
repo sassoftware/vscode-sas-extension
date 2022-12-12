@@ -1,76 +1,81 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
+
 ## [v0.1.1] - 2022-11-24
 
-### Breaking Change
+### Changed
 
-- "Authorization code" grant is applied now. Password and token file approach has been removed. Your client ID need to be registered with "authorization_code" and "refresh_token" grant type now.
+- **BREAKING:** Updated extension to require "Authorization code" grant. Your client ID need to be registered with "authorization_code" and "refresh_token" grant type now
 
-### Feature
+### Added
 
-- Login with SASLogon with PKCE
-- Refresh your access token with refresh token
-- Built-in client ID for Viya4 2022.11 and later
+- Added login with SASLogon with PKCE
+- Added support to refresh access token with refresh token
+- Added built-in client ID for Viya4 2022.11 and later
+
+### Removed
+
+- Removed password and token file login approach
 
 ## [v0.1.0] - 2022-10-08
 
-### Breaking Change
+### Changed
 
-- Command ID `SAS.session.run` and `SAS.session.runSelected` changed to `SAS.run` and `SAS.runSelected`
-- Settings `SAS.session.host`, `SAS.session.clientId`, etc. migrated to `SAS.connectionProfiles`
+- **BREAKING:** Changed Command ID `SAS.session.run` and `SAS.session.runSelected` changed to `SAS.run` and `SAS.runSelected`
+- **BREAKING:** Changed Settings `SAS.session.host`, `SAS.session.clientId`, etc. migrated to `SAS.connectionProfiles`
 
-### Feature
+### Added
 
-- Support connection profiles
+- Added support for connection profiles
 
-### Fix
+### Fixed
 
-- Improve macro statement autocomplete
-- Percentage sign should escape quotes in %str
-- PROC SQL snippet syntax
+- Improved macro statement autocomplete
+- Fixed issue where percentage sign should escape quotes in %str
+- Fixed PROC SQL snippet syntax
 
 ## [v0.0.7] - 2022-07-26
 
-### Feature
+### Added
 
-- Support run selected SAS code
+- Added support to run selected SAS code
 
 ## [v0.0.6] - 2022-07-08
 
-### Fix
+### Fixed
 
-- It now recovers from syntax check mode on each run
-- Correct syntax highlighting for name literal
+- Fixed extension recovery from syntax check mode on each run
+- Corrected syntax highlighting for name literal
 
-### Themes
+### Changed
 
-- SAS themes provide default colors to non-SAS languages
-- SAS syntax have basic type colors in non-SAS themes
-
-### Doc
-
-- Update README to show animated gifs
+- Changed SAS themes to provide default colors to non-SAS languages
+- Changed SAS syntax to have basic type colors in non-SAS themes
+- Updated README to show animated gifs
 
 ## [v0.0.5] - 2022-05-26
 
-### Fix
+### Fixed
 
-- Compute context not found error in some cases. User can now specify a compute context name to use.
+- Fixed compute context not found error; user can now specify a compute context name to use
 
-### Chore
+### Changed
 
-- Rearrange settings fields
-- Update dependencies versions
+- Rearranged settings fields
+- Updated dependencies versions
 
 ## [v0.0.4] - 2022-05-19
 
-### Fix
+### Fixed
 
-- Fixed blank error in some cases
+- Fixed error parsing/display
 
-### Doc
+### Changed
 
-- Update README.md to link to wiki
+- Updated README.md to link to wiki
 
 ## [v0.0.3] - 2022-05-17
 
