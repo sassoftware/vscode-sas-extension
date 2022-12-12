@@ -59,13 +59,14 @@ export class ComputeSession extends Compute {
   }
 
   async self<Session>(): Promise<Session> {
-    if (this._self.id === undefined)
+    if (this._self.id === undefined) {
       throw new Error("Cannot call self on ComputeSession with no id");
+    }
 
     const res = await this.api.getSession({ sessionId: this.sessionId });
     if (res.status === 200) {
       this._self = res.data;
-      this.etag = res.headers["etag"];
+      this.etag = res.headers.etag;
       return res.data;
     } else {
       throw new Error(
@@ -84,7 +85,7 @@ export class ComputeSession extends Compute {
     const resp = await this.api.getSessionState(parms);
 
     if (resp?.data) {
-      this.etag = resp.headers["etag"];
+      this.etag = resp.headers.etag;
       return resp.data;
     }
 
@@ -95,10 +96,13 @@ export class ComputeSession extends Compute {
     linkName: string,
     options?: AxiosRequestConfig
   ): Promise<AxiosResponse<T>> {
-    if (this._self.links === undefined) await this.self();
+    if (this._self.links === undefined) {
+      await this.self();
+    }
     const link = this.getLink(this._self.links, linkName);
-    if (link === undefined)
+    if (link === undefined) {
       throw new Error(`Session does not have '${linkName}' link`);
+    }
 
     return await this.requestLink(link, options);
   }
@@ -129,7 +133,7 @@ export class ComputeSession extends Compute {
     const resp = await this.setState(ComputeState.Canceled);
 
     if (resp.status === 200) {
-      this.etag = resp.headers["etag"];
+      this.etag = resp.headers.etag;
       return true;
     } else if (resp.status === 412) {
       await this.self();
