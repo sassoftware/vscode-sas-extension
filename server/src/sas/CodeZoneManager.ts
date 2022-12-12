@@ -2,7 +2,7 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion,
-@typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any */
+@typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any, @typescript-eslint/dot-notation */
 import { arrayToMap } from "./utils";
 import { LexerEx } from "./LexerEx";
 import { Lexer, Token } from "./Lexer";

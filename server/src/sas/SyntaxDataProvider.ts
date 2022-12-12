@@ -2,7 +2,7 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types,
-@typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any */
+@typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any,@typescript-eslint/dot-notation */
 
 import { arrayToMap } from "./utils";
 import { ResLoader } from "../node/ResLoader";
@@ -408,7 +408,7 @@ function _iterateKeywords(
   const count = keywords.length;
   for (let i = 0; i < count; i++) {
     if (!keywords[i]["Name"]) continue;
-    const names = keywords[i]["Name"].split("|");
+    const names = keywords[i].Name.split("|");
     for (let j = 0; j < names.length; j++) {
       cb(i, names[j], keywords[i]);
     }
@@ -546,7 +546,7 @@ function _loadProceduresFromPubs(cb?: () => void) {
     function (data?: string[]) {
       if (data && data.length) {
         if (db.kwPool["proc"] === undefined) {
-          db.kwPool["proc"] = {};
+          db.kwPool.proc = {};
         }
         data.forEach(function (item) {
           db.kwPool["proc"][item] = {};

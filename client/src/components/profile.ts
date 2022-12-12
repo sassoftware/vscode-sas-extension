@@ -300,35 +300,35 @@ export class ProfileConfig {
       };
     }
 
-    profileClone["endpoint"] = await createInputTextBox(
+    profileClone.endpoint = await createInputTextBox(
       ProfilePromptType.Endpoint,
-      profileClone["endpoint"]
+      profileClone.endpoint
     );
-    if (!profileClone["endpoint"]) return;
+    if (!profileClone.endpoint) return;
 
-    profileClone["context"] = await createInputTextBox(
+    profileClone.context = await createInputTextBox(
       ProfilePromptType.ComputeContext,
-      profileClone["context"] || DEFAULT_COMPUTE_CONTEXT
+      profileClone.context || DEFAULT_COMPUTE_CONTEXT
     );
     if (
-      profileClone["context"] === "" ||
-      profileClone["context"] === DEFAULT_COMPUTE_CONTEXT
+      profileClone.context === "" ||
+      profileClone.context === DEFAULT_COMPUTE_CONTEXT
     ) {
-      delete profileClone["context"];
+      delete profileClone.context;
     }
 
-    profileClone["clientId"] = await createInputTextBox(
+    profileClone.clientId = await createInputTextBox(
       ProfilePromptType.ClientId,
-      profileClone["clientId"]
+      profileClone.clientId
     );
-    if (profileClone["clientId"] === "") {
-      delete profileClone["clientId"];
+    if (profileClone.clientId === "") {
+      delete profileClone.clientId;
     }
 
-    if (profileClone["clientId"]) {
-      profileClone["clientSecret"] = await createInputTextBox(
+    if (profileClone.clientId) {
+      profileClone.clientSecret = await createInputTextBox(
         ProfilePromptType.ClientSecret,
-        profileClone["clientSecret"]
+        profileClone.clientSecret
       );
     }
 
