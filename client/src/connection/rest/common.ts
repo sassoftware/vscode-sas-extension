@@ -69,10 +69,7 @@ export class Compute {
   etag headers if needed
   */
   getLinkOptions(link: Link, options?: AxiosRequestConfig): RequestArgs {
-    if (options === undefined) {
-      options = {};
-    }
-    const headers = { ...options?.headers };
+    const headers = options ? { ...options?.headers } : {};
 
     if (link.method === "POST") {
       if (link.type !== undefined) {
@@ -105,14 +102,15 @@ export class Compute {
     }
 
     //Take the optional options given and merge in the link options
-    Object.assign(options, {
+    const processedConfig: AxiosRequestConfig = {
+      ...options,
       headers: headers,
       method: link.method,
       url: link.href,
-    });
+    };
 
     //TODO: We should not have to remove the /compute from the link
-    return { url: link.href.slice("/compute".length), options: options };
+    return { url: link.href.replace("/compute", ""), options: processedConfig };
   }
 
   /*
@@ -122,14 +120,23 @@ export class Compute {
     link: Link,
     options?: AxiosRequestConfig
   ): Promise<AxiosResponse<T>> {
-    if (options === undefined) {
-      options = {};
-    }
     const apiConfig = getApiConfig();
-    Object.assign(options, {
-      headers: apiConfig.baseOptions?.headers,
-    });
-    const o = this.getLinkOptions(link, options);
+
+    /*
+    Ideally we would use the base options as the root, and overwrite any 
+    options coming in on the function call. Right now the only option we
+    are looking at in base options is headers, but I dont know a way
+    to "merge" intefaces in typescipt.
+    */
+    const processedConfig: AxiosRequestConfig = {
+      ...options,
+      headers: {
+        ...apiConfig.baseOptions?.headers,
+        ...options?.headers,
+      },
+    };
+
+    const o = this.getLinkOptions(link, processedConfig);
 
     return createRequestFunction<T>(o, getApiConfig());
   }
