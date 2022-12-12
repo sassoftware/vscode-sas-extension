@@ -1,4 +1,7 @@
-import * as typer from "media-typer";
+import {
+  parse as parseMediaType,
+  format as formatMediaType,
+} from "media-typer";
 import { Link } from "./api/compute";
 import { Configuration } from "./api/configuration";
 
@@ -36,14 +39,14 @@ export function getApiConfig(): Configuration {
 }
 
 export function computeMediaType(type: string): string {
-  const parsed = typer.parse(type);
+  const parsed = parseMediaType(type);
   if (
     parsed.type === "application" &&
     parsed.subtype?.startsWith("vnd.sas") &&
     parsed.suffix === undefined
   ) {
     parsed.suffix = "json";
-    return typer.format(parsed);
+    return formatMediaType(parsed);
   }
   return type;
 }
@@ -136,8 +139,8 @@ export class Compute {
       },
     };
 
-    const o = this.getLinkOptions(link, processedConfig);
+    const linkOptions = this.getLinkOptions(link, processedConfig);
 
-    return createRequestFunction<T>(o, getApiConfig());
+    return createRequestFunction<T>(linkOptions, apiConfig);
   }
 }
