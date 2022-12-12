@@ -47,7 +47,9 @@ export async function getAccessToken(config: Config): Promise<string> {
     });
   }
 
-  if (tokens) return tokens.access_token;
+  if (tokens) {
+    return tokens.access_token;
+  }
 
   const { codeVerifier, codeChallenge } = getPKCE();
 
@@ -62,7 +64,9 @@ export async function getAccessToken(config: Config): Promise<string> {
     password: true,
     ignoreFocusOut: true,
   });
-  if (!authCode) throw new Error("No authorization code");
+  if (!authCode) {
+    throw new Error("No authorization code");
+  }
 
   tokens = (
     await axios.post(

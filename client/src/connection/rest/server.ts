@@ -36,13 +36,14 @@ export class ComputeServer extends Compute {
   }
 
   async self<Server>(): Promise<Server> {
-    if (this._self.id === undefined)
+    if (this._self.id === undefined) {
       throw new Error("Cannot call self on object with no id");
+    }
 
     const res = await this.api.getServer({ serverId: this.id });
     if (res.status === 200) {
       this._self = res.data;
-      this.etag = res.headers["etag"];
+      this.etag = res.headers.etag;
       return res.data;
     } else {
       throw new Error(
@@ -52,11 +53,14 @@ export class ComputeServer extends Compute {
   }
 
   async createSession(): Promise<ComputeSession> {
-    if (this._self.links === undefined) await this.self();
+    if (this._self.links === undefined) {
+      await this.self();
+    }
 
     const link = this.getLink(this.links, "createSession");
-    if (link === undefined)
+    if (link === undefined) {
       throw new Error("Server does not have createSession link");
+    }
 
     //Create the session
     //TODO: Add session create options
@@ -92,7 +96,9 @@ export class ComputeServer extends Compute {
   }
 
   async getState(options?: stateOptions): Promise<string> {
-    if (this._self.links === undefined) await this.self();
+    if (this._self.links === undefined) {
+      await this.self();
+    }
 
     const params = {};
     const headers = {};
@@ -102,11 +108,16 @@ export class ComputeServer extends Compute {
         headers["If-None-Match"] = this.etag;
       }
 
-      if (options.wait) params["timeout"] = options.wait;
+      if (options.wait) {
+        // eslint-disable-next-line @typescript-eslint/dot-notation
+        params["timeout"] = options.wait;
+      }
     }
 
     const link = this.getLink(this._self.links, "state");
-    if (link === undefined) throw new Error("Server does not have state link");
+    if (link === undefined) {
+      throw new Error("Server does not have state link");
+    }
 
     const { data, status } = await this.requestLink(link, {
       params: params,
