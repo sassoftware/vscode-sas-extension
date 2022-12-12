@@ -47,10 +47,13 @@ export class ComputeJob extends Compute {
     linkName: string,
     options?: AxiosRequestConfig
   ): Promise<AxiosResponse<T>> {
-    if (this._self.links === undefined) await this.self();
+    if (this._self.links === undefined) {
+      await this.self();
+    }
     const link = this.getLink(this._self.links, linkName);
-    if (link === undefined)
+    if (link === undefined) {
       throw new Error(`Job does not have '${linkName}' link`);
+    }
 
     return await this.requestLink(link, options);
   }
@@ -96,7 +99,7 @@ export class ComputeJob extends Compute {
       });
 
       if (resp.status === 200) {
-        const items = resp.data["items"];
+        const items = resp.data.items;
         const num = items.length;
         for (let i = 0; i < num; i++) {
           yield items[i];
@@ -107,7 +110,9 @@ export class ComputeJob extends Compute {
 
         //get new state
         state = await this.getState();
-      } else break;
+      } else {
+        break;
+      }
     }
 
     //There is a chance that the job ended between our last read and now.
@@ -125,7 +130,7 @@ export class ComputeJob extends Compute {
     do {
       if (resp.status === 200) {
         nextLink = resp.links?.find((link) => link.rel === "next");
-        const items = resp.data["items"];
+        const items = resp.data.items;
         const num = items.length;
         for (let i = 0; i < num; i++) {
           yield items[i];
