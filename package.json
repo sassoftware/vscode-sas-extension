@@ -310,7 +310,28 @@
         "language": "sas",
         "path": "./snippets/function-snippets.json"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sas-view-container",
+          "title": "SAS",
+          "icon": "icons/sas-svg.svg"
+        }
+      ]
+    },
+    "views": {
+      "sas-view-container": [
+        {
+          "id": "sas-content-pane",
+          "name": "SAS Content"
+        },
+        {
+          "id": "sas-libraries-pane",
+          "name": "Libraries"
+        }
+      ]
+    }
   },
   "repository": {
     "type": "git",
