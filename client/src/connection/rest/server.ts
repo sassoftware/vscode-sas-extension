@@ -2,7 +2,6 @@ import { BaseCompute, Compute, getApiConfig, stateOptions } from "./common";
 import { ServersApi, Server, Link } from "./api/compute";
 import { ComputeSession } from "./session";
 import { AxiosResponse } from "axios";
-//import { ComputeSession } from "./session";
 
 export class ComputeServer extends Compute {
   api;

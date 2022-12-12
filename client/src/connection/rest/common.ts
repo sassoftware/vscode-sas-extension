@@ -60,7 +60,7 @@ export class Compute {
 
   //Shortcut function to get a link by its name
   getLink(links: Array<Link>, rel: string): Link | undefined {
-    return links.find((x) => x.rel === rel);
+    return links.find((link: Link) => link.rel === rel);
   }
 
   /*
@@ -69,36 +69,40 @@ export class Compute {
   etag headers if needed
   */
   getLinkOptions(link: Link, options?: AxiosRequestConfig): RequestArgs {
-    if (options === undefined) options = {};
+    if (options === undefined) {
+      options = {};
+    }
     const headers = { ...options?.headers };
 
     if (link.method === "POST") {
-      if (link.type !== undefined)
+      if (link.type !== undefined) {
         headers["Content-Type"] = computeMediaType(link.type);
-      if (link.responseType !== undefined)
-        headers["Accept"] = computeMediaType(link.responseType);
+      }
+      if (link.responseType !== undefined) {
+        headers.Accept = computeMediaType(link.responseType);
+      }
     } else if (link.method === "PUT") {
-      if (link.type !== undefined)
+      if (link.type !== undefined) {
         headers["Content-Type"] = computeMediaType(link.type);
-      if (link.responseType !== undefined)
-        headers["Accept"] = computeMediaType(link.responseType);
-      if (this.etag !== undefined) headers["If-Match"] = this.etag;
+      }
+      if (link.responseType !== undefined) {
+        headers.Accept = computeMediaType(link.responseType);
+      }
+      if (this.etag !== undefined) {
+        headers["If-Match"] = this.etag;
+      }
     } else if (link.method === "DELETE") {
-      if (this.etag !== undefined) headers["If-Match"] = this.etag;
+      if (this.etag !== undefined) {
+        headers["If-Match"] = this.etag;
+      }
     } else if (link.type !== undefined) {
-      headers["Accept"] = computeMediaType(link.type);
+      headers.Accept = computeMediaType(link.type);
     }
 
     //The link must have an href
-    if (!link.href) throw new Error();
-
-    /*
-    const url = new URL(`http://${link.href}`);
-    const parms = {};
-    url.searchParams.forEach((value: string, key: string) => {
-      parms[key] = value;
-    });
-    */
+    if (!link.href) {
+      throw new Error();
+    }
 
     //Take the optional options given and merge in the link options
     Object.assign(options, {

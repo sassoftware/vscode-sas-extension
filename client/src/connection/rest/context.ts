@@ -34,7 +34,9 @@ export class ComputeContext extends Compute {
         filter: `eq(name,'${name}')`,
       })
     ).data.items[0];
-    if (!context?.id) throw new Error("Compute Context not found: " + name);
+    if (!context?.id) {
+      throw new Error("Compute Context not found: " + name);
+    }
 
     return ComputeContext.fromInterface(context);
   }
@@ -48,18 +50,22 @@ export class ComputeContext extends Compute {
   }
 
   async self<Context>(): Promise<Context> {
-    if (this._self.id === undefined)
+    if (this._self.id === undefined) {
       throw new Error("Cannot call self on object with no id");
+    }
 
     throw new Error("Not implemented");
   }
 
   async createSession(): Promise<ComputeSession> {
-    if (this._self.links === undefined) await this.self();
+    if (this._self.links === undefined) {
+      await this.self();
+    }
 
     const link = this.getLink(this.links, "createSession");
-    if (link === undefined)
+    if (link === undefined) {
       throw new Error("Server does not have createSession link");
+    }
 
     //Create the session
     //TODO: Add session create options
@@ -84,7 +90,6 @@ export class ComputeContext extends Compute {
     }
 
     //Create the session from the http resposne
-    const session = ComputeSession.fromResponse(resp);
-    return session;
+    return ComputeSession.fromResponse(resp);
   }
 }
