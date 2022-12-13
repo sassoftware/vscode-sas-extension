@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- **BREAKING:** Updated extension to require "Authorization code" grant. Your client ID need to be registered with "authorization_code" and "refresh_token" grant type now
+- **BREAKING:** Updated extension to require "Authorization code" grant. Your client ID needs to be registered with "authorization_code" and "refresh_token" grant type now.
 
 ### Added
 
@@ -24,8 +24,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- **BREAKING:** Changed Command ID `SAS.session.run` and `SAS.session.runSelected` changed to `SAS.run` and `SAS.runSelected`
-- **BREAKING:** Changed Settings `SAS.session.host`, `SAS.session.clientId`, etc. migrated to `SAS.connectionProfiles`
+- **BREAKING:** Changed Command ID `SAS.session.run` and `SAS.session.runSelected` to `SAS.run` and `SAS.runSelected`
+- **BREAKING:** Changed Settings `SAS.session.host`, `SAS.session.clientId`, etc. to `SAS.connectionProfiles`
 
 ### Added
 
