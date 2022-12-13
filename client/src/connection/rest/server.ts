@@ -109,8 +109,7 @@ export class ComputeServer extends Compute {
       }
 
       if (options.wait) {
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        params["timeout"] = options.wait;
+        params.timeout = options.wait;
       }
     }
 
