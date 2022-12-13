@@ -16,6 +16,18 @@ information on using pull requests.
 
 Please make sure your submission passed the `lint`, `format:check` and `test` tasks clean.
 
+### Creating a pull request description
+
+There are two parts to a pull request description: Summary and Testing.
+
+#### Summary
+
+Use this as a space to provide details about your new feature. Your summary should primarily focus on what has changed, and why it has changed.
+
+#### Testing
+
+For each pull request, you are expected to test the defaults to make sure no regressions were introduced as part of your change. When adding new features, you are expected to add new test cases that cover the new functionality.
+
 # Development
 
 ## Structure
@@ -32,7 +44,7 @@ Please make sure your submission passed the `lint`, `format:check` and `test` ta
 └── server // Language Server
     └── src
         └── browser
-        |   └── server.ts // Language Server entry point for browser
+        |   └── server.ts // Language Server entry point for browser'
         └── node
             └── server.ts // Language Server entry point for electron
 ```
