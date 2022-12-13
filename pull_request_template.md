@@ -1,7 +1,7 @@
-**Summary** [(more info)](CONTRIBUTING.md#summary)
+**Summary**
 Please provide a description of your changes.
 
-**Testing** [(more info)](CONTRIBUTING.md#testing)
+**Testing**
 
 - [ ] Test authenticating with sas server
 - [ ] Test running source code against server
