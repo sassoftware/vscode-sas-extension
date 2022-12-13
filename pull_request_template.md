@@ -1,5 +1,5 @@
 **Summary**
-Please provide a description of your changes.
+Please provide a description of your changes
 
 **Testing**
 

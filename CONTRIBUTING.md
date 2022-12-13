@@ -44,7 +44,7 @@ For each pull request, you are expected to test the defaults to make sure no reg
 └── server // Language Server
     └── src
         └── browser
-        |   └── server.ts // Language Server entry point for browser'
+        |   └── server.ts // Language Server entry point for browser
         └── node
             └── server.ts // Language Server entry point for electron
 ```
