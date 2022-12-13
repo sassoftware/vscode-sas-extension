@@ -100,7 +100,7 @@ export class ComputeServer extends Compute {
       await this.self();
     }
 
-    const params = {};
+    const params: { timeout?: number } = {};
     const headers = {};
 
     if (options !== undefined) {
