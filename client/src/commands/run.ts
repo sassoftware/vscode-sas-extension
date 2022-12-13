@@ -10,7 +10,7 @@ import {
   commands,
 } from "vscode";
 import { appendLog } from "../components/LogViewer";
-import { getSession } from "../connection";
+import { authenticate } from "../connection";
 import { profileConfig, switchProfile } from "./profile";
 
 let outputChannel: OutputChannel;
@@ -51,15 +51,7 @@ async function runCode(selected?: boolean) {
     .get("session.outputHtml");
   const code = getCode(outputHtml, selected);
 
-  const session = getSession();
-
-  await window.withProgress(
-    {
-      location: ProgressLocation.Notification,
-      title: "Connecting to SAS session...",
-    },
-    session.setup
-  );
+  const session = await authenticate();
 
   await window.withProgress(
     {

@@ -13,23 +13,23 @@ import {
   window,
   workspace,
 } from "vscode";
-import { closeSession } from "../commands/closeSession";
 import {
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
   TransportKind,
 } from "vscode-languageclient/node";
-import { LogTokensProvider, legend } from "../components/LogViewer";
+import { closeSession } from "../commands/closeSession";
 import {
-  profileConfig,
   addProfile,
-  updateProfile,
-  switchProfile,
   deleteProfile,
+  profileConfig,
+  switchProfile,
+  updateProfile,
 } from "../commands/profile";
 import { run, runSelected } from "../commands/run";
 import { SASAuthProvider } from "../components/AuthProvider";
+import { legend, LogTokensProvider } from "../components/LogViewer";
 
 let client: LanguageClient;
 // Create Profile status bar item

@@ -331,7 +331,19 @@
           "name": "Libraries"
         }
       ]
-    }
+    },
+    "viewsWelcome": [
+      {
+        "view": "sas-content-pane",
+        "contents": "Please [login](command:SAS.authenticate) to view SAS content.",
+        "when": "!SAS.session.outputHtml"
+      },
+      {
+        "view": "sas-libraries-pane",
+        "contents": "Please [login](command:SAS.authenticate) to view libraries.",
+        "when": "!SAS.session.outputHtml"
+      }
+    ]
   },
   "repository": {
     "type": "git",
