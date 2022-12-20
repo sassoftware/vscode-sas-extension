@@ -80,9 +80,10 @@ export function activate(context: ExtensionContext): void {
   context.subscriptions.push(
     commands.registerCommand("SAS.run", run),
     commands.registerCommand("SAS.runSelected", runSelected),
-    commands.registerCommand("SAS.close", (silent) =>
-      closeSession(silent === true ? undefined : "The SAS session has closed.")
-    ),
+    commands.registerCommand("SAS.close", (silent) => {
+      closeSession(silent === true ? undefined : "The SAS session has closed.");
+      commands.executeCommand("setContext", "SAS.authenticated", false);
+    }),
     commands.registerCommand("SAS.switchProfile", switchProfile),
     commands.registerCommand("SAS.addProfile", addProfile),
     commands.registerCommand("SAS.deleteProfile", deleteProfile),

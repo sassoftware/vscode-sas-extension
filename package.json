@@ -336,12 +336,12 @@
       {
         "view": "sas-content-pane",
         "contents": "Please [login](command:SAS.authenticate) to view SAS content.",
-        "when": "!SAS.session.outputHtml"
+        "when": "!SAS.authenticated"
       },
       {
         "view": "sas-libraries-pane",
         "contents": "Please [login](command:SAS.authenticate) to view libraries.",
-        "when": "!SAS.session.outputHtml"
+        "when": "!SAS.authenticated"
       }
     ]
   },
