@@ -19,6 +19,7 @@ module.exports = {
     eqeqeq: "error",
     "prefer-const": "error",
     "@typescript-eslint/dot-notation": "error",
+    "@typescript-eslint/no-unused-vars": "error",
     curly: "error",
   },
 };
