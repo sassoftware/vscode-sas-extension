@@ -30,7 +30,7 @@ async function setup() {
       .catch(() => (computeSession = undefined));
     if (state === ComputeState.Error) {
       await computeSession.cancel();
-    } else {
+    } else if (computeSession !== undefined) {
       //This might look weird, but I dont know how to detect the session being in
       //syntax check mode right now so we need to send the cancel every time to make
       //sure the session is in a good state.
