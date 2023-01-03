@@ -30,6 +30,7 @@ import {
 import { run, runSelected } from "../commands/run";
 import { SASAuthProvider } from "../components/AuthProvider";
 import { legend, LogTokensProvider } from "../components/LogViewer";
+import SASContentProvider from "../components/SASContentProvider";
 
 let client: LanguageClient;
 // Create Profile status bar item
@@ -76,6 +77,8 @@ export function activate(context: ExtensionContext): void {
 
   // Start the client. This will also launch the server
   client.start();
+
+  window.registerTreeDataProvider("sas-content", new SASContentProvider());
 
   context.subscriptions.push(
     commands.registerCommand("SAS.run", run),

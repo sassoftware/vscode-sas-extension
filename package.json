@@ -329,10 +329,9 @@
     "views": {
       "sas-view-container": [
         {
-          "id": "sas-content-pane",
+          "id": "sas-content",
           "name": "SAS Content",
-          "when": "SAS.authenticated",
-          "contents": "Hey there, partner"
+          "when": "SAS.authenticated"
         },
         {
           "id": "sas-content-get-started",
