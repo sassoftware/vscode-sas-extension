@@ -1,7 +1,6 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
-
-import { window } from "vscode";
+import { commands, window } from "vscode";
 import { getSession, Session } from "../connection";
 
 export async function closeSession(message?: string): Promise<void> {
@@ -15,4 +14,5 @@ export async function closeSession(message?: string): Promise<void> {
   if (message) {
     window.showInformationMessage(message);
   }
+  commands.executeCommand("setContext", "SAS.authenticated", false);
 }

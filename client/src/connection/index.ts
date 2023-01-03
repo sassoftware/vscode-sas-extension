@@ -4,7 +4,6 @@
 import { LogLine } from "./rest/api/compute";
 import { getSession as getRestSession } from "./rest";
 import { AuthType, ProfileConfig } from "../components/profile";
-import { window, ProgressLocation } from "vscode";
 
 let profileConfig: ProfileConfig;
 
@@ -36,18 +35,4 @@ export function getSession(): Session {
   }
 
   throw new Error("Invalid endpoint");
-}
-
-export async function authenticate(): Promise<Session> {
-  const session = getSession();
-
-  await window.withProgress(
-    {
-      location: ProgressLocation.Notification,
-      title: "Connecting to SAS session...",
-    },
-    session.setup
-  );
-
-  return session;
 }
