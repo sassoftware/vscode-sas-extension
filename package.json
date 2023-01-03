@@ -214,6 +214,12 @@
         "command": "SAS.updateProfile",
         "title": "%commands.SAS.updateProfile%",
         "category": "SAS"
+      },
+      {
+        "command": "SAS.authenticate",
+        "title": "%commands.SAS.authenticate%",
+        "category": "SAS",
+        "enablement": "!SAS.authenticating"
       }
     ],
     "keybindings": [
@@ -324,24 +330,22 @@
       "sas-view-container": [
         {
           "id": "sas-content-pane",
-          "name": "SAS Content"
+          "name": "SAS Content",
+          "when": "SAS.authenticated",
+          "contents": "Hey there, partner"
         },
         {
-          "id": "sas-libraries-pane",
-          "name": "Libraries"
+          "id": "sas-content-get-started",
+          "name": "Get Started",
+          "when": "!SAS.authenticated"
         }
       ]
     },
     "viewsWelcome": [
       {
-        "view": "sas-content-pane",
-        "contents": "Please [login](command:SAS.authenticate) to view SAS content.",
-        "when": "!SAS.authenticated"
-      },
-      {
-        "view": "sas-libraries-pane",
-        "contents": "Please [login](command:SAS.authenticate) to view libraries.",
-        "when": "!SAS.authenticated"
+        "view": "sas-content-get-started",
+        "when": "!SAS.authenticated",
+        "contents": "You have not yet signed in to SAS.\n[Sign in](command:SAS.authenticate)"
       }
     ]
   },
