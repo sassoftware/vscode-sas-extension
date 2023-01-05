@@ -26,17 +26,58 @@ const getTimeZone = () => {
   return `GMT${plusOrMinus}${strHours}:${strMinutes}`;
 };
 
+interface TreeItemMetaData {
+  contentType: string;
+  resourceLink: string;
+  extension: string;
+}
+
+interface MetadataResponseLink {
+  rel: string;
+  uri: string;
+}
+
+interface MetadataResponse {
+  name: string;
+  contentType: string;
+  links: MetadataResponseLink[];
+}
+
+const parseMetadata = (metadata: MetadataResponse): TreeItemMetaData => {
+  return {
+    contentType: metadata.contentType,
+    resourceLink:
+      metadata.links.find(
+        (link: MetadataResponseLink) => link.rel === "getResource"
+      )?.uri || "",
+    extension:
+      metadata.contentType === "file" && metadata.name.split(".").pop(),
+  };
+};
+
 class SASContentTreeItem extends TreeItem {
   children: TreeItem[] | undefined;
+  metadata: TreeItemMetaData | undefined;
 
-  constructor(label: string, children?: TreeItem[]) {
+  constructor(
+    label: string,
+    children?: TreeItem[],
+    metadata?: TreeItemMetaData
+  ) {
     super(
       label,
-      children === undefined
+      // TODO #56 Remove me
+      children === undefined && metadata.contentType !== "folder"
         ? TreeItemCollapsibleState.None
         : TreeItemCollapsibleState.Collapsed
     );
     this.children = children;
+    this.metadata = metadata;
+    this.command = {
+      title: "open",
+      command: `${SasContentPane}.selectNode`,
+      arguments: [this],
+    };
   }
 }
 
@@ -45,27 +86,17 @@ class SASContentProvider implements TreeDataProvider<TreeItem> {
   private data: TreeItem[];
 
   constructor() {
-    this.data = [
-      new SASContentTreeItem("Hey", [
-        new SASContentTreeItem("What?"),
-        new SASContentTreeItem("Now?"),
-      ]),
-      new SASContentTreeItem("Bye", [
-        new SASContentTreeItem("To?"),
-        new SASContentTreeItem("OIJ?"),
-      ]),
-    ];
+    this.data = [];
 
-    // commands.registerCommand(
-    //   `${SasContentPane}.selectNode`,
-    //   (item: TreeItem) => {
-    //     console.log({ item });
-    //   }
-    // );
+    commands.registerCommand(
+      `${SasContentPane}.selectNode`,
+      (item: SASContentTreeItem) => {
+        console.log("Clicked", { item });
+      }
+    );
   }
 
   getTreeItem(element: TreeItem): TreeItem | Thenable<TreeItem> {
-    console.log("getTreeItem called");
     return element;
   }
 
@@ -77,22 +108,29 @@ class SASContentProvider implements TreeDataProvider<TreeItem> {
     return (element as SASContentTreeItem).children;
   }
 
-  async folderContents(commonName: string, folderName: string): TreeItem {
+  async folderContents(
+    commonName: string,
+    folderName: string
+  ): Promise<SASContentTreeItem> {
     const folderResponse = await axios.request({
-      url: `${config.endpoint}/folders/folders/${folderName}/members`,
+      url: `${config.endpoint}/folders/folders/${encodeURIComponent(
+        folderName
+      )}/members`,
       method: "get",
       headers: {
         Authorization: "Bearer " + apiConfig.accessToken,
         Accept: "application/json",
       },
     });
-    console.log(folderResponse);
-    console.log(
-      folderResponse.data.items.map((item) => new SASContentTreeItem(item.name))
-    );
+
+    console.log(folderResponse.data);
+
     return new SASContentTreeItem(
       commonName,
-      folderResponse.data.items.map((item) => new SASContentTreeItem(item.name))
+      folderResponse.data.items.map(
+        (item) =>
+          new SASContentTreeItem(item.name, undefined, parseMetadata(item))
+      )
     );
   }
 
