@@ -23,7 +23,7 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
+**Environment (please complete the following information):**
 Client OS: [e.g. Windows 11]
 Extension version: [e.g. v0.1.1]
 SAS version: [e.g. Viya 2022.11]
