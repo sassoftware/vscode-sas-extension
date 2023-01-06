@@ -3,7 +3,7 @@ name: Bug report
 about: Create a report to help us improve
 title: ""
 labels: bug
-assignees: clangsmith, mail2fei
+assignees: clangsmith, 2TomLi
 ---
 
 **Describe the bug**
@@ -26,7 +26,7 @@ If applicable, add screenshots to help explain your problem.
 **Desktop (please complete the following information):**
 Client OS: [e.g. Windows 11]
 Extension version: [e.g. v0.1.1]
-SAS version: [e.g. 2022.11]
+SAS version: [e.g. Viya 2022.11]
 
 **Additional context**
 Add any other context about the problem here.
