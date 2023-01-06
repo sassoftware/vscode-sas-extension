@@ -38,11 +38,13 @@ async function setup() {
     }
   }
 
-  if (computeSession) return;
+  if (computeSession) {
+    return;
+  }
 
   //Set the locale in the base options so it appears on all api calls
   const locale = JSON.parse(process.env.VSCODE_NLS_CONFIG ?? "{}").locale;
-  apiConfig.baseOptions["headers"] = { "Accept-Language": locale };
+  apiConfig.baseOptions.headers = { "Accept-Language": locale };
 
   if (config.serverId) {
     const server1 = new ComputeServer(config.serverId);
@@ -59,8 +61,9 @@ async function setup() {
         filter: `eq(name,'${contextName}')`,
       })
     ).data.items[0];
-    if (!context?.id)
+    if (!context?.id) {
       throw new Error("Compute Context not found: " + contextName);
+    }
 
     const sess = (
       await contextsApi.createSession(
@@ -83,7 +86,9 @@ async function printLog(job: ComputeJob, onLog?: (logs: LogLine[]) => void) {
 }
 
 async function run(code: string, onLog?: (logs: LogLine[]) => void) {
-  if (!computeSession?.sessionId) throw new Error();
+  if (!computeSession?.sessionId) {
+    throw new Error();
+  }
 
   //Get the job
   const job = await computeSession.execute({ code: [code] });
