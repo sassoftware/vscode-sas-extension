@@ -2395,7 +2395,7 @@ export const LogLineTypeEnum = {
 } as const;
 
 export type LogLineTypeEnum =
-  (typeof LogLineTypeEnum)[keyof typeof LogLineTypeEnum];
+  typeof LogLineTypeEnum[keyof typeof LogLineTypeEnum];
 
 /**
  * Provides information about the log for a session or a job.
@@ -2547,7 +2547,7 @@ export const PromptContentRequestColumnDetailEnum = {
 } as const;
 
 export type PromptContentRequestColumnDetailEnum =
-  (typeof PromptContentRequestColumnDetailEnum)[keyof typeof PromptContentRequestColumnDetailEnum];
+  typeof PromptContentRequestColumnDetailEnum[keyof typeof PromptContentRequestColumnDetailEnum];
 
 /**
  * Contains the formatted and raw row data for prompt content
@@ -2630,7 +2630,7 @@ export const ResourceScopeEnum = {
 } as const;
 
 export type ResourceScopeEnum =
-  (typeof ResourceScopeEnum)[keyof typeof ResourceScopeEnum];
+  typeof ResourceScopeEnum[keyof typeof ResourceScopeEnum];
 
 /**
  * Provides a result that was created by a job and that is available for use by a consumer of a service.
@@ -2671,8 +2671,7 @@ export const ResultTypeEnum = {
   Ods: "ODS",
 } as const;
 
-export type ResultTypeEnum =
-  (typeof ResultTypeEnum)[keyof typeof ResultTypeEnum];
+export type ResultTypeEnum = typeof ResultTypeEnum[keyof typeof ResultTypeEnum];
 
 /**
  * Provides a paginated collection of result objects.
@@ -2935,7 +2934,7 @@ export const RowSetRequestColumnDetailEnum = {
 } as const;
 
 export type RowSetRequestColumnDetailEnum =
-  (typeof RowSetRequestColumnDetailEnum)[keyof typeof RowSetRequestColumnDetailEnum];
+  typeof RowSetRequestColumnDetailEnum[keyof typeof RowSetRequestColumnDetailEnum];
 
 /**
  * Provides a request that you can use to obtain rows from a table or data set.
@@ -3659,7 +3658,7 @@ export const SortByRequestDirectionEnum = {
 } as const;
 
 export type SortByRequestDirectionEnum =
-  (typeof SortByRequestDirectionEnum)[keyof typeof SortByRequestDirectionEnum];
+  typeof SortByRequestDirectionEnum[keyof typeof SortByRequestDirectionEnum];
 
 /**
  * Provides information about a SAS table or data set.
