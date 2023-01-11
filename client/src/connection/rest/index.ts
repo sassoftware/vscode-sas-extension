@@ -124,7 +124,6 @@ async function run(code: string, onLog?: (logs: LogLine[]) => void) {
         res.title = result.name;
       }
 
-      res.title = result.name;
       break;
     }
   }
