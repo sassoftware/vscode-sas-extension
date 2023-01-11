@@ -116,7 +116,14 @@ async function run(code: string, onLog?: (logs: LogLine[]) => void) {
   for (const result of results.reverse()) {
     const link = result.links[0];
     if (link.type === "text/html") {
-      res.html5 = (await job.requestLink<string>(link)).data;
+      const html5 = (await job.requestLink<string>(link)).data;
+
+      //Make sure that the html has a valid body
+      if (html5.search('<*id="IDX*.+">') !== -1) {
+        res.html5 = html5;
+        res.title = result.name;
+      }
+
       res.title = result.name;
       break;
     }
