@@ -3198,23 +3198,26 @@ export class LexerEx {
               state: this.PARSING_STATE.IN_DATA,
             });
             break;
-          default: {
-            const validName = this._cleanKeyword(word);
-            const state: any = {
-              parse: this.readMacroStmt_,
-              state: this.PARSING_STATE.IN_MACRO,
-              name: validName,
-            };
-            this.stack.push(state);
-            //this.setKeyword_(token, this.langSrv.isProcedureStatementKeyword("MACRO", validName));
-            const obj = this.handleLongStmtName_("MACRO", validName);
-            state.name = obj.stmtName;
-            this.setKeyword_(token, obj.isKeyword);
-            state.hasSlashOptionDelimiter = this.syntaxDb.hasOptionDelimiter(
-              "DATA",
-              obj.stmtName
-            );
-          }
+          default:
+            if (token.type === Lexer.TOKEN_TYPES.MREF) {
+              this.handleMref_(this.PARSING_STATE.IN_MACRO);
+            } else {
+              const validName = this._cleanKeyword(word);
+              const state: any = {
+                parse: this.readMacroStmt_,
+                state: this.PARSING_STATE.IN_MACRO,
+                name: validName,
+              };
+              this.stack.push(state);
+              //this.setKeyword_(token, this.langSrv.isProcedureStatementKeyword("MACRO", validName));
+              const obj = this.handleLongStmtName_("MACRO", validName);
+              state.name = obj.stmtName;
+              this.setKeyword_(token, obj.isKeyword);
+              state.hasSlashOptionDelimiter = this.syntaxDb.hasOptionDelimiter(
+                "DATA",
+                obj.stmtName
+              );
+            }
         }
       }
     }
