@@ -19,13 +19,25 @@ let running = false;
 function getCode(outputHtml: boolean, selected = false): string {
   const editor = window.activeTextEditor;
   const doc = editor?.document;
-  const code = selected ? doc?.getText(editor?.selection) : doc?.getText();
+  let code = "";
+  if (selected) {
+    // run selected code if there is one or more non-empty selections, otherwise run all code
 
-  return code
-    ? outputHtml
-      ? "ods html5;\n" + code + "\n;quit;ods html5 close;"
-      : code
-    : "";
+    // since you can have multiple selections, append the text for each selection in order of selection
+    // note: selection ranges can be empty (ex. just a carat)
+    for (const selection of editor.selections) {
+      const selectedText: string = doc.getText(selection);
+      code += selectedText;
+    }
+    // if no non-whitespace characters are selected, treat as no selection and run all code
+    if (code.trim().length === 0) {
+      code = doc?.getText();
+    }
+  } else {
+    code = doc?.getText();
+  }
+
+  return outputHtml ? "ods html5;\n" + code + "\n;quit;ods html5 close;" : code;
 }
 
 async function runCode(selected?: boolean) {
