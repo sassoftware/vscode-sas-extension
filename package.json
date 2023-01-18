@@ -601,8 +601,8 @@
     "format": "prettier --write .",
     "pretest": "npm run compile && tsc -p ./client",
     "test": "node ./client/out/test/runTest.js",
-    "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
-    "copyright:check": "node ./tools/check-copyright.mjs"
+    "coverage": "c8 --clean --check-coverage --lines 75 npm run test",
+    "postinstall": "cd client && npm install && cd ../server && npm install && cd .."
   },
   "devDependencies": {
     "@types/chai": "^4.3.4",
@@ -611,6 +611,7 @@
     "@types/sinon": "^10.0.13",
     "@typescript-eslint/eslint-plugin": "^5.57.0",
     "@typescript-eslint/parser": "^5.57.1",
+    "c8": "^7.12.0",
     "chai": "^4.3.7",
     "esbuild": "^0.17.16",
     "eslint": "^8.37.0",
