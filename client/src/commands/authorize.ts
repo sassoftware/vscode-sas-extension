@@ -1,7 +1,7 @@
 import { window, ProgressLocation, commands } from "vscode";
 import { getSession, Session } from "../connection";
 
-export async function authenticate(): Promise<Session> {
+export async function authorize(): Promise<Session> {
   commands.executeCommand("setContext", "SAS.authenticating", true);
 
   const session = getSession();
@@ -21,7 +21,7 @@ export async function authenticate(): Promise<Session> {
     }
   );
 
-  commands.executeCommand("setContext", "SAS.authenticated", true);
+  commands.executeCommand("setContext", "SAS.authorized", true);
   commands.executeCommand("setContext", "SAS.authenticating", false);
 
   return session;

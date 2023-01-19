@@ -14,5 +14,5 @@ export async function closeSession(message?: string): Promise<void> {
   if (message) {
     window.showInformationMessage(message);
   }
-  commands.executeCommand("setContext", "SAS.authenticated", false);
+  commands.executeCommand("setContext", "SAS.authorized", false);
 }

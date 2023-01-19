@@ -216,8 +216,8 @@
         "category": "SAS"
       },
       {
-        "command": "SAS.authenticate",
-        "title": "%commands.SAS.authenticate%",
+        "command": "SAS.authorize",
+        "title": "%commands.SAS.authorize%",
         "category": "SAS",
         "enablement": "!SAS.authenticating"
       }
@@ -329,22 +329,22 @@
     "views": {
       "sas-view-container": [
         {
-          "id": "sas-content",
+          "id": "SAS.ContentNavigator",
           "name": "SAS Content",
-          "when": "SAS.authenticated"
+          "when": "SAS.authorized"
         },
         {
-          "id": "sas-content-get-started",
+          "id": "SAS.ContentGetStarted",
           "name": "Get Started",
-          "when": "!SAS.authenticated"
+          "when": "!SAS.authorized"
         }
       ]
     },
     "viewsWelcome": [
       {
-        "view": "sas-content-get-started",
-        "when": "!SAS.authenticated",
-        "contents": "You have not yet signed in to SAS.\n[Sign in](command:SAS.authenticate)"
+        "view": "SAS.ContentGetStarted",
+        "when": "!SAS.authorized",
+        "contents": "You have not yet signed in to SAS.\n[Sign in](command:SAS.authorize)"
       }
     ]
   },

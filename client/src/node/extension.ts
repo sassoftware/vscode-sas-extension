@@ -29,6 +29,7 @@ import {
 } from "../commands/profile";
 import { run, runSelected } from "../commands/run";
 import { SASAuthProvider } from "../components/AuthProvider";
+import ContentNavigator from "../components/ContentNavigator";
 import { legend, LogTokensProvider } from "../components/LogViewer";
 
 let client: LanguageClient;
@@ -100,6 +101,8 @@ export function activate(context: ExtensionContext): void {
     ),
     activeProfileStatusBarIcon
   );
+
+  new ContentNavigator(context);
 
   // Reset first to set "No Active Profiles"
   resetStatusBarItem(activeProfileStatusBarIcon);
