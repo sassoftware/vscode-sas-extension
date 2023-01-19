@@ -167,7 +167,21 @@
         }
       }
     ],
+    "views": {
+      "explorer": [
+        {
+          "id": "SAS.ContentNavigator",
+          "name": "SAS Content Navigator",
+          "when": "SAS.authorized"
+        }
+      ]
+    },
     "commands": [
+      {
+        "command": "SAS.authorize",
+        "title": "%commands.SAS.authorize%",
+        "category": "SAS"
+      },
       {
         "command": "SAS.run",
         "title": "%commands.SAS.run%",
