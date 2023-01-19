@@ -1,0 +1,6 @@
+{
+  "all": true,
+  "include": ["client/out/**"],
+  "exclude": ["**/node_modules/**", "client/out/test/"],
+  "reporter": ["html", "text"]
+}
