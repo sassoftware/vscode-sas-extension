@@ -11,6 +11,7 @@
   "configuration.SAS.connectionProfiles.profiles.clientId": "SAS Viya Client ID",
   "configuration.SAS.connectionProfiles.profiles.clientSecret": "SAS Viya Client Secret",
 
+  "commands.SAS.authorize": "Logon SAS Server",
   "commands.SAS.run": "Run All SAS Code",
   "commands.SAS.close": "Close Current Session",
   "commands.SAS.switchProfile": "Switch Current Connection Profile",

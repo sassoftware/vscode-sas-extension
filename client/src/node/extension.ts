@@ -20,6 +20,7 @@ import {
   TransportKind,
 } from "vscode-languageclient/node";
 import { LogTokensProvider, legend } from "../components/LogViewer";
+import { ContentNavigator } from "../components/ContentNavigator";
 import {
   profileConfig,
   addProfile,
@@ -28,6 +29,7 @@ import {
   deleteProfile,
 } from "../commands/profile";
 import { run, runSelected } from "../commands/run";
+import { authorize } from "../commands/authorize";
 
 let client: LanguageClient;
 // Create Profile status bar item
@@ -76,6 +78,7 @@ export function activate(context: ExtensionContext): void {
   client.start();
 
   context.subscriptions.push(
+    commands.registerCommand("SAS.authorize", authorize),
     commands.registerCommand("SAS.run", run),
     commands.registerCommand("SAS.runSelected", runSelected),
     commands.registerCommand("SAS.close", () =>
@@ -92,6 +95,8 @@ export function activate(context: ExtensionContext): void {
     ),
     activeProfileStatusBarIcon
   );
+
+  new ContentNavigator(context);
 
   // Reset first to set "No Active Profiles"
   resetStatusBarItem(activeProfileStatusBarIcon);
