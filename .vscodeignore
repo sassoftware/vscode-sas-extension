@@ -16,4 +16,9 @@ contributing.md
 ContributorAgreement.txt
 .travis.yml
 .eslintignore
+<<<<<<< HEAD
 pull_request_template.md
+=======
+.eslintrc.js
+.c8rc
+>>>>>>> 1c2ad76 (chore: add recently created dev configs to .vscodeignore)
