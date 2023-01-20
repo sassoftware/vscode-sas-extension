@@ -3,6 +3,7 @@
 
 import { LogLine } from "./rest/api/compute";
 import { getSession as getRestSession } from "./rest";
+import { getSession as getSSHSession } from "./ssh";
 import { AuthType, ProfileConfig } from "../components/profile";
 
 let profileConfig: ProfileConfig;
@@ -29,8 +30,10 @@ export function getSession(): Session {
   if (validProfile.type === AuthType.Error) {
     throw new Error(validProfile.error);
   }
-  if (/^https*:/.test(validProfile.profile.endpoint)) {
+  if (validProfile.profile.endpoint.startsWith("https")) {
     return getRestSession(validProfile.profile);
+  } else if (validProfile.profile.endpoint.startsWith("ssh")) {
+    return getSSHSession(validProfile.profile as any);
   }
 
   throw new Error("Invalid endpoint");

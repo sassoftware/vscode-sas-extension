@@ -442,6 +442,8 @@
     "chai": "^4.3.7",
     "esbuild": "^0.17.10",
     "eslint": "^8.35.0",
+    "electron-rebuild": "^3.2.9",
+    "media-typer": "^1.1.0",
     "mocha": "^10.2.0",
     "path-browserify": "^1.0.1",
     "prettier": "^2.8.4",
