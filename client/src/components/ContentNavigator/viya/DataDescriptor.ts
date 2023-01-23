@@ -1,7 +1,13 @@
-import { ContentItem } from "../types";
+import { ContentItem, Link } from "../types";
 import { DataDescriptor as AbstractDataDescriptor } from "../base/DataDescriptor";
-import { FOLDER_TYPES } from "./const";
+import {
+  GENERIC_FOLDER_TYPE,
+  FOLDER_TYPES,
+  FOLDER_TYPE,
+  FILE_TYPE,
+} from "./const";
 import { getLink } from "../utils";
+import { utimes } from "fs";
 
 export class DataDescriptor extends AbstractDataDescriptor {
   public getId = (item: ContentItem) => {
@@ -23,7 +29,7 @@ export class DataDescriptor extends AbstractDataDescriptor {
   public getTypeName = (item: ContentItem) =>
     item.contentType ? item.contentType : item.type;
 
-  public isContainer = (item: ContentItem, bStrict?: boolean) => {
+  public isContainer = (item: ContentItem, bStrict?: boolean): boolean => {
     const typeName = this.getTypeName(item);
     if (!bStrict && this.isItemInRecycleBin(item) && this.isReference(item)) {
       return false;
@@ -32,6 +38,31 @@ export class DataDescriptor extends AbstractDataDescriptor {
       return true;
     }
     return false;
+  };
+
+  public resourceType = (item: ContentItem): string | undefined => {
+    if (!this.isValidItem(item)) {
+      return;
+    }
+
+    const typeName = this.getTypeName(item);
+    // We want to prevent trying to delete base level folders (favorites, my folder, etc)
+    const resourceTypes = [FOLDER_TYPE, FILE_TYPE].includes(typeName)
+      ? ["createChild", "delete", "update"]
+      : ["createChild", "update"];
+
+    const links = item.links.filter((link: Link) =>
+      resourceTypes.includes(link.rel)
+    );
+
+    if (links.length === 0) {
+      return;
+    }
+
+    return links
+      .map((link: Link) => link.rel)
+      .sort()
+      .join("-");
   };
 
   public getModifyDate = (item: ContentItem) => item.modifiedTimeStamp;

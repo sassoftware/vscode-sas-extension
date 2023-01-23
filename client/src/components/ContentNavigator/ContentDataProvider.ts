@@ -39,15 +39,21 @@ class ContentDataProvider
   }
 
   public getTreeItem(item: ContentItem): TreeItem | Thenable<TreeItem> {
-    console.log("dataprovider", "getTreeItem", item);
+    const isContainer = this.dataDescriptor.isContainer(item);
+
+    console.log("resourceType", this.dataDescriptor.resourceType(item), {
+      item,
+    });
+
     return {
+      contextValue: this.dataDescriptor.resourceType(item),
       id: this.dataDescriptor.getId(item),
       label: this.dataDescriptor.getLabel(item),
-      collapsibleState: this.dataDescriptor.isContainer(item)
+      collapsibleState: isContainer
         ? TreeItemCollapsibleState.Collapsed
-        : void 0,
-      command: this.dataDescriptor.isContainer(item)
-        ? void 0
+        : undefined,
+      command: isContainer
+        ? undefined
         : {
             command: "SAS.openSASfile",
             arguments: [

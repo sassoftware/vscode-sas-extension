@@ -4,7 +4,7 @@ export const getLink = (
   links: Array<Link>,
   method: string,
   relationship: string
-) =>
+): Link | null =>
   !links
     ? null
     : links.find((link) => link.method === method && link.rel === relationship);

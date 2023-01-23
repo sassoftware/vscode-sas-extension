@@ -23,10 +23,12 @@ export const ROOT_FOLDER = {
   ],
 };
 
-export const FILE_TYPES = ["file"];
+export const FILE_TYPE = "file";
+export const FOLDER_TYPE = "folder";
+export const FILE_TYPES = [FILE_TYPE];
 export const FOLDER_TYPES = [
   ROOT_FOLDER_TYPE,
-  "folder",
+  FOLDER_TYPE,
   "myFolder",
   "favoritesFolder",
   "userFolder",

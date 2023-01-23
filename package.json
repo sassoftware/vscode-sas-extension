@@ -220,6 +220,26 @@
         "title": "%commands.SAS.authorize%",
         "category": "SAS",
         "enablement": "!SAS.authenticating"
+      },
+      {
+        "command": "SAS.deleteResource",
+        "title": "%commands.SAS.deleteResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.addFileResource",
+        "title": "%commands.SAS.addFileResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.addFolderResource",
+        "title": "%commands.SAS.addFolderResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.renameResource",
+        "title": "%commands.SAS.renameResource%",
+        "category": "SAS"
       }
     ],
     "keybindings": [
@@ -235,6 +255,24 @@
       }
     ],
     "menus": {
+      "view/item/context": [
+        {
+          "command": "SAS.addFileResource",
+          "when": "viewItem =~ /createChild/"
+        },
+        {
+          "command": "SAS.addFolderResource",
+          "when": "viewItem =~ /createChild/"
+        },
+        {
+          "command": "SAS.deleteResource",
+          "when": "viewItem =~ /delete/"
+        },
+        {
+          "command": "SAS.renameResource",
+          "when": "viewItem =~ /update/"
+        }
+      ],
       "editor/title/run": [
         {
           "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
