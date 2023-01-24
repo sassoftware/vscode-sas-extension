@@ -4,10 +4,12 @@ import {
   Event,
   EventEmitter,
   FileChangeEvent,
+  FileChangeType,
   FileStat,
   FileSystemProvider,
   FileType,
   ProviderResult,
+  ThemeIcon,
   TreeDataProvider,
   TreeItem,
   TreeItemCollapsibleState,
@@ -20,13 +22,13 @@ class ContentDataProvider
   implements TreeDataProvider<ContentItem>, FileSystemProvider
 {
   private _onDidChangeFile: EventEmitter<FileChangeEvent[]>;
-  private _onDidChangeTreeData: EventEmitter<ContentItem>;
+  private _onDidChangeTreeData: EventEmitter<ContentItem | undefined>;
   private dataDescriptor: DataDescriptor;
   private textEncoder = new TextEncoder();
   private textDecoder = new TextDecoder();
   constructor(public readonly model: ContentModel) {
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
-    this._onDidChangeTreeData = new EventEmitter<ContentItem>();
+    this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
     this.dataDescriptor = this.model.getDataDescriptor();
   }
 
@@ -46,6 +48,7 @@ class ContentDataProvider
     });
 
     return {
+      iconPath: isContainer ? ThemeIcon.Folder : ThemeIcon.File,
       contextValue: this.dataDescriptor.resourceType(item),
       id: this.dataDescriptor.getId(item),
       label: this.dataDescriptor.getLabel(item),
@@ -56,13 +59,7 @@ class ContentDataProvider
         ? undefined
         : {
             command: "SAS.openSASfile",
-            arguments: [
-              Uri.parse(
-                `sas:/${this.dataDescriptor.getLabel(
-                  item
-                )}?id=${this.dataDescriptor.getResourceId(item)}`
-              ),
-            ],
+            arguments: [this.dataDescriptor.getUri(item)],
             title: "Open SAS File",
           },
     };
@@ -133,12 +130,16 @@ class ContentDataProvider
     // }
   }
 
-  public delete(
-    uri: Uri
+  public async delete(
+    item: ContentItem
     // options: { recursive: boolean }
-  ): void | Thenable<void> {
-    console.log("writeFile", uri);
-    throw new Error("Method not implemented.");
+  ): Promise<void> {
+    await this.model.delete(item);
+    this.refresh();
+  }
+
+  public refresh(): void {
+    this._onDidChangeTreeData.fire();
   }
 
   public rename(

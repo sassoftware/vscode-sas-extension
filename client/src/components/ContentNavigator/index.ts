@@ -12,22 +12,30 @@ class ContentNavigator {
       dataDescriptor
     );
     const dataProvider = new ContentDataProvider(model);
+    const treeView = window.createTreeView("SAS.ContentNavigator", {
+      treeDataProvider: dataProvider,
+    });
     model.serviceInit().then(() => {
-      context.subscriptions.push(
-        window.createTreeView("SAS.ContentNavigator", {
-          treeDataProvider: dataProvider,
-        })
-      );
+      context.subscriptions.push(treeView);
     });
 
     workspace.registerFileSystemProvider("sas", dataProvider);
     commands.registerCommand("SAS.openSASfile", async (resource) =>
       this.openResource(resource)
     );
+    commands.registerCommand(
+      "SAS.deleteResource",
+      async (resource) => await dataProvider.delete(resource)
+    );
+    commands.registerCommand("SAS.refreshResources", () =>
+      dataProvider.refresh()
+    );
   }
 
   private async openResource(resource: Uri): Promise<void> {
     try {
+      // TODO #56 Could we solve this try/catch issue by using `{ preview: false }`
+      // as an option?
       await window.showTextDocument(resource);
     } catch (error) {
       commands.executeCommand("workbench.action.closeActiveEditor");

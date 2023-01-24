@@ -240,6 +240,15 @@
         "command": "SAS.renameResource",
         "title": "%commands.SAS.renameResource%",
         "category": "SAS"
+      },
+      {
+        "command": "SAS.refreshResources",
+        "title": "%commands.SAS.refreshResources%",
+        "category": "SAS",
+        "icon": {
+          "light": "icons/light/refresh.svg",
+          "dark": "icons/dark/refresh.svg"
+        }
       }
     ],
     "keybindings": [
@@ -255,22 +264,29 @@
       }
     ],
     "menus": {
+      "view/title": [
+        {
+          "command": "SAS.refreshResources",
+          "when": "view == SAS.ContentNavigator",
+          "group": "navigation"
+        }
+      ],
       "view/item/context": [
         {
           "command": "SAS.addFileResource",
-          "when": "viewItem =~ /createChild/"
+          "when": "viewItem =~ /createChild/ && view == SAS.ContentNavigator"
         },
         {
           "command": "SAS.addFolderResource",
-          "when": "viewItem =~ /createChild/"
+          "when": "viewItem =~ /createChild/ && view == SAS.ContentNavigator"
         },
         {
           "command": "SAS.deleteResource",
-          "when": "viewItem =~ /delete/"
+          "when": "viewItem =~ /delete/ && view == SAS.ContentNavigator"
         },
         {
           "command": "SAS.renameResource",
-          "when": "viewItem =~ /update/"
+          "when": "viewItem =~ /update/ && view == SAS.ContentNavigator"
         }
       ],
       "editor/title/run": [

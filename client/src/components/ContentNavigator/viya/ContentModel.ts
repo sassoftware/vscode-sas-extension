@@ -1,9 +1,9 @@
 import axios, { AxiosInstance } from "axios";
-import { ContentItem } from "../types";
+import { ContentItem, Link } from "../types";
 import { ContentModel as AbstractContentModel } from "../base/ContentModel";
 import { DataDescriptor } from "./DataDescriptor";
 import { ROOT_FOLDER, FILE_TYPES, FOLDER_TYPES } from "./const";
-import { Uri } from "vscode";
+import { ThemeIcon, Uri } from "vscode";
 import { ajaxErrorHandler, getLink } from "../utils";
 import { apiConfig } from "../../../session/rest";
 
@@ -166,8 +166,6 @@ export class ContentModel extends AbstractContentModel {
       lastModified: res.headers["last-modified"],
     };
 
-    console.log("res data is this, yes", res.data);
-
     return res.data;
   }
 
@@ -183,7 +181,7 @@ export class ContentModel extends AbstractContentModel {
   }
 
   public async saveContentToUri(uri: Uri, content: string) {
-    console.log("saveContentToUri", uri);
+    console.log("saveContentToUri", uri, uri.query.substring(3) + "/content");
     const resourceId = uri.query.substring(3); // ?id=...
     const res = await this.conn.put(resourceId + "/content", content, {
       headers: {
@@ -197,6 +195,16 @@ export class ContentModel extends AbstractContentModel {
       etag: res.headers.etag,
       lastModified: res.headers["last-modified"],
     };
+  }
+
+  public async delete(item: ContentItem): Promise<boolean> {
+    const link = item.links.find((link: Link) => link.rel === "delete");
+    if (!link) {
+      return;
+    }
+
+    // TODO #56 handle failures, and make sure the file disappears
+    await this.conn.delete(link.uri);
   }
 }
 

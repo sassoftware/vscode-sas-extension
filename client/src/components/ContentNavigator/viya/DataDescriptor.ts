@@ -8,6 +8,7 @@ import {
 } from "./const";
 import { getLink } from "../utils";
 import { utimes } from "fs";
+import { Uri } from "vscode";
 
 export class DataDescriptor extends AbstractDataDescriptor {
   public getId = (item: ContentItem) => {
@@ -63,6 +64,12 @@ export class DataDescriptor extends AbstractDataDescriptor {
       .map((link: Link) => link.rel)
       .sort()
       .join("-");
+  };
+
+  public getUri = (item: ContentItem): Uri => {
+    return Uri.parse(
+      `sas:/${this.getLabel(item)}?id=${this.getResourceId(item)}`
+    );
   };
 
   public getModifyDate = (item: ContentItem) => item.modifiedTimeStamp;
