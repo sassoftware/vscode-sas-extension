@@ -339,7 +339,7 @@
     "@types/node": "^18.11.18",
     "@typescript-eslint/eslint-plugin": "^5.48.2",
     "@typescript-eslint/parser": "^5.49.0",
-    "chai": "^4.3.6",
+    "chai": "^4.3.7",
     "esbuild": "^0.13.15",
     "eslint": "^8.32.0",
     "media-typer": "^1.1.0",
