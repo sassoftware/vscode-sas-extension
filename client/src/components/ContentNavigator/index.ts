@@ -30,6 +30,26 @@ class ContentNavigator {
     commands.registerCommand("SAS.refreshResources", () =>
       dataProvider.refresh()
     );
+    commands.registerCommand("SAS.addFileResource", async (resource) => {
+      const fileName = await window.showInputBox({
+        prompt: "Please enter a file name",
+        title: "New file",
+        // TODO #56 Validate data
+        validateInput: (value): string | null => null,
+      });
+
+      await dataProvider.createFile(resource, fileName);
+    });
+    commands.registerCommand("SAS.addFolderResource", async (resource) => {
+      const folderName = await window.showInputBox({
+        prompt: "Please enter a folder name",
+        title: "New folder",
+        // TODO #56 Validate data
+        validateInput: (value): string | null => null,
+      });
+
+      await dataProvider.createFolder(resource, folderName);
+    });
   }
 
   private async openResource(resource: Uri): Promise<void> {

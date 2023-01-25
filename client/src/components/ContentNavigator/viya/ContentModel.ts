@@ -6,6 +6,12 @@ import { ROOT_FOLDER, FILE_TYPES, FOLDER_TYPES } from "./const";
 import { ThemeIcon, Uri } from "vscode";
 import { ajaxErrorHandler, getLink } from "../utils";
 import { apiConfig } from "../../../session/rest";
+import * as FormData from "form-data";
+
+interface AddMemberProperties {
+  name?: string;
+  contentType?: string;
+}
 
 export class ContentModel extends AbstractContentModel {
   protected dataDescriptor: DataDescriptor;
@@ -178,6 +184,69 @@ export class ContentModel extends AbstractContentModel {
       lastModified: res.headers["last-modified"],
     };
     return res.data;
+  }
+
+  private async addMember(
+    uri: string | undefined,
+    addMemberUri: string | undefined,
+    properties: AddMemberProperties
+  ): Promise<void> {
+    // TODO #56 Error checking
+    if (!uri || !addMemberUri) {
+      console.log("noooooo");
+      return;
+    }
+    console.log(
+      "posting ",
+      {
+        uri,
+        type: "CHILD",
+        ...properties,
+      },
+      "to",
+      addMemberUri
+    );
+    await this.conn.post(addMemberUri, {
+      uri,
+      type: "CHILD",
+      ...properties,
+    });
+  }
+
+  public async createFile(item: ContentItem, fileName: string) {
+    // TODO #56 Add some error checking
+    const resp = await this.conn.post(
+      `/files/files#rawUpload`,
+      Buffer.from("", "binary"),
+      {
+        headers: {
+          "Content-Type": "*/*",
+          "Content-Disposition": `filename="${fileName}"`,
+        },
+      }
+    );
+
+    const fileLink: Link | null = getLink(
+      (resp.data as ContentItem).links,
+      "GET",
+      "self"
+    );
+
+    await this.addMember(
+      fileLink?.uri,
+      getLink(item.links, "POST", "addMember")?.uri,
+      {
+        name: fileName,
+        // TODO #56 better content typing
+        contentType: "file",
+      }
+    );
+  }
+
+  public async createFolder(item: ContentItem, name: string) {
+    await this.conn.post(`/folders/folders?parentFolderUri=${item.uri}`, {
+      name,
+    });
   }
 
   public async saveContentToUri(uri: Uri, content: string) {

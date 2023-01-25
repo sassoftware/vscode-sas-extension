@@ -114,9 +114,17 @@ class ContentDataProvider
       .then((content) => this.textEncoder.encode(content));
   }
 
-  public createDirectory(uri: Uri): void | Thenable<void> {
-    console.log("createDirectory", uri);
-    throw new Error("Method not implemented.");
+  public async createFolder(
+    item: ContentItem,
+    folderName: string
+  ): Thenable<void> {
+    await this.model.createFolder(item, folderName);
+    this.refresh();
+  }
+
+  public async createFile(item: ContentItem, fileName: string): Thenable<void> {
+    await this.model.createFile(item, fileName);
+    this.refresh();
   }
 
   public writeFile(
