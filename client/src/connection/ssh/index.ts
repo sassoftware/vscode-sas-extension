@@ -104,7 +104,7 @@ function getResult() {
     resolve?.({});
     return;
   }
-  let result = "";
+  let fileContents = "";
   conn.exec(`cat ${html5FileName}.htm`, (err, s) => {
     if (err) {
       reject?.(err);
@@ -112,13 +112,17 @@ function getResult() {
     }
 
     s.on("data", (data) => {
-      result += data.toString().trimEnd();
+      fileContents += data.toString().trimEnd();
     }).on("close", (code) => {
       const rc = code as number;
       const runResult: RunResult = {};
       if (rc === 0) {
-        runResult.html5 = result;
-        runResult.title = html5FileName;
+        //Make sure that the html has a valid body
+        //TODO: should this be refactored into a shared location?
+        if (fileContents.search('<*id="IDX*.+">') !== -1) {
+          runResult.html5 = fileContents;
+          runResult.title = html5FileName;
+        }
       }
       resolve?.(runResult);
     });
