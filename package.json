@@ -218,8 +218,7 @@
       {
         "command": "SAS.authorize",
         "title": "%commands.SAS.authorize%",
-        "category": "SAS",
-        "enablement": "SAS.potato"
+        "category": "SAS"
       },
       {
         "command": "SAS.deleteResource",
@@ -267,26 +266,26 @@
       "view/title": [
         {
           "command": "SAS.refreshResources",
-          "when": "view == SAS.ContentNavigator",
+          "when": "view == sas-content-navigator",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
           "command": "SAS.addFileResource",
-          "when": "viewItem =~ /createChild/ && view == SAS.ContentNavigator"
+          "when": "viewItem =~ /createChild/ && view == sas-content-navigator"
         },
         {
           "command": "SAS.addFolderResource",
-          "when": "viewItem =~ /createChild/ && view == SAS.ContentNavigator"
+          "when": "viewItem =~ /createChild/ && view == sas-content-navigator"
         },
         {
           "command": "SAS.deleteResource",
-          "when": "viewItem =~ /delete/ && view == SAS.ContentNavigator"
+          "when": "viewItem =~ /delete/ && view == sas-content-navigator"
         },
         {
           "command": "SAS.renameResource",
-          "when": "viewItem =~ /update/ && view == SAS.ContentNavigator"
+          "when": "viewItem =~ /update/ && view == sas-content-navigator"
         }
       ],
       "editor/title/run": [
@@ -383,12 +382,12 @@
     "views": {
       "sas-view-container": [
         {
-          "id": "SAS.ContentNavigator",
+          "id": "sas-content-navigator",
           "name": "SAS Content",
           "when": "SAS.authorized"
         },
         {
-          "id": "SAS.ContentGetStarted",
+          "id": "sas-content-get-started",
           "name": "Get Started",
           "when": "!SAS.authorized"
         }
@@ -396,9 +395,10 @@
     },
     "viewsWelcome": [
       {
-        "view": "SAS.ContentGetStarted",
+        "view": "sas-content-get-started",
         "when": "!SAS.authorized",
-        "contents": "You have not yet signed in to SAS.\n[Sign in](command:SAS.authorize)"
+        "contents": "You have not yet signed in to SAS.\n[Sign in](command:SAS.authorize)",
+        "enablement": "!SAS.authorizing"
       }
     ]
   },

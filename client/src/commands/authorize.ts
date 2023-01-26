@@ -2,27 +2,32 @@ import { window, ProgressLocation, commands } from "vscode";
 import { getSession, Session } from "../connection";
 
 export async function authorize(): Promise<Session> {
-  commands.executeCommand("setContext", "SAS.authenticating", true);
+  commands.executeCommand("setContext", "SAS.authorizing", true);
 
   const session = getSession();
 
-  await window.withProgress(
-    {
-      location: ProgressLocation.Notification,
-      title: "Connecting to SAS session...",
-    },
-    async () => {
-      await window.withProgress(
-        {
-          location: { viewId: "sas-content-get-started" },
-        },
-        session.setup
-      );
-    }
-  );
+  try {
+    await window.withProgress(
+      {
+        location: ProgressLocation.Notification,
+        title: "Connecting to SAS session...",
+      },
+      async () => {
+        await window.withProgress(
+          {
+            location: { viewId: "sas-content-get-started" },
+          },
+          session.setup
+        );
+      }
+    );
 
-  commands.executeCommand("setContext", "SAS.authorized", true);
-  commands.executeCommand("setContext", "SAS.authenticating", false);
+    commands.executeCommand("setContext", "SAS.authorized", true);
+  } catch (error) {
+    throw new Error(error);
+  } finally {
+    commands.executeCommand("setContext", "SAS.authorizing", false);
+  }
 
   return session;
 }

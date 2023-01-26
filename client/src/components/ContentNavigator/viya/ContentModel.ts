@@ -17,47 +17,30 @@ export class ContentModel {
   private fileTokenMaps: {
     [id: string]: { etag?: string; lastModified: string };
   };
+  private authorized: boolean;
 
   constructor(baseURL: string, dataDescriptor: DataDescriptor) {
     this.connection = axios.create({ baseURL });
     this.fileTokenMaps = {};
     this.dataDescriptor = dataDescriptor;
+    this.authorized = false;
   }
 
-  public async serviceInit(): Promise<void> {
-    try {
-      const accessToken = await waitForAccessToken();
-      this.connection.defaults.headers.common.Authorization =
-        "Bearer " + accessToken;
-    } catch (e) {
-      ajaxErrorHandler(e);
-    }
+  public setup(): void {
+    this.connection.defaults.headers.common.Authorization =
+      "Bearer " + apiConfig.accessToken;
+    this.authorized = true;
   }
 
   public getDataDescriptor(): DataDescriptor {
     return this.dataDescriptor;
   }
 
-  private generateTypeQuery(parentIsContent: boolean): string {
-    // Generate type query segment if applicable
-    let typeQuery = "";
-    // Determine the set of types on which to filter
-    const includedTypes = FILE_TYPES.concat(FOLDER_TYPES);
-
-    // Generate type query string
-    typeQuery = "in(" + (parentIsContent ? "type" : "contentType") + ",";
-    for (let i = 0; i < includedTypes.length; i++) {
-      typeQuery += "'" + includedTypes[i] + "'";
-      if (i !== includedTypes.length - 1) {
-        typeQuery += ",";
-      }
-    }
-    typeQuery += ")";
-
-    return typeQuery;
-  }
-
   public async getChildren(item: ContentItem): Promise<ContentItem[]> {
+    if (!this.authorized) {
+      return [];
+    }
+
     if (!item) {
       return this.getRootChildren();
     }
@@ -124,43 +107,6 @@ export class ContentModel {
     return Promise.reject();
   }
 
-  private async getRootChildren(): Promise<ContentItem[]> {
-    const supportedDelegateFolders = [
-      "@myFavorites",
-      "@myFolder",
-      "@sasRoot",
-      // TODO #56 Include recycle bin in next iteration
-      // "@myRecycleBin",
-    ];
-    const shortcuts: ContentItem[] = [];
-    let numberCompletedServiceCalls = 0;
-
-    return new Promise<ContentItem[]>((resolve) => {
-      supportedDelegateFolders.forEach((sDelegate, index) => {
-        let serviceDelegateFoldersDeferred;
-        if (sDelegate === "@sasRoot") {
-          serviceDelegateFoldersDeferred = Promise.resolve({
-            data: ROOT_FOLDER,
-          });
-        } else {
-          serviceDelegateFoldersDeferred = this.connection.get(
-            `/folders/folders/${sDelegate}`
-          );
-        }
-        serviceDelegateFoldersDeferred
-          .then((result) => (shortcuts[index] = result.data))
-          .finally(() => {
-            numberCompletedServiceCalls++;
-            if (
-              numberCompletedServiceCalls === supportedDelegateFolders.length
-            ) {
-              resolve(shortcuts.filter((folder) => !!folder));
-            }
-          });
-      });
-    });
-  }
-
   public async getResourceByUri(uri: Uri): Promise<ContentItem> {
     const resourceId = getResourceId(uri);
     const res = await this.connection.get(resourceId);
@@ -189,36 +135,16 @@ export class ContentModel {
     return res.data;
   }
 
-  private async addMember(
-    uri: string | undefined,
-    addMemberUri: string | undefined,
-    properties: AddMemberProperties
-  ): Promise<boolean> {
-    if (!uri || !addMemberUri) {
-      return false;
-    }
-
-    try {
-      await this.connection.post(addMemberUri, {
-        uri,
-        type: "CHILD",
-        ...properties,
-      });
-    } catch (error) {
-      return false;
-    }
-
-    return true;
-  }
-
   public async createFile(
     item: ContentItem,
     fileName: string
   ): Promise<boolean> {
+    const contentType = await this.getFileContentType(fileName);
+
     let fileCreationResponse = null;
     try {
       fileCreationResponse = await this.connection.post(
-        `/files/files#rawUpload`,
+        `/files/files#rawUpload?typeDefName=${contentType}`,
         Buffer.from("", "binary"),
         {
           headers: {
@@ -243,8 +169,7 @@ export class ContentModel {
       getLink(item.links, "POST", "addMember")?.uri,
       {
         name: fileName,
-        // TODO #56 better content typing
-        contentType: "file",
+        contentType,
       }
     );
   }
@@ -335,17 +260,104 @@ export class ContentModel {
 
     return true;
   }
-}
 
-// TODO #56 FIXME: ContentModel is executed before the access token came back
-function waitForAccessToken(): Promise<string> {
-  return new Promise<string>((resolve) => {
-    const intervalId = setInterval(() => {
-      const accessToken = apiConfig.accessToken;
-      if (accessToken && typeof accessToken === "string") {
-        clearInterval(intervalId);
-        resolve(accessToken);
+  private async addMember(
+    uri: string | undefined,
+    addMemberUri: string | undefined,
+    properties: AddMemberProperties
+  ): Promise<boolean> {
+    if (!uri || !addMemberUri) {
+      return false;
+    }
+
+    try {
+      await this.connection.post(addMemberUri, {
+        uri,
+        type: "CHILD",
+        ...properties,
+      });
+    } catch (error) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private generateTypeQuery(parentIsContent: boolean): string {
+    // Generate type query segment if applicable
+    let typeQuery = "";
+    // Determine the set of types on which to filter
+    const includedTypes = FILE_TYPES.concat(FOLDER_TYPES);
+
+    // Generate type query string
+    typeQuery = "in(" + (parentIsContent ? "type" : "contentType") + ",";
+    for (let i = 0; i < includedTypes.length; i++) {
+      typeQuery += "'" + includedTypes[i] + "'";
+      if (i !== includedTypes.length - 1) {
+        typeQuery += ",";
       }
-    }, 200);
-  });
+    }
+    typeQuery += ")";
+
+    return typeQuery;
+  }
+
+  private async getFileContentType(fileName: string): Promise<string> {
+    const defaultContentType = "file";
+    const ext = fileName.split(".").pop().toLowerCase();
+    if (ext === "sas") {
+      return "programFile";
+    }
+
+    try {
+      const typeResponse = await this.connection.get(
+        `/types/types?filter=contains('extensions', '${ext}')`
+      );
+
+      if (!typeResponse.data.items || typeResponse.data.items.length === 0) {
+        return typeResponse.data.items[0].name;
+      }
+    } catch {
+      return defaultContentType;
+    }
+
+    return defaultContentType;
+  }
+
+  private async getRootChildren(): Promise<ContentItem[]> {
+    const supportedDelegateFolders = [
+      "@myFavorites",
+      "@myFolder",
+      "@sasRoot",
+      // TODO #56 Include recycle bin in next iteration
+      // "@myRecycleBin",
+    ];
+    const shortcuts: ContentItem[] = [];
+    let numberCompletedServiceCalls = 0;
+
+    return new Promise<ContentItem[]>((resolve) => {
+      supportedDelegateFolders.forEach((sDelegate, index) => {
+        let serviceDelegateFoldersDeferred;
+        if (sDelegate === "@sasRoot") {
+          serviceDelegateFoldersDeferred = Promise.resolve({
+            data: ROOT_FOLDER,
+          });
+        } else {
+          serviceDelegateFoldersDeferred = this.connection.get(
+            `/folders/folders/${sDelegate}`
+          );
+        }
+        serviceDelegateFoldersDeferred
+          .then((result) => (shortcuts[index] = result.data))
+          .finally(() => {
+            numberCompletedServiceCalls++;
+            if (
+              numberCompletedServiceCalls === supportedDelegateFolders.length
+            ) {
+              resolve(shortcuts.filter((folder) => !!folder));
+            }
+          });
+      });
+    });
+  }
 }

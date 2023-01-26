@@ -25,19 +25,24 @@ const createFolderValidator =
 class ContentNavigator {
   constructor(context: ExtensionContext) {
     const dataDescriptor = new DataDescriptor();
-    const model = new ContentModel(
-      profileConfig.getActiveProfileDetail()?.profile.endpoint,
-      dataDescriptor
+    const treeDataProvider = new ContentDataProvider(
+      new ContentModel(
+        profileConfig.getActiveProfileDetail()?.profile.endpoint,
+        dataDescriptor
+      )
     );
-    const dataProvider = new ContentDataProvider(model);
-    const treeView = window.createTreeView("SAS.ContentNavigator", {
-      treeDataProvider: dataProvider,
+    const treeView = window.createTreeView("sas-content-navigator", {
+      treeDataProvider,
     });
-    model.serviceInit().then(() => {
-      context.subscriptions.push(treeView);
+    treeView.onDidChangeVisibility(async () => {
+      if (treeView.visible) {
+        await treeDataProvider.setup();
+      }
     });
 
-    workspace.registerFileSystemProvider("sas", dataProvider);
+    context.subscriptions.push(treeView);
+
+    workspace.registerFileSystemProvider("sas", treeDataProvider);
     commands.registerCommand(
       "SAS.openSASfile",
       async (document: TextDocument) => await window.showTextDocument(document)
@@ -46,14 +51,14 @@ class ContentNavigator {
     commands.registerCommand(
       "SAS.deleteResource",
       async (resource: ContentItem) => {
-        if (!(await dataProvider.deleteResource(resource))) {
+        if (!(await treeDataProvider.deleteResource(resource))) {
           window.showErrorMessage("Unable to delete file");
         }
       }
     );
 
     commands.registerCommand("SAS.refreshResources", () =>
-      dataProvider.refresh()
+      treeDataProvider.refresh()
     );
 
     commands.registerCommand(
@@ -68,7 +73,7 @@ class ContentNavigator {
           return;
         }
 
-        const success = await dataProvider.createFile(resource, fileName);
+        const success = await treeDataProvider.createFile(resource, fileName);
         if (!success) {
           window.showErrorMessage(`Unable to create file "${fileName}"`);
         }
@@ -87,7 +92,10 @@ class ContentNavigator {
           return;
         }
 
-        const success = await dataProvider.createFolder(resource, folderName);
+        const success = await treeDataProvider.createFolder(
+          resource,
+          folderName
+        );
         if (!success) {
           window.showErrorMessage(`Unable to create folder "${folderName}"`);
         }
@@ -112,7 +120,7 @@ class ContentNavigator {
           return;
         }
 
-        const success = await dataProvider.renameResource(resource, name);
+        const success = await treeDataProvider.renameResource(resource, name);
         if (!success) {
           window.showErrorMessage(
             `Unable to rename "${resource.name} to ${name}"`

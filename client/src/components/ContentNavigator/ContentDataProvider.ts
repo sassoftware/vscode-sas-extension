@@ -25,10 +25,12 @@ class ContentDataProvider
   private dataDescriptor: DataDescriptor;
   private textEncoder = new TextEncoder();
   private textDecoder = new TextDecoder();
+  private model: ContentModel;
 
   constructor(public readonly model: ContentModel) {
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
+    this.model = model;
     this.dataDescriptor = this.model.getDataDescriptor();
   }
 
@@ -38,6 +40,11 @@ class ContentDataProvider
 
   get onDidChangeTreeData(): Event<ContentItem> {
     return this._onDidChangeTreeData.event;
+  }
+
+  public async setup(): Promise<void> {
+    this.model.setup();
+    this.refresh();
   }
 
   public getTreeItem(item: ContentItem): TreeItem | Promise<TreeItem> {
