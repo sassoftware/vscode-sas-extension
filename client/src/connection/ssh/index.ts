@@ -77,8 +77,7 @@ conn
           }
         });
 
-      stream.write("none\n");
-      stream.write(config.saspath + " -nodms\n");
+      stream.write(`${config.saspath} -nodms\n`);
     });
   })
   .on("error", (err) => {
@@ -115,13 +114,13 @@ function getResult() {
     s.on("data", (data) => {
       result += data.toString().trimEnd();
     }).on("close", (code) => {
-      resolve?.(
-        code === 0
-          ? {
-              html5: result,
-            }
-          : {}
-      );
+      const rc = code as number;
+      const runResult: RunResult = {};
+      if (rc === 0) {
+        runResult.html5 = result;
+        runResult.title = html5FileName;
+      }
+      resolve?.(runResult);
     });
   });
 }
@@ -163,7 +162,7 @@ function run(
     reject = _reject;
 
     stream?.write(code);
-    stream?.write(`;*';*";*/;\n;quit;\n%put ${endCode};\n`);
+    stream?.write(`%put ${endCode};\n`);
   });
 }
 
