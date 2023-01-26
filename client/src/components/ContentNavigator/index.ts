@@ -1,8 +1,26 @@
 import ContentDataProvider from "./ContentDataProvider";
-import { ExtensionContext, Uri, commands, window, workspace } from "vscode";
+import {
+  ExtensionContext,
+  Uri,
+  commands,
+  window,
+  workspace,
+  TextDocument,
+} from "vscode";
 import { profileConfig } from "../../commands/profile";
 import { DataDescriptor } from "./viya/DataDescriptor";
 import { ContentModel } from "./viya/ContentModel";
+import { ContentItem } from "./types";
+
+const createFileValidator =
+  (errorMessage: string) =>
+  (value: string): string | null =>
+    /^([a-zA-Z0-9\s._-]+)\.\w+$/.test(value) ? null : errorMessage;
+
+const createFolderValidator =
+  (errorMessage: string) =>
+  (value: string): string | null =>
+    /^([a-zA-Z0-9\s_-]+)$/.test(value) ? null : errorMessage;
 
 class ContentNavigator {
   constructor(context: ExtensionContext) {
@@ -20,50 +38,88 @@ class ContentNavigator {
     });
 
     workspace.registerFileSystemProvider("sas", dataProvider);
-    commands.registerCommand("SAS.openSASfile", async (resource) =>
-      this.openResource(resource)
+    commands.registerCommand(
+      "SAS.openSASfile",
+      async (document: TextDocument) => await window.showTextDocument(document)
     );
+
     commands.registerCommand(
       "SAS.deleteResource",
-      async (resource) => await dataProvider.delete(resource)
+      async (resource: ContentItem) => {
+        if (!(await dataProvider.deleteResource(resource))) {
+          window.showErrorMessage("Unable to delete file");
+        }
+      }
     );
+
     commands.registerCommand("SAS.refreshResources", () =>
       dataProvider.refresh()
     );
-    commands.registerCommand("SAS.addFileResource", async (resource) => {
-      const fileName = await window.showInputBox({
-        prompt: "Please enter a file name",
-        title: "New file",
-        // TODO #56 Validate data
-        validateInput: (value): string | null => null,
-      });
 
-      await dataProvider.createFile(resource, fileName);
-    });
-    commands.registerCommand("SAS.addFolderResource", async (resource) => {
-      const folderName = await window.showInputBox({
-        prompt: "Please enter a folder name",
-        title: "New folder",
-        // TODO #56 Validate data
-        validateInput: (value): string | null => null,
-      });
+    commands.registerCommand(
+      "SAS.addFileResource",
+      async (resource: ContentItem) => {
+        const fileName = await window.showInputBox({
+          prompt: "Please enter a file name",
+          title: "New file",
+          validateInput: createFileValidator("Invalid file name"),
+        });
+        if (!fileName) {
+          return;
+        }
 
-      await dataProvider.createFolder(resource, folderName);
-    });
-  }
+        const success = await dataProvider.createFile(resource, fileName);
+        if (!success) {
+          window.showErrorMessage(`Unable to create file "${fileName}"`);
+        }
+      }
+    );
 
-  private async openResource(resource: Uri): Promise<void> {
-    try {
-      // TODO #56 Could we solve this try/catch issue by using `{ preview: false }`
-      // as an option?
-      await window.showTextDocument(resource);
-    } catch (error) {
-      commands.executeCommand("workbench.action.closeActiveEditor");
-      const resourceName = resource.path.split("/").pop().trim() || "";
-      window.showErrorMessage(
-        `Cannot open ${resourceName ? `"${resourceName}"` : "file"}`
-      );
-    }
+    commands.registerCommand(
+      "SAS.addFolderResource",
+      async (resource: ContentItem) => {
+        const folderName = await window.showInputBox({
+          prompt: "Please enter a folder name",
+          title: "New folder",
+          validateInput: createFolderValidator("Invalid folder name"),
+        });
+        if (!folderName) {
+          return;
+        }
+
+        const success = await dataProvider.createFolder(resource, folderName);
+        if (!success) {
+          window.showErrorMessage(`Unable to create folder "${folderName}"`);
+        }
+      }
+    );
+
+    commands.registerCommand(
+      "SAS.renameResource",
+      async (resource: ContentItem) => {
+        const isContainer = dataDescriptor.isContainer(resource);
+
+        const name = await window.showInputBox({
+          prompt: "Please enter a new name",
+          title: isContainer ? "Rename folder" : "Rename file",
+          value: resource.name,
+          validateInput: isContainer
+            ? createFolderValidator("Invalid folder name")
+            : createFileValidator("Invalid file name"),
+        });
+
+        if (name === resource.name) {
+          return;
+        }
+
+        const success = await dataProvider.renameResource(resource, name);
+        if (!success) {
+          window.showErrorMessage(
+            `Unable to rename "${resource.name} to ${name}"`
+          );
+        }
+      }
+    );
   }
 }
 

@@ -1,11 +1,10 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import { commands, ExtensionContext, Uri, authentication } from "vscode";
+import { commands, ExtensionContext, Uri } from "vscode";
 import { LanguageClientOptions } from "vscode-languageclient";
 
 import { LanguageClient } from "vscode-languageclient/browser";
-import { SASAuthenticationProvider } from "../session/authProvider";
 
 let client: LanguageClient;
 

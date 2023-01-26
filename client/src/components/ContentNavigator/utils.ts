@@ -1,3 +1,4 @@
+import { Uri } from "vscode";
 import { Link } from "./types";
 
 export const getLink = (
@@ -26,4 +27,8 @@ export const ajaxErrorHandler = (error) => {
     console.log("Error", error.message);
   }
   console.log(error.config);
+};
+
+export const getResourceId = (uri: Uri): string => {
+  return uri.query.substring(3); // ?id=...
 };

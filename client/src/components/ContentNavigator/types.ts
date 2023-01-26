@@ -1,7 +1,13 @@
 export interface ContentItem {
-  // TODO #56 Lets see if we can prevent disabling this
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [propName: string]: any;
+  id: string;
+  contentType?: string;
+  creationTimeStamp: number;
+  links: Link[];
+  modifiedTimeStamp: number;
+  name: string;
+  type?: string;
+  uri: string;
+  __trash__: boolean;
 }
 
 export interface Link {

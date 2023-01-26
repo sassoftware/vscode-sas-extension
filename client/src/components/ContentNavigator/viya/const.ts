@@ -25,6 +25,7 @@ export const ROOT_FOLDER = {
 
 export const FILE_TYPE = "file";
 export const FOLDER_TYPE = "folder";
+export const TRASH_FOLDER = "trashFolder";
 export const FILE_TYPES = [FILE_TYPE];
 export const FOLDER_TYPES = [
   ROOT_FOLDER_TYPE,
@@ -33,6 +34,6 @@ export const FOLDER_TYPES = [
   "favoritesFolder",
   "userFolder",
   "userRoot",
-  "trashFolder",
-  // "hiddenFolder", "historyFolder", "applicationDataFolder"
+  // TODO #56 Include recycle bin in next iteration
+  // TRASH_FOLDER,
 ];

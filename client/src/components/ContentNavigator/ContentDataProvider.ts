@@ -1,10 +1,11 @@
 import { ContentItem } from "./types";
+import { ContentModel } from "./viya/ContentModel";
+import { DataDescriptor } from "./viya/DataDescriptor";
 import {
   Disposable,
   Event,
   EventEmitter,
   FileChangeEvent,
-  FileChangeType,
   FileStat,
   FileSystemProvider,
   FileType,
@@ -15,8 +16,6 @@ import {
   TreeItemCollapsibleState,
   Uri,
 } from "vscode";
-import { DataDescriptor } from "./viya/DataDescriptor";
-import { ContentModel } from "./viya/ContentModel";
 
 class ContentDataProvider
   implements TreeDataProvider<ContentItem>, FileSystemProvider
@@ -26,6 +25,7 @@ class ContentDataProvider
   private dataDescriptor: DataDescriptor;
   private textEncoder = new TextEncoder();
   private textDecoder = new TextDecoder();
+
   constructor(public readonly model: ContentModel) {
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
@@ -40,12 +40,8 @@ class ContentDataProvider
     return this._onDidChangeTreeData.event;
   }
 
-  public getTreeItem(item: ContentItem): TreeItem | Thenable<TreeItem> {
+  public getTreeItem(item: ContentItem): TreeItem | Promise<TreeItem> {
     const isContainer = this.dataDescriptor.isContainer(item);
-
-    console.log("resourceType", this.dataDescriptor.resourceType(item), {
-      item,
-    });
 
     return {
       iconPath: isContainer ? ThemeIcon.Folder : ThemeIcon.File,
@@ -66,15 +62,10 @@ class ContentDataProvider
   }
 
   public getChildren(item?: ContentItem): ProviderResult<ContentItem[]> {
-    console.log("dataprovider", "getChildren", item);
     return this.model.getChildren(item);
   }
 
-  public getParent?(item: ContentItem): ProviderResult<ContentItem> {
-    console.log("dataprovider", "getParent", item);
-    throw new Error("Method not implemented.");
-  }
-
+  // TODO #56 What's this for?
   public watch(
     uri: Uri
     // _options: { recursive: boolean; excludes: string[] }
@@ -85,30 +76,20 @@ class ContentDataProvider
     return new Disposable(() => {});
   }
 
-  public stat(uri: Uri): FileStat | Thenable<FileStat> {
-    console.log("stat", uri);
-    return this.model.getResourceByUri(uri).then((resource) => {
-      console.log("stat - resource", resource);
-      return {
+  public stat(uri: Uri): FileStat | Promise<FileStat> {
+    return this.model.getResourceByUri(uri).then(
+      (resource): FileStat => ({
         type: this.dataDescriptor.isContainer(resource)
           ? FileType.Directory
           : FileType.File,
         ctime: this.dataDescriptor.getCreationDate(resource),
         mtime: this.dataDescriptor.getModifyDate(resource),
         size: 0,
-      };
-    });
+      })
+    );
   }
 
-  public readDirectory(
-    uri: Uri
-  ): [string, FileType][] | Thenable<[string, FileType][]> {
-    console.log("readDirectory", uri);
-    throw new Error("Method not implemented.");
-  }
-
-  public readFile(uri: Uri): Uint8Array | Thenable<Uint8Array> {
-    console.log("readFile", uri);
+  public readFile(uri: Uri): Uint8Array | Promise<Uint8Array> {
     return this.model
       .getContentByUri(uri)
       .then((content) => this.textEncoder.encode(content));
@@ -117,54 +98,79 @@ class ContentDataProvider
   public async createFolder(
     item: ContentItem,
     folderName: string
-  ): Thenable<void> {
-    await this.model.createFolder(item, folderName);
-    this.refresh();
+  ): Promise<boolean> {
+    const success = await this.model.createFolder(item, folderName);
+    if (success) {
+      this.refresh();
+    }
+
+    return success;
   }
 
-  public async createFile(item: ContentItem, fileName: string): Thenable<void> {
-    await this.model.createFile(item, fileName);
-    this.refresh();
+  public async createFile(
+    item: ContentItem,
+    fileName: string
+  ): Promise<boolean> {
+    const success = await this.model.createFile(item, fileName);
+    if (success) {
+      this.refresh();
+    }
+
+    return success;
   }
 
+  public async renameResource(
+    item: ContentItem,
+    name: string
+  ): Promise<boolean> {
+    const success = await this.model.renameResource(item, name);
+    if (success) {
+      this.refresh();
+    }
+
+    return success;
+  }
+
+  // TODO #56 Lets make sure we don't overwrite newer files (should be handled by method)
   public writeFile(
     uri: Uri,
     content: Uint8Array,
     options: { create: boolean; overwrite: boolean }
-  ): void | Thenable<void> {
+  ): void | Promise<void> {
     console.log("writeFile", uri, options);
     // if (options.overwrite) {
     return this.model.saveContentToUri(uri, this.textDecoder.decode(content));
     // }
   }
 
-  public async delete(
-    item: ContentItem
-    // options: { recursive: boolean }
-  ): Promise<void> {
-    await this.model.delete(item);
-    this.refresh();
+  public async deleteResource(item: ContentItem): Promise<boolean> {
+    const success = await this.model.delete(item);
+    if (success) {
+      this.refresh();
+    }
+
+    return success;
   }
 
   public refresh(): void {
-    this._onDidChangeTreeData.fire();
+    this._onDidChangeTreeData.fire(undefined);
   }
 
-  public rename(
-    oldUri: Uri
-    // newUri: Uri,
-    // options: { overwrite: boolean }
-  ): void | Thenable<void> {
-    console.log("writeFile", oldUri);
+  public async delete(): Promise<void> {
     throw new Error("Method not implemented.");
   }
 
-  public copy?(
-    source: Uri
-    // destination: Uri,
-    // options: { overwrite: boolean }
-  ): void | Thenable<void> {
-    console.log("writeFile", source);
+  public rename(): void | Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+
+  public readDirectory():
+    | [string, FileType][]
+    | Thenable<[string, FileType][]> {
+    throw new Error("Method not implemented.");
+  }
+
+  public createDirectory(): void | Thenable<void> {
     throw new Error("Method not implemented.");
   }
 }

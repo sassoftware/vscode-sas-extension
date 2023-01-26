@@ -219,7 +219,7 @@
         "command": "SAS.authorize",
         "title": "%commands.SAS.authorize%",
         "category": "SAS",
-        "enablement": "!SAS.authenticating"
+        "enablement": "SAS.potato"
       },
       {
         "command": "SAS.deleteResource",

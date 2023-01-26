@@ -1,38 +1,34 @@
 import axios, { AxiosInstance } from "axios";
 import { ContentItem, Link } from "../types";
-import { ContentModel as AbstractContentModel } from "../base/ContentModel";
 import { DataDescriptor } from "./DataDescriptor";
-import { ROOT_FOLDER, FILE_TYPES, FOLDER_TYPES } from "./const";
-import { ThemeIcon, Uri } from "vscode";
-import { ajaxErrorHandler, getLink } from "../utils";
+import { ROOT_FOLDER, FILE_TYPES, FOLDER_TYPES, TRASH_FOLDER } from "./const";
+import { Uri } from "vscode";
+import { ajaxErrorHandler, getLink, getResourceId } from "../utils";
 import { apiConfig } from "../../../session/rest";
-import * as FormData from "form-data";
 
 interface AddMemberProperties {
   name?: string;
   contentType?: string;
 }
 
-export class ContentModel extends AbstractContentModel {
+export class ContentModel {
   protected dataDescriptor: DataDescriptor;
-  private conn: AxiosInstance;
+  private connection: AxiosInstance;
   private fileTokenMaps: {
-    [id: string]: { etag: string; lastModified: string };
+    [id: string]: { etag?: string; lastModified: string };
   };
 
-  constructor(endpoint: string, dataDescriptor: DataDescriptor) {
-    super(endpoint, dataDescriptor);
-    this.conn = axios.create({
-      baseURL: endpoint,
-    });
+  constructor(baseURL: string, dataDescriptor: DataDescriptor) {
+    this.connection = axios.create({ baseURL });
     this.fileTokenMaps = {};
+    this.dataDescriptor = dataDescriptor;
   }
 
   public async serviceInit(): Promise<void> {
     try {
-      console.log({ apiAccessToken: apiConfig.accessToken });
       const accessToken = await waitForAccessToken();
-      this.conn.defaults.headers.common.Authorization = "Bearer " + accessToken;
+      this.connection.defaults.headers.common.Authorization =
+        "Bearer " + accessToken;
     } catch (e) {
       ajaxErrorHandler(e);
     }
@@ -42,14 +38,7 @@ export class ContentModel extends AbstractContentModel {
     return this.dataDescriptor;
   }
 
-  public async getChildren(item: ContentItem): Promise<ContentItem[]> {
-    console.log("model", "getChildren", item);
-    if (!item) {
-      return this.getRootChildren();
-    }
-
-    const parentIsContent = item === ROOT_FOLDER;
-
+  private generateTypeQuery(parentIsContent: boolean): string {
     // Generate type query segment if applicable
     let typeQuery = "";
     // Determine the set of types on which to filter
@@ -65,14 +54,22 @@ export class ContentModel extends AbstractContentModel {
     }
     typeQuery += ")";
 
-    console.log({ typeQuery });
+    return typeQuery;
+  }
+
+  public async getChildren(item: ContentItem): Promise<ContentItem[]> {
+    if (!item) {
+      return this.getRootChildren();
+    }
+
+    const parentIsContent = item === ROOT_FOLDER;
+    const typeQuery = this.generateTypeQuery(item === ROOT_FOLDER);
 
     const membersLink = getLink(item.links, "GET", "members");
-    let membersUrl = membersLink
-      ? membersLink.uri
-      : item.uri
-      ? item.uri + "/members"
-      : null;
+    let membersUrl = membersLink ? membersLink.uri : null;
+    if (!membersUrl && item.uri) {
+      membersUrl = `${item.uri}/members`;
+    }
 
     if (!membersUrl) {
       const selfLink = getLink(item.links, "GET", "self");
@@ -102,13 +99,13 @@ export class ContentModel extends AbstractContentModel {
       membersUrl = membersUrl + "&filter=and(" + filters.join(",") + ")";
     }
 
-    const res = await this.conn.get(membersUrl);
+    const res = await this.connection.get(membersUrl);
     const result = res.data;
     if (!result.items) {
       return Promise.reject();
     }
     const isTrash =
-      "trashFolder" === this.dataDescriptor.getTypeName(item) || item.__trash__;
+      TRASH_FOLDER === this.dataDescriptor.getTypeName(item) || item.__trash__;
 
     result.items.forEach((child) => {
       if (isTrash) {
@@ -122,17 +119,18 @@ export class ContentModel extends AbstractContentModel {
   public getAncestors(item: ContentItem): Promise<ContentItem[]> {
     const ancestorsLink = getLink(item.links, "GET", "ancestors");
     if (ancestorsLink) {
-      return this.conn.get(ancestorsLink.uri);
+      return this.connection.get(ancestorsLink.uri);
     }
     return Promise.reject();
   }
 
-  private async getRootChildren() {
+  private async getRootChildren(): Promise<ContentItem[]> {
     const supportedDelegateFolders = [
       "@myFavorites",
-      "@myFolder" /*"@appDataFolder","@myHistory"*/,
+      "@myFolder",
       "@sasRoot",
-      "@myRecycleBin",
+      // TODO #56 Include recycle bin in next iteration
+      // "@myRecycleBin",
     ];
     const shortcuts: ContentItem[] = [];
     let numberCompletedServiceCalls = 0;
@@ -145,8 +143,8 @@ export class ContentModel extends AbstractContentModel {
             data: ROOT_FOLDER,
           });
         } else {
-          serviceDelegateFoldersDeferred = this.conn.get(
-            "/folders/folders/" + sDelegate
+          serviceDelegateFoldersDeferred = this.connection.get(
+            `/folders/folders/${sDelegate}`
           );
         }
         serviceDelegateFoldersDeferred
@@ -164,9 +162,8 @@ export class ContentModel extends AbstractContentModel {
   }
 
   public async getResourceByUri(uri: Uri): Promise<ContentItem> {
-    console.log("getResourceByUri", uri);
-    const resourceId = uri.query.substring(3); // ?id=...
-    const res = await this.conn.get(resourceId);
+    const resourceId = getResourceId(uri);
+    const res = await this.connection.get(resourceId);
     this.fileTokenMaps[resourceId] = {
       etag: res.headers.etag,
       lastModified: res.headers["last-modified"],
@@ -175,14 +172,20 @@ export class ContentModel extends AbstractContentModel {
     return res.data;
   }
 
-  public async getContentByUri(uri: Uri) {
-    console.log("getContentByUri", uri);
-    const resourceId = uri.query.substring(3); // ?id=...
-    const res = await this.conn.get(resourceId + "/content");
+  public async getContentByUri(uri: Uri): Promise<string> {
+    const resourceId = getResourceId(uri);
+    const res = await this.connection.get(resourceId + "/content");
     this.fileTokenMaps[resourceId] = {
       etag: res.headers.etag,
       lastModified: res.headers["last-modified"],
     };
+
+    // We expect the returned data to be a string. If this isn't a string,
+    // we can't really open it
+    if (typeof res.data === "object") {
+      throw new Error("Cannot open file");
+    }
+
     return res.data;
   }
 
@@ -190,49 +193,52 @@ export class ContentModel extends AbstractContentModel {
     uri: string | undefined,
     addMemberUri: string | undefined,
     properties: AddMemberProperties
-  ): Promise<void> {
-    // TODO #56 Error checking
+  ): Promise<boolean> {
     if (!uri || !addMemberUri) {
-      console.log("noooooo");
-      return;
+      return false;
     }
-    console.log(
-      "posting ",
-      {
+
+    try {
+      await this.connection.post(addMemberUri, {
         uri,
         type: "CHILD",
         ...properties,
-      },
-      "to",
-      addMemberUri
-    );
-    await this.conn.post(addMemberUri, {
-      uri,
-      type: "CHILD",
-      ...properties,
-    });
+      });
+    } catch (error) {
+      return false;
+    }
+
+    return true;
   }
 
-  public async createFile(item: ContentItem, fileName: string) {
-    // TODO #56 Add some error checking
-    const resp = await this.conn.post(
-      `/files/files#rawUpload`,
-      Buffer.from("", "binary"),
-      {
-        headers: {
-          "Content-Type": "*/*",
-          "Content-Disposition": `filename="${fileName}"`,
-        },
-      }
-    );
+  public async createFile(
+    item: ContentItem,
+    fileName: string
+  ): Promise<boolean> {
+    let fileCreationResponse = null;
+    try {
+      fileCreationResponse = await this.connection.post(
+        `/files/files#rawUpload`,
+        Buffer.from("", "binary"),
+        {
+          headers: {
+            "Content-Type": "text/plain",
+            // TODO #56 This doesn't work with Chinese characters
+            "Content-Disposition": `filename="${fileName}"`,
+          },
+        }
+      );
+    } catch (error) {
+      return false;
+    }
 
     const fileLink: Link | null = getLink(
-      (resp.data as ContentItem).links,
+      (fileCreationResponse.data as ContentItem).links,
       "GET",
       "self"
     );
 
-    await this.addMember(
+    return await this.addMember(
       fileLink?.uri,
       getLink(item.links, "POST", "addMember")?.uri,
       {
@@ -243,23 +249,72 @@ export class ContentModel extends AbstractContentModel {
     );
   }
 
-  public async createFolder(item: ContentItem, name: string) {
-    await this.conn.post(`/folders/folders?parentFolderUri=${item.uri}`, {
-      name,
-    });
+  public async createFolder(item: ContentItem, name: string): Promise<boolean> {
+    try {
+      await this.connection.post(
+        `/folders/folders?parentFolderUri=${item.uri}`,
+        {
+          name,
+        }
+      );
+    } catch (error) {
+      return false;
+    }
+
+    return true;
   }
 
-  public async saveContentToUri(uri: Uri, content: string) {
-    console.log("saveContentToUri", uri, uri.query.substring(3) + "/content");
-    const resourceId = uri.query.substring(3); // ?id=...
-    const res = await this.conn.put(resourceId + "/content", content, {
+  public async renameResource(
+    item: ContentItem,
+    name: string
+  ): Promise<boolean> {
+    // If we don't have a file token map for this resoure, lets grab
+    // it from the server
+    let fileTokenMap = this.fileTokenMaps[item.uri];
+    if (!fileTokenMap) {
+      try {
+        const res = await this.connection.get(item.uri);
+        fileTokenMap = {
+          etag: res.headers.etag,
+          lastModified: res.headers["last-modified"],
+        };
+      } catch (error) {
+        return false;
+      }
+    }
+
+    try {
+      const patchResponse = await this.connection.patch(
+        item.uri,
+        { name },
+        {
+          headers: {
+            "If-Unmodified-Since": this.fileTokenMaps[item.uri].lastModified,
+            "If-Match": this.fileTokenMaps[item.uri].etag,
+          },
+        }
+      );
+
+      this.fileTokenMaps[item.uri] = {
+        etag: patchResponse.headers.etag,
+        lastModified: patchResponse.headers["last-modified"],
+      };
+    } catch (error) {
+      return false;
+    }
+
+    return true;
+  }
+
+  public async saveContentToUri(uri: Uri, content: string): Promise<void> {
+    const resourceId = getResourceId(uri);
+    const res = await this.connection.put(resourceId + "/content", content, {
       headers: {
         "Content-Type": "text/plain",
         "If-Match": this.fileTokenMaps[resourceId].etag,
         "If-Unmodified-Since": this.fileTokenMaps[resourceId].lastModified,
       },
     });
-    console.log("save", res.headers);
     this.fileTokenMaps[resourceId] = {
       etag: res.headers.etag,
       lastModified: res.headers["last-modified"],
@@ -269,16 +324,21 @@ export class ContentModel extends AbstractContentModel {
   public async delete(item: ContentItem): Promise<boolean> {
     const link = item.links.find((link: Link) => link.rel === "delete");
     if (!link) {
-      return;
+      return false;
     }
 
-    // TODO #56 handle failures, and make sure the file disappears
-    await this.conn.delete(link.uri);
+    try {
+      await this.connection.delete(link.uri);
+    } catch (error) {
+      return false;
+    }
+
+    return true;
   }
 }
 
-// FIXME: ContentModel is executed before the access token came back
-function waitForAccessToken() {
+// TODO #56 FIXME: ContentModel is executed before the access token came back
+function waitForAccessToken(): Promise<string> {
   return new Promise<string>((resolve) => {
     const intervalId = setInterval(() => {
       const accessToken = apiConfig.accessToken;

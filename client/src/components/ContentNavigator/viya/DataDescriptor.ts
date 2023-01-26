@@ -1,33 +1,27 @@
 import { ContentItem, Link } from "../types";
-import { DataDescriptor as AbstractDataDescriptor } from "../base/DataDescriptor";
-import {
-  GENERIC_FOLDER_TYPE,
-  FOLDER_TYPES,
-  FOLDER_TYPE,
-  FILE_TYPE,
-} from "./const";
-import { getLink } from "../utils";
-import { utimes } from "fs";
+import { FOLDER_TYPES, FOLDER_TYPE, FILE_TYPE } from "./const";
 import { Uri } from "vscode";
+import { getLink } from "../utils";
 
-export class DataDescriptor extends AbstractDataDescriptor {
-  public getId = (item: ContentItem) => {
+export class DataDescriptor {
+  public getId = (item: ContentItem): string | null => {
     const oSelfLink = getLink(item.links, "GET", "self");
     return oSelfLink ? oSelfLink.uri : null;
   };
 
-  public getResourceId = (item: ContentItem) => {
+  public getResourceId = (item: ContentItem): string | null => {
     // Only members have uri attribute.
     if (item.uri) {
       return item.uri;
     }
     const oSelfLink = getLink(item.links, "GET", "self");
+
     return oSelfLink ? oSelfLink.uri : null;
   };
 
-  public getLabel = (item: ContentItem) => item.name;
+  public getLabel = (item: ContentItem): string => item.name;
 
-  public getTypeName = (item: ContentItem) =>
+  public getTypeName = (item: ContentItem): string =>
     item.contentType ? item.contentType : item.type;
 
   public isContainer = (item: ContentItem, bStrict?: boolean): boolean => {
@@ -72,14 +66,15 @@ export class DataDescriptor extends AbstractDataDescriptor {
     );
   };
 
-  public getModifyDate = (item: ContentItem) => item.modifiedTimeStamp;
+  public getModifyDate = (item: ContentItem): number => item.modifiedTimeStamp;
 
-  public getCreationDate = (item: ContentItem) => item.creationTimeStamp;
+  public getCreationDate = (item: ContentItem): number =>
+    item.creationTimeStamp;
 
-  public isReference = (item: ContentItem) =>
-    !!item && item.type && item.type === "reference";
+  public isReference = (item: ContentItem): boolean =>
+    !!item && item?.type === "reference";
 
-  public isValidItem = (item: ContentItem) =>
+  public isValidItem = (item: ContentItem): boolean =>
     !!item && !!item.id && !!item.name && !!item.links;
 
   public isItemInRecycleBin = (item: ContentItem) => !!item && item.__trash__;
