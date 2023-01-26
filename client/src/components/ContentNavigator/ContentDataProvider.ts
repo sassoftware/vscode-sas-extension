@@ -6,6 +6,7 @@ import {
   Event,
   EventEmitter,
   FileChangeEvent,
+  FileChangeType,
   FileStat,
   FileSystemProvider,
   FileType,
@@ -84,6 +85,7 @@ class ContentDataProvider
   }
 
   public stat(uri: Uri): FileStat | Promise<FileStat> {
+    console.log("stat", uri);
     return this.model.getResourceByUri(uri).then(
       (resource): FileStat => ({
         type: this.dataDescriptor.isContainer(resource)
@@ -129,13 +131,12 @@ class ContentDataProvider
   public async renameResource(
     item: ContentItem,
     name: string
-  ): Promise<boolean> {
-    const success = await this.model.renameResource(item, name);
-    if (success) {
+  ): Promise<Uri | undefined> {
+    const newItem = await this.model.renameResource(item, name);
+    if (newItem) {
       this.refresh();
+      return this.dataDescriptor.getUri(newItem);
     }
-
-    return success;
   }
 
   // TODO #56 Lets make sure we don't overwrite newer files (should be handled by method)

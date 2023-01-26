@@ -1,4 +1,4 @@
-import { Uri } from "vscode";
+import { Uri, window } from "vscode";
 import { Link } from "./types";
 
 export const getLink = (

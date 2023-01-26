@@ -6,6 +6,8 @@ import {
   window,
   workspace,
   TextDocument,
+  TextEditor,
+  TextDocumentChangeEvent,
 } from "vscode";
 import { profileConfig } from "../../commands/profile";
 import { DataDescriptor } from "./viya/DataDescriptor";
@@ -23,6 +25,8 @@ const createFolderValidator =
     /^([a-zA-Z0-9\s_-]+)$/.test(value) ? null : errorMessage;
 
 class ContentNavigator {
+  private dirtyFiles: Record<string, boolean>;
+
   constructor(context: ExtensionContext) {
     const dataDescriptor = new DataDescriptor();
     const treeDataProvider = new ContentDataProvider(
@@ -43,6 +47,21 @@ class ContentNavigator {
     context.subscriptions.push(treeView);
 
     workspace.registerFileSystemProvider("sas", treeDataProvider);
+    this.registerCommands(treeDataProvider, dataDescriptor);
+    this.watchForFileChanges();
+  }
+
+  private watchForFileChanges(): void {
+    this.dirtyFiles = {};
+    workspace.onDidChangeTextDocument((e: TextDocumentChangeEvent) => {
+      this.dirtyFiles[e.document.uri.query] = e.document.isDirty;
+    });
+  }
+
+  private registerCommands(
+    treeDataProvider: ContentDataProvider,
+    dataDescriptor: DataDescriptor
+  ): void {
     commands.registerCommand(
       "SAS.openSASfile",
       async (document: TextDocument) => await window.showTextDocument(document)
@@ -106,6 +125,13 @@ class ContentNavigator {
       "SAS.renameResource",
       async (resource: ContentItem) => {
         const isContainer = dataDescriptor.isContainer(resource);
+        const resourceUri = dataDescriptor.getUri(resource);
+
+        // Make sure the file is saved before renaming
+        if (this.dirtyFiles[resourceUri.query]) {
+          window.showErrorMessage("Please save your file first");
+          return;
+        }
 
         const name = await window.showInputBox({
           prompt: "Please enter a new name",
@@ -120,12 +146,21 @@ class ContentNavigator {
           return;
         }
 
-        const success = await treeDataProvider.renameResource(resource, name);
-        if (!success) {
+        // This could be improved up. We don't know if the old document is actually
+        // open. This forces it open then closes it, only to re-open it again after
+        // it's renamed.
+        await window.showTextDocument(resourceUri).then(() => {
+          commands.executeCommand("workbench.action.closeActiveEditor");
+        });
+
+        const newUri = await treeDataProvider.renameResource(resource, name);
+        if (!newUri) {
           window.showErrorMessage(
             `Unable to rename "${resource.name} to ${name}"`
           );
         }
+
+        await window.showTextDocument(newUri);
       }
     );
   }

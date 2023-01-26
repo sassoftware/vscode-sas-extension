@@ -175,9 +175,15 @@ export class ContentModel {
   }
 
   public async createFolder(item: ContentItem, name: string): Promise<boolean> {
+    const parentFolderUri =
+      item.uri || getLink(item.links || [], "GET", "self")?.uri || null;
+    if (!parentFolderUri) {
+      return false;
+    }
+
     try {
       await this.connection.post(
-        `/folders/folders?parentFolderUri=${item.uri}`,
+        `/folders/folders?parentFolderUri=${parentFolderUri}`,
         {
           name,
         }
@@ -192,7 +198,7 @@ export class ContentModel {
   public async renameResource(
     item: ContentItem,
     name: string
-  ): Promise<boolean> {
+  ): Promise<ContentItem | undefined> {
     // If we don't have a file token map for this resoure, lets grab
     // it from the server
     let fileTokenMap = this.fileTokenMaps[item.uri];
@@ -204,7 +210,7 @@ export class ContentModel {
           lastModified: res.headers["last-modified"],
         };
       } catch (error) {
-        return false;
+        return;
       }
     }
 
@@ -214,8 +220,8 @@ export class ContentModel {
         { name },
         {
           headers: {
-            "If-Unmodified-Since": this.fileTokenMaps[item.uri].lastModified,
-            "If-Match": this.fileTokenMaps[item.uri].etag,
+            "If-Unmodified-Since": fileTokenMap.lastModified,
+            "If-Match": fileTokenMap.etag,
           },
         }
       );
@@ -224,11 +230,11 @@ export class ContentModel {
         etag: patchResponse.headers.etag,
         lastModified: patchResponse.headers["last-modified"],
       };
-    } catch (error) {
-      return false;
-    }
 
-    return true;
+      return patchResponse.data;
+    } catch (error) {
+      return;
+    }
   }
 
   public async saveContentToUri(uri: Uri, content: string): Promise<void> {
