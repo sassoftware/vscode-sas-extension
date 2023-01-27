@@ -10,7 +10,7 @@ import {
 } from "./const";
 import { Uri } from "vscode";
 import { getLink, getResourceId } from "../utils";
-import { apiConfig } from "../../../session/rest";
+import { getApiConfig } from "../../../connection/rest/common";
 
 interface AddMemberProperties {
   name?: string;
@@ -25,16 +25,16 @@ export class ContentModel {
   };
   private authorized: boolean;
 
-  constructor(baseURL: string, dataDescriptor: DataDescriptor) {
-    this.connection = axios.create({ baseURL });
+  constructor(dataDescriptor: DataDescriptor) {
     this.dataDescriptor = dataDescriptor;
     this.fileTokenMaps = {};
     this.authorized = false;
   }
 
-  public setup(): void {
+  public connect(baseURL: string): void {
+    this.connection = axios.create({ baseURL });
     this.connection.defaults.headers.common.Authorization =
-      "Bearer " + apiConfig.accessToken;
+      "Bearer " + getApiConfig().accessToken;
     this.authorized = true;
   }
 
@@ -159,7 +159,6 @@ export class ContentModel {
         {
           headers: {
             "Content-Type": "text/plain",
-            // TODO #56 This doesn't work with Chinese characters
             "Content-Disposition": `filename="${fileName}"`,
           },
         }

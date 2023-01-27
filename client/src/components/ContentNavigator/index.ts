@@ -33,17 +33,16 @@ class ContentNavigator {
   constructor(context: ExtensionContext) {
     this.dataDescriptor = new DataDescriptor();
     this.contentDataProvider = new ContentDataProvider(
-      new ContentModel(
-        profileConfig.getActiveProfileDetail()?.profile.endpoint,
-        this.dataDescriptor
-      )
+      new ContentModel(this.dataDescriptor)
     );
     this.treeView = window.createTreeView("sas-content-navigator", {
       treeDataProvider: this.contentDataProvider,
     });
     this.treeView.onDidChangeVisibility(async () => {
       if (this.treeView.visible) {
-        await this.contentDataProvider.setup();
+        await this.contentDataProvider.connect(
+          profileConfig.getActiveProfileDetail()?.profile.endpoint
+        );
       }
     });
 
@@ -64,7 +63,13 @@ class ContentNavigator {
   private registerCommands(): void {
     commands.registerCommand(
       "SAS.openSASfile",
-      async (document: TextDocument) => await window.showTextDocument(document)
+      async (document: TextDocument) => {
+        try {
+          await window.showTextDocument(document);
+        } catch (error) {
+          await window.showErrorMessage(Messages.FileOpenError);
+        }
+      }
     );
 
     commands.registerCommand(
@@ -180,6 +185,12 @@ class ContentNavigator {
         await window.showTextDocument(newUri);
       }
     );
+
+    commands.registerCommand("SAS.collapseAll", () => {
+      commands.executeCommand(
+        "workbench.actions.treeView.sas-content-navigator.collapseAll"
+      );
+    });
   }
 
   private async handleCreationResponse(

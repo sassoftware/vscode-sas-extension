@@ -1,3 +1,5 @@
+import { ThemeIcon } from "vscode";
+
 const CONTENT_FOLDER_ID = "CONTENT_FOLDER_ID";
 const ROOT_FOLDER_TYPE = "RootFolder";
 
@@ -40,7 +42,7 @@ export const FOLDER_TYPES = [
 
 export const Messages = {
   FileDeletionError: "Unable to delete file",
-  FileOpenError: "Cannot open file",
+  FileOpenError: "The file type is unsupported",
   FileValidationError: "Invalid file name",
   FolderValidationError: "Invalid folder name",
   NewFileCreationError: 'Unable to create file "%(name)s"',

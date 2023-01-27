@@ -1,5 +1,6 @@
 import { window, ProgressLocation, commands } from "vscode";
 import { getSession, Session } from "../connection";
+import { profileConfig, switchProfile } from "./profile";
 
 export async function authorize(): Promise<Session> {
   commands.executeCommand("setContext", "SAS.authorizing", true);
@@ -33,3 +34,13 @@ export async function authorize(): Promise<Session> {
 
   return session;
 }
+
+export const checkProfileAndAuthorize = async (): Promise<void> => {
+  if (profileConfig.getActiveProfile() === "") {
+    await switchProfile();
+  }
+
+  if (profileConfig.getActiveProfile() !== "") {
+    await authorize();
+  }
+};

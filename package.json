@@ -214,37 +214,96 @@
         "command": "SAS.updateProfile",
         "title": "%commands.SAS.updateProfile%",
         "category": "SAS"
-      }
-    ],
-    "keybindings": [
-      {
-        "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
-        "command": "SAS.run",
-        "key": "f8"
       },
       {
-        "when": "editorLangId == sas && !SAS.hideRunMenuItem",
-        "command": "SAS.runSelected",
-        "key": "f3"
+        "command": "SAS.authorize",
+        "title": "%commands.SAS.authorize%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.deleteResource",
+        "title": "%commands.SAS.deleteResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.addFileResource",
+        "title": "%commands.SAS.addFileResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.addFolderResource",
+        "title": "%commands.SAS.addFolderResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.renameResource",
+        "title": "%commands.SAS.renameResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.refreshResources",
+        "title": "%commands.SAS.refreshResources%",
+        "category": "SAS",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "SAS.collapseAll",
+        "title": "%commands.SAS.collapseAll%",
+        "category": "SAS",
+        "icon": "$(collapse-all)"
       }
     ],
     "menus": {
+      "view/title": [
+        {
+          "command": "SAS.refreshResources",
+          "when": "view == sas-content-navigator",
+          "group": "navigation@0"
+        },
+        {
+          "command": "SAS.collapseAll",
+          "when": "view == sas-content-navigator",
+          "group": "navigation@1"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "SAS.addFolderResource",
+          "when": "viewItem =~ /createChild/ && view == sas-content-navigator",
+          "group": "addgroup@0"
+        },
+        {
+          "command": "SAS.addFileResource",
+          "when": "viewItem =~ /createChild/ && view == sas-content-navigator",
+          "group": "addgroup@1"
+        },
+        {
+          "command": "SAS.renameResource",
+          "when": "viewItem =~ /update/ && view == sas-content-navigator",
+          "group": "delrenamegroup@0"
+        },
+        {
+          "command": "SAS.deleteResource",
+          "when": "viewItem =~ /delete/ && view == sas-content-navigator",
+          "group": "delrenamegroup@1"
+        }
+      ],
       "editor/title/run": [
         {
           "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
-          "command": "SAS.runSelected"
+          "command": "SAS.run"
         }
       ],
       "editor/context": [
         {
           "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.run",
-          "group": "navigation@2"
+          "group": "navigation"
         },
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "editorHasSelection && !editorHasMultipleSelections && editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected",
-          "group": "navigation@1"
+          "group": "navigation"
         }
       ],
       "editor/title": [
@@ -260,7 +319,7 @@
           "command": "SAS.run"
         },
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "editorHasSelection && !editorHasMultipleSelections && editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected"
         }
       ]
@@ -309,6 +368,37 @@
       {
         "language": "sas",
         "path": "./snippets/function-snippets.json"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sas-view-container",
+          "title": "SAS",
+          "icon": "icons/sas-svg.svg"
+        }
+      ]
+    },
+    "views": {
+      "sas-view-container": [
+        {
+          "id": "sas-content-navigator",
+          "name": "Explorer",
+          "when": "SAS.authorized"
+        },
+        {
+          "id": "sas-content-get-started",
+          "name": "Get Started",
+          "when": "!SAS.authorized"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "sas-content-get-started",
+        "when": "!SAS.authorized",
+        "contents": "You have not yet signed in to SAS.\n[Sign in](command:SAS.authorize)",
+        "enablement": "!SAS.authorizing"
       }
     ]
   },

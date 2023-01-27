@@ -40,8 +40,8 @@ class ContentDataProvider
     return this._onDidChangeTreeData.event;
   }
 
-  public async setup(): Promise<void> {
-    this.model.setup();
+  public async connect(baseUrl: string): Promise<void> {
+    this.model.connect(baseUrl);
     this.refresh();
   }
 
@@ -128,16 +128,8 @@ class ContentDataProvider
     }
   }
 
-  // TODO #56 Lets make sure we don't overwrite newer files (should be handled by model method)
-  public writeFile(
-    uri: Uri,
-    content: Uint8Array,
-    options: { create: boolean; overwrite: boolean }
-  ): void | Promise<void> {
-    console.log("writeFile", uri, options);
-    // if (options.overwrite) {
+  public writeFile(uri: Uri, content: Uint8Array): void | Promise<void> {
     return this.model.saveContentToUri(uri, new TextDecoder().decode(content));
-    // }
   }
 
   public async deleteResource(item: ContentItem): Promise<boolean> {

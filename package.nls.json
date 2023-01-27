@@ -17,6 +17,7 @@
   "commands.SAS.authenticate": "Sign in",
   "commands.SAS.authorize": "Sign in",
   "commands.SAS.close": "Close Current Session",
+  "commands.SAS.collapseAll": "Collapse All",
   "commands.SAS.deleteProfile": "Delete Connection Profile",
   "commands.SAS.deleteResource": "Delete",
   "commands.SAS.refreshResources": "Refresh",
