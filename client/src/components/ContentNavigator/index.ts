@@ -7,6 +7,7 @@ import {
   TextDocument,
   TextDocumentChangeEvent,
   TreeView,
+  Uri,
 } from "vscode";
 import { profileConfig } from "../../commands/profile";
 import { DataDescriptor } from "./viya/DataDescriptor";
@@ -15,40 +16,41 @@ import { ContentItem } from "./types";
 import { Messages } from "./viya/const";
 import { sprintf } from "sprintf-js";
 
-const createFileValidator =
-  (errorMessage: string) =>
-  (value: string): string | null =>
-    /^([a-zA-Z0-9\s._-]+)\.\w+$/.test(value) ? null : errorMessage;
-
-const createFolderValidator =
-  (errorMessage: string) =>
-  (value: string): string | null =>
-    /^([a-zA-Z0-9\s_-]+)$/.test(value) ? null : errorMessage;
+const fileValidator = (value: string): string | null =>
+  /^([a-zA-Z0-9\s._-]+)\.\w+$/.test(value)
+    ? null
+    : Messages.FileValidationError;
+const foldervalidator = (value: string): string | null =>
+  /^([a-zA-Z0-9\s_-]+)$/.test(value) ? null : Messages.FolderValidationError;
 
 class ContentNavigator {
+  private dataDescriptor: DataDescriptor;
+  private contentDataProvider: ContentDataProvider;
+  private treeView: TreeView<ContentItem>;
+
   private dirtyFiles: Record<string, boolean>;
 
   constructor(context: ExtensionContext) {
-    const dataDescriptor = new DataDescriptor();
-    const treeDataProvider = new ContentDataProvider(
+    this.dataDescriptor = new DataDescriptor();
+    this.contentDataProvider = new ContentDataProvider(
       new ContentModel(
         profileConfig.getActiveProfileDetail()?.profile.endpoint,
-        dataDescriptor
+        this.dataDescriptor
       )
     );
-    const treeView = window.createTreeView("sas-content-navigator", {
-      treeDataProvider,
+    this.treeView = window.createTreeView("sas-content-navigator", {
+      treeDataProvider: this.contentDataProvider,
     });
-    treeView.onDidChangeVisibility(async () => {
-      if (treeView.visible) {
-        await treeDataProvider.setup();
+    this.treeView.onDidChangeVisibility(async () => {
+      if (this.treeView.visible) {
+        await this.contentDataProvider.setup();
       }
     });
 
-    context.subscriptions.push(treeView);
+    context.subscriptions.push(this.treeView);
 
-    workspace.registerFileSystemProvider("sas", treeDataProvider);
-    this.registerCommands(treeDataProvider, dataDescriptor, treeView);
+    workspace.registerFileSystemProvider("sas", this.contentDataProvider);
+    this.registerCommands();
     this.watchForFileChanges();
   }
 
@@ -59,11 +61,7 @@ class ContentNavigator {
     });
   }
 
-  private registerCommands(
-    treeDataProvider: ContentDataProvider,
-    dataDescriptor: DataDescriptor,
-    treeView: TreeView<ContentItem>
-  ): void {
+  private registerCommands(): void {
     commands.registerCommand(
       "SAS.openSASfile",
       async (document: TextDocument) => await window.showTextDocument(document)
@@ -72,14 +70,14 @@ class ContentNavigator {
     commands.registerCommand(
       "SAS.deleteResource",
       async (resource: ContentItem) => {
-        if (!(await treeDataProvider.deleteResource(resource))) {
+        if (!(await this.contentDataProvider.deleteResource(resource))) {
           window.showErrorMessage(Messages.FileDeletionError);
         }
       }
     );
 
     commands.registerCommand("SAS.refreshResources", () =>
-      treeDataProvider.refresh()
+      this.contentDataProvider.refresh()
     );
 
     commands.registerCommand(
@@ -88,26 +86,25 @@ class ContentNavigator {
         const fileName = await window.showInputBox({
           prompt: Messages.NewFilePrompt,
           title: Messages.NewFileTitle,
-          validateInput: createFileValidator(Messages.FileValidationError),
+          validateInput: fileValidator,
         });
         if (!fileName) {
           return;
         }
 
-        const newUri = await treeDataProvider.createFile(resource, fileName);
-        if (!newUri) {
-          window.showErrorMessage(
-            sprintf(Messages.NewFileCreationError, { name: fileName })
-          );
-          return;
-        }
-        await treeView.reveal(resource, {
-          expand: true,
-          select: false,
-          focus: false,
-        });
+        const newUri = await this.contentDataProvider.createFile(
+          resource,
+          fileName
+        );
+        this.handleCreationResponse(
+          resource,
+          newUri,
+          sprintf(Messages.NewFileCreationError, { name: fileName })
+        );
 
-        await window.showTextDocument(newUri);
+        if (newUri) {
+          await window.showTextDocument(newUri);
+        }
       }
     );
 
@@ -117,33 +114,29 @@ class ContentNavigator {
         const folderName = await window.showInputBox({
           prompt: Messages.NewFolderPrompt,
           title: Messages.NewFolderTitle,
-          validateInput: createFolderValidator(Messages.FolderValidationError),
+          validateInput: foldervalidator,
         });
         if (!folderName) {
           return;
         }
 
-        const newUri = await treeDataProvider.createFolder(
+        const newUri = await this.contentDataProvider.createFolder(
           resource,
           folderName
         );
-        if (!newUri) {
-          sprintf(Messages.NewFolderCreationError, { name: folderName });
-          return;
-        }
-        await treeView.reveal(resource, {
-          expand: true,
-          select: false,
-          focus: false,
-        });
+        this.handleCreationResponse(
+          resource,
+          newUri,
+          sprintf(Messages.NewFolderCreationError, { name: folderName })
+        );
       }
     );
 
     commands.registerCommand(
       "SAS.renameResource",
       async (resource: ContentItem) => {
-        const isContainer = dataDescriptor.isContainer(resource);
-        const resourceUri = dataDescriptor.getUri(resource);
+        const isContainer = this.dataDescriptor.isContainer(resource);
+        const resourceUri = this.dataDescriptor.getUri(resource);
 
         // Make sure the file is saved before renaming
         if (this.dirtyFiles[resourceUri.query]) {
@@ -157,9 +150,7 @@ class ContentNavigator {
             ? Messages.RenameFolderTitle
             : Messages.RenameFileTitle,
           value: resource.name,
-          validateInput: isContainer
-            ? createFolderValidator(Messages.FolderValidationError)
-            : createFileValidator(Messages.FileValidationError),
+          validateInput: isContainer ? foldervalidator : fileValidator,
         });
 
         if (name === resource.name) {
@@ -169,11 +160,14 @@ class ContentNavigator {
         // This could be improved upon. We don't know if the old document is actually
         // open. This forces it open then closes it, only to re-open it again after
         // it's renamed.
-        await window.showTextDocument(resourceUri).then(() => {
-          commands.executeCommand("workbench.action.closeActiveEditor");
+        await window.showTextDocument(resourceUri).then(async () => {
+          await commands.executeCommand("workbench.action.closeActiveEditor");
         });
 
-        const newUri = await treeDataProvider.renameResource(resource, name);
+        const newUri = await this.contentDataProvider.renameResource(
+          resource,
+          name
+        );
         if (!newUri) {
           window.showErrorMessage(
             sprintf(Messages.RenameError, {
@@ -186,6 +180,23 @@ class ContentNavigator {
         await window.showTextDocument(newUri);
       }
     );
+  }
+
+  private async handleCreationResponse(
+    resource: ContentItem,
+    newUri: Uri | undefined,
+    errorMessage: string
+  ): Promise<void> {
+    if (!newUri) {
+      window.showErrorMessage(errorMessage);
+      return;
+    }
+
+    this.treeView.reveal(resource, {
+      expand: true,
+      select: false,
+      focus: false,
+    });
   }
 }
 

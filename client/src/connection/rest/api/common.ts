@@ -146,6 +146,5 @@ export const createRequestFunction = function <T>(
   if (axiosRequestArgs.headers && configuration?.accessToken)
     axiosRequestArgs.headers["Authorization"] =
       "Bearer " + configuration?.accessToken;
-  console.log({ axiosRequestArgs });
   return globalAxios.request<T, AxiosResponse<T>>(axiosRequestArgs);
 };

@@ -4,25 +4,22 @@ import { Uri } from "vscode";
 import { getLink } from "../utils";
 
 export class DataDescriptor {
-  public getId = (item: ContentItem): string | null => {
-    const oSelfLink = getLink(item.links, "GET", "self");
-    return oSelfLink ? oSelfLink.uri : null;
-  };
+  public getId = (item: ContentItem): string | null =>
+    getLink(item.links, "GET", "self")?.uri || null;
 
   public getResourceId = (item: ContentItem): string | null => {
     // Only members have uri attribute.
     if (item.uri) {
       return item.uri;
     }
-    const oSelfLink = getLink(item.links, "GET", "self");
 
-    return oSelfLink ? oSelfLink.uri : null;
+    return getLink(item.links, "GET", "self")?.uri || null;
   };
 
   public getLabel = (item: ContentItem): string => item.name;
 
   public getTypeName = (item: ContentItem): string =>
-    item.contentType ? item.contentType : item.type;
+    item.contentType || item.type;
 
   public isContainer = (item: ContentItem, bStrict?: boolean): boolean => {
     const typeName = this.getTypeName(item);
@@ -77,5 +74,6 @@ export class DataDescriptor {
   public isValidItem = (item: ContentItem): boolean =>
     !!item && !!item.id && !!item.name && !!item.links;
 
-  public isItemInRecycleBin = (item: ContentItem) => !!item && item.__trash__;
+  public isItemInRecycleBin = (item: ContentItem): boolean =>
+    !!item && item.__trash__;
 }

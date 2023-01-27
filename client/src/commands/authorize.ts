@@ -13,6 +13,8 @@ export async function authorize(): Promise<Session> {
         title: "Connecting to SAS session...",
       },
       async () => {
+        // This looks a little weird. The purpose of this is to show both a notification
+        // message and a progress bar on the getting started view
         await window.withProgress(
           {
             location: { viewId: "sas-content-get-started" },

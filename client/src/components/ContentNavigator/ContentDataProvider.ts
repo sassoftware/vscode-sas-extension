@@ -6,7 +6,6 @@ import {
   Event,
   EventEmitter,
   FileChangeEvent,
-  FileChangeType,
   FileStat,
   FileSystemProvider,
   FileType,
@@ -23,10 +22,8 @@ class ContentDataProvider
 {
   private _onDidChangeFile: EventEmitter<FileChangeEvent[]>;
   private _onDidChangeTreeData: EventEmitter<ContentItem | undefined>;
-  private textEncoder = new TextEncoder();
-  private textDecoder = new TextDecoder();
-  private model: ContentModel;
-  private dataDescriptor: DataDescriptor;
+  private readonly model: ContentModel;
+  private readonly dataDescriptor: DataDescriptor;
 
   constructor(model: ContentModel) {
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
@@ -73,20 +70,14 @@ class ContentDataProvider
     return this.model.getChildren(item);
   }
 
-  // TODO #56 What's this for?
-  public watch(
-    uri: Uri
-    // _options: { recursive: boolean; excludes: string[] }
-  ): Disposable {
+  public watch(): Disposable {
     // ignore, fires for all changes...
-    console.log("watch", uri);
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     return new Disposable(() => {});
   }
 
-  public stat(uri: Uri): FileStat | Promise<FileStat> {
-    console.log("stat", uri);
-    return this.model.getResourceByUri(uri).then(
+  public async stat(uri: Uri): Promise<FileStat> {
+    return await this.model.getResourceByUri(uri).then(
       (resource): FileStat => ({
         type: this.dataDescriptor.isContainer(resource)
           ? FileType.Directory
@@ -98,10 +89,10 @@ class ContentDataProvider
     );
   }
 
-  public readFile(uri: Uri): Uint8Array | Promise<Uint8Array> {
-    return this.model
+  public async readFile(uri: Uri): Promise<Uint8Array> {
+    return await this.model
       .getContentByUri(uri)
-      .then((content) => this.textEncoder.encode(content));
+      .then((content) => new TextEncoder().encode(content));
   }
 
   public async createFolder(
@@ -113,8 +104,6 @@ class ContentDataProvider
       this.refresh();
       return this.dataDescriptor.getUri(newItem);
     }
-
-    return;
   }
 
   public async createFile(
@@ -139,7 +128,7 @@ class ContentDataProvider
     }
   }
 
-  // TODO #56 Lets make sure we don't overwrite newer files (should be handled by method)
+  // TODO #56 Lets make sure we don't overwrite newer files (should be handled by model method)
   public writeFile(
     uri: Uri,
     content: Uint8Array,
@@ -147,7 +136,7 @@ class ContentDataProvider
   ): void | Promise<void> {
     console.log("writeFile", uri, options);
     // if (options.overwrite) {
-    return this.model.saveContentToUri(uri, this.textDecoder.decode(content));
+    return this.model.saveContentToUri(uri, new TextDecoder().decode(content));
     // }
   }
 

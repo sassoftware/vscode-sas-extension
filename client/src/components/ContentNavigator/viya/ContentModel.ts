@@ -2,11 +2,11 @@ import axios, { AxiosInstance } from "axios";
 import { ContentItem, Link } from "../types";
 import { DataDescriptor } from "./DataDescriptor";
 import {
-  ROOT_FOLDER,
   FILE_TYPES,
   FOLDER_TYPES,
-  TRASH_FOLDER,
   Messages,
+  ROOT_FOLDER,
+  TRASH_FOLDER,
 } from "./const";
 import { Uri } from "vscode";
 import { getLink, getResourceId } from "../utils";
@@ -18,17 +18,17 @@ interface AddMemberProperties {
 }
 
 export class ContentModel {
-  protected dataDescriptor: DataDescriptor;
   private connection: AxiosInstance;
+  private dataDescriptor: DataDescriptor;
   private fileTokenMaps: {
-    [id: string]: { etag?: string; lastModified: string };
+    [id: string]: { etag: string; lastModified: string };
   };
   private authorized: boolean;
 
   constructor(baseURL: string, dataDescriptor: DataDescriptor) {
     this.connection = axios.create({ baseURL });
-    this.fileTokenMaps = {};
     this.dataDescriptor = dataDescriptor;
+    this.fileTokenMaps = {};
     this.authorized = false;
   }
 
