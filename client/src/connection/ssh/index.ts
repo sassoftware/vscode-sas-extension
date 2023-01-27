@@ -1,5 +1,4 @@
-import { Client, ConnectConfig } from "ssh2";
-import { Duplex } from "stream";
+import { Client, ClientChannel, ConnectConfig } from "ssh2";
 import { RunResult, Session } from "..";
 import { readFileSync } from "fs";
 
@@ -8,7 +7,7 @@ import { LogLine } from "../rest/api/compute";
 
 const conn = new Client();
 const endCode = "--vscode-sas-extension-submit-end--";
-let stream: Duplex | undefined;
+let stream: ClientChannel | undefined;
 let config: Config;
 let resolve: ((value?) => void) | undefined;
 let reject: ((reason?) => void) | undefined;
@@ -48,7 +47,6 @@ conn
         })
         .on("data", (data: Buffer) => {
           const output = data.toString().trimEnd();
-          console.log(output);
           if (onLog) {
             setTimer();
             output.split(/\n|\r\n/).forEach((line) => {
@@ -69,15 +67,14 @@ conn
             });
           } else {
             logs.push(output);
-            if (output.endsWith("?")) {
-              // Entered SAS, hearing user input. setup done
-              clearTimer();
-              resolve?.();
-            }
+            clearTimer();
+            resolve?.();
           }
         });
 
-      stream.write(`${config.saspath} -nodms\n`);
+      stream.write(
+        `${config.saspath} -nodms -terminal -stdio -nosyntaxcheck -pagesize MAX\n`
+      );
     });
   })
   .on("error", (err) => {
@@ -100,12 +97,13 @@ function clearTimer() {
 }
 
 function getResult() {
+  const runResult: RunResult = {};
   if (!html5FileName) {
-    resolve?.({});
+    resolve?.(runResult);
     return;
   }
   let fileContents = "";
-  conn.exec(`cat ${html5FileName}.htm`, (err, s) => {
+  conn.exec(`cat ${html5FileName}.htm`, (err: Error, s: ClientChannel) => {
     if (err) {
       reject?.(err);
       return;
@@ -115,7 +113,7 @@ function getResult() {
       fileContents += data.toString().trimEnd();
     }).on("close", (code) => {
       const rc = code as number;
-      const runResult: RunResult = {};
+
       if (rc === 0) {
         //Make sure that the html has a valid body
         //TODO: should this be refactored into a shared location?
