@@ -1,9 +1,15 @@
 import axios, { AxiosInstance } from "axios";
 import { ContentItem, Link } from "../types";
 import { DataDescriptor } from "./DataDescriptor";
-import { ROOT_FOLDER, FILE_TYPES, FOLDER_TYPES, TRASH_FOLDER } from "./const";
+import {
+  ROOT_FOLDER,
+  FILE_TYPES,
+  FOLDER_TYPES,
+  TRASH_FOLDER,
+  Messages,
+} from "./const";
 import { Uri } from "vscode";
-import { ajaxErrorHandler, getLink, getResourceId } from "../utils";
+import { getLink, getResourceId } from "../utils";
 import { apiConfig } from "../../../session/rest";
 
 interface AddMemberProperties {
@@ -99,12 +105,16 @@ export class ContentModel {
     return result.items;
   }
 
-  public getAncestors(item: ContentItem): Promise<ContentItem[]> {
+  public async getParent(item: ContentItem): Promise<ContentItem | undefined> {
     const ancestorsLink = getLink(item.links, "GET", "ancestors");
-    if (ancestorsLink) {
-      return this.connection.get(ancestorsLink.uri);
+    if (!ancestorsLink) {
+      return;
     }
-    return Promise.reject();
+
+    const resp = await this.connection.get(ancestorsLink.uri);
+    if (resp.data.ancestors && resp.data.ancestors.length > 0) {
+      return resp.data.ancestors[0];
+    }
   }
 
   public async getResourceByUri(uri: Uri): Promise<ContentItem> {
@@ -129,7 +139,7 @@ export class ContentModel {
     // We expect the returned data to be a string. If this isn't a string,
     // we can't really open it
     if (typeof res.data === "object") {
-      throw new Error("Cannot open file");
+      throw new Error(Messages.FileOpenError);
     }
 
     return res.data;
@@ -138,7 +148,7 @@ export class ContentModel {
   public async createFile(
     item: ContentItem,
     fileName: string
-  ): Promise<boolean> {
+  ): Promise<ContentItem | undefined> {
     const contentType = await this.getFileContentType(fileName);
 
     let fileCreationResponse = null;
@@ -155,7 +165,7 @@ export class ContentModel {
         }
       );
     } catch (error) {
-      return false;
+      return;
     }
 
     const fileLink: Link | null = getLink(
@@ -164,7 +174,7 @@ export class ContentModel {
       "self"
     );
 
-    return await this.addMember(
+    const memberAdded = await this.addMember(
       fileLink?.uri,
       getLink(item.links, "POST", "addMember")?.uri,
       {
@@ -172,27 +182,35 @@ export class ContentModel {
         contentType,
       }
     );
+    if (!memberAdded) {
+      return;
+    }
+
+    return fileCreationResponse.data;
   }
 
-  public async createFolder(item: ContentItem, name: string): Promise<boolean> {
+  public async createFolder(
+    item: ContentItem,
+    name: string
+  ): Promise<ContentItem | undefined> {
     const parentFolderUri =
       item.uri || getLink(item.links || [], "GET", "self")?.uri || null;
     if (!parentFolderUri) {
-      return false;
+      return;
     }
 
     try {
-      await this.connection.post(
+      const createFolderResponse = await this.connection.post(
         `/folders/folders?parentFolderUri=${parentFolderUri}`,
         {
           name,
         }
       );
-    } catch (error) {
-      return false;
-    }
 
-    return true;
+      return createFolderResponse.data;
+    } catch (error) {
+      return;
+    }
   }
 
   public async renameResource(

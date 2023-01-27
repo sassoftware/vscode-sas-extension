@@ -37,3 +37,21 @@ export const FOLDER_TYPES = [
   // TODO #56 Include recycle bin in next iteration
   // TRASH_FOLDER,
 ];
+
+export const Messages = {
+  FileDeletionError: "Unable to delete file",
+  FileOpenError: "Cannot open file",
+  FileValidationError: "Invalid file name",
+  FolderValidationError: "Invalid folder name",
+  NewFileCreationError: 'Unable to create file "%(name)s"',
+  NewFilePrompt: "Please enter a file name",
+  NewFileTitle: "New file",
+  NewFolderCreationError: 'Unable to create folder "%(name)s"',
+  NewFolderPrompt: "Please enter a folder name",
+  NewFolderTitle: "New folder",
+  RenameError: 'Unable to rename "%(oldName)s" to "%(newName)s"',
+  RenameFileTitle: "Rename file",
+  RenameFolderTitle: "Rename folder",
+  RenamePrompt: "Please enter a new name",
+  RenameUnsavedFileError: "Please save your file first",
+};

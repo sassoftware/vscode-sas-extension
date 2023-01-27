@@ -23,12 +23,12 @@ class ContentDataProvider
 {
   private _onDidChangeFile: EventEmitter<FileChangeEvent[]>;
   private _onDidChangeTreeData: EventEmitter<ContentItem | undefined>;
-  private dataDescriptor: DataDescriptor;
   private textEncoder = new TextEncoder();
   private textDecoder = new TextDecoder();
   private model: ContentModel;
+  private dataDescriptor: DataDescriptor;
 
-  constructor(public readonly model: ContentModel) {
+  constructor(model: ContentModel) {
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
     this.model = model;
@@ -107,25 +107,25 @@ class ContentDataProvider
   public async createFolder(
     item: ContentItem,
     folderName: string
-  ): Promise<boolean> {
-    const success = await this.model.createFolder(item, folderName);
-    if (success) {
+  ): Promise<Uri | undefined> {
+    const newItem = await this.model.createFolder(item, folderName);
+    if (newItem) {
       this.refresh();
+      return this.dataDescriptor.getUri(newItem);
     }
 
-    return success;
+    return;
   }
 
   public async createFile(
     item: ContentItem,
     fileName: string
-  ): Promise<boolean> {
-    const success = await this.model.createFile(item, fileName);
-    if (success) {
+  ): Promise<Uri | undefined> {
+    const newItem = await this.model.createFile(item, fileName);
+    if (newItem) {
       this.refresh();
+      return this.dataDescriptor.getUri(newItem);
     }
-
-    return success;
   }
 
   public async renameResource(
@@ -162,6 +162,12 @@ class ContentDataProvider
 
   public refresh(): void {
     this._onDidChangeTreeData.fire(undefined);
+  }
+
+  public async getParent(
+    element: ContentItem
+  ): Promise<ContentItem | undefined> {
+    return await this.model.getParent(element);
   }
 
   public async delete(): Promise<void> {
