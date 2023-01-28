@@ -627,7 +627,7 @@ export class Lexer {
                 };
               } else {
                 // aaaa.bbb is token
-                while (i < len && /\w/.test(text[i])) {
+                while (i < len && wordReg.test(text[i])) {
                   i++;
                 }
               }
