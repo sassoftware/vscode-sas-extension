@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "vscode-languageclient": "^8.0.1",
-    "axios": "^0.27.2"
+    "axios": "^0.27.2",
+    "media-typer": "^1.1.0"
   },
   "devDependencies": {
     "@types/vscode": "^1.66.0",

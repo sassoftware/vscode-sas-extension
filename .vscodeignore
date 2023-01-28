@@ -15,3 +15,5 @@ prettier.config.js
 contributing.md
 ContributorAgreement.txt
 .travis.yml
+.eslintignore
+pull_request_template.md
