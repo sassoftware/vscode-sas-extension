@@ -616,7 +616,7 @@ export class Lexer {
               i++;
               if (
                 this.curr.column > i || // has digital after .
-                (i < len && /[a-zA-Z_]/.test(text[i]) === false) || //format like abc.#
+                (i < len && wordReg.test(text[i]) === false) || //format like abc.#
                 (this.curr.column === i && i === len)
               ) {
                 //format is the end of line
