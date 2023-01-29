@@ -3,6 +3,7 @@
 
 import * as path from "path";
 import {
+  authentication,
   commands,
   ConfigurationChangeEvent,
   ExtensionContext,
@@ -28,6 +29,7 @@ import {
   deleteProfile,
 } from "../commands/profile";
 import { run, runSelected } from "../commands/run";
+import { SASAuthProvider } from "../components/AuthProvider";
 
 let client: LanguageClient;
 // Create Profile status bar item
@@ -78,13 +80,18 @@ export function activate(context: ExtensionContext): void {
   context.subscriptions.push(
     commands.registerCommand("SAS.run", run),
     commands.registerCommand("SAS.runSelected", runSelected),
-    commands.registerCommand("SAS.close", () =>
-      closeSession("The SAS session has closed.")
+    commands.registerCommand("SAS.close", (silent) =>
+      closeSession(silent === true ? undefined : "The SAS session has closed.")
     ),
     commands.registerCommand("SAS.switchProfile", switchProfile),
     commands.registerCommand("SAS.addProfile", addProfile),
     commands.registerCommand("SAS.deleteProfile", deleteProfile),
     commands.registerCommand("SAS.updateProfile", updateProfile),
+    authentication.registerAuthenticationProvider(
+      SASAuthProvider.id,
+      "SAS",
+      new SASAuthProvider(context.secrets)
+    ),
     languages.registerDocumentSemanticTokensProvider(
       { language: "sas-log" },
       LogTokensProvider,

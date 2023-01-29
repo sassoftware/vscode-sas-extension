@@ -1,8 +1,7 @@
-// Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+// Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import { window, workspace, ConfigurationTarget } from "vscode";
-import { closeSession } from "../commands/closeSession";
+import { commands, window, workspace, ConfigurationTarget } from "vscode";
 
 export const EXTENSION_CONFIG_KEY = "SAS";
 export const EXTENSION_DEFINE_PROFILES_CONFIG_KEY = "connectionProfiles";
@@ -155,7 +154,7 @@ export class ProfileConfig {
       profiles: profileList,
     };
     if (activeProfileParam in profileList) {
-      closeSession();
+      commands.executeCommand("SAS.close", true);
     } else {
       profiles.activeProfile = "";
     }
