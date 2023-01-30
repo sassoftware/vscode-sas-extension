@@ -96,13 +96,11 @@ export class ContentModel {
     const isTrash =
       TRASH_FOLDER === this.dataDescriptor.getTypeName(item) || item.__trash__;
 
-    result.items.forEach((child) => {
-      if (isTrash) {
-        child.__trash__ = true;
-      }
-    });
-
-    return result.items;
+    return result.items.map((childItem: ContentItem) => ({
+      ...childItem,
+      uid: `${childItem.id}${item.name}`.replace(/\s/g, ""),
+      __trash__: isTrash,
+    }));
   }
 
   public async getParent(item: ContentItem): Promise<ContentItem | undefined> {
@@ -130,7 +128,9 @@ export class ContentModel {
 
   public async getContentByUri(uri: Uri): Promise<string> {
     const resourceId = getResourceId(uri);
-    const res = await this.connection.get(resourceId + "/content");
+    const res = await this.connection.get(resourceId + "/content", {
+      transformResponse: (response) => response,
+    });
     this.fileTokenMaps[resourceId] = {
       etag: res.headers.etag,
       lastModified: res.headers["last-modified"],
@@ -216,12 +216,17 @@ export class ContentModel {
     item: ContentItem,
     name: string
   ): Promise<ContentItem | undefined> {
+    const itemIsReference = item.type === "reference";
+    const uri = itemIsReference
+      ? getLink(item.links, "GET", "self").uri
+      : item.uri;
+
     // If we don't have a file token map for this resoure, lets grab
     // it from the server
-    let fileTokenMap = this.fileTokenMaps[item.uri];
+    let fileTokenMap = this.fileTokenMaps[uri];
     if (!fileTokenMap) {
       try {
-        const res = await this.connection.get(item.uri);
+        const res = await this.connection.get(uri);
         fileTokenMap = {
           etag: res.headers.etag,
           lastModified: res.headers["last-modified"],
@@ -233,7 +238,7 @@ export class ContentModel {
 
     try {
       const patchResponse = await this.connection.patch(
-        item.uri,
+        uri,
         { name },
         {
           headers: {
@@ -243,10 +248,18 @@ export class ContentModel {
         }
       );
 
-      this.fileTokenMaps[item.uri] = {
+      this.fileTokenMaps[uri] = {
         etag: patchResponse.headers.etag,
         lastModified: patchResponse.headers["last-modified"],
       };
+
+      // The links in My Favorites are of type reference. Instead of passing
+      // back the reference objects, we want to pass back the underlying source
+      // objects.
+      if (itemIsReference) {
+        const referencedItem = await this.connection.get(item.uri);
+        return referencedItem.data;
+      }
 
       return patchResponse.data;
     } catch (error) {
@@ -352,7 +365,7 @@ export class ContentModel {
       "@myFavorites",
       "@myFolder",
       "@sasRoot",
-      // TODO #56 Include recycle bin in next iteration
+      // TODO #109 Include recycle bin in next iteration
       // "@myRecycleBin",
     ];
     const shortcuts: ContentItem[] = [];

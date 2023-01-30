@@ -7,6 +7,7 @@ export interface ContentItem {
   name: string;
   type?: string;
   uri: string;
+  uid?: string;
   __trash__: boolean;
 }
 

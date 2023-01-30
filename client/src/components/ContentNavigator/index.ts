@@ -165,14 +165,16 @@ class ContentNavigator {
         // This could be improved upon. We don't know if the old document is actually
         // open. This forces it open then closes it, only to re-open it again after
         // it's renamed.
-        await window.showTextDocument(resourceUri).then(async () => {
-          await commands.executeCommand("workbench.action.closeActiveEditor");
-        });
+        !isContainer &&
+          (await window.showTextDocument(resourceUri).then(async () => {
+            await commands.executeCommand("workbench.action.closeActiveEditor");
+          }));
 
         const newUri = await this.contentDataProvider.renameResource(
           resource,
           name
         );
+
         if (!newUri) {
           window.showErrorMessage(
             sprintf(Messages.RenameError, {
@@ -180,9 +182,12 @@ class ContentNavigator {
               newName: name,
             })
           );
+          return;
         }
 
-        await window.showTextDocument(newUri);
+        !isContainer && (await window.showTextDocument(newUri));
+
+        this.contentDataProvider.refresh();
       }
     );
 

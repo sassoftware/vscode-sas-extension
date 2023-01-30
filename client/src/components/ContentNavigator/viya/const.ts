@@ -29,14 +29,15 @@ export const FILE_TYPE = "file";
 export const FOLDER_TYPE = "folder";
 export const TRASH_FOLDER = "trashFolder";
 export const FILE_TYPES = [FILE_TYPE];
+export const FAVORITES_FOLDER = "favoritesFolder";
 export const FOLDER_TYPES = [
   ROOT_FOLDER_TYPE,
   FOLDER_TYPE,
   "myFolder",
-  "favoritesFolder",
+  FAVORITES_FOLDER,
   "userFolder",
   "userRoot",
-  // TODO #56 Include recycle bin in next iteration
+  // TODO #109 Include recycle bin in next iteration
   // TRASH_FOLDER,
 ];
 

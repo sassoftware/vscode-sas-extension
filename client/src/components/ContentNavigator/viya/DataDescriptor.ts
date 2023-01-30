@@ -1,11 +1,16 @@
 import { ContentItem, Link } from "../types";
-import { FOLDER_TYPES, FOLDER_TYPE, FILE_TYPE } from "./const";
+import {
+  FOLDER_TYPES,
+  FOLDER_TYPE,
+  FILE_TYPE,
+  FAVORITES_FOLDER,
+} from "./const";
 import { Uri } from "vscode";
 import { getLink } from "../utils";
 
 export class DataDescriptor {
   public getId = (item: ContentItem): string | null =>
-    getLink(item.links, "GET", "self")?.uri || null;
+    item.uid || getLink(item.links, "GET", "self")?.uri + item.type || null;
 
   public getResourceId = (item: ContentItem): string | null => {
     // Only members have uri attribute.
@@ -43,8 +48,9 @@ export class DataDescriptor {
       ? ["createChild", "delete", "update"]
       : ["createChild", "update"];
 
-    const links = item.links.filter((link: Link) =>
-      resourceTypes.includes(link.rel)
+    const links = item.links.filter(
+      (link: Link) =>
+        resourceTypes.includes(link.rel) && item.type !== FAVORITES_FOLDER
     );
 
     if (links.length === 0) {

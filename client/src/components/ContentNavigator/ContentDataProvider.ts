@@ -123,7 +123,6 @@ class ContentDataProvider
   ): Promise<Uri | undefined> {
     const newItem = await this.model.renameResource(item, name);
     if (newItem) {
-      this.refresh();
       return this.dataDescriptor.getUri(newItem);
     }
   }
