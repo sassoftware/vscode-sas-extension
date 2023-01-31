@@ -291,19 +291,19 @@
       "editor/title/run": [
         {
           "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
-          "command": "SAS.run"
+          "command": "SAS.runSelected"
         }
       ],
       "editor/context": [
         {
           "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.run",
-          "group": "navigation"
+          "group": "navigation@2"
         },
         {
-          "when": "editorHasSelection && !editorHasMultipleSelections && editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected",
-          "group": "navigation"
+          "group": "navigation@1"
         }
       ],
       "editor/title": [
@@ -319,7 +319,7 @@
           "command": "SAS.run"
         },
         {
-          "when": "editorHasSelection && !editorHasMultipleSelections && editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected"
         }
       ]
