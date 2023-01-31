@@ -1,4 +1,5 @@
-import { ThemeIcon } from "vscode";
+// Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+// Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 const CONTENT_FOLDER_ID = "CONTENT_FOLDER_ID";
 const ROOT_FOLDER_TYPE = "RootFolder";

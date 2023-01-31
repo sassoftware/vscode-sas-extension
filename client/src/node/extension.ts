@@ -112,15 +112,24 @@ export function activate(context: ExtensionContext): void {
   // If configFile setting is changed, update watcher to watch new configuration file
   workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
     if (event.affectsConfiguration("SAS.connectionProfiles")) {
-      const profileList = profileConfig.getAllProfiles();
-      const activeProfileName = profileConfig.getActiveProfile();
-      if (activeProfileName in profileList || activeProfileName === "") {
-        updateStatusBarProfile(activeProfileStatusBarIcon);
-      } else {
-        profileConfig.updateActiveProfileSetting("");
-      }
+      triggerProfileUpdate();
     }
   });
+
+  triggerProfileUpdate();
+}
+
+function triggerProfileUpdate(): void {
+  const profileList = profileConfig.getAllProfiles();
+  const activeProfileName = profileConfig.getActiveProfile();
+  if (activeProfileName in profileList || activeProfileName === "") {
+    updateStatusBarProfile(activeProfileStatusBarIcon);
+    // TODO Update with changes for SAS 9 integration
+    // commands.executeCommand("setContext", "SAS.connectionMethod", profileList[activeProfileName].connectionMethod || "rest");
+    commands.executeCommand("setContext", "SAS.connectionMethod", "rest");
+  } else {
+    profileConfig.updateActiveProfileSetting("");
+  }
 }
 
 async function updateStatusBarProfile(profileStatusBarIcon: StatusBarItem) {
