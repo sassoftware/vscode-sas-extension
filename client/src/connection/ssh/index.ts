@@ -17,13 +17,14 @@ let timer;
 let html5FileName = "";
 
 export interface Config {
-  host: string;
+  endpoint: string;
   saspath: string;
   port?: number;
   username: string;
   password?: string;
   privateKeyPath?: string;
   privateKey?: string;
+  extraArgs?: string[];
 }
 
 conn
@@ -43,6 +44,9 @@ conn
         .on("close", () => {
           onLog = undefined;
           stream = undefined;
+          resolve = undefined;
+          reject = undefined;
+          logs = [];
           conn.end();
         })
         .on("data", (data: Buffer) => {
@@ -53,7 +57,7 @@ conn
               if (!line) {
                 return;
               }
-              if (line === endCode) {
+              if (line.endsWith(endCode)) {
                 // run completed
                 clearTimer();
                 getResult();
@@ -67,13 +71,17 @@ conn
             });
           } else {
             logs.push(output);
-            clearTimer();
-            resolve?.();
+            if (output.endsWith("?")) {
+              clearTimer();
+              resolve?.();
+            }
           }
         });
 
+      //const extraArgs: string? = config.extraArgs?.join(" ");
+
       stream.write(
-        `${config.saspath} -nodms -terminal -stdio -nosyntaxcheck -pagesize MAX\n`
+        `${config.saspath} -nodms -terminal -nosyntaxcheck -pagesize MAX\n`
       );
     });
   })
@@ -119,7 +127,7 @@ function getResult() {
         //TODO: should this be refactored into a shared location?
         if (fileContents.search('<*id="IDX*.+">') !== -1) {
           runResult.html5 = fileContents;
-          runResult.title = html5FileName;
+          runResult.title = "Result";
         }
       }
       resolve?.(runResult);
@@ -139,7 +147,7 @@ function setup(): Promise<void> {
     setTimer();
 
     const cfg: ConnectConfig = {
-      host: config.host,
+      host: config.endpoint,
       port: config.port,
       username: config.username,
       privateKey: config.privateKey,
@@ -163,7 +171,7 @@ function run(
     resolve = _resolve;
     reject = _reject;
 
-    stream?.write(code);
+    stream?.write(`${code}\n`);
     stream?.write(`%put ${endCode};\n`);
   });
 }

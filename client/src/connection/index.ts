@@ -32,7 +32,7 @@ export function getSession(): Session {
   }
   if (validProfile.profile.endpoint.startsWith("https")) {
     return getRestSession(validProfile.profile);
-  } else if (validProfile.profile.endpoint.startsWith("ssh")) {
+  } else if (validProfile.profile?.connectionType === "ssh") {
     return getSSHSession(validProfile.profile as any);
   }
 
