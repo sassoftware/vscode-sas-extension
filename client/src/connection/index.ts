@@ -1,3 +1,6 @@
+// Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+// Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
+
 import { LogLine } from "./rest/api/compute";
 import { getSession as getRestSession } from "./rest";
 import { AuthType, ProfileConfig } from "../components/profile";

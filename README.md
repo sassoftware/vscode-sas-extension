@@ -191,7 +191,7 @@ After configuring the SAS extension for your SAS environment, run your SAS progr
 
 To run a SAS program:
 
-1. Click `Run` (running man icon) in the upper right corner of your SAS program window. For a secure connection to SAS Viya we use authorization code for authentication. Complete these steps to connect.
+1. Click the running man icon in the upper right corner of your SAS program window. For a secure connection to SAS Viya we use authorization code for authentication. Complete these steps to connect.
 
    1.1. VS Code may prompt you about opening an external web site. Click 'Open'.
 
@@ -211,8 +211,9 @@ To run a SAS program:
 
 To run a piece of SAS code:
 
-1. Select a piece of code in your SAS program
-2. Open context menu and select `Run Selected SAS Code`
+- The `Run Selected or All SAS Code` command (`F3`) will automatically run selected code when there's a selection, and run all code when there's no selection.
+- When there're multiple selections, The `Run Selected or All SAS Code` command will combine the code from the selections in the order in which they were selected, and then submits the combined code.
+- The `Run All SAS Code` command (`F8`) will always run all code regardless of selection.
 
 **Notes**:
 

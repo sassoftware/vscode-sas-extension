@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [v0.1.2] - 2023-02-01
+
+### Changed
+
+- The `Run Selected SAS Code` command changed to `Run Selected or All SAS Code`. It will run selected code when there's a selection, and run all code when there's no selection.
+- The running man icon changed to `Run Selected or All SAS Code`
+
+### Added
+
+- When there're multiple selections, the `Run Selected or All SAS Code` command will combine all the selected code and submit.
+- Added default shortcuts, `F3` for `Run Selected or All SAS Code`, `F8` for `Run All SAS Code`.
+
+### Fixed
+
+- Fixed a problem when there is a period in the profile name
+- Fixed a problem when job running longer than 60 seconds
+- Only show Result window if result is generated
+
 ## [v0.1.1] - 2022-11-24
 
 ### Changed
