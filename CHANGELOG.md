@@ -8,19 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- The `Run Selected SAS Code` command changed to `Run Selected or All SAS Code`. It will run selected code when there's a selection, and run all code when there's no selection.
-- The running man icon changed to `Run Selected or All SAS Code`
+- The `Run Selected SAS Code` command changed to `Run Selected or All SAS Code`. It will run selected code when there's a selection, and run all code when there's no selection. #50, #51
+- The running man icon changed to `Run Selected or All SAS Code` #50, #51
 
 ### Added
 
-- When there're multiple selections, the `Run Selected or All SAS Code` command will combine all the selected code and submit.
-- Added default shortcuts, `F3` for `Run Selected or All SAS Code`, `F8` for `Run All SAS Code`.
+- When there're multiple selections, the `Run Selected or All SAS Code` command will combine all the selected code and submit. #50, #51
+- Added default shortcuts, `F3` for `Run Selected or All SAS Code`, `F8` for `Run All SAS Code`. #50, #51
 
 ### Fixed
 
-- Fixed a problem when there is a period in the profile name
-- Fixed a problem when job running longer than 60 seconds
-- Only show Result window if result is generated
+- Fixed a problem when there is a period in the profile name #43 #44
+- Fixed a problem when job running longer than 60 seconds #36, #40
+- Only show Result window if result is generated #46, #77
 
 ## [v0.1.1] - 2022-11-24
 
