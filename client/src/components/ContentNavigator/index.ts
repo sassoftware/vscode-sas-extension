@@ -7,7 +7,6 @@ import {
   commands,
   window,
   workspace,
-  TextDocument,
   TextDocumentChangeEvent,
   TreeView,
   Uri,
@@ -64,16 +63,15 @@ class ContentNavigator {
   }
 
   private registerCommands(): void {
-    commands.registerCommand(
-      "SAS.openSASfile",
-      async (document: TextDocument) => {
-        try {
-          await window.showTextDocument(document);
-        } catch (error) {
-          await window.showErrorMessage(Messages.FileOpenError);
-        }
+    commands.registerCommand("SAS.openSASfile", async (item: ContentItem) => {
+      try {
+        await window.showTextDocument(
+          await this.contentDataProvider.getUri(item)
+        );
+      } catch (error) {
+        await window.showErrorMessage(Messages.FileOpenError);
       }
-    );
+    });
 
     commands.registerCommand(
       "SAS.deleteResource",
@@ -168,10 +166,16 @@ class ContentNavigator {
         // This could be improved upon. We don't know if the old document is actually
         // open. This forces it open then closes it, only to re-open it again after
         // it's renamed.
-        !isContainer &&
-          (await window.showTextDocument(resourceUri).then(async () => {
-            await commands.executeCommand("workbench.action.closeActiveEditor");
-          }));
+        try {
+          !isContainer &&
+            (await window.showTextDocument(resourceUri).then(async () => {
+              await commands.executeCommand(
+                "workbench.action.closeActiveEditor"
+              );
+            }));
+        } catch (error) {
+          // If we fail to show the file, there's nothing extra to do
+        }
 
         const newUri = await this.contentDataProvider.renameResource(
           resource,
@@ -188,7 +192,11 @@ class ContentNavigator {
           return;
         }
 
-        !isContainer && (await window.showTextDocument(newUri));
+        try {
+          !isContainer && (await window.showTextDocument(newUri));
+        } catch (error) {
+          // If we fail to show the file, there's nothing extra to do
+        }
 
         this.contentDataProvider.refresh();
       }

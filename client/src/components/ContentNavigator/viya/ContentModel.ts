@@ -134,6 +134,7 @@ export class ContentModel {
     const res = await this.connection.get(resourceId + "/content", {
       transformResponse: (response) => response,
     });
+
     this.fileTokenMaps[resourceId] = {
       etag: res.headers.etag,
       lastModified: res.headers["last-modified"],
@@ -283,6 +284,20 @@ export class ContentModel {
       etag: res.headers.etag,
       lastModified: res.headers["last-modified"],
     };
+  }
+
+  public async getUri(item: ContentItem): Promise<Uri> {
+    if (item.type !== "reference") {
+      return this.dataDescriptor.getUri(item);
+    }
+
+    // If we're attempting to open a favorite, open the underlying file instead.
+    try {
+      const resp = await this.connection.get(item.uri);
+      return this.dataDescriptor.getUri(resp.data);
+    } catch (error) {
+      return this.dataDescriptor.getUri(item);
+    }
   }
 
   public async delete(item: ContentItem): Promise<boolean> {

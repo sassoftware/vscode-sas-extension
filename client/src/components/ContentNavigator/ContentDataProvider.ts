@@ -63,7 +63,7 @@ class ContentDataProvider
         ? undefined
         : {
             command: "SAS.openSASfile",
-            arguments: [this.dataDescriptor.getUri(item)],
+            arguments: [item],
             title: "Open SAS File",
           },
     };
@@ -96,6 +96,10 @@ class ContentDataProvider
     return await this.model
       .getContentByUri(uri)
       .then((content) => new TextEncoder().encode(content));
+  }
+
+  public getUri(item: ContentItem): Promise<Uri> {
+    return this.model.getUri(item);
   }
 
   public async createFolder(
