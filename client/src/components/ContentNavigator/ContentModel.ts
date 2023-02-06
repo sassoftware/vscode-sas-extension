@@ -2,8 +2,7 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import axios, { AxiosInstance } from "axios";
-import { ContentItem, Link } from "../types";
-import { DataDescriptor } from "./DataDescriptor";
+import { ContentItem, Link } from "./types";
 import {
   FILE_TYPES,
   FOLDER_TYPES,
@@ -12,8 +11,8 @@ import {
   TRASH_FOLDER,
 } from "./const";
 import { Uri } from "vscode";
-import { getLink, getResourceId } from "../utils";
-import { getApiConfig } from "../../../connection/rest/common";
+import { getLink, getResourceId, getTypeName, getUri } from "./utils";
+import { getApiConfig } from "../../connection/rest/common";
 
 interface AddMemberProperties {
   name?: string;
@@ -22,14 +21,12 @@ interface AddMemberProperties {
 
 export class ContentModel {
   private connection: AxiosInstance;
-  private dataDescriptor: DataDescriptor;
   private fileTokenMaps: {
     [id: string]: { etag: string; lastModified: string };
   };
   private authorized: boolean;
 
-  constructor(dataDescriptor: DataDescriptor) {
-    this.dataDescriptor = dataDescriptor;
+  constructor() {
     this.fileTokenMaps = {};
     this.authorized = false;
   }
@@ -39,10 +36,6 @@ export class ContentModel {
     this.connection.defaults.headers.common.Authorization =
       "Bearer " + getApiConfig().accessToken;
     this.authorized = true;
-  }
-
-  public getDataDescriptor(): DataDescriptor {
-    return this.dataDescriptor;
   }
 
   public async getChildren(item: ContentItem): Promise<ContentItem[]> {
@@ -96,8 +89,7 @@ export class ContentModel {
     if (!result.items) {
       return Promise.reject();
     }
-    const isTrash =
-      TRASH_FOLDER === this.dataDescriptor.getTypeName(item) || item.__trash__;
+    const isTrash = TRASH_FOLDER === getTypeName(item) || item.__trash__;
 
     return result.items.map((childItem: ContentItem) => ({
       ...childItem,
@@ -288,15 +280,15 @@ export class ContentModel {
 
   public async getUri(item: ContentItem): Promise<Uri> {
     if (item.type !== "reference") {
-      return this.dataDescriptor.getUri(item);
+      return getUri(item);
     }
 
     // If we're attempting to open a favorite, open the underlying file instead.
     try {
       const resp = await this.connection.get(item.uri);
-      return this.dataDescriptor.getUri(resp.data);
+      return getUri(resp.data);
     } catch (error) {
-      return this.dataDescriptor.getUri(item);
+      return getUri(item);
     }
   }
 

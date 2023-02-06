@@ -12,31 +12,27 @@ import {
   Uri,
 } from "vscode";
 import { profileConfig } from "../../commands/profile";
-import { DataDescriptor } from "./viya/DataDescriptor";
-import { ContentModel } from "./viya/ContentModel";
+import { ContentModel } from "./ContentModel";
 import { ContentItem } from "./types";
-import { Messages } from "./viya/const";
+import { Messages } from "./const";
 import { sprintf } from "sprintf-js";
+import { getUri, isContainer as getIsContainer } from "./utils";
 
 const fileValidator = (value: string): string | null =>
   /^([a-zA-Z0-9\s._-]+)\.\w+$/.test(value)
     ? null
     : Messages.FileValidationError;
-const foldervalidator = (value: string): string | null =>
+const folderValidator = (value: string): string | null =>
   /^([a-zA-Z0-9\s_-]+)$/.test(value) ? null : Messages.FolderValidationError;
 
 class ContentNavigator {
-  private dataDescriptor: DataDescriptor;
   private contentDataProvider: ContentDataProvider;
   private treeView: TreeView<ContentItem>;
 
   private dirtyFiles: Record<string, boolean>;
 
   constructor(context: ExtensionContext) {
-    this.dataDescriptor = new DataDescriptor();
-    this.contentDataProvider = new ContentDataProvider(
-      new ContentModel(this.dataDescriptor)
-    );
+    this.contentDataProvider = new ContentDataProvider(new ContentModel());
     this.treeView = window.createTreeView("sas-content-navigator", {
       treeDataProvider: this.contentDataProvider,
     });
@@ -120,7 +116,7 @@ class ContentNavigator {
         const folderName = await window.showInputBox({
           prompt: Messages.NewFolderPrompt,
           title: Messages.NewFolderTitle,
-          validateInput: foldervalidator,
+          validateInput: folderValidator,
         });
         if (!folderName) {
           return;
@@ -141,8 +137,8 @@ class ContentNavigator {
     commands.registerCommand(
       "SAS.renameResource",
       async (resource: ContentItem) => {
-        const isContainer = this.dataDescriptor.isContainer(resource);
-        const resourceUri = this.dataDescriptor.getUri(resource);
+        const isContainer = getIsContainer(resource);
+        const resourceUri = getUri(resource);
 
         // Make sure the file is saved before renaming
         if (this.dirtyFiles[resourceUri.query]) {
@@ -156,7 +152,7 @@ class ContentNavigator {
             ? Messages.RenameFolderTitle
             : Messages.RenameFileTitle,
           value: resource.name,
-          validateInput: isContainer ? foldervalidator : fileValidator,
+          validateInput: isContainer ? folderValidator : fileValidator,
         });
 
         if (name === resource.name) {

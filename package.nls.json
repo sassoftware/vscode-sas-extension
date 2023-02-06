@@ -25,5 +25,8 @@
   "commands.SAS.run": "Run All SAS Code",
   "commands.SAS.runSelected": "Run Selected or All SAS Code",
   "commands.SAS.switchProfile": "Switch Current Connection Profile",
-  "commwands.SAS.updateProfile": "Update Connection Profile"
+  "commwands.SAS.updateProfile": "Update Connection Profile",
+
+  "views.SAS.welcome": "You have not yet signed in to SAS.\n[Sign in](command:SAS.authorize)",
+  "views.SAS.unsupportedConnection": "Your connection does not support SAS content navigation."
 }

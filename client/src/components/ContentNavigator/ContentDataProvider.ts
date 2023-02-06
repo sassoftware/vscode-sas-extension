@@ -2,8 +2,6 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import { ContentItem } from "./types";
-import { ContentModel } from "./viya/ContentModel";
-import { DataDescriptor } from "./viya/DataDescriptor";
 import {
   Disposable,
   Event,
@@ -19,6 +17,16 @@ import {
   TreeItemCollapsibleState,
   Uri,
 } from "vscode";
+import {
+  getCreationDate,
+  getId,
+  getLabel,
+  getModifyDate,
+  getUri,
+  isContainer as getIsContainer,
+  resourceType,
+} from "./utils";
+import { ContentModel } from "./ContentModel";
 
 class ContentDataProvider
   implements TreeDataProvider<ContentItem>, FileSystemProvider
@@ -26,13 +34,11 @@ class ContentDataProvider
   private _onDidChangeFile: EventEmitter<FileChangeEvent[]>;
   private _onDidChangeTreeData: EventEmitter<ContentItem | undefined>;
   private readonly model: ContentModel;
-  private readonly dataDescriptor: DataDescriptor;
 
   constructor(model: ContentModel) {
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
     this.model = model;
-    this.dataDescriptor = this.model.getDataDescriptor();
   }
 
   get onDidChangeFile(): Event<FileChangeEvent[]> {
@@ -49,13 +55,13 @@ class ContentDataProvider
   }
 
   public getTreeItem(item: ContentItem): TreeItem | Promise<TreeItem> {
-    const isContainer = this.dataDescriptor.isContainer(item);
+    const isContainer = getIsContainer(item);
 
     return {
       iconPath: isContainer ? ThemeIcon.Folder : ThemeIcon.File,
-      contextValue: this.dataDescriptor.resourceType(item),
-      id: this.dataDescriptor.getId(item),
-      label: this.dataDescriptor.getLabel(item),
+      contextValue: resourceType(item),
+      id: getId(item),
+      label: getLabel(item),
       collapsibleState: isContainer
         ? TreeItemCollapsibleState.Collapsed
         : undefined,
@@ -82,11 +88,9 @@ class ContentDataProvider
   public async stat(uri: Uri): Promise<FileStat> {
     return await this.model.getResourceByUri(uri).then(
       (resource): FileStat => ({
-        type: this.dataDescriptor.isContainer(resource)
-          ? FileType.Directory
-          : FileType.File,
-        ctime: this.dataDescriptor.getCreationDate(resource),
-        mtime: this.dataDescriptor.getModifyDate(resource),
+        type: getIsContainer(resource) ? FileType.Directory : FileType.File,
+        ctime: getCreationDate(resource),
+        mtime: getModifyDate(resource),
         size: 0,
       })
     );
@@ -109,7 +113,7 @@ class ContentDataProvider
     const newItem = await this.model.createFolder(item, folderName);
     if (newItem) {
       this.refresh();
-      return this.dataDescriptor.getUri(newItem);
+      return getUri(newItem);
     }
   }
 
@@ -120,7 +124,7 @@ class ContentDataProvider
     const newItem = await this.model.createFile(item, fileName);
     if (newItem) {
       this.refresh();
-      return this.dataDescriptor.getUri(newItem);
+      return getUri(newItem);
     }
   }
 
@@ -130,7 +134,7 @@ class ContentDataProvider
   ): Promise<Uri | undefined> {
     const newItem = await this.model.renameResource(item, name);
     if (newItem) {
-      return this.dataDescriptor.getUri(newItem);
+      return getUri(newItem);
     }
   }
 

@@ -402,13 +402,13 @@
       {
         "view": "sas-content-get-started",
         "when": "!SAS.authorized && SAS.connectionMethod == rest",
-        "contents": "You have not yet signed in to SAS.\n[Sign in](command:SAS.authorize)",
+        "contents": "%views.SAS.welcome%",
         "enablement": "!SAS.authorizing"
       },
       {
         "view": "sas-content-invalid-connection",
         "when": "SAS.connectionMethod != rest",
-        "contents": "Your connection does not support SAS content navigation."
+        "contents": "%views.SAS.unsupportedConnection%"
       }
     ]
   },
