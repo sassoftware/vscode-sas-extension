@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 console.log("start");
 const dev = process.argv[2];
-import esbuild from "esbuild";
+const esbuild = require("esbuild");
 
 const plugins = [
   {
@@ -33,9 +33,10 @@ const buildOptions = {
   plugins: dev ? plugins : [],
 };
 
-const ctx = await esbuild.context(buildOptions);
-if (dev) {
-  await ctx.watch();
-}
+esbuild.context(buildOptions).then((ctx) => {
+  if (dev) {
+    return ctx.watch();
+  }
 
-await ctx.dispose();
+  return ctx.dispose();
+});
