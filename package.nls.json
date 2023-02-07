@@ -27,6 +27,6 @@
   "commands.SAS.switchProfile": "Switch Current Connection Profile",
   "commwands.SAS.updateProfile": "Update Connection Profile",
 
-  "views.SAS.welcome": "You have not yet signed in to SAS.\n[Sign in](command:SAS.authorize)",
-  "views.SAS.unsupportedConnection": "Your connection does not support SAS content navigation."
+  "views.SAS.welcome": "To use the SAS Extension for Visual Studio Code, you must sign in to SAS.\n[Sign In](command:SAS.authorize)",
+  "views.SAS.unsupportedConnection": "Your connection does not support SAS content navigation within the SAS Extension for Visual Studio Code. You can access files only using the Explorer view."
 }

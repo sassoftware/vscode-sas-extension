@@ -388,12 +388,12 @@
         },
         {
           "id": "sas-content-get-started",
-          "name": "Get Started",
+          "name": "Sign In",
           "when": "!SAS.authorized && SAS.connectionMethod == rest"
         },
         {
           "id": "sas-content-invalid-connection",
-          "name": "Get Started",
+          "name": "Sign In",
           "when": "!SAS.authorized && SAS.connectionMethod != rest"
         }
       ]
