@@ -360,7 +360,7 @@ export class ContentModel {
         `/types/types?filter=contains('extensions', '${ext}')`
       );
 
-      if (!typeResponse.data.items || typeResponse.data.items.length === 0) {
+      if (typeResponse.data.items && typeResponse.data.items.length !== 0) {
         return typeResponse.data.items[0].name;
       }
     } catch {
