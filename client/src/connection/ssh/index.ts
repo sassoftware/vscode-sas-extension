@@ -24,7 +24,7 @@ export interface Config {
   password?: string;
   privateKeyPath?: string;
   privateKey?: string;
-  extraArgs?: string[];
+  sasOptions?: string[];
 }
 
 conn
@@ -78,11 +78,23 @@ conn
           }
         });
 
-      //const extraArgs: string? = config.extraArgs?.join(" ");
+      const resolvedEnv: string[] = [
+        '_JAVA_OPTIONS="-Djava.awt.headless=true"',
+      ];
+      const execArgs: string = resolvedEnv.join(" ");
 
-      stream.write(
-        `${config.saspath} -nodms -terminal -nosyntaxcheck -pagesize MAX\n`
-      );
+      const resolvedSasOpts: string[] = [
+        "-nodms",
+        "-terminal",
+        "-nosyntaxcheck",
+      ];
+
+      if (config.sasOptions) {
+        resolvedSasOpts.push(...config.sasOptions);
+      }
+      const execSasOpts: string = resolvedSasOpts.join(" ");
+
+      stream.write(`${execArgs} ${config.saspath} ${execSasOpts} \n`);
     });
   })
   .on("error", (err) => {

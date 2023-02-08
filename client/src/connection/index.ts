@@ -30,7 +30,7 @@ export function getSession(): Session {
   if (validProfile.type === AuthType.Error) {
     throw new Error(validProfile.error);
   }
-  if (validProfile.profile.endpoint.startsWith("https")) {
+  if (validProfile.profile?.connectionType === "rest") {
     return getRestSession(validProfile.profile);
   } else if (validProfile.profile?.connectionType === "ssh") {
     return getSSHSession(validProfile.profile as any);

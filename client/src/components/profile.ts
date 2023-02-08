@@ -38,6 +38,7 @@ export interface Profile {
   clientId?: string;
   clientSecret?: string;
   context?: string;
+  connectionType: string;
 }
 
 /**
