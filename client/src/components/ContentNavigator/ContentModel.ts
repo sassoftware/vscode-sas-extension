@@ -2,7 +2,8 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import axios, { AxiosInstance } from "axios";
-import { ContentItem, Link } from "./types";
+import { Uri } from "vscode";
+import { getApiConfig } from "../../connection/rest/common";
 import {
   FILE_TYPES,
   FOLDER_TYPES,
@@ -10,9 +11,8 @@ import {
   ROOT_FOLDER,
   TRASH_FOLDER,
 } from "./const";
-import { Uri } from "vscode";
+import { ContentItem, Link } from "./types";
 import { getLink, getResourceId, getTypeName, getUri } from "./utils";
-import { getApiConfig } from "../../connection/rest/common";
 
 interface AddMemberProperties {
   name?: string;
@@ -300,6 +300,19 @@ export class ContentModel {
 
     try {
       await this.connection.delete(link.uri);
+    } catch (error) {
+      return false;
+    }
+
+    const deleteResourceLink = item.links.find(
+      (link: Link) => link.rel === "deleteResource"
+    );
+    if (!deleteResourceLink) {
+      return false;
+    }
+
+    try {
+      await this.connection.delete(deleteResourceLink.uri);
     } catch (error) {
       return false;
     }
