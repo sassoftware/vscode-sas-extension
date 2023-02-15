@@ -1,10 +1,14 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
+import { authentication } from "vscode";
 import { RunResult, Session } from "..";
+import { SASAuthProvider } from "../../components/AuthProvider";
 import { ContextsApi, LogLine } from "./api/compute";
-import { clearTokens, getAccessToken } from "./auth";
 import { ComputeState, getApiConfig } from "./common";
+import { ComputeJob } from "./job";
+import { ComputeServer } from "./server";
+import { ComputeSession } from "./session";
 
 export interface Config {
   endpoint: string;
@@ -14,17 +18,16 @@ export interface Config {
   serverId?: string;
 }
 
-import { ComputeServer } from "./server";
-import { ComputeSession } from "./session";
-import { ComputeJob } from "./job";
-
 let config: Config;
 let computeSession: ComputeSession | undefined;
 
 async function setup() {
   const apiConfig = getApiConfig();
   if (!config.serverId) {
-    apiConfig.accessToken = await getAccessToken(config);
+    const session = await authentication.getSession(SASAuthProvider.id, [], {
+      createIfNone: true,
+    });
+    apiConfig.accessToken = session.accessToken;
   }
 
   if (computeSession && computeSession.sessionId) {
@@ -140,9 +143,9 @@ async function run(code: string, onLog?: (logs: LogLine[]) => void) {
 }
 
 async function close() {
-  clearTokens();
   if (computeSession && computeSession.sessionId) {
     computeSession.delete();
+    computeSession = undefined;
   }
 }
 
