@@ -38,7 +38,7 @@ export class ContentModel {
     this.authorized = true;
   }
 
-  public async getChildren(item: ContentItem): Promise<ContentItem[]> {
+  public async getChildren(item?: ContentItem): Promise<ContentItem[]> {
     if (!this.authorized) {
       return [];
     }
@@ -308,7 +308,7 @@ export class ContentModel {
       (link: Link) => link.rel === "deleteResource"
     );
     if (!deleteResourceLink) {
-      return false;
+      return true;
     }
 
     try {
