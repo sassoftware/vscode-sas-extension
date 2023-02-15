@@ -19,6 +19,7 @@ import {
   ServerOptions,
   TransportKind,
 } from "vscode-languageclient/node";
+import { checkProfileAndAuthorize } from "../commands/authorize";
 import { closeSession } from "../commands/closeSession";
 import {
   addProfile,
@@ -89,6 +90,7 @@ export function activate(context: ExtensionContext): void {
     commands.registerCommand("SAS.addProfile", addProfile),
     commands.registerCommand("SAS.deleteProfile", deleteProfile),
     commands.registerCommand("SAS.updateProfile", updateProfile),
+    commands.registerCommand("SAS.authorize", checkProfileAndAuthorize),
     authentication.registerAuthenticationProvider(
       SASAuthProvider.id,
       "SAS",
