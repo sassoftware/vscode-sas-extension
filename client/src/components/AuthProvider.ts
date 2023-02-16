@@ -5,6 +5,7 @@ import {
   AuthenticationProvider,
   AuthenticationProviderAuthenticationSessionsChangeEvent,
   AuthenticationSession,
+  commands,
   Disposable,
   Event,
   EventEmitter,
@@ -38,8 +39,10 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
   async getSessions(): Promise<readonly AuthenticationSession[]> {
     const stored = await this.secretStorage.get(SECRET_KEY);
     if (!stored) {
+      commands.executeCommand("setContext", "SAS.authorized", false);
       return [];
     }
+
     const session: SASAuthSession = JSON.parse(stored);
     const activeProfile = profileConfig.getActiveProfileDetail();
     const tokens = await refreshToken(activeProfile.profile, {
@@ -57,6 +60,8 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
     }
     const newSession = { ...session, accessToken: tokens.access_token };
     await this.secretStorage.store(SECRET_KEY, JSON.stringify(newSession));
+    commands.executeCommand("setContext", "SAS.authorized", true);
+
     return [newSession];
   }
 
@@ -76,10 +81,13 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
       scopes: [],
     };
     await this.secretStorage.store(SECRET_KEY, JSON.stringify(session));
+    commands.executeCommand("setContext", "SAS.authorized", true);
+
     return session;
   }
 
   async removeSession(): Promise<void> {
     await this.secretStorage.delete(SECRET_KEY);
+    commands.executeCommand("setContext", "SAS.authorized", false);
   }
 }

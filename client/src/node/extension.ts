@@ -84,7 +84,7 @@ export function activate(context: ExtensionContext): void {
     commands.registerCommand("SAS.runSelected", runSelected),
     commands.registerCommand("SAS.close", (silent) => {
       closeSession(silent === true ? undefined : "The SAS session has closed.");
-      commands.executeCommand("setContext", "SAS.authenticated", false);
+      commands.executeCommand("setContext", "SAS.authorized", false);
     }),
     commands.registerCommand("SAS.switchProfile", switchProfile),
     commands.registerCommand("SAS.addProfile", addProfile),
@@ -127,8 +127,8 @@ function triggerProfileUpdate(): void {
   if (activeProfileName in profileList || activeProfileName === "") {
     updateStatusBarProfile(activeProfileStatusBarIcon);
     // TODO Update with changes for SAS 9 integration
-    // commands.executeCommand("setContext", "SAS.connectionMethod", profileList[activeProfileName].connectionMethod || "rest");
-    commands.executeCommand("setContext", "SAS.connectionMethod", "rest");
+    // commands.executeCommand("setContext", "SAS.connectionType", profileList[activeProfileName].connectionType || "Viya");
+    commands.executeCommand("setContext", "SAS.connectionType", "Viya");
   } else {
     profileConfig.updateActiveProfileSetting("");
   }

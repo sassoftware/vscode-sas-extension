@@ -2,8 +2,8 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import axios, { AxiosInstance } from "axios";
-import { Uri } from "vscode";
-import { getApiConfig } from "../../connection/rest/common";
+import { authentication, Uri } from "vscode";
+import { SASAuthProvider } from "../AuthProvider";
 import {
   FILE_TYPES,
   FOLDER_TYPES,
@@ -31,10 +31,12 @@ export class ContentModel {
     this.authorized = false;
   }
 
-  public connect(baseURL: string): void {
+  public async connect(baseURL: string): Promise<void> {
     this.connection = axios.create({ baseURL });
-    this.connection.defaults.headers.common.Authorization =
-      "Bearer " + getApiConfig().accessToken;
+    const session = await authentication.getSession(SASAuthProvider.id, [], {
+      createIfNone: true,
+    });
+    this.connection.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`;
     this.authorized = true;
   }
 

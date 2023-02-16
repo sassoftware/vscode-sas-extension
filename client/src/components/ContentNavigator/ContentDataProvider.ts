@@ -1,7 +1,6 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import { ContentItem } from "./types";
 import {
   Disposable,
   Event,
@@ -17,6 +16,8 @@ import {
   TreeItemCollapsibleState,
   Uri,
 } from "vscode";
+import { ContentModel } from "./ContentModel";
+import { ContentItem } from "./types";
 import {
   getCreationDate,
   getId,
@@ -26,7 +27,6 @@ import {
   isContainer as getIsContainer,
   resourceType,
 } from "./utils";
-import { ContentModel } from "./ContentModel";
 
 class ContentDataProvider
   implements TreeDataProvider<ContentItem>, FileSystemProvider
@@ -50,7 +50,7 @@ class ContentDataProvider
   }
 
   public async connect(baseUrl: string): Promise<void> {
-    this.model.connect(baseUrl);
+    await this.model.connect(baseUrl);
     this.refresh();
   }
 

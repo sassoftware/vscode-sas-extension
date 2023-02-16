@@ -1,7 +1,14 @@
 import axios from "axios";
 import { expect } from "chai";
 import * as sinon from "sinon";
-import { FileStat, FileType, ThemeIcon, TreeItem, Uri } from "vscode";
+import {
+  authentication,
+  FileStat,
+  FileType,
+  ThemeIcon,
+  TreeItem,
+  Uri,
+} from "vscode";
 import { ROOT_FOLDER } from "../../../src/components/ContentNavigator/const";
 import ContentDataProvider from "../../../src/components/ContentNavigator/ContentDataProvider";
 import { ContentModel } from "../../../src/components/ContentNavigator/ContentModel";
@@ -82,10 +89,18 @@ const mockContentItem = (
 });
 
 describe("ContentDataProvider", async function () {
+  let authStub;
+  beforeEach(() => {
+    authStub = sinon
+      .stub(authentication, "getSession")
+      .resolves({ accessToken: "12345" });
+  });
+
   afterEach(() => {
     if (stub) {
       stub.restore();
     }
+    authStub.restore();
   });
 
   it("getTreeItem - returns a file tree item for file reference", async () => {
@@ -147,7 +162,7 @@ describe("ContentDataProvider", async function () {
       }),
     });
 
-    dataProvider.connect("http://test.io");
+    await dataProvider.connect("http://test.io");
 
     const children = await dataProvider.getChildren();
     expect(children.length).to.equal(3);
@@ -166,7 +181,7 @@ describe("ContentDataProvider", async function () {
         },
     });
 
-    dataProvider.connect("http://test.io");
+    await dataProvider.connect("http://test.io");
 
     const children = await dataProvider.getChildren(
       mockContentItem({
@@ -196,7 +211,7 @@ describe("ContentDataProvider", async function () {
       "uri://test": childItem,
     });
 
-    dataProvider.connect("http://test.io");
+    await dataProvider.connect("http://test.io");
     const fileData: FileStat = await dataProvider.stat(getUri(childItem));
 
     expect(fileData).to.deep.include({
@@ -214,7 +229,7 @@ describe("ContentDataProvider", async function () {
       "uri://test": childItem,
     });
 
-    dataProvider.connect("http://test.io");
+    await dataProvider.connect("http://test.io");
     const folderData: FileStat = await dataProvider.stat(getUri(childItem));
 
     expect(folderData).to.deep.include({
@@ -232,7 +247,7 @@ describe("ContentDataProvider", async function () {
       "uri://test/content": "/* file content */",
     });
 
-    dataProvider.connect("http://test.io");
+    await dataProvider.connect("http://test.io");
     const fileData: Uint8Array = await dataProvider.readFile(getUri(childItem));
 
     expect(new TextDecoder().decode(fileData)).to.equal("/* file content */");
@@ -255,7 +270,7 @@ describe("ContentDataProvider", async function () {
       },
     });
 
-    dataProvider.connect("http://test.io");
+    await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.createFolder(parentItem, "folder-test");
     expect(uri).to.deep.equal(getUri(createdFolder));
   });
@@ -305,7 +320,7 @@ describe("ContentDataProvider", async function () {
       },
     });
 
-    dataProvider.connect("http://test.io");
+    await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.createFile(parentItem, "file.sas");
     expect(uri).to.deep.equal(getUri(createdFile));
   });
@@ -325,7 +340,7 @@ describe("ContentDataProvider", async function () {
       },
     });
 
-    dataProvider.connect("http://test.io");
+    await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.renameResource(item, "new-file.sas");
     expect(uri).to.deep.equal(getUri(item));
   });
@@ -353,7 +368,7 @@ describe("ContentDataProvider", async function () {
       },
     });
 
-    dataProvider.connect("http://test.io");
+    await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.renameResource(
       item,
       "favorite-link.sas"
@@ -374,7 +389,7 @@ describe("ContentDataProvider", async function () {
     mockRequests({
       "uri://test/content": "/* file content */",
     });
-    dataProvider.connect("http://test.io");
+    await dataProvider.connect("http://test.io");
     await dataProvider.readFile(getUri(item));
 
     mockRequests({
@@ -383,7 +398,7 @@ describe("ContentDataProvider", async function () {
         requestData: "/* This is the content */",
       },
     });
-    dataProvider.connect("http://test.io");
+    await dataProvider.connect("http://test.io");
     await dataProvider.writeFile(
       getUri(item),
       new TextEncoder().encode("/* This is the content */")
@@ -423,7 +438,7 @@ describe("ContentDataProvider", async function () {
       },
     });
 
-    dataProvider.connect("http://test.io");
+    await dataProvider.connect("http://test.io");
     const deleted = await dataProvider.deleteResource(item);
 
     expect(deleted).to.equal(true);

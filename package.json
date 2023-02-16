@@ -384,30 +384,30 @@
         {
           "id": "sas-content-navigator",
           "name": "Explorer",
-          "when": "SAS.authorized && SAS.connectionMethod == rest"
+          "when": "SAS.authorized && SAS.connectionType == Viya"
         },
         {
           "id": "sas-content-get-started",
           "name": "Sign In",
-          "when": "!SAS.authorized && SAS.connectionMethod == rest"
+          "when": "!SAS.authorized && SAS.connectionType == Viya"
         },
         {
           "id": "sas-content-invalid-connection",
           "name": "Sign In",
-          "when": "!SAS.authorized && SAS.connectionMethod != rest"
+          "when": "!SAS.authorized && SAS.connectionType != Viya"
         }
       ]
     },
     "viewsWelcome": [
       {
         "view": "sas-content-get-started",
-        "when": "!SAS.authorized && SAS.connectionMethod == rest",
+        "when": "!SAS.authorized && SAS.connectionType == Viya",
         "contents": "%views.SAS.welcome%",
         "enablement": "!SAS.authorizing"
       },
       {
         "view": "sas-content-invalid-connection",
-        "when": "SAS.connectionMethod != rest",
+        "when": "SAS.connectionType != Viya",
         "contents": "%views.SAS.unsupportedConnection%"
       }
     ]
