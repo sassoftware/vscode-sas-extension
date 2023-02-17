@@ -49,6 +49,7 @@ export const Messages = {
   EmptyRecycleBinWarningMessage:
     "Are you sure you want to permanently delete all the items? You cannot undo this action.",
   FileDeletionError: "Unable to delete file.",
+  FolderDeletionError: "Unable to delete folder.",
   FileOpenError: "The file type is unsupported.",
   FileRestoreError: "Unable to restore file.",
   FileValidationError: "Invalid file name.",

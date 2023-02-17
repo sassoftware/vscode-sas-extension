@@ -80,7 +80,11 @@ class ContentDataProvider
         ? TreeItemCollapsibleState.Collapsed
         : undefined,
       command: isContainer
-        ? undefined
+        ? {
+            command: "SAS.gah",
+            arguments: [item],
+            title: "test",
+          }
         : {
             command: "SAS.openSASfile",
             arguments: [item],

@@ -484,6 +484,11 @@
           "when": "SAS.authorized && SAS.connectionType == rest"
         },
         {
+          "id": "sas-library-navigator",
+          "name": "Libraries",
+          "when": "SAS.authorized && SAS.connectionType == Viya"
+        },
+        {
           "id": "sas-content-get-started",
           "name": "Sign In",
           "when": "!SAS.authorized && SAS.connectionType == rest"
