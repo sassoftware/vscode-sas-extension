@@ -4,6 +4,7 @@ import { readFileSync } from "fs";
 
 //TODO: decouple ui model from api model
 import { LogLine } from "../rest/api/compute";
+import { SSHProfile } from "../../components/profile";
 
 const conn = new Client();
 const endCode = "--vscode-sas-extension-submit-end--";
@@ -196,9 +197,9 @@ function close() {
   stream.end("exit\n");
 }
 
-export function getSession(c: Config): Session {
-  if (c.privateKeyPath) {
-    c.privateKey = readFileSync(c.privateKeyPath).toString();
+export function getSession(profile: SSHProfile): Session {
+  if (profile.privateKeyPath) {
+    profile.privateKey = readFileSync(profile.privateKeyPath).toString();
   }
   config = c;
   return {

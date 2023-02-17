@@ -4,7 +4,12 @@
 import { LogLine } from "./rest/api/compute";
 import { getSession as getRestSession } from "./rest";
 import { getSession as getSSHSession } from "./ssh";
-import { AuthType, ProfileConfig } from "../components/profile";
+import {
+  AuthType,
+  ProfileConfig,
+  SSHProfile,
+  ViyaProfile,
+} from "../components/profile";
 
 let profileConfig: ProfileConfig;
 
@@ -30,10 +35,10 @@ export function getSession(): Session {
   if (validProfile.type === AuthType.Error) {
     throw new Error(validProfile.error);
   }
-  if (validProfile.profile?.connectionType === "rest") {
-    return getRestSession(validProfile.profile);
-  } else if (validProfile.profile?.connectionType === "ssh") {
-    return getSSHSession(validProfile.profile as any);
+  if (validProfile.profile?.connectionType === "Viya") {
+    return getRestSession(validProfile.profile as ViyaProfile);
+  } else if (validProfile.profile?.connectionType === "SSH") {
+    return getSSHSession(validProfile.profile as SSHProfile);
   }
 
   throw new Error("Invalid endpoint");

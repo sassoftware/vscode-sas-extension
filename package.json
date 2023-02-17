@@ -136,30 +136,109 @@
                   "type": "object",
                   "description": "%configuration.SAS.connectionProfiles.profiles.name%",
                   "required": [
-                    "endpoint"
+                    "connectionType"
                   ],
                   "properties": {
-                    "endpoint": {
+                    "connectionType": {
                       "type": "string",
-                      "default": "",
-                      "description": "%configuration.SAS.connectionProfiles.profiles.endpoint%"
-                    },
-                    "context": {
-                      "type": "string",
-                      "default": "SAS Job Execution compute context",
-                      "description": "%configuration.SAS.connectionProfiles.profiles.context%"
-                    },
-                    "clientId": {
-                      "type": "string",
-                      "default": "",
-                      "description": "%configuration.SAS.connectionProfiles.profiles.clientId%"
-                    },
-                    "clientSecret": {
-                      "type": "string",
-                      "default": "",
-                      "description": "%configuration.SAS.connectionProfiles.profiles.clientSecret%"
+                      "default": "Viya",
+                      "description": "%configurations.SAS.connectionProfiles.profiles.connectionType%",
+                      "enum": [
+                        "viya",
+                        "ssh"
+                      ]
                     }
-                  }
+                  },
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "connectionType": {
+                            "const": "viya"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "endpoint"
+                        ],
+                        "properties": {
+                          "endpoint": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.endpoint%"
+                          },
+                          "context": {
+                            "type": "string",
+                            "default": "SAS Job Execution compute context",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.context%"
+                          },
+                          "clientId": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.clientId%"
+                          },
+                          "clientSecret": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.clientSecret%"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "connectionType": {
+                            "const": "ssh"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "host",
+                          "saspath",
+                          "username",
+                          "port",
+                          "privateKeyPath"
+                        ],
+                        "properties": {
+                          "host": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.host%"
+                          },
+                          "saspath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.saspath%"
+                          },
+                          "username": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.username%"
+                          },
+                          "port": {
+                            "type": "number",
+                            "default": 22,
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.port%",
+                            "exclusiveMinimum": 1,
+                            "exclusiveMaximum": 65535
+                          },
+                          "privateKeyPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.privateKeyPath%"
+                          },
+                          "sasOptions": {
+                            "type": "array",
+                            "default": [],
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.sasOptions%"
+                          }
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
