@@ -84,7 +84,6 @@ export function activate(context: ExtensionContext): void {
     commands.registerCommand("SAS.runSelected", runSelected),
     commands.registerCommand("SAS.close", (silent) => {
       closeSession(silent === true ? undefined : "The SAS session has closed.");
-      commands.executeCommand("setContext", "SAS.authorized", false);
     }),
     commands.registerCommand("SAS.switchProfile", switchProfile),
     commands.registerCommand("SAS.addProfile", addProfile),
