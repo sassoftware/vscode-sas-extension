@@ -44,6 +44,7 @@ export const FOLDER_TYPES = [
 
 export const Messages = {
   FileDeletionError: "Unable to delete file.",
+  FolderDeletionError: "Unable to delete folder.",
   FileOpenError: "The file type is unsupported.",
   FileValidationError: "Invalid file name.",
   FolderDeletionError: "Unable to delete folder.",
