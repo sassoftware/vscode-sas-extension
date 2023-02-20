@@ -1,21 +1,21 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import ContentDataProvider from "./ContentDataProvider";
+import { sprintf } from "sprintf-js";
 import {
-  ExtensionContext,
   commands,
-  window,
-  workspace,
+  ExtensionContext,
   TextDocumentChangeEvent,
   TreeView,
   Uri,
+  window,
+  workspace,
 } from "vscode";
 import { profileConfig } from "../../commands/profile";
+import { Messages } from "./const";
+import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
 import { ContentItem } from "./types";
-import { Messages } from "./const";
-import { sprintf } from "sprintf-js";
 import { getUri, isContainer as getIsContainer } from "./utils";
 
 const fileValidator = (value: string): string | null =>
@@ -72,8 +72,13 @@ class ContentNavigator {
     commands.registerCommand(
       "SAS.deleteResource",
       async (resource: ContentItem) => {
+        const isContainer = getIsContainer(resource);
         if (!(await this.contentDataProvider.deleteResource(resource))) {
-          window.showErrorMessage(Messages.FileDeletionError);
+          window.showErrorMessage(
+            isContainer
+              ? Messages.FolderDeletionError
+              : Messages.FileDeletionError
+          );
         }
       }
     );

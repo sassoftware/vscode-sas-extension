@@ -294,7 +294,7 @@ export class ContentModel {
     }
   }
 
-  public async delete(item: ContentItem): Promise<boolean> {
+  private async deleteItem(item: ContentItem): Promise<boolean> {
     const link = item.links.find((link: Link) => link.rel === "delete");
     if (!link) {
       return false;
@@ -306,20 +306,35 @@ export class ContentModel {
       return false;
     }
 
-    const deleteResourceLink = item.links.find(
-      (link: Link) => link.rel === "deleteResource"
-    );
-    if (!deleteResourceLink) {
-      return true;
-    }
+    return true;
+  }
 
-    try {
-      await this.connection.delete(deleteResourceLink.uri);
-    } catch (error) {
+  public async delete(item: ContentItem): Promise<boolean> {
+    const success = this.deleteItem(item);
+    if (!success) {
       return false;
     }
 
-    return true;
+    // Now, lets see if there's a favorite for this item
+    try {
+      const { data: favoritesResponse } = await this.connection.get(
+        `/folders/folders/@myFavorites/members?limit=100&filter=eq(uri,"${item.uri}")`
+      );
+
+      // If we don't have a favorite, we're done
+      if (favoritesResponse.items.length === 0) {
+        return true;
+      }
+
+      // We should only have one favorite matching our uri
+      if (favoritesResponse.items.length > 1) {
+        return false;
+      }
+
+      return await this.deleteItem(favoritesResponse.items[0]);
+    } catch (error) {
+      return true;
+    }
   }
 
   private async addMember(
