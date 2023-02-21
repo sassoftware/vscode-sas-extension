@@ -1,14 +1,14 @@
-// Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+// Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import { ContentItem, Link } from "./types";
-import {
-  FOLDER_TYPES,
-  FOLDER_TYPE,
-  FILE_TYPE,
-  FAVORITES_FOLDER,
-} from "./const";
 import { Uri } from "vscode";
+import {
+  FAVORITES_FOLDER,
+  FILE_TYPE,
+  FOLDER_TYPE,
+  FOLDER_TYPES,
+} from "./const";
+import { ContentItem, Link } from "./types";
 
 export const getLink = (
   links: Array<Link>,
