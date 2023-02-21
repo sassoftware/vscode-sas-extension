@@ -9,24 +9,13 @@ import { SSHProfile } from "../../components/profile";
 const conn = new Client();
 const endCode = "--vscode-sas-extension-submit-end--";
 let stream: ClientChannel | undefined;
-let config: Config;
+let config: SSHProfile;
 let resolve: ((value?) => void) | undefined;
 let reject: ((reason?) => void) | undefined;
 let onLog: ((logs: LogLine[]) => void) | undefined;
 let logs: string[] = [];
 let timer;
 let html5FileName = "";
-
-export interface Config {
-  endpoint: string;
-  saspath: string;
-  port?: number;
-  username: string;
-  password?: string;
-  privateKeyPath?: string;
-  privateKey?: string;
-  sasOptions?: string[];
-}
 
 conn
   .on("ready", () => {
@@ -160,10 +149,10 @@ function setup(): Promise<void> {
     setTimer();
 
     const cfg: ConnectConfig = {
-      host: config.endpoint,
+      host: config.host,
       port: config.port,
       username: config.username,
-      privateKey: config.privateKey,
+      privateKey: readFileSync(config.privateKeyPath),
     };
     conn.connect(cfg);
   });
@@ -198,10 +187,7 @@ function close() {
 }
 
 export function getSession(profile: SSHProfile): Session {
-  if (profile.privateKeyPath) {
-    profile.privateKey = readFileSync(profile.privateKeyPath).toString();
-  }
-  config = c;
+  config = profile;
   return {
     setup,
     run,

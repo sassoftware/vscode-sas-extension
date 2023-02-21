@@ -6,6 +6,7 @@ import { getSession as getRestSession } from "./rest";
 import { getSession as getSSHSession } from "./ssh";
 import {
   AuthType,
+  ConnectionType,
   ProfileConfig,
   SSHProfile,
   ViyaProfile,
@@ -35,9 +36,9 @@ export function getSession(): Session {
   if (validProfile.type === AuthType.Error) {
     throw new Error(validProfile.error);
   }
-  if (validProfile.profile?.connectionType === "Viya") {
+  if (validProfile.profile?.connectionType === ConnectionType.Viya) {
     return getRestSession(validProfile.profile as ViyaProfile);
-  } else if (validProfile.profile?.connectionType === "SSH") {
+  } else if (validProfile.profile?.connectionType === ConnectionType.SSH) {
     return getSSHSession(validProfile.profile as SSHProfile);
   }
 

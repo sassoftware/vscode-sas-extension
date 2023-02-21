@@ -2,12 +2,12 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import {
+  commands,
   window,
   workspace,
   ConfigurationTarget,
   QuickPickOptions,
 } from "vscode";
-import { closeSession } from "../commands/closeSession";
 
 export const EXTENSION_CONFIG_KEY = "SAS";
 export const EXTENSION_DEFINE_PROFILES_CONFIG_KEY = "connectionProfiles";
