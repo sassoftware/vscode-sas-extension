@@ -9,9 +9,14 @@ export const checkProfileAndAuthorize = async (): Promise<void> => {
   }
 
   if (profileConfig.getActiveProfile() !== "") {
-    await authentication.getSession(SASAuthProvider.id, [], {
-      createIfNone: true,
-    });
+    try {
+      await authentication.getSession(SASAuthProvider.id, [], {
+        createIfNone: true,
+      });
+    } catch (error) {
+      // Do nothing here. We just want to make sure we're resetting
+      // context option below.
+    }
   }
 
   commands.executeCommand("setContext", "SAS.authorizing", false);

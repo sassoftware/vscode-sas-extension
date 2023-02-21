@@ -14,7 +14,6 @@
   "commands.SAS.addFileResource": "New File...",
   "commands.SAS.addFolderResource": "New Folder...",
   "commands.SAS.addProfile": "Add New Connection Profile",
-  "commands.SAS.authenticate": "Sign in",
   "commands.SAS.authorize": "Sign in",
   "commands.SAS.close": "Close Current Session",
   "commands.SAS.collapseAll": "Collapse All",
@@ -25,7 +24,7 @@
   "commands.SAS.run": "Run All SAS Code",
   "commands.SAS.runSelected": "Run Selected or All SAS Code",
   "commands.SAS.switchProfile": "Switch Current Connection Profile",
-  "commwands.SAS.updateProfile": "Update Connection Profile",
+  "commands.SAS.updateProfile": "Update Connection Profile",
 
   "views.SAS.welcome": "To use the SAS Extension for Visual Studio Code, you must sign in to SAS.\n[Sign In](command:SAS.authorize)",
   "views.SAS.unsupportedConnection": "Your connection does not support SAS content navigation within the SAS Extension for Visual Studio Code. You can access files only using the Explorer view."
