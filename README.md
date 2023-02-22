@@ -13,7 +13,8 @@ Welcome to the SAS Extension for Visual Studio Code! This extension provides sup
     - [Code Folding and Code Outline](#code-folding-and-code-outline)
     - [Configuring the SAS Extension](#configuring-the-sas-extension)
     - [Profiles](#profiles)
-      - [Profile Anatomy](#profile-anatomy)
+      - [Profile Anatomy (Viya)](#profile-anatomy-viya)
+      - [Profile Anatomy (SAS 9.4 Remote)](#profile-anatomy-sas-94-remote)
       - [Add New SAS Profile](#add-new-sas-profile)
       - [Delete SAS Profile](#delete-sas-profile)
       - [Switch Current SAS Profile](#switch-current-sas-profile)
@@ -111,7 +112,7 @@ _Tip_: You can define a custom region by adding `/*region*/` and `/*endregion*/`
 
 ### Configuring the SAS Extension
 
-Before running SAS code, you must configure the SAS extension to access a SAS Viya server. You must license SAS Viya to run SAS code.
+Before running SAS code, you must configure the SAS extension to access a SAS 9.4 or Viya server. You must license SAS 9.4 or Viya to run SAS code.
 
 1. When first configuring, open up a file with the SAS language. "No Profile" can be located on the Status Bar located at the bottom left of your VSCode window
 
@@ -127,7 +128,7 @@ Before running SAS code, you must configure the SAS extension to access a SAS Vi
 
 ### Profiles
 
-Profiles are easy ways to switch between multiple Viya deployments and Compute Contexts. There is no limit to the amount of profiles that can be stored.
+Profiles are easy ways to switch between multiple SAS deployments. For Viya connections, multiple Viya profiles can be used to switch between compute contexts. There is no limit to the amount of profiles that can be stored.
 
 Profiles will be stored into the VSCode settings.json file, and can be modified by hand, if needed.
 
@@ -140,7 +141,7 @@ The following commands are supported for profiles:
 | `SAS.updateProfile` | SAS: Update Connection profile         |
 | `SAS.deleteProfile` | SAS: Delete Connection profile         |
 
-#### Profile Anatomy
+#### Profile Anatomy (Viya)
 
 | Name                | Description                           | Additional Notes                                                                                                                                      |
 | ------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -150,9 +151,20 @@ The following commands are supported for profiles:
 | **Client ID**       | Registered Client ID for SAS Viya     | Please see your SAS administrator. `authorization_code` and `refresh_token` grant types are required.<br /> _Leave empty for Viya4 2022.11 and later_ |
 | **Client Secret**   | Registered Client Secret for SAS Viya | Please see your SAS administrator.<br /> _Leave empty for Viya4 2022.11 and later_                                                                    |
 
+#### Profile Anatomy (SAS 9.4 Remote)
+
+| Name                 | Description                          | Additional Notes                                                                             |
+| -------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------- |
+| **Name**             | Name of the profile                  | This will display on the status bar                                                          |
+| **Host**             | SSH Server Host                      | This will appear when hovering over the status bar                                           |
+| **Username**         | SSH Server Username                  | A username to use when establishing the SSH connection to the server                         |
+| **Port**             | SSH Server Port                      | The ssh port of the SSH server. Default value is 22                                          |
+| **SAS Path**         | Path to SAS Executable on the server | Must be a fully qualified path on the SSH server to a SAS executable                         |
+| **Private Key Path** | Local Path to SSH private key file   | Requires a SSH public/private key pair. The public key must be copied to the SSH Server Host |
+
 #### Add New SAS Profile
 
-Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, complete the prompts to create a new profile. Depending on your SAS version, the values for the prompts differ slightly.
+Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, select a connection type and complete the prompts to create a new profile. For SAS Viya Connections, depending on your SAS version, the values for the prompts differ slightly.
 
 - For SAS Viya 2022.11 and later, you can leave Client ID and Client Secret prompts empty and simply press Enter. (The built-in Client ID `vscode` will be used.)
 - For SAS Viya 2022.10 and before (including SAS Viya 3.5), you need to provide a Client ID and secret.
@@ -191,7 +203,8 @@ After configuring the SAS extension for your SAS environment, run your SAS progr
 
 To run a SAS program:
 
-1. Click the running man icon in the upper right corner of your SAS program window. For a secure connection to SAS Viya we use authorization code for authentication. Complete these steps to connect.
+1. Click the running man icon in the upper right corner of your SAS program window.
+2. For a secure connection to SAS Viya we use authorization code for authentication. Complete these steps to connect.
 
    1.1. VS Code may prompt you about opening an external web site. Click 'Open'.
 
@@ -201,9 +214,10 @@ To run a SAS program:
 
    1.4 Paste the authorization code in VS Code where indicated at the top of the screen.
 
-2. VS Code connects to SAS Viya and runs the code.
-3. The results are displayed in the application.
-4. The SAS output log and error information are displayed in the applicaiton.
+3. For a secure connection to SAS 9.4 remote we use the supplied private key to authenticate to the remote server via SSH.
+4. VS Code connects to SAS and runs the code.
+5. The results are displayed in the application.
+6. The SAS output log and error information are displayed in the applicaiton.
 
 **Note:** You do not need a new authorization code for every command you run. The connection will persist and you can run more commands using the same connection.
 
@@ -220,7 +234,7 @@ To run a piece of SAS code:
 - A new session must be created the first time you run SAS code. Connection time will vary depending on the server connection.
 - Currently, only HTML output is supported. By default, the ODS HTML5 statement is added to the submitted code. Clear the `Enable/disable ODS HTML5 output` option in the Settings editor for the SAS extension to disable this output.
 - When you click `Run`, the code in the active tab in the editor is submitted. Make sure that the correct tab is active when you run your program.
-- To reset your connection to the SAS Viya server, run the `Close Current Session` command in VS Code or click the `Close Current Session` button next to the `Run` button.
+- To reset your connection to SAS, run the `Close Current Session` command in VS Code or click the `Close Current Session` button next to the `Run` button.
 
 ## Support
 
