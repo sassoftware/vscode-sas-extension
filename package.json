@@ -141,7 +141,7 @@
                   "properties": {
                     "connectionType": {
                       "type": "string",
-                      "default": "Viya",
+                      "default": "viya",
                       "description": "%configurations.SAS.connectionProfiles.profiles.connectionType%",
                       "enum": [
                         "viya",

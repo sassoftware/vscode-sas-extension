@@ -14,6 +14,11 @@ export const EXTENSION_DEFINE_PROFILES_CONFIG_KEY = "connectionProfiles";
 export const EXTENSION_PROFILES_CONFIG_KEY = "profiles";
 export const EXTENSION_ACTIVE_PROFILE_CONFIG_KEY = "activeProfile";
 
+export const DEFAULT_CONNECTION_PICK_OPTS: string[] = [
+  "SAS Viya",
+  "SAS 9.4 (remote)",
+];
+
 /**
  * The default compute context that will be used to create a SAS session.
  */
@@ -57,19 +62,6 @@ export interface ViyaProfile extends Profile {
   clientSecret?: string;
   context?: string;
 }
-
-/**
- * 
-"endpoint": "rdcesx02832.race.sas.com",
-        "saspath": "/install/sas9.4/SASHome/SASFoundation/9.4/bin/sas_u8",
-        "port": 22,
-        "username": "sasdemo",
-        "privateKeyPath": "/Users/jomorr/.ssh/id_ecdsa",
-        "sasOptions": [
-          "-nonews",
-          "-pagesize MAX"
-        ]
-*/
 
 export interface SSHProfile extends Profile {
   host: string;
@@ -372,16 +364,11 @@ export class ProfileConfig {
     }
 
     const inputConnectionType: string = await createInputQuickPick(
-      Object.keys(ConnectionType),
+      DEFAULT_CONNECTION_PICK_OPTS,
       ProfilePromptType.ConnectionType
     );
 
-    const foundKeys = Object.values(ConnectionType).filter(
-      (x) => ConnectionType[x] === inputConnectionType.toLocaleLowerCase()
-    );
-
-    const foundEnum = foundKeys.length > 0 ? foundKeys[0] : undefined;
-    profileClone.connectionType = foundEnum;
+    profileClone.connectionType = mapQuickPickToEnum(inputConnectionType);
 
     if (profileClone.connectionType === ConnectionType.Viya) {
       const viyaProfileClone = profileClone as ViyaProfile;
@@ -610,3 +597,14 @@ const input: ProfilePromptInput = {
     description: "Enter the path to a Private Key File",
   },
 };
+
+function mapQuickPickToEnum(connectionTypePickInput: string): ConnectionType {
+  switch (connectionTypePickInput) {
+    case "SAS Viya":
+      return ConnectionType.Viya;
+    case "SAS 9.4 (remote)":
+      return ConnectionType.SSH;
+    default:
+      return undefined;
+  }
+}
