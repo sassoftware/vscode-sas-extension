@@ -1,4 +1,7 @@
-import { authentication, commands } from "vscode";
+// Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+// Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
+
+import { authentication, commands, window } from "vscode";
 import { SASAuthProvider } from "../components/AuthProvider";
 import { profileConfig, switchProfile } from "./profile";
 
@@ -14,8 +17,7 @@ export const checkProfileAndAuthorize = async (): Promise<void> => {
         createIfNone: true,
       });
     } catch (error) {
-      // Do nothing here. We just want to make sure we're resetting
-      // context option below.
+      window.showErrorMessage(error.message);
     }
   }
 
