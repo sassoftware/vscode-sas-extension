@@ -33,7 +33,7 @@ export async function addProfile(): Promise<void> {
 export async function updateProfile(): Promise<void> {
   const profileList = profileConfig.listProfile();
   if (profileList.length === 0) {
-    addProfile();
+    await addProfile();
     return;
   }
   const selected = await window.showQuickPick(profileList, {
@@ -51,7 +51,7 @@ export async function updateProfile(): Promise<void> {
 export async function switchProfile(): Promise<void> {
   const profileList = profileConfig.listProfile();
   if (profileList.length === 0) {
-    addProfile();
+    await addProfile();
     return;
   }
   const selected = await window.showQuickPick(profileList, {

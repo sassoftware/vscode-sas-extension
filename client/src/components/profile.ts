@@ -76,6 +76,7 @@ export class ProfileConfig {
     const profileList: Dictionary<Profile> = workspace
       .getConfiguration(EXTENSION_CONFIG_KEY)
       .get(EXTENSION_DEFINE_PROFILES_CONFIG_KEY)[EXTENSION_PROFILES_CONFIG_KEY];
+
     if (!profileList) {
       workspace
         .getConfiguration(EXTENSION_CONFIG_KEY)

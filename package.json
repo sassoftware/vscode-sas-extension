@@ -214,21 +214,80 @@
         "command": "SAS.updateProfile",
         "title": "%commands.SAS.updateProfile%",
         "category": "SAS"
-      }
-    ],
-    "keybindings": [
-      {
-        "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
-        "command": "SAS.run",
-        "key": "f8"
       },
       {
-        "when": "editorLangId == sas && !SAS.hideRunMenuItem",
-        "command": "SAS.runSelected",
-        "key": "f3"
+        "command": "SAS.authorize",
+        "title": "%commands.SAS.authorize%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.deleteResource",
+        "title": "%commands.SAS.deleteResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.addFileResource",
+        "title": "%commands.SAS.addFileResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.addFolderResource",
+        "title": "%commands.SAS.addFolderResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.renameResource",
+        "title": "%commands.SAS.renameResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.refreshResources",
+        "title": "%commands.SAS.refreshResources%",
+        "category": "SAS",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "SAS.collapseAll",
+        "title": "%commands.SAS.collapseAll%",
+        "category": "SAS",
+        "icon": "$(collapse-all)"
       }
     ],
     "menus": {
+      "view/title": [
+        {
+          "command": "SAS.refreshResources",
+          "when": "view == sas-content-navigator",
+          "group": "navigation@0"
+        },
+        {
+          "command": "SAS.collapseAll",
+          "when": "view == sas-content-navigator",
+          "group": "navigation@1"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "SAS.addFolderResource",
+          "when": "viewItem =~ /createChild/ && view == sas-content-navigator",
+          "group": "addgroup@0"
+        },
+        {
+          "command": "SAS.addFileResource",
+          "when": "viewItem =~ /createChild/ && view == sas-content-navigator",
+          "group": "addgroup@1"
+        },
+        {
+          "command": "SAS.renameResource",
+          "when": "viewItem =~ /update/ && view == sas-content-navigator",
+          "group": "delrenamegroup@0"
+        },
+        {
+          "command": "SAS.deleteResource",
+          "when": "viewItem =~ /delete/ && view == sas-content-navigator",
+          "group": "delrenamegroup@1"
+        }
+      ],
       "editor/title/run": [
         {
           "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
@@ -310,6 +369,47 @@
         "language": "sas",
         "path": "./snippets/function-snippets.json"
       }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sas-view-container",
+          "title": "SAS",
+          "icon": "icons/sas-svg.svg"
+        }
+      ]
+    },
+    "views": {
+      "sas-view-container": [
+        {
+          "id": "sas-content-navigator",
+          "name": "Explorer",
+          "when": "SAS.authorized && SAS.connectionType == Viya"
+        },
+        {
+          "id": "sas-content-get-started",
+          "name": "Sign In",
+          "when": "!SAS.authorized && SAS.connectionType == Viya"
+        },
+        {
+          "id": "sas-content-invalid-connection",
+          "name": "Sign In",
+          "when": "!SAS.authorized && SAS.connectionType != Viya"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "sas-content-get-started",
+        "when": "!SAS.authorized && SAS.connectionType == Viya",
+        "contents": "%views.SAS.welcome%",
+        "enablement": "!SAS.authorizing"
+      },
+      {
+        "view": "sas-content-invalid-connection",
+        "when": "SAS.connectionType != Viya",
+        "contents": "%views.SAS.unsupportedConnection%"
+      }
     ]
   },
   "repository": {
@@ -345,6 +445,7 @@
     "mocha": "^10.2.0",
     "path-browserify": "^1.0.1",
     "prettier": "^2.8.4",
+    "sinon": "^15.0.1",
     "ts-loader": "^9.4.2",
     "typescript": "^4.9.5",
     "webpack": "^5.75.0",

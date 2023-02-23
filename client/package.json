@@ -9,9 +9,10 @@
     "vscode": "^1.66.0"
   },
   "dependencies": {
-    "vscode-languageclient": "^8.0.1",
     "axios": "^0.27.2",
-    "media-typer": "^1.1.0"
+    "media-typer": "^1.1.0",
+    "sprintf-js": "^1.1.2",
+    "vscode-languageclient": "^8.0.1"
   },
   "devDependencies": {
     "@types/vscode": "^1.66.0",

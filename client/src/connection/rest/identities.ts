@@ -12,10 +12,13 @@ export async function getCurrentUser(options: {
   accessToken: string;
 }) {
   return (
-    await axios.get<User>(`${options.endpoint}/identities/users/@currentUser`, {
-      headers: {
-        Authorization: "Bearer " + options.accessToken,
-      },
-    })
+    await axios
+      .create({
+        baseURL: options.endpoint,
+        headers: {
+          Authorization: "Bearer " + options.accessToken,
+        },
+      })
+      .get<User>("/identities/users/@currentUser")
   ).data;
 }

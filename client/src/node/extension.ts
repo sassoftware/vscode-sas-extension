@@ -13,23 +13,25 @@ import {
   window,
   workspace,
 } from "vscode";
-import { closeSession } from "../commands/closeSession";
 import {
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
   TransportKind,
 } from "vscode-languageclient/node";
-import { LogTokensProvider, legend } from "../components/LogViewer";
+import { checkProfileAndAuthorize } from "../commands/authorize";
+import { closeSession } from "../commands/closeSession";
 import {
-  profileConfig,
   addProfile,
-  updateProfile,
-  switchProfile,
   deleteProfile,
+  profileConfig,
+  switchProfile,
+  updateProfile,
 } from "../commands/profile";
 import { run, runSelected } from "../commands/run";
 import { SASAuthProvider } from "../components/AuthProvider";
+import ContentNavigator from "../components/ContentNavigator";
+import { legend, LogTokensProvider } from "../components/LogViewer";
 
 let client: LanguageClient;
 // Create Profile status bar item
@@ -80,13 +82,14 @@ export function activate(context: ExtensionContext): void {
   context.subscriptions.push(
     commands.registerCommand("SAS.run", run),
     commands.registerCommand("SAS.runSelected", runSelected),
-    commands.registerCommand("SAS.close", (silent) =>
-      closeSession(silent === true ? undefined : "The SAS session has closed.")
-    ),
+    commands.registerCommand("SAS.close", (silent) => {
+      closeSession(silent === true ? undefined : "The SAS session has closed.");
+    }),
     commands.registerCommand("SAS.switchProfile", switchProfile),
     commands.registerCommand("SAS.addProfile", addProfile),
     commands.registerCommand("SAS.deleteProfile", deleteProfile),
     commands.registerCommand("SAS.updateProfile", updateProfile),
+    commands.registerCommand("SAS.authorize", checkProfileAndAuthorize),
     authentication.registerAuthenticationProvider(
       SASAuthProvider.id,
       "SAS",
@@ -100,6 +103,8 @@ export function activate(context: ExtensionContext): void {
     activeProfileStatusBarIcon
   );
 
+  new ContentNavigator(context);
+
   // Reset first to set "No Active Profiles"
   resetStatusBarItem(activeProfileStatusBarIcon);
   // Update status bar if profile is found
@@ -108,15 +113,24 @@ export function activate(context: ExtensionContext): void {
   // If configFile setting is changed, update watcher to watch new configuration file
   workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
     if (event.affectsConfiguration("SAS.connectionProfiles")) {
-      const profileList = profileConfig.getAllProfiles();
-      const activeProfileName = profileConfig.getActiveProfile();
-      if (activeProfileName in profileList || activeProfileName === "") {
-        updateStatusBarProfile(activeProfileStatusBarIcon);
-      } else {
-        profileConfig.updateActiveProfileSetting("");
-      }
+      triggerProfileUpdate();
     }
   });
+
+  triggerProfileUpdate();
+}
+
+function triggerProfileUpdate(): void {
+  const profileList = profileConfig.getAllProfiles();
+  const activeProfileName = profileConfig.getActiveProfile();
+  if (activeProfileName in profileList || activeProfileName === "") {
+    updateStatusBarProfile(activeProfileStatusBarIcon);
+    // TODO Update with changes for SAS 9 integration
+    // commands.executeCommand("setContext", "SAS.connectionType", profileList[activeProfileName].connectionType || "Viya");
+    commands.executeCommand("setContext", "SAS.connectionType", "Viya");
+  } else {
+    profileConfig.updateActiveProfileSetting("");
+  }
 }
 
 async function updateStatusBarProfile(profileStatusBarIcon: StatusBarItem) {
