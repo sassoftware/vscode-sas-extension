@@ -12,6 +12,7 @@ import {
   workspace,
 } from "vscode";
 import { profileConfig } from "../../commands/profile";
+import { ViyaProfile } from "../profile";
 import { Messages } from "./const";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
@@ -38,9 +39,10 @@ class ContentNavigator {
     });
     this.treeView.onDidChangeVisibility(async () => {
       if (this.treeView.visible) {
-        await this.contentDataProvider.connect(
-          profileConfig.getActiveProfileDetail()?.profile.endpoint
-        );
+        const profile = profileConfig.getActiveProfileDetail()
+          ?.profile as ViyaProfile;
+
+        await this.contentDataProvider.connect(profile.endpoint);
       }
     });
 
