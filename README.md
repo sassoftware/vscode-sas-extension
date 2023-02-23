@@ -204,7 +204,7 @@ After configuring the SAS extension for your SAS environment, run your SAS progr
 To run a SAS program:
 
 1. Click the running man icon in the upper right corner of your SAS program window.
-2. For a secure connection to SAS Viya we use authorization code for authentication. Complete these steps to connect.
+2. For a secure connection to SAS Viya we use an authorization code for authentication. Complete these steps to connect.
 
    1.1. VS Code may prompt you about opening an external web site. Click 'Open'.
 
