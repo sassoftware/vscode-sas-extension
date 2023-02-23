@@ -21,9 +21,6 @@
   "commands.SAS.addFileResource": "New File...",
   "commands.SAS.addFolderResource": "New Folder...",
 
-  "commands.SAS.run": "Run All SAS Code",
-  "commands.SAS.close": "Close Current Session",
-  "commands.SAS.switchProfile": "Switch Current Connection Profile",
   "commands.SAS.addProfile": "Add New Connection Profile",
   "commands.SAS.authorize": "Sign in",
   "commands.SAS.close": "Close Current Session",

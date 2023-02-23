@@ -14,9 +14,14 @@ export const EXTENSION_DEFINE_PROFILES_CONFIG_KEY = "connectionProfiles";
 export const EXTENSION_PROFILES_CONFIG_KEY = "profiles";
 export const EXTENSION_ACTIVE_PROFILE_CONFIG_KEY = "activeProfile";
 
-export const DEFAULT_CONNECTION_PICK_OPTS: string[] = [
-  "SAS Viya",
-  "SAS 9.4 (remote)",
+enum ConnectionOptions {
+  SASViya = "SAS Viya",
+  SAS94Remote = "SAS 9.4 (remote)",
+}
+
+const CONNECTION_PICK_OPTS: string[] = [
+  ConnectionOptions.SASViya,
+  ConnectionOptions.SAS94Remote,
 ];
 
 /**
@@ -364,7 +369,7 @@ export class ProfileConfig {
     }
 
     const inputConnectionType: string = await createInputQuickPick(
-      DEFAULT_CONNECTION_PICK_OPTS,
+      CONNECTION_PICK_OPTS,
       ProfilePromptType.ConnectionType
     );
 
@@ -453,8 +458,6 @@ export class ProfileConfig {
         return (<ViyaProfile>activeProfile).endpoint;
     }
   }
-
-  // async viyaPrompt(profile: ViyaProfile): Promise<void> {}
 }
 
 /**
@@ -632,9 +635,9 @@ function mapQuickPickToEnum(connectionTypePickInput: string): ConnectionType {
      more than one selectable quick pick input that uses the same underlying connection methods..
   */
   switch (connectionTypePickInput) {
-    case "SAS Viya":
+    case ConnectionOptions.SASViya:
       return ConnectionType.Rest;
-    case "SAS 9.4 (remote)":
+    case ConnectionOptions.SAS94Remote:
       return ConnectionType.SSH;
     default:
       return undefined;
