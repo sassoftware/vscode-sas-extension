@@ -139,10 +139,12 @@ async function updateStatusBarProfile(profileStatusBarIcon: StatusBarItem) {
   if (!activeProfile) {
     resetStatusBarItem(profileStatusBarIcon);
   } else {
+    const statusBarTooltip = profileConfig.remoteTarget(activeProfileName);
+
     updateStatusBarItem(
       profileStatusBarIcon,
       `${activeProfileName}`,
-      `${activeProfileName}\n${activeProfile.endpoint}`
+      `${activeProfileName}\n${statusBarTooltip}`
     );
   }
 }

@@ -141,10 +141,10 @@
                   "properties": {
                     "connectionType": {
                       "type": "string",
-                      "default": "viya",
+                      "default": "rest",
                       "description": "%configurations.SAS.connectionProfiles.profiles.connectionType%",
                       "enum": [
-                        "viya",
+                        "rest",
                         "ssh"
                       ]
                     }
@@ -154,7 +154,7 @@
                       "if": {
                         "properties": {
                           "connectionType": {
-                            "const": "viya"
+                            "const": "rest"
                           }
                         }
                       },
@@ -514,6 +514,7 @@
     "postinstall": "cd client && npm install && cd ../server && npm install && cd .."
   },
   "devDependencies": {
+    "@types/chai": "^4.3.4",
     "@types/mocha": "^10.0.1",
     "@types/node": "^18.14.2",
     "@typescript-eslint/eslint-plugin": "^5.53.0",

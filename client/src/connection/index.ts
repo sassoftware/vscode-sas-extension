@@ -36,7 +36,7 @@ export function getSession(): Session {
   if (validProfile.type === AuthType.Error) {
     throw new Error(validProfile.error);
   }
-  if (validProfile.profile?.connectionType === ConnectionType.Viya) {
+  if (validProfile.profile?.connectionType === ConnectionType.Rest) {
     return getRestSession(validProfile.profile as ViyaProfile);
   } else if (validProfile.profile?.connectionType === ConnectionType.SSH) {
     return getSSHSession(validProfile.profile as SSHProfile);

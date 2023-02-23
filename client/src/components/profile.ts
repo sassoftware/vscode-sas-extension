@@ -44,7 +44,7 @@ export enum AuthType {
  * Enum that represents the connection type for a profile.
  */
 export enum ConnectionType {
-  Viya = "viya",
+  Rest = "rest",
   SSH = "ssh",
 }
 
@@ -309,7 +309,7 @@ export class ProfileConfig {
       return pv;
     }
 
-    if (profileDetail.profile.connectionType === ConnectionType.Viya) {
+    if (profileDetail.profile.connectionType === ConnectionType.Rest) {
       const viyaProfile: ViyaProfile = <ViyaProfile>profileDetail.profile;
 
       if (!viyaProfile.endpoint) {
@@ -370,7 +370,7 @@ export class ProfileConfig {
 
     profileClone.connectionType = mapQuickPickToEnum(inputConnectionType);
 
-    if (profileClone.connectionType === ConnectionType.Viya) {
+    if (profileClone.connectionType === ConnectionType.Rest) {
       const viyaProfileClone = profileClone as ViyaProfile;
       viyaProfileClone.endpoint = await createInputTextBox(
         ProfilePromptType.Endpoint,
@@ -435,6 +435,22 @@ export class ProfileConfig {
         newProfileClone.privateKeyPath
       );
       await this.upsertProfile(name, newProfileClone);
+    }
+  }
+
+  /**
+   * Retrieves the remote target associated with the active profile. For SSH profiles, the host
+   * value is used. For Viya, the endpoint value is used.
+   * @param profileName - a profile name to retrieve.
+   * @returns
+   */
+  remoteTarget(profileName: string): string {
+    const activeProfile = this.getProfileByName(profileName);
+    switch (activeProfile.connectionType) {
+      case ConnectionType.SSH:
+        return (<SSHProfile>activeProfile).host;
+      case ConnectionType.Rest:
+        return (<ViyaProfile>activeProfile).endpoint;
     }
   }
 
@@ -512,6 +528,12 @@ export async function createInputTextBox(
   return entered;
 }
 
+/**
+ * Helper method to generate a window.ShowInputQuickPick using a defined set of {@link ProfilePrompt}s.
+ * @param items list of selectable options to bind to the quickpick.
+ * @param profilePromptType {@link ProfilePromptType}
+ * @returns Thenable<{@link String}> of the users input
+ */
 export async function createInputQuickPick(
   items: readonly string[] | Thenable<readonly string[]> = [],
   profilePromptType: ProfilePromptType
@@ -578,8 +600,8 @@ const input: ProfilePromptInput = {
   },
   [ProfilePromptType.SASPath]: {
     title: "SAS Path Executable",
-    placeholder: "Enter the path of a SAS Executable",
-    description: "Enter the path of a SAS Executable",
+    placeholder: "Enter the server path of a SAS Executable",
+    description: "Enter the server path of a SAS Executable",
   },
   [ProfilePromptType.Port]: {
     title: "Port",
@@ -593,15 +615,25 @@ const input: ProfilePromptInput = {
   },
   [ProfilePromptType.PrivateKeyPath]: {
     title: "Private Key File",
-    placeholder: "Enter the path to a Private Key File",
-    description: "Enter the path to a Private Key File",
+    placeholder: "Enter a local path to a Private Key File",
+    description: "Enter a local path to a Private Key File",
   },
 };
 
+/**
+ * Helper function to map the quick pick item selection to a well known {@link ConnectionType}.
+ * @param connectionTypePickInput - string value of one of the quick pick option inputs
+ * @returns {@link ConnectionType}
+ */
 function mapQuickPickToEnum(connectionTypePickInput: string): ConnectionType {
+  /* 
+     Having a translation layer here allows the profile types to potentially evolve separately from the 
+     underlying technology used to implement the connection. Down the road its quite possible to have
+     more than one selectable quick pick input that uses the same underlying connection methods..
+  */
   switch (connectionTypePickInput) {
     case "SAS Viya":
-      return ConnectionType.Viya;
+      return ConnectionType.Rest;
     case "SAS 9.4 (remote)":
       return ConnectionType.SSH;
     default:
