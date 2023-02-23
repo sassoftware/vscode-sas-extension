@@ -14,7 +14,6 @@ let resolve: ((value?) => void) | undefined;
 let reject: ((reason?) => void) | undefined;
 let onLog: ((logs: LogLine[]) => void) | undefined;
 let logs: string[] = [];
-let timer;
 let html5FileName = "";
 
 conn
@@ -42,14 +41,12 @@ conn
         .on("data", (data: Buffer) => {
           const output = data.toString().trimEnd();
           if (onLog) {
-            setTimer();
             output.split(/\n|\r\n/).forEach((line) => {
               if (!line) {
                 return;
               }
               if (line.endsWith(endCode)) {
                 // run completed
-                clearTimer();
                 getResult();
               }
               if (!(line.endsWith("?") || line.endsWith(">"))) {
@@ -62,7 +59,6 @@ conn
           } else {
             logs.push(output);
             if (output.endsWith("?")) {
-              clearTimer();
               resolve?.();
             }
           }
@@ -88,23 +84,9 @@ conn
     });
   })
   .on("error", (err) => {
-    clearTimer();
     reject?.(err);
     return;
   });
-
-function setTimer() {
-  clearTimer();
-  timer = setTimeout(() => {
-    reject?.(new Error("Time out"));
-    timer = undefined;
-  }, 10000);
-}
-
-function clearTimer() {
-  timer && clearTimeout(timer);
-  timer = undefined;
-}
 
 function getResult() {
   const runResult: RunResult = {};
@@ -146,13 +128,13 @@ function setup(): Promise<void> {
       resolve();
       return;
     }
-    setTimer();
 
     const cfg: ConnectConfig = {
       host: config.host,
       port: config.port,
       username: config.username,
       privateKey: readFileSync(config.privateKeyPath),
+      readyTimeout: 20000,
     };
     conn.connect(cfg);
   });
