@@ -4,6 +4,7 @@ export interface LibraryItem {
   links: Link[];
   name: string;
   type: LibraryItemType;
+  library: string | undefined;
 }
 
 // @TODO #129 Consolidate w/ the other link type

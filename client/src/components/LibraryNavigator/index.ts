@@ -15,7 +15,7 @@ import renderTableView from "./utils";
 
 class LibraryNavigator {
   private libraryDataProvider: LibraryDataProvider;
-  private treeView: TreeView<any>;
+  private treeView: TreeView<LibraryItem>;
 
   constructor(context: ExtensionContext) {
     this.libraryDataProvider = new LibraryDataProvider(new LibraryModel());
@@ -23,18 +23,11 @@ class LibraryNavigator {
       treeDataProvider: this.libraryDataProvider,
     });
 
-    // this.treeView.onDidChangeVisibility(async () => {
-    //   if (this.treeView.visible) {
-    //     this.libraryDataProvider.connect();
-    //   }
-    // });
-
     context.subscriptions.push(this.treeView);
 
     commands.registerCommand(
       "SAS.viewTable",
       async (item: LibraryItem, viewDataCallback: () => Promise<TableData>) => {
-        console.log(item);
         const panel = window.createWebviewPanel(
           // Panel view type
           "showGallery",
@@ -56,6 +49,17 @@ class LibraryNavigator {
         );
       }
     );
+
+    commands.registerCommand("SAS.refreshLibraries", () => this.refresh());
+  }
+
+  public async refresh(): Promise<void> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        this.libraryDataProvider.refresh();
+        resolve();
+      }, 3 * 1000);
+    });
   }
 }
 

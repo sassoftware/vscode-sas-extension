@@ -324,8 +324,14 @@
         "category": "SAS"
       },
       {
-        "command": "SAS.refreshResources",
-        "title": "%commands.SAS.refreshResources%",
+        "command": "SAS.refreshContent",
+        "title": "%commands.SAS.refresh%",
+        "category": "SAS",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "SAS.refreshLibraries",
+        "title": "%commands.SAS.refresh%",
         "category": "SAS",
         "icon": "$(refresh)"
       },
@@ -339,7 +345,7 @@
     "menus": {
       "view/title": [
         {
-          "command": "SAS.refreshResources",
+          "command": "SAS.refreshContent",
           "when": "view == sas-content-navigator",
           "group": "navigation@0"
         },
@@ -347,6 +353,11 @@
           "command": "SAS.collapseAll",
           "when": "view == sas-content-navigator",
           "group": "navigation@1"
+        },
+        {
+          "command": "SAS.refreshLibraries",
+          "when": "view == sas-library-navigator",
+          "group": "navigation@0"
         }
       ],
       "view/item/context": [

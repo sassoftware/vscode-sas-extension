@@ -81,9 +81,18 @@ export function activate(context: ExtensionContext): void {
   // Start the client. This will also launch the server
   client.start();
 
+  const libraryNavigator = new LibraryNavigator(context);
+  new ContentNavigator(context);
+
   context.subscriptions.push(
-    commands.registerCommand("SAS.run", run),
-    commands.registerCommand("SAS.runSelected", runSelected),
+    commands.registerCommand("SAS.run", async () => {
+      await run();
+      await libraryNavigator.refresh();
+    }),
+    commands.registerCommand("SAS.runSelected", async () => {
+      await runSelected();
+      await libraryNavigator.refresh();
+    }),
     commands.registerCommand("SAS.close", (silent) => {
       closeSession(silent === true ? undefined : "The SAS session has closed.");
     }),
@@ -104,9 +113,6 @@ export function activate(context: ExtensionContext): void {
     ),
     activeProfileStatusBarIcon
   );
-
-  new ContentNavigator(context);
-  new LibraryNavigator(context);
 
   // Reset first to set "No Active Profiles"
   resetStatusBarItem(activeProfileStatusBarIcon);

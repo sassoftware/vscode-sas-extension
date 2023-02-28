@@ -3,7 +3,7 @@ import { getSession } from "../../connection";
 import { DataAccessApi } from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
 import { SASAuthProvider } from "../AuthProvider";
-import { LibraryItem, TableData, TableRow } from "./types";
+import { LibraryItem, TableData, TableHeader, TableRow } from "./types";
 
 class LibraryModel {
   private dataAccessApi: ReturnType<typeof DataAccessApi>;
@@ -60,13 +60,13 @@ class LibraryModel {
     const { dataAccessApi, sessionId } = await this.getDataAccessAPI();
     const response = await dataAccessApi.getRows({
       sessionId,
-      libref: "SASHELP",
+      libref: item.library,
       tableName: item.name,
       includeColumnNames: true,
     });
 
     return {
-      headers: response.data.items[0] as TableRow,
+      headers: response.data.items[0] as TableHeader,
       rows: response.data.items.slice(1) as TableRow[],
     };
   }
@@ -76,7 +76,7 @@ class LibraryModel {
 
     const response = await dataAccessApi.getTable({
       sessionId,
-      libref: "SASHELP",
+      libref: item.library,
       tableName: item.name,
     });
 
@@ -94,13 +94,24 @@ class LibraryModel {
       : await dataAccessApi.getLibraries({ sessionId }, options);
 
     const type = item ? "table" : "library";
+    const items = response.data.items;
+    if (!item) {
+      items.push({
+        id: "WORK",
+        name: "WORK",
+        links: [],
+      });
+    }
 
-    return response.data.items.map(({ id, name, links }: LibraryItem) => ({
-      type,
-      id,
-      name,
-      links,
-    }));
+    return items.map(
+      ({ id, name, links }: LibraryItem): LibraryItem => ({
+        type,
+        id,
+        name,
+        links,
+        library: item?.id || undefined,
+      })
+    );
   }
 }
 

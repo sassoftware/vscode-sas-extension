@@ -140,7 +140,7 @@ class ContentNavigator {
       }
     });
 
-    commands.registerCommand("SAS.refreshResources", () =>
+    commands.registerCommand("SAS.refreshContent", () =>
       this.contentDataProvider.refresh()
     );
 
