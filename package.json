@@ -441,7 +441,7 @@
     "@typescript-eslint/parser": "^5.52.0",
     "chai": "^4.3.7",
     "esbuild": "^0.17.9",
-    "eslint": "^8.34.0",
+    "eslint": "^8.35.0",
     "mocha": "^10.2.0",
     "path-browserify": "^1.0.1",
     "prettier": "^2.8.4",
