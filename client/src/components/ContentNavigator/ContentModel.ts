@@ -58,6 +58,7 @@ export class ContentModel {
         return Promise.reject(error);
       }
     );
+
     await this.updateAccessToken();
     this.authorized = true;
   }
