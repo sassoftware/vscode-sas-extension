@@ -79,6 +79,8 @@ async function setup() {
     ).data;
     computeSession = ComputeSession.fromInterface(sess);
   }
+
+  return computeSession;
 }
 
 /*

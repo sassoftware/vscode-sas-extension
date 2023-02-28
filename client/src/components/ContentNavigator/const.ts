@@ -47,7 +47,6 @@ export const Messages = {
   FolderDeletionError: "Unable to delete folder.",
   FileOpenError: "The file type is unsupported.",
   FileValidationError: "Invalid file name.",
-  FolderDeletionError: "Unable to delete folder.",
   FolderValidationError: "Invalid folder name.",
   NewFileCreationError: 'Unable to create file "%(name)s".',
   NewFilePrompt: "Enter a file name.",

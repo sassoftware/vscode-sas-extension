@@ -36,6 +36,7 @@ export class ContentModel {
     const session = await authentication.getSession(SASAuthProvider.id, [], {
       createIfNone: true,
     });
+    console.log(`Bearer ${session.accessToken}`);
     this.connection.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`;
     this.authorized = true;
   }

@@ -6,42 +6,60 @@ import {
   Event,
   EventEmitter,
   FileChangeEvent,
+  ProgressLocation,
   ProviderResult,
   ThemeIcon,
   TreeDataProvider,
   TreeItem,
   TreeItemCollapsibleState,
+  window,
 } from "vscode";
+import { getSession } from "../../connection";
+import { DataAccessApi } from "../../connection/rest/api/compute";
+import { getApiConfig } from "../../connection/rest/common";
+import LibraryModel from "./LibraryModel";
+import { LibraryItem } from "./types";
 
-class LibraryDataProvider implements TreeDataProvider<any> {
-  private _onDidChangeTreeData: EventEmitter<any | undefined>;
+class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
+  private _onDidChangeTreeData: EventEmitter<LibraryItem | undefined>;
+  private model: LibraryModel;
 
   onDidChangeFile: Event<FileChangeEvent[]>;
 
-  get onDidChangeTreeData(): Event<any> {
+  get onDidChangeTreeData(): Event<LibraryItem> {
     return this._onDidChangeTreeData.event;
   }
 
-  constructor() {
-    this._onDidChangeTreeData = new EventEmitter<any | undefined>();
+  constructor(model: LibraryModel) {
+    this._onDidChangeTreeData = new EventEmitter<LibraryItem | undefined>();
+    this.model = model;
   }
 
-  public getTreeItem(item: any): TreeItem | Promise<TreeItem> {
+  // public async connect(): Promise<void> {
+  //   await this.model.connect();
+  // }
+
+  public getTreeItem(item: LibraryItem): TreeItem | Promise<TreeItem> {
     return {
-      iconPath: ThemeIcon.File,
-      id: "1234",
-      label: "Test",
-      collapsibleState: TreeItemCollapsibleState.Collapsed,
-      command: {
-        command: "SAS.viewLibrary",
-        arguments: [item],
-        title: "View SAS Library",
-      },
+      id: item.id,
+      label: item.name,
+      collapsibleState:
+        item.type === "library"
+          ? TreeItemCollapsibleState.Collapsed
+          : TreeItemCollapsibleState.None,
+      command:
+        item.type === "table"
+          ? {
+              command: "SAS.viewTable",
+              arguments: [item, () => this.model.loadViewData(item)],
+              title: "View SAS Table",
+            }
+          : undefined,
     };
   }
 
-  public getChildren(item?: any): ProviderResult<any[]> {
-    return ["1234"];
+  public getChildren(item?: LibraryItem): ProviderResult<LibraryItem[]> {
+    return this.model.getChildren(item);
   }
 
   public watch(): Disposable {
