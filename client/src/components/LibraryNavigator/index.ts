@@ -9,8 +9,8 @@ import {
   ViewColumn,
   window,
 } from "vscode";
+import DragAndDropController from "../DragAndDropController";
 import LibraryDataProvider from "./LibraryDataProvider";
-import LibraryDragAndDropController from "./LibraryDragAndDropController";
 import LibraryModel from "./LibraryModel";
 import { LibraryItem, TableData } from "./types";
 import renderTableView from "./utils";
@@ -20,8 +20,10 @@ class LibraryNavigator {
   private treeView: TreeView<LibraryItem>;
 
   constructor(context: ExtensionContext) {
-    const dragAndDropController = new LibraryDragAndDropController(
-      "application/vnd.code.tree.sas-library-navigator"
+    const dragAndDropController = new DragAndDropController<LibraryItem>(
+      context,
+      "application/vnd.code.tree.sas-library-navigator",
+      (item: LibraryItem | undefined) => (item.library ? item.uid : undefined)
     );
     this.libraryDataProvider = new LibraryDataProvider(new LibraryModel());
     this.treeView = window.createTreeView("sas-library-navigator", {
@@ -30,12 +32,6 @@ class LibraryNavigator {
     });
 
     context.subscriptions.push(this.treeView);
-    context.subscriptions.push(
-      languages.registerDocumentDropEditProvider(
-        dragAndDropController.selector(),
-        dragAndDropController
-      )
-    );
 
     commands.registerCommand(
       "SAS.viewTable",
