@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Added SAS content navigator. You are now able to browse, edit, create, delete, and run files on a SAS server using a Viya connection.
+- Added SAS content navigator. You are now able to browse, edit, create, delete, and run files on a SAS server using a Viya connection ([#56](https://github.com/sassoftware/vscode-sas-extension/issues/56)).
 
 ## [v0.1.2] - 2023-02-01
 
