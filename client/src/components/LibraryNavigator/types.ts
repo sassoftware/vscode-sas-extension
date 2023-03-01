@@ -1,5 +1,6 @@
 export type LibraryItemType = "library" | "table";
 export interface LibraryItem {
+  uid: string;
   id: string;
   links: Link[];
   name: string;

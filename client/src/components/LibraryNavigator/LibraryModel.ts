@@ -3,11 +3,22 @@ import { getSession } from "../../connection";
 import { DataAccessApi } from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
 import { SASAuthProvider } from "../AuthProvider";
-import { LibraryItem, TableData, TableHeader, TableRow } from "./types";
+import {
+  LibraryItemType,
+  LibraryItem,
+  TableData,
+  TableHeader,
+  TableRow,
+} from "./types";
 
 class LibraryModel {
   private dataAccessApi: ReturnType<typeof DataAccessApi>;
   private sessionId: string;
+  private libraries: Record<string, LibraryItem>;
+
+  constructor() {
+    this.libraries = {};
+  }
 
   public async connect(): Promise<void> {
     const session = getSession();
@@ -84,32 +95,77 @@ class LibraryModel {
   }
 
   public async getChildren(item?: LibraryItem): Promise<LibraryItem[]> {
+    if (!item) {
+      return await this.getLibraries();
+    }
+
+    if (item) {
+      return await this.getTables(item);
+    }
+  }
+
+  public getParent(item: LibraryItem): LibraryItem | undefined {
+    return this.libraries[item.library];
+  }
+
+  private async getLibraries(): Promise<LibraryItem[]> {
     const { dataAccessApi, sessionId } = await this.getDataAccessAPI();
     const options = {
       headers: { Accept: "application/vnd.sas.collection+json" },
     };
 
-    const response = item
-      ? await dataAccessApi.getTables({ sessionId, libref: item.id }, options)
-      : await dataAccessApi.getLibraries({ sessionId }, options);
+    const {
+      data: { items },
+    } = await dataAccessApi.getLibraries({ sessionId }, options);
+    items.push({
+      id: "WORK",
+      name: "WORK",
+      links: [],
+    });
 
-    const type = item ? "table" : "library";
-    const items = response.data.items;
-    if (!item) {
-      items.push({
-        id: "WORK",
-        name: "WORK",
-        links: [],
-      });
-    }
+    const libraries = this.processItems(
+      items as LibraryItem[],
+      "library",
+      undefined
+    );
 
+    this.libraries = libraries.reduce(
+      (carry: Record<string, LibraryItem>, item: LibraryItem) => ({
+        ...carry,
+        [item.id]: item,
+      }),
+      {}
+    );
+
+    return libraries;
+  }
+
+  private async getTables(item?: LibraryItem): Promise<LibraryItem[]> {
+    const { dataAccessApi, sessionId } = await this.getDataAccessAPI();
+    const options = {
+      headers: { Accept: "application/vnd.sas.collection+json" },
+    };
+
+    const {
+      data: { items },
+    } = await dataAccessApi.getTables({ sessionId, libref: item.id }, options);
+
+    return this.processItems(items as LibraryItem[], "table", item.id);
+  }
+
+  private processItems(
+    items: LibraryItem[],
+    type: LibraryItemType,
+    library: string | undefined
+  ): LibraryItem[] {
     return items.map(
       ({ id, name, links }: LibraryItem): LibraryItem => ({
+        uid: `${library}.${id}`,
         type,
         id,
         name,
         links,
-        library: item?.id || undefined,
+        library,
       })
     );
   }

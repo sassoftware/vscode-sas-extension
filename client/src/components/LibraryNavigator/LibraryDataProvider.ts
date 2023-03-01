@@ -2,6 +2,9 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import {
+  CancellationToken,
+  DataTransfer,
+  DataTransferItem,
   Disposable,
   Event,
   EventEmitter,
@@ -10,6 +13,7 @@ import {
   ProviderResult,
   ThemeIcon,
   TreeDataProvider,
+  TreeDragAndDropController,
   TreeItem,
   TreeItemCollapsibleState,
   window,
@@ -20,9 +24,15 @@ import { getApiConfig } from "../../connection/rest/common";
 import LibraryModel from "./LibraryModel";
 import { LibraryItem } from "./types";
 
-class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
+class LibraryDataProvider
+  implements
+    TreeDataProvider<LibraryItem>,
+    TreeDragAndDropController<LibraryItem>
+{
   private _onDidChangeTreeData: EventEmitter<LibraryItem | undefined>;
   private model: LibraryModel;
+  public dropMimeTypes: string[];
+  public dragMimeTypes: string[];
 
   onDidChangeFile: Event<FileChangeEvent[]>;
 
@@ -33,15 +43,38 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
   constructor(model: LibraryModel) {
     this._onDidChangeTreeData = new EventEmitter<LibraryItem | undefined>();
     this.model = model;
+    this.dragMimeTypes = ["application/vnd.code.tree.libraryDragAndDrop"];
   }
 
-  // public async connect(): Promise<void> {
-  //   await this.model.connect();
-  // }
+  public handleDrag(
+    source: LibraryItem[],
+    dataTransfer: DataTransfer
+  ): void | Thenable<void> {
+    console.log("im dragon");
+    dataTransfer.set(
+      "application/vnd.code.tree.libraryDragAndDrop",
+      new DataTransferItem(source)
+    );
+  }
+
+  public handleDrop(
+    target: LibraryItem,
+    dataTransfer: DataTransfer
+  ): void | Thenable<void> {
+    const dataItem = dataTransfer.get(
+      "application/vnd.code.tree.libraryDragAndDrop"
+    );
+    console.log("This is data item yay", dataItem);
+  }
+
+  public getParent(item: LibraryItem): ProviderResult<LibraryItem | undefined> {
+    console.log("getttttting the parent");
+    this.model.getParent(item);
+  }
 
   public getTreeItem(item: LibraryItem): TreeItem | Promise<TreeItem> {
     return {
-      id: item.id,
+      id: item.uid,
       label: item.name,
       collapsibleState:
         item.type === "library"
