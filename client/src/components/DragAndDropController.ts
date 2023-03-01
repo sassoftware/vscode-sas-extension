@@ -11,27 +11,36 @@ import {
   DocumentDropEditProvider,
   Position,
   DocumentDropEdit,
+  ExtensionContext,
+  languages,
 } from "vscode";
-import { LibraryItem } from "./types";
 
-class LibraryDragAndDropController
-  implements TreeDragAndDropController<LibraryItem>, DocumentDropEditProvider
+class DragAndDropController<T>
+  implements TreeDragAndDropController<T>, DocumentDropEditProvider
 {
-  dropMimeTypes: string[];
-  dragMimeTypes: string[] = [];
-  draggedItem: string | undefined;
+  public dropMimeTypes: string[];
+  public dragMimeTypes: string[];
+  private draggedItem: string | undefined;
+  private draggableItem: (item: T | undefined) => string | undefined;
 
-  constructor(dragMimeType: string) {
+  constructor(
+    context: ExtensionContext,
+    dragMimeType: string,
+    draggableItem: (item: T | undefined) => string | undefined
+  ) {
     this.dragMimeTypes = [dragMimeType];
+    this.draggableItem = draggableItem;
+
+    context.subscriptions.push(
+      languages.registerDocumentDropEditProvider(this.selector(), this)
+    );
   }
 
   public handleDrag(
-    source: LibraryItem[],
+    source: T[],
     dataTransfer: DataTransfer
   ): void | Thenable<void> {
-    if (source[0] && source[0].library) {
-      this.draggedItem = `${source[0].library}.${source[0].id}`;
-    }
+    this.draggedItem = this.draggableItem(source?.[0]);
 
     const dataTransferItem = new DataTransferItem(source);
     dataTransfer.set(this.dragMimeTypes[0], dataTransferItem);
@@ -67,4 +76,4 @@ class LibraryDragAndDropController
   }
 }
 
-export default LibraryDragAndDropController;
+export default DragAndDropController;

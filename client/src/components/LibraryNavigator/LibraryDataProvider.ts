@@ -24,11 +24,7 @@ import { getApiConfig } from "../../connection/rest/common";
 import LibraryModel from "./LibraryModel";
 import { LibraryItem } from "./types";
 
-class LibraryDataProvider
-  implements
-    TreeDataProvider<LibraryItem>,
-    TreeDragAndDropController<LibraryItem>
-{
+class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
   private _onDidChangeTreeData: EventEmitter<LibraryItem | undefined>;
   private model: LibraryModel;
   public dropMimeTypes: string[];
@@ -44,32 +40,6 @@ class LibraryDataProvider
     this._onDidChangeTreeData = new EventEmitter<LibraryItem | undefined>();
     this.model = model;
     this.dragMimeTypes = ["application/vnd.code.tree.libraryDragAndDrop"];
-  }
-
-  public handleDrag(
-    source: LibraryItem[],
-    dataTransfer: DataTransfer
-  ): void | Thenable<void> {
-    console.log("im dragon");
-    dataTransfer.set(
-      "application/vnd.code.tree.libraryDragAndDrop",
-      new DataTransferItem(source)
-    );
-  }
-
-  public handleDrop(
-    target: LibraryItem,
-    dataTransfer: DataTransfer
-  ): void | Thenable<void> {
-    const dataItem = dataTransfer.get(
-      "application/vnd.code.tree.libraryDragAndDrop"
-    );
-    console.log("This is data item yay", dataItem);
-  }
-
-  public getParent(item: LibraryItem): ProviderResult<LibraryItem | undefined> {
-    console.log("getttttting the parent");
-    this.model.getParent(item);
   }
 
   public getTreeItem(item: LibraryItem): TreeItem | Promise<TreeItem> {
