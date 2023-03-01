@@ -120,7 +120,6 @@ class LibraryModel {
     items.push({
       id: "WORK",
       name: "WORK",
-      links: [],
     });
 
     const libraries = this.processItems(
@@ -159,12 +158,11 @@ class LibraryModel {
     library: string | undefined
   ): LibraryItem[] {
     return items.map(
-      ({ id, name, links }: LibraryItem): LibraryItem => ({
+      ({ id, name }: LibraryItem): LibraryItem => ({
         uid: `${library}.${id}`,
         type,
         id,
         name,
-        links,
         library,
       })
     );
