@@ -9,11 +9,11 @@ import {
   ViewColumn,
   window,
 } from "vscode";
+import DataTable from "../../panels/DataTable";
 import DragAndDropController from "../DragAndDropController";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
 import { LibraryItem, TableData } from "./types";
-import renderTableView from "./utils";
 
 class LibraryNavigator {
   private libraryDataProvider: LibraryDataProvider;
@@ -36,24 +36,11 @@ class LibraryNavigator {
     commands.registerCommand(
       "SAS.viewTable",
       async (item: LibraryItem, viewDataCallback: () => Promise<TableData>) => {
-        const panel = window.createWebviewPanel(
-          // Panel view type
-          "showGallery",
-          // Panel title
+        DataTable.render(
+          context.extensionUri,
+          item.uid,
           item.name,
-          // The editor column the panel should be displayed in
-          ViewColumn.One,
-          // Extra panel configurations
-          {
-            // Enable JavaScript in the webview
-            enableScripts: true,
-          }
-        );
-
-        renderTableView(
-          panel.webview,
-          await viewDataCallback(),
-          context.extensionUri
+          await viewDataCallback()
         );
       }
     );

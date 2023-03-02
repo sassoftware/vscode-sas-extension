@@ -1,6 +1,7 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
+import path = require("path");
 import {
   Disposable,
   Event,
@@ -80,11 +81,7 @@ class ContentDataProvider
         ? TreeItemCollapsibleState.Collapsed
         : undefined,
       command: isContainer
-        ? {
-            command: "SAS.gah",
-            arguments: [item],
-            title: "test",
-          }
+        ? undefined
         : {
             command: "SAS.openSASfile",
             arguments: [item],

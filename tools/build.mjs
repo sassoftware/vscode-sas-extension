@@ -19,7 +19,7 @@ const buildOptions = {
   entryPoints: {
     "./client/dist/node/extension": "./client/src/node/extension.ts",
     "./server/dist/node/server": "./server/src/node/server.ts",
-    "./client/dist/webview": "./client/src/webview/index.ts",
+    "./client/dist/panels/DataTable": "./client/src/panels/DataTable/main.ts",
   },
   bundle: true,
   outdir: ".",
