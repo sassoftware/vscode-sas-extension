@@ -234,7 +234,6 @@ export class ProfileConfig {
   getProfileByName<T extends Profile>(name: string): T {
     const profileList = this.getAllProfiles();
     if (name in profileList) {
-      /* eslint-disable @typescript-eslint/consistent-type-assertions*/
       return profileList[name] as T;
     }
     return undefined;
