@@ -136,34 +136,28 @@ class LibraryModel {
       headers: { Accept: "application/vnd.sas.collection+json" },
     };
 
-    let {
+    const {
       data: { items },
     } = await dataAccessApi.getLibraries({ sessionId }, options);
 
-    items = await Promise.all(
-      (items as LibraryItem[]).map(
-        async (item: LibraryItem): Promise<LibraryItem> => {
-          const { data } = await dataAccessApi.getLibrarySummary({
-            sessionId,
-            libref: item.id,
-          });
+    const libraryItems: LibraryItem[] = await Promise.all(
+      items.map(async (item: LibraryItem): Promise<LibraryItem> => {
+        const { data } = await dataAccessApi.getLibrarySummary({
+          sessionId,
+          libref: item.id,
+        });
 
-          return { ...item, readOnly: (data as Library).readOnly };
-        }
-      )
+        return { ...item, readOnly: (data as Library).readOnly };
+      })
     );
 
-    items.push({
+    libraryItems.push({
       id: "WORK",
       name: "WORK",
       readOnly: false,
     });
-    console.log({ items });
-    const libraries = this.processItems(
-      items as LibraryItem[],
-      "library",
-      undefined
-    );
+
+    const libraries = this.processItems(libraryItems, "library", undefined);
 
     // TODO #129 consider cleaning this up
     this.libraries = libraries.reduce(
@@ -201,9 +195,9 @@ class LibraryModel {
         uid: `${library?.id}.${libraryItem.id}`,
         library: library?.id,
         readOnly:
-          typeof libraryItem.readOnly !== undefined
+          libraryItem.readOnly !== undefined
             ? libraryItem.readOnly
-            : library?.readOnly || true,
+            : library?.readOnly || false,
         type,
       })
     );
