@@ -592,32 +592,32 @@ const input: ProfilePromptInput = {
   [ProfilePromptType.ConnectionType]: {
     title: "Connection Type",
     placeholder: "Select a Connection Type",
-    description: "Select a Connection Type",
+    description: "Select a Connection Type.",
   },
   [ProfilePromptType.Host]: {
-    title: "Host",
-    placeholder: "Enter a Host",
-    description: "Enter a Host",
+    title: "SAS 9 SSH Server",
+    placeholder: "Enter the server name",
+    description: "Enter the name of the SAS 9 SSH server.",
   },
   [ProfilePromptType.SASPath]: {
-    title: "SAS Path Executable",
-    placeholder: "Enter the server path of a SAS Executable",
-    description: "Enter the server path of a SAS Executable",
+    title: "Server Path",
+    placeholder: "Enter the server path",
+    description: "Enter the server path of the SAS Executable.",
   },
   [ProfilePromptType.Port]: {
-    title: "Port",
-    placeholder: "Enter a Port Number",
-    description: "Enter a Port Number",
+    title: "Port Number",
+    placeholder: "Enter a port number",
+    description: "Enter a port number.",
   },
   [ProfilePromptType.Username]: {
-    title: "Username",
-    placeholder: "Enter a Username",
-    description: "Enter a Username",
+    title: "SAS Server Username",
+    placeholder: "Enter your username",
+    description: "Enter your SAS server username.",
   },
   [ProfilePromptType.PrivateKeyPath]: {
     title: "Private Key File",
-    placeholder: "Enter a local path to a Private Key File",
-    description: "Enter a local path to a Private Key File",
+    placeholder: "Enter the local path",
+    description: "Enter the local path to a private key file.",
   },
 };
 
