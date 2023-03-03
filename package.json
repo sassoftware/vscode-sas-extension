@@ -420,6 +420,38 @@
         {
           "when": "editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected"
+        },
+        {
+          "when": "false",
+          "command": "SAS.deleteResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.addFileResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.addFolderResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.renameResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.refreshContent"
+        },
+        {
+          "when": "false",
+          "command": "SAS.refreshLibraries"
+        },
+        {
+          "when": "false",
+          "command": "SAS.collapseAll"
+        },
+        {
+          "when": "false",
+          "command": "SAS.deleteTable"
         }
       ]
     },
