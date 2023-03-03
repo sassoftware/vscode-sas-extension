@@ -340,6 +340,11 @@
         "title": "%commands.SAS.collapseAll%",
         "category": "SAS",
         "icon": "$(collapse-all)"
+      },
+      {
+        "command": "SAS.deleteTable",
+        "title": "%commands.SAS.deleteTable%",
+        "category": "SAS"
       }
     ],
     "menus": {
@@ -361,6 +366,10 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "SAS.deleteTable",
+          "when": "viewItem =~ /table-actionable/ && view == sas-library-navigator"
+        },
         {
           "command": "SAS.addFolderResource",
           "when": "viewItem =~ /createChild/ && view == sas-content-navigator",

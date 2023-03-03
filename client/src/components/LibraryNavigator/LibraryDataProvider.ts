@@ -13,10 +13,8 @@ import {
   ProviderResult,
   ThemeIcon,
   TreeDataProvider,
-  TreeDragAndDropController,
   TreeItem,
   TreeItemCollapsibleState,
-  window,
 } from "vscode";
 import { getSession } from "../../connection";
 import { DataAccessApi } from "../../connection/rest/api/compute";
@@ -45,7 +43,8 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
   public getTreeItem(item: LibraryItem): TreeItem | Promise<TreeItem> {
     return {
       id: item.uid,
-      label: item.name,
+      label: `${item.name} ${item.readOnly ? "🔒" : ""}`,
+      contextValue: `${item.type}-${item.readOnly ? "readonly" : "actionable"}`,
       collapsibleState:
         item.type === "library"
           ? TreeItemCollapsibleState.Collapsed
@@ -63,6 +62,11 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
 
   public getChildren(item?: LibraryItem): ProviderResult<LibraryItem[]> {
     return this.model.getChildren(item);
+  }
+
+  public async deleteTable(item: LibraryItem): Promise<void> {
+    await this.model.deleteTable(item);
+    this.refresh();
   }
 
   public watch(): Disposable {

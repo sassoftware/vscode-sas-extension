@@ -1,14 +1,7 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import {
-  commands,
-  ExtensionContext,
-  languages,
-  TreeView,
-  ViewColumn,
-  window,
-} from "vscode";
+import { commands, ExtensionContext, TreeView, window } from "vscode";
 import DataTable from "../../panels/DataTable";
 import DragAndDropController from "../DragAndDropController";
 import LibraryDataProvider from "./LibraryDataProvider";
@@ -46,6 +39,14 @@ class LibraryNavigator {
     );
 
     commands.registerCommand("SAS.refreshLibraries", () => this.refresh());
+
+    commands.registerCommand("SAS.deleteTable", async (item: LibraryItem) => {
+      try {
+        await this.libraryDataProvider.deleteTable(item);
+      } catch (error) {
+        window.showErrorMessage(error.message);
+      }
+    });
   }
 
   public async refresh(): Promise<void> {

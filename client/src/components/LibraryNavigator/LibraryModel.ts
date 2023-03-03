@@ -1,6 +1,10 @@
 import { authentication, ProgressLocation, window } from "vscode";
 import { getSession } from "../../connection";
-import { DataAccessApi } from "../../connection/rest/api/compute";
+import {
+  DataAccessApi,
+  Library,
+  LibrarySummary,
+} from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
 import { SASAuthProvider } from "../AuthProvider";
 import {
@@ -10,6 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "./types";
+import { sprintf } from "sprintf-js";
+import { Messages } from "./const";
 
 class LibraryModel {
   private dataAccessApi: ReturnType<typeof DataAccessApi>;
@@ -94,6 +100,22 @@ class LibraryModel {
     return response.data;
   }
 
+  public async deleteTable(item: LibraryItem) {
+    const { dataAccessApi, sessionId } = await this.getDataAccessAPI();
+
+    try {
+      await dataAccessApi.deleteTable({
+        sessionId,
+        libref: item.library,
+        tableName: item.name,
+      });
+    } catch (error) {
+      throw new Error(
+        sprintf(Messages.TableDeletionError, { tableName: item.uid })
+      );
+    }
+  }
+
   public async getChildren(item?: LibraryItem): Promise<LibraryItem[]> {
     if (!item) {
       return await this.getLibraries();
@@ -114,20 +136,36 @@ class LibraryModel {
       headers: { Accept: "application/vnd.sas.collection+json" },
     };
 
-    const {
+    let {
       data: { items },
     } = await dataAccessApi.getLibraries({ sessionId }, options);
+
+    items = await Promise.all(
+      (items as LibraryItem[]).map(
+        async (item: LibraryItem): Promise<LibraryItem> => {
+          const { data } = await dataAccessApi.getLibrarySummary({
+            sessionId,
+            libref: item.id,
+          });
+
+          return { ...item, readOnly: (data as Library).readOnly };
+        }
+      )
+    );
+
     items.push({
       id: "WORK",
       name: "WORK",
+      readOnly: false,
     });
-
+    console.log({ items });
     const libraries = this.processItems(
       items as LibraryItem[],
       "library",
       undefined
     );
 
+    // TODO #129 consider cleaning this up
     this.libraries = libraries.reduce(
       (carry: Record<string, LibraryItem>, item: LibraryItem) => ({
         ...carry,
@@ -149,21 +187,24 @@ class LibraryModel {
       data: { items },
     } = await dataAccessApi.getTables({ sessionId, libref: item.id }, options);
 
-    return this.processItems(items as LibraryItem[], "table", item.id);
+    return this.processItems(items as LibraryItem[], "table", item);
   }
 
   private processItems(
     items: LibraryItem[],
     type: LibraryItemType,
-    library: string | undefined
+    library: LibraryItem | undefined
   ): LibraryItem[] {
     return items.map(
-      ({ id, name }: LibraryItem): LibraryItem => ({
-        uid: `${library}.${id}`,
+      (libraryItem: LibraryItem): LibraryItem => ({
+        ...libraryItem,
+        uid: `${library?.id}.${libraryItem.id}`,
+        library: library?.id,
+        readOnly:
+          typeof libraryItem.readOnly !== undefined
+            ? libraryItem.readOnly
+            : library?.readOnly || true,
         type,
-        id,
-        name,
-        library,
       })
     );
   }

@@ -5,6 +5,7 @@ export interface LibraryItem {
   name: string;
   type: LibraryItemType;
   library: string | undefined;
+  readOnly: boolean;
 }
 
 export interface TableRow {
