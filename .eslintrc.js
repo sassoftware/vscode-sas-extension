@@ -22,7 +22,7 @@ module.exports = {
     "@typescript-eslint/no-unused-vars": "error",
     "@typescript-eslint/consistent-type-assertions": [
       "error",
-      { assertionStyle: "as" },
+      { assertionStyle: "never" },
     ],
     curly: "error",
   },
