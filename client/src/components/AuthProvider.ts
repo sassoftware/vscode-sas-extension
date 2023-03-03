@@ -47,53 +47,54 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
     const session: SASAuthSession = JSON.parse(stored);
     const activeProfile = profileConfig.getActiveProfileDetail();
     const profile = activeProfile.profile;
-    if (profile.connectionType === ConnectionType.Rest) {
-      const tokens = await refreshToken(profile, {
-        access_token: session.accessToken,
-        refresh_token: session.refreshToken,
-      });
-      if (!tokens) {
-        // refresh token failed, the stored session is not valid anymore
-        await this.removeSession();
-        return [];
-      }
-      const accessToken = tokens.access_token;
-      if (accessToken === session.accessToken) {
-        return [session];
-      }
-      const newSession = { ...session, accessToken: tokens.access_token };
-      await this.secretStorage.store(SECRET_KEY, JSON.stringify(newSession));
-      commands.executeCommand("setContext", "SAS.authorized", true);
-
-      return [newSession];
+    if (profile.connectionType !== ConnectionType.Rest) {
+      return [];
     }
-    return [];
+    const tokens = await refreshToken(profile, {
+      access_token: session.accessToken,
+      refresh_token: session.refreshToken,
+    });
+    if (!tokens) {
+      // refresh token failed, the stored session is not valid anymore
+      await this.removeSession();
+      return [];
+    }
+    const accessToken = tokens.access_token;
+    if (accessToken === session.accessToken) {
+      return [session];
+    }
+    const newSession = { ...session, accessToken: tokens.access_token };
+    await this.secretStorage.store(SECRET_KEY, JSON.stringify(newSession));
+    commands.executeCommand("setContext", "SAS.authorized", true);
+
+    return [newSession];
   }
 
   async createSession(): Promise<AuthenticationSession> {
     const activeProfile = profileConfig.getActiveProfileDetail();
     const profile = activeProfile.profile;
 
-    if (profile.connectionType === ConnectionType.Rest) {
-      const { access_token: accessToken, refresh_token: refreshToken } =
-        await getTokens(profile);
-      const user = await getCurrentUser({
-        endpoint: profile.endpoint,
-        accessToken,
-      });
-      const session: SASAuthSession = {
-        id: "SAS",
-        account: { id: user.id, label: user.name },
-        accessToken,
-        refreshToken,
-        scopes: [],
-      };
-      await this.secretStorage.store(SECRET_KEY, JSON.stringify(session));
-      commands.executeCommand("setContext", "SAS.authorized", true);
-
-      return session;
+    if (profile.connectionType !== ConnectionType.Rest) {
+      return;
     }
-    return;
+
+    const { access_token: accessToken, refresh_token: refreshToken } =
+      await getTokens(profile);
+    const user = await getCurrentUser({
+      endpoint: profile.endpoint,
+      accessToken,
+    });
+    const session: SASAuthSession = {
+      id: "SAS",
+      account: { id: user.id, label: user.name },
+      accessToken,
+      refreshToken,
+      scopes: [],
+    };
+    await this.secretStorage.store(SECRET_KEY, JSON.stringify(session));
+    commands.executeCommand("setContext", "SAS.authorized", true);
+
+    return session;
   }
 
   async removeSession(): Promise<void> {
