@@ -118,7 +118,24 @@ export function activate(context: ExtensionContext): void {
     }
   });
 
+  migrateRestProfiles();
   triggerProfileUpdate();
+}
+
+/**
+ * Helper function to ensure that profiles have a supported connectionType.
+ * Profiles without a connectionType defined will be treated as Rest/Viya profiles.
+ */
+function migrateRestProfiles() {
+  const profiles = profileConfig.getAllProfiles();
+
+  Object.keys(profiles).forEach((k) => {
+    const profile = profiles[k];
+    if (profile.connectionType === undefined) {
+      profile.connectionType = ConnectionType.Rest;
+      profileConfig.upsertProfile(k, profile);
+    }
+  });
 }
 
 function triggerProfileUpdate(): void {
