@@ -356,7 +356,7 @@ export class ProfileConfig {
   /**
    * Requests users input on updating or adding a new profile.
    *
-   * @param name the {@link String} represntation of the name of the profile
+   * @param name the {@link String} representation of the name of the profile
    */
   async prompt(name: string): Promise<void> {
     const profile: Profile = this.getProfileByName(name);
