@@ -117,7 +117,7 @@ describe.only("Profiles", async function () {
       it("add a new viya profile", async function () {
         // Arrange
         // Act
-        await profileConfig.upsertProfile(testProfileNewName, <ViyaProfile>{
+        await profileConfig.upsertProfile(testProfileNewName, {
           connectionType: ConnectionType.Rest,
           endpoint: "https://test-host.sas.com",
           context: "SAS Studio context",
@@ -155,9 +155,10 @@ describe.only("Profiles", async function () {
       it("add a new profile", async function () {
         // Arrange
         // Act
-        await profileConfig.upsertProfile(testProfileNewName, <ViyaProfile>{
+        await profileConfig.upsertProfile(testProfileNewName, {
           endpoint: "https://test-host.sas.com",
           context: "SAS Studio context",
+          connectionType: ConnectionType.Rest,
         });
         const profilesList = await profileConfig.listProfile();
 
@@ -201,9 +202,8 @@ describe.only("Profiles", async function () {
       it("get profile by name", async function () {
         // Arrange
         // Act
-        const testProfile = await (<ViyaProfile>(
-          profileConfig.getProfileByName(testProfileName)
-        ));
+        const testProfile: ViyaProfile =
+          profileConfig.getProfileByName(testProfileName);
 
         // Assert
         expect(testProfile.endpoint).to.equal(
@@ -226,17 +226,14 @@ describe.only("Profiles", async function () {
 
       it("update single element of the profile", async function () {
         // Arrange
-        let testProfile = <ViyaProfile>(
-          profileConfig.getProfileByName(testProfileName)
-        );
+        let testProfile: ViyaProfile =
+          profileConfig.getProfileByName(testProfileName);
 
         // Act
         // update profile manually
         testProfile.endpoint = "https://test2-host.sas.com";
         await profileConfig.upsertProfile(testProfileName, testProfile);
-        testProfile = <ViyaProfile>(
-          profileConfig.getProfileByName(testProfileName)
-        );
+        testProfile = profileConfig.getProfileByName(testProfileName);
 
         // Assert
         // validate host has changed and clientId and token is still empty
@@ -265,9 +262,8 @@ describe.only("Profiles", async function () {
         // Act
         await profileConfig.updateActiveProfileSetting(testProfileName);
         const activeProfileName = profileConfig.getActiveProfile();
-        const activeProfile = <ViyaProfile>(
-          profileConfig.getProfileByName(activeProfileName)
-        );
+        const activeProfile: ViyaProfile =
+          profileConfig.getProfileByName(activeProfileName);
 
         // Assert
         expect(activeProfileName).to.equal(
@@ -319,12 +315,14 @@ describe.only("Profiles", async function () {
     });
     describe("CRUD Operations", async function () {
       it("add a new profile", async function () {
-        // Arrange
-        // Act
-        await profileConfig.upsertProfile(testProfileNewName, <ViyaProfile>{
+        const newProfile: ViyaProfile = {
           endpoint: "https://test-host.sas.com",
           context: "SAS Studio context",
-        });
+          connectionType: ConnectionType.Rest,
+        };
+        // Arrange
+        // Act
+        await profileConfig.upsertProfile(testProfileNewName, newProfile);
         const profiles = profileConfig.listProfile();
 
         // Assert
@@ -351,9 +349,8 @@ describe.only("Profiles", async function () {
       it("get profile by name", async function () {
         // Arrange
         // Act
-        const testProfile = <ViyaProfile>(
-          profileConfig.getProfileByName(testProfileName)
-        );
+        const testProfile: ViyaProfile =
+          profileConfig.getProfileByName(testProfileName);
 
         // Assert
         expect(testProfile.endpoint).to.equal(
@@ -380,9 +377,8 @@ describe.only("Profiles", async function () {
 
       it("update single element of the profile", async function () {
         // Arrange
-        let testProfile = <ViyaProfile>(
-          profileConfig.getProfileByName(testProfileName)
-        );
+        let testProfile: ViyaProfile =
+          profileConfig.getProfileByName(testProfileName);
 
         // Act
         // update profile manually
@@ -397,9 +393,7 @@ describe.only("Profiles", async function () {
             ConfigurationTarget.Global
           );
         // get profile after settings update
-        testProfile = <ViyaProfile>(
-          profileConfig.getProfileByName(testProfileName)
-        );
+        testProfile = profileConfig.getProfileByName(testProfileName);
 
         // Assert
         // validate that endpoint was added
@@ -473,9 +467,8 @@ describe.only("Profiles", async function () {
         // Act
         await profileConfig.updateActiveProfileSetting(testProfileName);
         const activeProfileName = profileConfig.getActiveProfile();
-        const activeProfile = <ViyaProfile>(
-          profileConfig.getProfileByName(activeProfileName)
-        );
+        const activeProfile: ViyaProfile =
+          profileConfig.getProfileByName(activeProfileName);
 
         // Assert
         expect(activeProfileName).to.equal(
@@ -558,9 +551,8 @@ describe.only("Profiles", async function () {
           `Profile ${testProfileName} should exist`
         );
 
-        const addedProfile: SSHProfile = <SSHProfile>(
-          profileConfig.getProfileByName(testProfileNewName)
-        );
+        const addedProfile: SSHProfile =
+          profileConfig.getProfileByName(testProfileNewName);
 
         expect(addedProfile).to.eql(
           requestSSHProfile,
@@ -621,9 +613,8 @@ describe.only("Profiles", async function () {
         // Act
         await profileConfig.updateActiveProfileSetting(testProfileName);
         const activeProfileName = profileConfig.getActiveProfile();
-        const activeProfile = <ViyaProfile>(
-          profileConfig.getProfileByName(activeProfileName)
-        );
+        const activeProfile: ViyaProfile =
+          profileConfig.getProfileByName(activeProfileName);
 
         // Assert
         expect(activeProfileName).to.equal(

@@ -148,10 +148,9 @@ export class ContentModel {
     fileName: string
   ): Promise<ContentItem | undefined> {
     const contentType = await this.getFileContentType(fileName);
-
-    let fileCreationResponse = null;
+    let createdResource: ContentItem;
     try {
-      fileCreationResponse = await this.connection.post(
+      const fileCreationResponse = await this.connection.post<ContentItem>(
         `/files/files#rawUpload?typeDefName=${contentType}`,
         Buffer.from("", "binary"),
         {
@@ -161,15 +160,12 @@ export class ContentModel {
           },
         }
       );
+      createdResource = fileCreationResponse.data;
     } catch (error) {
       return;
     }
 
-    const fileLink: Link | null = getLink(
-      (fileCreationResponse.data as ContentItem).links,
-      "GET",
-      "self"
-    );
+    const fileLink: Link | null = getLink(createdResource.links, "GET", "self");
 
     const memberAdded = await this.addMember(
       fileLink?.uri,
@@ -183,7 +179,7 @@ export class ContentModel {
       return;
     }
 
-    return fileCreationResponse.data;
+    return createdResource;
   }
 
   public async createFolder(

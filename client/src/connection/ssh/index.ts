@@ -1,20 +1,29 @@
-import { Client, ClientChannel, ConnectConfig } from "ssh2";
-import { RunResult, Session } from "..";
-import { readFileSync } from "fs";
+// Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+// Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-//TODO: decouple ui model from api model
-import { LogLine } from "../rest/api/compute";
-import { SSHProfile } from "../../components/profile";
+import { Client, ClientChannel, ConnectConfig } from "ssh2";
+import { RunResult, Session, LogLine } from "..";
+import { readFileSync } from "fs";
 
 const conn = new Client();
 const endCode = "--vscode-sas-extension-submit-end--";
+const sasLaunchTimeout = 10000;
 let stream: ClientChannel | undefined;
-let config: SSHProfile;
+let config: Config;
 let resolve: ((value?) => void) | undefined;
 let reject: ((reason?) => void) | undefined;
 let onLog: ((logs: LogLine[]) => void) | undefined;
 let logs: string[] = [];
 let html5FileName = "";
+
+export interface Config {
+  host: string;
+  username: string;
+  saspath: string;
+  sasOptions: string[];
+  port: number;
+  privateKeyPath: string;
+}
 
 conn
   .on("ready", () => {
@@ -40,8 +49,9 @@ conn
         })
         .on("data", (data: Buffer) => {
           const output = data.toString().trimEnd();
+          const outputLines = output.split(/\n|\r\n/);
           if (onLog) {
-            output.split(/\n|\r\n/).forEach((line) => {
+            outputLines.forEach((line) => {
               if (!line) {
                 return;
               }
@@ -60,6 +70,17 @@ conn
             logs.push(output);
             if (output.endsWith("?")) {
               resolve?.();
+            } else {
+              //we're not in running state, set a timeout so we dont attempt to connect indefinitely
+              setTimeout(() => {
+                reject?.(
+                  new Error(
+                    "Execution Failed. Verify that Profile connection settings are correct."
+                  )
+                );
+                logs = [];
+                conn.end();
+              }, sasLaunchTimeout);
             }
           }
         });
@@ -104,7 +125,7 @@ function getResult() {
     s.on("data", (data) => {
       fileContents += data.toString().trimEnd();
     }).on("close", (code) => {
-      const rc = code as number;
+      const rc: number = code;
 
       if (rc === 0) {
         //Make sure that the html has a valid body
@@ -120,9 +141,9 @@ function getResult() {
 }
 
 function setup(): Promise<void> {
-  return new Promise((_resolve, _reject) => {
-    resolve = _resolve;
-    reject = _reject;
+  return new Promise((pResolve, pReject) => {
+    resolve = pResolve;
+    reject = pReject;
 
     if (stream) {
       resolve();
@@ -134,7 +155,7 @@ function setup(): Promise<void> {
       port: config.port,
       username: config.username,
       privateKey: readFileSync(config.privateKeyPath),
-      readyTimeout: 20000,
+      readyTimeout: sasLaunchTimeout,
     };
     conn.connect(cfg);
   });
@@ -168,8 +189,8 @@ function close() {
   stream.end("exit\n");
 }
 
-export function getSession(profile: SSHProfile): Session {
-  config = profile;
+export function getSession(c: Config): Session {
+  config = c;
   return {
     setup,
     run,

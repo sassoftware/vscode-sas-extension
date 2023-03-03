@@ -39,10 +39,10 @@ class ContentNavigator {
     });
     this.treeView.onDidChangeVisibility(async () => {
       if (this.treeView.visible) {
-        const profile = profileConfig.getActiveProfileDetail()
-          ?.profile as ViyaProfile;
-
-        await this.contentDataProvider.connect(profile.endpoint);
+        const activeProfile: ViyaProfile = profileConfig.getProfileByName(
+          profileConfig.getActiveProfile()
+        );
+        await this.contentDataProvider.connect(activeProfile.endpoint);
       }
     });
 

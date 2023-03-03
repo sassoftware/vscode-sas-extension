@@ -4,7 +4,7 @@
 import { BaseCompute, Compute, getApiConfig, stateOptions } from "./common";
 import { ServersApi, Server, Link } from "./api/compute";
 import { ComputeSession } from "./session";
-import { AxiosResponse } from "axios";
+import axios, { AxiosResponse } from "axios";
 
 export class ComputeServer extends Compute {
   api;
@@ -79,10 +79,13 @@ export class ComputeServer extends Compute {
       },
     };
 
-    const resp = await this.requestLink(link, { data: body });
-
-    if (!(resp.status === 201 || resp.status === 200)) {
-      throw new Error(<string>resp?.data);
+    let resp: AxiosResponse;
+    try {
+      resp = await this.requestLink(link, { data: body });
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.message);
+      }
     }
 
     //Create the session from the http resposne
@@ -121,13 +124,13 @@ export class ComputeServer extends Compute {
       throw new Error("Server does not have state link");
     }
 
-    const { data, status } = await this.requestLink(link, {
+    const { data, status } = await this.requestLink<string>(link, {
       params: params,
       headers: headers,
     });
 
     if (status === 200) {
-      return <string>data;
+      return data;
     } else {
       throw new Error("Something went wrong");
     }

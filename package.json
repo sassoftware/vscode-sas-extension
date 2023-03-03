@@ -463,30 +463,30 @@
         {
           "id": "sas-content-navigator",
           "name": "Explorer",
-          "when": "SAS.authorized && SAS.connectionType == Viya"
+          "when": "SAS.authorized && SAS.connectionType == rest"
         },
         {
           "id": "sas-content-get-started",
           "name": "Sign In",
-          "when": "!SAS.authorized && SAS.connectionType == Viya"
+          "when": "!SAS.authorized && SAS.connectionType == rest"
         },
         {
           "id": "sas-content-invalid-connection",
           "name": "Sign In",
-          "when": "!SAS.authorized && SAS.connectionType != Viya"
+          "when": "!SAS.authorized && SAS.connectionType != rest"
         }
       ]
     },
     "viewsWelcome": [
       {
         "view": "sas-content-get-started",
-        "when": "!SAS.authorized && SAS.connectionType == Viya",
+        "when": "!SAS.authorized && SAS.connectionType == rest",
         "contents": "%views.SAS.welcome%",
         "enablement": "!SAS.authorizing"
       },
       {
         "view": "sas-content-invalid-connection",
-        "when": "SAS.connectionType != Viya",
+        "when": "SAS.connectionType != rest",
         "contents": "%views.SAS.unsupportedConnection%"
       }
     ]
@@ -502,7 +502,7 @@
   "qna": "https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp&ssr=false#qna",
   "scripts": {
     "vscode:prepublish": "npm run lint && npm run compile && npm run compile-browser",
-    "lint": "node node_modules/eslint/bin/eslint.js ./client/src/**/*.ts ./server/src/**/*.ts",
+    "lint": "node node_modules/eslint/bin/eslint.js './client/src/**/*.ts' './server/src/**/*.ts'",
     "compile": "node ./tools/build.mjs",
     "watch": "node ./tools/build.mjs dev",
     "compile-browser": "webpack --mode production",

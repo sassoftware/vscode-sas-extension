@@ -20,7 +20,6 @@
 
   "commands.SAS.addFileResource": "New File...",
   "commands.SAS.addFolderResource": "New Folder...",
-
   "commands.SAS.addProfile": "Add New Connection Profile",
   "commands.SAS.authorize": "Sign in",
   "commands.SAS.close": "Close Current Session",

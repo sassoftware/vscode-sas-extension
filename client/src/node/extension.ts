@@ -32,6 +32,7 @@ import { run, runSelected } from "../commands/run";
 import { SASAuthProvider } from "../components/AuthProvider";
 import ContentNavigator from "../components/ContentNavigator";
 import { legend, LogTokensProvider } from "../components/LogViewer";
+import { ConnectionType } from "../components/profile";
 
 let client: LanguageClient;
 // Create Profile status bar item
@@ -125,9 +126,11 @@ function triggerProfileUpdate(): void {
   const activeProfileName = profileConfig.getActiveProfile();
   if (activeProfileName in profileList || activeProfileName === "") {
     updateStatusBarProfile(activeProfileStatusBarIcon);
-    // TODO Update with changes for SAS 9 integration
-    // commands.executeCommand("setContext", "SAS.connectionType", profileList[activeProfileName].connectionType || "Viya");
-    commands.executeCommand("setContext", "SAS.connectionType", "Viya");
+    commands.executeCommand(
+      "setContext",
+      "SAS.connectionType",
+      profileList[activeProfileName].connectionType || ConnectionType.Rest
+    );
   } else {
     profileConfig.updateActiveProfileSetting("");
   }

@@ -53,22 +53,21 @@ export enum ConnectionType {
   SSH = "ssh",
 }
 
-export interface Profile {
-  connectionType: ConnectionType;
-}
 /**
  * Profile is an interface that represents a users profile.  Currently
  * supports two different authentication flows, token and password
  * flow with the clientId and clientSecret.
  */
-export interface ViyaProfile extends Profile {
+export interface ViyaProfile {
+  connectionType: ConnectionType.Rest;
   endpoint: string;
   clientId?: string;
   clientSecret?: string;
   context?: string;
 }
 
-export interface SSHProfile extends Profile {
+export interface SSHProfile {
+  connectionType: ConnectionType.SSH;
   host: string;
   saspath: string;
   port: number;
@@ -76,6 +75,9 @@ export interface SSHProfile extends Profile {
   privateKeyPath: string;
   sasOptions: string[];
 }
+
+export type Profile = ViyaProfile | SSHProfile;
+
 /**
  * Profile detail is an interface that encapsulates the name of the profile
  * with the {@link Profile}.
@@ -229,13 +231,13 @@ export class ProfileConfig {
    * @param name {@link String} of the profile name
    * @returns Profile object
    */
-  getProfileByName(name: string): Profile {
-    let profile: Profile = undefined;
+  getProfileByName<T extends Profile>(name: string): T {
     const profileList = this.getAllProfiles();
     if (name in profileList) {
-      profile = profileList[name];
+      /* eslint-disable @typescript-eslint/consistent-type-assertions*/
+      return profileList[name] as T;
     }
-    return profile;
+    return undefined;
   }
 
   /**
@@ -249,10 +251,11 @@ export class ProfileConfig {
 
     const profileList = this.getAllProfiles();
     if (activeProfileName in profileList) {
-      return <ProfileDetail>{
+      const detail: ProfileDetail = {
         name: activeProfileName,
         profile: profileList[activeProfileName],
       };
+      return detail;
     } else {
       return undefined;
     }
@@ -305,7 +308,7 @@ export class ProfileConfig {
     const pv: ProfileValidation = {
       type: AuthType.Error,
       error: "",
-      profile: <Profile>{},
+      profile: undefined,
     };
 
     //Validate active profile, return early if not valid
@@ -314,35 +317,32 @@ export class ProfileConfig {
       return pv;
     }
 
-    if (profileDetail.profile.connectionType === ConnectionType.Rest) {
-      const viyaProfile: ViyaProfile = <ViyaProfile>profileDetail.profile;
-
-      if (!viyaProfile.endpoint) {
+    const profile: Profile = profileDetail.profile;
+    if (profile.connectionType === ConnectionType.Rest) {
+      if (!profile.endpoint) {
         pv.error = "Missing endpoint in active profile.";
         return pv;
       }
-    } else if (profileDetail.profile.connectionType === ConnectionType.SSH) {
-      const sshProfile: SSHProfile = profileDetail.profile as SSHProfile;
-
-      if (!sshProfile.host) {
+    } else if (profile.connectionType === ConnectionType.SSH) {
+      if (!profile.host) {
         pv.error = "Missing host in active profile.";
         return pv;
       }
 
-      if (!sshProfile.port) {
+      if (!profile.port) {
         pv.error = "Missing port in active profile.";
         return pv;
       }
 
-      if (!sshProfile.privateKeyPath) {
+      if (!profile.privateKeyPath) {
         pv.error = "Missing private key file in active profile.";
         return pv;
       }
-      if (!sshProfile.saspath) {
+      if (!profile.saspath) {
         pv.error = "Missing sas path in active profile.";
         return pv;
       }
-      if (!sshProfile.username) {
+      if (!profile.username) {
         pv.error = "Missing username in active profile.";
         return pv;
       }
@@ -359,12 +359,13 @@ export class ProfileConfig {
    * @param name the {@link String} represntation of the name of the profile
    */
   async prompt(name: string): Promise<void> {
-    const profile = this.getProfileByName(name);
+    const profile: Profile = this.getProfileByName(name);
     // Cannot mutate VSCode Config Object, create a clone and upsert
-    let profileClone: Profile = { ...profile };
+    let profileClone = { ...profile };
     if (!profile) {
-      profileClone = <Profile>{
-        connectionType: undefined,
+      profileClone = {
+        connectionType: ConnectionType.Rest,
+        endpoint: undefined,
       };
     }
 
@@ -376,70 +377,67 @@ export class ProfileConfig {
     profileClone.connectionType = mapQuickPickToEnum(inputConnectionType);
 
     if (profileClone.connectionType === ConnectionType.Rest) {
-      const viyaProfileClone = profileClone as ViyaProfile;
-      viyaProfileClone.endpoint = await createInputTextBox(
+      profileClone.endpoint = await createInputTextBox(
         ProfilePromptType.Endpoint,
-        viyaProfileClone.endpoint
+        profileClone.endpoint
       );
 
-      if (!viyaProfileClone.endpoint) {
+      if (!profileClone.endpoint) {
         return;
       }
 
-      viyaProfileClone.context = await createInputTextBox(
+      profileClone.context = await createInputTextBox(
         ProfilePromptType.ComputeContext,
-        viyaProfileClone.context || DEFAULT_COMPUTE_CONTEXT
+        profileClone.context || DEFAULT_COMPUTE_CONTEXT
       );
       if (
-        viyaProfileClone.context === "" ||
-        viyaProfileClone.context === DEFAULT_COMPUTE_CONTEXT
+        profileClone.context === "" ||
+        profileClone.context === DEFAULT_COMPUTE_CONTEXT
       ) {
-        delete viyaProfileClone.context;
+        delete profileClone.context;
       }
 
-      viyaProfileClone.clientId = await createInputTextBox(
+      profileClone.clientId = await createInputTextBox(
         ProfilePromptType.ClientId,
-        viyaProfileClone.clientId
+        profileClone.clientId
       );
-      if (viyaProfileClone.clientId === "") {
-        delete viyaProfileClone.clientId;
+      if (profileClone.clientId === "") {
+        delete profileClone.clientId;
       }
 
-      if (viyaProfileClone.clientId) {
-        viyaProfileClone.clientSecret = await createInputTextBox(
+      if (profileClone.clientId) {
+        profileClone.clientSecret = await createInputTextBox(
           ProfilePromptType.ClientSecret,
-          viyaProfileClone.clientSecret
+          profileClone.clientSecret
         );
       }
 
-      await this.upsertProfile(name, viyaProfileClone);
+      await this.upsertProfile(name, profileClone);
     } else if (profileClone.connectionType === ConnectionType.SSH) {
-      const newProfileClone: SSHProfile = profileClone as SSHProfile;
-      newProfileClone.host = await createInputTextBox(
+      profileClone.host = await createInputTextBox(
         ProfilePromptType.Host,
-        newProfileClone.host
+        profileClone.host
       );
 
-      newProfileClone.saspath = await createInputTextBox(
+      profileClone.saspath = await createInputTextBox(
         ProfilePromptType.SASPath,
-        newProfileClone.saspath
+        profileClone.saspath
       );
 
-      newProfileClone.username = await createInputTextBox(
+      profileClone.username = await createInputTextBox(
         ProfilePromptType.Username,
-        newProfileClone.username
+        profileClone.username
       );
 
-      newProfileClone.port = +(await createInputTextBox(
-        ProfilePromptType.Port,
-        DEFAULT_SSH_PORT
-      ));
+      profileClone.port = parseInt(
+        await createInputTextBox(ProfilePromptType.Port, DEFAULT_SSH_PORT)
+      );
 
-      newProfileClone.privateKeyPath = await createInputTextBox(
+      profileClone.privateKeyPath = await createInputTextBox(
         ProfilePromptType.PrivateKeyPath,
-        newProfileClone.privateKeyPath
+        profileClone.privateKeyPath
       );
-      await this.upsertProfile(name, newProfileClone);
+      await this.upsertProfile(name, profileClone);
     }
   }
 
@@ -453,9 +451,9 @@ export class ProfileConfig {
     const activeProfile = this.getProfileByName(profileName);
     switch (activeProfile.connectionType) {
       case ConnectionType.SSH:
-        return (<SSHProfile>activeProfile).host;
+        return activeProfile.host;
       case ConnectionType.Rest:
-        return (<ViyaProfile>activeProfile).endpoint;
+        return activeProfile.endpoint;
     }
   }
 }

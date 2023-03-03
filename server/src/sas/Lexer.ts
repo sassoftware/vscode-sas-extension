@@ -1,6 +1,6 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
-
+/* eslint-disable @typescript-eslint/consistent-type-assertions*/
 import { Model } from "./Model";
 import { SyntaxDataProvider } from "./SyntaxDataProvider";
 import { TextPosition, arrayToMap } from "./utils";
