@@ -1,17 +1,34 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import { commands, window, workspace, ConfigurationTarget } from "vscode";
+import {
+  commands,
+  window,
+  workspace,
+  ConfigurationTarget,
+  QuickPickOptions,
+} from "vscode";
 
 export const EXTENSION_CONFIG_KEY = "SAS";
 export const EXTENSION_DEFINE_PROFILES_CONFIG_KEY = "connectionProfiles";
 export const EXTENSION_PROFILES_CONFIG_KEY = "profiles";
 export const EXTENSION_ACTIVE_PROFILE_CONFIG_KEY = "activeProfile";
 
+enum ConnectionOptions {
+  SASViya = "SAS Viya",
+  SAS94Remote = "SAS 9.4 (remote)",
+}
+
+const CONNECTION_PICK_OPTS: string[] = [
+  ConnectionOptions.SASViya,
+  ConnectionOptions.SAS94Remote,
+];
+
 /**
  * The default compute context that will be used to create a SAS session.
  */
 export const DEFAULT_COMPUTE_CONTEXT = "SAS Job Execution compute context";
+export const DEFAULT_SSH_PORT = "22";
 
 /**
  * Dictionary is a type that maps a generic object with a string key.
@@ -29,16 +46,37 @@ export enum AuthType {
 }
 
 /**
+ * Enum that represents the connection type for a profile.
+ */
+export enum ConnectionType {
+  Rest = "rest",
+  SSH = "ssh",
+}
+
+/**
  * Profile is an interface that represents a users profile.  Currently
  * supports two different authentication flows, token and password
  * flow with the clientId and clientSecret.
  */
-export interface Profile {
+export interface ViyaProfile {
+  connectionType: ConnectionType.Rest;
   endpoint: string;
   clientId?: string;
   clientSecret?: string;
   context?: string;
 }
+
+export interface SSHProfile {
+  connectionType: ConnectionType.SSH;
+  host: string;
+  saspath: string;
+  port: number;
+  username: string;
+  privateKeyPath: string;
+  sasOptions: string[];
+}
+
+export type Profile = ViyaProfile | SSHProfile;
 
 /**
  * Profile detail is an interface that encapsulates the name of the profile
@@ -193,13 +231,13 @@ export class ProfileConfig {
    * @param name {@link String} of the profile name
    * @returns Profile object
    */
-  getProfileByName(name: string): Profile {
-    let profile: Profile = undefined;
+  getProfileByName<T extends Profile>(name: string): T {
     const profileList = this.getAllProfiles();
     if (name in profileList) {
-      profile = profileList[name];
+      /* eslint-disable @typescript-eslint/consistent-type-assertions*/
+      return profileList[name] as T;
     }
-    return profile;
+    return undefined;
   }
 
   /**
@@ -213,10 +251,11 @@ export class ProfileConfig {
 
     const profileList = this.getAllProfiles();
     if (activeProfileName in profileList) {
-      return <ProfileDetail>{
+      const detail: ProfileDetail = {
         name: activeProfileName,
         profile: profileList[activeProfileName],
       };
+      return detail;
     } else {
       return undefined;
     }
@@ -269,17 +308,46 @@ export class ProfileConfig {
     const pv: ProfileValidation = {
       type: AuthType.Error,
       error: "",
-      profile: <Profile>{},
+      profile: undefined,
     };
+
     //Validate active profile, return early if not valid
     if (!profileDetail?.profile) {
       pv.error = "No Active Profile";
       return pv;
     }
-    if (!profileDetail.profile.endpoint) {
-      pv.error = "Missing endpoint in active profile.";
-      return pv;
+
+    const profile: Profile = profileDetail.profile;
+    if (profile.connectionType === ConnectionType.Rest) {
+      if (!profile.endpoint) {
+        pv.error = "Missing endpoint in active profile.";
+        return pv;
+      }
+    } else if (profile.connectionType === ConnectionType.SSH) {
+      if (!profile.host) {
+        pv.error = "Missing host in active profile.";
+        return pv;
+      }
+
+      if (!profile.port) {
+        pv.error = "Missing port in active profile.";
+        return pv;
+      }
+
+      if (!profile.privateKeyPath) {
+        pv.error = "Missing private key file in active profile.";
+        return pv;
+      }
+      if (!profile.saspath) {
+        pv.error = "Missing sas path in active profile.";
+        return pv;
+      }
+      if (!profile.username) {
+        pv.error = "Missing username in active profile.";
+        return pv;
+      }
     }
+
     pv.profile = profileDetail.profile;
     pv.type = AuthType.AuthCode;
     return pv;
@@ -288,54 +356,105 @@ export class ProfileConfig {
   /**
    * Requests users input on updating or adding a new profile.
    *
-   * @param name the {@link String} represntation of the name of the profile
+   * @param name the {@link String} representation of the name of the profile
    */
   async prompt(name: string): Promise<void> {
-    const profile = this.getProfileByName(name);
+    const profile: Profile = this.getProfileByName(name);
     // Cannot mutate VSCode Config Object, create a clone and upsert
     let profileClone = { ...profile };
     if (!profile) {
-      profileClone = <Profile>{
-        endpoint: "",
+      profileClone = {
+        connectionType: ConnectionType.Rest,
+        endpoint: undefined,
       };
     }
 
-    profileClone.endpoint = await createInputTextBox(
-      ProfilePromptType.Endpoint,
-      profileClone.endpoint
+    const inputConnectionType: string = await createInputQuickPick(
+      CONNECTION_PICK_OPTS,
+      ProfilePromptType.ConnectionType
     );
 
-    if (!profileClone.endpoint) {
-      return;
-    }
+    profileClone.connectionType = mapQuickPickToEnum(inputConnectionType);
 
-    profileClone.context = await createInputTextBox(
-      ProfilePromptType.ComputeContext,
-      profileClone.context || DEFAULT_COMPUTE_CONTEXT
-    );
-    if (
-      profileClone.context === "" ||
-      profileClone.context === DEFAULT_COMPUTE_CONTEXT
-    ) {
-      delete profileClone.context;
-    }
-
-    profileClone.clientId = await createInputTextBox(
-      ProfilePromptType.ClientId,
-      profileClone.clientId
-    );
-    if (profileClone.clientId === "") {
-      delete profileClone.clientId;
-    }
-
-    if (profileClone.clientId) {
-      profileClone.clientSecret = await createInputTextBox(
-        ProfilePromptType.ClientSecret,
-        profileClone.clientSecret
+    if (profileClone.connectionType === ConnectionType.Rest) {
+      profileClone.endpoint = await createInputTextBox(
+        ProfilePromptType.Endpoint,
+        profileClone.endpoint
       );
-    }
 
-    await this.upsertProfile(name, profileClone);
+      if (!profileClone.endpoint) {
+        return;
+      }
+
+      profileClone.context = await createInputTextBox(
+        ProfilePromptType.ComputeContext,
+        profileClone.context || DEFAULT_COMPUTE_CONTEXT
+      );
+      if (
+        profileClone.context === "" ||
+        profileClone.context === DEFAULT_COMPUTE_CONTEXT
+      ) {
+        delete profileClone.context;
+      }
+
+      profileClone.clientId = await createInputTextBox(
+        ProfilePromptType.ClientId,
+        profileClone.clientId
+      );
+      if (profileClone.clientId === "") {
+        delete profileClone.clientId;
+      }
+
+      if (profileClone.clientId) {
+        profileClone.clientSecret = await createInputTextBox(
+          ProfilePromptType.ClientSecret,
+          profileClone.clientSecret
+        );
+      }
+
+      await this.upsertProfile(name, profileClone);
+    } else if (profileClone.connectionType === ConnectionType.SSH) {
+      profileClone.host = await createInputTextBox(
+        ProfilePromptType.Host,
+        profileClone.host
+      );
+
+      profileClone.saspath = await createInputTextBox(
+        ProfilePromptType.SASPath,
+        profileClone.saspath
+      );
+
+      profileClone.username = await createInputTextBox(
+        ProfilePromptType.Username,
+        profileClone.username
+      );
+
+      profileClone.port = parseInt(
+        await createInputTextBox(ProfilePromptType.Port, DEFAULT_SSH_PORT)
+      );
+
+      profileClone.privateKeyPath = await createInputTextBox(
+        ProfilePromptType.PrivateKeyPath,
+        profileClone.privateKeyPath
+      );
+      await this.upsertProfile(name, profileClone);
+    }
+  }
+
+  /**
+   * Retrieves the remote target associated with the active profile. For SSH profiles, the host
+   * value is used. For Viya, the endpoint value is used.
+   * @param profileName - a profile name to retrieve.
+   * @returns
+   */
+  remoteTarget(profileName: string): string {
+    const activeProfile = this.getProfileByName(profileName);
+    switch (activeProfile.connectionType) {
+      case ConnectionType.SSH:
+        return activeProfile.host;
+      case ConnectionType.Rest:
+        return activeProfile.endpoint;
+    }
   }
 }
 
@@ -358,6 +477,12 @@ export enum ProfilePromptType {
   Endpoint,
   ComputeContext,
   ClientSecret,
+  ConnectionType,
+  Host,
+  SASPath,
+  Port,
+  Username,
+  PrivateKeyPath,
 }
 
 /**
@@ -405,6 +530,30 @@ export async function createInputTextBox(
 }
 
 /**
+ * Helper method to generate a window.ShowInputQuickPick using a defined set of {@link ProfilePrompt}s.
+ * @param items list of selectable options to bind to the quickpick.
+ * @param profilePromptType {@link ProfilePromptType}
+ * @returns Thenable<{@link String}> of the users input
+ */
+export async function createInputQuickPick(
+  items: readonly string[] | Thenable<readonly string[]> = [],
+  profilePromptType: ProfilePromptType
+): Promise<string> {
+  const profilePrompt = getProfilePrompt(profilePromptType);
+
+  const options: QuickPickOptions = {
+    title: profilePrompt.title,
+    placeHolder: profilePrompt.placeholder,
+    ignoreFocusOut: true,
+    canPickMany: false,
+  };
+
+  const entered = await window.showQuickPick(items, options);
+
+  return entered;
+}
+
+/**
  * Mapped {@link ProfilePrompt} to an enum of {@link ProfilePromptType}.
  */
 const input: ProfilePromptInput = {
@@ -440,4 +589,55 @@ const input: ProfilePromptInput = {
     placeholder: "Enter a client secret",
     description: "Enter secret for client ID. An example is myapp.secret.",
   },
+  [ProfilePromptType.ConnectionType]: {
+    title: "Connection Type",
+    placeholder: "Select a Connection Type",
+    description: "Select a Connection Type.",
+  },
+  [ProfilePromptType.Host]: {
+    title: "SAS 9 SSH Server",
+    placeholder: "Enter the server name",
+    description: "Enter the name of the SAS 9 SSH server.",
+  },
+  [ProfilePromptType.SASPath]: {
+    title: "Server Path",
+    placeholder: "Enter the server path",
+    description: "Enter the server path of the SAS Executable.",
+  },
+  [ProfilePromptType.Port]: {
+    title: "Port Number",
+    placeholder: "Enter a port number",
+    description: "Enter a port number.",
+  },
+  [ProfilePromptType.Username]: {
+    title: "SAS Server Username",
+    placeholder: "Enter your username",
+    description: "Enter your SAS server username.",
+  },
+  [ProfilePromptType.PrivateKeyPath]: {
+    title: "Private Key File",
+    placeholder: "Enter the local path",
+    description: "Enter the local path to a private key file.",
+  },
 };
+
+/**
+ * Helper function to map the quick pick item selection to a well known {@link ConnectionType}.
+ * @param connectionTypePickInput - string value of one of the quick pick option inputs
+ * @returns {@link ConnectionType}
+ */
+function mapQuickPickToEnum(connectionTypePickInput: string): ConnectionType {
+  /* 
+     Having a translation layer here allows the profile types to potentially evolve separately from the 
+     underlying technology used to implement the connection. Down the road its quite possible to have
+     more than one selectable quick pick input that uses the same underlying connection methods..
+  */
+  switch (connectionTypePickInput) {
+    case ConnectionOptions.SASViya:
+      return ConnectionType.Rest;
+    case ConnectionOptions.SAS94Remote:
+      return ConnectionType.SSH;
+    default:
+      return undefined;
+  }
+}

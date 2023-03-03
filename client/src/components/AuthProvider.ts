@@ -14,6 +14,7 @@ import {
 import { profileConfig } from "../commands/profile";
 import { getTokens, refreshToken } from "../connection/rest/auth";
 import { getCurrentUser } from "../connection/rest/identities";
+import { ConnectionType } from "../components/profile";
 
 const SECRET_KEY = "SASAuth";
 
@@ -45,7 +46,11 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
 
     const session: SASAuthSession = JSON.parse(stored);
     const activeProfile = profileConfig.getActiveProfileDetail();
-    const tokens = await refreshToken(activeProfile.profile, {
+    const profile = activeProfile.profile;
+    if (profile.connectionType !== ConnectionType.Rest) {
+      return [];
+    }
+    const tokens = await refreshToken(profile, {
       access_token: session.accessToken,
       refresh_token: session.refreshToken,
     });
@@ -67,10 +72,16 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
 
   async createSession(): Promise<AuthenticationSession> {
     const activeProfile = profileConfig.getActiveProfileDetail();
+    const profile = activeProfile.profile;
+
+    if (profile.connectionType !== ConnectionType.Rest) {
+      return;
+    }
+
     const { access_token: accessToken, refresh_token: refreshToken } =
-      await getTokens(activeProfile.profile);
+      await getTokens(profile);
     const user = await getCurrentUser({
-      endpoint: activeProfile.profile.endpoint,
+      endpoint: profile.endpoint,
       accessToken,
     });
     const session: SASAuthSession = {

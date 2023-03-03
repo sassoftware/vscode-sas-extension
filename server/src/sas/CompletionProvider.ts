@@ -1,7 +1,7 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-/* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/no-unused-vars, @typescript-eslint/consistent-type-assertions */
 import {
   CompletionItem,
   CompletionItemKind,

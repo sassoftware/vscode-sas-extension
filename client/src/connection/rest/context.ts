@@ -4,7 +4,7 @@
 import { BaseCompute, Compute, getApiConfig } from "./common";
 import { ContextsApi, Context, Link, ContextSummary } from "./api/compute";
 import { ComputeSession } from "./session";
-import { AxiosResponse } from "axios";
+import axios, { AxiosResponse } from "axios";
 
 export class ComputeContext extends Compute {
   api;
@@ -86,10 +86,13 @@ export class ComputeContext extends Compute {
 
     const options = this.getLinkOptions(link, { data: body });
 
-    const resp = await this.requestLink(link, options);
-
-    if (!(resp.status === 201 || resp.status === 200)) {
-      throw new Error(<string>resp?.data);
+    let resp: AxiosResponse;
+    try {
+      resp = await this.requestLink(link, options);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.message);
+      }
     }
 
     //Create the session from the http resposne

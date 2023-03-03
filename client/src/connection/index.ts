@@ -1,11 +1,14 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import { LogLine } from "./rest/api/compute";
+import { LogLine as ComputeLogLine } from "./rest/api/compute";
 import { getSession as getRestSession } from "./rest";
-import { AuthType, ProfileConfig } from "../components/profile";
+import { getSession as getSSHSession } from "./ssh";
+import { AuthType, ConnectionType, ProfileConfig } from "../components/profile";
 
 let profileConfig: ProfileConfig;
+
+export type LogLine = ComputeLogLine;
 
 export interface RunResult {
   html5?: string;
@@ -29,8 +32,10 @@ export function getSession(): Session {
   if (validProfile.type === AuthType.Error) {
     throw new Error(validProfile.error);
   }
-  if (/^https*:/.test(validProfile.profile.endpoint)) {
+  if (validProfile.profile?.connectionType === ConnectionType.Rest) {
     return getRestSession(validProfile.profile);
+  } else if (validProfile.profile?.connectionType === ConnectionType.SSH) {
+    return getSSHSession(validProfile.profile);
   }
 
   throw new Error("Invalid endpoint");

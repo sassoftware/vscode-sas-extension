@@ -26,6 +26,7 @@ const buildOptions = {
   external: ["vscode"],
   loader: {
     ".properties": "text",
+    ".node": "copy",
   },
   sourcemap: !!dev,
   minify: !dev,

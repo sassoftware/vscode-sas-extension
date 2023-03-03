@@ -20,6 +20,10 @@ module.exports = {
     "prefer-const": "error",
     "@typescript-eslint/dot-notation": "error",
     "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/consistent-type-assertions": [
+      "error",
+      { assertionStyle: "never" },
+    ],
     curly: "error",
   },
 };

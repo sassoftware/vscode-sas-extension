@@ -136,30 +136,109 @@
                   "type": "object",
                   "description": "%configuration.SAS.connectionProfiles.profiles.name%",
                   "required": [
-                    "endpoint"
+                    "connectionType"
                   ],
                   "properties": {
-                    "endpoint": {
+                    "connectionType": {
                       "type": "string",
-                      "default": "",
-                      "description": "%configuration.SAS.connectionProfiles.profiles.endpoint%"
-                    },
-                    "context": {
-                      "type": "string",
-                      "default": "SAS Job Execution compute context",
-                      "description": "%configuration.SAS.connectionProfiles.profiles.context%"
-                    },
-                    "clientId": {
-                      "type": "string",
-                      "default": "",
-                      "description": "%configuration.SAS.connectionProfiles.profiles.clientId%"
-                    },
-                    "clientSecret": {
-                      "type": "string",
-                      "default": "",
-                      "description": "%configuration.SAS.connectionProfiles.profiles.clientSecret%"
+                      "default": "rest",
+                      "description": "%configurations.SAS.connectionProfiles.profiles.connectionType%",
+                      "enum": [
+                        "rest",
+                        "ssh"
+                      ]
                     }
-                  }
+                  },
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "connectionType": {
+                            "const": "rest"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "endpoint"
+                        ],
+                        "properties": {
+                          "endpoint": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.endpoint%"
+                          },
+                          "context": {
+                            "type": "string",
+                            "default": "SAS Job Execution compute context",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.context%"
+                          },
+                          "clientId": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.clientId%"
+                          },
+                          "clientSecret": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.clientSecret%"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "connectionType": {
+                            "const": "ssh"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "host",
+                          "saspath",
+                          "username",
+                          "port",
+                          "privateKeyPath"
+                        ],
+                        "properties": {
+                          "host": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.host%"
+                          },
+                          "saspath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.saspath%"
+                          },
+                          "username": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.username%"
+                          },
+                          "port": {
+                            "type": "number",
+                            "default": 22,
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.port%",
+                            "exclusiveMinimum": 1,
+                            "exclusiveMaximum": 65535
+                          },
+                          "privateKeyPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.privateKeyPath%"
+                          },
+                          "sasOptions": {
+                            "type": "array",
+                            "default": [],
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.sasOptions%"
+                          }
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -384,30 +463,30 @@
         {
           "id": "sas-content-navigator",
           "name": "Explorer",
-          "when": "SAS.authorized && SAS.connectionType == Viya"
+          "when": "SAS.authorized && SAS.connectionType == rest"
         },
         {
           "id": "sas-content-get-started",
           "name": "Sign In",
-          "when": "!SAS.authorized && SAS.connectionType == Viya"
+          "when": "!SAS.authorized && SAS.connectionType == rest"
         },
         {
           "id": "sas-content-invalid-connection",
           "name": "Sign In",
-          "when": "!SAS.authorized && SAS.connectionType != Viya"
+          "when": "!SAS.authorized && SAS.connectionType != rest"
         }
       ]
     },
     "viewsWelcome": [
       {
         "view": "sas-content-get-started",
-        "when": "!SAS.authorized && SAS.connectionType == Viya",
+        "when": "!SAS.authorized && SAS.connectionType == rest",
         "contents": "%views.SAS.welcome%",
         "enablement": "!SAS.authorizing"
       },
       {
         "view": "sas-content-invalid-connection",
-        "when": "SAS.connectionType != Viya",
+        "when": "SAS.connectionType != rest",
         "contents": "%views.SAS.unsupportedConnection%"
       }
     ]
@@ -423,7 +502,7 @@
   "qna": "https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp&ssr=false#qna",
   "scripts": {
     "vscode:prepublish": "npm run lint && npm run compile && npm run compile-browser",
-    "lint": "node node_modules/eslint/bin/eslint.js ./client/src/**/*.ts ./server/src/**/*.ts",
+    "lint": "node node_modules/eslint/bin/eslint.js './client/src/**/*.ts' './server/src/**/*.ts'",
     "compile": "node ./tools/build.mjs",
     "watch": "node ./tools/build.mjs dev",
     "compile-browser": "webpack --mode production",
@@ -435,6 +514,7 @@
     "postinstall": "cd client && npm install && cd ../server && npm install && cd .."
   },
   "devDependencies": {
+    "@types/chai": "^4.3.4",
     "@types/mocha": "^10.0.1",
     "@types/node": "^18.14.2",
     "@typescript-eslint/eslint-plugin": "^5.53.0",
