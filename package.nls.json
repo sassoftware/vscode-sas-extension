@@ -27,6 +27,7 @@
   "commands.SAS.collapseAll": "Collapse All",
   "commands.SAS.deleteProfile": "Delete Connection Profile",
   "commands.SAS.deleteResource": "Delete",
+  "commands.SAS.deleteTable": "Delete",
   "commands.SAS.refresh": "Refresh",
   "commands.SAS.renameResource": "Rename...",
   "commands.SAS.run": "Run All SAS Code",
