@@ -2,23 +2,16 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import {
-  CancellationToken,
-  DataTransfer,
-  DataTransferItem,
   Disposable,
   Event,
   EventEmitter,
   FileChangeEvent,
-  ProgressLocation,
   ProviderResult,
-  ThemeIcon,
   TreeDataProvider,
   TreeItem,
   TreeItemCollapsibleState,
 } from "vscode";
-import { getSession } from "../../connection";
-import { DataAccessApi } from "../../connection/rest/api/compute";
-import { getApiConfig } from "../../connection/rest/common";
+import { featureEnabled } from "../../util/feature";
 import LibraryModel from "./LibraryModel";
 import { LibraryItem } from "./types";
 
@@ -50,7 +43,7 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
           ? TreeItemCollapsibleState.Collapsed
           : TreeItemCollapsibleState.None,
       command:
-        item.type === "table"
+        item.type === "table" && featureEnabled("dataViewer")
           ? {
               command: "SAS.viewTable",
               arguments: [item, () => this.model.loadViewData(item)],
