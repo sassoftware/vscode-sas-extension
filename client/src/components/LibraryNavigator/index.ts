@@ -1,8 +1,9 @@
-// Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+// Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import { commands, ExtensionContext, TreeView, window } from "vscode";
 import DataTable from "../../panels/DataTable";
+import { featureEnabled } from "../../util/feature";
 import DragAndDropController from "../DragAndDropController";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
@@ -29,10 +30,13 @@ class LibraryNavigator {
     commands.registerCommand(
       "SAS.viewTable",
       async (item: LibraryItem, viewDataCallback: () => Promise<TableData>) => {
+        if (!featureEnabled("dataViewer")) {
+          return;
+        }
+
         DataTable.render(
           context.extensionUri,
           item.uid,
-          item.name,
           await viewDataCallback()
         );
       }

@@ -9,6 +9,7 @@
     "vscode": "^1.71.0"
   },
   "dependencies": {
+    "@vscode/webview-ui-toolkit": "^1.2.2",
     "axios": "^0.27.2",
     "media-typer": "^1.1.0",
     "sprintf-js": "^1.1.2",

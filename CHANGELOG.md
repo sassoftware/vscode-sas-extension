@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Updated error message for unsupported connection type ([#151](https://github.com/sassoftware/vscode-sas-extension/issues/151)).
 - Fix to ensure all tests suites run on npm run test ([#147](https://github.com/sassoftware/vscode-sas-extension/issues/147)).
 - Fix to properly quote glob patterns for lint command on windows ([#149](https://github.com/sassoftware/vscode-sas-extension/issues/149)).
+- Added support for SAS libraries ([#129](https://github.com/sassoftware/vscode-sas-extension/issues/129)). You are now able to see libraries and tables from a SAS instance. You are also able to delete tables and can drag tables into your sas programs. See [Accessing libraries and tables](./README.md#accessing-libraries-and-tables) for more information.
 
 ## [v0.1.2] - 2023-02-01
 

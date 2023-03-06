@@ -543,7 +543,7 @@
         {
           "id": "sas-library-navigator",
           "name": "Libraries",
-          "when": "SAS.authorized && SAS.connectionType == Viya"
+          "when": "SAS.authorized && SAS.connectionType == rest"
         },
         {
           "id": "sas-content-get-started",
@@ -613,8 +613,5 @@
     "typescript": "^5.0.2",
     "webpack": "^5.76.2",
     "webpack-cli": "^5.0.1"
-  },
-  "dependencies": {
-    "@vscode/webview-ui-toolkit": "^1.2.2"
   }
 }
