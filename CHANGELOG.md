@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [Unreleased]
+
+### Added
+
+- Added support for SAS libraries. You are now able to see libraries and tables from a SAS instance. You are also able to delete tables and can drag tables into your sas programs. For more information, view
+
 ## [v0.1.2] - 2023-02-01
 
 ### Changed

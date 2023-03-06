@@ -4,6 +4,7 @@
 import { Client, ClientChannel, ConnectConfig } from "ssh2";
 import { RunResult, Session, LogLine } from "..";
 import { readFileSync } from "fs";
+import { ComputeSession } from "../rest/session";
 
 const conn = new Client();
 const endCode = "--vscode-sas-extension-submit-end--";
@@ -140,7 +141,7 @@ function getResult() {
   });
 }
 
-function setup(): Promise<void> {
+function setup(): Promise<ComputeSession | undefined> {
   return new Promise((pResolve, pReject) => {
     resolve = pResolve;
     reject = pReject;

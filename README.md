@@ -20,6 +20,7 @@ Welcome to the SAS Extension for Visual Studio Code! This extension provides sup
       - [Switch Current SAS Profile](#switch-current-sas-profile)
       - [Update SAS Profile](#update-sas-profile)
     - [Running SAS Code](#running-sas-code)
+    - [Accessing Libraries and Tables](#accessing-libraries-and-tables)
   - [Support](#support)
     - [SAS Communities](#sas-communities)
     - [SAS Programming Documentation](#sas-programming-documentation)
@@ -236,6 +237,21 @@ To run a piece of SAS code:
 - When you click `Run`, the code in the active tab in the editor is submitted. Make sure that the correct tab is active when you run your program.
 - To reset your connection to SAS, run the `Close Current Session` command in VS Code or click the `Close Current Session` button next to the `Run` button.
 
+### Accessing Libraries and Tables
+
+After configuring the SAS extension for a SAS Viya environment, you will be able to access your connected libraries.
+
+You can use the libraries pane to delete a table, or drag and drop tables into your SAS program code. Additionally,
+there is an experimental data viewer that can be enabled by adding the following to your user settings:
+
+```
+"SAS.feature": {
+  "dataViewer": true
+},
+```
+
+This data viewer is currently limited to displaying the first 100 rows of a data source.
+
 ## Support
 
 ### SAS Communities
@@ -261,3 +277,7 @@ We welcome your contributions! Please read [CONTRIBUTING.md](/CONTRIBUTING.md) f
 ## License
 
 This project is subject to the SAS Code Extension Terms, a copy of which is included as [Code_Extension_Agreement.pdf](/Code_Extension_Agreement.pdf)
+
+```
+
+```

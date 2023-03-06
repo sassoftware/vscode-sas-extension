@@ -1,31 +1,17 @@
-import { authentication, ProgressLocation, window } from "vscode";
+// Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+// Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
+
+import { ProgressLocation, window } from "vscode";
 import { getSession } from "../../connection";
-import {
-  DataAccessApi,
-  Library,
-  LibrarySummary,
-} from "../../connection/rest/api/compute";
+import { DataAccessApi } from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
-import { SASAuthProvider } from "../AuthProvider";
-import {
-  LibraryItemType,
-  LibraryItem,
-  TableData,
-  TableHeader,
-  TableRow,
-} from "./types";
+import { LibraryItemType, LibraryItem, TableData } from "./types";
 import { sprintf } from "sprintf-js";
 import { Messages } from "./const";
-import { AxiosError } from "axios";
 
 class LibraryModel {
   private dataAccessApi: ReturnType<typeof DataAccessApi>;
   private sessionId: string;
-  private libraries: Record<string, LibraryItem>;
-
-  constructor() {
-    this.libraries = {};
-  }
 
   public async connect(): Promise<void> {
     const session = getSession();
@@ -41,7 +27,6 @@ class LibraryModel {
       }
     );
 
-    // Lets catch some error cases here
     this.sessionId = computeSession && computeSession.sessionId;
     this.dataAccessApi = DataAccessApi(getApiConfig());
   }
@@ -67,8 +52,8 @@ class LibraryModel {
     );
 
     return {
-      headers: response.data.items[0] as TableHeader,
-      rows: response.data.items.slice(1) as TableRow[],
+      headers: response.data.items[0],
+      rows: response.data.items.slice(1),
     };
   }
 
@@ -88,7 +73,6 @@ class LibraryModel {
 
   public async deleteTable(item: LibraryItem) {
     await this.setup();
-
     try {
       await this.retryOnFail(
         async () =>
@@ -110,13 +94,7 @@ class LibraryModel {
       return await this.getLibraries();
     }
 
-    if (item) {
-      return await this.getTables(item);
-    }
-  }
-
-  public getParent(item: LibraryItem): LibraryItem | undefined {
-    return this.libraries[item.library];
+    return await this.getTables(item);
   }
 
   private async getLibraries(): Promise<LibraryItem[]> {
@@ -145,7 +123,7 @@ class LibraryModel {
             })
         );
 
-        return { ...item, readOnly: (data as Library).readOnly };
+        return { ...item, readOnly: data.readOnly };
       })
     );
 
@@ -157,18 +135,7 @@ class LibraryModel {
       type: "library",
     });
 
-    const libraries = this.processItems(libraryItems, "library", undefined);
-
-    // TODO #129 consider cleaning this up
-    this.libraries = libraries.reduce(
-      (carry: Record<string, LibraryItem>, item: LibraryItem) => ({
-        ...carry,
-        [item.id]: item,
-      }),
-      {}
-    );
-
-    return libraries;
+    return this.processItems(libraryItems, "library", undefined);
   }
 
   private async getTables(item?: LibraryItem): Promise<LibraryItem[]> {
@@ -187,7 +154,7 @@ class LibraryModel {
         )
     );
 
-    return this.processItems(items as LibraryItem[], "table", item);
+    return this.processItems(items, "table", item);
   }
 
   private processItems(

@@ -1,4 +1,4 @@
-// Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+// Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import {
@@ -11,7 +11,7 @@ import {
   TreeItem,
   TreeItemCollapsibleState,
 } from "vscode";
-import { featureEnabled } from "../../util/feature";
+import { Messages } from "./const";
 import LibraryModel from "./LibraryModel";
 import { LibraryItem } from "./types";
 
@@ -43,11 +43,11 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
           ? TreeItemCollapsibleState.Collapsed
           : TreeItemCollapsibleState.None,
       command:
-        item.type === "table" && featureEnabled("dataViewer")
+        item.type === "table"
           ? {
               command: "SAS.viewTable",
               arguments: [item, () => this.model.loadViewData(item)],
-              title: "View SAS Table",
+              title: Messages.ViewTableCommandTitle,
             }
           : undefined,
     };
