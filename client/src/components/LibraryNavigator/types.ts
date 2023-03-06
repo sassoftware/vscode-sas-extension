@@ -4,7 +4,7 @@ export interface LibraryItem {
   id: string;
   name: string;
   type: LibraryItemType;
-  library: string | undefined;
+  library?: string;
   readOnly: boolean;
 }
 

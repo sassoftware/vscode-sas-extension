@@ -45,7 +45,7 @@ async function setup() {
   }
 
   if (computeSession) {
-    return;
+    return computeSession;
   }
 
   //Set the locale in the base options so it appears on all api calls
@@ -57,7 +57,7 @@ async function setup() {
     computeSession = await server1.getSession();
 
     //Maybe wait for session to be initialized?
-    return;
+    return computeSession;
   } else {
     //Create session from context
     const contextsApi = ContextsApi(apiConfig);
