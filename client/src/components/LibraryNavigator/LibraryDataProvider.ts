@@ -41,13 +41,6 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
   }
 
   public getTreeItem(item: LibraryItem): TreeItem | Promise<TreeItem> {
-    console.log(
-      "getTreeItem",
-      item,
-      `${item.type}-${item.readOnly ? "readonly" : "actionable"}`,
-      item.type,
-      item.readOnly
-    );
     return {
       id: item.uid,
       label: `${item.name} ${item.readOnly ? "🔒" : ""}`,
