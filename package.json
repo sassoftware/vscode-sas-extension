@@ -242,6 +242,11 @@
                 }
               }
             }
+          },
+          "SAS.feature": {
+            "order": 2,
+            "type": "object",
+            "default": {}
           }
         }
       }
