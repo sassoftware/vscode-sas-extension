@@ -25,7 +25,7 @@ async function initProfile(): Promise<void> {
   profileConfig = new ProfileConfig();
 }
 
-describe.only("Profiles", async function () {
+describe("Profiles", async function () {
   before(async () => {
     await workspace
       .getConfiguration(EXTENSION_CONFIG_KEY)
