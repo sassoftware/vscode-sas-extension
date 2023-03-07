@@ -502,7 +502,7 @@
   "qna": "https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp&ssr=false#qna",
   "scripts": {
     "vscode:prepublish": "npm run lint && npm run compile && npm run compile-browser",
-    "lint": "node node_modules/eslint/bin/eslint.js './client/src/**/*.ts' './server/src/**/*.ts'",
+    "lint": "node node_modules/eslint/bin/eslint.js \"./client/src/**/*.ts\" \"./server/src/**/*.ts\"",
     "compile": "node ./tools/build.mjs",
     "watch": "node ./tools/build.mjs dev",
     "compile-browser": "webpack --mode production",
