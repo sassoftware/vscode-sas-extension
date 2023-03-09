@@ -9,7 +9,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Authentication status now persisted in VS Code ([#94](https://github.com/sassoftware/vscode-sas-extension/issues/94))
-- Support redirect from SASLogon for Viya 2023.03 and later ([#110](https://github.com/sassoftware/vscode-sas-extension/pull/110))
 
 ## [v0.1.2] - 2023-02-01
 

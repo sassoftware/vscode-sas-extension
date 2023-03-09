@@ -212,14 +212,6 @@ To run a SAS program:
 
    1.3. This will take you to a SAS Logon prompt. Log in with your SAS credentials.
 
-   For Viya 2023.03 and later
-
-   1.4. Browser may prompt you to open VS Code. Click 'Open'. It will take you back to VS Code.
-
-   1.5. VS Code may prompt you that the extension wants to open an URI. Click 'Open'.
-
-   For Viya 2023.02 and before
-
    1.4. SAS returns an authorization code. Copy this code.
 
    1.5. Paste the authorization code in VS Code where indicated at the top of the screen.
