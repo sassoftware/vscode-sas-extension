@@ -11,9 +11,11 @@ import {
   workspace,
   l10n,
   Uri,
+  Color,
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 import { LogFn as LogChannelFn } from "../components/LogChannel";
+import { appendLog } from "../components/LogViewer";
 import { getSession } from "../connection";
 import { profileConfig, switchProfile } from "./profile";
 
@@ -32,6 +34,7 @@ function getCode(outputHtml: boolean, selected = false, uri?: Uri): string {
         (editor) => editor.document.uri.toString() === uri.toString(),
       )
     : window.activeTextEditor;
+  const activeColorTheme = window.activeColorTheme;
   const doc = editor?.document;
   let code = "";
   if (selected) {
@@ -53,6 +56,29 @@ function getCode(outputHtml: boolean, selected = false, uri?: Uri): string {
 
   return outputHtml
     ? "ods html5;\n" + code + "\n;run;quit;ods html5 close;"
+    : code;
+  let odsStyle = "";
+  switch (activeColorTheme.kind) {
+    case ColorThemeKind.Light: {
+      odsStyle = "Illuminate";
+      break;
+    }
+    case ColorThemeKind.Dark: {
+      odsStyle = "Ignite";
+      break;
+    }
+    case ColorThemeKind.HighContrast: {
+      odsStyle = "HighContrast";
+      break;
+    }
+    case ColorThemeKind.HighContrastLight: {
+      odsStyle = "Illuminate";
+      break;
+    }
+  }
+
+  return outputHtml
+    ? `ods html5 style=${odsStyle};\n` + code + "\n;quit;ods html5 close;"
     : code;
 }
 
