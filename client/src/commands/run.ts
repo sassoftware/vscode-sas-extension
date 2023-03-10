@@ -8,6 +8,8 @@ import {
   window,
   workspace,
   commands,
+  ColorThemeKind,
+  Color,
 } from "vscode";
 import { appendLog } from "../components/LogViewer";
 import { getSession } from "../connection";
@@ -18,6 +20,7 @@ let running = false;
 
 function getCode(outputHtml: boolean, selected = false): string {
   const editor = window.activeTextEditor;
+  const activeColorTheme = window.activeColorTheme;
   const doc = editor?.document;
   let code = "";
   if (selected) {
@@ -37,7 +40,29 @@ function getCode(outputHtml: boolean, selected = false): string {
     code = doc?.getText();
   }
 
-  return outputHtml ? "ods html5;\n" + code + "\n;quit;ods html5 close;" : code;
+  let odsStyle = "";
+  switch (activeColorTheme.kind) {
+    case ColorThemeKind.Light: {
+      odsStyle = "Illuminate";
+      break;
+    }
+    case ColorThemeKind.Dark: {
+      odsStyle = "Ignite";
+      break;
+    }
+    case ColorThemeKind.HighContrast: {
+      odsStyle = "HighContrast";
+      break;
+    }
+    case ColorThemeKind.HighContrastLight: {
+      odsStyle = "Illuminate";
+      break;
+    }
+  }
+
+  return outputHtml
+    ? `ods html5 style=${odsStyle};\n` + code + "\n;quit;ods html5 close;"
+    : code;
 }
 
 async function runCode(selected?: boolean) {
