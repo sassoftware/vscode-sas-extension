@@ -15,6 +15,7 @@ let reject: ((reason?) => void) | undefined;
 let onLog: ((logs: LogLine[]) => void) | undefined;
 let logs: string[] = [];
 let html5FileName = "";
+let timer: NodeJS.Timeout;
 
 export interface Config {
   host: string;
@@ -69,18 +70,8 @@ conn
           } else {
             logs.push(output);
             if (output.endsWith("?")) {
+              clearTimer();
               resolve?.();
-            } else {
-              //we're not in running state, set a timeout so we dont attempt to connect indefinitely
-              setTimeout(() => {
-                reject?.(
-                  new Error(
-                    "Execution Failed. Verify that Profile connection settings are correct."
-                  )
-                );
-                logs = [];
-                conn.end();
-              }, sasLaunchTimeout);
             }
           }
         });
@@ -105,6 +96,7 @@ conn
     });
   })
   .on("error", (err) => {
+    clearTimer();
     reject?.(err);
     return;
   });
@@ -157,6 +149,8 @@ function setup(): Promise<void> {
       privateKey: readFileSync(config.privateKeyPath),
       readyTimeout: sasLaunchTimeout,
     };
+
+    setTimer();
     conn.connect(cfg);
   });
 }
@@ -187,6 +181,22 @@ function close() {
   }
   stream.write("endsas;\n");
   stream.end("exit\n");
+}
+
+function setTimer() {
+  clearTimer();
+  timer = setTimeout(() => {
+    reject?.(
+      new Error("Failed to connect to Session. Check profile settings.")
+    );
+    timer = undefined;
+    close();
+  }, sasLaunchTimeout);
+}
+
+function clearTimer() {
+  timer && clearTimeout(timer);
+  timer = undefined;
 }
 
 export function getSession(c: Config): Session {
