@@ -20,11 +20,13 @@ import { ContentItem } from "./types";
 import { getUri, isContainer as getIsContainer } from "./utils";
 
 const fileValidator = (value: string): string | null =>
-  /^([a-zA-Z0-9\s._-]+)\.\w+$/.test(value)
+  /^([^,/<>?;:\\{}|`=+*&^%#@!~\uff01-\uff5e\u3000-\u303f\u0080-\u00ff]+)\.\w+$/.test(
+    value
+  )
     ? null
     : Messages.FileValidationError;
 const folderValidator = (value: string): string | null =>
-  /^([a-zA-Z0-9\s_-]+)$/.test(value) ? null : Messages.FolderValidationError;
+  value.length <= 100 ? null : Messages.FolderValidationError;
 
 class ContentNavigator {
   private contentDataProvider: ContentDataProvider;
