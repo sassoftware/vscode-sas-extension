@@ -127,13 +127,6 @@ class LibraryModel {
       })
     );
 
-    libraryItems.push({
-      uid: "WORK",
-      id: "WORK",
-      name: "WORK",
-      readOnly: false,
-      type: "library",
-    });
 
     return this.processItems(libraryItems, "library", undefined);
   }
