@@ -1,7 +1,7 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import { authentication } from "vscode";
+import { authentication, commands } from "vscode";
 import { RunResult, Session } from "..";
 import { SASAuthProvider } from "../../components/AuthProvider";
 import { ContextsApi, LogLine } from "./api/compute";
@@ -16,6 +16,7 @@ export interface Config {
   clientSecret?: string;
   context?: string;
   serverId?: string;
+  reconnect?: boolean;
 }
 
 let config: Config;
@@ -54,10 +55,33 @@ async function setup(): Promise<void> {
 
   if (config.serverId) {
     const server1 = new ComputeServer(config.serverId);
+
+    //if we have a session already, get it
+    let sessionId: string = await commands.executeCommand<string>(
+      "SAS.contextValue.get",
+      "SAS.sessionId"
+    );
+    if (!config.reconnect) {
+      sessionId = undefined;
+    }
+    if (sessionId !== undefined) {
+      try {
+        computeSession = await server1.getSession(sessionId);
+        return;
+      } catch (error) {
+        console.log(
+          `Attempt to reconnect to session ${sessionId} failed. Starting a new session`
+        );
+        commands.executeCommand(
+          "SAS.contextValue.set",
+          "SAS.sessionId",
+          undefined
+        );
+      }
+    }
     computeSession = await server1.getSession();
 
     //Maybe wait for session to be initialized?
-    return;
   } else {
     //Create session from context
     const contextsApi = ContextsApi(apiConfig);
@@ -79,6 +103,13 @@ async function setup(): Promise<void> {
     ).data;
     computeSession = ComputeSession.fromInterface(sess);
   }
+
+  //Save the current sessionId
+  commands.executeCommand(
+    "SAS.contextValue.set",
+    "SAS.sessionId",
+    computeSession.sessionId
+  );
 }
 
 /*
