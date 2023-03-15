@@ -330,6 +330,16 @@
         "title": "%commands.SAS.collapseAll%",
         "category": "SAS",
         "icon": "$(collapse-all)"
+      },
+      {
+        "command": "SAS.contextValue.set",
+        "title": "Set Context Value",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.contextValue.get",
+        "title": "Get Context Value",
+        "category": "SAS"
       }
     ],
     "menus": {
@@ -396,6 +406,10 @@
         {
           "when": "editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.run"
+        },
+        {
+          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "command": "SAS.runSelected"
         },
         {
           "when": "editorLangId == sas && !SAS.hideRunMenuItem",

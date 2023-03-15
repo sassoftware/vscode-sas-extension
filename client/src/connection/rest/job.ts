@@ -69,10 +69,14 @@ export class ComputeJob extends Compute {
       ifNoneMatch: options?.onChange ? this.etag : undefined,
     };
 
-    const resp = await this.api.getJobState(parms);
+    const resp = await this.api.getJobState(parms, {
+      validateStatus: (status) => {
+        return status >= 200 && status < 400;
+      },
+    });
     if (resp.status === 200) {
       //Set the new etag
-      this.etag = resp.etag;
+      this.etag = resp.headers.etag;
 
       //return the state
       return resp.data;
