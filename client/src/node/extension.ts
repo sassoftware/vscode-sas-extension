@@ -190,3 +190,19 @@ export function deactivate(): Thenable<void> | undefined {
   closeSession();
   return client.stop();
 }
+
+/*
+Set an extension context value.
+This function has the SAS extension context as "this"
+*/
+async function setContextValue(key: string, value: string): Promise<void> {
+  this.workspaceState.update(key, value);
+}
+
+/*
+Set an extension context value.
+This function has the SAS extension context as "this"
+*/
+async function getContextValue(key: string): Promise<string> {
+  return this.workspaceState.get(key);
+}

@@ -95,7 +95,9 @@ export class ComputeServer extends Compute {
 
   async getSession(sessionId?: string): Promise<ComputeSession> {
     if (sessionId !== undefined) {
-      return new ComputeSession(sessionId);
+      const sess = new ComputeSession(sessionId);
+      await sess.self();
+      return sess;
     } else {
       return this.createSession();
     }
