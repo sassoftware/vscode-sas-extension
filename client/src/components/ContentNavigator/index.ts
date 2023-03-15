@@ -21,6 +21,7 @@ import { getUri, isContainer as getIsContainer } from "./utils";
 
 const fileValidator = (value: string): string | null =>
   /^([^,/<>?;:\\{}|`=+*&^%#@!~\uff01-\uff5e\u3000-\u303f\u0080-\u00ff]+)\.\w+$/.test(
+    // the file name does NOT allow some special characters like punctuations (especially full width), CJK and Latin-1 characters.
     value
   )
     ? null
