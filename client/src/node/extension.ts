@@ -163,7 +163,7 @@ function triggerProfileUpdate(): void {
       "setContext",
       "SAS.connection.direct",
       connectionType === ConnectionType.Rest &&
-        !!profileList[activeProfileName]?.serverId
+        "serverId" in profileList[activeProfileName]
     );
   } else {
     profileConfig.updateActiveProfileSetting("");
