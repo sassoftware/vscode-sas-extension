@@ -127,7 +127,6 @@ class LibraryModel {
       })
     );
 
-
     return this.processItems(libraryItems, "library", undefined);
   }
 

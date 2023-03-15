@@ -157,14 +157,14 @@ function triggerProfileUpdate(): void {
 
     //Set the connection type
     commands.executeCommand("setContext", "SAS.connectionType", connectionType);
-    if (connectionType === ConnectionType.Rest) {
-      //Check to see if we are directly connected (Ie. we have a serverId)
-      if ("serverId" in profileList[activeProfileName]) {
-        commands.executeCommand("setContext", "SAS.connection.direct", true);
-      }
-    } else {
-      commands.executeCommand("setContext", "SAS.connection.direct", false);
-    }
+
+    //See if the connection is direct (ie. serverId)
+    commands.executeCommand(
+      "setContext",
+      "SAS.connection.direct",
+      connectionType === ConnectionType.Rest &&
+        !!profileList[activeProfileName]?.serverId
+    );
   } else {
     profileConfig.updateActiveProfileSetting("");
   }
