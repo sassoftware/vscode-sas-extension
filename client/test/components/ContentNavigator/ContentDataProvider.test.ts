@@ -1,4 +1,5 @@
-import axios from "axios";
+import axios, { AxiosInstance } from "axios";
+import { StubbedInstance, stubInterface } from "ts-sinon";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import {
@@ -16,56 +17,7 @@ import { ContentItem } from "../../../src/components/ContentNavigator/types";
 import { getUri } from "../../../src/components/ContentNavigator/utils";
 
 let stub;
-
-const processRequest =
-  (requestMap: Record<string, any>) =>
-  async (request: string, payload?: any) => {
-    return new Promise((resolve, reject) => {
-      if (!requestMap[request]) {
-        return reject(new Error());
-      }
-
-      if (!requestMap[request].responseData) {
-        return resolve({
-          data: requestMap[request],
-          headers: { etag: "1234", "last-modified": "5678" },
-        });
-      }
-
-      const { responseData, requestData } = requestMap[request];
-
-      if (payload && requestData) {
-        expect(payload).to.deep.equal(requestData);
-      }
-
-      return resolve({
-        data: responseData,
-        headers: { etag: "1234", "last-modified": "5678" },
-      });
-    });
-  };
-
-const mockRequests = (requestMap: Record<string, any>) => {
-  if (stub) {
-    stub.restore();
-  }
-
-  stub = sinon.stub(axios, "create").returns({
-    interceptors: { response: { use: () => null } },
-    get: processRequest(requestMap),
-    post: processRequest(requestMap),
-    patch: processRequest(requestMap),
-    put: processRequest(requestMap),
-    delete: processRequest(requestMap),
-    defaults: {
-      headers: {
-        common: {
-          Authorization: "",
-        },
-      },
-    },
-  });
-};
+let axiosInstance: StubbedInstance<AxiosInstance>;
 
 const mockContentItem = (
   contentItem: Partial<ContentItem> = {}
@@ -92,9 +44,29 @@ const mockContentItem = (
 describe("ContentDataProvider", async function () {
   let authStub;
   beforeEach(() => {
-    authStub = sinon
-      .stub(authentication, "getSession")
-      .resolves({ accessToken: "12345" });
+    authStub = sinon.stub(authentication, "getSession").resolves({
+      accessToken: "12345",
+      account: { id: "id", label: "label" },
+      id: "id",
+      scopes: [],
+    });
+
+    axiosInstance = stubInterface<AxiosInstance>();
+    axiosInstance.defaults = {
+      headers: {
+        common: {
+          Authorization: "",
+        },
+        put: {},
+        post: {},
+        patch: {},
+        delete: {},
+        head: {},
+        get: {},
+      },
+    };
+
+    stub = sinon.stub(axios, "create").returns(axiosInstance);
   });
 
   afterEach(() => {
@@ -102,6 +74,7 @@ describe("ContentDataProvider", async function () {
       stub.restore();
     }
     authStub.restore();
+    axiosInstance = undefined;
   });
 
   it("getTreeItem - returns a file tree item for file reference", async () => {
@@ -148,16 +121,23 @@ describe("ContentDataProvider", async function () {
 
   it("getChildren - returns root children without content item", async function () {
     const dataProvider = new ContentDataProvider(new ContentModel());
-    mockRequests({
-      "/folders/folders/@myFavorites": mockContentItem({
+
+    axiosInstance.get.withArgs("/folders/folders/@myFavorites").resolves({
+      data: mockContentItem({
         name: "@myFavorites",
         type: "folder",
       }),
-      "/folders/folders/@myFolder": mockContentItem({
+    });
+
+    axiosInstance.get.withArgs("/folders/folders/@myFolder").resolves({
+      data: mockContentItem({
         name: "@myFolder",
         type: "folder",
       }),
-      "/folders/folders/@sasRoot": mockContentItem({
+    });
+
+    axiosInstance.get.withArgs("/folders/folders/@sasRoot").resolves({
+      data: mockContentItem({
         name: "@sasRoot",
         type: "folder",
       }),
@@ -175,12 +155,16 @@ describe("ContentDataProvider", async function () {
   it("getChildren - returns children with content item", async function () {
     const childItem = mockContentItem();
     const dataProvider = new ContentDataProvider(new ContentModel());
-    mockRequests({
-      "uri://myFolders?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot')":
-        {
+
+    axiosInstance.get
+      .withArgs(
+        "uri://myFolders?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot')"
+      )
+      .resolves({
+        data: {
           items: [childItem],
         },
-    });
+      });
 
     await dataProvider.connect("http://test.io");
 
@@ -208,8 +192,10 @@ describe("ContentDataProvider", async function () {
   it("stat - returns file data", async function () {
     const childItem = mockContentItem();
     const dataProvider = new ContentDataProvider(new ContentModel());
-    mockRequests({
-      "uri://test": childItem,
+
+    axiosInstance.get.withArgs("uri://test").resolves({
+      data: childItem,
+      headers: { etag: "1234", "last-modified": "5678" },
     });
 
     await dataProvider.connect("http://test.io");
@@ -226,8 +212,10 @@ describe("ContentDataProvider", async function () {
   it("stat - returns folder data", async function () {
     const childItem = mockContentItem({ type: "folder" });
     const dataProvider = new ContentDataProvider(new ContentModel());
-    mockRequests({
-      "uri://test": childItem,
+
+    axiosInstance.get.withArgs("uri://test").resolves({
+      data: childItem,
+      headers: { etag: "1234", "last-modified": "5678" },
     });
 
     await dataProvider.connect("http://test.io");
@@ -244,8 +232,10 @@ describe("ContentDataProvider", async function () {
   it("readFile - returns file contents", async function () {
     const childItem = mockContentItem();
     const dataProvider = new ContentDataProvider(new ContentModel());
-    mockRequests({
-      "uri://test/content": "/* file content */",
+
+    axiosInstance.get.withArgs("uri://test/content").resolves({
+      data: "/* file content */",
+      headers: { etag: "1234", "last-modified": "5678" },
     });
 
     await dataProvider.connect("http://test.io");
@@ -264,12 +254,14 @@ describe("ContentDataProvider", async function () {
       name: "folder-test",
     });
     const dataProvider = new ContentDataProvider(new ContentModel());
-    mockRequests({
-      "/folders/folders?parentFolderUri=uri://parent-folder": {
-        responseData: createdFolder,
-        requestData: { name: "folder-test" },
-      },
-    });
+
+    axiosInstance.post
+      .withArgs("/folders/folders?parentFolderUri=uri://parent-folder", {
+        name: "folder-test",
+      })
+      .resolves({
+        data: createdFolder,
+      });
 
     await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.createFolder(parentItem, "folder-test");
@@ -305,21 +297,24 @@ describe("ContentDataProvider", async function () {
     });
 
     const dataProvider = new ContentDataProvider(new ContentModel());
-    mockRequests({
-      "/files/files#rawUpload?typeDefName=programFile": {
-        responseData: createdFile,
-        requestData: Buffer.from("", "binary"),
-      },
-      "uri://addMember": {
-        responseData: {},
-        requestData: {
-          uri: "uri://self",
-          type: "CHILD",
-          name: "file.sas",
-          contentType: "programFile",
-        },
-      },
-    });
+
+    axiosInstance.post
+      .withArgs(
+        "/files/files#rawUpload?typeDefName=programFile",
+        Buffer.from("", "binary")
+      )
+      .resolves({
+        data: createdFile,
+      });
+
+    axiosInstance.post
+      .withArgs("uri://addMember", {
+        uri: "uri://self",
+        type: "CHILD",
+        name: "file.sas",
+        contentType: "programFile",
+      })
+      .resolves({ data: {} });
 
     await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.createFile(parentItem, "file.sas");
@@ -327,23 +322,37 @@ describe("ContentDataProvider", async function () {
   });
 
   it("renameResource - renames resource and returns uri", async function () {
-    const item = mockContentItem({
+    const origItem = mockContentItem({
       type: "file",
       name: "file.sas",
       uri: "uri://rename",
     });
 
-    const dataProvider = new ContentDataProvider(new ContentModel());
-    mockRequests({
-      "uri://rename": {
-        responseData: item,
-        requestData: { name: "new-file.sas" },
-      },
+    const newItem = mockContentItem({
+      type: "file",
+      name: "new-file.sas",
+      uri: "uri://rename",
     });
 
+    axiosInstance.get.withArgs("uri://rename").resolves({
+      data: origItem,
+      headers: { etag: "1234", "last-modified": "5678" },
+    });
+    axiosInstance.patch
+      .withArgs("uri://rename", { name: "new-file.sas" })
+      .resolves({
+        data: newItem,
+        headers: { etag: "1234", "last-modified": "5678" },
+      });
+
+    const dataProvider = new ContentDataProvider(new ContentModel());
+
     await dataProvider.connect("http://test.io");
-    const uri: Uri = await dataProvider.renameResource(item, "new-file.sas");
-    expect(uri).to.deep.equal(getUri(item));
+    const uri: Uri = await dataProvider.renameResource(
+      origItem,
+      "new-file.sas"
+    );
+    expect(uri).to.deep.equal(getUri(newItem));
   });
 
   it("renameResource - renames reference resource and returns uri of referenced item", async function () {
@@ -359,14 +368,20 @@ describe("ContentDataProvider", async function () {
     });
 
     const dataProvider = new ContentDataProvider(new ContentModel());
-    mockRequests({
-      "uri://self": {
-        responseData: item,
-        requestData: { name: "favorite-link.sas" },
-      },
-      "uri://rename": {
-        responseData: referencedFile,
-      },
+
+    axiosInstance.get.withArgs("uri://self").resolves({
+      data: item,
+      headers: { etag: "1234", "last-modified": "5678" },
+    });
+    axiosInstance.patch
+      .withArgs("uri://self", { name: "favorite-link.sas" })
+      .resolves({
+        data: item,
+        headers: { etag: "1234", "last-modified": "5678" },
+      });
+    axiosInstance.get.withArgs("uri://rename").resolves({
+      data: referencedFile,
+      headers: { etag: "1234", "last-modified": "5678" },
     });
 
     await dataProvider.connect("http://test.io");
@@ -387,18 +402,21 @@ describe("ContentDataProvider", async function () {
     const dataProvider = new ContentDataProvider(new ContentModel());
 
     // Make initial request and store file token data
-    mockRequests({
-      "uri://test/content": "/* file content */",
+    axiosInstance.get.withArgs("uri://test/content").resolves({
+      data: "/* file content */",
+      headers: { etag: "1234", "last-modified": "5678" },
     });
+
     await dataProvider.connect("http://test.io");
     await dataProvider.readFile(getUri(item));
 
-    mockRequests({
-      "uri://test/content": {
-        responseData: item,
-        requestData: "/* This is the content */",
-      },
-    });
+    axiosInstance.put
+      .withArgs("uri://test/content", "/* This is the content */")
+      .resolves({
+        data: item,
+        headers: { etag: "1234", "last-modified": "5678" },
+      });
+
     await dataProvider.connect("http://test.io");
     await dataProvider.writeFile(
       getUri(item),
@@ -430,14 +448,10 @@ describe("ContentDataProvider", async function () {
 
     const dataProvider = new ContentDataProvider(new ContentModel());
 
-    mockRequests({
-      "uri://delete": {
-        responseData: {},
-      },
-      "uri://delete-resource": {
-        responseData: {},
-      },
-    });
+    axiosInstance.delete.withArgs("uri://delete").resolves({ data: {} });
+    axiosInstance.delete
+      .withArgs("uri://delete-resource")
+      .resolves({ data: {} });
 
     await dataProvider.connect("http://test.io");
     const deleted = await dataProvider.deleteResource(item);
