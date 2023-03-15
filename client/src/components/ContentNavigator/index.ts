@@ -40,7 +40,10 @@ class ContentNavigator {
   private dirtyFiles: Record<string, boolean>;
 
   constructor(context: ExtensionContext) {
-    this.contentDataProvider = new ContentDataProvider(new ContentModel());
+    this.contentDataProvider = new ContentDataProvider(
+      new ContentModel(),
+      context.extensionUri
+    );
     this.treeView = window.createTreeView("sas-content-navigator", {
       treeDataProvider: this.contentDataProvider,
     });

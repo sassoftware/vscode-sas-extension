@@ -43,12 +43,14 @@ class ContentDataProvider
   private _onDidChangeTreeData: EventEmitter<ContentItem | undefined>;
   private _onDidChange: EventEmitter<Uri>;
   private readonly model: ContentModel;
+  private extensionUri: Uri;
 
-  constructor(model: ContentModel) {
+  constructor(model: ContentModel, extensionUri: Uri) {
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
     this._onDidChange = new EventEmitter<Uri>();
     this.model = model;
+    this.extensionUri = extensionUri;
   }
 
   get onDidChangeFile(): Event<FileChangeEvent[]> {
@@ -72,7 +74,7 @@ class ContentDataProvider
     const isContainer = getIsContainer(item);
 
     return {
-      iconPath: isContainer ? ThemeIcon.Folder : ThemeIcon.File,
+      iconPath: this.iconPathForItem(item),
       contextValue: resourceType(item),
       id: getId(item),
       label: getLabel(item),
@@ -92,6 +94,31 @@ class ContentDataProvider
   public async provideTextDocumentContent(uri: Uri): Promise<string> {
     // use text document content provider to display the readonly editor for the files in the recycle bin
     return await this.model.getContentByUri(uri);
+  }
+
+  private iconPathForItem(
+    item: ContentItem
+  ): ThemeIcon | { light: Uri; dark: Uri } {
+    const isContainer = getIsContainer(item);
+    if (isContainer) {
+      return ThemeIcon.Folder;
+    }
+
+    const extension = item.name.split(".").pop().toLowerCase();
+    if (extension === "sas") {
+      return {
+        dark: Uri.joinPath(
+          this.extensionUri,
+          "icons/dark/sasProgramFileDark.svg"
+        ),
+        light: Uri.joinPath(
+          this.extensionUri,
+          "icons/light/sasProgramFileLight.svg"
+        ),
+      };
+    }
+
+    return isContainer ? ThemeIcon.Folder : ThemeIcon.File;
   }
 
   public getChildren(item?: ContentItem): ProviderResult<ContentItem[]> {

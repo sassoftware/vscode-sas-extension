@@ -10,8 +10,9 @@ import {
   TreeDataProvider,
   TreeItem,
   TreeItemCollapsibleState,
+  Uri,
 } from "vscode";
-import { Messages } from "./const";
+import { Icons, Messages } from "./const";
 import LibraryModel from "./LibraryModel";
 import { LibraryItem } from "./types";
 
@@ -20,6 +21,7 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
   private model: LibraryModel;
   public dropMimeTypes: string[];
   public dragMimeTypes: string[];
+  private extensionUri: Uri;
 
   onDidChangeFile: Event<FileChangeEvent[]>;
 
@@ -27,16 +29,24 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
     return this._onDidChangeTreeData.event;
   }
 
-  constructor(model: LibraryModel) {
+  constructor(model: LibraryModel, extensionUri: Uri) {
     this._onDidChangeTreeData = new EventEmitter<LibraryItem | undefined>();
     this.model = model;
     this.dragMimeTypes = ["application/vnd.code.tree.libraryDragAndDrop"];
+    this.extensionUri = extensionUri;
   }
 
   public getTreeItem(item: LibraryItem): TreeItem | Promise<TreeItem> {
+    const iconPath = this.iconPathForItem(item);
     return {
       id: item.uid,
-      label: `${item.name} ${item.readOnly ? "🔒" : ""}`,
+      iconPath: iconPath
+        ? {
+            light: Uri.joinPath(this.extensionUri, iconPath.light),
+            dark: Uri.joinPath(this.extensionUri, iconPath.dark),
+          }
+        : undefined,
+      label: item.name,
       contextValue: `${item.type}-${item.readOnly ? "readonly" : "actionable"}`,
       collapsibleState:
         item.type === "library"
@@ -51,6 +61,19 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
             }
           : undefined,
     };
+  }
+
+  private iconPathForItem(
+    item: LibraryItem
+  ): { light: string; dark: string } | undefined {
+    switch (item.type) {
+      case "table":
+        return Icons.DataSet;
+      case "library":
+        return item.readOnly ? Icons.ReadOnlyLibrary : Icons.Library;
+      default:
+        return;
+    }
   }
 
   public getChildren(item?: LibraryItem): ProviderResult<LibraryItem[]> {

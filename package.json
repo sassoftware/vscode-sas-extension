@@ -488,8 +488,8 @@
           ".sas"
         ],
         "icon": {
-          "dark": "icons/dark/sasProgramFile.svg",
-          "light": "icons/light/sasProgramFile.svg"
+          "dark": "icons/dark/sasProgramFileDark.svg",
+          "light": "icons/light/sasProgramFileLight.svg"
         },
         "configuration": "./language-configuration.json"
       },
@@ -529,7 +529,7 @@
         {
           "id": "sas-view-container",
           "title": "SAS",
-          "icon": "icons/sas-svg.svg"
+          "icon": "icons/dark/sasIndicatorDark.svg"
         }
       ]
     },

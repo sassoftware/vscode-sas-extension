@@ -19,7 +19,10 @@ class LibraryNavigator {
       "application/vnd.code.tree.sas-library-navigator",
       (item: LibraryItem | undefined) => (item.library ? item.uid : undefined)
     );
-    this.libraryDataProvider = new LibraryDataProvider(new LibraryModel());
+    this.libraryDataProvider = new LibraryDataProvider(
+      new LibraryModel(),
+      context.extensionUri
+    );
     this.treeView = window.createTreeView("sas-library-navigator", {
       treeDataProvider: this.libraryDataProvider,
       dragAndDropController,
