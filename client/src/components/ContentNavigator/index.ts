@@ -17,7 +17,11 @@ import { Messages } from "./const";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
 import { ContentItem } from "./types";
-import { getUri, isContainer as getIsContainer } from "./utils";
+import {
+  getUri,
+  isContainer as getIsContainer,
+  isItemInRecycleBin,
+} from "./utils";
 
 const fileValidator = (value: string): string | null =>
   /^([^/<>;\\{}?#]+)\.\w+$/.test(
@@ -52,6 +56,10 @@ class ContentNavigator {
     context.subscriptions.push(this.treeView);
 
     workspace.registerFileSystemProvider("sas", this.contentDataProvider);
+    workspace.registerTextDocumentContentProvider(
+      "sasReadOnly",
+      this.contentDataProvider
+    );
     this.registerCommands();
     this.watchForFileChanges();
   }
@@ -67,7 +75,7 @@ class ContentNavigator {
     commands.registerCommand("SAS.openSASfile", async (item: ContentItem) => {
       try {
         await window.showTextDocument(
-          await this.contentDataProvider.getUri(item)
+          await this.contentDataProvider.getUri(item, item.__trash__)
         );
       } catch (error) {
         await window.showErrorMessage(Messages.FileOpenError);
@@ -78,12 +86,46 @@ class ContentNavigator {
       "SAS.deleteResource",
       async (resource: ContentItem) => {
         const isContainer = getIsContainer(resource);
-        if (!(await this.contentDataProvider.deleteResource(resource))) {
+        const deleteResult =
+          !isItemInRecycleBin(resource) && resource.permission.write
+            ? await this.contentDataProvider.recycleResource(resource)
+            : await this.contentDataProvider.deleteResource(resource);
+        if (!deleteResult) {
           window.showErrorMessage(
             isContainer
               ? Messages.FolderDeletionError
               : Messages.FileDeletionError
           );
+        }
+      }
+    );
+
+    commands.registerCommand(
+      "SAS.restoreResource",
+      async (resource: ContentItem) => {
+        const isContainer = getIsContainer(resource);
+        if (!(await this.contentDataProvider.restoreResource(resource))) {
+          window.showErrorMessage(
+            isContainer
+              ? Messages.FolderRestoreError
+              : Messages.FileRestoreError
+          );
+        }
+      }
+    );
+
+    commands.registerCommand(
+      "SAS.emptyRecycleBin",
+      async (resource: ContentItem) => {
+        const children = await this.contentDataProvider.getChildren(resource);
+        if (
+          !(await Promise.all(
+            children.map((child) =>
+              this.contentDataProvider.deleteResource(child)
+            )
+          ))
+        ) {
+          window.showErrorMessage(Messages.EmptyRecycleBinError);
         }
       }
     );

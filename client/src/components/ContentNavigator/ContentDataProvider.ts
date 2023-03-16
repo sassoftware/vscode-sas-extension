@@ -10,11 +10,15 @@ import {
   FileSystemProvider,
   FileType,
   ProviderResult,
+  TextDocumentContentProvider,
   ThemeIcon,
   TreeDataProvider,
   TreeItem,
   TreeItemCollapsibleState,
   Uri,
+  window,
+  Tab,
+  TabInputText,
 } from "vscode";
 import { ContentModel } from "./ContentModel";
 import { ContentItem } from "./types";
@@ -26,10 +30,14 @@ import {
   getUri,
   isContainer as getIsContainer,
   resourceType,
+  getLink,
 } from "./utils";
 
 class ContentDataProvider
-  implements TreeDataProvider<ContentItem>, FileSystemProvider
+  implements
+    TreeDataProvider<ContentItem>,
+    FileSystemProvider,
+    TextDocumentContentProvider
 {
   private _onDidChangeFile: EventEmitter<FileChangeEvent[]>;
   private _onDidChangeTreeData: EventEmitter<ContentItem | undefined>;
@@ -75,6 +83,11 @@ class ContentDataProvider
     };
   }
 
+  public async provideTextDocumentContent(uri: Uri): Promise<string> {
+    // use text document content provider to display the readonly editor for the files in the recycle bin
+    return await this.model.getContentByUri(uri);
+  }
+
   public getChildren(item?: ContentItem): ProviderResult<ContentItem[]> {
     return this.model.getChildren(item);
   }
@@ -102,8 +115,8 @@ class ContentDataProvider
       .then((content) => new TextEncoder().encode(content));
   }
 
-  public getUri(item: ContentItem): Promise<Uri> {
-    return this.model.getUri(item);
+  public getUri(item: ContentItem, readOnly: boolean): Promise<Uri> {
+    return this.model.getUri(item, readOnly);
   }
 
   public async createFolder(
@@ -143,11 +156,48 @@ class ContentDataProvider
   }
 
   public async deleteResource(item: ContentItem): Promise<boolean> {
+    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+      return false;
+    }
     const success = await this.model.delete(item);
     if (success) {
       this.refresh();
     }
+    return success;
+  }
 
+  public async recycleResource(item: ContentItem): Promise<boolean> {
+    const recycleBin = this.model.getDelegateFolder("@myRecycleBin");
+    if (!recycleBin) {
+      // fallback to delete
+      return this.deleteResource(item);
+    }
+    const recycleBinUri = getLink(recycleBin.links, "GET", "self")?.uri;
+    if (!recycleBinUri) {
+      return false;
+    }
+    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+      return false;
+    }
+    const success = await this.model.moveTo(item, recycleBinUri);
+    if (success) {
+      this.refresh();
+    }
+    return success;
+  }
+
+  public async restoreResource(item: ContentItem): Promise<boolean> {
+    const previousParentUri = getLink(item.links, "GET", "previousParent")?.uri;
+    if (!previousParentUri) {
+      return false;
+    }
+    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+      return false;
+    }
+    const success = await this.model.moveTo(item, previousParentUri);
+    if (success) {
+      this.refresh();
+    }
     return success;
   }
 
@@ -181,3 +231,15 @@ class ContentDataProvider
 }
 
 export default ContentDataProvider;
+
+const closeFileIfOpen = async (file: Uri): Promise<boolean> => {
+  const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
+  const tab = tabs.find(
+    (tab) =>
+      tab.input instanceof TabInputText && tab.input.uri.query === file.query // compare the file id
+  );
+  if (tab) {
+    return window.tabGroups.close(tab);
+  }
+  return true;
+};

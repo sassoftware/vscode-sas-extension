@@ -10,13 +10,16 @@ import axios, {
 import { authentication, Uri } from "vscode";
 import { SASAuthProvider } from "../AuthProvider";
 import {
+  FAVORITES_FOLDER,
+  FILE_TYPE,
   FILE_TYPES,
+  FOLDER_TYPE,
   FOLDER_TYPES,
   Messages,
   ROOT_FOLDER,
   TRASH_FOLDER,
 } from "./const";
-import { ContentItem, Link } from "./types";
+import { ContentItem, Link, Permission } from "./types";
 import { getLink, getResourceId, getTypeName, getUri } from "./utils";
 
 interface AddMemberProperties {
@@ -30,10 +33,12 @@ export class ContentModel {
     [id: string]: { etag: string; lastModified: string };
   };
   private authorized: boolean;
+  private delegateFolders: { [name: string]: ContentItem };
 
   constructor() {
     this.fileTokenMaps = {};
     this.authorized = false;
+    this.delegateFolders = {};
   }
 
   public async connect(baseURL: string): Promise<void> {
@@ -113,6 +118,7 @@ export class ContentModel {
     return result.items.map((childItem: ContentItem) => ({
       ...childItem,
       uid: `${childItem.id}${item.name}`.replace(/\s/g, ""),
+      permission: getPermission(childItem),
       __trash__: isTrash,
     }));
   }
@@ -304,17 +310,17 @@ export class ContentModel {
     };
   }
 
-  public async getUri(item: ContentItem): Promise<Uri> {
+  public async getUri(item: ContentItem, readOnly: boolean): Promise<Uri> {
     if (item.type !== "reference") {
-      return getUri(item);
+      return getUri(item, readOnly);
     }
 
     // If we're attempting to open a favorite, open the underlying file instead.
     try {
       const resp = await this.connection.get(item.uri);
-      return getUri(resp.data);
+      return getUri(resp.data, readOnly);
     } catch (error) {
-      return getUri(item);
+      return getUri(item, readOnly);
     }
   }
 
@@ -359,6 +365,27 @@ export class ContentModel {
     } catch (error) {
       return true;
     }
+  }
+
+  public getDelegateFolder(name: string): ContentItem | undefined {
+    return this.delegateFolders[name];
+  }
+
+  public async moveTo(
+    item: ContentItem,
+    targetParentFolderUri: string
+  ): Promise<boolean> {
+    const newItemData = {
+      ...item,
+      parentFolderUri: targetParentFolderUri,
+    };
+    const updateLink = getLink(item.links, "PUT", "update");
+    try {
+      await this.connection.put(updateLink.uri, newItemData);
+    } catch (error) {
+      return false;
+    }
+    return true;
   }
 
   private async addMember(
@@ -429,14 +456,12 @@ export class ContentModel {
       "@myFavorites",
       "@myFolder",
       "@sasRoot",
-      // TODO #109 Include recycle bin in next iteration
-      // "@myRecycleBin",
+      "@myRecycleBin",
     ];
-    const shortcuts: ContentItem[] = [];
     let numberCompletedServiceCalls = 0;
 
     return new Promise<ContentItem[]>((resolve) => {
-      supportedDelegateFolders.forEach(async (sDelegate, index) => {
+      supportedDelegateFolders.forEach(async (sDelegate) => {
         let result;
         if (sDelegate === "@sasRoot") {
           result = {
@@ -445,12 +470,23 @@ export class ContentModel {
         } else {
           result = await this.connection.get(`/folders/folders/${sDelegate}`);
         }
-
-        shortcuts[index] = result.data;
+        this.delegateFolders[sDelegate] = {
+          ...result.data,
+          permission: getPermission(result.data),
+        };
 
         numberCompletedServiceCalls++;
         if (numberCompletedServiceCalls === supportedDelegateFolders.length) {
-          resolve(shortcuts.filter((folder) => !!folder));
+          resolve(
+            Object.entries(this.delegateFolders)
+              .sort(
+                // sort the delegate folders as the order in the supportedDelegateFolders
+                (a, b) =>
+                  supportedDelegateFolders.indexOf(a[0]) -
+                  supportedDelegateFolders.indexOf(b[0])
+              )
+              .map((entry) => entry[1])
+          );
         }
       });
     });
@@ -463,3 +499,22 @@ export class ContentModel {
     this.connection.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`;
   }
 }
+
+const getPermission = (item: ContentItem): Permission => {
+  const itemType = getTypeName(item);
+  return [FOLDER_TYPE, FILE_TYPE].includes(itemType) // normal folders and files
+    ? {
+        write: !!getLink(item.links, "PUT", "update"),
+        delete: !!getLink(item.links, "DELETE", "delete"),
+        addMember: !!getLink(item.links, "POST", "createChild"),
+      }
+    : {
+        // delegate folders, user folder and user root folder
+        write: false,
+        delete: false,
+        addMember:
+          itemType !== TRASH_FOLDER &&
+          itemType !== FAVORITES_FOLDER &&
+          !!getLink(item.links, "POST", "createChild"),
+      };
+};
