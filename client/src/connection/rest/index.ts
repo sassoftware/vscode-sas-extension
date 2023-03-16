@@ -21,7 +21,7 @@ export interface Config {
 let config: Config;
 let computeSession: ComputeSession | undefined;
 
-async function setup() {
+async function setup(): Promise<void> {
   const apiConfig = getApiConfig();
   if (!config.serverId) {
     const session = await authentication.getSession(SASAuthProvider.id, [], {
@@ -45,7 +45,7 @@ async function setup() {
   }
 
   if (computeSession) {
-    return computeSession;
+    return;
   }
 
   //Set the locale in the base options so it appears on all api calls
@@ -57,7 +57,7 @@ async function setup() {
     computeSession = await server1.getSession();
 
     //Maybe wait for session to be initialized?
-    return computeSession;
+    return;
   } else {
     //Create session from context
     const contextsApi = ContextsApi(apiConfig);
@@ -79,8 +79,6 @@ async function setup() {
     ).data;
     computeSession = ComputeSession.fromInterface(sess);
   }
-
-  return computeSession;
 }
 
 /*
@@ -144,8 +142,12 @@ async function run(code: string, onLog?: (logs: LogLine[]) => void) {
   return res;
 }
 
+function sessionId() {
+  return computeSession && computeSession.sessionId;
+}
+
 async function close() {
-  if (computeSession && computeSession.sessionId) {
+  if (sessionId()) {
     computeSession.delete();
     computeSession = undefined;
   }
@@ -160,5 +162,6 @@ export function getSession(c: Config): Session {
     setup,
     run,
     close,
+    sessionId,
   };
 }

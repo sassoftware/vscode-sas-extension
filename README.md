@@ -293,7 +293,3 @@ We welcome your contributions! Please read [CONTRIBUTING.md](/CONTRIBUTING.md) f
 ## License
 
 This project is subject to the SAS Code Extension Terms, a copy of which is included as [Code_Extension_Agreement.pdf](/Code_Extension_Agreement.pdf)
-
-```
-
-```

@@ -5,7 +5,6 @@ import { LogLine as ComputeLogLine } from "./rest/api/compute";
 import { getSession as getRestSession } from "./rest";
 import { getSession as getSSHSession } from "./ssh";
 import { AuthType, ConnectionType, ProfileConfig } from "../components/profile";
-import { ComputeSession } from "./rest/session";
 
 let profileConfig: ProfileConfig;
 
@@ -17,9 +16,10 @@ export interface RunResult {
 }
 
 export interface Session {
-  setup(): Promise<ComputeSession | undefined>;
+  setup(): Promise<void>;
   run(code: string, onLog?: (logs: LogLine[]) => void): Promise<RunResult>;
   close(): Promise<void> | void;
+  sessionId?(): string | undefined;
 }
 
 export function getSession(): Session {

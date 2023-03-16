@@ -15,7 +15,6 @@ class LibraryModel {
 
   public async connect(): Promise<void> {
     const session = getSession();
-    let computeSession = null;
 
     await window.withProgress(
       {
@@ -23,11 +22,11 @@ class LibraryModel {
         title: "Connecting to SAS session...",
       },
       async () => {
-        computeSession = await session.setup();
+        await session.setup();
       }
     );
 
-    this.sessionId = computeSession && computeSession.sessionId;
+    this.sessionId = session?.sessionId();
     this.dataAccessApi = DataAccessApi(getApiConfig());
   }
 
