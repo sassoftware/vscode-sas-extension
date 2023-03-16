@@ -8,7 +8,7 @@ import {
   FOLDER_TYPE,
   FOLDER_TYPES,
 } from "./const";
-import { ContentItem, Link } from "./types";
+import { ContentItem, Link, Permission } from "./types";
 
 export const getLink = (
   links: Array<Link>,
@@ -53,30 +53,34 @@ export const resourceType = (item: ContentItem): string | undefined => {
   if (!isValidItem(item)) {
     return;
   }
+  const { write, delete: del, addMember } = getPermission(item);
+  const isRecycled = isItemInRecycleBin(item);
+  const actions = [
+    addMember && !isRecycled ? "createChild" : undefined,
+    del ? "delete" : undefined,
+    write && !isRecycled ? "update" : undefined,
+    write && isRecycled ? "restore" : undefined,
+  ].filter((action) => !!action);
 
-  const typeName = getTypeName(item);
-  // We want to prevent trying to delete base level folders (favorites, my folder, etc)
-  const resourceTypes = [FOLDER_TYPE, FILE_TYPE].includes(typeName)
-    ? ["createChild", "delete", "update"]
-    : ["createChild", "update"];
+  if (getTypeName(item) === "trashFolder") {
+    if (!isNaN(item.memberCount) && item.memberCount > 0) {
+      actions.push("empty");
+    }
+  }
 
-  const links = item.links.filter(
-    (link: Link) =>
-      resourceTypes.includes(link.rel) && item.type !== FAVORITES_FOLDER
-  );
-
-  if (links.length === 0) {
+  if (actions.length === 0) {
     return;
   }
 
-  return links
-    .map((link: Link) => link.rel)
-    .sort()
-    .join("-");
+  return actions.sort().join("-");
 };
 
-export const getUri = (item: ContentItem): Uri =>
-  Uri.parse(`sas:/${getLabel(item)}?id=${getResourceIdFromItem(item)}`);
+export const getUri = (item: ContentItem, readOnly?: boolean): Uri =>
+  Uri.parse(
+    `${readOnly ? "sasReadOnly" : "sas"}:/${getLabel(
+      item
+    )}?id=${getResourceIdFromItem(item)}`
+  );
 
 export const getModifyDate = (item: ContentItem): number =>
   item.modifiedTimeStamp;
@@ -92,3 +96,22 @@ export const isValidItem = (item: ContentItem): boolean =>
 
 export const isItemInRecycleBin = (item: ContentItem): boolean =>
   !!item && item.__trash__;
+
+export const getPermission = (item: ContentItem): Permission => {
+  const itemType = getTypeName(item);
+  return [FOLDER_TYPE, FILE_TYPE].includes(itemType) // normal folders and files
+    ? {
+        write: !!getLink(item.links, "PUT", "update"),
+        delete: !!getLink(item.links, "DELETE", "delete"),
+        addMember: !!getLink(item.links, "POST", "createChild"),
+      }
+    : {
+        // delegate folders, user folder and user root folder
+        write: false,
+        delete: false,
+        addMember:
+          itemType !== "trashFolder" &&
+          itemType !== FAVORITES_FOLDER &&
+          !!getLink(item.links, "POST", "createChild"),
+      };
+};

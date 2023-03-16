@@ -38,16 +38,18 @@ export const FOLDER_TYPES = [
   FAVORITES_FOLDER,
   "userFolder",
   "userRoot",
-  // TODO #109 Include recycle bin in next iteration
-  // TRASH_FOLDER,
+  TRASH_FOLDER,
 ];
 
 export const Messages = {
   FileDeletionError: "Unable to delete file.",
+  FileRestoreError: "Unable to restore file.",
   FileOpenError: "The file type is unsupported.",
   FileValidationError: "Invalid file name.",
   FolderDeletionError: "Unable to delete folder.",
+  FolderRestoreError: "Unable to restore folder.",
   FolderValidationError: "Invalid folder name.",
+  EmptyRecycleBinError: "Unable to empty the recycle bin.",
   NewFileCreationError: 'Unable to create file "%(name)s".',
   NewFilePrompt: "Enter a file name.",
   NewFileTitle: "New File",

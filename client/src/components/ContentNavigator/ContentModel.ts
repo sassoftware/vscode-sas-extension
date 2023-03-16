@@ -25,10 +25,12 @@ export class ContentModel {
     [id: string]: { etag: string; lastModified: string };
   };
   private authorized: boolean;
+  private delegateFolders: { [name: string]: ContentItem };
 
   constructor() {
     this.fileTokenMaps = {};
     this.authorized = false;
+    this.delegateFolders = {};
   }
 
   public async connect(baseURL: string): Promise<void> {
@@ -276,17 +278,17 @@ export class ContentModel {
     };
   }
 
-  public async getUri(item: ContentItem): Promise<Uri> {
+  public async getUri(item: ContentItem, readOnly: boolean): Promise<Uri> {
     if (item.type !== "reference") {
-      return getUri(item);
+      return getUri(item, readOnly);
     }
 
     // If we're attempting to open a favorite, open the underlying file instead.
     try {
       const resp = await this.connection.get(item.uri);
-      return getUri(resp.data);
+      return getUri(resp.data, readOnly);
     } catch (error) {
-      return getUri(item);
+      return getUri(item, readOnly);
     }
   }
 
@@ -331,6 +333,27 @@ export class ContentModel {
     } catch (error) {
       return true;
     }
+  }
+
+  public getDelegateFolder(name: string): ContentItem | undefined {
+    return this.delegateFolders[name];
+  }
+
+  public async moveTo(
+    item: ContentItem,
+    targetParentFolderUri: string
+  ): Promise<boolean> {
+    const newItemData = {
+      ...item,
+      parentFolderUri: targetParentFolderUri,
+    };
+    const updateLink = getLink(item.links, "PUT", "update");
+    try {
+      await this.connection.put(updateLink.uri, newItemData);
+    } catch (error) {
+      return false;
+    }
+    return true;
   }
 
   private async addMember(
@@ -401,8 +424,7 @@ export class ContentModel {
       "@myFavorites",
       "@myFolder",
       "@sasRoot",
-      // TODO #109 Include recycle bin in next iteration
-      // "@myRecycleBin",
+      "@myRecycleBin",
     ];
     const shortcuts: ContentItem[] = [];
     let numberCompletedServiceCalls = 0;
@@ -420,7 +442,10 @@ export class ContentModel {
           );
         }
         serviceDelegateFoldersDeferred
-          .then((result) => (shortcuts[index] = result.data))
+          .then((result) => {
+            shortcuts[index] = result.data;
+            this.delegateFolders[sDelegate] = result.data;
+          })
           .finally(() => {
             numberCompletedServiceCalls++;
             if (

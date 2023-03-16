@@ -175,7 +175,7 @@ describe("ContentDataProvider", async function () {
     const childItem = mockContentItem();
     const dataProvider = new ContentDataProvider(new ContentModel());
     mockRequests({
-      "uri://myFolders?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot')":
+      "uri://myFolders?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')":
         {
           items: [childItem],
         },
@@ -440,6 +440,86 @@ describe("ContentDataProvider", async function () {
 
     await dataProvider.connect("http://test.io");
     const deleted = await dataProvider.deleteResource(item);
+
+    expect(deleted).to.equal(true);
+  });
+
+  it("recycleResource - move item to the recycle bin", async function () {
+    const item = mockContentItem({
+      type: "file",
+      name: "file.sas",
+      links: [
+        {
+          rel: "update",
+          uri: "uri://update",
+          method: "PUT",
+          href: "uri://update",
+          type: "test",
+        },
+      ],
+    });
+    const model = new ContentModel();
+    sinon.stub(model, "getDelegateFolder").returns(
+      mockContentItem({
+        type: "trashFolder",
+        name: "Recycle Bin",
+        links: [
+          {
+            rel: "self",
+            uri: "uri://self",
+            method: "GET",
+            href: "uri://self",
+            type: "test",
+          },
+        ],
+      })
+    );
+    const dataProvider = new ContentDataProvider(model);
+
+    mockRequests({
+      "uri://update": {
+        responseData: {},
+      },
+    });
+
+    await dataProvider.connect("http://test.io");
+    const recycled = await dataProvider.recycleResource(item);
+
+    expect(recycled).to.equal(true);
+  });
+
+  it("restoreResource - restore item to the previous parent folder", async function () {
+    const item = mockContentItem({
+      type: "file",
+      name: "file.sas",
+      links: [
+        {
+          rel: "update",
+          uri: "uri://update",
+          method: "PUT",
+          href: "uri://update",
+          type: "test",
+        },
+        {
+          rel: "previousParent",
+          uri: "uri://previous.parent",
+          method: "GET",
+          href: "previousParent",
+          type: "test",
+        },
+      ],
+    });
+
+    const dataProvider = new ContentDataProvider(new ContentModel());
+
+    mockRequests({
+      "uri://update": {
+        responseData: {},
+      },
+    });
+
+    await dataProvider.connect("http://test.io");
+    const deleted = await dataProvider.restoreResource(item);
 
     expect(deleted).to.equal(true);
   });

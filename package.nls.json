@@ -29,6 +29,8 @@
   "commands.SAS.deleteResource": "Delete",
   "commands.SAS.refreshResources": "Refresh",
   "commands.SAS.renameResource": "Rename...",
+  "commands.SAS.restoreResource": "Restore",
+  "commands.SAS.emptyRecycleBin": "Empty Recycle Bin",
   "commands.SAS.run": "Run All SAS Code",
   "commands.SAS.runSelected": "Run Selected or All SAS Code",
   "commands.SAS.switchProfile": "Switch Current Connection Profile",
