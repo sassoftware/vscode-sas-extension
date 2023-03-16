@@ -20,6 +20,7 @@ Welcome to the SAS Extension for Visual Studio Code! This extension provides sup
       - [Switch Current SAS Profile](#switch-current-sas-profile)
       - [Update SAS Profile](#update-sas-profile)
     - [Running SAS Code](#running-sas-code)
+    - [Accessing SAS Content](#accessing-sas-content)
   - [Support](#support)
     - [SAS Communities](#sas-communities)
     - [SAS Programming Documentation](#sas-programming-documentation)
@@ -237,6 +238,20 @@ To run a piece of SAS code:
 - Currently, only HTML output is supported. By default, the ODS HTML5 statement is added to the submitted code. Clear the `Enable/disable ODS HTML5 output` option in the Settings editor for the SAS extension to disable this output.
 - When you click `Run`, the code in the active tab in the editor is submitted. Make sure that the correct tab is active when you run your program.
 - To reset your connection to SAS, run the `Close Current Session` command in VS Code or click the `Close Current Session` button next to the `Run` button.
+
+### Accessing SAS Content
+
+After configuring the SAS extension for a SAS Viya environment, you will be able to access SAS Content.
+
+To access SAS Content:
+
+1. Click the SAS icon in VSCode's activity bar.
+2. Click Sign In.
+3. Your SAS Content should be displayed after sign in. From here, you are able to create, edit, delete, and run files stored on a SAS server.
+
+**Notes**:
+
+- SAS Content requires a profile with a connection to a Viya instance.
 
 ## Support
 
