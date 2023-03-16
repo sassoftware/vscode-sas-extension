@@ -19,4 +19,13 @@ export const Icons = {
     light: "icons/light/libraryLight.svg",
     dark: "icons/dark/libraryDark.svg",
   },
+  WorkLibrary: {
+    light: "icons/light/workLibraryLight.svg",
+    dark: "icons/dark/workLibraryDark.svg",
+  },
 };
+
+export const DefaultRecordLimit = 100;
+export const WorkLibraryId = "WORK";
+export const LibraryType = "library";
+export const TableType = "table";

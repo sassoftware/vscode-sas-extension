@@ -12,7 +12,13 @@ import {
   TreeItemCollapsibleState,
   Uri,
 } from "vscode";
-import { Icons, Messages } from "./const";
+import {
+  Icons,
+  LibraryType,
+  Messages,
+  TableType,
+  WorkLibraryId,
+} from "./const";
 import LibraryModel from "./LibraryModel";
 import { LibraryItem } from "./types";
 
@@ -49,11 +55,11 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
       label: item.name,
       contextValue: `${item.type}-${item.readOnly ? "readonly" : "actionable"}`,
       collapsibleState:
-        item.type === "library"
+        item.type === LibraryType
           ? TreeItemCollapsibleState.Collapsed
           : TreeItemCollapsibleState.None,
       command:
-        item.type === "table"
+        item.type === TableType
           ? {
               command: "SAS.viewTable",
               arguments: [item, () => this.model.loadViewData(item)],
@@ -67,10 +73,18 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
     item: LibraryItem
   ): { light: string; dark: string } | undefined {
     switch (item.type) {
-      case "table":
+      case TableType:
         return Icons.DataSet;
-      case "library":
-        return item.readOnly ? Icons.ReadOnlyLibrary : Icons.Library;
+      case LibraryType:
+        if (item.id === WorkLibraryId) {
+          return Icons.WorkLibrary;
+        }
+
+        if (item.readOnly) {
+          return Icons.ReadOnlyLibrary;
+        }
+
+        return Icons.Library;
       default:
         return;
     }

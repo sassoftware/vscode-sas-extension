@@ -7,7 +7,8 @@ import { DataAccessApi } from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
 import { LibraryItemType, LibraryItem, TableData } from "./types";
 import { sprintf } from "sprintf-js";
-import { Messages } from "./const";
+import { DefaultRecordLimit, Messages } from "./const";
+import sortBy from "lodash/sortBy";
 
 class LibraryModel {
   private dataAccessApi: ReturnType<typeof DataAccessApi>;
@@ -102,15 +103,28 @@ class LibraryModel {
       headers: { Accept: "application/vnd.sas.collection+json" },
     };
 
-    const {
-      data: { items },
-    } = await this.retryOnFail(
-      async () =>
-        await this.dataAccessApi.getLibraries(
-          { sessionId: this.sessionId },
-          options
-        )
-    );
+    let offset = -1 * DefaultRecordLimit;
+    let items = [];
+    let totalItemCount = Infinity;
+    do {
+      offset += DefaultRecordLimit;
+      const { data } = await this.retryOnFail(
+        async () =>
+          await this.dataAccessApi.getLibraries(
+            {
+              sessionId: this.sessionId,
+              limit: DefaultRecordLimit,
+              start: offset,
+            },
+            options
+          )
+      );
+
+      items = [...items, ...data.items];
+      totalItemCount = data.count;
+    } while (offset <= totalItemCount);
+
+    items = sortBy(items, (item: LibraryItem) => item.id);
 
     const libraryItems: LibraryItem[] = await Promise.all(
       items.map(async (item: LibraryItem): Promise<LibraryItem> => {
@@ -126,14 +140,6 @@ class LibraryModel {
       })
     );
 
-    libraryItems.push({
-      uid: "WORK",
-      id: "WORK",
-      name: "WORK",
-      readOnly: false,
-      type: "library",
-    });
-
     return this.processItems(libraryItems, "library", undefined);
   }
 
@@ -143,15 +149,26 @@ class LibraryModel {
       headers: { Accept: "application/vnd.sas.collection+json" },
     };
 
-    const {
-      data: { items },
-    } = await this.retryOnFail(
-      async () =>
-        await this.dataAccessApi.getTables(
-          { sessionId: this.sessionId, libref: item.id },
-          options
-        )
-    );
+    let offset = -1 * DefaultRecordLimit;
+    let items = [];
+    let totalItemCount = Infinity;
+    do {
+      offset += DefaultRecordLimit;
+      const { data } = await this.retryOnFail(
+        async () =>
+          await this.dataAccessApi.getTables(
+            {
+              sessionId: this.sessionId,
+              libref: item.id,
+              limit: DefaultRecordLimit,
+              start: offset,
+            },
+            options
+          )
+      );
+      items = [...items, ...data.items];
+      totalItemCount = data.count;
+    } while (offset <= totalItemCount);
 
     return this.processItems(items, "table", item);
   }
@@ -161,7 +178,7 @@ class LibraryModel {
     type: LibraryItemType,
     library: LibraryItem | undefined
   ): LibraryItem[] {
-    return items.map(
+    return sortBy(items, (item: LibraryItem) => item.id).map(
       (libraryItem: LibraryItem): LibraryItem => ({
         ...libraryItem,
         uid: `${library?.id}.${libraryItem.id}`,
