@@ -27,5 +27,3 @@ export const Icons = {
 
 export const DefaultRecordLimit = 100;
 export const WorkLibraryId = "WORK";
-export const LibraryType = "library";
-export const TableType = "table";

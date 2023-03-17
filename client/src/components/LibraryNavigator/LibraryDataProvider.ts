@@ -12,15 +12,9 @@ import {
   TreeItemCollapsibleState,
   Uri,
 } from "vscode";
-import {
-  Icons,
-  LibraryType,
-  Messages,
-  TableType,
-  WorkLibraryId,
-} from "./const";
+import { Icons, Messages, WorkLibraryId } from "./const";
 import LibraryModel from "./LibraryModel";
-import { LibraryItem } from "./types";
+import { LibraryItem, LibraryType, TableType } from "./types";
 
 class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
   private _onDidChangeTreeData: EventEmitter<LibraryItem | undefined>;

@@ -20,7 +20,6 @@ export async function refreshToken(
 ): Promise<Tokens | undefined> {
   const clientId = config.clientId || "vscode";
   const clientSecret = config.clientSecret ?? "";
-
   const rootApi = RootApi(
     new Configuration({ basePath: config.endpoint + "/compute" })
   );

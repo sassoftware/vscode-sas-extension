@@ -8,11 +8,12 @@ import { getApiConfig } from "../../connection/rest/common";
 import { LibraryItemType, LibraryItem, TableData } from "./types";
 import { sprintf } from "sprintf-js";
 import { DefaultRecordLimit, Messages } from "./const";
-import sortBy from "lodash/sortBy";
+import { sortBy } from "lodash";
+import { AxiosResponse } from "axios";
 
 class LibraryModel {
-  private dataAccessApi: ReturnType<typeof DataAccessApi>;
-  private sessionId: string;
+  protected dataAccessApi: ReturnType<typeof DataAccessApi>;
+  protected sessionId: string;
 
   public async connect(): Promise<void> {
     const session = getSession();
@@ -122,7 +123,7 @@ class LibraryModel {
 
       items = [...items, ...data.items];
       totalItemCount = data.count;
-    } while (offset <= totalItemCount);
+    } while (offset < totalItemCount);
 
     items = sortBy(items, (item: LibraryItem) => item.id);
 
@@ -168,7 +169,7 @@ class LibraryModel {
       );
       items = [...items, ...data.items];
       totalItemCount = data.count;
-    } while (offset <= totalItemCount);
+    } while (offset < totalItemCount);
 
     return this.processItems(items, "table", item);
   }
@@ -181,7 +182,7 @@ class LibraryModel {
     return sortBy(items, (item: LibraryItem) => item.id).map(
       (libraryItem: LibraryItem): LibraryItem => ({
         ...libraryItem,
-        uid: `${library?.id}.${libraryItem.id}`,
+        uid: `${library?.id || ""}.${libraryItem.id}`,
         library: library?.id,
         readOnly:
           libraryItem.readOnly !== undefined
@@ -192,8 +193,9 @@ class LibraryModel {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async retryOnFail(callbackFn: () => Promise<any>): Promise<any> {
+  private async retryOnFail(
+    callbackFn: () => Promise<AxiosResponse>
+  ): Promise<AxiosResponse> {
     try {
       return await callbackFn();
     } catch (error) {

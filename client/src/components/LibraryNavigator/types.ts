@@ -1,3 +1,5 @@
+export const LibraryType = "library";
+export const TableType = "table";
 export type LibraryItemType = "library" | "table";
 export interface LibraryItem {
   uid: string;
