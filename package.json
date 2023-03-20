@@ -410,10 +410,6 @@
         {
           "when": "editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected"
-        },
-        {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
-          "command": "SAS.runSelected"
         }
       ]
     },
