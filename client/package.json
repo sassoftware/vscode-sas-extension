@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@types/ssh2": "^1.11.7",
-    "@types/vscode": "^1.67.0",
+    "@types/vscode": "1.67.0",
     "@vscode/test-electron": "^1.6.2"
   }
 }
