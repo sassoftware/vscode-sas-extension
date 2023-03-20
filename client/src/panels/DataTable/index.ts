@@ -1,5 +1,7 @@
 import { Disposable, Uri, ViewColumn, WebviewPanel, window } from "vscode";
+import { Messages } from "../../components/LibraryNavigator/const";
 import { TableData, TableRow } from "../../components/LibraryNavigator/types";
+import { sprintf } from "sprintf-js";
 
 export enum Commands {
   ReceiveRowData = "SAS.DataTable.receiveRowData",
@@ -33,6 +35,13 @@ class DataTable {
           <title>${uid}</title>
         </head>
         <body>
+          <p>
+            <vscode-tag>alpha</vscode-tag>
+            ${sprintf(Messages.DataTableHeader, {
+              tableName: uid,
+            })}
+          </p>
+          <vscode-divider role="presentation"></vscode-divider>
           <vscode-data-grid class="data-grid">
             <vscode-data-grid-row row-type="header">
               ${tableData.headers.columns

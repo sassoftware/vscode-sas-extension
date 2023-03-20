@@ -133,7 +133,7 @@ export function activate(context: ExtensionContext): void {
 function triggerProfileUpdate(): void {
   const profileList = profileConfig.getAllProfiles();
   const activeProfileName = profileConfig.getActiveProfile();
-  if (activeProfileName in profileList || activeProfileName === "") {
+  if (profileList[activeProfileName]) {
     updateStatusBarProfile(activeProfileStatusBarIcon);
     commands.executeCommand(
       "setContext",

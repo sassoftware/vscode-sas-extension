@@ -3,7 +3,6 @@
 
 import { commands, ExtensionContext, TreeView, window } from "vscode";
 import DataTable from "../../panels/DataTable";
-import { featureEnabled } from "../../util/feature";
 import DragAndDropController from "../DragAndDropController";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
@@ -33,10 +32,6 @@ class LibraryNavigator {
     commands.registerCommand(
       "SAS.viewTable",
       async (item: LibraryItem, viewDataCallback: () => Promise<TableData>) => {
-        if (!featureEnabled("dataViewer")) {
-          return;
-        }
-
         DataTable.render(
           context.extensionUri,
           item.uid,

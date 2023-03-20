@@ -2,6 +2,7 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 export const Messages = {
+  DataTableHeader: "Viewing a sample of the first 100 rows of %(tableName)s.",
   TableDeletionError: "Unable to delete table %(tableName)s.",
   ViewTableCommandTitle: "View SAS Table",
 };

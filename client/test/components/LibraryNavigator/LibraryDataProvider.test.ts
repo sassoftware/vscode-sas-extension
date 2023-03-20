@@ -1,11 +1,14 @@
 import { Uri, TreeItemCollapsibleState } from "vscode";
 import LibraryDataProvider from "../../../src/components/LibraryNavigator/LibraryDataProvider";
 import LibraryModel from "../../../src/components/LibraryNavigator/LibraryModel";
-import { Icons } from "../../../src/components/LibraryNavigator/const";
+import {
+  Icons,
+  Messages,
+} from "../../../src/components/LibraryNavigator/const";
 import { DataAccessApi } from "../../../src/connection/rest/api/compute";
 import { getApiConfig } from "../../../src/connection/rest/common";
 import { expect } from "chai";
-
+import { sprintf } from "sprintf-js";
 import * as nock from "nock";
 import { LibraryItem } from "../../../src/components/LibraryNavigator/types";
 
@@ -173,5 +176,44 @@ describe("LibraryDataProvider", async function () {
       TreeItemCollapsibleState.Collapsed
     );
     expect(treeItem.command === undefined).to.equal(true);
+  });
+
+  it("deleteTable - deletes a table successfully", async () => {
+    const item: LibraryItem = {
+      uid: "test",
+      id: "test",
+      name: "test",
+      type: "table",
+      readOnly: false,
+      library: "lib",
+    };
+
+    nock("http://test.local").delete("/sessions/1234/data/lib/test").reply(200);
+
+    const provider = libraryDataProvider();
+    await provider.deleteTable(item);
+  });
+
+  it("deleteTable - fails with error message", async () => {
+    const item: LibraryItem = {
+      uid: "test",
+      id: "test",
+      name: "test",
+      type: "table",
+      readOnly: false,
+      library: "lib",
+    };
+
+    nock("http://test.local").delete("/sessions/1234/data/lib/test").reply(500);
+
+    const provider = libraryDataProvider();
+    try {
+      await provider.deleteTable(item);
+    } catch (error) {
+      expect(error.message).to.equal(
+        new Error(sprintf(Messages.TableDeletionError, { tableName: "test" }))
+          .message
+      );
+    }
   });
 });

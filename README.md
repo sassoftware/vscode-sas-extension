@@ -257,16 +257,7 @@ To access SAS Content:
 
 After configuring the SAS extension for a SAS Viya environment, you will be able to access your connected libraries.
 
-You can use the libraries pane to delete a table, or drag and drop tables into your SAS program code. Additionally,
-there is an experimental data viewer that can be enabled by adding the following to your user settings:
-
-```
-"SAS.feature": {
-  "dataViewer": true
-},
-```
-
-This data viewer is currently limited to displaying the first 100 rows of a data source.
+You can use the libraries pane to delete a table, drag and drop tables into your SAS program code, or view a sample of the table data.
 
 ## Support
 
