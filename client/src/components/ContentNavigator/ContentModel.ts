@@ -1,7 +1,12 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import axios, { AxiosInstance } from "axios";
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosResponse,
+} from "axios";
 import { authentication, Uri } from "vscode";
 import { SASAuthProvider } from "../AuthProvider";
 import {
@@ -33,10 +38,22 @@ export class ContentModel {
 
   public async connect(baseURL: string): Promise<void> {
     this.connection = axios.create({ baseURL });
-    const session = await authentication.getSession(SASAuthProvider.id, [], {
-      createIfNone: true,
-    });
-    this.connection.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`;
+    this.connection.interceptors.response.use(
+      (response: AxiosResponse) => response,
+      async (error: AxiosError) => {
+        const originalRequest: AxiosRequestConfig & { _retry?: boolean } =
+          error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          await this.updateAccessToken();
+          return this.connection(originalRequest);
+        }
+
+        return Promise.reject(error);
+      }
+    );
+    await this.updateAccessToken();
     this.authorized = true;
   }
 
@@ -128,7 +145,6 @@ export class ContentModel {
     const res = await this.connection.get(resourceId + "/content", {
       transformResponse: (response) => response,
     });
-
     this.fileTokenMaps[resourceId] = {
       etag: res.headers.etag,
       lastModified: res.headers["last-modified"],
@@ -199,7 +215,6 @@ export class ContentModel {
           name,
         }
       );
-
       return createFolderResponse.data;
     } catch (error) {
       return;
@@ -241,7 +256,6 @@ export class ContentModel {
           },
         }
       );
-
       this.fileTokenMaps[uri] = {
         etag: patchResponse.headers.etag,
         lastModified: patchResponse.headers["last-modified"],
@@ -408,28 +422,30 @@ export class ContentModel {
     let numberCompletedServiceCalls = 0;
 
     return new Promise<ContentItem[]>((resolve) => {
-      supportedDelegateFolders.forEach((sDelegate, index) => {
-        let serviceDelegateFoldersDeferred;
+      supportedDelegateFolders.forEach(async (sDelegate, index) => {
+        let result;
         if (sDelegate === "@sasRoot") {
-          serviceDelegateFoldersDeferred = Promise.resolve({
+          result = {
             data: ROOT_FOLDER,
-          });
+          };
         } else {
-          serviceDelegateFoldersDeferred = this.connection.get(
-            `/folders/folders/${sDelegate}`
-          );
+          result = await this.connection.get(`/folders/folders/${sDelegate}`);
         }
-        serviceDelegateFoldersDeferred
-          .then((result) => (shortcuts[index] = result.data))
-          .finally(() => {
-            numberCompletedServiceCalls++;
-            if (
-              numberCompletedServiceCalls === supportedDelegateFolders.length
-            ) {
-              resolve(shortcuts.filter((folder) => !!folder));
-            }
-          });
+
+        shortcuts[index] = result.data;
+
+        numberCompletedServiceCalls++;
+        if (numberCompletedServiceCalls === supportedDelegateFolders.length) {
+          resolve(shortcuts.filter((folder) => !!folder));
+        }
       });
     });
+  }
+
+  private async updateAccessToken(): Promise<void> {
+    const session = await authentication.getSession(SASAuthProvider.id, [], {
+      createIfNone: true,
+    });
+    this.connection.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`;
   }
 }

@@ -51,6 +51,7 @@ const mockRequests = (requestMap: Record<string, any>) => {
   }
 
   stub = sinon.stub(axios, "create").returns({
+    interceptors: { response: { use: () => null } },
     get: processRequest(requestMap),
     post: processRequest(requestMap),
     patch: processRequest(requestMap),
