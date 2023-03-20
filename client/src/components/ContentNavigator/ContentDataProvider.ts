@@ -156,12 +156,13 @@ class ContentDataProvider
   }
 
   public async deleteResource(item: ContentItem): Promise<boolean> {
+    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+      return false;
+    }
     const success = await this.model.delete(item);
     if (success) {
-      closeFileIfOpen(getUri(item, item.__trash__));
       this.refresh();
     }
-
     return success;
   }
 
@@ -175,9 +176,11 @@ class ContentDataProvider
     if (!recycleBinUri) {
       return false;
     }
+    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+      return false;
+    }
     const success = await this.model.moveTo(item, recycleBinUri);
     if (success) {
-      closeFileIfOpen(getUri(item));
       this.refresh();
     }
     return success;
@@ -188,9 +191,11 @@ class ContentDataProvider
     if (!previousParentUri) {
       return false;
     }
+    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+      return false;
+    }
     const success = await this.model.moveTo(item, previousParentUri);
     if (success) {
-      closeFileIfOpen(getUri(item, item.__trash__));
       this.refresh();
     }
     return success;
@@ -227,13 +232,14 @@ class ContentDataProvider
 
 export default ContentDataProvider;
 
-const closeFileIfOpen = async (file: Uri): Promise<void> => {
+const closeFileIfOpen = async (file: Uri): Promise<boolean> => {
   const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
   const index = tabs.findIndex(
     (tab) =>
-      tab.input instanceof TabInputText && tab.input.uri.path === file.path
+      tab.input instanceof TabInputText && tab.input.uri.query === file.query // compare the file id
   );
   if (index !== -1) {
-    await window.tabGroups.close(tabs[index]);
+    return window.tabGroups.close(tabs[index]);
   }
+  return true;
 };
