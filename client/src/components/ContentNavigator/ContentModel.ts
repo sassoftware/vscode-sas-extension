@@ -1,7 +1,12 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import axios, { AxiosInstance, AxiosResponse } from "axios";
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosResponse,
+} from "axios";
 import { authentication, Uri } from "vscode";
 import { SASAuthProvider } from "../AuthProvider";
 import {
@@ -33,6 +38,21 @@ export class ContentModel {
 
   public async connect(baseURL: string): Promise<void> {
     this.connection = axios.create({ baseURL });
+    this.connection.interceptors.response.use(
+      (response: AxiosResponse) => response,
+      async (error: AxiosError) => {
+        const originalRequest: AxiosRequestConfig & { _retry?: boolean } =
+          error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          await this.updateAccessToken();
+          return this.connection(originalRequest);
+        }
+
+        return Promise.reject(error);
+      }
+    );
     await this.updateAccessToken();
     this.authorized = true;
   }
@@ -83,9 +103,7 @@ export class ContentModel {
       membersUrl = membersUrl + "&filter=and(" + filters.join(",") + ")";
     }
 
-    const res = await this.reconnectOnFailure(
-      async () => await this.connection.get(membersUrl)
-    );
+    const res = await this.connection.get(membersUrl);
     const result = res.data;
     if (!result.items) {
       return Promise.reject();
@@ -105,9 +123,7 @@ export class ContentModel {
       return;
     }
 
-    const resp = await this.reconnectOnFailure(
-      async () => await this.connection.get(ancestorsLink.uri)
-    );
+    const resp = await this.connection.get(ancestorsLink.uri);
     if (resp.data.ancestors && resp.data.ancestors.length > 0) {
       return resp.data.ancestors[0];
     }
@@ -115,9 +131,7 @@ export class ContentModel {
 
   public async getResourceByUri(uri: Uri): Promise<ContentItem> {
     const resourceId = getResourceId(uri);
-    const res = await this.reconnectOnFailure(
-      async () => await this.connection.get(resourceId)
-    );
+    const res = await this.connection.get(resourceId);
     this.fileTokenMaps[resourceId] = {
       etag: res.headers.etag,
       lastModified: res.headers["last-modified"],
@@ -128,13 +142,9 @@ export class ContentModel {
 
   public async getContentByUri(uri: Uri): Promise<string> {
     const resourceId = getResourceId(uri);
-    const res = await this.reconnectOnFailure(
-      async () =>
-        await this.connection.get(resourceId + "/content", {
-          transformResponse: (response) => response,
-        })
-    );
-
+    const res = await this.connection.get(resourceId + "/content", {
+      transformResponse: (response) => response,
+    });
     this.fileTokenMaps[resourceId] = {
       etag: res.headers.etag,
       lastModified: res.headers["last-modified"],
@@ -156,18 +166,15 @@ export class ContentModel {
     const contentType = await this.getFileContentType(fileName);
     let createdResource: ContentItem;
     try {
-      const fileCreationResponse = await this.reconnectOnFailure(
-        async () =>
-          await this.connection.post<ContentItem>(
-            `/files/files#rawUpload?typeDefName=${contentType}`,
-            Buffer.from("", "binary"),
-            {
-              headers: {
-                "Content-Type": "text/plain",
-                "Content-Disposition": `filename="${fileName}"`,
-              },
-            }
-          )
+      const fileCreationResponse = await this.connection.post<ContentItem>(
+        `/files/files#rawUpload?typeDefName=${contentType}`,
+        Buffer.from("", "binary"),
+        {
+          headers: {
+            "Content-Type": "text/plain",
+            "Content-Disposition": `filename="${fileName}"`,
+          },
+        }
       );
       createdResource = fileCreationResponse.data;
     } catch (error) {
@@ -202,16 +209,12 @@ export class ContentModel {
     }
 
     try {
-      const createFolderResponse = await this.reconnectOnFailure(
-        async () =>
-          await this.connection.post(
-            `/folders/folders?parentFolderUri=${parentFolderUri}`,
-            {
-              name,
-            }
-          )
+      const createFolderResponse = await this.connection.post(
+        `/folders/folders?parentFolderUri=${parentFolderUri}`,
+        {
+          name,
+        }
       );
-
       return createFolderResponse.data;
     } catch (error) {
       return;
@@ -232,9 +235,7 @@ export class ContentModel {
     let fileTokenMap = this.fileTokenMaps[uri];
     if (!fileTokenMap) {
       try {
-        const res = await this.reconnectOnFailure(
-          async () => await this.connection.get(uri)
-        );
+        const res = await this.connection.get(uri);
         fileTokenMap = {
           etag: res.headers.etag,
           lastModified: res.headers["last-modified"],
@@ -245,20 +246,16 @@ export class ContentModel {
     }
 
     try {
-      const patchResponse = await this.reconnectOnFailure(
-        async () =>
-          await this.connection.patch(
-            uri,
-            { name },
-            {
-              headers: {
-                "If-Unmodified-Since": fileTokenMap.lastModified,
-                "If-Match": fileTokenMap.etag,
-              },
-            }
-          )
+      const patchResponse = await this.connection.patch(
+        uri,
+        { name },
+        {
+          headers: {
+            "If-Unmodified-Since": fileTokenMap.lastModified,
+            "If-Match": fileTokenMap.etag,
+          },
+        }
       );
-
       this.fileTokenMaps[uri] = {
         etag: patchResponse.headers.etag,
         lastModified: patchResponse.headers["last-modified"],
@@ -268,9 +265,7 @@ export class ContentModel {
       // back the reference objects, we want to pass back the underlying source
       // objects.
       if (itemIsReference) {
-        const referencedItem = await this.reconnectOnFailure(
-          async () => await this.connection.get(item.uri)
-        );
+        const referencedItem = await this.connection.get(item.uri);
         return referencedItem.data;
       }
 
@@ -282,16 +277,13 @@ export class ContentModel {
 
   public async saveContentToUri(uri: Uri, content: string): Promise<void> {
     const resourceId = getResourceId(uri);
-    const res = await this.reconnectOnFailure(
-      async () =>
-        await this.connection.put(resourceId + "/content", content, {
-          headers: {
-            "Content-Type": "text/plain",
-            "If-Match": this.fileTokenMaps[resourceId].etag,
-            "If-Unmodified-Since": this.fileTokenMaps[resourceId].lastModified,
-          },
-        })
-    );
+    const res = await this.connection.put(resourceId + "/content", content, {
+      headers: {
+        "Content-Type": "text/plain",
+        "If-Match": this.fileTokenMaps[resourceId].etag,
+        "If-Unmodified-Since": this.fileTokenMaps[resourceId].lastModified,
+      },
+    });
     this.fileTokenMaps[resourceId] = {
       etag: res.headers.etag,
       lastModified: res.headers["last-modified"],
@@ -305,9 +297,7 @@ export class ContentModel {
 
     // If we're attempting to open a favorite, open the underlying file instead.
     try {
-      const resp = await this.reconnectOnFailure(
-        async () => await this.connection.get(item.uri)
-      );
+      const resp = await this.connection.get(item.uri);
       return getUri(resp.data);
     } catch (error) {
       return getUri(item);
@@ -321,9 +311,7 @@ export class ContentModel {
     }
 
     try {
-      await this.reconnectOnFailure(
-        async () => await this.connection.delete(link.uri)
-      );
+      await this.connection.delete(link.uri);
     } catch (error) {
       return false;
     }
@@ -339,11 +327,8 @@ export class ContentModel {
 
     // Now, lets see if there's a favorite for this item
     try {
-      const { data: favoritesResponse } = await this.reconnectOnFailure(
-        async () =>
-          await this.connection.get(
-            `/folders/folders/@myFavorites/members?limit=100&filter=eq(uri,"${item.uri}")`
-          )
+      const { data: favoritesResponse } = await this.connection.get(
+        `/folders/folders/@myFavorites/members?limit=100&filter=eq(uri,"${item.uri}")`
       );
 
       // If we don't have a favorite, we're done
@@ -372,14 +357,11 @@ export class ContentModel {
     }
 
     try {
-      await this.reconnectOnFailure(
-        async () =>
-          await this.connection.post(addMemberUri, {
-            uri,
-            type: "CHILD",
-            ...properties,
-          })
-      );
+      await this.connection.post(addMemberUri, {
+        uri,
+        type: "CHILD",
+        ...properties,
+      });
     } catch (error) {
       return false;
     }
@@ -414,11 +396,8 @@ export class ContentModel {
     }
 
     try {
-      const typeResponse = await this.reconnectOnFailure(
-        async () =>
-          await this.connection.get(
-            `/types/types?filter=contains('extensions', '${ext}')`
-          )
+      const typeResponse = await this.connection.get(
+        `/types/types?filter=contains('extensions', '${ext}')`
       );
 
       if (typeResponse.data.items && typeResponse.data.items.length !== 0) {
@@ -468,22 +447,5 @@ export class ContentModel {
       createIfNone: true,
     });
     this.connection.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`;
-  }
-
-  private async reconnectOnFailure(
-    callbackFn: () => Promise<AxiosResponse>
-  ): Promise<AxiosResponse> {
-    try {
-      return await callbackFn();
-    } catch (error) {
-      if (error.response?.status !== 401) {
-        throw error;
-      }
-
-      await this.updateAccessToken();
-
-      // If it fails a second time, we give up
-      return await callbackFn();
-    }
   }
 }
