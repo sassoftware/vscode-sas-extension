@@ -6,7 +6,7 @@ import { assertThrowsAsync, getTestFixtureContent } from "../../utils";
 import { assert, expect } from "chai";
 import { StubbedInstance, stubInterface } from "ts-sinon";
 
-describe.only("ssh connection", () => {
+describe("ssh connection", () => {
   const seconds = 1000;
   let keyContent: string;
   let sandbox: sinon.SinonSandbox;
