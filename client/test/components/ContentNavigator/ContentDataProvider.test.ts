@@ -52,6 +52,10 @@ describe("ContentDataProvider", async function () {
     });
 
     axiosInstance = stubInterface<AxiosInstance>();
+    axiosInstance.interceptors.response = {
+      use: () => null,
+      eject: () => null,
+    };
     axiosInstance.defaults = {
       headers: {
         common: {
