@@ -31,6 +31,7 @@ import {
 import { run, runSelected } from "../commands/run";
 import { SASAuthProvider } from "../components/AuthProvider";
 import ContentNavigator from "../components/ContentNavigator";
+import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
 import { legend, LogTokensProvider } from "../components/LogViewer";
 import { ConnectionType } from "../components/profile";
@@ -81,6 +82,7 @@ export function activate(context: ExtensionContext): void {
   // Start the client. This will also launch the server
   client.start();
 
+  setContext(context);
   const libraryNavigator = new LibraryNavigator(context);
   const contentNavigator = new ContentNavigator(context);
 
@@ -189,20 +191,4 @@ export function deactivate(): Thenable<void> | undefined {
   }
   closeSession();
   return client.stop();
-}
-
-/*
-Set an extension context value.
-This function has the SAS extension context as "this"
-*/
-async function setContextValue(key: string, value: string): Promise<void> {
-  this.workspaceState.update(key, value);
-}
-
-/*
-Set an extension context value.
-This function has the SAS extension context as "this"
-*/
-async function getContextValue(key: string): Promise<string> {
-  return this.workspaceState.get(key);
 }
