@@ -330,16 +330,6 @@
         "title": "%commands.SAS.collapseAll%",
         "category": "SAS",
         "icon": "$(collapse-all)"
-      },
-      {
-        "command": "SAS.contextValue.set",
-        "title": "Set Context Value",
-        "category": "SAS"
-      },
-      {
-        "command": "SAS.contextValue.get",
-        "title": "Get Context Value",
-        "category": "SAS"
       }
     ],
     "menus": {
