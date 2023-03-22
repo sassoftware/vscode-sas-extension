@@ -38,5 +38,5 @@ export function getSession(): Session {
     return getSSHSession(validProfile.profile);
   }
 
-  throw new Error("Invalid endpoint");
+  throw new Error("Invalid connectionType. Check Profile settings.");
 }

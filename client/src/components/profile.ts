@@ -105,6 +105,23 @@ export interface ProfileValidation {
  */
 export class ProfileConfig {
   /**
+   * Helper function to migrate legacy profiles without a connection type.
+   */
+  async migrateLegacyProfiles() {
+    const profiles = this.getAllProfiles();
+
+    if (profiles) {
+      for (const key in profiles) {
+        const profile = profiles[key];
+        if (profile.connectionType === undefined) {
+          profile.connectionType = ConnectionType.Rest;
+          await this.upsertProfile(key, profile);
+        }
+      }
+    }
+  }
+
+  /**
    * Validates settings.json to confirm that SAS.connectionProfiles exists
    * as a key, and updates it, if the setting does not exists
    *
@@ -318,6 +335,10 @@ export class ProfileConfig {
     }
 
     const profile: Profile = profileDetail.profile;
+    if (profile.connectionType === undefined) {
+      pv.error = "Missing connectionType in active profile.";
+      return pv;
+    }
     if (profile.connectionType === ConnectionType.Rest) {
       if (!profile.endpoint) {
         pv.error = "Missing endpoint in active profile.";

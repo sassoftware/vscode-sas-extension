@@ -8,8 +8,8 @@ import {
   ViyaProfile,
   ConnectionType,
   SSHProfile,
-} from "../src/components/profile";
-import { expect } from "chai";
+} from "../../../src/components/profile";
+import { assert, expect } from "chai";
 import { ConfigurationTarget, workspace } from "vscode";
 
 let testProfileName: string;
@@ -20,6 +20,7 @@ let testOverloadedProfile;
 let testEmptyProfile;
 let testEmptyItemsProfile;
 let testSSHProfile;
+let legacyProfile;
 
 async function initProfile(): Promise<void> {
   profileConfig = new ProfileConfig();
@@ -42,6 +43,7 @@ describe("Profiles", async function () {
           clientId: "sas.test",
           clientSecret: "",
           context: "SAS Studio context",
+          connectionType: "rest",
         },
       },
     };
@@ -72,6 +74,7 @@ describe("Profiles", async function () {
           context: "SAS Studio context",
           username: "sastest",
           tokenFile: "path/to/token.txt",
+          connectionType: "rest",
         },
       },
     };
@@ -88,6 +91,34 @@ describe("Profiles", async function () {
         },
       },
     };
+    legacyProfile = {
+      activeProfile: "",
+      profiles: {
+        testSSHProfile: {
+          host: "host",
+          username: "username",
+          port: 22,
+          sasPath: "sasPath",
+          sasOptions: ["-nonews"],
+          connectionType: "ssh",
+          privateKeyFile: "privateKeyFile",
+        },
+        testViyaProfile: {
+          endpoint: "https://test-host.sas.com",
+          clientId: "sas.test",
+          clientSecret: "",
+          context: "SAS Studio context",
+          username: "sastest",
+          tokenFile: "path/to/token.txt",
+        },
+        testProfile: {
+          endpoint: "",
+          context: "",
+          clientId: "",
+          clientSecret: "",
+        },
+      },
+    };
   });
 
   afterEach(async () => {
@@ -99,6 +130,65 @@ describe("Profiles", async function () {
     }
   });
 
+  describe("Legacy Profile", async function () {
+    beforeEach(async () => {
+      await initProfile();
+      await workspace
+        .getConfiguration(EXTENSION_CONFIG_KEY)
+        .update(
+          EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+          legacyProfile,
+          ConfigurationTarget.Global
+        );
+    });
+
+    this.afterEach(async () => {
+      await workspace
+        .getConfiguration(EXTENSION_CONFIG_KEY)
+        .update(
+          EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+          undefined,
+          ConfigurationTarget.Global
+        );
+    });
+
+    it("adds connectionType to legacy profiles", async () => {
+      await profileConfig.migrateLegacyProfiles();
+
+      const profiles = profileConfig.getAllProfiles();
+      expect(Object.keys(profiles).length).to.be.greaterThan(0);
+
+      for (const key in profiles) {
+        const profile = profiles[key];
+        if (profile.connectionType === undefined) {
+          assert.fail(`Found undefined connectionType in profile named ${key}`);
+        }
+      }
+    });
+
+    it("fails to validate missing connectionType", async () => {
+      // Arrange
+
+      const profileByName = profileConfig.getProfileByName("testViyaProfile");
+
+      // Act
+      const validateProfile = await profileConfig.validateProfile({
+        name: testProfileName,
+        profile: profileByName,
+      });
+
+      // Assert
+      expect(validateProfile.data).to.equal(undefined);
+      expect(validateProfile.type).to.equal(
+        AuthType.Error,
+        "legacy profile did not return correct AuthType"
+      );
+      expect(validateProfile.error).to.equal(
+        "Missing connectionType in active profile.",
+        "should return messing connectionType error"
+      );
+    });
+  });
   describe("No Profile", async function () {
     beforeEach(async () => {
       testProfileNewName = "testProfile";
