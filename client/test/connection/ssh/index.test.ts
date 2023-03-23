@@ -186,6 +186,7 @@ describe("ssh connection", () => {
         }
       });
     });
+
     afterEach(() => {
       streamStub = undefined;
       onDataListener = undefined;
