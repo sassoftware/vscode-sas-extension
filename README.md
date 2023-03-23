@@ -207,20 +207,22 @@ To run a SAS program:
 1. Click the running man icon in the upper right corner of your SAS program window.
 2. For a secure connection to SAS Viya we use an authorization code for authentication. Complete these steps to connect.
 
-   1.1. VS Code may prompt you about opening an external web site. Click 'Open'.
+   1.1. VS Code may prompt you that the extension wants to sign in. Click 'Allow'.
 
-   1.2. This will take you to a SAS Logon prompt. Log in with your SAS credentials.
+   1.2. VS Code may prompt you about opening an external web site. Click 'Open'.
 
-   1.3 SAS returns an authorization code. Copy this code.
+   1.3. This will take you to a SAS Logon prompt. Log in with your SAS credentials.
 
-   1.4 Paste the authorization code in VS Code where indicated at the top of the screen.
+   1.4. SAS returns an authorization code. Copy this code.
+
+   1.5. Paste the authorization code in VS Code where indicated at the top of the screen.
 
 3. For a secure connection to SAS 9.4 remote we use the supplied private key to authenticate to the remote server via SSH.
 4. VS Code connects to SAS and runs the code.
 5. The results are displayed in the application.
 6. The SAS output log and error information are displayed in the applicaiton.
 
-**Note:** You do not need a new authorization code for every command you run. The connection will persist and you can run more commands using the same connection.
+**Note:** Your sign in status will persist in VS Code. You can view it and sign out from VS Code's `Accounts` menu.
 
 <img src="doc/images/runCode.png"/>
 
