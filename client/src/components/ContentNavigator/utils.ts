@@ -2,13 +2,8 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import { Uri } from "vscode";
-import {
-  FAVORITES_FOLDER,
-  FILE_TYPE,
-  FOLDER_TYPE,
-  FOLDER_TYPES,
-} from "./const";
-import { ContentItem, Link, Permission } from "./types";
+import { FOLDER_TYPES, TRASH_FOLDER } from "./const";
+import { ContentItem, Link } from "./types";
 
 export const getLink = (
   links: Array<Link>,
@@ -53,17 +48,16 @@ export const resourceType = (item: ContentItem): string | undefined => {
   if (!isValidItem(item)) {
     return;
   }
-  const { write, delete: del, addMember } = getPermission(item);
+  const { write, delete: del, addMember } = item.permission;
   const isRecycled = isItemInRecycleBin(item);
   const actions = [
-    addMember && !isRecycled ? "createChild" : undefined,
-    del ? "delete" : undefined,
-    write && !isRecycled ? "update" : undefined,
-    write && isRecycled ? "restore" : undefined,
+    addMember && !isRecycled && "createChild",
+    del && "delete",
+    write && (!isRecycled ? "update" : "restore"),
   ].filter((action) => !!action);
 
-  if (getTypeName(item) === "trashFolder") {
-    if (!isNaN(item.memberCount) && item.memberCount > 0) {
+  if (getTypeName(item) === TRASH_FOLDER) {
+    if (item?.memberCount) {
       actions.push("empty");
     }
   }
@@ -96,22 +90,3 @@ export const isValidItem = (item: ContentItem): boolean =>
 
 export const isItemInRecycleBin = (item: ContentItem): boolean =>
   !!item && item.__trash__;
-
-export const getPermission = (item: ContentItem): Permission => {
-  const itemType = getTypeName(item);
-  return [FOLDER_TYPE, FILE_TYPE].includes(itemType) // normal folders and files
-    ? {
-        write: !!getLink(item.links, "PUT", "update"),
-        delete: !!getLink(item.links, "DELETE", "delete"),
-        addMember: !!getLink(item.links, "POST", "createChild"),
-      }
-    : {
-        // delegate folders, user folder and user root folder
-        write: false,
-        delete: false,
-        addMember:
-          itemType !== "trashFolder" &&
-          itemType !== FAVORITES_FOLDER &&
-          !!getLink(item.links, "POST", "createChild"),
-      };
-};

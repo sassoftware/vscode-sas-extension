@@ -10,13 +10,16 @@ import axios, {
 import { authentication, Uri } from "vscode";
 import { SASAuthProvider } from "../AuthProvider";
 import {
+  FAVORITES_FOLDER,
+  FILE_TYPE,
   FILE_TYPES,
+  FOLDER_TYPE,
   FOLDER_TYPES,
   Messages,
   ROOT_FOLDER,
   TRASH_FOLDER,
 } from "./const";
-import { ContentItem, Link } from "./types";
+import { ContentItem, Link, Permission } from "./types";
 import { getLink, getResourceId, getTypeName, getUri } from "./utils";
 
 interface AddMemberProperties {
@@ -115,6 +118,7 @@ export class ContentModel {
     return result.items.map((childItem: ContentItem) => ({
       ...childItem,
       uid: `${childItem.id}${item.name}`.replace(/\s/g, ""),
+      permission: getPermission(childItem),
       __trash__: isTrash,
     }));
   }
@@ -453,7 +457,10 @@ export class ContentModel {
         } else {
           result = await this.connection.get(`/folders/folders/${sDelegate}`);
         }
-        this.delegateFolders[sDelegate] = result.data;
+        this.delegateFolders[sDelegate] = {
+          ...result.data,
+          permission: getPermission(result.data),
+        };
 
         numberCompletedServiceCalls++;
         if (numberCompletedServiceCalls === supportedDelegateFolders.length) {
@@ -479,3 +486,22 @@ export class ContentModel {
     this.connection.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`;
   }
 }
+
+const getPermission = (item: ContentItem): Permission => {
+  const itemType = getTypeName(item);
+  return [FOLDER_TYPE, FILE_TYPE].includes(itemType) // normal folders and files
+    ? {
+        write: !!getLink(item.links, "PUT", "update"),
+        delete: !!getLink(item.links, "DELETE", "delete"),
+        addMember: !!getLink(item.links, "POST", "createChild"),
+      }
+    : {
+        // delegate folders, user folder and user root folder
+        write: false,
+        delete: false,
+        addMember:
+          itemType !== TRASH_FOLDER &&
+          itemType !== FAVORITES_FOLDER &&
+          !!getLink(item.links, "POST", "createChild"),
+      };
+};

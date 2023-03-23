@@ -13,6 +13,7 @@ export interface ContentItem {
   uid?: string;
   __trash__: boolean;
   memberCount?: number;
+  permission: Permission;
 }
 
 export interface Link {

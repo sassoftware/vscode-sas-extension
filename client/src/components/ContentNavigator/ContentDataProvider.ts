@@ -234,12 +234,12 @@ export default ContentDataProvider;
 
 const closeFileIfOpen = async (file: Uri): Promise<boolean> => {
   const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
-  const index = tabs.findIndex(
+  const tab = tabs.find(
     (tab) =>
       tab.input instanceof TabInputText && tab.input.uri.query === file.query // compare the file id
   );
-  if (index !== -1) {
-    return window.tabGroups.close(tabs[index]);
+  if (tab) {
+    return window.tabGroups.close(tab);
   }
   return true;
 };
