@@ -241,6 +241,7 @@ describe("Profiles", async function () {
           ConfigurationTarget.Global
         );
     });
+
     describe("CRUD Operations", async function () {
       it("add a new profile", async function () {
         // Arrange
@@ -526,6 +527,7 @@ describe("Profiles", async function () {
       });
     });
   });
+
   describe("Overloaded Profile", async function () {
     beforeEach(async () => {
       testProfileName = "testProfile";
@@ -595,6 +597,7 @@ describe("Profiles", async function () {
       });
     });
   });
+
   describe("SSH Profile", async function () {
     beforeEach(async () => {
       testProfileName = "testProfile";
