@@ -189,6 +189,7 @@ describe("Profiles", async function () {
       );
     });
   });
+
   describe("No Profile", async function () {
     beforeEach(async () => {
       testProfileNewName = "testProfile";
