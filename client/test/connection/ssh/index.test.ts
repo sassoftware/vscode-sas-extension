@@ -11,7 +11,6 @@ describe("ssh connection", () => {
   let keyContent: string;
   let sandbox: sinon.SinonSandbox;
   let session: SSHSession;
-
   let streamOnStub;
 
   beforeEach(() => {
@@ -269,6 +268,7 @@ describe("ssh connection", () => {
       await session.run("test code").catch((err) => assert.fail(err));
     });
   });
+
   describe("close", () => {
     let streamStub: StubbedInstance<ClientChannel>;
     let onDataListener;
@@ -322,7 +322,7 @@ describe("ssh connection", () => {
       }
 
       expect(streamStub.write.calledWith("endsas;\n")).to.be.true;
-      expect(streamStub.end.calledWith("exit\n")).to.be.true;
+      expect(streamStub.close.calledOnce).to.be.true;
     });
   });
 });

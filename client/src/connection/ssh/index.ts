@@ -41,13 +41,13 @@ export class SSHSession implements Session {
     this.conn = new Client();
   }
 
-  setup = (): Promise<void> => {
+  public setup = (): Promise<void> => {
     return new Promise((pResolve, pReject) => {
       this.resolve = pResolve;
       this.reject = pReject;
 
       if (this.stream) {
-        this.resolve();
+        this.resolve?.({});
         return;
       }
 
@@ -61,87 +61,19 @@ export class SSHSession implements Session {
 
       this.conn
         .on("ready", () => {
-          this.conn.shell((err, s) => {
-            if (err) {
-              this.reject?.(err);
-              return;
-            }
-            this.stream = s;
-            if (!this.stream) {
-              this.reject?.(err);
-              return;
-            }
-
-            this.stream.on("close", () => {
-              this.onLog = undefined;
-              this.stream = undefined;
-              this.resolve = undefined;
-              this.reject = undefined;
-              this.logs = [];
-              this.html5FileName = "";
-              this.timer = undefined;
-              this.conn.end();
-            });
-            this.stream.on("data", (data: Buffer) => {
-              const output = data.toString().trimEnd();
-              const outputLines = output.split(/\n|\r\n/);
-              if (this.onLog) {
-                outputLines.forEach((line) => {
-                  if (!line) {
-                    return;
-                  }
-                  if (line.endsWith(endCode)) {
-                    // run completed
-                    this.getResult();
-                  }
-                  if (!(line.endsWith("?") || line.endsWith(">"))) {
-                    this.html5FileName =
-                      line.match(/NOTE: .+ HTML5.* Body .+: (.+)\.htm/)?.[1] ??
-                      this.html5FileName;
-                    this.onLog?.([{ type: "normal", line }]);
-                  }
-                });
-              } else {
-                this.logs.push(output);
-                if (output.endsWith("?")) {
-                  this.clearTimer();
-                  this.resolve?.();
-                }
-              }
-            });
-
-            const resolvedEnv: string[] = [
-              '_JAVA_OPTIONS="-Djava.awt.headless=true"',
-            ];
-            const execArgs: string = resolvedEnv.join(" ");
-
-            const resolvedSasOpts: string[] = [
-              "-nodms",
-              "-terminal",
-              "-nosyntaxcheck",
-            ];
-
-            if (this.config.sasOptions) {
-              resolvedSasOpts.push(...this.config.sasOptions);
-            }
-            const execSasOpts: string = resolvedSasOpts.join(" ");
-
-            this.stream.write(
-              `${execArgs} ${this.config.saspath} ${execSasOpts} \n`
-            );
-          });
+          this.conn.shell(this.onShell);
         })
-        .on("error", (err) => {
-          this.clearTimer();
-          this.reject?.(err);
-          return;
-        });
+        .on("error", this.onConnectionError);
 
       this.setTimer();
       this.conn.connect(cfg);
     });
   };
-  run(code: string, onLog?: (logs: LogLine[]) => void): Promise<RunResult> {
+
+  public run = (
+    code: string,
+    onLog?: (logs: LogLine[]) => void
+  ): Promise<RunResult> => {
     this.onLog = onLog;
     this.html5FileName = "";
     if (this.logs.length) {
@@ -156,16 +88,22 @@ export class SSHSession implements Session {
       this.stream?.write(`${code}\n`);
       this.stream?.write(`%put ${endCode};\n`);
     });
-  }
-  close(): void | Promise<void> {
+  };
+
+  public close = (): void | Promise<void> => {
     if (!this.stream) {
       return;
     }
     this.stream.write("endsas;\n");
-    this.stream.end("exit\n");
-  }
+    this.stream.close();
+  };
 
-  setTimer() {
+  private onConnectionError = (err: Error) => {
+    this.clearTimer();
+    this.reject?.(err);
+  };
+
+  private setTimer = (): void => {
     this.clearTimer();
     this.timer = setTimeout(() => {
       this.reject?.(
@@ -174,13 +112,14 @@ export class SSHSession implements Session {
       this.timer = undefined;
       this.close();
     }, sasLaunchTimeout);
-  }
+  };
 
-  clearTimer() {
+  private clearTimer = (): void => {
     this.timer && clearTimeout(this.timer);
     this.timer = undefined;
-  }
-  getResult() {
+  };
+
+  private getResult = (): void => {
     const runResult: RunResult = {};
     if (!this.html5FileName) {
       this.resolve?.(runResult);
@@ -202,7 +141,7 @@ export class SSHSession implements Session {
 
           if (rc === 0) {
             //Make sure that the html has a valid body
-            //TODO: should this be refactored into a shared location?
+            //TODO #185: should this be refactored into a shared location?
             if (fileContents.search('<*id="IDX*.+">') !== -1) {
               runResult.html5 = fileContents;
               runResult.title = "Result";
@@ -212,5 +151,71 @@ export class SSHSession implements Session {
         });
       }
     );
-  }
+  };
+
+  private onStreamClose = (): void => {
+    this.onLog = undefined;
+    this.stream = undefined;
+    this.resolve = undefined;
+    this.reject = undefined;
+    this.logs = [];
+    this.html5FileName = "";
+    this.timer = undefined;
+    this.conn.end();
+  };
+
+  private onStreamData = (data: Buffer): void => {
+    const output = data.toString().trimEnd();
+    const outputLines = output.split(/\n|\r\n/);
+    if (this.onLog) {
+      outputLines.forEach((line) => {
+        if (!line) {
+          return;
+        }
+        if (line.endsWith(endCode)) {
+          // run completed
+          this.getResult();
+        }
+        if (!(line.endsWith("?") || line.endsWith(">"))) {
+          this.html5FileName =
+            line.match(/NOTE: .+ HTML5.* Body .+: (.+)\.htm/)?.[1] ??
+            this.html5FileName;
+          this.onLog?.([{ type: "normal", line }]);
+        }
+      });
+    } else {
+      this.logs.push(output);
+      if (output.endsWith("?")) {
+        this.clearTimer();
+        this.resolve?.();
+      }
+    }
+  };
+
+  private onShell = (err: Error, s: ClientChannel): void => {
+    if (err) {
+      this.reject?.(err);
+      return;
+    }
+    this.stream = s;
+    if (!this.stream) {
+      this.reject?.(err);
+      return;
+    }
+
+    this.stream.on("close", this.onStreamClose);
+    this.stream.on("data", this.onStreamData);
+
+    const resolvedEnv: string[] = ['_JAVA_OPTIONS="-Djava.awt.headless=true"'];
+    const execArgs: string = resolvedEnv.join(" ");
+
+    const resolvedSasOpts: string[] = ["-nodms", "-terminal", "-nosyntaxcheck"];
+
+    if (this.config.sasOptions) {
+      resolvedSasOpts.push(...this.config.sasOptions);
+    }
+    const execSasOpts: string = resolvedSasOpts.join(" ");
+
+    this.stream.write(`${execArgs} ${this.config.saspath} ${execSasOpts} \n`);
+  };
 }
