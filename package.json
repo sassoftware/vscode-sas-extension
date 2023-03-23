@@ -517,6 +517,7 @@
     "@types/chai": "^4.3.4",
     "@types/mocha": "^10.0.1",
     "@types/node": "^18.15.3",
+    "@types/sinon": "^10.0.13",
     "@typescript-eslint/eslint-plugin": "^5.55.0",
     "@typescript-eslint/parser": "^5.55.0",
     "chai": "^4.3.7",
@@ -527,6 +528,7 @@
     "prettier": "^2.8.5",
     "sinon": "^15.0.2",
     "ts-loader": "^9.4.2",
+    "ts-sinon": "^2.0.2",
     "typescript": "^5.0.2",
     "webpack": "^5.76.2",
     "webpack-cli": "^5.0.1"

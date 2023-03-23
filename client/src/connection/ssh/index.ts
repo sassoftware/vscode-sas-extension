@@ -5,16 +5,9 @@ import { Client, ClientChannel, ConnectConfig } from "ssh2";
 import { RunResult, Session, LogLine } from "..";
 import { readFileSync } from "fs";
 
-const conn = new Client();
 const endCode = "--vscode-sas-extension-submit-end--";
 const sasLaunchTimeout = 10000;
-let stream: ClientChannel | undefined;
-let config: Config;
-let resolve: ((value?) => void) | undefined;
-let reject: ((reason?) => void) | undefined;
-let onLog: ((logs: LogLine[]) => void) | undefined;
-let logs: string[] = [];
-let html5FileName = "";
+let sessionInstance: SSHSession;
 
 export interface Config {
   host: string;
@@ -25,175 +18,204 @@ export interface Config {
   privateKeyPath: string;
 }
 
-conn
-  .on("ready", () => {
-    conn.shell((err, s) => {
-      if (err) {
-        reject?.(err);
-        return;
-      }
-      stream = s;
-      if (!stream) {
-        reject?.(err);
+export function getSession(c: Config): Session {
+  if (!sessionInstance) {
+    sessionInstance = new SSHSession(c);
+  }
+  return sessionInstance;
+}
+
+export class SSHSession implements Session {
+  private conn: Client;
+  private stream: ClientChannel | undefined;
+  private config: Config;
+  private resolve: ((value?) => void) | undefined;
+  private reject: ((reason?) => void) | undefined;
+  private onLog: ((logs: LogLine[]) => void) | undefined;
+  private logs: string[] = [];
+  private html5FileName = "";
+  private timer: NodeJS.Timeout;
+
+  constructor(c: Config) {
+    this.config = c;
+    this.conn = new Client();
+  }
+
+  public setup = (): Promise<void> => {
+    return new Promise((pResolve, pReject) => {
+      this.resolve = pResolve;
+      this.reject = pReject;
+
+      if (this.stream) {
+        this.resolve?.({});
         return;
       }
 
-      stream
-        .on("close", () => {
-          onLog = undefined;
-          stream = undefined;
-          resolve = undefined;
-          reject = undefined;
-          logs = [];
-          conn.end();
+      const cfg: ConnectConfig = {
+        host: this.config.host,
+        port: this.config.port,
+        username: this.config.username,
+        privateKey: readFileSync(this.config.privateKeyPath),
+        readyTimeout: sasLaunchTimeout,
+      };
+
+      this.conn
+        .on("ready", () => {
+          this.conn.shell(this.onShell);
         })
-        .on("data", (data: Buffer) => {
-          const output = data.toString().trimEnd();
-          const outputLines = output.split(/\n|\r\n/);
-          if (onLog) {
-            outputLines.forEach((line) => {
-              if (!line) {
-                return;
-              }
-              if (line.endsWith(endCode)) {
-                // run completed
-                getResult();
-              }
-              if (!(line.endsWith("?") || line.endsWith(">"))) {
-                html5FileName =
-                  line.match(/NOTE: .+ HTML5.* Body .+: (.+)\.htm/)?.[1] ??
-                  html5FileName;
-                onLog?.([{ type: "normal", line }]);
-              }
-            });
-          } else {
-            logs.push(output);
-            if (output.endsWith("?")) {
-              resolve?.();
-            } else {
-              //we're not in running state, set a timeout so we dont attempt to connect indefinitely
-              setTimeout(() => {
-                reject?.(
-                  new Error(
-                    "Execution Failed. Verify that Profile connection settings are correct."
-                  )
-                );
-                logs = [];
-                conn.end();
-              }, sasLaunchTimeout);
+        .on("error", this.onConnectionError);
+
+      this.setTimer();
+      this.conn.connect(cfg);
+    });
+  };
+
+  public run = (
+    code: string,
+    onLog?: (logs: LogLine[]) => void
+  ): Promise<RunResult> => {
+    this.onLog = onLog;
+    this.html5FileName = "";
+    if (this.logs.length) {
+      this.onLog?.(this.logs.map((line) => ({ type: "normal", line })));
+      this.logs = [];
+    }
+
+    return new Promise((_resolve, _reject) => {
+      this.resolve = _resolve;
+      this.reject = _reject;
+
+      this.stream?.write(`${code}\n`);
+      this.stream?.write(`%put ${endCode};\n`);
+    });
+  };
+
+  public close = (): void | Promise<void> => {
+    if (!this.stream) {
+      return;
+    }
+    this.stream.write("endsas;\n");
+    this.stream.close();
+  };
+
+  private onConnectionError = (err: Error) => {
+    this.clearTimer();
+    this.reject?.(err);
+  };
+
+  private setTimer = (): void => {
+    this.clearTimer();
+    this.timer = setTimeout(() => {
+      this.reject?.(
+        new Error("Failed to connect to Session. Check profile settings.")
+      );
+      this.timer = undefined;
+      this.close();
+    }, sasLaunchTimeout);
+  };
+
+  private clearTimer = (): void => {
+    this.timer && clearTimeout(this.timer);
+    this.timer = undefined;
+  };
+
+  private getResult = (): void => {
+    const runResult: RunResult = {};
+    if (!this.html5FileName) {
+      this.resolve?.(runResult);
+      return;
+    }
+    let fileContents = "";
+    this.conn.exec(
+      `cat ${this.html5FileName}.htm`,
+      (err: Error, s: ClientChannel) => {
+        if (err) {
+          this.reject?.(err);
+          return;
+        }
+
+        s.on("data", (data) => {
+          fileContents += data.toString().trimEnd();
+        }).on("close", (code) => {
+          const rc: number = code;
+
+          if (rc === 0) {
+            //Make sure that the html has a valid body
+            //TODO #185: should this be refactored into a shared location?
+            if (fileContents.search('<*id="IDX*.+">') !== -1) {
+              runResult.html5 = fileContents;
+              runResult.title = "Result";
             }
           }
+          this.resolve?.(runResult);
         });
-
-      const resolvedEnv: string[] = [
-        '_JAVA_OPTIONS="-Djava.awt.headless=true"',
-      ];
-      const execArgs: string = resolvedEnv.join(" ");
-
-      const resolvedSasOpts: string[] = [
-        "-nodms",
-        "-terminal",
-        "-nosyntaxcheck",
-      ];
-
-      if (config.sasOptions) {
-        resolvedSasOpts.push(...config.sasOptions);
       }
-      const execSasOpts: string = resolvedSasOpts.join(" ");
+    );
+  };
 
-      stream.write(`${execArgs} ${config.saspath} ${execSasOpts} \n`);
-    });
-  })
-  .on("error", (err) => {
-    reject?.(err);
-    return;
-  });
+  private onStreamClose = (): void => {
+    this.onLog = undefined;
+    this.stream = undefined;
+    this.resolve = undefined;
+    this.reject = undefined;
+    this.logs = [];
+    this.html5FileName = "";
+    this.timer = undefined;
+    this.conn.end();
+  };
 
-function getResult() {
-  const runResult: RunResult = {};
-  if (!html5FileName) {
-    resolve?.(runResult);
-    return;
-  }
-  let fileContents = "";
-  conn.exec(`cat ${html5FileName}.htm`, (err: Error, s: ClientChannel) => {
-    if (err) {
-      reject?.(err);
-      return;
-    }
-
-    s.on("data", (data) => {
-      fileContents += data.toString().trimEnd();
-    }).on("close", (code) => {
-      const rc: number = code;
-
-      if (rc === 0) {
-        //Make sure that the html has a valid body
-        //TODO: should this be refactored into a shared location?
-        if (fileContents.search('<*id="IDX*.+">') !== -1) {
-          runResult.html5 = fileContents;
-          runResult.title = "Result";
+  private onStreamData = (data: Buffer): void => {
+    const output = data.toString().trimEnd();
+    const outputLines = output.split(/\n|\r\n/);
+    if (this.onLog) {
+      outputLines.forEach((line) => {
+        if (!line) {
+          return;
         }
+        if (line.endsWith(endCode)) {
+          // run completed
+          this.getResult();
+        }
+        if (!(line.endsWith("?") || line.endsWith(">"))) {
+          this.html5FileName =
+            line.match(/NOTE: .+ HTML5.* Body .+: (.+)\.htm/)?.[1] ??
+            this.html5FileName;
+          this.onLog?.([{ type: "normal", line }]);
+        }
+      });
+    } else {
+      this.logs.push(output);
+      if (output.endsWith("?")) {
+        this.clearTimer();
+        this.resolve?.();
       }
-      resolve?.(runResult);
-    });
-  });
-}
+    }
+  };
 
-function setup(): Promise<void> {
-  return new Promise((pResolve, pReject) => {
-    resolve = pResolve;
-    reject = pReject;
-
-    if (stream) {
-      resolve();
+  private onShell = (err: Error, s: ClientChannel): void => {
+    if (err) {
+      this.reject?.(err);
+      return;
+    }
+    this.stream = s;
+    if (!this.stream) {
+      this.reject?.(err);
       return;
     }
 
-    const cfg: ConnectConfig = {
-      host: config.host,
-      port: config.port,
-      username: config.username,
-      privateKey: readFileSync(config.privateKeyPath),
-      readyTimeout: sasLaunchTimeout,
-    };
-    conn.connect(cfg);
-  });
-}
+    this.stream.on("close", this.onStreamClose);
+    this.stream.on("data", this.onStreamData);
 
-function run(
-  code: string,
-  onLogFn?: (logs: LogLine[]) => void
-): Promise<RunResult> {
-  onLog = onLogFn;
-  html5FileName = "";
-  if (logs.length) {
-    onLog?.(logs.map((line) => ({ type: "normal", line })));
-    logs = [];
-  }
+    const resolvedEnv: string[] = ['_JAVA_OPTIONS="-Djava.awt.headless=true"'];
+    const execArgs: string = resolvedEnv.join(" ");
 
-  return new Promise((_resolve, _reject) => {
-    resolve = _resolve;
-    reject = _reject;
+    const resolvedSasOpts: string[] = ["-nodms", "-terminal", "-nosyntaxcheck"];
 
-    stream?.write(`${code}\n`);
-    stream?.write(`%put ${endCode};\n`);
-  });
-}
+    if (this.config.sasOptions) {
+      resolvedSasOpts.push(...this.config.sasOptions);
+    }
+    const execSasOpts: string = resolvedSasOpts.join(" ");
 
-function close() {
-  if (!stream) {
-    return;
-  }
-  stream.write("endsas;\n");
-  stream.end("exit\n");
-}
-
-export function getSession(c: Config): Session {
-  config = c;
-  return {
-    setup,
-    run,
-    close,
+    this.stream.write(`${execArgs} ${this.config.saspath} ${execSasOpts} \n`);
   };
 }
