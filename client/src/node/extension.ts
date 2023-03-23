@@ -82,7 +82,7 @@ export function activate(context: ExtensionContext): void {
   client.start();
 
   const libraryNavigator = new LibraryNavigator(context);
-  new ContentNavigator(context);
+  const contentNavigator = new ContentNavigator(context);
 
   context.subscriptions.push(
     commands.registerCommand("SAS.run", async () => {
@@ -111,7 +111,9 @@ export function activate(context: ExtensionContext): void {
       LogTokensProvider,
       legend
     ),
-    activeProfileStatusBarIcon
+    activeProfileStatusBarIcon,
+    ...libraryNavigator.getSubscriptions(),
+    ...contentNavigator.getSubscriptions()
   );
 
   // Reset first to set "No Active Profiles"
