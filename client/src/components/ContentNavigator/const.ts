@@ -47,7 +47,8 @@ export const Messages = {
   FileOpenError: "The file type is unsupported.",
   FileValidationError: "Invalid file name.",
   FolderDeletionError: "Unable to delete folder.",
-  FolderValidationError: "Invalid folder name.",
+  FolderValidationError:
+    "The folder name cannot contain more than 100 characters.",
   NewFileCreationError: 'Unable to create file "%(name)s".',
   NewFilePrompt: "Enter a file name.",
   NewFileTitle: "New File",

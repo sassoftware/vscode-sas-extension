@@ -172,7 +172,8 @@ export class ContentModel {
         {
           headers: {
             "Content-Type": "text/plain",
-            "Content-Disposition": `filename="${fileName}"`,
+            "Content-Disposition": `filename*=UTF-8''${encodeURI(fileName)}`,
+            Accept: "application/vnd.sas.file+json",
           },
         }
       );
