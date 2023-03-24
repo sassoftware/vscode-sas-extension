@@ -19,7 +19,10 @@ const buildOptions = {
   entryPoints: {
     "./client/dist/node/extension": "./client/src/node/extension.ts",
     "./server/dist/node/server": "./server/src/node/server.ts",
-    "./client/dist/webview": "./client/src/webview/index.ts",
+    "./client/dist/webview/DataViewer/view":
+      "./client/src/webview/DataViewer/view.html",
+    "./client/dist/webview/DataViewer/index":
+      "./client/src/webview/DataViewer/index.ts",
   },
   bundle: true,
   outdir: ".",
@@ -27,6 +30,7 @@ const buildOptions = {
   external: ["vscode"],
   loader: {
     ".properties": "text",
+    ".html": "text",
     ".node": "copy",
   },
   sourcemap: !!dev,

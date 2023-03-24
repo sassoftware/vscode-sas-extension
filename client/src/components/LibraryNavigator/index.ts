@@ -11,7 +11,8 @@ import {
   window,
   workspace,
 } from "vscode";
-import DataTable from "../../panels/DataTable";
+import DataTable from "../../panels/DataViewer";
+import { WebViewManager } from "../../panels/WebviewManager";
 import DragAndDropController from "../DragAndDropController";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import LibraryDataProvider from "./LibraryDataProvider";
@@ -22,6 +23,7 @@ class LibraryNavigator implements SubscriptionProvider {
   private libraryDataProvider: LibraryDataProvider;
   private treeView: TreeView<LibraryItem>;
   private extensionUri: Uri;
+  private webviewManager: WebViewManager;
 
   constructor(context: ExtensionContext) {
     this.extensionUri = context.extensionUri;
@@ -38,6 +40,7 @@ class LibraryNavigator implements SubscriptionProvider {
       treeDataProvider: this.libraryDataProvider,
       dragAndDropController,
     });
+    this.webviewManager = new WebViewManager();
   }
 
   public getSubscriptions(): Disposable[] {
@@ -49,10 +52,9 @@ class LibraryNavigator implements SubscriptionProvider {
           item: LibraryItem,
           viewDataCallback: () => Promise<TableData>
         ) => {
-          DataTable.render(
-            this.extensionUri,
-            item.uid,
-            await viewDataCallback()
+          this.webviewManager.render(
+            new DataTable(this.extensionUri, item.uid),
+            item.uid
           );
         }
       ),
