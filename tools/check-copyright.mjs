@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 
 const INCLUDED_FILE_TYPES = /.*\.(mjs|js|ts|tsx|jsx)$/;
 const EXCLUDED_FILE_TYPES = /.*(\.test\.tsx?|check-copyright\.mjs)$/;
-const COPYRIGHT_STRING = "// Copyright";
+const COPYRIGHT_REGEX = /^\/\/ Copyright © ([0-9-\s]+), SAS Institute/;
 
 const processChanges = (changedFiles) => {
   const filesToCheck = changedFiles
@@ -16,7 +16,7 @@ const processChanges = (changedFiles) => {
   let invalidFiles = [];
   filesToCheck.map((file) => {
     const fileContents = readFileSync(file);
-    if (fileContents.toString().indexOf(COPYRIGHT_STRING) === -1) {
+    if (!COPYRIGHT_REGEX.test(fileContents.toString())) {
       invalidFiles.push(file);
     }
   });
