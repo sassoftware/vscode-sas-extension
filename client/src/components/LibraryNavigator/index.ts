@@ -66,12 +66,7 @@ class LibraryNavigator implements SubscriptionProvider {
   }
 
   public async refresh(): Promise<void> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        this.libraryDataProvider.refresh();
-        resolve();
-      }, 3 * 1000);
-    });
+    this.libraryDataProvider.refresh();
   }
 }
 
