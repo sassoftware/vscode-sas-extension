@@ -587,7 +587,7 @@
     "pretest": "npm run compile && tsc -p ./client",
     "test": "node ./client/out/test/runTest.js",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
-    "check-copyright": "node ./tools/check-copyright.mjs"
+    "copyright:check": "node ./tools/check-copyright.mjs"
   },
   "devDependencies": {
     "@types/chai": "^4.3.4",
