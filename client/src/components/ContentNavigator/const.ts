@@ -42,14 +42,19 @@ export const FOLDER_TYPES = [
 ];
 
 export const Messages = {
-  FileDeletionError: "Unable to delete file.",
-  FileRestoreError: "Unable to restore file.",
   FileOpenError: "The file type is unsupported.",
   FileValidationError: "Invalid file name.",
-  FolderDeletionError: "Unable to delete folder.",
-  FolderRestoreError: "Unable to restore folder.",
   FolderValidationError:
     "The folder name cannot contain more than 100 characters.",
+  FileDeletionError: "Unable to delete file.",
+  FolderDeletionError: "Unable to delete folder.",
+  DeletionWarningMessage:
+    'Are you sure you want to permanently delete the item "{name}"?',
+  DeleteButtonLabel: "Delete",
+  FileRestoreError: "Unable to restore file.",
+  FolderRestoreError: "Unable to restore folder.",
+  EmptyRecycleBinWarningMessage:
+    "Are you sure you want to permanently delete all the items? You cannot undo this action.",
   EmptyRecycleBinError: "Unable to empty the recycle bin.",
   NewFileCreationError: 'Unable to create file "%(name)s".',
   NewFilePrompt: "Enter a file name.",

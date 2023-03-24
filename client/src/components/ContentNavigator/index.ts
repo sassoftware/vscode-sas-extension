@@ -86,10 +86,21 @@ class ContentNavigator {
       "SAS.deleteResource",
       async (resource: ContentItem) => {
         const isContainer = getIsContainer(resource);
-        const deleteResult =
-          !isItemInRecycleBin(resource) && resource.permission.write
-            ? await this.contentDataProvider.recycleResource(resource)
-            : await this.contentDataProvider.deleteResource(resource);
+        const moveToRecycleBin =
+          !isItemInRecycleBin(resource) && resource.permission.write;
+        if (
+          !moveToRecycleBin &&
+          !(await window.showWarningMessage(
+            Messages.DeletionWarningMessage.replace("{name}", resource.name),
+            { modal: true },
+            Messages.DeleteButtonLabel
+          ))
+        ) {
+          return;
+        }
+        const deleteResult = moveToRecycleBin
+          ? await this.contentDataProvider.recycleResource(resource)
+          : await this.contentDataProvider.deleteResource(resource);
         if (!deleteResult) {
           window.showErrorMessage(
             isContainer
@@ -117,6 +128,15 @@ class ContentNavigator {
     commands.registerCommand(
       "SAS.emptyRecycleBin",
       async (resource: ContentItem) => {
+        if (
+          !(await window.showWarningMessage(
+            Messages.EmptyRecycleBinWarningMessage,
+            { modal: true },
+            Messages.DeleteButtonLabel
+          ))
+        ) {
+          return;
+        }
         const children = await this.contentDataProvider.getChildren(resource);
         if (
           !(await Promise.all(
@@ -209,20 +229,6 @@ class ContentNavigator {
 
         if (name === resource.name) {
           return;
-        }
-
-        // This could be improved upon. We don't know if the old document is actually
-        // open. This forces it open then closes it, only to re-open it again after
-        // it's renamed.
-        try {
-          !isContainer &&
-            (await window.showTextDocument(resourceUri).then(async () => {
-              await commands.executeCommand(
-                "workbench.action.closeActiveEditor"
-              );
-            }));
-        } catch (error) {
-          // If we fail to show the file, there's nothing extra to do
         }
 
         const newUri = await this.contentDataProvider.renameResource(

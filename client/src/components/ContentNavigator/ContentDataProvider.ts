@@ -145,6 +145,9 @@ class ContentDataProvider
     item: ContentItem,
     name: string
   ): Promise<Uri | undefined> {
+    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+      return;
+    }
     const newItem = await this.model.renameResource(item, name);
     if (newItem) {
       return getUri(newItem);
