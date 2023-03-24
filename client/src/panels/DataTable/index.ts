@@ -1,3 +1,6 @@
+// Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
+// Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
+
 import { Disposable, Uri, ViewColumn, WebviewPanel, window } from "vscode";
 import { Messages } from "../../components/LibraryNavigator/const";
 import { TableData, TableRow } from "../../components/LibraryNavigator/types";
