@@ -118,24 +118,8 @@ export function activate(context: ExtensionContext): void {
     }
   });
 
-  migrateRestProfiles();
+  profileConfig.migrateLegacyProfiles();
   triggerProfileUpdate();
-}
-
-/**
- * Helper function to ensure that profiles have a supported connectionType.
- * Profiles without a connectionType defined will be treated as Rest/Viya profiles.
- */
-function migrateRestProfiles() {
-  const profiles = profileConfig.getAllProfiles();
-
-  Object.keys(profiles).forEach((k) => {
-    const profile = profiles[k];
-    if (profile.connectionType === undefined) {
-      profile.connectionType = ConnectionType.Rest;
-      profileConfig.upsertProfile(k, profile);
-    }
-  });
 }
 
 function triggerProfileUpdate(): void {
@@ -146,7 +130,7 @@ function triggerProfileUpdate(): void {
     commands.executeCommand(
       "setContext",
       "SAS.connectionType",
-      profileList[activeProfileName].connectionType || ConnectionType.Rest
+      profileList[activeProfileName]?.connectionType || ConnectionType.Rest
     );
   } else {
     profileConfig.updateActiveProfileSetting("");
