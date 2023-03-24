@@ -38,6 +38,11 @@ const mockContentItem = (
   name: "testFile",
   uri: "uri://test",
   __trash__: false,
+  permission: {
+    write: false,
+    addMember: false,
+    delete: false,
+  },
   ...contentItem,
 });
 
@@ -140,9 +145,9 @@ describe("ContentDataProvider", async function () {
       }),
     });
 
-    axiosInstance.get.withArgs("/folders/folders/@sasRoot").resolves({
+    axiosInstance.get.withArgs("/folders/folders/@myRecycleBin").resolves({
       data: mockContentItem({
-        name: "@sasRoot",
+        name: "@myRecycleBin",
         type: "folder",
       }),
     });
@@ -150,10 +155,11 @@ describe("ContentDataProvider", async function () {
     await dataProvider.connect("http://test.io");
 
     const children = await dataProvider.getChildren();
-    expect(children.length).to.equal(3);
+    expect(children.length).to.equal(4);
     expect(children[0].name).to.equal("@myFavorites");
     expect(children[1].name).to.equal("@myFolder");
-    expect(children[2]).to.equal(ROOT_FOLDER);
+    expect(children[2].name).to.equal(ROOT_FOLDER.name);
+    expect(children[3].name).to.equal("@myRecycleBin");
   });
 
   it("getChildren - returns children with content item", async function () {
@@ -162,7 +168,7 @@ describe("ContentDataProvider", async function () {
 
     axiosInstance.get
       .withArgs(
-        "uri://myFolders?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot')"
+        "uri://myFolders?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')"
       )
       .resolves({
         data: {
@@ -495,11 +501,7 @@ describe("ContentDataProvider", async function () {
     );
     const dataProvider = new ContentDataProvider(model);
 
-    mockRequests({
-      "uri://update": {
-        responseData: {},
-      },
-    });
+    axiosInstance.put.withArgs("uri://update").resolves({ data: {} });
 
     await dataProvider.connect("http://test.io");
     const recycled = await dataProvider.recycleResource(item);
@@ -531,11 +533,7 @@ describe("ContentDataProvider", async function () {
 
     const dataProvider = new ContentDataProvider(new ContentModel());
 
-    mockRequests({
-      "uri://update": {
-        responseData: {},
-      },
-    });
+    axiosInstance.put.withArgs("uri://update").resolves({ data: {} });
 
     await dataProvider.connect("http://test.io");
     const deleted = await dataProvider.restoreResource(item);

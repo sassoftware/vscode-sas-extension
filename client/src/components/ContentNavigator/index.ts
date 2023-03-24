@@ -21,7 +21,6 @@ import {
   getUri,
   isContainer as getIsContainer,
   isItemInRecycleBin,
-  getPermission,
 } from "./utils";
 
 const fileValidator = (value: string): string | null =>
@@ -88,7 +87,7 @@ class ContentNavigator {
       async (resource: ContentItem) => {
         const isContainer = getIsContainer(resource);
         const deleteResult =
-          !isItemInRecycleBin(resource) && getPermission(resource).write
+          !isItemInRecycleBin(resource) && resource.permission.write
             ? await this.contentDataProvider.recycleResource(resource)
             : await this.contentDataProvider.deleteResource(resource);
         if (!deleteResult) {
