@@ -41,11 +41,13 @@ class ContentDataProvider
 {
   private _onDidChangeFile: EventEmitter<FileChangeEvent[]>;
   private _onDidChangeTreeData: EventEmitter<ContentItem | undefined>;
+  private _onDidChange: EventEmitter<Uri>;
   private readonly model: ContentModel;
 
   constructor(model: ContentModel) {
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
+    this._onDidChange = new EventEmitter<Uri>();
     this.model = model;
   }
 
@@ -55,6 +57,10 @@ class ContentDataProvider
 
   get onDidChangeTreeData(): Event<ContentItem> {
     return this._onDidChangeTreeData.event;
+  }
+
+  get onDidChange(): Event<Uri> {
+    return this._onDidChange.event;
   }
 
   public async connect(baseUrl: string): Promise<void> {
@@ -185,6 +191,8 @@ class ContentDataProvider
     const success = await this.model.moveTo(item, recycleBinUri);
     if (success) {
       this.refresh();
+      // update the text document content as well just in case that this file was just restored and updated
+      this._onDidChange.fire(getUri(item, true));
     }
     return success;
   }
@@ -235,7 +243,7 @@ class ContentDataProvider
 
 export default ContentDataProvider;
 
-const closeFileIfOpen = async (file: Uri): Promise<boolean> => {
+const closeFileIfOpen = (file: Uri): boolean | Thenable<boolean> => {
   const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
   const tab = tabs.find(
     (tab) =>
