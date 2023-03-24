@@ -87,7 +87,8 @@ describe("Profiles", async function () {
           port: 22,
           sasPath: "sasPath",
           sasOptions: ["-nonews"],
-          privateKeyFile: "privateKeyFile",
+          agentSocket: "/agent/socket",
+          connectionType: "ssh",
         },
       },
     };
@@ -618,7 +619,7 @@ describe("Profiles", async function () {
           connectionType: ConnectionType.SSH,
           host: "ssh.host",
           port: 22,
-          privateKeyPath: "/private/key/path",
+          agentSocket: "/private/key/path",
           sasOptions: ["-nonews"],
           saspath: "/sas/path",
           username: "username",
@@ -865,11 +866,11 @@ describe("Profiles", async function () {
         wantPlaceHolder: "Enter your username",
       },
       {
-        name: "Private Key File",
-        prompt: ProfilePromptType.PrivateKeyPath,
-        wantTitle: "Private Key File",
-        wantDescription: "Enter the local path to a private key file.",
-        wantPlaceHolder: "Enter the local path",
+        name: "Agent Socket",
+        prompt: ProfilePromptType.AgentSocket,
+        wantTitle: "Agent Socket",
+        wantDescription: "Enter the local path of the ssh agent socket.",
+        wantPlaceHolder: "Enter the agent socket path",
       },
     ];
 

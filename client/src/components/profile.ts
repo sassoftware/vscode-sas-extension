@@ -72,7 +72,7 @@ export interface SSHProfile {
   saspath: string;
   port: number;
   username: string;
-  privateKeyPath: string;
+  agentSocket: string;
   sasOptions: string[];
 }
 
@@ -355,8 +355,8 @@ export class ProfileConfig {
         return pv;
       }
 
-      if (!profile.privateKeyPath) {
-        pv.error = "Missing private key file in active profile.";
+      if (!profile.agentSocket) {
+        pv.error = "Missing agent socket in active profile.";
         return pv;
       }
       if (!profile.saspath) {
@@ -454,9 +454,9 @@ export class ProfileConfig {
         await createInputTextBox(ProfilePromptType.Port, DEFAULT_SSH_PORT)
       );
 
-      profileClone.privateKeyPath = await createInputTextBox(
-        ProfilePromptType.PrivateKeyPath,
-        profileClone.privateKeyPath
+      profileClone.agentSocket = await createInputTextBox(
+        ProfilePromptType.AgentSocket,
+        process.env.SSH_AUTH_SOCK || ""
       );
       await this.upsertProfile(name, profileClone);
     }
@@ -503,7 +503,7 @@ export enum ProfilePromptType {
   SASPath,
   Port,
   Username,
-  PrivateKeyPath,
+  AgentSocket,
 }
 
 /**
@@ -635,10 +635,10 @@ const input: ProfilePromptInput = {
     placeholder: "Enter your username",
     description: "Enter your SAS server username.",
   },
-  [ProfilePromptType.PrivateKeyPath]: {
-    title: "Private Key File",
-    placeholder: "Enter the local path",
-    description: "Enter the local path to a private key file.",
+  [ProfilePromptType.AgentSocket]: {
+    title: "Agent Socket",
+    placeholder: "Enter the agent socket path",
+    description: "Enter the local path of the ssh agent socket.",
   },
 };
 

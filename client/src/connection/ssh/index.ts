@@ -3,7 +3,6 @@
 
 import { Client, ClientChannel, ConnectConfig } from "ssh2";
 import { RunResult, Session, LogLine } from "..";
-import { readFileSync } from "fs";
 
 const endCode = "--vscode-sas-extension-submit-end--";
 const sasLaunchTimeout = 10000;
@@ -15,7 +14,7 @@ export interface Config {
   saspath: string;
   sasOptions: string[];
   port: number;
-  privateKeyPath: string;
+  agentSocket: string;
 }
 
 export function getSession(c: Config): Session {
@@ -55,8 +54,8 @@ export class SSHSession implements Session {
         host: this.config.host,
         port: this.config.port,
         username: this.config.username,
-        privateKey: readFileSync(this.config.privateKeyPath),
         readyTimeout: sasLaunchTimeout,
+        agent: this.config.agentSocket,
       };
 
       this.conn
