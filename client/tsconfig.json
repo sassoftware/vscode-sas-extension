@@ -2,11 +2,11 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "es2019",
-    "lib": ["ES2019", "WebWorker"],
+    "lib": ["ES2019", "DOM"],
     "outDir": "out",
     "rootDir": ".",
     "sourceMap": true
   },
   "include": ["src", "test"],
-  "exclude": ["node_modules", ".vscode-test", "src/webview"]
+  "exclude": ["node_modules", ".vscode-test"]
 }
