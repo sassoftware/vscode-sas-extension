@@ -246,7 +246,7 @@ export class ContentModel {
       }
     }
 
-    const validationUri = getLink(item.links, "PUT", "validateRename").uri;
+    const validationUri = getLink(item.links, "PUT", "validateRename")?.uri;
     if (validationUri) {
       try {
         await this.connection.put(
