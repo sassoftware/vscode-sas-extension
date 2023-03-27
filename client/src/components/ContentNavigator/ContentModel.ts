@@ -246,6 +246,19 @@ export class ContentModel {
       }
     }
 
+    const validationUri = getLink(item.links, "PUT", "validateRename").uri;
+    if (validationUri) {
+      try {
+        await this.connection.put(
+          validationUri
+            .replace("{newname}", encodeURI(name))
+            .replace("{newtype}", getTypeName(item))
+        );
+      } catch (error) {
+        return;
+      }
+    }
+
     try {
       const patchResponse = await this.connection.patch(
         uri,
