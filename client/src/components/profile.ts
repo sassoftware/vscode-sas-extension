@@ -72,7 +72,6 @@ export interface SSHProfile {
   saspath: string;
   port: number;
   username: string;
-  agentSocket: string;
   sasOptions: string[];
 }
 
@@ -355,10 +354,6 @@ export class ProfileConfig {
         return pv;
       }
 
-      if (!profile.agentSocket) {
-        pv.error = "Missing agent socket in active profile.";
-        return pv;
-      }
       if (!profile.saspath) {
         pv.error = "Missing sas path in active profile.";
         return pv;
@@ -454,10 +449,6 @@ export class ProfileConfig {
         await createInputTextBox(ProfilePromptType.Port, DEFAULT_SSH_PORT)
       );
 
-      profileClone.agentSocket = await createInputTextBox(
-        ProfilePromptType.AgentSocket,
-        process.env.SSH_AUTH_SOCK || ""
-      );
       await this.upsertProfile(name, profileClone);
     }
   }
@@ -503,7 +494,6 @@ export enum ProfilePromptType {
   SASPath,
   Port,
   Username,
-  AgentSocket,
 }
 
 /**
@@ -634,11 +624,6 @@ const input: ProfilePromptInput = {
     title: "SAS Server Username",
     placeholder: "Enter your username",
     description: "Enter your SAS server username.",
-  },
-  [ProfilePromptType.AgentSocket]: {
-    title: "Agent Socket",
-    placeholder: "Enter the agent socket path",
-    description: "Enter the local path of the ssh agent socket.",
   },
 };
 

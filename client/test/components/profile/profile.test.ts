@@ -87,7 +87,6 @@ describe("Profiles", async function () {
           port: 22,
           sasPath: "sasPath",
           sasOptions: ["-nonews"],
-          agentSocket: "/agent/socket",
           connectionType: "ssh",
         },
       },
@@ -102,7 +101,6 @@ describe("Profiles", async function () {
           sasPath: "sasPath",
           sasOptions: ["-nonews"],
           connectionType: "ssh",
-          privateKeyFile: "privateKeyFile",
         },
         testViyaProfile: {
           endpoint: "https://test-host.sas.com",
@@ -619,7 +617,6 @@ describe("Profiles", async function () {
           connectionType: ConnectionType.SSH,
           host: "ssh.host",
           port: 22,
-          agentSocket: "/private/key/path",
           sasOptions: ["-nonews"],
           saspath: "/sas/path",
           username: "username",
@@ -864,13 +861,6 @@ describe("Profiles", async function () {
         wantTitle: "SAS Server Username",
         wantDescription: "Enter your SAS server username.",
         wantPlaceHolder: "Enter your username",
-      },
-      {
-        name: "Agent Socket",
-        prompt: ProfilePromptType.AgentSocket,
-        wantTitle: "Agent Socket",
-        wantDescription: "Enter the local path of the ssh agent socket.",
-        wantPlaceHolder: "Enter the agent socket path",
       },
     ];
 

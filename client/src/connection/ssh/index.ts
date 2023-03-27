@@ -14,20 +14,20 @@ export interface Config {
   saspath: string;
   sasOptions: string[];
   port: number;
-  agentSocket: string;
 }
 
 export function getSession(c: Config): Session {
   if (!sessionInstance) {
-    sessionInstance = new SSHSession(c);
+    sessionInstance = new SSHSession();
   }
+  sessionInstance.config = c;
   return sessionInstance;
 }
 
 export class SSHSession implements Session {
   private conn: Client;
   private stream: ClientChannel | undefined;
-  private config: Config;
+  public config: Config;
   private resolve: ((value?) => void) | undefined;
   private reject: ((reason?) => void) | undefined;
   private onLog: ((logs: LogLine[]) => void) | undefined;
@@ -35,7 +35,7 @@ export class SSHSession implements Session {
   private html5FileName = "";
   private timer: NodeJS.Timeout;
 
-  constructor(c: Config) {
+  constructor(c?: Config) {
     this.config = c;
     this.conn = new Client();
   }
@@ -50,12 +50,18 @@ export class SSHSession implements Session {
         return;
       }
 
+      if (!process.env.SSH_AUTH_SOCK) {
+        this.reject?.(
+          new Error("SSH_AUTH_SOCK not set. Check Environment Variables.")
+        );
+      }
+
       const cfg: ConnectConfig = {
         host: this.config.host,
         port: this.config.port,
         username: this.config.username,
         readyTimeout: sasLaunchTimeout,
-        agent: this.config.agentSocket,
+        agent: process.env.SSH_AUTH_SOCK || undefined,
       };
 
       this.conn

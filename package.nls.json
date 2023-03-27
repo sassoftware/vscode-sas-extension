@@ -16,7 +16,6 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "SAS SSH Connection username",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "SAS SSH Connection executable path",
   "configuration.SAS.connectionProfiles.profiles.ssh.port": "SAS SSH Connection port",
-  "configuration.SAS.connectionProfiles.profiles.ssh.privateKeyPath": "SAS SSH Connection private key path",
   "configuration.SAS.connectionProfiles.profiles.ssh.sasOptions": "SAS SSH Connection SAS system options",
 
   "commands.SAS.addFileResource": "New File...",
