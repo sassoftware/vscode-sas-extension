@@ -22,7 +22,7 @@ const buildOptions = {
     "./client/dist/webview/DataViewer/view":
       "./client/src/webview/DataViewer/view.html",
     "./client/dist/webview/DataViewer/index":
-      "./client/src/webview/DataViewer/index.ts",
+      "./client/src/webview/DataViewer/index.tsx",
   },
   bundle: true,
   outdir: ".",
@@ -36,6 +36,9 @@ const buildOptions = {
   sourcemap: !!dev,
   minify: !dev,
   plugins: dev ? plugins : [],
+  define: {
+    "process.env.NODE_ENV": dev ? `"development"` : `"production"`,
+  },
 };
 
 const ctx = await esbuild.context(buildOptions);

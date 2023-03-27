@@ -39,6 +39,15 @@ class DataViewer extends WebView {
           data: this._initialData,
         });
         break;
+      case "loadMore":
+        this.panel.webview.postMessage({
+          viewId: this._uid.replace(/\./g, ""),
+          command: "onResultsLoaded",
+          data: {
+            rows: this._initialData.rows.slice(0, 50),
+          },
+        });
+        break;
       default:
         break;
     }

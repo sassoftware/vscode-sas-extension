@@ -5,7 +5,8 @@
     "lib": ["ES2019", "DOM"],
     "outDir": "out",
     "rootDir": ".",
-    "sourceMap": true
+    "sourceMap": true,
+    "jsx": "react"
   },
   "include": ["src", "test"],
   "exclude": ["node_modules", ".vscode-test"]
