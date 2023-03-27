@@ -154,14 +154,13 @@ The following commands are supported for profiles:
 
 #### Profile Anatomy (SAS 9.4 Remote)
 
-| Name                 | Description                          | Additional Notes                                                                                                           |
-| -------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| **Name**             | Name of the profile                  | This will display on the status bar                                                                                        |
-| **Host**             | SSH Server Host                      | This will appear when hovering over the status bar                                                                         |
-| **Username**         | SSH Server Username                  | A username to use when establishing the SSH connection to the server                                                       |
-| **Port**             | SSH Server Port                      | The ssh port of the SSH server. Default value is 22                                                                        |
-| **SAS Path**         | Path to SAS Executable on the server | Must be a fully qualified path on the SSH server to a SAS executable                                                       |
-| **SSH Agent Socket** | Local Path to SSH agent socket       | Requires a SSH public/private key pair. The public key must be copied to the SSH Server Host and registered with ssh-agent |
+| Name         | Description                          | Additional Notes                                                     |
+| ------------ | ------------------------------------ | -------------------------------------------------------------------- |
+| **Name**     | Name of the profile                  | This will display on the status bar                                  |
+| **Host**     | SSH Server Host                      | This will appear when hovering over the status bar                   |
+| **Username** | SSH Server Username                  | A username to use when establishing the SSH connection to the server |
+| **Port**     | SSH Server Port                      | The ssh port of the SSH server. Default value is 22                  |
+| **SAS Path** | Path to SAS Executable on the server | Must be a fully qualified path on the SSH server to a SAS executable |
 
 #### Add New SAS Profile
 
@@ -217,7 +216,7 @@ To run a SAS program:
 
    1.5. Paste the authorization code in VS Code where indicated at the top of the screen.
 
-3. For a secure connection to SAS 9.4 remote we use the supplied ssh-agent socket to authenticate to the remote server via SSH.
+3. For a secure connection to SAS 9.4 remote, a public / private ssh key pair is required. The socket defined in the environment variable `SSH_AUTH_SOCK` is used to communicate with ssh-agent to authenticate the ssh session. The private key must be registered with ssh-agent.
 4. VS Code connects to SAS and runs the code.
 5. The results are displayed in the application.
 6. The SAS output log and error information are displayed in the applicaiton.
