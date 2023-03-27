@@ -8,8 +8,9 @@ import { getApiConfig } from "../../connection/rest/common";
 import { LibraryItemType, LibraryItem, TableData } from "./types";
 import { sprintf } from "sprintf-js";
 import { DefaultRecordLimit, Messages } from "./const";
-import { sortBy } from "lodash";
 import { AxiosResponse } from "axios";
+
+const sortById = (a: LibraryItem, b: LibraryItem) => a.id.localeCompare(b.id);
 
 class LibraryModel {
   protected dataAccessApi: ReturnType<typeof DataAccessApi>;
@@ -125,7 +126,7 @@ class LibraryModel {
       totalItemCount = data.count;
     } while (offset < totalItemCount);
 
-    items = sortBy(items, (item: LibraryItem) => item.id);
+    items.sort(sortById);
 
     const libraryItems: LibraryItem[] = await Promise.all(
       items.map(async (item: LibraryItem): Promise<LibraryItem> => {
@@ -179,18 +180,20 @@ class LibraryModel {
     type: LibraryItemType,
     library: LibraryItem | undefined
   ): LibraryItem[] {
-    return sortBy(items, (item: LibraryItem) => item.id).map(
-      (libraryItem: LibraryItem): LibraryItem => ({
-        ...libraryItem,
-        uid: `${library?.id || ""}.${libraryItem.id}`,
-        library: library?.id,
-        readOnly:
-          libraryItem.readOnly !== undefined
-            ? libraryItem.readOnly
-            : library?.readOnly || false,
-        type,
-      })
-    );
+    return items
+      .map(
+        (libraryItem: LibraryItem): LibraryItem => ({
+          ...libraryItem,
+          uid: `${library?.id || ""}.${libraryItem.id}`,
+          library: library?.id,
+          readOnly:
+            libraryItem.readOnly !== undefined
+              ? libraryItem.readOnly
+              : library?.readOnly || false,
+          type,
+        })
+      )
+      .sort(sortById);
   }
 
   private async retryOnFail(
