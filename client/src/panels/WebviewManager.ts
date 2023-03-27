@@ -2,10 +2,6 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import { Disposable, Uri, ViewColumn, WebviewPanel, window } from "vscode";
-import { Messages } from "../../components/LibraryNavigator/const";
-import { TableData, TableRow } from "../../components/LibraryNavigator/types";
-import { sprintf } from "sprintf-js";
-import html from "../../webview/DataViewer/view.html";
 
 export class WebViewManager {
   public panels: Record<string, WebView> = {};
@@ -36,10 +32,12 @@ export abstract class WebView {
   private _disposables: Disposable[] = [];
 
   abstract render(): WebView;
+  abstract processMessage(event: Event): void;
 
   public withPanel(webviewPanel: WebviewPanel): WebView {
     this.panel = webviewPanel;
     this.panel.onDidDispose(() => this.dispose(), null, this._disposables);
+    this.panel.webview.onDidReceiveMessage(this.processMessage.bind(this));
 
     return this;
   }

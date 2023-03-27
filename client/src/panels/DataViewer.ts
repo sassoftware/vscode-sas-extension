@@ -2,26 +2,26 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import { Uri } from "vscode";
-import { Messages } from "../../components/LibraryNavigator/const";
-import { TableData, TableRow } from "../../components/LibraryNavigator/types";
 import { sprintf } from "sprintf-js";
 import html from "../webview/DataViewer/view.html";
 import { WebView } from "./WebviewManager";
 
-class DataTable extends WebView {
-  public static panels: Record<string, DataTable> = {};
+class DataViewer extends WebView {
   private _uid: string;
   private _extensionUri: Uri;
+  private _initialData: any;
 
-  public constructor(extensionUri: Uri, uid: string) {
+  public constructor(extensionUri: Uri, uid: string, initialData: any) {
     super();
     this._uid = uid;
     this._extensionUri = extensionUri;
+    this._initialData = initialData;
   }
 
-  public render(): DataTable {
+  public render(): DataViewer {
     this.panel.webview.html = sprintf(html, {
       data: {
+        viewId: this._uid.replace(/\./g, ""),
         title: this._uid,
         webviewUri: this.webviewUri(this._extensionUri, "DataViewer"),
       },
@@ -29,6 +29,20 @@ class DataTable extends WebView {
 
     return this;
   }
+
+  private processMessage(event: Event): void {
+    switch (event.command) {
+      case "requestLoad":
+        this.panel.webview.postMessage({
+          viewId: this._uid.replace(/\./g, ""),
+          command: "onLoad",
+          data: this._initialData,
+        });
+        break;
+      default:
+        break;
+    }
+  }
 }
 
-export default DataTable;
+export default DataViewer;

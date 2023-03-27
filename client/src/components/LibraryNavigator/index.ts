@@ -11,7 +11,7 @@ import {
   window,
   workspace,
 } from "vscode";
-import DataTable from "../../panels/DataViewer";
+import DataViewer from "../../panels/DataViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import DragAndDropController from "../DragAndDropController";
 import { SubscriptionProvider } from "../SubscriptionProvider";
@@ -53,7 +53,11 @@ class LibraryNavigator implements SubscriptionProvider {
           viewDataCallback: () => Promise<TableData>
         ) => {
           this.webviewManager.render(
-            new DataTable(this.extensionUri, item.uid),
+            new DataViewer(
+              this.extensionUri,
+              item.uid,
+              await viewDataCallback()
+            ),
             item.uid
           );
         }

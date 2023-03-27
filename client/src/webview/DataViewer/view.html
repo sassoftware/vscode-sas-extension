@@ -6,7 +6,10 @@
     <title>%(data.title)s</title>
   </head>
   <body>
-    <h1>Hi</h1>
+    <vscode-data-grid
+      class="data-view-%(data.viewId)s"
+      aria-label="%(data.title)s contents"
+    ></vscode-data-grid>
     <script type="module" src="%(data.webviewUri)s"></script>
   </body>
 </html>

@@ -25,3 +25,35 @@ provideVSCodeDesignSystem().register(
   vsCodeTag(),
   vsCodeDivider()
 );
+
+let storedRowData: any = null;
+
+const populateView = (viewId: string, data) => {
+  const dataViewer = document.querySelector(`.data-view-${viewId}`);
+  const rows = data.rows.map((row) => {
+    return row.cells.reduce((carry, cell, idx) => {
+      return { ...carry, [data.headers.columns[idx]]: cell };
+    }, {});
+  });
+
+  storedRowData = rows;
+  dataViewer.rowsData = rows;
+};
+
+const commandHandler = (event) => {
+  switch (event.data.command) {
+    case "onLoad":
+      populateView(event.data.viewId, event.data.data);
+      break;
+    default:
+      break;
+  }
+};
+
+const vscode = acquireVsCodeApi();
+const onLoadHandler = () => {
+  vscode.postMessage({ command: "requestLoad" });
+};
+
+window.addEventListener("message", commandHandler);
+window.addEventListener("load", onLoadHandler);
