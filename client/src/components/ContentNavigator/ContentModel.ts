@@ -71,8 +71,8 @@ export class ContentModel {
       return this.getRootChildren();
     }
 
-    const parentIsContent = item === ROOT_FOLDER;
-    const typeQuery = this.generateTypeQuery(item === ROOT_FOLDER);
+    const parentIsContent = item.uri === ROOT_FOLDER.uri;
+    const typeQuery = this.generateTypeQuery(parentIsContent);
 
     const membersLink = getLink(item.links, "GET", "members");
     let membersUrl = membersLink ? membersLink.uri : null;
@@ -237,35 +237,23 @@ export class ContentModel {
       ? getLink(item.links, "GET", "self").uri
       : item.uri;
 
-    // If we don't have a file token map for this resoure, lets grab
-    // it from the server
-    let fileTokenMap = this.fileTokenMaps[uri];
-    if (!fileTokenMap) {
-      try {
-        const res = await this.connection.get(uri);
-        fileTokenMap = {
-          etag: res.headers.etag,
-          lastModified: res.headers["last-modified"],
-        };
-      } catch (error) {
-        return;
-      }
-    }
+    try {
+      // not sure why but the response of moveTo request does not return the latest etag so request it every time
+      const res = await this.connection.get(uri);
+      const fileTokenMap = {
+        etag: res.headers.etag,
+        lastModified: res.headers["last-modified"],
+      };
 
-    const validationUri = getLink(item.links, "PUT", "validateRename")?.uri;
-    if (validationUri) {
-      try {
+      const validationUri = getLink(item.links, "PUT", "validateRename")?.uri;
+      if (validationUri) {
         await this.connection.put(
           validationUri
             .replace("{newname}", encodeURI(name))
             .replace("{newtype}", getTypeName(item))
         );
-      } catch (error) {
-        return;
       }
-    }
 
-    try {
       const patchResponse = await this.connection.patch(
         uri,
         { name },
@@ -324,8 +312,8 @@ export class ContentModel {
     }
   }
 
-  private async deleteItem(item: ContentItem): Promise<boolean> {
-    const link = item.links.find((link: Link) => link.rel === "delete");
+  public async delete(item: ContentItem): Promise<boolean> {
+    const link = item.links.find((link: Link) => link.rel === "deleteResource");
     if (!link) {
       return false;
     }
@@ -335,40 +323,8 @@ export class ContentModel {
     } catch (error) {
       return false;
     }
-
+    // delete the resource or move item to recycle bin will automatically delete the favorites as well.
     return true;
-  }
-
-  public async delete(item: ContentItem): Promise<boolean> {
-    const success = this.deleteItem(item);
-    if (!success) {
-      return false;
-    }
-
-    // Now, lets see if there's a favorite for this item
-    try {
-      const { data: favoritesResponse } = await this.connection.get(
-        `/folders/folders/@myFavorites/members?limit=100&filter=eq(uri,"${item.uri}")`
-      );
-
-      // If we don't have a favorite, we're done
-      if (favoritesResponse.items.length === 0) {
-        return true;
-      }
-
-      // We should only have one favorite matching our uri
-      if (favoritesResponse.items.length > 1) {
-        return false;
-      }
-
-      return await this.deleteItem(favoritesResponse.items[0]);
-    } catch (error) {
-      return true;
-    }
-  }
-
-  public getDelegateFolder(name: string): ContentItem | undefined {
-    return this.delegateFolders[name];
   }
 
   public async moveTo(
@@ -492,6 +448,10 @@ export class ContentModel {
     });
   }
 
+  public getDelegateFolder(name: string): ContentItem | undefined {
+    return this.delegateFolders[name];
+  }
+
   private async updateAccessToken(): Promise<void> {
     const session = await authentication.getSession(SASAuthProvider.id, [], {
       createIfNone: true,
@@ -505,7 +465,7 @@ const getPermission = (item: ContentItem): Permission => {
   return [FOLDER_TYPE, FILE_TYPE].includes(itemType) // normal folders and files
     ? {
         write: !!getLink(item.links, "PUT", "update"),
-        delete: !!getLink(item.links, "DELETE", "delete"),
+        delete: !!getLink(item.links, "DELETE", "deleteResource"),
         addMember: !!getLink(item.links, "POST", "createChild"),
       }
     : {
