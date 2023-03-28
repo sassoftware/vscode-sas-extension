@@ -325,6 +325,44 @@ describe("ContentDataProvider", async function () {
     expect(uri).to.deep.equal(getUri(createdFile));
   });
 
+  it("renameResource - fail if the new name is conflicted", async function () {
+    const origItem = mockContentItem({
+      type: "file",
+      name: "file.sas",
+      uri: "uri://rename",
+      links: [
+        {
+          method: "PUT",
+          rel: "validateRename",
+          uri: "uri://validate?value={newname}&type={newtype}",
+          href: "uri://validate?value={newname}&type={newtype}",
+          type: "test",
+        },
+      ],
+    });
+
+    axiosInstance.get.withArgs("uri://rename").resolves({
+      data: origItem,
+      headers: { etag: "1234", "last-modified": "5678" },
+    });
+    axiosInstance.put
+      .withArgs("uri://validate?value=new-file.sas&type=file")
+      .rejects({
+        data: {
+          status: 409,
+        },
+      });
+
+    const dataProvider = new ContentDataProvider(new ContentModel());
+
+    await dataProvider.connect("http://test.io");
+    const uri: Uri = await dataProvider.renameResource(
+      origItem,
+      "new-file.sas"
+    );
+    expect(uri).to.equal(undefined);
+  });
+
   it("renameResource - renames resource and returns uri", async function () {
     const origItem = mockContentItem({
       type: "file",
