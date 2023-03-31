@@ -336,6 +336,10 @@ describe("ssh connection", () => {
       };
     });
 
+    afterEach(() => {
+      delete process.env.SSH_AUTH_SOCKET;
+    });
+
     it("builds a well-formed ssh session instance", () => {
       const session = getSession(config);
 
