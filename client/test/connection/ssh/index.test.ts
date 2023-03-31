@@ -1,6 +1,6 @@
 import * as sinon from "sinon";
 import { Client, ClientChannel } from "ssh2";
-import { SSHSession } from "../../../src/connection/ssh";
+import { getSession, SSHSession } from "../../../src/connection/ssh";
 import { assertThrowsAsync } from "../../utils";
 import { assert, expect } from "chai";
 import { StubbedInstance, stubInterface } from "ts-sinon";
@@ -320,6 +320,26 @@ describe("ssh connection", () => {
 
       expect(streamStub.write.calledWith("endsas;\n")).to.be.true;
       expect(streamStub.close.calledOnce).to.be.true;
+    });
+  });
+
+  describe("getSession", () => {
+    let config;
+    beforeEach(() => {
+      process.env.SSH_AUTH_SOCKET = "val";
+      config = {
+        host: "host",
+        username: "username",
+        saspath: "saspath",
+        sasOptions: ["-nonews"],
+        port: 22,
+      };
+    });
+
+    it("builds a well-formed ssh session instance", () => {
+      const session = getSession(config);
+
+      expect(session).to.not.equal(undefined);
     });
   });
 });
