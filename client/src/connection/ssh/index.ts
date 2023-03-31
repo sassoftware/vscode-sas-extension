@@ -17,6 +17,10 @@ export interface Config {
 }
 
 export function getSession(c: Config): Session {
+  if (!process.env.SSH_AUTH_SOCK) {
+    throw new Error("SSH_AUTH_SOCK not set. Check Environment Variables.");
+  }
+
   if (!sessionInstance) {
     sessionInstance = new SSHSession();
   }
@@ -48,12 +52,6 @@ export class SSHSession implements Session {
       if (this.stream) {
         this.resolve?.({});
         return;
-      }
-
-      if (!process.env.SSH_AUTH_SOCK) {
-        this.reject?.(
-          new Error("SSH_AUTH_SOCK not set. Check Environment Variables.")
-        );
       }
 
       const cfg: ConnectConfig = {
