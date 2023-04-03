@@ -212,6 +212,19 @@ class ContentDataProvider
     return success;
   }
 
+  public async emptyRecycleBin(): Promise<boolean> {
+    const recycleBin = this.model.getDelegateFolder("@myRecycleBin");
+    const children = await this.getChildren(recycleBin);
+    const result = await Promise.all(
+      children.map((child) => this.deleteResource(child))
+    );
+    const success = result.length === children.length;
+    if (success) {
+      this.refresh();
+    }
+    return success;
+  }
+
   public refresh(): void {
     this._onDidChangeTreeData.fire(undefined);
   }

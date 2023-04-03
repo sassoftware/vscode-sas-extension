@@ -91,7 +91,7 @@ class ContentNavigator {
         if (
           !moveToRecycleBin &&
           !(await window.showWarningMessage(
-            Messages.DeletionWarningMessage.replace("{name}", resource.name),
+            Messages.DeleteWarningMessage.replace("{name}", resource.name),
             { modal: true },
             Messages.DeleteButtonLabel
           ))
@@ -125,30 +125,20 @@ class ContentNavigator {
       }
     );
 
-    commands.registerCommand(
-      "SAS.emptyRecycleBin",
-      async (resource: ContentItem) => {
-        if (
-          !(await window.showWarningMessage(
-            Messages.EmptyRecycleBinWarningMessage,
-            { modal: true },
-            Messages.DeleteButtonLabel
-          ))
-        ) {
-          return;
-        }
-        const children = await this.contentDataProvider.getChildren(resource);
-        if (
-          !(await Promise.all(
-            children.map((child) =>
-              this.contentDataProvider.deleteResource(child)
-            )
-          ))
-        ) {
-          window.showErrorMessage(Messages.EmptyRecycleBinError);
-        }
+    commands.registerCommand("SAS.emptyRecycleBin", async () => {
+      if (
+        !(await window.showWarningMessage(
+          Messages.EmptyRecycleBinWarningMessage,
+          { modal: true },
+          Messages.DeleteButtonLabel
+        ))
+      ) {
+        return;
       }
-    );
+      if (!(await this.contentDataProvider.emptyRecycleBin())) {
+        window.showErrorMessage(Messages.EmptyRecycleBinError);
+      }
+    });
 
     commands.registerCommand("SAS.refreshResources", () =>
       this.contentDataProvider.refresh()

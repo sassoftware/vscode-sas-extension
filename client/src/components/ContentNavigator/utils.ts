@@ -56,10 +56,8 @@ export const resourceType = (item: ContentItem): string | undefined => {
     write && (!isRecycled ? "update" : "restore"),
   ].filter((action) => !!action);
 
-  if (getTypeName(item) === TRASH_FOLDER) {
-    if (item?.memberCount) {
-      actions.push("empty");
-    }
+  if (getTypeName(item) === TRASH_FOLDER && item?.memberCount) {
+    actions.push("empty");
   }
 
   if (actions.length === 0) {
