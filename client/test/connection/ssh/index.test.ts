@@ -326,7 +326,7 @@ describe("ssh connection", () => {
   describe("getSession", () => {
     let config;
     beforeEach(() => {
-      process.env.SSH_AUTH_SOCKET = "val";
+      process.env.SSH_AUTH_SOCK = "val";
       config = {
         host: "host",
         username: "username",
@@ -337,7 +337,7 @@ describe("ssh connection", () => {
     });
 
     afterEach(() => {
-      delete process.env.SSH_AUTH_SOCKET;
+      delete process.env.SSH_AUTH_SOCK;
     });
 
     it("builds a well-formed ssh session instance", () => {
