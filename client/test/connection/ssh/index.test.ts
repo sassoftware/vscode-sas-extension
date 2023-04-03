@@ -42,7 +42,6 @@ describe("ssh connection", () => {
         port: 22,
         saspath: "/path/to/sas_u8",
         sasOptions: [],
-        agentSocket: "/agent/socket",
       };
 
       sandbox.stub(Client.prototype, "connect").callsFake(function () {
