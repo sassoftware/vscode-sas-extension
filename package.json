@@ -199,8 +199,7 @@
                           "host",
                           "saspath",
                           "username",
-                          "port",
-                          "privateKeyPath"
+                          "port"
                         ],
                         "properties": {
                           "host": {
@@ -224,11 +223,6 @@
                             "description": "%configuration.SAS.connectionProfiles.profiles.ssh.port%",
                             "exclusiveMinimum": 1,
                             "exclusiveMaximum": 65535
-                          },
-                          "privateKeyPath": {
-                            "type": "string",
-                            "default": "",
-                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.privateKeyPath%"
                           },
                           "sasOptions": {
                             "type": "array",

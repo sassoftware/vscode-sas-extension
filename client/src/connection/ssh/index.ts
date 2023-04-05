@@ -3,7 +3,6 @@
 
 import { Client, ClientChannel, ConnectConfig } from "ssh2";
 import { RunResult, Session, LogLine } from "..";
-import { readFileSync } from "fs";
 
 const endCode = "--vscode-sas-extension-submit-end--";
 const sasLaunchTimeout = 10000;
@@ -15,20 +14,24 @@ export interface Config {
   saspath: string;
   sasOptions: string[];
   port: number;
-  privateKeyPath: string;
 }
 
 export function getSession(c: Config): Session {
-  if (!sessionInstance) {
-    sessionInstance = new SSHSession(c);
+  if (!process.env.SSH_AUTH_SOCK) {
+    throw new Error("SSH_AUTH_SOCK not set. Check Environment Variables.");
   }
+
+  if (!sessionInstance) {
+    sessionInstance = new SSHSession();
+  }
+  sessionInstance.config = c;
   return sessionInstance;
 }
 
 export class SSHSession implements Session {
   private conn: Client;
   private stream: ClientChannel | undefined;
-  private config: Config;
+  private _config: Config;
   private resolve: ((value?) => void) | undefined;
   private reject: ((reason?) => void) | undefined;
   private onLog: ((logs: LogLine[]) => void) | undefined;
@@ -36,9 +39,13 @@ export class SSHSession implements Session {
   private html5FileName = "";
   private timer: NodeJS.Timeout;
 
-  constructor(c: Config) {
-    this.config = c;
+  constructor(c?: Config) {
+    this._config = c;
     this.conn = new Client();
+  }
+
+  set config(newValue: Config) {
+    this._config = newValue;
   }
 
   public setup = (): Promise<void> => {
@@ -52,11 +59,11 @@ export class SSHSession implements Session {
       }
 
       const cfg: ConnectConfig = {
-        host: this.config.host,
-        port: this.config.port,
-        username: this.config.username,
-        privateKey: readFileSync(this.config.privateKeyPath),
+        host: this._config.host,
+        port: this._config.port,
+        username: this._config.username,
         readyTimeout: sasLaunchTimeout,
+        agent: process.env.SSH_AUTH_SOCK || undefined,
       };
 
       this.conn
@@ -211,11 +218,11 @@ export class SSHSession implements Session {
 
     const resolvedSasOpts: string[] = ["-nodms", "-terminal", "-nosyntaxcheck"];
 
-    if (this.config.sasOptions) {
-      resolvedSasOpts.push(...this.config.sasOptions);
+    if (this._config.sasOptions) {
+      resolvedSasOpts.push(...this._config.sasOptions);
     }
     const execSasOpts: string = resolvedSasOpts.join(" ");
 
-    this.stream.write(`${execArgs} ${this.config.saspath} ${execSasOpts} \n`);
+    this.stream.write(`${execArgs} ${this._config.saspath} ${execSasOpts} \n`);
   };
 }

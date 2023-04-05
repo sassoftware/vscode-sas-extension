@@ -1,14 +1,12 @@
 import * as sinon from "sinon";
 import { Client, ClientChannel } from "ssh2";
-import * as fs from "fs";
-import { SSHSession } from "../../../src/connection/ssh";
-import { assertThrowsAsync, getTestFixtureContent } from "../../utils";
+import { getSession, SSHSession } from "../../../src/connection/ssh";
+import { assertThrowsAsync } from "../../utils";
 import { assert, expect } from "chai";
 import { StubbedInstance, stubInterface } from "ts-sinon";
 
 describe("ssh connection", () => {
   const seconds = 1000;
-  let keyContent: string;
   let sandbox: sinon.SinonSandbox;
   let session: SSHSession;
   let streamOnStub;
@@ -25,13 +23,10 @@ describe("ssh connection", () => {
       port: 22,
       saspath: "/path/to/sas_u8",
       sasOptions: [],
-      privateKeyPath: "/path/to/key",
+      agentSocket: "/agent/socket",
     };
 
     session = new SSHSession(config);
-
-    keyContent = getTestFixtureContent("keyContent.txt").toString();
-    sandbox.stub(fs, "readFileSync").returns(keyContent);
   });
 
   afterEach(() => {
@@ -47,7 +42,6 @@ describe("ssh connection", () => {
         port: 22,
         saspath: "/path/to/sas_u8",
         sasOptions: [],
-        privateKeyPath: "../../testFixture/keyContent.txt",
       };
 
       sandbox.stub(Client.prototype, "connect").callsFake(function () {
@@ -86,7 +80,7 @@ describe("ssh connection", () => {
         port: 22,
         saspath: "/path/to/sas_u8",
         sasOptions: [],
-        privateKeyPath: "/path/to/key",
+        agentSocket: "/agent/socket",
       };
 
       sandbox.stub(Client.prototype, "connect").callsFake(function () {
@@ -107,7 +101,7 @@ describe("ssh connection", () => {
         port: 22,
         saspath: "/path/to/sas_u8",
         sasOptions: [],
-        privateKeyPath: "/path/to/key",
+        agentSocket: "/agent/socket",
       };
 
       sandbox.stub(Client.prototype, "connect").callsFake(function () {
@@ -134,7 +128,7 @@ describe("ssh connection", () => {
         port: 22,
         saspath: "/path/to/sas_u8",
         sasOptions: [],
-        privateKeyPath: "/path/to/key",
+        agentSocket: "/agent/socket",
       };
 
       sandbox.stub(Client.prototype, "connect").callsFake(function () {
@@ -160,7 +154,7 @@ describe("ssh connection", () => {
       port: 22,
       saspath: "/path/to/sas_u8",
       sasOptions: [],
-      privateKeyPath: "../../testFixture/keyContent.txt",
+      agentSocket: "/agent/socket",
     };
 
     const session = new SSHSession(config);
@@ -325,6 +319,30 @@ describe("ssh connection", () => {
 
       expect(streamStub.write.calledWith("endsas;\n")).to.be.true;
       expect(streamStub.close.calledOnce).to.be.true;
+    });
+  });
+
+  describe("getSession", () => {
+    let config;
+    beforeEach(() => {
+      process.env.SSH_AUTH_SOCK = "val";
+      config = {
+        host: "host",
+        username: "username",
+        saspath: "saspath",
+        sasOptions: ["-nonews"],
+        port: 22,
+      };
+    });
+
+    afterEach(() => {
+      delete process.env.SSH_AUTH_SOCK;
+    });
+
+    it("builds a well-formed ssh session instance", () => {
+      const session = getSession(config);
+
+      expect(session).to.not.equal(undefined);
     });
   });
 });

@@ -72,7 +72,6 @@ export interface SSHProfile {
   saspath: string;
   port: number;
   username: string;
-  privateKeyPath: string;
   sasOptions: string[];
 }
 
@@ -355,10 +354,6 @@ export class ProfileConfig {
         return pv;
       }
 
-      if (!profile.privateKeyPath) {
-        pv.error = "Missing private key file in active profile.";
-        return pv;
-      }
       if (!profile.saspath) {
         pv.error = "Missing sas path in active profile.";
         return pv;
@@ -454,10 +449,6 @@ export class ProfileConfig {
         await createInputTextBox(ProfilePromptType.Port, DEFAULT_SSH_PORT)
       );
 
-      profileClone.privateKeyPath = await createInputTextBox(
-        ProfilePromptType.PrivateKeyPath,
-        profileClone.privateKeyPath
-      );
       await this.upsertProfile(name, profileClone);
     }
   }
@@ -503,7 +494,6 @@ export enum ProfilePromptType {
   SASPath,
   Port,
   Username,
-  PrivateKeyPath,
 }
 
 /**
@@ -634,11 +624,6 @@ const input: ProfilePromptInput = {
     title: "SAS Server Username",
     placeholder: "Enter your username",
     description: "Enter your SAS server username.",
-  },
-  [ProfilePromptType.PrivateKeyPath]: {
-    title: "Private Key File",
-    placeholder: "Enter the local path",
-    description: "Enter the local path to a private key file.",
   },
 };
 

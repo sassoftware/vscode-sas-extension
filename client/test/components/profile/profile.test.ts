@@ -87,7 +87,7 @@ describe("Profiles", async function () {
           port: 22,
           sasPath: "sasPath",
           sasOptions: ["-nonews"],
-          privateKeyFile: "privateKeyFile",
+          connectionType: "ssh",
         },
       },
     };
@@ -101,7 +101,6 @@ describe("Profiles", async function () {
           sasPath: "sasPath",
           sasOptions: ["-nonews"],
           connectionType: "ssh",
-          privateKeyFile: "privateKeyFile",
         },
         testViyaProfile: {
           endpoint: "https://test-host.sas.com",
@@ -618,7 +617,6 @@ describe("Profiles", async function () {
           connectionType: ConnectionType.SSH,
           host: "ssh.host",
           port: 22,
-          privateKeyPath: "/private/key/path",
           sasOptions: ["-nonews"],
           saspath: "/sas/path",
           username: "username",
@@ -863,13 +861,6 @@ describe("Profiles", async function () {
         wantTitle: "SAS Server Username",
         wantDescription: "Enter your SAS server username.",
         wantPlaceHolder: "Enter your username",
-      },
-      {
-        name: "Private Key File",
-        prompt: ProfilePromptType.PrivateKeyPath,
-        wantTitle: "Private Key File",
-        wantDescription: "Enter the local path to a private key file.",
-        wantPlaceHolder: "Enter the local path",
       },
     ];
 
