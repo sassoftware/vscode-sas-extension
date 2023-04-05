@@ -24,14 +24,14 @@ export function getSession(c: Config): Session {
   if (!sessionInstance) {
     sessionInstance = new SSHSession();
   }
-  sessionInstance.config = c;
+  sessionInstance.setConfig(c);
   return sessionInstance;
 }
 
 export class SSHSession implements Session {
   private conn: Client;
   private stream: ClientChannel | undefined;
-  public config: Config;
+  private config: Config;
   private resolve: ((value?) => void) | undefined;
   private reject: ((reason?) => void) | undefined;
   private onLog: ((logs: LogLine[]) => void) | undefined;
@@ -43,6 +43,10 @@ export class SSHSession implements Session {
     this.config = c;
     this.conn = new Client();
   }
+
+  public setConfig = (config: Config) => {
+    this.config = config;
+  };
 
   public setup = (): Promise<void> => {
     return new Promise((pResolve, pReject) => {
@@ -60,6 +64,9 @@ export class SSHSession implements Session {
         username: this.config.username,
         readyTimeout: sasLaunchTimeout,
         agent: process.env.SSH_AUTH_SOCK || undefined,
+        debug: (message: string) => {
+          console.log(message);
+        },
       };
 
       this.conn
