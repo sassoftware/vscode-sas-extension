@@ -64,9 +64,6 @@ export class SSHSession implements Session {
         username: this.config.username,
         readyTimeout: sasLaunchTimeout,
         agent: process.env.SSH_AUTH_SOCK || undefined,
-        debug: (message: string) => {
-          console.log(message);
-        },
       };
 
       this.conn
