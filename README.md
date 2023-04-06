@@ -251,7 +251,7 @@ To access SAS Content:
 
 **Notes**:
 
-- # SAS Content requires a profile with a connection to a Viya instance.
+- SAS Content requires a profile with a connection to a Viya instance.
 
 ### Accessing Libraries and Tables
 
