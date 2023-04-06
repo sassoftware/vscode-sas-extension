@@ -558,25 +558,25 @@
         {
           "id": "sas-content-get-started",
           "name": "Sign In",
-          "when": "!SAS.authorized && (SAS.connectionType == rest || !SAS.connectionType)"
+          "when": "!SAS.authorized && SAS.connectionType == rest"
         },
         {
           "id": "sas-content-invalid-connection",
           "name": "Sign In",
-          "when": "!SAS.authorized && SAS.connectionType != rest && SAS.connectionType"
+          "when": "!SAS.authorized && SAS.connectionType != rest"
         }
       ]
     },
     "viewsWelcome": [
       {
         "view": "sas-content-get-started",
-        "when": "!SAS.authorized && (SAS.connectionType == rest || !SAS.connectionType)",
+        "when": "!SAS.authorized && SAS.connectionType == rest",
         "contents": "%views.SAS.welcome%",
         "enablement": "!SAS.authorizing"
       },
       {
         "view": "sas-content-invalid-connection",
-        "when": "SAS.connectionType && SAS.connectionType != rest",
+        "when": "SAS.connectionType != rest",
         "contents": "%views.SAS.unsupportedConnection%"
       }
     ]

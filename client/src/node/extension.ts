@@ -144,6 +144,11 @@ function triggerProfileUpdate(): void {
     );
   } else {
     profileConfig.updateActiveProfileSetting("");
+    commands.executeCommand(
+      "setContext",
+      "SAS.connectionType",
+      ConnectionType.Rest
+    );
   }
 }
 
