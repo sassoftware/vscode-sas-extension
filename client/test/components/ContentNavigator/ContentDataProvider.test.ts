@@ -392,7 +392,10 @@ describe("ContentDataProvider", async function () {
         },
       });
 
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.renameResource(
@@ -582,7 +585,10 @@ describe("ContentDataProvider", async function () {
         ],
       })
     );
-    const dataProvider = new ContentDataProvider(model);
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" })
+    );
 
     axiosInstance.put.withArgs("uri://update").resolves({ data: {} });
 
@@ -614,7 +620,10 @@ describe("ContentDataProvider", async function () {
       ],
     });
 
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     axiosInstance.put.withArgs("uri://update").resolves({ data: {} });
 
