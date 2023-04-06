@@ -140,7 +140,7 @@ class ContentNavigator implements SubscriptionProvider {
           window.showErrorMessage(Messages.EmptyRecycleBinError);
         }
       }),
-      commands.registerCommand("SAS.refreshResources", () =>
+      commands.registerCommand("SAS.refreshContent", () =>
         this.contentDataProvider.refresh()
       ),
       commands.registerCommand(
@@ -242,7 +242,7 @@ class ContentNavigator implements SubscriptionProvider {
           this.contentDataProvider.refresh();
         }
       ),
-      commands.registerCommand("SAS.collapseAll", () => {
+      commands.registerCommand("SAS.collapseAllContent", () => {
         commands.executeCommand(
           "workbench.actions.treeView.sas-content-navigator.collapseAll"
         );
