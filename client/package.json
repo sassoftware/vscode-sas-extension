@@ -6,7 +6,7 @@
   "version": "0.0.1",
   "publisher": "SAS",
   "engines": {
-    "vscode": "^1.66.0"
+    "vscode": "^1.67.0"
   },
   "dependencies": {
     "axios": "^0.27.2",
@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@types/ssh2": "^1.11.7",
-    "@types/vscode": "^1.66.0",
+    "@types/vscode": "1.67.0",
     "@vscode/test-electron": "^1.6.2"
   }
 }

@@ -10,13 +10,16 @@ import axios, {
 import { authentication, Uri } from "vscode";
 import { SASAuthProvider } from "../AuthProvider";
 import {
+  FAVORITES_FOLDER,
+  FILE_TYPE,
   FILE_TYPES,
+  FOLDER_TYPE,
   FOLDER_TYPES,
   Messages,
   ROOT_FOLDER,
   TRASH_FOLDER,
 } from "./const";
-import { ContentItem, Link } from "./types";
+import { ContentItem, Link, Permission } from "./types";
 import { getLink, getResourceId, getTypeName, getUri } from "./utils";
 
 interface AddMemberProperties {
@@ -30,10 +33,12 @@ export class ContentModel {
     [id: string]: { etag: string; lastModified: string };
   };
   private authorized: boolean;
+  private delegateFolders: { [name: string]: ContentItem };
 
   constructor() {
     this.fileTokenMaps = {};
     this.authorized = false;
+    this.delegateFolders = {};
   }
 
   public async connect(baseURL: string): Promise<void> {
@@ -66,8 +71,8 @@ export class ContentModel {
       return this.getRootChildren();
     }
 
-    const parentIsContent = item === ROOT_FOLDER;
-    const typeQuery = this.generateTypeQuery(item === ROOT_FOLDER);
+    const parentIsContent = item.uri === ROOT_FOLDER.uri;
+    const typeQuery = this.generateTypeQuery(parentIsContent);
 
     const membersLink = getLink(item.links, "GET", "members");
     let membersUrl = membersLink ? membersLink.uri : null;
@@ -113,6 +118,7 @@ export class ContentModel {
     return result.items.map((childItem: ContentItem) => ({
       ...childItem,
       uid: `${childItem.id}${item.name}`.replace(/\s/g, ""),
+      permission: getPermission(childItem),
       __trash__: isTrash,
     }));
   }
@@ -231,35 +237,23 @@ export class ContentModel {
       ? getLink(item.links, "GET", "self").uri
       : item.uri;
 
-    // If we don't have a file token map for this resoure, lets grab
-    // it from the server
-    let fileTokenMap = this.fileTokenMaps[uri];
-    if (!fileTokenMap) {
-      try {
-        const res = await this.connection.get(uri);
-        fileTokenMap = {
-          etag: res.headers.etag,
-          lastModified: res.headers["last-modified"],
-        };
-      } catch (error) {
-        return;
-      }
-    }
+    try {
+      // not sure why but the response of moveTo request does not return the latest etag so request it every time
+      const res = await this.connection.get(uri);
+      const fileTokenMap = {
+        etag: res.headers.etag,
+        lastModified: res.headers["last-modified"],
+      };
 
-    const validationUri = getLink(item.links, "PUT", "validateRename")?.uri;
-    if (validationUri) {
-      try {
+      const validationUri = getLink(item.links, "PUT", "validateRename")?.uri;
+      if (validationUri) {
         await this.connection.put(
           validationUri
             .replace("{newname}", encodeURI(name))
             .replace("{newtype}", getTypeName(item))
         );
-      } catch (error) {
-        return;
       }
-    }
 
-    try {
       const patchResponse = await this.connection.patch(
         uri,
         { name },
@@ -304,22 +298,22 @@ export class ContentModel {
     };
   }
 
-  public async getUri(item: ContentItem): Promise<Uri> {
+  public async getUri(item: ContentItem, readOnly: boolean): Promise<Uri> {
     if (item.type !== "reference") {
-      return getUri(item);
+      return getUri(item, readOnly);
     }
 
     // If we're attempting to open a favorite, open the underlying file instead.
     try {
       const resp = await this.connection.get(item.uri);
-      return getUri(resp.data);
+      return getUri(resp.data, readOnly);
     } catch (error) {
-      return getUri(item);
+      return getUri(item, readOnly);
     }
   }
 
-  private async deleteItem(item: ContentItem): Promise<boolean> {
-    const link = item.links.find((link: Link) => link.rel === "delete");
+  public async delete(item: ContentItem): Promise<boolean> {
+    const link = item.links.find((link: Link) => link.rel === "deleteResource");
     if (!link) {
       return false;
     }
@@ -329,36 +323,25 @@ export class ContentModel {
     } catch (error) {
       return false;
     }
-
+    // delete the resource or move item to recycle bin will automatically delete the favorites as well.
     return true;
   }
 
-  public async delete(item: ContentItem): Promise<boolean> {
-    const success = this.deleteItem(item);
-    if (!success) {
+  public async moveTo(
+    item: ContentItem,
+    targetParentFolderUri: string
+  ): Promise<boolean> {
+    const newItemData = {
+      ...item,
+      parentFolderUri: targetParentFolderUri,
+    };
+    const updateLink = getLink(item.links, "PUT", "update");
+    try {
+      await this.connection.put(updateLink.uri, newItemData);
+    } catch (error) {
       return false;
     }
-
-    // Now, lets see if there's a favorite for this item
-    try {
-      const { data: favoritesResponse } = await this.connection.get(
-        `/folders/folders/@myFavorites/members?limit=100&filter=eq(uri,"${item.uri}")`
-      );
-
-      // If we don't have a favorite, we're done
-      if (favoritesResponse.items.length === 0) {
-        return true;
-      }
-
-      // We should only have one favorite matching our uri
-      if (favoritesResponse.items.length > 1) {
-        return false;
-      }
-
-      return await this.deleteItem(favoritesResponse.items[0]);
-    } catch (error) {
-      return true;
-    }
+    return true;
   }
 
   private async addMember(
@@ -429,14 +412,12 @@ export class ContentModel {
       "@myFavorites",
       "@myFolder",
       "@sasRoot",
-      // TODO #109 Include recycle bin in next iteration
-      // "@myRecycleBin",
+      "@myRecycleBin",
     ];
-    const shortcuts: ContentItem[] = [];
     let numberCompletedServiceCalls = 0;
 
     return new Promise<ContentItem[]>((resolve) => {
-      supportedDelegateFolders.forEach(async (sDelegate, index) => {
+      supportedDelegateFolders.forEach(async (sDelegate) => {
         let result;
         if (sDelegate === "@sasRoot") {
           result = {
@@ -445,15 +426,30 @@ export class ContentModel {
         } else {
           result = await this.connection.get(`/folders/folders/${sDelegate}`);
         }
-
-        shortcuts[index] = result.data;
+        this.delegateFolders[sDelegate] = {
+          ...result.data,
+          permission: getPermission(result.data),
+        };
 
         numberCompletedServiceCalls++;
         if (numberCompletedServiceCalls === supportedDelegateFolders.length) {
-          resolve(shortcuts.filter((folder) => !!folder));
+          resolve(
+            Object.entries(this.delegateFolders)
+              .sort(
+                // sort the delegate folders as the order in the supportedDelegateFolders
+                (a, b) =>
+                  supportedDelegateFolders.indexOf(a[0]) -
+                  supportedDelegateFolders.indexOf(b[0])
+              )
+              .map((entry) => entry[1])
+          );
         }
       });
     });
+  }
+
+  public getDelegateFolder(name: string): ContentItem | undefined {
+    return this.delegateFolders[name];
   }
 
   private async updateAccessToken(): Promise<void> {
@@ -463,3 +459,22 @@ export class ContentModel {
     this.connection.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`;
   }
 }
+
+const getPermission = (item: ContentItem): Permission => {
+  const itemType = getTypeName(item);
+  return [FOLDER_TYPE, FILE_TYPE].includes(itemType) // normal folders and files
+    ? {
+        write: !!getLink(item.links, "PUT", "update"),
+        delete: !!getLink(item.links, "DELETE", "deleteResource"),
+        addMember: !!getLink(item.links, "POST", "createChild"),
+      }
+    : {
+        // delegate folders, user folder and user root folder
+        write: false,
+        delete: false,
+        addMember:
+          itemType !== TRASH_FOLDER &&
+          itemType !== FAVORITES_FOLDER &&
+          !!getLink(item.links, "POST", "createChild"),
+      };
+};

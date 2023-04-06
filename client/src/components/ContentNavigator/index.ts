@@ -17,7 +17,11 @@ import { Messages } from "./const";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
 import { ContentItem } from "./types";
-import { getUri, isContainer as getIsContainer } from "./utils";
+import {
+  getUri,
+  isContainer as getIsContainer,
+  isItemInRecycleBin,
+} from "./utils";
 
 const fileValidator = (value: string): string | null =>
   /^([^/<>;\\{}?#]+)\.\w+$/.test(
@@ -52,6 +56,10 @@ class ContentNavigator {
     context.subscriptions.push(this.treeView);
 
     workspace.registerFileSystemProvider("sas", this.contentDataProvider);
+    workspace.registerTextDocumentContentProvider(
+      "sasReadOnly",
+      this.contentDataProvider
+    );
     this.registerCommands();
     this.watchForFileChanges();
   }
@@ -67,7 +75,7 @@ class ContentNavigator {
     commands.registerCommand("SAS.openSASfile", async (item: ContentItem) => {
       try {
         await window.showTextDocument(
-          await this.contentDataProvider.getUri(item)
+          await this.contentDataProvider.getUri(item, item.__trash__)
         );
       } catch (error) {
         await window.showErrorMessage(Messages.FileOpenError);
@@ -78,7 +86,22 @@ class ContentNavigator {
       "SAS.deleteResource",
       async (resource: ContentItem) => {
         const isContainer = getIsContainer(resource);
-        if (!(await this.contentDataProvider.deleteResource(resource))) {
+        const moveToRecycleBin =
+          !isItemInRecycleBin(resource) && resource.permission.write;
+        if (
+          !moveToRecycleBin &&
+          !(await window.showWarningMessage(
+            Messages.DeleteWarningMessage.replace("{name}", resource.name),
+            { modal: true },
+            Messages.DeleteButtonLabel
+          ))
+        ) {
+          return;
+        }
+        const deleteResult = moveToRecycleBin
+          ? await this.contentDataProvider.recycleResource(resource)
+          : await this.contentDataProvider.deleteResource(resource);
+        if (!deleteResult) {
           window.showErrorMessage(
             isContainer
               ? Messages.FolderDeletionError
@@ -87,6 +110,35 @@ class ContentNavigator {
         }
       }
     );
+
+    commands.registerCommand(
+      "SAS.restoreResource",
+      async (resource: ContentItem) => {
+        const isContainer = getIsContainer(resource);
+        if (!(await this.contentDataProvider.restoreResource(resource))) {
+          window.showErrorMessage(
+            isContainer
+              ? Messages.FolderRestoreError
+              : Messages.FileRestoreError
+          );
+        }
+      }
+    );
+
+    commands.registerCommand("SAS.emptyRecycleBin", async () => {
+      if (
+        !(await window.showWarningMessage(
+          Messages.EmptyRecycleBinWarningMessage,
+          { modal: true },
+          Messages.DeleteButtonLabel
+        ))
+      ) {
+        return;
+      }
+      if (!(await this.contentDataProvider.emptyRecycleBin())) {
+        window.showErrorMessage(Messages.EmptyRecycleBinError);
+      }
+    });
 
     commands.registerCommand("SAS.refreshResources", () =>
       this.contentDataProvider.refresh()
@@ -167,20 +219,6 @@ class ContentNavigator {
 
         if (name === resource.name) {
           return;
-        }
-
-        // This could be improved upon. We don't know if the old document is actually
-        // open. This forces it open then closes it, only to re-open it again after
-        // it's renamed.
-        try {
-          !isContainer &&
-            (await window.showTextDocument(resourceUri).then(async () => {
-              await commands.executeCommand(
-                "workbench.action.closeActiveEditor"
-              );
-            }));
-        } catch (error) {
-          // If we fail to show the file, there's nothing extra to do
         }
 
         const newUri = await this.contentDataProvider.renameResource(

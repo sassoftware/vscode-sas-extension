@@ -10,11 +10,15 @@ import {
   FileSystemProvider,
   FileType,
   ProviderResult,
+  TextDocumentContentProvider,
   ThemeIcon,
   TreeDataProvider,
   TreeItem,
   TreeItemCollapsibleState,
   Uri,
+  window,
+  Tab,
+  TabInputText,
 } from "vscode";
 import { ContentModel } from "./ContentModel";
 import { ContentItem } from "./types";
@@ -26,18 +30,24 @@ import {
   getUri,
   isContainer as getIsContainer,
   resourceType,
+  getLink,
 } from "./utils";
 
 class ContentDataProvider
-  implements TreeDataProvider<ContentItem>, FileSystemProvider
+  implements
+    TreeDataProvider<ContentItem>,
+    FileSystemProvider,
+    TextDocumentContentProvider
 {
   private _onDidChangeFile: EventEmitter<FileChangeEvent[]>;
   private _onDidChangeTreeData: EventEmitter<ContentItem | undefined>;
+  private _onDidChange: EventEmitter<Uri>;
   private readonly model: ContentModel;
 
   constructor(model: ContentModel) {
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
+    this._onDidChange = new EventEmitter<Uri>();
     this.model = model;
   }
 
@@ -47,6 +57,10 @@ class ContentDataProvider
 
   get onDidChangeTreeData(): Event<ContentItem> {
     return this._onDidChangeTreeData.event;
+  }
+
+  get onDidChange(): Event<Uri> {
+    return this._onDidChange.event;
   }
 
   public async connect(baseUrl: string): Promise<void> {
@@ -73,6 +87,11 @@ class ContentDataProvider
             title: "Open SAS File",
           },
     };
+  }
+
+  public async provideTextDocumentContent(uri: Uri): Promise<string> {
+    // use text document content provider to display the readonly editor for the files in the recycle bin
+    return await this.model.getContentByUri(uri);
   }
 
   public getChildren(item?: ContentItem): ProviderResult<ContentItem[]> {
@@ -102,8 +121,8 @@ class ContentDataProvider
       .then((content) => new TextEncoder().encode(content));
   }
 
-  public getUri(item: ContentItem): Promise<Uri> {
-    return this.model.getUri(item);
+  public getUri(item: ContentItem, readOnly: boolean): Promise<Uri> {
+    return this.model.getUri(item, readOnly);
   }
 
   public async createFolder(
@@ -132,6 +151,9 @@ class ContentDataProvider
     item: ContentItem,
     name: string
   ): Promise<Uri | undefined> {
+    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+      return;
+    }
     const newItem = await this.model.renameResource(item, name);
     if (newItem) {
       return getUri(newItem);
@@ -143,11 +165,63 @@ class ContentDataProvider
   }
 
   public async deleteResource(item: ContentItem): Promise<boolean> {
+    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+      return false;
+    }
     const success = await this.model.delete(item);
     if (success) {
       this.refresh();
     }
+    return success;
+  }
 
+  public async recycleResource(item: ContentItem): Promise<boolean> {
+    const recycleBin = this.model.getDelegateFolder("@myRecycleBin");
+    if (!recycleBin) {
+      // fallback to delete
+      return this.deleteResource(item);
+    }
+    const recycleBinUri = getLink(recycleBin.links, "GET", "self")?.uri;
+    if (!recycleBinUri) {
+      return false;
+    }
+    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+      return false;
+    }
+    const success = await this.model.moveTo(item, recycleBinUri);
+    if (success) {
+      this.refresh();
+      // update the text document content as well just in case that this file was just restored and updated
+      this._onDidChange.fire(getUri(item, true));
+    }
+    return success;
+  }
+
+  public async restoreResource(item: ContentItem): Promise<boolean> {
+    const previousParentUri = getLink(item.links, "GET", "previousParent")?.uri;
+    if (!previousParentUri) {
+      return false;
+    }
+    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+      return false;
+    }
+    const success = await this.model.moveTo(item, previousParentUri);
+    if (success) {
+      this.refresh();
+    }
+    return success;
+  }
+
+  public async emptyRecycleBin(): Promise<boolean> {
+    const recycleBin = this.model.getDelegateFolder("@myRecycleBin");
+    const children = await this.getChildren(recycleBin);
+    const result = await Promise.all(
+      children.map((child) => this.deleteResource(child))
+    );
+    const success = result.length === children.length;
+    if (success) {
+      this.refresh();
+    }
     return success;
   }
 
@@ -181,3 +255,15 @@ class ContentDataProvider
 }
 
 export default ContentDataProvider;
+
+const closeFileIfOpen = (file: Uri): boolean | Thenable<boolean> => {
+  const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
+  const tab = tabs.find(
+    (tab) =>
+      tab.input instanceof TabInputText && tab.input.uri.query === file.query // compare the file id
+  );
+  if (tab) {
+    return window.tabGroups.close(tab);
+  }
+  return true;
+};

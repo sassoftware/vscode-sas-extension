@@ -12,7 +12,7 @@
   "license": "SAS Code Extension Terms",
   "icon": "icons/sas.png",
   "engines": {
-    "vscode": "^1.66.0"
+    "vscode": "^1.67.0"
   },
   "activationEvents": [
     "onLanguage:sas"
@@ -314,6 +314,16 @@
         "category": "SAS"
       },
       {
+        "command": "SAS.restoreResource",
+        "title": "%commands.SAS.restoreResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.emptyRecycleBin",
+        "title": "%commands.SAS.emptyRecycleBin%",
+        "category": "SAS"
+      },
+      {
         "command": "SAS.refreshResources",
         "title": "%commands.SAS.refreshResources%",
         "category": "SAS",
@@ -359,6 +369,16 @@
           "command": "SAS.deleteResource",
           "when": "viewItem =~ /delete/ && view == sas-content-navigator",
           "group": "delrenamegroup@1"
+        },
+        {
+          "command": "SAS.restoreResource",
+          "when": "viewItem =~ /restore/ && view == sas-content-navigator",
+          "group": "restoregroup@0"
+        },
+        {
+          "command": "SAS.emptyRecycleBin",
+          "when": "viewItem =~ /empty/ && view == sas-content-navigator",
+          "group": "emptygroup@0"
         }
       ],
       "editor/title/run": [
@@ -394,6 +414,10 @@
         {
           "when": "editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected"
+        },
+        {
+          "when": "false",
+          "command": "SAS.restoreResource"
         }
       ]
     },

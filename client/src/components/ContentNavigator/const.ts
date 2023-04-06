@@ -38,15 +38,22 @@ export const FOLDER_TYPES = [
   FAVORITES_FOLDER,
   "userFolder",
   "userRoot",
-  // TODO #109 Include recycle bin in next iteration
-  // TRASH_FOLDER,
+  TRASH_FOLDER,
 ];
 
 export const Messages = {
+  DeleteButtonLabel: "Delete",
+  DeleteWarningMessage:
+    'Are you sure you want to permanently delete the item "{name}"?',
+  EmptyRecycleBinError: "Unable to empty the recycle bin.",
+  EmptyRecycleBinWarningMessage:
+    "Are you sure you want to permanently delete all the items? You cannot undo this action.",
   FileDeletionError: "Unable to delete file.",
   FileOpenError: "The file type is unsupported.",
+  FileRestoreError: "Unable to restore file.",
   FileValidationError: "Invalid file name.",
   FolderDeletionError: "Unable to delete folder.",
+  FolderRestoreError: "Unable to restore folder.",
   FolderValidationError:
     "The folder name cannot contain more than 100 characters.",
   NewFileCreationError: 'Unable to create file "%(name)s".',

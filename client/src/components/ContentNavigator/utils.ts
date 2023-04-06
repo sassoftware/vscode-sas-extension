@@ -2,12 +2,7 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import { Uri } from "vscode";
-import {
-  FAVORITES_FOLDER,
-  FILE_TYPE,
-  FOLDER_TYPE,
-  FOLDER_TYPES,
-} from "./const";
+import { FOLDER_TYPES, TRASH_FOLDER } from "./const";
 import { ContentItem, Link } from "./types";
 
 export const getLink = (
@@ -53,30 +48,31 @@ export const resourceType = (item: ContentItem): string | undefined => {
   if (!isValidItem(item)) {
     return;
   }
+  const { write, delete: del, addMember } = item.permission;
+  const isRecycled = isItemInRecycleBin(item);
+  const actions = [
+    addMember && !isRecycled && "createChild",
+    del && "delete",
+    write && (!isRecycled ? "update" : "restore"),
+  ].filter((action) => !!action);
 
-  const typeName = getTypeName(item);
-  // We want to prevent trying to delete base level folders (favorites, my folder, etc)
-  const resourceTypes = [FOLDER_TYPE, FILE_TYPE].includes(typeName)
-    ? ["createChild", "delete", "update"]
-    : ["createChild", "update"];
+  if (getTypeName(item) === TRASH_FOLDER && item?.memberCount) {
+    actions.push("empty");
+  }
 
-  const links = item.links.filter(
-    (link: Link) =>
-      resourceTypes.includes(link.rel) && item.type !== FAVORITES_FOLDER
-  );
-
-  if (links.length === 0) {
+  if (actions.length === 0) {
     return;
   }
 
-  return links
-    .map((link: Link) => link.rel)
-    .sort()
-    .join("-");
+  return actions.sort().join("-");
 };
 
-export const getUri = (item: ContentItem): Uri =>
-  Uri.parse(`sas:/${getLabel(item)}?id=${getResourceIdFromItem(item)}`);
+export const getUri = (item: ContentItem, readOnly?: boolean): Uri =>
+  Uri.parse(
+    `${readOnly ? "sasReadOnly" : "sas"}:/${getLabel(
+      item
+    )}?id=${getResourceIdFromItem(item)}`
+  );
 
 export const getModifyDate = (item: ContentItem): number =>
   item.modifiedTimeStamp;

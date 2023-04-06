@@ -12,6 +12,8 @@ export interface ContentItem {
   uri: string;
   uid?: string;
   __trash__: boolean;
+  memberCount?: number;
+  permission: Permission;
 }
 
 export interface Link {
@@ -20,4 +22,10 @@ export interface Link {
   href: string;
   type: string;
   uri: string;
+}
+
+export interface Permission {
+  write: boolean;
+  delete: boolean;
+  addMember: boolean;
 }
