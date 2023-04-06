@@ -12,7 +12,7 @@
   "license": "SAS Code Extension Terms",
   "icon": "icons/sas.png",
   "engines": {
-    "vscode": "^1.67.0"
+    "vscode": "^1.71.0"
   },
   "activationEvents": [
     "onLanguage:sas"
@@ -324,8 +324,14 @@
         "category": "SAS"
       },
       {
-        "command": "SAS.refreshResources",
-        "title": "%commands.SAS.refreshResources%",
+        "command": "SAS.refreshContent",
+        "title": "%commands.SAS.refresh%",
+        "category": "SAS",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "SAS.refreshLibraries",
+        "title": "%commands.SAS.refresh%",
         "category": "SAS",
         "icon": "$(refresh)"
       },
@@ -334,12 +340,17 @@
         "title": "%commands.SAS.collapseAll%",
         "category": "SAS",
         "icon": "$(collapse-all)"
+      },
+      {
+        "command": "SAS.deleteTable",
+        "title": "%commands.SAS.deleteTable%",
+        "category": "SAS"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "SAS.refreshResources",
+          "command": "SAS.refreshContent",
           "when": "view == sas-content-navigator",
           "group": "navigation@0"
         },
@@ -347,9 +358,18 @@
           "command": "SAS.collapseAll",
           "when": "view == sas-content-navigator",
           "group": "navigation@1"
+        },
+        {
+          "command": "SAS.refreshLibraries",
+          "when": "view == sas-library-navigator",
+          "group": "navigation@0"
         }
       ],
       "view/item/context": [
+        {
+          "command": "SAS.deleteTable",
+          "when": "viewItem =~ /table-actionable/ && view == sas-library-navigator"
+        },
         {
           "command": "SAS.addFolderResource",
           "when": "viewItem =~ /createChild/ && view == sas-content-navigator",
@@ -418,6 +438,38 @@
         {
           "when": "false",
           "command": "SAS.restoreResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.deleteResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.addFileResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.addFolderResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.renameResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.refreshContent"
+        },
+        {
+          "when": "false",
+          "command": "SAS.refreshLibraries"
+        },
+        {
+          "when": "false",
+          "command": "SAS.collapseAll"
+        },
+        {
+          "when": "false",
+          "command": "SAS.deleteTable"
         }
       ]
     },
@@ -431,8 +483,8 @@
           ".sas"
         ],
         "icon": {
-          "dark": "icons/dark/sasProgramFile.svg",
-          "light": "icons/light/sasProgramFile.svg"
+          "dark": "icons/dark/sasProgramFileDark.svg",
+          "light": "icons/light/sasProgramFileLight.svg"
         },
         "configuration": "./language-configuration.json"
       },
@@ -472,7 +524,7 @@
         {
           "id": "sas-view-container",
           "title": "SAS",
-          "icon": "icons/sas-svg.svg"
+          "icon": "icons/dark/sasIndicatorDark.svg"
         }
       ]
     },
@@ -481,6 +533,11 @@
         {
           "id": "sas-content-navigator",
           "name": "Explorer",
+          "when": "SAS.authorized && SAS.connectionType == rest"
+        },
+        {
+          "id": "sas-library-navigator",
+          "name": "Libraries",
           "when": "SAS.authorized && SAS.connectionType == rest"
         },
         {
@@ -529,7 +586,8 @@
     "format": "prettier --write .",
     "pretest": "npm run compile && tsc -p ./client",
     "test": "node ./client/out/test/runTest.js",
-    "postinstall": "cd client && npm install && cd ../server && npm install && cd .."
+    "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
+    "copyright:check": "node ./tools/check-copyright.mjs"
   },
   "devDependencies": {
     "@types/chai": "^4.3.4",
@@ -542,6 +600,7 @@
     "esbuild": "^0.17.14",
     "eslint": "^8.37.0",
     "mocha": "^10.2.0",
+    "nock": "^13.3.0",
     "path-browserify": "^1.0.1",
     "prettier": "^2.8.5",
     "sinon": "^15.0.3",

@@ -19,6 +19,7 @@ export interface Session {
   setup(): Promise<void>;
   run(code: string, onLog?: (logs: LogLine[]) => void): Promise<RunResult>;
   close(): Promise<void> | void;
+  sessionId?(): string | undefined;
 }
 
 export function getSession(): Session {

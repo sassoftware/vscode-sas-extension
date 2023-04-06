@@ -21,6 +21,7 @@ Welcome to the SAS Extension for Visual Studio Code! This extension provides sup
       - [Update SAS Profile](#update-sas-profile)
     - [Running SAS Code](#running-sas-code)
     - [Accessing SAS Content](#accessing-sas-content)
+    - [Accessing Libraries and Tables](#accessing-libraries-and-tables)
   - [Support](#support)
     - [SAS Communities](#sas-communities)
     - [SAS Programming Documentation](#sas-programming-documentation)
@@ -250,7 +251,13 @@ To access SAS Content:
 
 **Notes**:
 
-- SAS Content requires a profile with a connection to a Viya instance.
+- # SAS Content requires a profile with a connection to a Viya instance.
+
+### Accessing Libraries and Tables
+
+After configuring the SAS extension for a SAS Viya environment, you will be able to access your connected libraries.
+
+You can use the libraries pane to delete a table, drag and drop tables into your SAS program code, or view a sample of the table data.
 
 ## Support
 

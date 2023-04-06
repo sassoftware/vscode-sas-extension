@@ -31,6 +31,7 @@ import {
 import { run, runSelected } from "../commands/run";
 import { SASAuthProvider } from "../components/AuthProvider";
 import ContentNavigator from "../components/ContentNavigator";
+import LibraryNavigator from "../components/LibraryNavigator";
 import { legend, LogTokensProvider } from "../components/LogViewer";
 import { ConnectionType } from "../components/profile";
 
@@ -80,9 +81,18 @@ export function activate(context: ExtensionContext): void {
   // Start the client. This will also launch the server
   client.start();
 
+  const libraryNavigator = new LibraryNavigator(context);
+  const contentNavigator = new ContentNavigator(context);
+
   context.subscriptions.push(
-    commands.registerCommand("SAS.run", run),
-    commands.registerCommand("SAS.runSelected", runSelected),
+    commands.registerCommand("SAS.run", async () => {
+      await run();
+      await libraryNavigator.refresh();
+    }),
+    commands.registerCommand("SAS.runSelected", async () => {
+      await runSelected();
+      await libraryNavigator.refresh();
+    }),
     commands.registerCommand("SAS.close", (silent) => {
       closeSession(silent === true ? undefined : "The SAS session has closed.");
     }),
@@ -101,10 +111,10 @@ export function activate(context: ExtensionContext): void {
       LogTokensProvider,
       legend
     ),
-    activeProfileStatusBarIcon
+    activeProfileStatusBarIcon,
+    ...libraryNavigator.getSubscriptions(),
+    ...contentNavigator.getSubscriptions()
   );
-
-  new ContentNavigator(context);
 
   // Reset first to set "No Active Profiles"
   resetStatusBarItem(activeProfileStatusBarIcon);
@@ -125,7 +135,7 @@ export function activate(context: ExtensionContext): void {
 function triggerProfileUpdate(): void {
   const profileList = profileConfig.getAllProfiles();
   const activeProfileName = profileConfig.getActiveProfile();
-  if (activeProfileName in profileList || activeProfileName === "") {
+  if (profileList[activeProfileName]) {
     updateStatusBarProfile(activeProfileStatusBarIcon);
     commands.executeCommand(
       "setContext",

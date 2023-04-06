@@ -4,6 +4,7 @@
 import { sprintf } from "sprintf-js";
 import {
   commands,
+  Disposable,
   ExtensionContext,
   TextDocumentChangeEvent,
   TreeView,
@@ -22,6 +23,7 @@ import {
   isContainer as getIsContainer,
   isItemInRecycleBin,
 } from "./utils";
+import { SubscriptionProvider } from "../SubscriptionProvider";
 
 const fileValidator = (value: string): string | null =>
   /^([^/<>;\\{}?#]+)\.\w+$/.test(
@@ -33,14 +35,17 @@ const fileValidator = (value: string): string | null =>
 const folderValidator = (value: string): string | null =>
   value.length <= 100 ? null : Messages.FolderValidationError;
 
-class ContentNavigator {
+class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
   private treeView: TreeView<ContentItem>;
 
   private dirtyFiles: Record<string, boolean>;
 
   constructor(context: ExtensionContext) {
-    this.contentDataProvider = new ContentDataProvider(new ContentModel());
+    this.contentDataProvider = new ContentDataProvider(
+      new ContentModel(),
+      context.extensionUri
+    );
     this.treeView = window.createTreeView("sas-content-navigator", {
       treeDataProvider: this.contentDataProvider,
     });
@@ -53,14 +58,11 @@ class ContentNavigator {
       }
     });
 
-    context.subscriptions.push(this.treeView);
-
     workspace.registerFileSystemProvider("sas", this.contentDataProvider);
     workspace.registerTextDocumentContentProvider(
       "sasReadOnly",
       this.contentDataProvider
     );
-    this.registerCommands();
     this.watchForFileChanges();
   }
 
@@ -71,186 +73,181 @@ class ContentNavigator {
     });
   }
 
-  private registerCommands(): void {
-    commands.registerCommand("SAS.openSASfile", async (item: ContentItem) => {
-      try {
-        await window.showTextDocument(
-          await this.contentDataProvider.getUri(item, item.__trash__)
-        );
-      } catch (error) {
-        await window.showErrorMessage(Messages.FileOpenError);
-      }
-    });
-
-    commands.registerCommand(
-      "SAS.deleteResource",
-      async (resource: ContentItem) => {
-        const isContainer = getIsContainer(resource);
-        const moveToRecycleBin =
-          !isItemInRecycleBin(resource) && resource.permission.write;
+  public getSubscriptions(): Disposable[] {
+    return [
+      this.treeView,
+      commands.registerCommand("SAS.openSASfile", async (item: ContentItem) => {
+        try {
+          await window.showTextDocument(
+            await this.contentDataProvider.getUri(item, item.__trash__)
+          );
+        } catch (error) {
+          await window.showErrorMessage(Messages.FileOpenError);
+        }
+      }),
+      commands.registerCommand(
+        "SAS.deleteResource",
+        async (resource: ContentItem) => {
+          const isContainer = getIsContainer(resource);
+          const moveToRecycleBin =
+            !isItemInRecycleBin(resource) && resource.permission.write;
+          if (
+            !moveToRecycleBin &&
+            !(await window.showWarningMessage(
+              Messages.DeleteWarningMessage.replace("{name}", resource.name),
+              { modal: true },
+              Messages.DeleteButtonLabel
+            ))
+          ) {
+            return;
+          }
+          const deleteResult = moveToRecycleBin
+            ? await this.contentDataProvider.recycleResource(resource)
+            : await this.contentDataProvider.deleteResource(resource);
+          if (!deleteResult) {
+            window.showErrorMessage(
+              isContainer
+                ? Messages.FolderDeletionError
+                : Messages.FileDeletionError
+            );
+          }
+        }
+      ),
+      commands.registerCommand(
+        "SAS.restoreResource",
+        async (resource: ContentItem) => {
+          const isContainer = getIsContainer(resource);
+          if (!(await this.contentDataProvider.restoreResource(resource))) {
+            window.showErrorMessage(
+              isContainer
+                ? Messages.FolderRestoreError
+                : Messages.FileRestoreError
+            );
+          }
+        }
+      ),
+      commands.registerCommand("SAS.emptyRecycleBin", async () => {
         if (
-          !moveToRecycleBin &&
           !(await window.showWarningMessage(
-            Messages.DeleteWarningMessage.replace("{name}", resource.name),
+            Messages.EmptyRecycleBinWarningMessage,
             { modal: true },
             Messages.DeleteButtonLabel
           ))
         ) {
           return;
         }
-        const deleteResult = moveToRecycleBin
-          ? await this.contentDataProvider.recycleResource(resource)
-          : await this.contentDataProvider.deleteResource(resource);
-        if (!deleteResult) {
-          window.showErrorMessage(
-            isContainer
-              ? Messages.FolderDeletionError
-              : Messages.FileDeletionError
+        if (!(await this.contentDataProvider.emptyRecycleBin())) {
+          window.showErrorMessage(Messages.EmptyRecycleBinError);
+        }
+      }),
+      commands.registerCommand("SAS.refreshResources", () =>
+        this.contentDataProvider.refresh()
+      ),
+      commands.registerCommand(
+        "SAS.addFileResource",
+        async (resource: ContentItem) => {
+          const fileName = await window.showInputBox({
+            prompt: Messages.NewFilePrompt,
+            title: Messages.NewFileTitle,
+            validateInput: fileValidator,
+          });
+          if (!fileName) {
+            return;
+          }
+
+          const newUri = await this.contentDataProvider.createFile(
+            resource,
+            fileName
+          );
+          this.handleCreationResponse(
+            resource,
+            newUri,
+            sprintf(Messages.NewFileCreationError, { name: fileName })
+          );
+
+          if (newUri) {
+            await window.showTextDocument(newUri);
+          }
+        }
+      ),
+      commands.registerCommand(
+        "SAS.addFolderResource",
+        async (resource: ContentItem) => {
+          const folderName = await window.showInputBox({
+            prompt: Messages.NewFolderPrompt,
+            title: Messages.NewFolderTitle,
+            validateInput: folderValidator,
+          });
+          if (!folderName) {
+            return;
+          }
+
+          const newUri = await this.contentDataProvider.createFolder(
+            resource,
+            folderName
+          );
+          this.handleCreationResponse(
+            resource,
+            newUri,
+            sprintf(Messages.NewFolderCreationError, { name: folderName })
           );
         }
-      }
-    );
+      ),
+      commands.registerCommand(
+        "SAS.renameResource",
+        async (resource: ContentItem) => {
+          const isContainer = getIsContainer(resource);
+          const resourceUri = getUri(resource);
 
-    commands.registerCommand(
-      "SAS.restoreResource",
-      async (resource: ContentItem) => {
-        const isContainer = getIsContainer(resource);
-        if (!(await this.contentDataProvider.restoreResource(resource))) {
-          window.showErrorMessage(
-            isContainer
-              ? Messages.FolderRestoreError
-              : Messages.FileRestoreError
+          // Make sure the file is saved before renaming
+          if (this.dirtyFiles[resourceUri.query]) {
+            window.showErrorMessage(Messages.RenameUnsavedFileError);
+            return;
+          }
+
+          const name = await window.showInputBox({
+            prompt: Messages.RenamePrompt,
+            title: isContainer
+              ? Messages.RenameFolderTitle
+              : Messages.RenameFileTitle,
+            value: resource.name,
+            validateInput: isContainer ? folderValidator : fileValidator,
+          });
+
+          if (name === resource.name) {
+            return;
+          }
+
+          const newUri = await this.contentDataProvider.renameResource(
+            resource,
+            name
           );
+
+          if (!newUri) {
+            window.showErrorMessage(
+              sprintf(Messages.RenameError, {
+                oldName: resource.name,
+                newName: name,
+              })
+            );
+            return;
+          }
+
+          try {
+            !isContainer && (await window.showTextDocument(newUri));
+          } catch (error) {
+            // If we fail to show the file, there's nothing extra to do
+          }
+
+          this.contentDataProvider.refresh();
         }
-      }
-    );
-
-    commands.registerCommand("SAS.emptyRecycleBin", async () => {
-      if (
-        !(await window.showWarningMessage(
-          Messages.EmptyRecycleBinWarningMessage,
-          { modal: true },
-          Messages.DeleteButtonLabel
-        ))
-      ) {
-        return;
-      }
-      if (!(await this.contentDataProvider.emptyRecycleBin())) {
-        window.showErrorMessage(Messages.EmptyRecycleBinError);
-      }
-    });
-
-    commands.registerCommand("SAS.refreshResources", () =>
-      this.contentDataProvider.refresh()
-    );
-
-    commands.registerCommand(
-      "SAS.addFileResource",
-      async (resource: ContentItem) => {
-        const fileName = await window.showInputBox({
-          prompt: Messages.NewFilePrompt,
-          title: Messages.NewFileTitle,
-          validateInput: fileValidator,
-        });
-        if (!fileName) {
-          return;
-        }
-
-        const newUri = await this.contentDataProvider.createFile(
-          resource,
-          fileName
+      ),
+      commands.registerCommand("SAS.collapseAll", () => {
+        commands.executeCommand(
+          "workbench.actions.treeView.sas-content-navigator.collapseAll"
         );
-        this.handleCreationResponse(
-          resource,
-          newUri,
-          sprintf(Messages.NewFileCreationError, { name: fileName })
-        );
-
-        if (newUri) {
-          await window.showTextDocument(newUri);
-        }
-      }
-    );
-
-    commands.registerCommand(
-      "SAS.addFolderResource",
-      async (resource: ContentItem) => {
-        const folderName = await window.showInputBox({
-          prompt: Messages.NewFolderPrompt,
-          title: Messages.NewFolderTitle,
-          validateInput: folderValidator,
-        });
-        if (!folderName) {
-          return;
-        }
-
-        const newUri = await this.contentDataProvider.createFolder(
-          resource,
-          folderName
-        );
-        this.handleCreationResponse(
-          resource,
-          newUri,
-          sprintf(Messages.NewFolderCreationError, { name: folderName })
-        );
-      }
-    );
-
-    commands.registerCommand(
-      "SAS.renameResource",
-      async (resource: ContentItem) => {
-        const isContainer = getIsContainer(resource);
-        const resourceUri = getUri(resource);
-
-        // Make sure the file is saved before renaming
-        if (this.dirtyFiles[resourceUri.query]) {
-          window.showErrorMessage(Messages.RenameUnsavedFileError);
-          return;
-        }
-
-        const name = await window.showInputBox({
-          prompt: Messages.RenamePrompt,
-          title: isContainer
-            ? Messages.RenameFolderTitle
-            : Messages.RenameFileTitle,
-          value: resource.name,
-          validateInput: isContainer ? folderValidator : fileValidator,
-        });
-
-        if (name === resource.name) {
-          return;
-        }
-
-        const newUri = await this.contentDataProvider.renameResource(
-          resource,
-          name
-        );
-
-        if (!newUri) {
-          window.showErrorMessage(
-            sprintf(Messages.RenameError, {
-              oldName: resource.name,
-              newName: name,
-            })
-          );
-          return;
-        }
-
-        try {
-          !isContainer && (await window.showTextDocument(newUri));
-        } catch (error) {
-          // If we fail to show the file, there's nothing extra to do
-        }
-
-        this.contentDataProvider.refresh();
-      }
-    );
-
-    commands.registerCommand("SAS.collapseAll", () => {
-      commands.executeCommand(
-        "workbench.actions.treeView.sas-content-navigator.collapseAll"
-      );
-    });
+      }),
+    ];
   }
 
   private async handleCreationResponse(

@@ -21,7 +21,7 @@ export interface Config {
 let config: Config;
 let computeSession: ComputeSession | undefined;
 
-async function setup() {
+async function setup(): Promise<void> {
   const apiConfig = getApiConfig();
   if (!config.serverId) {
     const session = await authentication.getSession(SASAuthProvider.id, [], {
@@ -142,8 +142,12 @@ async function run(code: string, onLog?: (logs: LogLine[]) => void) {
   return res;
 }
 
+function sessionId() {
+  return computeSession && computeSession.sessionId;
+}
+
 async function close() {
-  if (computeSession && computeSession.sessionId) {
+  if (sessionId()) {
     computeSession.delete();
     computeSession = undefined;
   }
@@ -158,5 +162,6 @@ export function getSession(c: Config): Session {
     setup,
     run,
     close,
+    sessionId,
   };
 }

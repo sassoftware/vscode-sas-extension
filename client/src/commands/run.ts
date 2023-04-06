@@ -92,14 +92,14 @@ async function runCode(selected?: boolean) {
   );
 }
 
-function _run(selected = false) {
+const _run = async (selected = false) => {
   if (running) {
     return;
   }
   running = true;
   commands.executeCommand("setContext", "SAS.hideRunMenuItem", true);
 
-  runCode(selected)
+  await runCode(selected)
     .catch((err) => {
       console.dir(err);
       window.showErrorMessage(
@@ -110,12 +110,12 @@ function _run(selected = false) {
       running = false;
       commands.executeCommand("setContext", "SAS.hideRunMenuItem", false);
     });
+};
+
+export async function run(): Promise<void> {
+  await _run();
 }
 
-export function run(): void {
-  _run();
-}
-
-export function runSelected(): void {
-  _run(true);
+export async function runSelected(): Promise<void> {
+  await _run(true);
 }

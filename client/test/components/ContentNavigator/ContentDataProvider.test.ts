@@ -88,7 +88,10 @@ describe("ContentDataProvider", async function () {
 
   it("getTreeItem - returns a file tree item for file reference", async () => {
     const contentItem: ContentItem = mockContentItem();
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     const treeItem = await dataProvider.getTreeItem(contentItem);
     const expectedTreeItem: TreeItem = {
@@ -110,7 +113,10 @@ describe("ContentDataProvider", async function () {
       type: "folder",
       name: "testFolder",
     });
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     const treeItem = await dataProvider.getTreeItem(contentItem);
     const expectedTreeItem: TreeItem = {
@@ -123,13 +129,19 @@ describe("ContentDataProvider", async function () {
   });
 
   it("getChildren - returns no children if not authorized", async () => {
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
     const children = await dataProvider.getChildren();
     expect(children.length).to.equal(0);
   });
 
   it("getChildren - returns root children without content item", async function () {
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     axiosInstance.get.withArgs("/folders/folders/@myFavorites").resolves({
       data: mockContentItem({
@@ -164,7 +176,10 @@ describe("ContentDataProvider", async function () {
 
   it("getChildren - returns children with content item", async function () {
     const childItem = mockContentItem();
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     axiosInstance.get
       .withArgs(
@@ -201,7 +216,10 @@ describe("ContentDataProvider", async function () {
 
   it("stat - returns file data", async function () {
     const childItem = mockContentItem();
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     axiosInstance.get.withArgs("uri://test").resolves({
       data: childItem,
@@ -221,7 +239,10 @@ describe("ContentDataProvider", async function () {
 
   it("stat - returns folder data", async function () {
     const childItem = mockContentItem({ type: "folder" });
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     axiosInstance.get.withArgs("uri://test").resolves({
       data: childItem,
@@ -241,7 +262,10 @@ describe("ContentDataProvider", async function () {
 
   it("readFile - returns file contents", async function () {
     const childItem = mockContentItem();
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     axiosInstance.get.withArgs("uri://test/content").resolves({
       data: "/* file content */",
@@ -263,7 +287,10 @@ describe("ContentDataProvider", async function () {
       type: "folder",
       name: "folder-test",
     });
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     axiosInstance.post
       .withArgs("/folders/folders?parentFolderUri=uri://parent-folder", {
@@ -280,7 +307,10 @@ describe("ContentDataProvider", async function () {
 
   it("createFolder - fails to create a folder without parent folder", async function () {
     const parentItem = mockContentItem({ type: "folder", uri: "" });
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     const item = await dataProvider.createFolder(parentItem, "folder-test");
 
@@ -306,7 +336,10 @@ describe("ContentDataProvider", async function () {
       name: "file.sas",
     });
 
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     axiosInstance.post
       .withArgs(
@@ -359,7 +392,10 @@ describe("ContentDataProvider", async function () {
         },
       });
 
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.renameResource(
@@ -393,7 +429,10 @@ describe("ContentDataProvider", async function () {
         headers: { etag: "1234", "last-modified": "5678" },
       });
 
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.renameResource(
@@ -415,7 +454,10 @@ describe("ContentDataProvider", async function () {
       name: "the-real-file.sas",
     });
 
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     axiosInstance.get.withArgs("uri://self").resolves({
       data: item,
@@ -447,7 +489,10 @@ describe("ContentDataProvider", async function () {
       name: "file.sas",
     });
 
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     // Make initial request and store file token data
     axiosInstance.get.withArgs("uri://test/content").resolves({
@@ -494,7 +539,10 @@ describe("ContentDataProvider", async function () {
       ],
     });
 
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     axiosInstance.delete.withArgs("uri://delete").resolves({ data: {} });
     axiosInstance.delete
@@ -537,7 +585,10 @@ describe("ContentDataProvider", async function () {
         ],
       })
     );
-    const dataProvider = new ContentDataProvider(model);
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" })
+    );
 
     axiosInstance.put.withArgs("uri://update").resolves({ data: {} });
 
@@ -569,7 +620,10 @@ describe("ContentDataProvider", async function () {
       ],
     });
 
-    const dataProvider = new ContentDataProvider(new ContentModel());
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
 
     axiosInstance.put.withArgs("uri://update").resolves({ data: {} });
 
