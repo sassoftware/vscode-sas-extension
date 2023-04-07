@@ -336,7 +336,13 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "SAS.collapseAll",
+        "command": "SAS.collapseAllContent",
+        "title": "%commands.SAS.collapseAll%",
+        "category": "SAS",
+        "icon": "$(collapse-all)"
+      },
+      {
+        "command": "SAS.collapseAllLibraries",
         "title": "%commands.SAS.collapseAll%",
         "category": "SAS",
         "icon": "$(collapse-all)"
@@ -355,7 +361,7 @@
           "group": "navigation@0"
         },
         {
-          "command": "SAS.collapseAll",
+          "command": "SAS.collapseAllContent",
           "when": "view == sas-content-navigator",
           "group": "navigation@1"
         },
@@ -363,6 +369,11 @@
           "command": "SAS.refreshLibraries",
           "when": "view == sas-library-navigator",
           "group": "navigation@0"
+        },
+        {
+          "command": "SAS.collapseAllLibraries",
+          "when": "view == sas-library-navigator",
+          "group": "navigation@1"
         }
       ],
       "view/item/context": [
@@ -465,7 +476,11 @@
         },
         {
           "when": "false",
-          "command": "SAS.collapseAll"
+          "command": "SAS.collapseAllContent"
+        },
+        {
+          "when": "false",
+          "command": "SAS.collapseAllLibraries"
         },
         {
           "when": "false",

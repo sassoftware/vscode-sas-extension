@@ -62,6 +62,11 @@ class LibraryNavigator implements SubscriptionProvider {
           window.showErrorMessage(error.message);
         }
       }),
+      commands.registerCommand("SAS.collapseAllLibraries", () => {
+        commands.executeCommand(
+          "workbench.actions.treeView.sas-library-navigator.collapseAll"
+        );
+      }),
     ];
   }
 

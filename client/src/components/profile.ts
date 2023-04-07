@@ -132,13 +132,14 @@ export class ProfileConfig {
       .get(EXTENSION_DEFINE_PROFILES_CONFIG_KEY)[EXTENSION_PROFILES_CONFIG_KEY];
 
     if (!profileList) {
-      workspace
-        .getConfiguration(EXTENSION_CONFIG_KEY)
-        .update(
-          EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
-          {},
-          ConfigurationTarget.Global
-        );
+      workspace.getConfiguration(EXTENSION_CONFIG_KEY).update(
+        EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+        {
+          activeProfile: "",
+          profiles: {},
+        },
+        ConfigurationTarget.Global
+      );
       return false;
     }
     return true;
@@ -633,8 +634,8 @@ const input: ProfilePromptInput = {
  * @returns {@link ConnectionType}
  */
 function mapQuickPickToEnum(connectionTypePickInput: string): ConnectionType {
-  /* 
-     Having a translation layer here allows the profile types to potentially evolve separately from the 
+  /*
+     Having a translation layer here allows the profile types to potentially evolve separately from the
      underlying technology used to implement the connection. Down the road its quite possible to have
      more than one selectable quick pick input that uses the same underlying connection methods..
   */

@@ -46,8 +46,8 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
 
     const session: SASAuthSession = JSON.parse(stored);
     const activeProfile = profileConfig.getActiveProfileDetail();
-    const profile = activeProfile.profile;
-    if (profile.connectionType !== ConnectionType.Rest) {
+    const profile = activeProfile?.profile;
+    if (!profile || profile.connectionType !== ConnectionType.Rest) {
       return [];
     }
     const tokens = await refreshToken(profile, {
