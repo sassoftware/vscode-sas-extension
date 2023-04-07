@@ -16,7 +16,7 @@ import { getTokens, refreshToken } from "../connection/rest/auth";
 import { getCurrentUser } from "../connection/rest/identities";
 import { ConnectionType } from "../components/profile";
 
-const SECRET_KEY = "SASAuth";
+const SECRET_KEY = "SASAuth-2";
 
 interface SASAuthSession extends AuthenticationSession {
   refreshToken?: string;
@@ -38,18 +38,24 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
   }
 
   async getSessions(): Promise<readonly AuthenticationSession[]> {
-    const stored = await this.secretStorage.get(SECRET_KEY);
-    if (!stored) {
+    const storedSessions = await this.secretStorage.get(SECRET_KEY);
+    if (!storedSessions) {
       commands.executeCommand("setContext", "SAS.authorized", false);
       return [];
     }
 
-    const session: SASAuthSession = JSON.parse(stored);
+    const sessions: SASAuthSession = JSON.parse(storedSessions);
     const activeProfile = profileConfig.getActiveProfileDetail();
     const profile = activeProfile?.profile;
     if (!profile || profile.connectionType !== ConnectionType.Rest) {
       return [];
     }
+    const profileName = profileConfig.getActiveProfile();
+    const session = sessions[profileName];
+    if (!session) {
+      return [];
+    }
+
     const tokens = await refreshToken(profile, {
       access_token: session.accessToken,
       refresh_token: session.refreshToken,
@@ -64,7 +70,7 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
       return [session];
     }
     const newSession = { ...session, accessToken: tokens.access_token };
-    await this.secretStorage.store(SECRET_KEY, JSON.stringify(newSession));
+    await this.writeSession(newSession);
     commands.executeCommand("setContext", "SAS.authorized", true);
 
     return [newSession];
@@ -91,10 +97,31 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
       refreshToken,
       scopes: [],
     };
-    await this.secretStorage.store(SECRET_KEY, JSON.stringify(session));
+
+    await this.writeSession(session);
+
     commands.executeCommand("setContext", "SAS.authorized", true);
 
     return session;
+  }
+
+  private async writeSession(session: SASAuthSession): Promise<void> {
+    const storedSessionData = await this.secretStorage.get(SECRET_KEY);
+    const storedSessions = storedSessionData
+      ? JSON.parse(storedSessionData)
+      : {};
+    const profileName = profileConfig.getActiveProfile();
+    console.log("aint this a bitch");
+    if (!profileName) {
+      return;
+    }
+
+    const sessions = {
+      ...storedSessions,
+      [profileName]: session,
+    };
+
+    await this.secretStorage.store(SECRET_KEY, JSON.stringify(sessions));
   }
 
   async removeSession(): Promise<void> {

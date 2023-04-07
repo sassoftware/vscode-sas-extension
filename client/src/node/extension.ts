@@ -122,11 +122,22 @@ export function activate(context: ExtensionContext): void {
   updateStatusBarProfile(activeProfileStatusBarIcon);
 
   // If configFile setting is changed, update watcher to watch new configuration file
-  workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-    if (event.affectsConfiguration("SAS.connectionProfiles")) {
-      triggerProfileUpdate();
+  workspace.onDidChangeConfiguration(
+    async (event: ConfigurationChangeEvent) => {
+      if (event.affectsConfiguration("SAS.connectionProfiles")) {
+        console.log("Things are affected. Connection profile thing");
+        commands.executeCommand("setContext", "SAS.authorized", false);
+        // if (
+        //   event.affectsConfiguration("SAS.connectionProfiles.activeProfile")
+        // ) {
+        //   console.log("Things are affected. Closing session");
+        //   await closeSession();
+        //   commands.executeCommand("setContext", "SAS.authorized", false);
+        // }
+        triggerProfileUpdate();
+      }
     }
-  });
+  );
 
   profileConfig.migrateLegacyProfiles();
   triggerProfileUpdate();
