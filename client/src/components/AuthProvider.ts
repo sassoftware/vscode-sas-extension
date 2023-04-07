@@ -111,7 +111,6 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
       ? JSON.parse(storedSessionData)
       : {};
     const profileName = profileConfig.getActiveProfile();
-    console.log("aint this a bitch");
     if (!profileName) {
       return;
     }

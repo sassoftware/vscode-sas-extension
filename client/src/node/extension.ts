@@ -125,15 +125,7 @@ export function activate(context: ExtensionContext): void {
   workspace.onDidChangeConfiguration(
     async (event: ConfigurationChangeEvent) => {
       if (event.affectsConfiguration("SAS.connectionProfiles")) {
-        console.log("Things are affected. Connection profile thing");
         commands.executeCommand("setContext", "SAS.authorized", false);
-        // if (
-        //   event.affectsConfiguration("SAS.connectionProfiles.activeProfile")
-        // ) {
-        //   console.log("Things are affected. Closing session");
-        //   await closeSession();
-        //   commands.executeCommand("setContext", "SAS.authorized", false);
-        // }
         triggerProfileUpdate();
       }
     }
