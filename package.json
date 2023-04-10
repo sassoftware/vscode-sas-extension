@@ -602,7 +602,8 @@
     "pretest": "npm run compile && tsc -p ./client",
     "test": "node ./client/out/test/runTest.js",
     "coverage": "c8 --clean --lines 75 npm run test",
-    "postinstall": "cd client && npm install && cd ../server && npm install && cd .."
+    "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
+    "copyright:check": "node ./tools/check-copyright.mjs"
   },
   "devDependencies": {
     "@types/chai": "^4.3.4",
