@@ -19,3 +19,4 @@ ContributorAgreement.txt
 pull_request_template.md
 .eslintrc.js
 .c8rc
+coverage/
