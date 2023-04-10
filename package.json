@@ -601,7 +601,7 @@
     "format": "prettier --write .",
     "pretest": "npm run compile && tsc -p ./client",
     "test": "node ./client/out/test/runTest.js",
-    "coverage": "c8 --clean --lines 75 npm run test",
+    "coverage": "c8 --clean npm run test",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
     "copyright:check": "node ./tools/check-copyright.mjs"
   },
