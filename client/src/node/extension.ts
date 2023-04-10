@@ -117,7 +117,6 @@ export function activate(context: ExtensionContext): void {
     // If configFile setting is changed, update watcher to watch new configuration file
     workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
       if (event.affectsConfiguration("SAS.connectionProfiles")) {
-        commands.executeCommand("setContext", "SAS.authorized", false);
         triggerProfileUpdate();
       }
     })
