@@ -330,17 +330,21 @@ export class ContentModel {
     try {
       const children = await this.getChildren(item);
       await Promise.all(children.map((child) => this.delete(child)));
-      const deleteLink =
-        item.links.find((link: Link) => link.rel === "deleteRecursively")
-          ?.uri ??
-        `${
-          item.links.find((link: Link) => link.rel === "deleteResource")?.uri ??
-          ""
-        }?recursive=true`;
-      if (deleteLink.startsWith("?")) {
-        // new delete resource link
+      const deleteRecursivelyLink = getLink(
+        item.links,
+        "DELETE",
+        "deleteRecursively"
+      )?.uri;
+      const deleteResourceLink = getLink(
+        item.links,
+        "DELETE",
+        "deleteResource"
+      )?.uri;
+      if (!deleteRecursivelyLink && !deleteResourceLink) {
         return false;
       }
+      const deleteLink =
+        deleteRecursivelyLink ?? `${deleteResourceLink}?recursive=true`;
       await this.connection.delete(deleteLink);
     } catch (error) {
       return false;
@@ -349,8 +353,10 @@ export class ContentModel {
   }
 
   private async deleteResource(item: ContentItem): Promise<boolean> {
-    const deleteResourceLink = item.links.find(
-      (link: Link) => link.rel === "deleteResource"
+    const deleteResourceLink = getLink(
+      item.links,
+      "DELETE",
+      "deleteResource"
     )?.uri;
     if (!deleteResourceLink) {
       return false;
@@ -365,9 +371,7 @@ export class ContentModel {
     // member is deleted. Per Gary Williams, we must do these steps sequentially not concurrently.
     // If member already deleted, server treats this call as NO-OP.
     try {
-      const deleteLink = item.links.find(
-        (link: Link) => link.rel === "delete"
-      )?.uri;
+      const deleteLink = getLink(item.links, "DELETE", "delete")?.uri;
       if (deleteLink) {
         await this.connection.delete(deleteLink);
       }
