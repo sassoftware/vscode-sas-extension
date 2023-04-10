@@ -612,7 +612,7 @@
     "@typescript-eslint/eslint-plugin": "^5.57.0",
     "@typescript-eslint/parser": "^5.57.1",
     "chai": "^4.3.7",
-    "esbuild": "^0.17.14",
+    "esbuild": "^0.17.16",
     "eslint": "^8.37.0",
     "mocha": "^10.2.0",
     "nock": "^13.3.0",
