@@ -16,7 +16,7 @@ import { getTokens, refreshToken } from "../connection/rest/auth";
 import { getCurrentUser } from "../connection/rest/identities";
 import { ConnectionType } from "../components/profile";
 
-const SECRET_KEY = "SASAuth-2";
+const SECRET_KEY = "SASAuth-3";
 
 interface SASAuthSession extends AuthenticationSession {
   refreshToken?: string;
@@ -38,16 +38,16 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
   }
 
   async getSessions(): Promise<readonly AuthenticationSession[]> {
-    const storedSessions = await this.secretStorage.get(SECRET_KEY);
-    if (!storedSessions) {
+    const sessions = await this.getStoredSessions();
+    if (!sessions) {
       commands.executeCommand("setContext", "SAS.authorized", false);
       return [];
     }
 
-    const sessions: SASAuthSession = JSON.parse(storedSessions);
     const activeProfile = profileConfig.getActiveProfileDetail();
     const profile = activeProfile?.profile;
     if (!profile || profile.connectionType !== ConnectionType.Rest) {
+      commands.executeCommand("setContext", "SAS.authorized", false);
       return [];
     }
     const profileName = profileConfig.getActiveProfile();
@@ -106,17 +106,14 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
   }
 
   private async writeSession(session: SASAuthSession): Promise<void> {
-    const storedSessionData = await this.secretStorage.get(SECRET_KEY);
-    const storedSessions = storedSessionData
-      ? JSON.parse(storedSessionData)
-      : {};
+    const storedSessions = await this.getStoredSessions();
     const profileName = profileConfig.getActiveProfile();
     if (!profileName) {
       return;
     }
 
     const sessions = {
-      ...storedSessions,
+      ...(storedSessions || {}),
       [profileName]: session,
     };
 
@@ -124,7 +121,30 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
   }
 
   async removeSession(): Promise<void> {
-    await this.secretStorage.delete(SECRET_KEY);
+    const sessions = await this.getStoredSessions();
+    const profileName = profileConfig.getActiveProfile() || "";
+    if (!sessions) {
+      await this.secretStorage.delete(SECRET_KEY);
+    } else {
+      delete sessions[profileName];
+      await this.secretStorage.store(SECRET_KEY, JSON.stringify(sessions));
+    }
+
     commands.executeCommand("setContext", "SAS.authorized", false);
+  }
+
+  private async getStoredSessions(): Promise<
+    Record<string, SASAuthSession> | undefined
+  > {
+    const storedSessionData = await this.secretStorage.get(SECRET_KEY);
+    if (!storedSessionData) {
+      return;
+    }
+
+    const storedSessions = storedSessionData
+      ? JSON.parse(storedSessionData)
+      : {};
+
+    return storedSessions;
   }
 }

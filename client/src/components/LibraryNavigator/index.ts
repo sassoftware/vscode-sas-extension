@@ -3,11 +3,13 @@
 
 import {
   commands,
+  ConfigurationChangeEvent,
   Disposable,
   ExtensionContext,
   TreeView,
   Uri,
   window,
+  workspace,
 } from "vscode";
 import DataTable from "../../panels/DataTable";
 import DragAndDropController from "../DragAndDropController";
@@ -66,6 +68,11 @@ class LibraryNavigator implements SubscriptionProvider {
         commands.executeCommand(
           "workbench.actions.treeView.sas-library-navigator.collapseAll"
         );
+      }),
+      workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
+        if (event.affectsConfiguration("SAS.connectionProfiles")) {
+          this.refresh();
+        }
       }),
     ];
   }
