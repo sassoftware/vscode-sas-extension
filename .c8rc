@@ -1,6 +1,6 @@
 {
   "all": true,
-  "include": ["client/out/**"],
-  "exclude": ["**/node_modules/**", "client/out/test/"],
+  "src": ["client/src", "server/src"],
+  "exclude": [ "**/node_modules/**", "client/out/test/"],
   "reporter": ["html", "text"]
 }
