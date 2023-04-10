@@ -12,3 +12,5 @@ server/**/*.json
 
 # VSCode history
 .history/
+
+coverage/
