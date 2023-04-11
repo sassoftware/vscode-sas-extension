@@ -20,7 +20,13 @@ import {
   TRASH_FOLDER,
 } from "./const";
 import { ContentItem, Link, Permission } from "./types";
-import { getLink, getResourceId, getTypeName, getUri } from "./utils";
+import {
+  getLink,
+  getResourceId,
+  getTypeName,
+  getUri,
+  isContainer,
+} from "./utils";
 
 interface AddMemberProperties {
   name?: string;
@@ -313,17 +319,65 @@ export class ContentModel {
   }
 
   public async delete(item: ContentItem): Promise<boolean> {
-    const link = item.links.find((link: Link) => link.rel === "deleteResource");
-    if (!link) {
-      return false;
-    }
+    // folder service will return 409 error if the deleting folder has non-folder item even if add recursive parameter
+    // delete the resource or move item to recycle bin will automatically delete the favorites as well.
+    return await (isContainer(item)
+      ? this.deleteFolder(item)
+      : this.deleteResource(item));
+  }
 
+  private async deleteFolder(item: ContentItem): Promise<boolean> {
     try {
-      await this.connection.delete(link.uri);
+      const children = await this.getChildren(item);
+      await Promise.all(children.map((child) => this.delete(child)));
+      const deleteRecursivelyLink = getLink(
+        item.links,
+        "DELETE",
+        "deleteRecursively"
+      )?.uri;
+      const deleteResourceLink = getLink(
+        item.links,
+        "DELETE",
+        "deleteResource"
+      )?.uri;
+      if (!deleteRecursivelyLink && !deleteResourceLink) {
+        return false;
+      }
+      const deleteLink =
+        deleteRecursivelyLink ?? `${deleteResourceLink}?recursive=true`;
+      await this.connection.delete(deleteLink);
     } catch (error) {
       return false;
     }
-    // delete the resource or move item to recycle bin will automatically delete the favorites as well.
+    return true;
+  }
+
+  private async deleteResource(item: ContentItem): Promise<boolean> {
+    const deleteResourceLink = getLink(
+      item.links,
+      "DELETE",
+      "deleteResource"
+    )?.uri;
+    if (!deleteResourceLink) {
+      return false;
+    }
+    try {
+      await this.connection.delete(deleteResourceLink);
+    } catch (error) {
+      return false;
+    }
+    // Due to delay in folders service's automatic deletion of associated member we need
+    // to attempt manual deletion of member to ensure subsequent data refreshes don't occur before
+    // member is deleted. Per Gary Williams, we must do these steps sequentially not concurrently.
+    // If member already deleted, server treats this call as NO-OP.
+    try {
+      const deleteLink = getLink(item.links, "DELETE", "delete")?.uri;
+      if (deleteLink) {
+        await this.connection.delete(deleteLink);
+      }
+    } catch (error) {
+      return error.response.status === 404 || error.response.status === 403;
+    }
     return true;
   }
 
