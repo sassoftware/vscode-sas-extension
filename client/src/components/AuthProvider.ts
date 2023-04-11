@@ -53,6 +53,7 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
     const profileName = profileConfig.getActiveProfile();
     const session = sessions[profileName];
     if (!session) {
+      commands.executeCommand("setContext", "SAS.authorized", false);
       return [];
     }
 
@@ -124,11 +125,11 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
     const sessions = await this.getStoredSessions();
     const profileName = profileConfig.getActiveProfile() || "";
     if (!sessions) {
-      await this.secretStorage.delete(SECRET_KEY);
-    } else {
-      delete sessions[profileName];
-      await this.secretStorage.store(SECRET_KEY, JSON.stringify(sessions));
+      return;
     }
+
+    delete sessions[profileName];
+    await this.secretStorage.store(SECRET_KEY, JSON.stringify(sessions));
 
     commands.executeCommand("setContext", "SAS.authorized", false);
   }
@@ -141,10 +142,6 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
       return;
     }
 
-    const storedSessions = storedSessionData
-      ? JSON.parse(storedSessionData)
-      : {};
-
-    return storedSessions;
+    return JSON.parse(storedSessionData);
   }
 }
