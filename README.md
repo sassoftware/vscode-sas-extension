@@ -198,6 +198,10 @@ After executing the `SAS.updateProfile` command:
 
 To update the name of a profile, please delete and recreate it.
 
+#### Notes:
+
+- There is a potential issue with switching between multiple profiles on Windows. For more information, see [#215](https://github.com/sassoftware/vscode-sas-extension/issues/215)
+
 ### Running SAS Code
 
 After configuring the SAS extension for your SAS environment, run your SAS program and view the log and results.
