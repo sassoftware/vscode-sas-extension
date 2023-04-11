@@ -17,3 +17,6 @@ ContributorAgreement.txt
 .travis.yml
 .eslintignore
 pull_request_template.md
+.eslintrc.js
+.c8rc
+coverage/

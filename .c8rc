@@ -1,0 +1,7 @@
+{
+  "all": true,
+  "src": ["client/src", "server/src"],
+  "exclude": ["**/node_modules/**", "client/out/test/"],
+  "reporter": ["html", "text"],
+  "lines": 75
+}
