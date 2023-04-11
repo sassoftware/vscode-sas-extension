@@ -11,6 +11,7 @@
   "configuration.SAS.connectionProfiles.profiles.tokenFile": "SAS Viya Token File",
   "configuration.SAS.connectionProfiles.profiles.username": "SAS Viya User ID",
   "configuration.SAS.session.outputHtml": "Enable/disable ODS HTML5 output",
+  "configuration.SAS.userProvidedCertificates": "Provide trusted CA certificate files",
 
   "configuration.SAS.connectionProfiles.profiles.ssh.host": "SAS SSH Connection SSH Host",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "SAS SSH Connection username",

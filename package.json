@@ -117,6 +117,13 @@
             "default": true,
             "description": "%configuration.SAS.session.outputHtml%"
           },
+          "SAS.userProvidedCertificates": {
+            "type": "array",
+            "description": "%configuration.SAS.userProvidedCertificates%",
+            "items": {
+              "type": "string"
+            }
+          },
           "SAS.connectionProfiles": {
             "order": 1,
             "type": "object",
