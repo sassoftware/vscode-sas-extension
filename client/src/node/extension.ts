@@ -28,7 +28,7 @@ import {
   switchProfile,
   updateProfile,
 } from "../commands/profile";
-import { run, runSelected } from "../commands/run";
+import { run, runSelected, runRegion } from "../commands/run";
 import { SASAuthProvider } from "../components/AuthProvider";
 import ContentNavigator from "../components/ContentNavigator";
 import { setContext } from "../components/ExtensionContext";
@@ -97,6 +97,10 @@ export function activate(context: ExtensionContext): void {
     }),
     commands.registerCommand("SAS.runSelected", async () => {
       await runSelected();
+      await libraryNavigator.refresh();
+    }),
+    commands.registerCommand("SAS.runRegion", async () => {
+      await runRegion(client);
       await libraryNavigator.refresh();
     }),
     commands.registerCommand("SAS.close", (silent) => {

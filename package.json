@@ -267,6 +267,15 @@
         "category": "SAS"
       },
       {
+        "command": "SAS.runRegion",
+        "title": "%commands.SAS.runRegion%",
+        "icon": {
+          "light": "icons/light/submitSASCode.svg",
+          "dark": "icons/dark/submitSASCode.svg"
+        },
+        "category": "SAS"
+      },
+      {
         "command": "SAS.close",
         "title": "%commands.SAS.close%",
         "icon": {
@@ -447,6 +456,11 @@
           "when": "editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected",
           "group": "navigation@1"
+        },
+        {
+          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "command": "SAS.runRegion",
+          "group": "navigation@3"
         }
       ],
       "editor/title": [
@@ -464,6 +478,10 @@
         {
           "when": "editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected"
+        },
+        {
+          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "command": "SAS.runRegion"
         },
         {
           "when": "false",
