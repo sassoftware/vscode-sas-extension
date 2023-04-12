@@ -113,20 +113,19 @@ export function activate(context: ExtensionContext): void {
     ),
     activeProfileStatusBarIcon,
     ...libraryNavigator.getSubscriptions(),
-    ...contentNavigator.getSubscriptions()
+    ...contentNavigator.getSubscriptions(),
+    // If configFile setting is changed, update watcher to watch new configuration file
+    workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
+      if (event.affectsConfiguration("SAS.connectionProfiles")) {
+        triggerProfileUpdate();
+      }
+    })
   );
 
   // Reset first to set "No Active Profiles"
   resetStatusBarItem(activeProfileStatusBarIcon);
   // Update status bar if profile is found
   updateStatusBarProfile(activeProfileStatusBarIcon);
-
-  // If configFile setting is changed, update watcher to watch new configuration file
-  workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-    if (event.affectsConfiguration("SAS.connectionProfiles")) {
-      triggerProfileUpdate();
-    }
-  });
 
   profileConfig.migrateLegacyProfiles();
   triggerProfileUpdate();

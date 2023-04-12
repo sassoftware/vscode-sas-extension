@@ -4,6 +4,7 @@
 import { sprintf } from "sprintf-js";
 import {
   commands,
+  ConfigurationChangeEvent,
   Disposable,
   ExtensionContext,
   TextDocumentChangeEvent,
@@ -247,6 +248,16 @@ class ContentNavigator implements SubscriptionProvider {
           "workbench.actions.treeView.sas-content-navigator.collapseAll"
         );
       }),
+      workspace.onDidChangeConfiguration(
+        async (event: ConfigurationChangeEvent) => {
+          if (event.affectsConfiguration("SAS.connectionProfiles")) {
+            const activeProfile: ViyaProfile = profileConfig.getProfileByName(
+              profileConfig.getActiveProfile()
+            );
+            await this.contentDataProvider.connect(activeProfile.endpoint);
+          }
+        }
+      ),
     ];
   }
 
