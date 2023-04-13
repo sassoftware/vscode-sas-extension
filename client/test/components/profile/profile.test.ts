@@ -103,7 +103,7 @@ describe("Profiles", async function () {
           connectionType: "ssh",
         },
         testViyaProfile: {
-          endpoint: "https://test-host.sas.com",
+          endpoint: "https://test-host.sas.com/",
           clientId: "sas.test",
           clientSecret: "",
           context: "SAS Studio context",
@@ -161,6 +161,26 @@ describe("Profiles", async function () {
         const profile = profiles[key];
         if (profile.connectionType === undefined) {
           assert.fail(`Found undefined connectionType in profile named ${key}`);
+        }
+      }
+    });
+
+    it("removes trailing slash from endpoint on legacy profiles", async () => {
+      await profileConfig.migrateLegacyProfiles();
+
+      const profiles = profileConfig.getAllProfiles();
+      expect(Object.keys(profiles).length).to.be.greaterThan(0);
+
+      for (const key in profiles) {
+        const profile = profiles[key];
+        if (
+          profile.connectionType === ConnectionType.Rest &&
+          /\/$/.test(profile.endpoint)
+        ) {
+          console.log('profile', profile);
+          assert.fail(
+            `Found trailing slash in endpoint of profile named ${key}`
+          );
         }
       }
     });

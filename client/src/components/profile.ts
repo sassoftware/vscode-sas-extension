@@ -112,15 +112,15 @@ export class ProfileConfig {
     if (profiles) {
       for (const key in profiles) {
         const profile = profiles[key];
+        if (profile.connectionType === undefined) {
+          profile.connectionType = ConnectionType.Rest;
+          await this.upsertProfile(key, profile);
+        }
         if (
           profile.connectionType === ConnectionType.Rest &&
           /\/$/.test(profile.endpoint)
         ) {
           profile.endpoint = profile.endpoint.replace(/\/$/, "");
-          await this.upsertProfile(key, profile);
-        }
-        if (profile.connectionType === undefined) {
-          profile.connectionType = ConnectionType.Rest;
           await this.upsertProfile(key, profile);
         }
       }
