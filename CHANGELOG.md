@@ -4,25 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
-## [Unreleased]
+## [v0.1.3] - 2023-04-13
 
 ### Added
 
-- Authentication status now persisted in VS Code ([#94](https://github.com/sassoftware/vscode-sas-extension/issues/94))
-- Added SAS content navigator. You are now able to browse, edit, create, delete, and run files on a SAS server using a Viya connection ([#56](https://github.com/sassoftware/vscode-sas-extension/issues/56))
-- Support authorization redirect ([#110](https://github.com/sassoftware/vscode-sas-extension/pull/110))
-- Added support for running SAS code on a remote 9.4 linux server using ssh and -nodms ([#61](https://github.com/sassoftware/vscode-sas-extension/issues/61))
-- Fixed ready timeout on successful connection for remote 9.4 ([#186](https://github.com/sassoftware/vscode-sas-extension/issues/186))
-- Fix to reuse remote 9.4 interactive session to persist WORK tables ([#155](https://github.com/sassoftware/vscode-sas-extension/issues/155))
+- Authentication status now persisted in VS Code ([#94](https://github.com/sassoftware/vscode-sas-extension/issues/94), [#110](https://github.com/sassoftware/vscode-sas-extension/pull/110))
+- Added support for running SAS code on a remote 9.4 linux server using ssh and -nodms ([#61](https://github.com/sassoftware/vscode-sas-extension/issues/61), [#155](https://github.com/sassoftware/vscode-sas-extension/issues/155), [#186](https://github.com/sassoftware/vscode-sas-extension/issues/186))
 - Migrate legacy profiles to use new connectionType property ([#157](https://github.com/sassoftware/vscode-sas-extension/issues/157))
 - Updated error message for unsupported connection type ([#151](https://github.com/sassoftware/vscode-sas-extension/issues/151))
-- Fix to ensure all tests suites run on npm run test ([#147](https://github.com/sassoftware/vscode-sas-extension/issues/147))
-- Fix to properly quote glob patterns for lint command on windows ([#149](https://github.com/sassoftware/vscode-sas-extension/issues/149))
+- Added SAS content navigator. You are now able to browse, edit, create, delete, and run files on a SAS server using a Viya connection ([#56](https://github.com/sassoftware/vscode-sas-extension/issues/56), [#162](https://github.com/sassoftware/vscode-sas-extension/pull/162), [#176](https://github.com/sassoftware/vscode-sas-extension/pull/176), [#193](https://github.com/sassoftware/vscode-sas-extension/pull/193))
 - Added support for SAS libraries. You are now able to see libraries and tables from a SAS instance. You are also able to delete, view, and drag tables into your sas programs. ([#129](https://github.com/sassoftware/vscode-sas-extension/issues/129))
 - Update syntax colors ([#153](https://github.com/sassoftware/vscode-sas-extension/pull/153))
-- Improve the new file/folder name validator ([#162](https://github.com/sassoftware/vscode-sas-extension/pull/162))
-- Support recycle bin in content navigation ([#176](https://github.com/sassoftware/vscode-sas-extension/pull/176))
-- Validate the new name before rename ([#193](https://github.com/sassoftware/vscode-sas-extension/pull/193))
 
 ## [v0.1.2] - 2023-02-01
 
