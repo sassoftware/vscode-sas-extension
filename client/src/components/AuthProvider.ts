@@ -64,10 +64,12 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
     if (!tokens) {
       // refresh token failed, the stored session is not valid anymore
       await this.removeSession();
+      commands.executeCommand("setContext", "SAS.authorized", false);
       return [];
     }
     const accessToken = tokens.access_token;
     if (accessToken === session.accessToken) {
+      commands.executeCommand("setContext", "SAS.authorized", true);
       return [session];
     }
     const newSession = { ...session, accessToken: tokens.access_token };
