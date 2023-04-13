@@ -112,6 +112,13 @@ export class ProfileConfig {
     if (profiles) {
       for (const key in profiles) {
         const profile = profiles[key];
+        if (
+          profile.connectionType === ConnectionType.Rest &&
+          /\/$/.test(profile.endpoint)
+        ) {
+          profile.endpoint = profile.endpoint.replace(/\/$/, "");
+          await this.upsertProfile(key, profile);
+        }
         if (profile.connectionType === undefined) {
           profile.connectionType = ConnectionType.Rest;
           await this.upsertProfile(key, profile);
@@ -402,6 +409,7 @@ export class ProfileConfig {
       if (!profileClone.endpoint) {
         return;
       }
+      profileClone.endpoint = profileClone.endpoint.replace(/\/$/, "");
 
       profileClone.context = await createInputTextBox(
         ProfilePromptType.ComputeContext,
