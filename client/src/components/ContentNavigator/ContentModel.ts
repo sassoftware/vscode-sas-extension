@@ -113,6 +113,9 @@ export class ContentModel {
     } else if (filters.length > 1) {
       membersUrl = membersUrl + "&filter=and(" + filters.join(",") + ")";
     }
+    membersUrl =
+      membersUrl +
+      "&sortBy=eq(contentType,'folder'):descending,name:ascending,type:ascending";
 
     const res = await this.connection.get(membersUrl);
     const result = res.data;
