@@ -177,7 +177,6 @@ describe("Profiles", async function () {
           profile.connectionType === ConnectionType.Rest &&
           /\/$/.test(profile.endpoint)
         ) {
-          console.log('profile', profile);
           assert.fail(
             `Found trailing slash in endpoint of profile named ${key}`
           );
