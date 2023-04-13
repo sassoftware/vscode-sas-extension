@@ -23,7 +23,6 @@ export async function refreshToken(
   const rootApi = RootApi(
     new Configuration({
       basePath: config.endpoint + "/compute",
-      accessToken: tokens.access_token,
     })
   );
   await rootApi.headersForRoot().catch((err) => {
