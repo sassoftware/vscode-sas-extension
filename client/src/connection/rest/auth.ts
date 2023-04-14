@@ -21,7 +21,10 @@ export async function refreshToken(
   const clientId = config.clientId || "vscode";
   const clientSecret = config.clientSecret ?? "";
   const rootApi = RootApi(
-    new Configuration({ basePath: config.endpoint + "/compute" })
+    new Configuration({
+      basePath: config.endpoint + "/compute",
+      accessToken: tokens.access_token,
+    })
   );
   await rootApi.headersForRoot().catch((err) => {
     if (err.response?.status === 401) {

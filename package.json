@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "categories": [
     "Programming Languages",
     "Data Science",
@@ -351,6 +351,18 @@
         "command": "SAS.deleteTable",
         "title": "%commands.SAS.deleteTable%",
         "category": "SAS"
+      }
+    ],
+    "keybindings": [
+      {
+        "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
+        "command": "SAS.run",
+        "key": "f8"
+      },
+      {
+        "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+        "command": "SAS.runSelected",
+        "key": "f3"
       }
     ],
     "menus": {
