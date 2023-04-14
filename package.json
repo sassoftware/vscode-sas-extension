@@ -340,12 +340,17 @@
         "title": "%commands.SAS.collapseAll%",
         "category": "SAS",
         "icon": "$(collapse-all)"
+      },
+      {
         "command": "SAS.collapseAllLibraries",
-        "command": "SAS.contextValue.set",
-        "category": "SAS"
+        "title": "%commands.SAS.collapseAll%",
+        "category": "SAS",
         "icon": "$(collapse-all)"
-        "command": "SAS.contextValue.get",
-        "title": "Get Context Value",
+      },
+      {
+        "command": "SAS.deleteTable",
+        "title": "%commands.SAS.deleteTable%",
+        "category": "SAS"
       }
     ],
     "keybindings": [
