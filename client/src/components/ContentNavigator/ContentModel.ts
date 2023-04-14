@@ -115,7 +115,7 @@ export class ContentModel {
     }
     membersUrl =
       membersUrl +
-      "&sortBy=eq(contentType,'folder'):descending,name:ascending,type:ascending";
+      "&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending";
 
     const res = await this.connection.get(membersUrl);
     const result = res.data;
