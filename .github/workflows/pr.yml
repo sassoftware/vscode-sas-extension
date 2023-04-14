@@ -21,4 +21,4 @@ jobs:
       - run: npm run copyright:check
       - run: xvfb-run -a npm run test
         if: runner.os == 'Linux'
-      - run: npx vsce package
+      - run: npx @vscode/vsce package
