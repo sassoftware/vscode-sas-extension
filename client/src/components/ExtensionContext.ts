@@ -19,6 +19,8 @@ export async function setContextValue(
 /*
  * Get an extension context value.
  */
-export async function getContextValue(key: string): Promise<string> {
+export async function getContextValue(
+  key: string
+): Promise<string | undefined> {
   return context.workspaceState.get(key);
 }
