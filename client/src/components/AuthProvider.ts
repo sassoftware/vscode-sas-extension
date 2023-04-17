@@ -64,7 +64,6 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
     if (!tokens) {
       // refresh token failed, the stored session is not valid anymore
       await this.removeSession();
-      commands.executeCommand("setContext", "SAS.authorized", false);
       return [];
     }
     const accessToken = tokens.access_token;
@@ -102,6 +101,11 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
     };
 
     await this.writeSession(session);
+    this._onDidChangeSessions.fire({
+      added: [session],
+      changed: [],
+      removed: [],
+    });
 
     commands.executeCommand("setContext", "SAS.authorized", true);
 
@@ -130,8 +134,14 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
       return;
     }
 
+    const session = sessions[profileName];
     delete sessions[profileName];
     await this.secretStorage.store(SECRET_KEY, JSON.stringify(sessions));
+    this._onDidChangeSessions.fire({
+      added: [],
+      changed: [],
+      removed: [session],
+    });
 
     commands.executeCommand("setContext", "SAS.authorized", false);
   }
