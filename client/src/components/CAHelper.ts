@@ -14,18 +14,18 @@ export const installCAs = () => {
     return;
   }
 
-  const CAs = [].concat(tls.rootCertificates);
-  const originalLength = CAs.length;
+  const userCertificates = [];
   for (const filename of certFiles) {
     if (filename && filename.length) {
       try {
-        CAs.push(fs.readFileSync(filename));
+        userCertificates.push(fs.readFileSync(filename));
       } catch (e) {
         console.log(`Failed to read user provided certificate`, e);
       }
     }
   }
-  if (CAs.length !== originalLength) {
-    https.globalAgent.options.ca = CAs;
+  if (userCertificates.length > 0) {
+    https.globalAgent.options.ca =
+      tls.rootCertificates.concat(userCertificates);
   }
 };
