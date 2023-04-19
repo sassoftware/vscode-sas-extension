@@ -9,13 +9,13 @@ declare global {
   type DedicatedWorkerGlobalScope = Worker;
 }
 
-import * as React from "react";
-import * as ReactDOMClient from "react-dom/client";
 import {
   VSCodeDataGrid,
-  VSCodeDataGridRow,
   VSCodeDataGridCell,
+  VSCodeDataGridRow,
 } from "@vscode/webview-ui-toolkit/react";
+import * as React from "react";
+import * as ReactDOMClient from "react-dom/client";
 import InfiniteScroll from "react-infinite-scroller";
 
 const { useEffect, useState } = React;

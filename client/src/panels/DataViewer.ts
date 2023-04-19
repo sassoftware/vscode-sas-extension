@@ -2,8 +2,6 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import { Uri } from "vscode";
-import { sprintf } from "sprintf-js";
-import html from "../webview/DataViewer/view.html";
 import { WebView } from "./WebviewManager";
 
 class DataViewer extends WebView {
@@ -18,19 +16,33 @@ class DataViewer extends WebView {
     this._initialData = initialData;
   }
 
-  public render(): DataViewer {
-    this.panel.webview.html = sprintf(html, {
-      data: {
-        viewId: this._uid.replace(/\./g, ""),
-        title: this._uid,
-        webviewUri: this.webviewUri(this._extensionUri, "DataViewer"),
-      },
-    });
+  public render(): WebView {
+    this.panel.webview.html = `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>${this._uid}</title>
+        </head>
+        <body>
+          <vscode-data-grid
+            class="data-view-${this._uid.replace(/\./g, "")}"
+            aria-label="${this._uid} contents"
+          ></vscode-data-grid>
+          <div class="data-viewer"></div>
+          <script type="module" src="${this.webviewUri(
+            this._extensionUri,
+            "DataViewer"
+          )}"></script>
+        </body>
+      </html>
+    `;
 
     return this;
   }
 
-  private processMessage(event: Event): void {
+  public processMessage(event: Event): void {
     switch (event.command) {
       case "requestLoad":
         this.panel.webview.postMessage({

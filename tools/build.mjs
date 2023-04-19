@@ -19,10 +19,7 @@ const buildOptions = {
   entryPoints: {
     "./client/dist/node/extension": "./client/src/node/extension.ts",
     "./server/dist/node/server": "./server/src/node/server.ts",
-    "./client/dist/webview/DataViewer/view":
-      "./client/src/webview/DataViewer/view.html",
-    "./client/dist/webview/DataViewer/index":
-      "./client/src/webview/DataViewer/index.tsx",
+    "./client/dist/webview/DataViewer": "./client/src/webview/DataViewer.tsx",
   },
   bundle: true,
   outdir: ".",
