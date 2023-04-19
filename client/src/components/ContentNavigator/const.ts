@@ -42,6 +42,7 @@ export const FOLDER_TYPES = [
 ];
 
 export const Messages = {
+  AddToFavoritesError: "Unable to add the item to My Favorites.",
   DeleteButtonLabel: "Delete",
   DeleteWarningMessage:
     'Are you sure you want to permanently delete the item "{name}"?',
@@ -62,6 +63,7 @@ export const Messages = {
   NewFolderCreationError: 'Unable to create folder "%(name)s".',
   NewFolderPrompt: "Enter a folder name.",
   NewFolderTitle: "New Folder",
+  RemoveFromFavoritesError: "Unable to remove the reference.",
   RenameError: 'Unable to rename "%(oldName)s" to "%(newName)s".',
   RenameFileTitle: "Rename File",
   RenameFolderTitle: "Rename Folder",

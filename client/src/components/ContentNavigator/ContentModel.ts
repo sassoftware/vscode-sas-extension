@@ -31,6 +31,7 @@ import {
 interface AddMemberProperties {
   name?: string;
   contentType?: string;
+  type?: string;
 }
 
 export class ContentModel {
@@ -403,7 +404,7 @@ export class ContentModel {
     return true;
   }
 
-  private async addMember(
+  public async addMember(
     uri: string | undefined,
     addMemberUri: string | undefined,
     properties: AddMemberProperties
@@ -422,6 +423,19 @@ export class ContentModel {
       return false;
     }
 
+    return true;
+  }
+
+  public async removeMember(item: ContentItem): Promise<boolean> {
+    const deleteMemberUri = getLink(item.links, "DELETE", "delete");
+    if (!deleteMemberUri) {
+      return false;
+    }
+    try {
+      await this.connection.delete(deleteMemberUri.uri);
+    } catch (error) {
+      return false;
+    }
     return true;
   }
 

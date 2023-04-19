@@ -633,4 +633,74 @@ describe("ContentDataProvider", async function () {
 
     expect(deleted).to.equal(true);
   });
+
+  it("add to favorites - Add the reference of an item to My Favorites folder", async function () {
+    const item = mockContentItem({
+      type: "file",
+      name: "file.sas",
+      links: [
+        {
+          rel: "getResource",
+          uri: "uri://resource",
+          method: "GET",
+          href: "uri://resource",
+          type: "test",
+        },
+      ],
+    });
+    const model = new ContentModel();
+    sinon.stub(model, "getDelegateFolder").returns(
+      mockContentItem({
+        type: "favoritesFolder",
+        name: "My Favorites",
+        links: [
+          {
+            rel: "addMember",
+            uri: "uri://addMember",
+            method: "POST",
+            href: "uri://addMember",
+            type: "test",
+          },
+        ],
+      })
+    );
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" })
+    );
+
+    axiosInstance.post.withArgs("uri://addMember").resolves({ data: {} });
+
+    await dataProvider.connect("http://test.io");
+    const success = await dataProvider.addToFavorites(item);
+
+    expect(success).to.equal(true);
+  });
+
+  it("remove from favorites - Remove the reference of an item from My Favorites folder", async function () {
+    const item = mockContentItem({
+      type: "reference",
+      name: "file.sas",
+      links: [
+        {
+          rel: "delete",
+          uri: "uri://delete",
+          method: "DELETE",
+          href: "uri://delete",
+          type: "test",
+        },
+      ],
+    });
+    const dataProvider = new ContentDataProvider(
+      new ContentModel(),
+      Uri.from({ scheme: "http" })
+    );
+
+    axiosInstance.delete.withArgs("uri://delete").resolves({ data: {} });
+
+    await dataProvider.connect("http://test.io");
+    const success = await dataProvider.removeFromFavorites(item);
+
+    expect(success).to.equal(true);
+  });
 });

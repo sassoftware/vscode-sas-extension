@@ -2,7 +2,7 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import { Uri } from "vscode";
-import { FOLDER_TYPES, TRASH_FOLDER } from "./const";
+import { FILE_TYPE, FOLDER_TYPE, FOLDER_TYPES, TRASH_FOLDER } from "./const";
 import { ContentItem, Link } from "./types";
 
 export const getLink = (
@@ -58,6 +58,15 @@ export const resourceType = (item: ContentItem): string | undefined => {
 
   if (getTypeName(item) === TRASH_FOLDER && item?.memberCount) {
     actions.push("empty");
+  }
+  console.log(item.name, item.type, item.contentType);
+  if (item.type === "reference" && !isRecycled) {
+    actions.push("removeFromFavorites");
+  } else if (
+    [FOLDER_TYPE, FILE_TYPE].includes(item.contentType) &&
+    !isRecycled
+  ) {
+    actions.push("addToFavorites");
   }
 
   if (actions.length === 0) {

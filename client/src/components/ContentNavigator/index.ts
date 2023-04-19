@@ -234,6 +234,22 @@ class ContentNavigator implements SubscriptionProvider {
           this.contentDataProvider.refresh();
         }
       ),
+      commands.registerCommand(
+        "SAS.addToFavorites",
+        async (resource: ContentItem) => {
+          if (!(await this.contentDataProvider.addToFavorites(resource))) {
+            window.showErrorMessage(Messages.AddToFavoritesError);
+          }
+        }
+      ),
+      commands.registerCommand(
+        "SAS.removeFromFavorites",
+        async (resource: ContentItem) => {
+          if (!(await this.contentDataProvider.removeFromFavorites(resource))) {
+            window.showErrorMessage(Messages.RemoveFromFavoritesError);
+          }
+        }
+      ),
       commands.registerCommand("SAS.collapseAllContent", () => {
         commands.executeCommand(
           "workbench.actions.treeView.sas-content-navigator.collapseAll"
