@@ -8,7 +8,7 @@ import {
   getContextValue,
   setContextValue,
 } from "../../components/ExtensionContext";
-import { ContextsApi, LogLine } from "./api/compute";
+import { ContextsApi, LogLine, SessionsApi } from "./api/compute";
 import { ComputeState, getApiConfig } from "./common";
 import { ComputeJob } from "./job";
 import { ComputeServer } from "./server";

@@ -189,6 +189,5 @@ export function deactivate(): Thenable<void> | undefined {
   if (!client) {
     return undefined;
   }
-  closeSession();
   return client.stop();
 }
