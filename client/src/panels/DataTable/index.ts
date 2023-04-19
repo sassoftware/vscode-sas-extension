@@ -1,10 +1,10 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
+import { sprintf } from "sprintf-js";
 import { Disposable, Uri, ViewColumn, WebviewPanel, window } from "vscode";
 import { Messages } from "../../components/LibraryNavigator/const";
 import { TableData, TableRow } from "../../components/LibraryNavigator/types";
-import { sprintf } from "sprintf-js";
 
 export enum Commands {
   ReceiveRowData = "SAS.DataTable.receiveRowData",
