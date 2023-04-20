@@ -52,22 +52,18 @@ class DataViewer extends WebView {
     event: Event & { command: string }
   ): Promise<void> {
     switch (event.command) {
-      case "request:loadData": {
-        const data = await this._paginator.getData();
+      case "request:loadData":
         this.panel.webview.postMessage({
           command: "response:loadData",
-          data: { ...data, hasMore: this._paginator.hasMore() },
+          data: await this._paginator.getData(),
         });
         break;
-      }
-      case "request:loadMoreResults": {
-        const data = await this._paginator.getMoreResults();
+      case "request:loadMoreResults":
         this.panel.webview.postMessage({
           command: "response:loadMoreResults",
-          data: { ...data, hasMore: this._paginator.hasMore() },
+          data: await this._paginator.getMoreResults(),
         });
         break;
-      }
       default:
         break;
     }

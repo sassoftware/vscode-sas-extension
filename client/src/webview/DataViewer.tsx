@@ -8,10 +8,11 @@ import {
 import * as React from "react";
 import * as ReactDOMClient from "react-dom/client";
 import InfiniteScroll from "react-infinite-scroller";
+import useDataViewer from "./useDataViewer";
 
-const { useEffect, useState } = React;
+const DataViewer = () => {
+  const { loadMoreResults, headers, rows, hasMore } = useDataViewer();
 
-const DataViewer = ({ headers, rows, loadMoreResults, hasMore }) => {
   return (
     <div>
       <InfiniteScroll
@@ -46,50 +47,5 @@ const DataViewer = ({ headers, rows, loadMoreResults, hasMore }) => {
   );
 };
 
-declare const acquireVsCodeApi;
-const vscode = acquireVsCodeApi();
-const DataViewerWrapper = () => {
-  const [headers, setHeaders] = useState({});
-  const [rows, setRows] = useState([]);
-  const [hasMore, setHasMore] = useState(false);
-
-  const commandHandler = (event) => {
-    switch (event.data.command) {
-      case "response:loadData":
-        setHeaders(event.data.data.headers);
-        setRows(event.data.data.rows);
-        setHasMore(event.data.data.hasMore);
-        break;
-      case "response:loadMoreResults":
-        setRows((rows) => rows.concat(event.data.data.rows));
-        setHasMore(event.data.data.hasMore);
-        break;
-      default:
-        break;
-    }
-  };
-
-  const loadMoreResults = () =>
-    vscode.postMessage({ command: "request:loadMoreResults" });
-
-  useEffect(() => {
-    vscode.postMessage({ command: "request:loadData" });
-    window.addEventListener("message", commandHandler);
-
-    return () => {
-      window.removeEventListener("message", commandHandler);
-    };
-  }, []);
-
-  return (
-    <DataViewer
-      hasMore={hasMore}
-      headers={headers}
-      rows={rows}
-      loadMoreResults={loadMoreResults}
-    />
-  );
-};
-
 const root = ReactDOMClient.createRoot(document.querySelector(".data-viewer"));
-root.render(<DataViewerWrapper />);
+root.render(<DataViewer />);

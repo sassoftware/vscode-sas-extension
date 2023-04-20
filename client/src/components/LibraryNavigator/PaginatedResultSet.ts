@@ -22,7 +22,7 @@ class PaginatedResultSet<T> {
     const response = await this.queryForData(this.start);
     this.limit = response.data.limit;
     this.count = response.data.count;
-    return this.transformData(response);
+    return this.prepareResponse(response);
   }
 
   public hasMore(): boolean {
@@ -36,6 +36,16 @@ class PaginatedResultSet<T> {
     this.start += this.limit;
 
     return await this.getData();
+  }
+
+  private prepareResponse(
+    response: AxiosResponse
+  ): T & { hasMore: boolean; start: number } {
+    return {
+      ...this.transformData(response),
+      hasMore: this.hasMore(),
+      start: this.start,
+    };
   }
 }
 
