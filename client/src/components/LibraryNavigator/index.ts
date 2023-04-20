@@ -17,6 +17,7 @@ import DragAndDropController from "../DragAndDropController";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
+import PaginatedResultSet from "./PaginatedResultSet";
 import { LibraryItem, TableData } from "./types";
 
 class LibraryNavigator implements SubscriptionProvider {
@@ -48,16 +49,9 @@ class LibraryNavigator implements SubscriptionProvider {
       this.treeView,
       commands.registerCommand(
         "SAS.viewTable",
-        async (
-          item: LibraryItem,
-          viewDataCallback: () => Promise<TableData>
-        ) => {
+        async (item: LibraryItem, paginator: PaginatedResultSet<TableData>) => {
           this.webviewManager.render(
-            new DataViewer(
-              this.extensionUri,
-              item.uid,
-              await viewDataCallback()
-            ),
+            new DataViewer(this.extensionUri, item.uid, paginator),
             item.uid
           );
         }

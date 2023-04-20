@@ -1,14 +1,15 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
+import { AxiosResponse } from "axios";
+import { sprintf } from "sprintf-js";
 import { ProgressLocation, window } from "vscode";
 import { getSession } from "../../connection";
 import { DataAccessApi } from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
-import { LibraryItemType, LibraryItem, TableData } from "./types";
-import { sprintf } from "sprintf-js";
+import PaginatedResultSet from "./PaginatedResultSet";
 import { DefaultRecordLimit, Messages } from "./const";
-import { AxiosResponse } from "axios";
+import { LibraryItem, LibraryItemType, TableData } from "./types";
 
 const sortById = (a: LibraryItem, b: LibraryItem) => a.id.localeCompare(b.id);
 
@@ -45,22 +46,27 @@ class LibraryModel {
     this.sessionId = undefined;
   }
 
-  public async loadViewData(item: LibraryItem): Promise<TableData> {
-    await this.setup();
-    const response = await this.retryOnFail(
-      async () =>
-        await this.dataAccessApi.getRows({
-          sessionId: this.sessionId,
-          libref: item.library,
-          tableName: item.name,
-          includeColumnNames: true,
-        })
+  public getTableResultSet(item: LibraryItem): PaginatedResultSet<TableData> {
+    return new PaginatedResultSet<TableData>(
+      async (start: number) => {
+        await this.setup();
+        return await this.retryOnFail(
+          async () =>
+            await this.dataAccessApi.getRows({
+              sessionId: this.sessionId,
+              libref: item.library || "",
+              tableName: item.name,
+              includeColumnNames: true,
+              start,
+              limit: 100,
+            })
+        );
+      },
+      (response) => ({
+        headers: response.data.items[0],
+        rows: response.data.items.slice(1),
+      })
     );
-
-    return {
-      headers: response.data.items[0],
-      rows: response.data.items.slice(1),
-    };
   }
 
   public async getTable(item: LibraryItem) {
@@ -69,7 +75,7 @@ class LibraryModel {
       async () =>
         await this.dataAccessApi.getTable({
           sessionId: this.sessionId,
-          libref: item.library,
+          libref: item.library || "",
           tableName: item.name,
         })
     );

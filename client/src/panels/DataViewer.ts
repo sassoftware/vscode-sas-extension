@@ -2,18 +2,24 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import { Uri } from "vscode";
+import PaginatedResultSet from "../components/LibraryNavigator/PaginatedResultSet";
+import { TableData } from "../components/LibraryNavigator/types";
 import { WebView } from "./WebviewManager";
 
 class DataViewer extends WebView {
   private _uid: string;
   private _extensionUri: Uri;
-  private _initialData: any;
+  private _paginator: PaginatedResultSet<TableData>;
 
-  public constructor(extensionUri: Uri, uid: string, initialData: any) {
+  public constructor(
+    extensionUri: Uri,
+    uid: string,
+    paginator: PaginatedResultSet<TableData>
+  ) {
     super();
     this._uid = uid;
     this._extensionUri = extensionUri;
-    this._initialData = initialData;
+    this._paginator = paginator;
   }
 
   public render(): WebView {
@@ -42,24 +48,26 @@ class DataViewer extends WebView {
     return this;
   }
 
-  public processMessage(event: Event): void {
+  public async processMessage(
+    event: Event & { command: string }
+  ): Promise<void> {
     switch (event.command) {
-      case "requestLoad":
+      case "request:loadData": {
+        const data = await this._paginator.getData();
         this.panel.webview.postMessage({
-          viewId: this._uid.replace(/\./g, ""),
-          command: "onLoad",
-          data: this._initialData,
+          command: "response:loadData",
+          data: { ...data, hasMore: this._paginator.hasMore() },
         });
         break;
-      case "loadMore":
+      }
+      case "request:loadMoreResults": {
+        const data = await this._paginator.getMoreResults();
         this.panel.webview.postMessage({
-          viewId: this._uid.replace(/\./g, ""),
-          command: "onResultsLoaded",
-          data: {
-            rows: this._initialData.rows.slice(0, 50),
-          },
+          command: "response:loadMoreResults",
+          data: { ...data, hasMore: this._paginator.hasMore() },
         });
         break;
+      }
       default:
         break;
     }
