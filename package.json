@@ -624,7 +624,7 @@
     "@typescript-eslint/eslint-plugin": "^5.58.0",
     "@typescript-eslint/parser": "^5.58.0",
     "chai": "^4.3.7",
-    "esbuild": "^0.17.16",
+    "esbuild": "^0.17.17",
     "eslint": "^8.38.0",
     "mocha": "^10.2.0",
     "nock": "^13.3.0",
