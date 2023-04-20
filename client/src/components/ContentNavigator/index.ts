@@ -15,16 +15,16 @@ import {
 } from "vscode";
 import { profileConfig } from "../../commands/profile";
 import { ViyaProfile } from "../profile";
+import { SubscriptionProvider } from "../SubscriptionProvider";
 import { Messages } from "./const";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
 import { ContentItem } from "./types";
 import {
-  getUri,
   isContainer as getIsContainer,
+  getUri,
   isItemInRecycleBin,
 } from "./utils";
-import { SubscriptionProvider } from "../SubscriptionProvider";
 
 const fileValidator = (value: string): string | null =>
   /^([^/<>;\\{}?#]+)\.\w+$/.test(
@@ -77,15 +77,6 @@ class ContentNavigator implements SubscriptionProvider {
   public getSubscriptions(): Disposable[] {
     return [
       this.treeView,
-      commands.registerCommand("SAS.openSASfile", async (item: ContentItem) => {
-        try {
-          await window.showTextDocument(
-            await this.contentDataProvider.getUri(item, item.__trash__)
-          );
-        } catch (error) {
-          await window.showErrorMessage(Messages.FileOpenError);
-        }
-      }),
       commands.registerCommand(
         "SAS.deleteResource",
         async (resource: ContentItem) => {

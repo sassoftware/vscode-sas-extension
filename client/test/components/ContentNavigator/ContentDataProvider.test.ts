@@ -1,18 +1,18 @@
 import axios, { AxiosInstance } from "axios";
-import { StubbedInstance, stubInterface } from "ts-sinon";
 import { expect } from "chai";
 import * as sinon from "sinon";
+import { StubbedInstance, stubInterface } from "ts-sinon";
 import {
-  authentication,
   FileStat,
   FileType,
   ThemeIcon,
   TreeItem,
   Uri,
+  authentication,
 } from "vscode";
-import { ROOT_FOLDER } from "../../../src/components/ContentNavigator/const";
 import ContentDataProvider from "../../../src/components/ContentNavigator/ContentDataProvider";
 import { ContentModel } from "../../../src/components/ContentNavigator/ContentModel";
+import { ROOT_FOLDER } from "../../../src/components/ContentNavigator/const";
 import { ContentItem } from "../../../src/components/ContentNavigator/types";
 import { getUri } from "../../../src/components/ContentNavigator/utils";
 
@@ -94,13 +94,14 @@ describe("ContentDataProvider", async function () {
     );
 
     const treeItem = await dataProvider.getTreeItem(contentItem);
+    const uri = await dataProvider.getUri(contentItem, false);
     const expectedTreeItem: TreeItem = {
       iconPath: ThemeIcon.File,
       id: "uri://selffile",
       label: "testFile",
       command: {
-        command: "SAS.openSASfile",
-        arguments: [contentItem],
+        command: "vscode.open",
+        arguments: [uri],
         title: "Open SAS File",
       },
     };

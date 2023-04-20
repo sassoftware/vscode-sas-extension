@@ -10,6 +10,8 @@ import {
   FileSystemProvider,
   FileType,
   ProviderResult,
+  Tab,
+  TabInputText,
   TextDocumentContentProvider,
   ThemeIcon,
   TreeDataProvider,
@@ -17,20 +19,18 @@ import {
   TreeItemCollapsibleState,
   Uri,
   window,
-  Tab,
-  TabInputText,
 } from "vscode";
 import { ContentModel } from "./ContentModel";
 import { ContentItem } from "./types";
 import {
   getCreationDate,
   getId,
+  isContainer as getIsContainer,
   getLabel,
+  getLink,
   getModifyDate,
   getUri,
-  isContainer as getIsContainer,
   resourceType,
-  getLink,
 } from "./utils";
 
 class ContentDataProvider
@@ -70,8 +70,10 @@ class ContentDataProvider
     this.refresh();
   }
 
-  public getTreeItem(item: ContentItem): TreeItem | Promise<TreeItem> {
+  public async getTreeItem(item: ContentItem): Promise<TreeItem> {
     const isContainer = getIsContainer(item);
+
+    const uri = await this.getUri(item, false);
 
     return {
       iconPath: this.iconPathForItem(item),
@@ -84,8 +86,8 @@ class ContentDataProvider
       command: isContainer
         ? undefined
         : {
-            command: "SAS.openSASfile",
-            arguments: [item],
+            command: "vscode.open",
+            arguments: [uri],
             title: "Open SAS File",
           },
     };
