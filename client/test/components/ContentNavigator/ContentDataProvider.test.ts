@@ -183,7 +183,7 @@ describe("ContentDataProvider", async function () {
 
     axiosInstance.get
       .withArgs(
-        "uri://myFolders?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')"
+        "uri://myFolders?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending"
       )
       .resolves({
         data: {
