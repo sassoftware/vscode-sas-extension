@@ -113,7 +113,11 @@ export class ContentModel {
     } else if (filters.length > 1) {
       membersUrl = membersUrl + "&filter=and(" + filters.join(",") + ")";
     }
-    membersUrl = membersUrl + "&sortBy=type:descending,name:primary:ascending";
+    membersUrl =
+      membersUrl +
+      `&sortBy=${
+        parentIsContent ? "" : "eq(contentType,'folder'):descending,"
+      }name:primary:ascending,type:ascending`;
 
     const res = await this.connection.get(membersUrl);
     const result = res.data;
