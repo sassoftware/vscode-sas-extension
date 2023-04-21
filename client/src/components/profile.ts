@@ -599,7 +599,8 @@ const input: ProfilePromptInput = {
   [ProfilePromptType.ClientId]: {
     title: "Client ID",
     placeholder: "Enter a client ID",
-    description: "Enter the registered client ID. An example is myapp.client. For SAS Viya 2022.11 and later, you can leave Client ID empty and simply press Enter",
+    description:
+      "Enter the registered client ID. An example is myapp.client. For SAS Viya 2022.11 and later, you can leave Client ID empty and simply press Enter",
   },
   [ProfilePromptType.ClientSecret]: {
     title: "Client Secret",
