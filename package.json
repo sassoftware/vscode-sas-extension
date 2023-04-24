@@ -630,7 +630,7 @@
     "nock": "^13.3.0",
     "path-browserify": "^1.0.1",
     "prettier": "^2.8.7",
-    "sinon": "^15.0.3",
+    "sinon": "^15.0.4",
     "ts-loader": "^9.4.2",
     "ts-sinon": "^2.0.2",
     "typescript": "^5.0.2",
