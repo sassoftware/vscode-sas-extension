@@ -625,7 +625,7 @@
     "@typescript-eslint/parser": "^5.58.0",
     "chai": "^4.3.7",
     "esbuild": "^0.17.17",
-    "eslint": "^8.38.0",
+    "eslint": "^8.39.0",
     "mocha": "^10.2.0",
     "nock": "^13.3.0",
     "path-browserify": "^1.0.1",
