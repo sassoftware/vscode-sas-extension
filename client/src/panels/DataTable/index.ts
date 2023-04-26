@@ -71,7 +71,7 @@ class DataTable {
                 </vscode-data-grid-row>
               `;
               })
-              .join("")}}
+              .join("")}
           </vscode-data-grid>
           <script type="module" src="${webviewUri}"></script>
         </body>
