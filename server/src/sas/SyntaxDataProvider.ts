@@ -2194,6 +2194,8 @@ export class SyntaxDataProvider {
 
     if (ret) {
       ret = this._handleOptionValues(ret, cb);
+    } else {
+      _notify(cb, ret);
     }
     return ret;
   }
