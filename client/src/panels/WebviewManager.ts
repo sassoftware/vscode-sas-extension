@@ -5,10 +5,8 @@ import { Disposable, Uri, ViewColumn, WebviewPanel, window } from "vscode";
 
 export class WebViewManager {
   public panels: Record<string, WebView> = {};
-  private _currentUid: string;
 
   public render(webview: WebView, uid: string) {
-    this._currentUid = uid;
     if (this.panels[uid]) {
       this.panels[uid].display();
       return;
@@ -18,18 +16,19 @@ export class WebViewManager {
       enableScripts: true,
     });
 
+    webview.onDispose = () => delete this.panels[uid];
     this.panels[uid] = webview.withPanel(panel).render();
-  }
-
-  public dispose() {
-    this.panels[this._currentUid].dispose();
-    delete this.panels[this._currentUid];
   }
 }
 
 export abstract class WebView {
   protected panel: WebviewPanel;
   private _disposables: Disposable[] = [];
+  private _onDispose: () => void;
+
+  set onDispose(disposeCallback: () => void) {
+    this._onDispose = disposeCallback;
+  }
 
   abstract render(): WebView;
   abstract processMessage(event: Event): void;
@@ -50,6 +49,7 @@ export abstract class WebView {
         disposable.dispose();
       }
     }
+    this._onDispose && this._onDispose();
   }
 
   public display() {
