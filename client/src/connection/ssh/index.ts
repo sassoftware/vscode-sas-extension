@@ -44,6 +44,10 @@ export class SSHSession implements Session {
     this.conn = new Client();
   }
 
+  sessionId?(): string {
+    throw new Error("Method not implemented.");
+  }
+
   set config(newValue: Config) {
     this._config = newValue;
   }

@@ -17,6 +17,7 @@ export const EXTENSION_ACTIVE_PROFILE_CONFIG_KEY = "activeProfile";
 enum ConnectionOptions {
   SASViya = "SAS Viya",
   SAS94Remote = "SAS 9.4 (remote)",
+  SAS9Local = "SAS 9.4 (local)",
 }
 
 const CONNECTION_PICK_OPTS: string[] = [
@@ -51,6 +52,7 @@ export enum AuthType {
 export enum ConnectionType {
   Rest = "rest",
   SSH = "ssh",
+  Local = "local",
 }
 
 /**
@@ -82,7 +84,13 @@ export interface SSHProfile {
   sasOptions: string[];
 }
 
-export type Profile = ViyaProfile | SSHProfile;
+export interface LocalProfile {
+  connectionType: ConnectionType.Local;
+  sasPath: string;
+  sasOptions: string[];
+}
+
+export type Profile = ViyaProfile | SSHProfile | LocalProfile;
 
 /**
  * Profile detail is an interface that encapsulates the name of the profile
@@ -666,6 +674,8 @@ function mapQuickPickToEnum(connectionTypePickInput: string): ConnectionType {
       return ConnectionType.Rest;
     case ConnectionOptions.SAS94Remote:
       return ConnectionType.SSH;
+    case ConnectionOptions.SAS9Local:
+      return ConnectionType.Local;
     default:
       return undefined;
   }
