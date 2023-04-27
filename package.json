@@ -459,10 +459,6 @@
           "command": "SAS.runSelected"
         },
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
-          "command": "SAS.runSelected"
-        },
-        {
           "when": "false",
           "command": "SAS.restoreResource"
         },
