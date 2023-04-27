@@ -9,7 +9,6 @@ let logLines: LogLine[] = [];
 let tmpDir: string;
 let workDirectory: string;
 let tmpProgramName: string;
-const programName = "program";
 let programFullName: string;
 let logFileName: string;
 let listFileName: string;

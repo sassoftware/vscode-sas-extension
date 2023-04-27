@@ -217,7 +217,7 @@ describe("Profiles", async function () {
       it("validate initial state", async function () {
         // Arrange
         // Act
-        const profileLen = await profileConfig.length();
+        const profileLen = profileConfig.length();
 
         // Verify
         expect(profileLen).to.equal(0, "No profiles should exist");
