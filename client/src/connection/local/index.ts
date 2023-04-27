@@ -72,7 +72,7 @@ const run = async (
     `-print "${listFileName}"`,
   ];
 
-  fs.mkdirSync(workDirectory, {recursive:true});
+  fs.mkdirSync(workDirectory, { recursive: true });
   fs.writeFileSync(programFullName, codeWithODSPath);
 
   //add user opts to default opts
