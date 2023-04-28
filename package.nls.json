@@ -20,6 +20,7 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.sasOptions": "SAS SSH Connection SAS system options",
 
   "commands.SAS.addFileResource": "New File...",
+  "commands.SAS.addFileToMyFolder": "Add file to my folder",
   "commands.SAS.addFolderResource": "New Folder...",
   "commands.SAS.addProfile": "Add New Connection Profile",
   "commands.SAS.addToFavorites": "Add to My Favorites",

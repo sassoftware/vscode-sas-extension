@@ -1,6 +1,9 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
+import { readFile } from "fs";
+import { basename } from "path";
+import { promisify } from "util";
 import {
   Disposable,
   Event,
@@ -185,11 +188,34 @@ class ContentDataProvider
     }
   }
 
+  public async addFileToMyContent(file: Uri): Promise<Uri | undefined> {
+    let fileData: Buffer;
+    try {
+      fileData = await promisify(readFile)(file.fsPath);
+    } catch (e) {
+      return undefined;
+    }
+
+    // There's a change we haven't connected to SAS content. Lets
+    // do that here.
+    if (!this.model.getDelegateFolder("@myFolder")) {
+      await this.model.getChildren();
+    }
+
+    const myFolder = this.model.getDelegateFolder("@myFolder");
+    if (!myFolder) {
+      return undefined;
+    }
+
+    return await this.createFile(myFolder, basename(file.path), fileData);
+  }
+
   public async createFile(
     item: ContentItem,
-    fileName: string
+    fileName: string,
+    buffer?: Buffer
   ): Promise<Uri | undefined> {
-    const newItem = await this.model.createFile(item, fileName);
+    const newItem = await this.model.createFile(item, fileName, buffer);
     if (newItem) {
       this.refresh();
       return getUri(newItem);

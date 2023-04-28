@@ -194,14 +194,15 @@ export class ContentModel {
 
   public async createFile(
     item: ContentItem,
-    fileName: string
+    fileName: string,
+    buffer?: Buffer
   ): Promise<ContentItem | undefined> {
     const contentType = await this.getFileContentType(fileName);
     let createdResource: ContentItem;
     try {
       const fileCreationResponse = await this.connection.post<ContentItem>(
         `/files/files#rawUpload?typeDefName=${contentType}`,
-        Buffer.from("", "binary"),
+        buffer || Buffer.from("", "binary"),
         {
           headers: {
             "Content-Type": "text/plain",

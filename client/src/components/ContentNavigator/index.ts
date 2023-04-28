@@ -78,6 +78,23 @@ class ContentNavigator implements SubscriptionProvider {
     return [
       this.treeView,
       commands.registerCommand(
+        "SAS.addFileToMyFolder",
+        async (resource: Uri) => {
+          const activeProfile: ViyaProfile = profileConfig.getProfileByName(
+            profileConfig.getActiveProfile()
+          );
+          await this.contentDataProvider.connect(activeProfile.endpoint);
+          const newUri = await this.contentDataProvider.addFileToMyContent(
+            resource
+          );
+          if (newUri) {
+            window.showInformationMessage(Messages.AddFileToMyFolderSuccess);
+          } else {
+            window.showErrorMessage(Messages.AddFileToMyFolderFailure);
+          }
+        }
+      ),
+      commands.registerCommand(
         "SAS.deleteResource",
         async (resource: ContentItem) => {
           const isContainer = getIsContainer(resource);

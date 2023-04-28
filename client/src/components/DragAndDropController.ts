@@ -5,13 +5,13 @@ import {
   CancellationToken,
   DataTransfer,
   DataTransferItem,
+  DocumentDropEdit,
+  DocumentDropEditProvider,
   DocumentSelector,
+  ExtensionContext,
+  Position,
   TextDocument,
   TreeDragAndDropController,
-  DocumentDropEditProvider,
-  Position,
-  DocumentDropEdit,
-  ExtensionContext,
   languages,
 } from "vscode";
 
