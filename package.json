@@ -627,7 +627,7 @@
     "esbuild": "^0.17.18",
     "eslint": "^8.39.0",
     "mocha": "^10.2.0",
-    "nock": "^13.3.0",
+    "nock": "^13.3.1",
     "path-browserify": "^1.0.1",
     "prettier": "^2.8.7",
     "sinon": "^15.0.4",
