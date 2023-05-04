@@ -6,10 +6,12 @@ import {
   AuthenticationProviderAuthenticationSessionsChangeEvent,
   AuthenticationSession,
   commands,
+  ConfigurationChangeEvent,
   Disposable,
   Event,
   EventEmitter,
   SecretStorage,
+  workspace,
 } from "vscode";
 import { profileConfig } from "../commands/profile";
 import { getTokens, refreshToken } from "../connection/rest/auth";
@@ -25,35 +27,72 @@ interface SASAuthSession extends AuthenticationSession {
 export class SASAuthProvider implements AuthenticationProvider, Disposable {
   static id = "SAS";
 
+  private _disposables: Disposable[];
+  private _lastSession: SASAuthSession | undefined;
   private _onDidChangeSessions =
     new EventEmitter<AuthenticationProviderAuthenticationSessionsChangeEvent>();
   get onDidChangeSessions(): Event<AuthenticationProviderAuthenticationSessionsChangeEvent> {
     return this._onDidChangeSessions.event;
   }
 
-  constructor(private readonly secretStorage: SecretStorage) {}
+  constructor(private readonly secretStorage: SecretStorage) {
+    this._disposables = [
+      this._onDidChangeSessions,
+      workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
+        if (
+          event.affectsConfiguration("SAS.connectionProfiles") &&
+          this._lastSession
+        ) {
+          this._onDidChangeSessions.fire({
+            added: [],
+            changed: [],
+            removed: [this._lastSession],
+          });
+          this._lastSession = undefined;
+        }
+      }),
+    ];
+  }
 
   dispose(): void {
-    this._onDidChangeSessions.dispose();
+    for (const d of this._disposables) {
+      d.dispose();
+    }
   }
 
   async getSessions(): Promise<readonly AuthenticationSession[]> {
+    const sessions = await this._getSessions();
+    if (sessions.length === 0) {
+      commands.executeCommand("setContext", "SAS.authorized", false);
+    } else {
+      if (this._lastSession?.id !== sessions[0].id) {
+        // have to fire change event so that the Accounts menu can update after switching profile
+        this._lastSession = sessions[0];
+        this._onDidChangeSessions.fire({
+          added: [],
+          changed: sessions,
+          removed: [],
+        });
+      }
+      commands.executeCommand("setContext", "SAS.authorized", true);
+    }
+    return sessions;
+  }
+
+  private async _getSessions(): Promise<readonly AuthenticationSession[]> {
     const sessions = await this.getStoredSessions();
     if (!sessions) {
-      commands.executeCommand("setContext", "SAS.authorized", false);
       return [];
     }
 
     const activeProfile = profileConfig.getActiveProfileDetail();
     const profile = activeProfile?.profile;
     if (!profile || profile.connectionType !== ConnectionType.Rest) {
-      commands.executeCommand("setContext", "SAS.authorized", false);
       return [];
     }
     const profileName = profileConfig.getActiveProfile();
     const session = sessions[profileName];
     if (!session) {
-      commands.executeCommand("setContext", "SAS.authorized", false);
       return [];
     }
 
@@ -63,18 +102,15 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
     });
     if (!tokens) {
       // refresh token failed, the stored session is not valid anymore
-      await this.removeSession();
-      commands.executeCommand("setContext", "SAS.authorized", false);
+      await this.removeSession(session.id, true);
       return [];
     }
     const accessToken = tokens.access_token;
     if (accessToken === session.accessToken) {
-      commands.executeCommand("setContext", "SAS.authorized", true);
       return [session];
     }
     const newSession = { ...session, accessToken: tokens.access_token };
     await this.writeSession(newSession);
-    commands.executeCommand("setContext", "SAS.authorized", true);
 
     return [newSession];
   }
@@ -93,8 +129,9 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
       endpoint: profile.endpoint,
       accessToken,
     });
+    const profileName = profileConfig.getActiveProfile();
     const session: SASAuthSession = {
-      id: "SAS",
+      id: profileName,
       account: { id: user.id, label: user.name },
       accessToken,
       refreshToken,
@@ -102,6 +139,12 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
     };
 
     await this.writeSession(session);
+    this._lastSession = session;
+    this._onDidChangeSessions.fire({
+      added: [session],
+      changed: [],
+      removed: [],
+    });
 
     commands.executeCommand("setContext", "SAS.authorized", true);
 
@@ -110,30 +153,50 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
 
   private async writeSession(session: SASAuthSession): Promise<void> {
     const storedSessions = await this.getStoredSessions();
-    const profileName = profileConfig.getActiveProfile();
-    if (!profileName) {
-      return;
-    }
 
     const sessions = {
       ...(storedSessions || {}),
-      [profileName]: session,
+      [session.id]: session,
     };
 
     await this.secretStorage.store(SECRET_KEY, JSON.stringify(sessions));
   }
 
-  async removeSession(): Promise<void> {
+  async removeSession(sessionId: string, silent?: boolean): Promise<void> {
     const sessions = await this.getStoredSessions();
-    const profileName = profileConfig.getActiveProfile() || "";
     if (!sessions) {
       return;
     }
+    const profileName = profileConfig.getActiveProfile();
+    const id = sessions[sessionId] ? sessionId : profileName;
+    const session = sessions[id];
+    if (!session) {
+      return;
+    }
+    delete sessions[id];
 
-    delete sessions[profileName];
+    if (!silent) {
+      // Triggered by user sign out from the Accounts menu
+      // VS Code will sign out all sessions by this account
+      Object.values(sessions).forEach((s) => {
+        if (s.account.id === session.account.id) {
+          delete sessions[s.id];
+        }
+      });
+    }
+
     await this.secretStorage.store(SECRET_KEY, JSON.stringify(sessions));
 
-    commands.executeCommand("setContext", "SAS.authorized", false);
+    this._lastSession = undefined;
+    this._onDidChangeSessions.fire({
+      added: [],
+      changed: [],
+      removed: [session],
+    });
+
+    if (!silent) {
+      commands.executeCommand("setContext", "SAS.authorized", false);
+    }
   }
 
   private async getStoredSessions(): Promise<
