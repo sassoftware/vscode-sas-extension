@@ -35,6 +35,7 @@ import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
 import { legend, LogTokensProvider } from "../components/LogViewer";
 import { ConnectionType } from "../components/profile";
+import { installCAs } from "../components/CAHelper";
 
 let client: LanguageClient;
 // Create Profile status bar item
@@ -82,7 +83,10 @@ export function activate(context: ExtensionContext): void {
   // Start the client. This will also launch the server
   client.start();
 
+  installCAs();
+
   setContext(context);
+
   const libraryNavigator = new LibraryNavigator(context);
   const contentNavigator = new ContentNavigator(context);
 
