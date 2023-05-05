@@ -31,6 +31,7 @@ import {
 import { run, runSelected } from "../commands/run";
 import { SASAuthProvider } from "../components/AuthProvider";
 import ContentNavigator from "../components/ContentNavigator";
+import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
 import { legend, LogTokensProvider } from "../components/LogViewer";
 import { ConnectionType } from "../components/profile";
@@ -83,6 +84,8 @@ export function activate(context: ExtensionContext): void {
   client.start();
 
   installCAs();
+
+  setContext(context);
 
   const libraryNavigator = new LibraryNavigator(context);
   const contentNavigator = new ContentNavigator(context);
@@ -190,6 +193,5 @@ export function deactivate(): Thenable<void> | undefined {
   if (!client) {
     return undefined;
   }
-  closeSession();
   return client.stop();
 }

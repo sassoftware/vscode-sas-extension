@@ -7,7 +7,7 @@ import axios, {
   AxiosRequestConfig,
   AxiosResponse,
 } from "axios";
-import { authentication, Uri } from "vscode";
+import { Uri, authentication } from "vscode";
 import { SASAuthProvider } from "../AuthProvider";
 import {
   FAVORITES_FOLDER,
@@ -113,6 +113,11 @@ export class ContentModel {
     } else if (filters.length > 1) {
       membersUrl = membersUrl + "&filter=and(" + filters.join(",") + ")";
     }
+    membersUrl =
+      membersUrl +
+      `&sortBy=${
+        parentIsContent ? "" : "eq(contentType,'folder'):descending,"
+      }name:primary:ascending,type:ascending`;
 
     const res = await this.connection.get(membersUrl);
     const result = res.data;

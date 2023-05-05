@@ -4,7 +4,11 @@
 import { authentication } from "vscode";
 import { RunResult, Session } from "..";
 import { SASAuthProvider } from "../../components/AuthProvider";
-import { ContextsApi, LogLine } from "./api/compute";
+import {
+  getContextValue,
+  setContextValue,
+} from "../../components/ExtensionContext";
+import { ContextsApi, LogLine, SessionsApi } from "./api/compute";
 import { ComputeState, getApiConfig } from "./common";
 import { ComputeJob } from "./job";
 import { ComputeServer } from "./server";
@@ -16,10 +20,61 @@ export interface Config {
   clientSecret?: string;
   context?: string;
   serverId?: string;
+  reconnect?: boolean;
 }
 
 let config: Config;
 let computeSession: ComputeSession | undefined;
+
+async function reconnectComputeSession(): Promise<ComputeSession> {
+  let session: ComputeSession = undefined;
+
+  if (!config.reconnect) {
+    return undefined;
+  }
+
+  //Grab the sessionId
+  const sessionId: string = await getContextValue("SAS.sessionId");
+
+  if (sessionId === undefined) {
+    //No sessionId in the cache means nothing to reconnect to
+    return undefined;
+  }
+
+  //At this point a sessionId was retrieved, so try and re-connect
+
+  if (config.serverId) {
+    const computeServer = new ComputeServer(config.serverId);
+
+    try {
+      session = await computeServer.getSession(sessionId);
+    } catch (error) {
+      console.log(
+        `Attempt to reconnect to session ${sessionId} failed. A new session will be started`
+      );
+    }
+  } else {
+    const apiConfig = getApiConfig();
+    const sessions = SessionsApi(apiConfig);
+
+    try {
+      const mySession = (await sessions.getSession({ sessionId: sessionId }))
+        .data;
+      session = ComputeSession.fromInterface(mySession);
+    } catch (error) {
+      console.log(
+        `Attempt to reconnect to session ${sessionId} failed. A new session will be started`
+      );
+    }
+  }
+
+  if (session === undefined) {
+    //If we tried to reconnect and failed, set the cached sessionId to undefined
+    setContextValue("SAS.sessionId", undefined);
+  }
+
+  return session;
+}
 
 async function setup(): Promise<void> {
   const apiConfig = getApiConfig();
@@ -52,12 +107,19 @@ async function setup(): Promise<void> {
   const locale = JSON.parse(process.env.VSCODE_NLS_CONFIG ?? "{}").locale;
   apiConfig.baseOptions.headers = { "Accept-Language": locale };
 
+  //Check to see if we can reconnect to a session first
+  computeSession = await reconnectComputeSession();
+  if (computeSession) {
+    //reconnected to a running session, so just return
+    return;
+  }
+
+  //Start a new session
   if (config.serverId) {
     const server1 = new ComputeServer(config.serverId);
     computeSession = await server1.getSession();
 
     //Maybe wait for session to be initialized?
-    return;
   } else {
     //Create session from context
     const contextsApi = ContextsApi(apiConfig);
@@ -79,6 +141,9 @@ async function setup(): Promise<void> {
     ).data;
     computeSession = ComputeSession.fromInterface(sess);
   }
+
+  //Save the current sessionId
+  setContextValue("SAS.sessionId", computeSession.sessionId);
 }
 
 /*
@@ -150,6 +215,9 @@ async function close() {
   if (sessionId()) {
     computeSession.delete();
     computeSession = undefined;
+
+    //Since the session is being closed, remove the cached session id
+    setContextValue("SAS.sessionId", undefined);
   }
 }
 
