@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Allow user to provide trusted CA certificates ([#220](https://github.com/sassoftware/vscode-sas-extension/issues/220))
+- Support Run Region ([#222](https://github.com/sassoftware/vscode-sas-extension/issues/222))
 
 ## [v0.1.4] - 2023-04-28
 

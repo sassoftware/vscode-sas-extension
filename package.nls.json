@@ -34,6 +34,7 @@
   "commands.SAS.restoreResource": "Restore",
   "commands.SAS.run": "Run All SAS Code",
   "commands.SAS.runSelected": "Run Selected or All SAS Code",
+  "commands.SAS.runRegion": "Run Region",
   "commands.SAS.switchProfile": "Switch Current Connection Profile",
   "commands.SAS.updateProfile": "Update Connection Profile",
 

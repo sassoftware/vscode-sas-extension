@@ -169,6 +169,10 @@ export class LanguageServiceProvider {
     return result;
   }
 
+  getFoldingBlock(line: number, col: number) {
+    return this.syntaxProvider.getFoldingBlock(line, col, true);
+  }
+
   setLibService(fn: LibService): void {
     return this.syntaxProvider.lexer.syntaxDb.setLibService(fn);
   }
