@@ -20,9 +20,13 @@
     "vscode-languageclient": "^8.0.1"
   },
   "devDependencies": {
+    "@grpc/grpc-js": "^1.8.14",
+    "@types/google-protobuf": "^3.15.6",
     "@types/ssh2": "^1.11.7",
     "@types/vscode": "^1.71.0",
     "@types/vscode-notebook-renderer": "^1.72.0",
-    "@vscode/test-electron": "^1.6.2"
+    "@vscode/test-electron": "^1.6.2",
+    "grpc_tools_node_protoc_ts": "^5.3.3",
+    "grpc-tools": "^1.12.4"
   }
 }

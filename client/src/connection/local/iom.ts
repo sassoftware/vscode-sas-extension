@@ -1,82 +1,89 @@
-// import * as edge from "electron-edge-js";
+import { LogLine, RunResult, Session } from "..";
+import * as grpc from "@grpc/grpc-js";
+import { ExecutionServiceClient } from "./api/iom_broker_grpc_pb";
+import {
+  ConnectionContext,
+  ExecutionRequest,
+  LogChunk,
+} from "./api/iom_broker_pb";
+import { Empty } from "google-protobuf/google/protobuf/empty_pb";
 
-// export const runCode = edge.func({
-//   source: function () {
-//     /*
-// using System.IO;
-// using System.Text.RegularExpressions;
-// using System.Threading.Tasks;
+let client: ExecutionServiceClient;
+let config: Config;
 
-// using SAS;
+export interface Config {
+  sasOptions: string[];
+  port: number;
+}
 
-// public class Startup
-// {
-//     public async Task<object> Invoke(object input)
-//     {
-//         var sasCode = (string)input;
-//         return SASRunner.ExecuteCode(sasCode);
-//     }
-// }
+const setup = async (): Promise<void> => {
+  if (!client) {
+    client = new ExecutionServiceClient(
+      `localhost:${config.port}`,
+      grpc.credentials.createInsecure()
+    );
+  }
 
-// static class SASRunner
-// {
-//     public static RunResult ExecuteCode(string code)
-//     {
-//         var ws = new Workspace();
-//         var ls = ws.LanguageService;
-//         var rs = new RunResult();
+  const connRequest = new ConnectionContext();
+  connRequest.setHost("localhost");
+  client.setupConnection(connRequest, (error, response) => {
+    if (error) {
+      throw error;
+    }
+    console.log("setupConnection response: " + response.getRc());
+  });
+};
 
-//         var runResult = new RunResult();
-//         var chunkedLog = "";
+const sessionId = (): string | undefined => {
+  throw new Error("Method not implemented");
+};
 
-//         ls.Submit(code);
+const run = async (
+  code: string,
+  onLog?: (logs: LogLine[]) => void
+): Promise<RunResult> => {
+  const executionRequest = new ExecutionRequest();
+  executionRequest.setCode(code);
 
-//         string log = "";
-//         string logChunk;
-//         int chunk = 1024;
-//         do
-//         {
-//             logChunk = ls.FlushLog(chunk);
-//             log += logChunk;
-//         } while (logChunk.Length > 0);
+  client.executeCode(executionRequest, (error, response) => {
+    if (error) {
+      throw error;
+    }
 
-//         rs.Log = log;
+    console.log("executeCode response: " + response.getRc());
 
-//         var workPattern = @"^---vscode-sas: work_path: (.*)";
-//         var workPatternMatch = Regex.Match(log, workPattern, RegexOptions.Multiline);
-//         var workDir = "";
-//         if(workPatternMatch.Success)
-//         {
-//             workDir = workPatternMatch.Groups[1].Value;
-//         }
+    const logStream = client.fetchLog(new Empty());
+    logStream.on("data", (chunk: LogChunk) => {
+      const lines = chunk.getContent().split("\n");
 
-//         var odsPattern = @"^NOTE: .+ HTML5.* Body .+: (.+)";
-//         var odsPatternMatch = Regex.Match(log, odsPattern, RegexOptions.Multiline);
-//         var odsFile = "";
-//         if(odsPatternMatch.Success)
-//         {
-//             odsFile = odsPatternMatch.Groups[1].Value;
-//         }
+      for (const line of lines) {
+        let logline: LogLine;
+        logline.type = line.startsWith("ERROR") ? "error" : "normal";
+        logline.line = line;
+        onLog([logline]);
+      }
+    });
+    logStream.on("error", Promise.reject);
+  });
+  const runResult = {};
+  return runResult;
+};
 
-//         string odsAbsoluteFile = workDir + "/" + odsFile;
-//         rs.HTML = File.ReadAllText(odsAbsoluteFile);
+const close = async (): Promise<void> => {
+  client.closeConnection(new Empty(), (error, response) => {
+    if (error) {
+      throw error;
+    }
+    console.log("close rc: " + response.getRc());
+  });
+};
 
-//         return rs;
-
-//     }
-
-//     public class RunResult
-//     {
-//         public string HTML { get; set; }
-//         public string Log { get; set; }
-//     }
-//     public class RunContext
-//     {
-//         public string[] SASOptions { get; set; }
-//         public string Code { get; set; }
-//     }
-// }
-// */
-//   },
-//   references: ["C:\\SASHome\\x86\\Integration Technologies\\SASInterop.dll"],
-// });
+export const getSession = (c: Config): Session => {
+  config = c;
+  return {
+    setup,
+    run,
+    close,
+    sessionId,
+  };
+};

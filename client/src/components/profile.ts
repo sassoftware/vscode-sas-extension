@@ -88,6 +88,7 @@ export interface LocalProfile {
   connectionType: ConnectionType.Local;
   sasPath: string;
   sasOptions: string[];
+  port: number;
 }
 
 export type Profile = ViyaProfile | SSHProfile | LocalProfile;

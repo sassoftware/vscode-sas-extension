@@ -708,6 +708,8 @@
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "pretest": "npm run compile && tsc -p ./client",
+    "proto:gen": "grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./client/src/connection/local/proto/gen --grpc_out=generate_package_definition:./client/src/connection/local/proto **/*.proto",
+    "proto:gents": "npm run proto:gen && grpc_tools_node_protoc --plugin=protoc-gen-ts.cmd=./client/node_modules/.bin/protoc-gen-ts --ts_out=./client/src/connection/local/proto/gen -I ./client/src/connection/local/proto *.proto",
     "test": "node ./client/out/test/runTest.js",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
     "copyright:check": "node ./tools/check-copyright.mjs"
