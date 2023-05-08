@@ -5,7 +5,6 @@ import {
   Disposable,
   Event,
   EventEmitter,
-  FileChangeEvent,
   ProviderResult,
   TreeDataProvider,
   TreeItem,
@@ -17,24 +16,16 @@ import LibraryModel from "./LibraryModel";
 import { LibraryItem, LibraryType, TableType } from "./types";
 
 class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
-  private _onDidChangeTreeData: EventEmitter<LibraryItem | undefined>;
-  private model: LibraryModel;
-  public dropMimeTypes: string[];
-  public dragMimeTypes: string[];
-  private extensionUri: Uri;
-
-  onDidChangeFile: Event<FileChangeEvent[]>;
+  private _onDidChangeTreeData = new EventEmitter<LibraryItem | undefined>();
 
   get onDidChangeTreeData(): Event<LibraryItem> {
     return this._onDidChangeTreeData.event;
   }
 
-  constructor(model: LibraryModel, extensionUri: Uri) {
-    this._onDidChangeTreeData = new EventEmitter<LibraryItem | undefined>();
-    this.model = model;
-    this.dragMimeTypes = ["application/vnd.code.tree.libraryDragAndDrop"];
-    this.extensionUri = extensionUri;
-  }
+  constructor(
+    private readonly model: LibraryModel,
+    private readonly extensionUri: Uri
+  ) {}
 
   public getTreeItem(item: LibraryItem): TreeItem | Promise<TreeItem> {
     const iconPath = this.iconPathForItem(item);
@@ -100,6 +91,7 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
   }
 
   public refresh(): void {
+    this.model.reset();
     this._onDidChangeTreeData.fire(undefined);
   }
 }

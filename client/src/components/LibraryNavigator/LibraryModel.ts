@@ -41,6 +41,10 @@ class LibraryModel {
     await this.connect();
   }
 
+  public reset(): void {
+    this.sessionId = undefined;
+  }
+
   public async loadViewData(item: LibraryItem): Promise<TableData> {
     await this.setup();
     const response = await this.retryOnFail(
