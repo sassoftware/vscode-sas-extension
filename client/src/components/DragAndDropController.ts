@@ -57,7 +57,8 @@ class DragAndDropController<T>
       token.isCancellationRequested ||
       !dataTransferItem ||
       !this.draggedItem ||
-      !JSON.parse(dataTransferItem.value).itemHandles?.[0].includes(
+      !(
+        this.draggableItem(JSON.parse(dataTransferItem.value)[0]) ===
         this.draggedItem
       )
     ) {
