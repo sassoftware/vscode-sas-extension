@@ -213,7 +213,7 @@ describe("ContentDataProvider", async function () {
 
     expect(children.length).to.equal(1);
     expect(children[0]).to.deep.include(childItem);
-    expect(children[0].uid).to.equal("MyFavorites/testFile");
+    expect(children[0].uid).to.equal("My Favorites/testFile");
   });
 
   it("stat - returns file data", async function () {

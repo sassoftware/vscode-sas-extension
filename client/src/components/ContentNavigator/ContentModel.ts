@@ -128,7 +128,7 @@ export class ContentModel {
 
     return result.items.map((childItem: ContentItem) => ({
       ...childItem,
-      uid: `${item.uid}/${childItem.name}`.replace(/\s/g, ""),
+      uid: `${item.uid}/${childItem.name}`,
       permission: getPermission(childItem),
       __trash__: isTrash,
     }));
@@ -487,7 +487,7 @@ export class ContentModel {
         }
         this.delegateFolders[sDelegate] = {
           ...result.data,
-          uid: result.data.name.replace(/\s/g, ""),
+          uid: result.data.name,
           permission: getPermission(result.data),
         };
 
