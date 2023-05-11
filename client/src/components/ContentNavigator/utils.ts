@@ -59,7 +59,7 @@ export const resourceType = (item: ContentItem): string | undefined => {
   if (getTypeName(item) === TRASH_FOLDER && item?.memberCount) {
     actions.push("empty");
   }
-  console.log(item.name, item.type, item.contentType);
+
   if (item.type === "reference" && !isRecycled) {
     actions.push("removeFromFavorites");
   } else if (
