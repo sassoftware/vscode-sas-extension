@@ -590,12 +590,12 @@
         {
           "id": "sas-library-navigator",
           "name": "Libraries",
-          "when": "SAS.authorized && SAS.connectionType == rest"
+          "when": "(SAS.authorized && SAS.connectionType == rest) || SAS.connection.direct"
         },
         {
           "id": "sas-content-get-started",
           "name": "Sign In",
-          "when": "!SAS.authorized && SAS.connectionType == rest"
+          "when": "(!SAS.authorized && SAS.connectionType == rest) && !SAS.connection.direct"
         },
         {
           "id": "sas-content-invalid-connection",
@@ -607,7 +607,7 @@
     "viewsWelcome": [
       {
         "view": "sas-content-get-started",
-        "when": "!SAS.authorized && SAS.connectionType == rest",
+        "when": "(!SAS.authorized && SAS.connectionType == rest) && !SAS.connection.direct",
         "contents": "%views.SAS.welcome%",
         "enablement": "!SAS.authorizing"
       },

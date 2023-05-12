@@ -146,10 +146,19 @@ function triggerProfileUpdate(): void {
   const activeProfileName = profileConfig.getActiveProfile();
   if (profileList[activeProfileName]) {
     updateStatusBarProfile(activeProfileStatusBarIcon);
+
+    const connectionType =
+      profileList[activeProfileName].connectionType || ConnectionType.Rest;
+
+    //Set the connection type
+    commands.executeCommand("setContext", "SAS.connectionType", connectionType);
+
+    //See if the connection is direct (ie. serverId)
     commands.executeCommand(
       "setContext",
-      "SAS.connectionType",
-      profileList[activeProfileName]?.connectionType || ConnectionType.Rest
+      "SAS.connection.direct",
+      connectionType === ConnectionType.Rest &&
+        "serverId" in profileList[activeProfileName]
     );
   } else {
     profileConfig.updateActiveProfileSetting("");
