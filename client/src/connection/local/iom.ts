@@ -4,12 +4,15 @@ import { ExecutionServiceClient } from "./api/iom_broker_grpc_pb";
 import {
   ConnectionContext,
   ExecutionRequest,
+  FileChunk,
   LogChunk,
 } from "./api/iom_broker_pb";
 import { Empty } from "google-protobuf/google/protobuf/empty_pb";
+import { LogLineTypeEnum } from "../rest/api/compute";
 
 let client: ExecutionServiceClient;
 let config: Config;
+const logLines: LogLine[] = [];
 
 export interface Config {
   sasOptions: string[];
@@ -17,20 +20,27 @@ export interface Config {
 }
 
 const setup = async (): Promise<void> => {
-  if (!client) {
+  return new Promise<void>((resolve, reject) => {
+    if (client) {
+      resolve();
+    }
+
     client = new ExecutionServiceClient(
       `localhost:${config.port}`,
       grpc.credentials.createInsecure()
     );
-  }
 
-  const connRequest = new ConnectionContext();
-  connRequest.setHost("localhost");
-  client.setupConnection(connRequest, (error, response) => {
-    if (error) {
-      throw error;
-    }
-    console.log("setupConnection response: " + response.getRc());
+    const connRequest = new ConnectionContext();
+    connRequest.setHost("localhost");
+    client.setupConnection(connRequest, (error, response) => {
+      if (error) {
+        reject(error);
+      }
+      console.log("setupConnection response: " + response.getRc());
+      if (response.getRc() === 0) {
+        resolve();
+      }
+    });
   });
 };
 
@@ -42,39 +52,55 @@ const run = async (
   code: string,
   onLog?: (logs: LogLine[]) => void
 ): Promise<RunResult> => {
-  const executionRequest = new ExecutionRequest();
-  executionRequest.setCode(code);
+  return new Promise<RunResult>((resolve, reject) => {
+    const executionRequest = new ExecutionRequest();
+    executionRequest.setCode(code);
 
-  client.executeCode(executionRequest, (error, response) => {
-    if (error) {
-      throw error;
-    }
+    client.executeCode(executionRequest, (error, response) => {
+      if (error) {
+        reject(new Error(error.details));
+      }
 
-    console.log("executeCode response: " + response.getRc());
+      console.log("executeCode response: " + response.getRc());
 
-    const logStream = client.fetchLog(new Empty());
-    logStream.on("data", (chunk: LogChunk) => {
-      const lines = chunk.getContent().split("\n");
+      if (response.getRc() === 0) {
+        const logStream = client.fetchLog(new Empty());
+        logStream.on("data", (chunk: LogChunk) => {
+          const lines = chunk.getContent().split("\n");
 
-      for (const line of lines) {
-        let logline: LogLine;
-        logline.type = line.startsWith("ERROR") ? "error" : "normal";
-        logline.line = line;
-        onLog([logline]);
+          for (const line of lines) {
+            onLog([{ line: line, type: "normal" }]);
+          }
+        });
+        logStream.on("error", (error) => reject(error));
+
+        let odsBuffer = Buffer.alloc(4096);
+
+        const odsStream = client.fetchODS(new Empty());
+        odsStream.on("data", (chunk: FileChunk) => {
+          odsBuffer = Buffer.concat([odsBuffer, Buffer.from(chunk.getChunk())]);
+        });
+        odsStream.on("error", (error) => reject(error));
+        odsStream.on("close", () => {
+          const runResult: RunResult = {
+            html5: odsBuffer.toString(),
+            title: "Results",
+          };
+          resolve(runResult);
+        });
       }
     });
-    logStream.on("error", Promise.reject);
   });
-  const runResult = {};
-  return runResult;
 };
 
 const close = async (): Promise<void> => {
   client.closeConnection(new Empty(), (error, response) => {
     if (error) {
-      throw error;
+      throw new Error(error.details);
     }
     console.log("close rc: " + response.getRc());
+    client.close();
+    client = undefined;
   });
 };
 

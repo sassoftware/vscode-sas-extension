@@ -14,7 +14,7 @@ let logFileName: string;
 let listFileName: string;
 let odsHtmlFileName = "";
 
-interface Config {
+export interface Config {
   sasPath: string;
   sasOptions: string[];
 }
