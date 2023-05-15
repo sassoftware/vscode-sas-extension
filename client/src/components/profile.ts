@@ -275,9 +275,16 @@ export class ProfileConfig {
 
     const profileList = this.getAllProfiles();
     if (activeProfileName in profileList) {
+      const profile = { ...profileList[activeProfileName] };
+      if (
+        profile.connectionType === ConnectionType.Rest &&
+        /\/$/.test(profile.endpoint)
+      ) {
+        profile.endpoint = profile.endpoint.replace(/\/$/, "");
+      }
       const detail: ProfileDetail = {
         name: activeProfileName,
-        profile: profileList[activeProfileName],
+        profile,
       };
       return detail;
     } else {
