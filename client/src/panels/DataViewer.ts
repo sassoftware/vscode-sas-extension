@@ -49,7 +49,7 @@ class DataViewer extends WebView {
   }
 
   public async processMessage(
-    event: Event & { command: string }
+    event: Event & { command: string; data?: { start?: number } }
   ): Promise<void> {
     switch (event.command) {
       case "request:loadData":
@@ -63,6 +63,9 @@ class DataViewer extends WebView {
           command: "response:loadMoreResults",
           data: await this._paginator.getMoreResults(),
         });
+        break;
+      case "request:updateStart":
+        this._paginator.updateStartOffset(event.data.start);
         break;
       default:
         break;

@@ -18,6 +18,10 @@ class PaginatedResultSet<T> {
     this.count = 0;
   }
 
+  public updateStartOffset(start: number): void {
+    this.start = start;
+  }
+
   public async getData(): Promise<T> {
     const response = await this.queryForData(this.start);
     this.limit = response.data.limit;
