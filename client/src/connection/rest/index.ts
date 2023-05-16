@@ -221,7 +221,8 @@ async function close() {
   }
 }
 
-export function getSession(config: Config): Session {
+export function getSession(c: Config): Session {
+  config = c;
   getApiConfig().basePath = config.endpoint + "/compute";
 
   return {
