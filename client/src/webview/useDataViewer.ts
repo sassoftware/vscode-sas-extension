@@ -3,6 +3,10 @@ import { useEffect, useState } from "react";
 declare const acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
 
+const contextMenuHandler = (e) => {
+  e.stopImmediatePropagation();
+};
+
 const useDataViewer = () => {
   const [headers, setHeaders] = useState({});
   const [rows, setRows] = useState([]);
@@ -57,8 +61,11 @@ const useDataViewer = () => {
 
     window.addEventListener("message", commandHandler);
 
+    window.addEventListener("contextmenu", contextMenuHandler, true);
+
     return () => {
       window.removeEventListener("message", commandHandler);
+      window.removeEventListener("contextmenu", contextMenuHandler);
     };
   }, []);
 

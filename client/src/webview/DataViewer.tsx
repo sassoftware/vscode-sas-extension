@@ -24,6 +24,7 @@ const DataViewer = () => {
           <VSCodeDataGridRow row-type="header">
             {(headers.columns || []).map((column, idx) => (
               <VSCodeDataGridCell
+                style={{ minWidth: "100px" }}
                 cell-type="columnheader"
                 key={idx}
                 grid-column={idx + 1}
@@ -35,7 +36,11 @@ const DataViewer = () => {
           {rows.map((row, idx) => (
             <VSCodeDataGridRow key={idx}>
               {row.cells.map((cell, idx) => (
-                <VSCodeDataGridCell key={idx} grid-column={idx + 1}>
+                <VSCodeDataGridCell
+                  key={idx}
+                  grid-column={idx + 1}
+                  style={{ minWidth: "100px" }}
+                >
                   {cell}
                 </VSCodeDataGridCell>
               ))}
