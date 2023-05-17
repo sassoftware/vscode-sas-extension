@@ -121,7 +121,6 @@ describe("ContentDataProvider", async function () {
 
     const treeItem = await dataProvider.getTreeItem(contentItem);
     const expectedTreeItem: TreeItem = {
-      iconPath: ThemeIcon.Folder,
       id: "uri://selffolder",
       label: "testFolder",
     };
