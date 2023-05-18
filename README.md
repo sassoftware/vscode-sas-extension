@@ -145,14 +145,16 @@ The following commands are supported for profiles:
 
 Details on creating and managing profiles is available on the [Connect and Run page](/connect-and-run.md).
 
-
 ### Running SAS Code
 
 After configuring the SAS extension for your SAS environment, run your SAS program and view the log and results.
 
+<<<<<<< HEAD
 Details on running code is available on the [Connect and Run page](connect-and-run.md).
+=======
+Details on creating and managing profiles is available on the [Connect and Run page](connect-and-run.md).
 
-
+> > > > > > > 1c9749a1db8834069abad011a75a8f27b7178235
 
 ### Accessing SAS Content
 

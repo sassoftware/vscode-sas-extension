@@ -15,9 +15,8 @@ The following commands are supported for profiles:
 | `SAS.updateProfile` | SAS: Update Connection profile         |
 | `SAS.deleteProfile` | SAS: Delete Connection profile         |
 
-
-
 ## Profile Anatomy (SAS Viya)
+
 The parameters listed below make up the profile settings for configuring a connection to SAS Viya.
 
 | Name                | Description                           | Additional Notes                                                                                                                                      |
@@ -26,9 +25,7 @@ The parameters listed below make up the profile settings for configuring a conne
 | **Endpoint**        | Viya endpoint                         | This will appear when hovering over the status bar                                                                                                    |
 | **Compute Context** | Context for Compute Server            | Please see [SAS Documentation](https://go.documentation.sas.com/doc/en/sasadmincdc/v_014/evfun/p1dkdadd9rkbmdn1fpv562l2p5vy.htm) for more information |
 | **Client ID**       | Registered Client ID for SAS Viya     | Please see your SAS administrator. `authorization_code` and `refresh_token` grant types are required.<br /> _Leave empty for Viya4 2022.11 and later_ |
-| **Client Secret**   | Registered Client Secret for SAS Viya | Please see your SAS administrator.<br /> _Leave empty for Viya4 2022.11 and later_                                                                    |  
-
-
+| **Client Secret**   | Registered Client Secret for SAS Viya | Please see your SAS administrator.<br /> _Leave empty for Viya4 2022.11 and later_                                                                    |
 
 ### Add New SAS Viya Profile
 
@@ -39,84 +36,98 @@ Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift
 
 For more information about Client IDs and the authentication process, please see the blog post [Authentication to SAS Viya: a couple of approaches](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/). A SAS administrator can follow the Steps 1 and 2 in the post to register a new client.
 
-
 ## Profile Anatomy (SAS 9.4 Remote)
+
 For a secure connection to SAS 9.4 remote server, a public / private ssh key pair is required. The socket defined in the environment variable `SSH_AUTH_SOCK` is used to communicate with ssh-agent to authenticate the ssh session. The private key must be registered with the ssh-agent. The steps for configuring ssh follow.
 
 ### Required setup for connection to SAS 9.4
 
 In order to configure the connection between VS Code and SAS 9, you must configure OpenSSH. Follow the steps below to complete the setup.
+
 #### Windows
+
 1. Enable openssh client optional feature; [instructions found here](https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse?tabs=gui).
 
 2. [Create an environment variable](https://phoenixnap.com/kb/windows-set-environment-variable) SSH_AUTH_SOCK with value //./pipe/openssh-ssh-agent (windows uses a named pipe for the auth sock).  
-**Note**: An attempt to create the varible using Powershell command line did not register; suggest using these GUI instructions.
+   **Note**: An attempt to create the varible using Powershell command line did not register; suggest using these GUI instructions.
 
-3. Ensure ssh-agent service is running and set startup type to automatic; commands found in [this link](https://dev.to/aka_anoop/how-to-enable-openssh-agent-to-access-your-github-repositories-on-windows-powershell-1ab8)  
+3. Ensure ssh-agent service is running and set startup type to automatic; commands found in [this link](https://dev.to/aka_anoop/how-to-enable-openssh-agent-to-access-your-github-repositories-on-windows-powershell-1ab8)
 
-4. [Generate ed25519 keys](https://medium.com/risan/upgrade-your-ssh-key-to-ed25519-c6e8d60d3c54) with the following command (email address is not binding; use any):  
+4. [Generate ed25519 keys](https://medium.com/risan/upgrade-your-ssh-key-to-ed25519-c6e8d60d3c54) with the following command (email address is not binding; use any):
 
 ```
      ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519 -C "youremail@company.com"
 ```
+
 5. You’ll be asked a series of questions. First, if you didn not provide a path, a default one is provided. Also, if you wish to add a passphrase enter it. Pressing the ‘Enter’ key for each question accepts the default key name and does not password protect your key.
 
    - Enter a file in which to save the key (/c/Users/you/.ssh/id_ed25519):[Press enter]
    - Enter passphrase (empty for no passphrase): [Type a passphrase]
-   - Enter same passphrase again: [Type passphrase again]  
+   - Enter same passphrase again: [Type passphrase again]
 
-   
 6. Define an entry in ~/.ssh/config of the form:
+
 ```
-    Host host.machine.name 
+    Host host.machine.name
         AddKeysToAgent yes
-        IdentityFile /path/to/private/key/with/passphrase 
+        IdentityFile /path/to/private/key/with/passphrase
 ```
+
 Note: if ~/.ssh/config does not exist, run the following Powershell command to create it: `Out-File -FilePath config`  
-7. Add the private key to ssh-agent: ssh-add /path/to/private/key/with/passphrase  
-8. In VS Code, define a connection profile  (see detailed instructions below in the [Add New SAS 9.4 Remote Profile](#add-new-sas-94-remote-profile) section). The connection for the remote server is stored in the settings.json file.
+<<<<<<< HEAD 7. Add the private key to ssh-agent: ssh-add /path/to/private/key/with/passphrase  
+======= 7. Add the private key to ssh-agent: ssh-add /path/to/private/key/with/passphrase
+
+> > > > > > > 1c9749a1db8834069abad011a75a8f27b7178235 8. In VS Code, define a connection profile (see detailed instructions below in the [Add New SAS 9.4 Remote Profile](#add-new-sas-94-remote-profile) section). The connection for the remote server is stored in the settings.json file.
+
 ```
     "ssh_test": {
-        "connectionType": "ssh",  
-        "host": "host.machine.name",  
-        "saspath": "/path/to/sas/executable",  
-        "username": "username",  
+        "connectionType": "ssh",
+        "host": "host.machine.name",
+        "saspath": "/path/to/sas/executable",
+        "username": "username",
         "port": 22
     }
 ```
+
 Note: the default path to the SAS executable (saspath) is /opt/sasinside/SASHome/SASFoundation/9.4/bin/sas_u8. Check with your SAS administrator for the exact path.  
-9. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
+<<<<<<< HEAD 9. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
+======= 7. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
+
+> > > > > > > 1c9749a1db8834069abad011a75a8f27b7178235
 
 #### Mac
+
 1. Start ssh-agent in the background:
-`    eval "$(ssh-agent -s)"`
+   `    eval "$(ssh-agent -s)"`
 2. Ensure that SSH_AUTH_SOCK has a value
    `echo $SSH_AUTH_SOCK`
 3. Define an entry in $HOME/.ssh/config of the form:
+
 ```
-     Host host.machine.name 
+     Host host.machine.name
         AddKeysToAgent yes
         UseKeychain yes
-        IdentityFile /path/to/private/key/with/passphrase 
+        IdentityFile /path/to/private/key/with/passphrase
 ```
+
 4. Add the private key to ssh-agent: ssh-add /path/to/private/key/with/passphrase
 5. Define a connection profile in settings.json for a remote server (see detailed instructions below in the [Add New SAS 9.4 Remote Profile](#add-new-sas-94-remote-profile) section):
+
 ```
     "ssh_test": {
-        "connectionType": "ssh",  
-        "host": "host.machine.name",  
-        "saspath": "/path/to/sas/executable",  
-        "username": "username",  
+        "connectionType": "ssh",
+        "host": "host.machine.name",
+        "saspath": "/path/to/sas/executable",
+        "username": "username",
         "port": 22
-    } 
+    }
 ```
+
 6. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
 
-
 ### Profile Anatomy (SAS 9.4 Remote)
+
 The parameters listed below make up the profile settings for configuring a connection to SAS 9.4.
-
-
 
 | Name         | Description                          | Additional Notes                                                     |
 | ------------ | ------------------------------------ | -------------------------------------------------------------------- |
@@ -127,8 +138,8 @@ The parameters listed below make up the profile settings for configuring a conne
 | **SAS Path** | Path to SAS Executable on the server | Must be a fully qualified path on the SSH server to a SAS executable |
 
 ### Add New SAS 9.4 Remote Profile
-Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, select the SAS 9.4 (remote) connection type and complete the prompts (using values from the preceeding table) to create a new profile.
 
+Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, select the SAS 9.4 (remote) connection type and complete the prompts (using values from the preceeding table) to create a new profile.
 
 ## Delete Connection Profile
 
@@ -160,12 +171,12 @@ To update the name of a profile, please delete and recreate it.
 
 - There is a potential issue with switching between multiple profiles on Windows. For more information, see [#215](https://github.com/sassoftware/vscode-sas-extension/issues/215).
 
-
 # Running SAS Code
 
 After configuring the SAS extension for your SAS environment, run your SAS program and view the log and results. The connection set up and process is different for SAS Viya and SAS 9. Each is explained in detail below.
 
-## SAS Viya 
+## SAS Viya
+
 To run a SAS program connection to a SAS Viya instance:
 
 1. Click the running man icon in the upper right corner of your SAS program window.
@@ -181,22 +192,25 @@ To run a SAS program connection to a SAS Viya instance:
 
    2.5. Paste the authorization code in VS Code where indicated at the top of the screen.
 
+# <<<<<<< HEAD
 
-3. VS Code connects to SAS and runs the code.
-4. The results are displayed in the application.
-5. The SAS output log and error information are displayed in the applicaiton.
+**Note:** Your sign in status will persist in VS Code. You can view it and sign out from VS Code's `Accounts` menu.
+
+> > > > > > > 1c9749a1db8834069abad011a75a8f27b7178235 3. VS Code connects to SAS and runs the code. 4. The results are displayed in the application. 5. The SAS output log and error information are displayed in the applicaiton.
 
 <img src="doc/images/runCode2.png"/>
 
 **Note:** Your sign in status will persist in VS Code. You can view it and sign out from VS Code's `Accounts` menu.
 
 ## SAS 9.4
+
 1. Click the running man icon in the upper right corner of your SAS program window.
 2. VS Code connects to SAS and runs the code.
 3. The results are displayed in the application.
 4. The SAS output log and error information are displayed in the applicaiton.
 
 ## Additional notes
+
 To run a piece of SAS code:
 
 - The `Run Selected or All SAS Code` command (`F3`) will automatically run selected code when there's a selection, and run all code when there's no selection.
