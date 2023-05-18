@@ -11,8 +11,8 @@ import {
   TreeItemCollapsibleState,
   Uri,
 } from "vscode";
-import { Icons, Messages, WorkLibraryId } from "./const";
 import LibraryModel from "./LibraryModel";
+import { Icons, Messages, WorkLibraryId } from "./const";
 import { LibraryItem, LibraryType, TableType } from "./types";
 
 class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
@@ -47,7 +47,7 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
         item.type === TableType
           ? {
               command: "SAS.viewTable",
-              arguments: [item, () => this.model.loadViewData(item)],
+              arguments: [item, this.model.getTableResultSet(item)],
               title: Messages.ViewTableCommandTitle,
             }
           : undefined,

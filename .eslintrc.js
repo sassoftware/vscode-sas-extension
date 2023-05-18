@@ -4,6 +4,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 6,
     sourceType: "module",
+    ecmaFeatures: { jsx: true },
     project: [
       "./tsconfig.json",
       "./client/tsconfig.json",
@@ -13,8 +14,13 @@ module.exports = {
   env: {
     node: true,
   },
-  plugins: ["@typescript-eslint"],
-  extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  plugins: ["@typescript-eslint", "react", "react-hooks"],
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+  ],
   rules: {
     eqeqeq: "error",
     "prefer-const": "error",
@@ -25,5 +31,10 @@ module.exports = {
       { assertionStyle: "never" },
     ],
     curly: "error",
+  },
+  settings: {
+    react: {
+      version: "detect",
+    },
   },
 };
