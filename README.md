@@ -155,10 +155,16 @@ Details on running code is available on the [Connect and Run page](connect-and-r
 Details on creating and managing profiles is available on the [Connect and Run page](connect-and-run.md).
 <<<<<<< HEAD
 =======
+<<<<<<< HEAD
 
 > > > > > > > 1c9749a1db8834069abad011a75a8f27b7178235
 
+> > > > > > > # a970e15a6ba24e07b2298d59389688c419604474
+> > > > > > >
+> > > > > > > 1c9749a1db8834069abad011a75a8f27b7178235
+
 > > > > > > > a970e15a6ba24e07b2298d59389688c419604474
+> > > > > > > cd75556ec4b0b3b005e76050b2f7786fea85fcd5
 
 > > > > > > > 1c9749a1db8834069abad011a75a8f27b7178235
 

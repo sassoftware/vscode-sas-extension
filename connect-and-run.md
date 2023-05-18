@@ -75,6 +75,7 @@ In order to configure the connection between VS Code and SAS 9, you must configu
 
 Note: if ~/.ssh/config does not exist, run the following Powershell command to create it: `Out-File -FilePath config`  
 <<<<<<< HEAD
+<<<<<<< HEAD
 <<<<<<< HEAD 7. Add the private key to ssh-agent: ssh-add /path/to/private/key/with/passphrase  
 ======= 7. Add the private key to ssh-agent: ssh-add /path/to/private/key/with/passphrase
 
@@ -86,6 +87,21 @@ Note: if ~/.ssh/config does not exist, run the following Powershell command to c
 
 > > > > > > > 1c9749a1db8834069abad011a75a8f27b7178235 8. In VS Code, define a connection profile (see detailed instructions below in the [Add New SAS 9.4 Remote Profile](#add-new-sas-94-remote-profile) section). The connection for the remote server is stored in the settings.json file.
 > > > > > > > a970e15a6ba24e07b2298d59389688c419604474
+
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD 7. Add the private key to ssh-agent: ssh-add /path/to/private/key/with/passphrase  
+======= 7. Add the private key to ssh-agent: ssh-add /path/to/private/key/with/passphrase
+
+> > > > > > > 1c9749a1db8834069abad011a75a8f27b7178235 8. In VS Code, define a connection profile (see detailed instructions below in the [Add New SAS 9.4 Remote Profile](#add-new-sas-94-remote-profile) section). The connection for the remote server is stored in the settings.json file.
+
+=======
+<<<<<<< HEAD 7. Add the private key to ssh-agent: ssh-add /path/to/private/key/with/passphrase  
+======= 7. Add the private key to ssh-agent: ssh-add /path/to/private/key/with/passphrase
+
+> > > > > > > 1c9749a1db8834069abad011a75a8f27b7178235 8. In VS Code, define a connection profile (see detailed instructions below in the [Add New SAS 9.4 Remote Profile](#add-new-sas-94-remote-profile) section). The connection for the remote server is stored in the settings.json file.
+> > > > > > > a970e15a6ba24e07b2298d59389688c419604474
+> > > > > > > cd75556ec4b0b3b005e76050b2f7786fea85fcd5
 
 ```
     "ssh_test": {
@@ -99,8 +115,20 @@ Note: if ~/.ssh/config does not exist, run the following Powershell command to c
 
 Note: the default path to the SAS executable (saspath) is /opt/sasinside/SASHome/SASFoundation/9.4/bin/sas_u8. Check with your SAS administrator for the exact path.  
 <<<<<<< HEAD
+<<<<<<< HEAD
 <<<<<<< HEAD 9. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
 ======= 7. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
+
+> > > > > > > # 1c9749a1db8834069abad011a75a8f27b7178235
+> > > > > > >
+> > > > > > > <<<<<<< HEAD
+
+9. # Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
+10. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file. > > > > > > > 1c9749a1db8834069abad011a75a8f27b7178235 > > > > > > > a970e15a6ba24e07b2298d59389688c419604474
+    =======
+    <<<<<<< HEAD
+    <<<<<<< HEAD 9. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
+    ======= 7. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
 
 > > > > > > > # 1c9749a1db8834069abad011a75a8f27b7178235
 > > > > > > >
@@ -110,6 +138,7 @@ Note: the default path to the SAS executable (saspath) is /opt/sasinside/SASHome
 10. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
     > > > > > > > 1c9749a1db8834069abad011a75a8f27b7178235
     > > > > > > > a970e15a6ba24e07b2298d59389688c419604474
+    > > > > > > > cd75556ec4b0b3b005e76050b2f7786fea85fcd5
 
 #### Mac
 
@@ -210,8 +239,18 @@ To run a SAS program connection to a SAS Viya instance:
 
 # <<<<<<< HEAD
 
+# <<<<<<< HEAD
+
 <<<<<<< HEAD
 **Note:** Your sign in status will persist in VS Code. You can view it and sign out from VS Code's `Accounts` menu.
+
+> > > > > > > # 1c9749a1db8834069abad011a75a8f27b7178235 3. VS Code connects to SAS and runs the code. 4. The results are displayed in the application. 5. The SAS output log and error information are displayed in the applicaiton.
+> > > > > > >
+> > > > > > > cd75556ec4b0b3b005e76050b2f7786fea85fcd5
+> > > > > > > <<<<<<< HEAD
+> > > > > > > **Note:** Your sign in status will persist in VS Code. You can view it and sign out from VS Code's `Accounts` menu.
+
+<<<<<<< HEAD
 
 > > > > > > > # 1c9749a1db8834069abad011a75a8f27b7178235 3. VS Code connects to SAS and runs the code. 4. The results are displayed in the application. 5. The SAS output log and error information are displayed in the applicaiton.
 
@@ -221,6 +260,10 @@ To run a SAS program connection to a SAS Viya instance:
 
 > > > > > > > 1c9749a1db8834069abad011a75a8f27b7178235 3. VS Code connects to SAS and runs the code. 4. The results are displayed in the application. 5. The SAS output log and error information are displayed in the applicaiton.
 > > > > > > > a970e15a6ba24e07b2298d59389688c419604474
+> > > > > > > =======
+> > > > > > > 1c9749a1db8834069abad011a75a8f27b7178235 3. VS Code connects to SAS and runs the code. 4. The results are displayed in the application. 5. The SAS output log and error information are displayed in the applicaiton.
+> > > > > > > a970e15a6ba24e07b2298d59389688c419604474
+> > > > > > > cd75556ec4b0b3b005e76050b2f7786fea85fcd5
 
 <img src="doc/images/runCode2.png"/>
 
