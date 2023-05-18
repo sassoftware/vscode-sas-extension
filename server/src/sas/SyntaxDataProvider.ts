@@ -767,7 +767,7 @@ function _setStatementsFromPubs(data: Statement[], context: string) {
       stmt.aliases.forEach(function (alias: string) {
         list.push(alias);
         db.procStmts[context][alias] = JSON.parse(
-          JSON.stringify({}, db.procStmts[context][stmtName])
+          JSON.stringify(db.procStmts[context][stmtName])
         ); // deep clone
         db.procStmts[context][alias][ID_ALIAS] = _resolveAliasFromPubs(
           alias,
