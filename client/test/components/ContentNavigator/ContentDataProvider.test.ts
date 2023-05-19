@@ -206,12 +206,13 @@ describe("ContentDataProvider", async function () {
             type: "test",
           },
         ],
+        uid: "1",
       })
     );
 
     expect(children.length).to.equal(1);
     expect(children[0]).to.deep.include(childItem);
-    expect(children[0].uid).to.equal("abc123@myFavorites");
+    expect(children[0].uid).to.equal("1/0");
   });
 
   it("stat - returns file data", async function () {

@@ -126,9 +126,9 @@ export class ContentModel {
     }
     const isTrash = TRASH_FOLDER_TYPE === getTypeName(item) || item.__trash__;
 
-    return result.items.map((childItem: ContentItem) => ({
+    return result.items.map((childItem: ContentItem, index) => ({
       ...childItem,
-      uid: `${childItem.id}${item.name}`.replace(/\s/g, ""),
+      uid: `${item.uid}/${index}`,
       permission: getPermission(childItem),
       __trash__: isTrash,
     }));
@@ -476,7 +476,7 @@ export class ContentModel {
     let numberCompletedServiceCalls = 0;
 
     return new Promise<ContentItem[]>((resolve) => {
-      supportedDelegateFolders.forEach(async (sDelegate) => {
+      supportedDelegateFolders.forEach(async (sDelegate, index) => {
         let result;
         if (sDelegate === "@sasRoot") {
           result = {
@@ -487,6 +487,7 @@ export class ContentModel {
         }
         this.delegateFolders[sDelegate] = {
           ...result.data,
+          uid: `${index}`,
           permission: getPermission(result.data),
         };
 
