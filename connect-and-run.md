@@ -199,8 +199,6 @@ To run a SAS program connection to a SAS Viya instance:
 
    2.5. Paste the authorization code in VS Code where indicated at the top of the screen.
 
-**Note:** Your sign in status will persist in VS Code. You can view it and sign out from VS Code's `Accounts` menu.
-
 3. VS Code connects to SAS and runs the code.
 
 4. The results are displayed in the application. 5. The SAS output log and error information are displayed in the applicaiton.

@@ -4,12 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
-## [Unreleased]
+## [v0.1.5] - 2023-05-19
 
 ### Added
 
 - Allow user to provide trusted CA certificates ([#220](https://github.com/sassoftware/vscode-sas-extension/issues/220))
 - Support Run Region ([#222](https://github.com/sassoftware/vscode-sas-extension/issues/222))
+- Infinite scrolling for data table ([#199](https://github.com/sassoftware/vscode-sas-extension/pull/199))
+- Updated folder icons ([#214](https://github.com/sassoftware/vscode-sas-extension/issues/214))
+
+### Fixed
+
+- Errors for libraries view in some cases ([#250](https://github.com/sassoftware/vscode-sas-extension/issues/250)), ([#252](https://github.com/sassoftware/vscode-sas-extension/issues/252))
+- Let built-in suggestions popup in some cases ([#259](https://github.com/sassoftware/vscode-sas-extension/issues/259))
+- Show user acount information correctly ([#235](https://github.com/sassoftware/vscode-sas-extension/issues/235))
+- Updated syntax data ([#249](https://github.com/sassoftware/vscode-sas-extension/issues/249))
 
 ## [v0.1.4] - 2023-04-28
 
