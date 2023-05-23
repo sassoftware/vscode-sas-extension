@@ -18,7 +18,7 @@ import { ConnectionType } from "../components/profile";
 import { getTokens, refreshToken } from "../connection/rest/auth";
 import { getCurrentUser } from "../connection/rest/identities";
 
-const SECRET_KEY = "SASAuth-123123";
+const SECRET_KEY = "SASAuth";
 
 interface SASAuthSession extends AuthenticationSession {
   refreshToken?: string;
