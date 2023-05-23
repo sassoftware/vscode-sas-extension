@@ -202,11 +202,15 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
   private async getStoredSessions(): Promise<
     Record<string, SASAuthSession> | undefined
   > {
-    const storedSessionData = await this.secretStorage.get(SECRET_KEY);
-    if (!storedSessionData) {
+    try {
+      const storedSessionData = await this.secretStorage.get(SECRET_KEY);
+      if (!storedSessionData) {
+        return;
+      }
+
+      return JSON.parse(storedSessionData);
+    } catch (e) {
       return;
     }
-
-    return JSON.parse(storedSessionData);
   }
 }
