@@ -13,6 +13,10 @@ import { LibraryItem, LibraryItemType, TableData } from "./types";
 
 const sortById = (a: LibraryItem, b: LibraryItem) => a.id.localeCompare(b.id);
 
+const requestOptions = {
+  headers: { Accept: "application/vnd.sas.collection+json" },
+};
+
 class LibraryModel {
   protected dataAccessApi: ReturnType<typeof DataAccessApi>;
   protected sessionId: string;
@@ -52,14 +56,17 @@ class LibraryModel {
         await this.setup();
         return await this.retryOnFail(
           async () =>
-            await this.dataAccessApi.getRows({
-              sessionId: this.sessionId,
-              libref: item.library || "",
-              tableName: item.name,
-              includeColumnNames: true,
-              start,
-              limit: 100,
-            })
+            await this.dataAccessApi.getRows(
+              {
+                sessionId: this.sessionId,
+                libref: item.library || "",
+                tableName: item.name,
+                includeColumnNames: true,
+                start,
+                limit: 100,
+              },
+              requestOptions
+            )
         );
       },
       (response) => ({
@@ -111,9 +118,6 @@ class LibraryModel {
 
   private async getLibraries(): Promise<LibraryItem[]> {
     await this.setup();
-    const options = {
-      headers: { Accept: "application/vnd.sas.collection+json" },
-    };
 
     let offset = -1 * DefaultRecordLimit;
     let items = [];
@@ -128,7 +132,7 @@ class LibraryModel {
               limit: DefaultRecordLimit,
               start: offset,
             },
-            options
+            requestOptions
           )
       );
 
@@ -142,10 +146,13 @@ class LibraryModel {
       items.map(async (item: LibraryItem): Promise<LibraryItem> => {
         const { data } = await this.retryOnFail(
           async () =>
-            await this.dataAccessApi.getLibrarySummary({
-              sessionId: this.sessionId,
-              libref: item.id,
-            })
+            await this.dataAccessApi.getLibrarySummary(
+              {
+                sessionId: this.sessionId,
+                libref: item.id,
+              },
+              requestOptions
+            )
         );
 
         return { ...item, readOnly: data.readOnly };
@@ -157,9 +164,6 @@ class LibraryModel {
 
   private async getTables(item?: LibraryItem): Promise<LibraryItem[]> {
     await this.setup();
-    const options = {
-      headers: { Accept: "application/vnd.sas.collection+json" },
-    };
 
     let offset = -1 * DefaultRecordLimit;
     let items = [];
@@ -175,7 +179,7 @@ class LibraryModel {
               limit: DefaultRecordLimit,
               start: offset,
             },
-            options
+            requestOptions
           )
       );
       items = [...items, ...data.items];
