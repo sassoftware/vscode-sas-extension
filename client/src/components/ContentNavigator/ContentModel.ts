@@ -195,7 +195,7 @@ export class ContentModel {
   public async createFile(
     item: ContentItem,
     fileName: string,
-    buffer?: Buffer
+    buffer?: ArrayBufferLike
   ): Promise<ContentItem | undefined> {
     const contentType = await this.getFileContentType(fileName);
     let createdResource: ContentItem;
@@ -420,7 +420,7 @@ export class ContentModel {
     return true;
   }
 
-  private async addMember(
+  public async addMember(
     uri: string | undefined,
     addMemberUri: string | undefined,
     properties: AddMemberProperties

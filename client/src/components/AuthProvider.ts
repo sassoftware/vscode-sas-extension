@@ -14,11 +14,11 @@ import {
   workspace,
 } from "vscode";
 import { profileConfig } from "../commands/profile";
+import { ConnectionType } from "../components/profile";
 import { getTokens, refreshToken } from "../connection/rest/auth";
 import { getCurrentUser } from "../connection/rest/identities";
-import { ConnectionType } from "../components/profile";
 
-const SECRET_KEY = "SASAuth";
+const SECRET_KEY = "SASAuth-123123";
 
 interface SASAuthSession extends AuthenticationSession {
   refreshToken?: string;

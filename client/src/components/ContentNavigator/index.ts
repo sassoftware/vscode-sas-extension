@@ -47,17 +47,6 @@ class ContentNavigator implements SubscriptionProvider {
       new ContentModel(),
       context.extensionUri
     );
-    this.treeView = window.createTreeView("sas-content-navigator", {
-      treeDataProvider: this.contentDataProvider,
-    });
-    this.treeView.onDidChangeVisibility(async () => {
-      if (this.treeView.visible) {
-        const activeProfile: ViyaProfile = profileConfig.getProfileByName(
-          profileConfig.getActiveProfile()
-        );
-        await this.contentDataProvider.connect(activeProfile.endpoint);
-      }
-    });
 
     workspace.registerFileSystemProvider("sas", this.contentDataProvider);
     workspace.registerTextDocumentContentProvider(
@@ -76,7 +65,7 @@ class ContentNavigator implements SubscriptionProvider {
 
   public getSubscriptions(): Disposable[] {
     return [
-      this.treeView,
+      ...this.contentDataProvider.getSubscriptions(),
       commands.registerCommand(
         "SAS.addFileToMyFolder",
         async (resource: Uri) => {
@@ -271,7 +260,7 @@ class ContentNavigator implements SubscriptionProvider {
       ),
       commands.registerCommand("SAS.collapseAllContent", () => {
         commands.executeCommand(
-          "workbench.actions.treeView.sas-content-navigator.collapseAll"
+          "workbench.actions.treeView.contentDataProvider.collapseAll"
         );
       }),
       workspace.onDidChangeConfiguration(

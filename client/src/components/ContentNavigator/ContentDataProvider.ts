@@ -3,8 +3,12 @@
 
 import { readFile } from "fs";
 import { basename } from "path";
+import { sprintf } from "sprintf-js";
 import { promisify } from "util";
 import {
+  DataTransfer,
+  DataTransferFile,
+  DataTransferItem,
   Disposable,
   Event,
   EventEmitter,
@@ -18,12 +22,23 @@ import {
   TextDocumentContentProvider,
   ThemeIcon,
   TreeDataProvider,
+  TreeDragAndDropController,
   TreeItem,
   TreeItemCollapsibleState,
+  TreeView,
   Uri,
   window,
 } from "vscode";
+import { profileConfig } from "../../commands/profile";
+import { SubscriptionProvider } from "../SubscriptionProvider";
+import { ViyaProfile } from "../profile";
 import { ContentModel } from "./ContentModel";
+import {
+  FAVORITES_FOLDER_TYPE,
+  Messages,
+  ROOT_FOLDER_TYPE,
+  TRASH_FOLDER_TYPE,
+} from "./const";
 import { ContentItem } from "./types";
 import {
   getCreationDate,
@@ -34,26 +49,35 @@ import {
   getModifyDate,
   getTypeName,
   getUri,
+  isContentItem,
   isItemInRecycleBin,
+  isReference,
   resourceType,
 } from "./utils";
-import {
-  FAVORITES_FOLDER_TYPE,
-  ROOT_FOLDER_TYPE,
-  TRASH_FOLDER_TYPE,
-} from "./const";
 
 class ContentDataProvider
   implements
     TreeDataProvider<ContentItem>,
     FileSystemProvider,
-    TextDocumentContentProvider
+    TextDocumentContentProvider,
+    SubscriptionProvider,
+    TreeDragAndDropController<ContentItem>
 {
   private _onDidChangeFile: EventEmitter<FileChangeEvent[]>;
   private _onDidChangeTreeData: EventEmitter<ContentItem | undefined>;
   private _onDidChange: EventEmitter<Uri>;
+  private _treeView: TreeView<ContentItem>;
   private readonly model: ContentModel;
   private extensionUri: Uri;
+
+  public dropMimeTypes: string[] = [
+    "application/vnd.code.tree.contentDataProvider",
+    "files",
+    "text/uri-list",
+  ];
+  public dragMimeTypes: string[] = [
+    "application/vnd.code.tree.contentDataProvider",
+  ];
 
   constructor(model: ContentModel, extensionUri: Uri) {
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
@@ -61,6 +85,99 @@ class ContentDataProvider
     this._onDidChange = new EventEmitter<Uri>();
     this.model = model;
     this.extensionUri = extensionUri;
+
+    this._treeView = window.createTreeView("contentDataProvider", {
+      treeDataProvider: this,
+      dragAndDropController: this,
+    });
+
+    this._treeView.onDidChangeVisibility(async () => {
+      if (this._treeView.visible) {
+        const activeProfile: ViyaProfile = profileConfig.getProfileByName(
+          profileConfig.getActiveProfile()
+        );
+        await this.connect(activeProfile.endpoint);
+      }
+    });
+  }
+
+  public async handleDrop(
+    target: ContentItem,
+    sources: DataTransfer
+  ): Promise<void> {
+    const files: DataTransferFile[] = [];
+    sources.forEach(async (item: DataTransferItem) => {
+      if (Array.isArray(item.value) && isContentItem(item.value[0])) {
+        let success = false;
+        let message = Messages.FileDropError;
+        if (item.value[0].flags.isInRecycleBin) {
+          message = Messages.FileDragFromTrashError;
+        } else if (isReference(item.value[0])) {
+          message = Messages.FileDragFromFavorites;
+        } else if (target.type === TRASH_FOLDER_TYPE) {
+          success = await this.recycleResource(item.value[0]);
+        } else if (target.type === FAVORITES_FOLDER_TYPE) {
+          success = await this.addToMyFavorites(item.value[0]);
+        } else {
+          success = await this.model.moveTo(item.value[0], target.uri);
+          if (success) {
+            this.refresh();
+          }
+        }
+
+        if (!success) {
+          await window.showErrorMessage(
+            sprintf(message, {
+              name: item.value[0].name,
+            })
+          );
+        }
+
+        return;
+      }
+
+      const file = item.asFile();
+      if (file) {
+        files.push(file);
+        return;
+      }
+
+      const itemUri = Uri.parse(item.value);
+      files.push({
+        name: basename(itemUri.path),
+        uri: itemUri,
+        data: async () => {
+          return await promisify(readFile)(itemUri.fsPath);
+        },
+      });
+    });
+
+    for (const file of files) {
+      const fileCreated = await this.createFile(
+        target,
+        file.name,
+        await file.data()
+      );
+      if (!fileCreated) {
+        await window.showErrorMessage(
+          sprintf(Messages.FileDropError, {
+            name: file.name,
+          })
+        );
+      }
+    }
+  }
+
+  public handleDrag(
+    source: ContentItem[],
+    dataTransfer: DataTransfer
+  ): void | Thenable<void> {
+    const dataTransferItem = new DataTransferItem(source);
+    dataTransfer.set(this.dragMimeTypes[0], dataTransferItem);
+  }
+
+  public getSubscriptions(): Disposable[] {
+    return [this._treeView];
   }
 
   get onDidChangeFile(): Event<FileChangeEvent[]> {
@@ -213,7 +330,7 @@ class ContentDataProvider
   public async createFile(
     item: ContentItem,
     fileName: string,
-    buffer?: Buffer
+    buffer?: ArrayBufferLike
   ): Promise<Uri | undefined> {
     const newItem = await this.model.createFile(item, fileName, buffer);
     if (newItem) {
