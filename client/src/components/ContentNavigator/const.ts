@@ -43,15 +43,13 @@ export const FOLDER_TYPES = [
 ];
 
 export const Messages = {
-  AddToFavoritesError: "The item could not be added to My Favorites.",
   AddFileToMyFolderFailure: "Unable to add file to my folder.",
   AddFileToMyFolderSuccess: "File added to my folder.",
+  AddToFavoritesError: "The item could not be added to My Favorites.",
   DeleteButtonLabel: "Delete",
-  DeleteWarningMessage:
-    'Are you sure you want to permanently delete the item "{name}"?',
+  DeleteWarningMessage: 'Are you sure you want to permanently delete the item "{name}"?',
   EmptyRecycleBinError: "Unable to empty the recycle bin.",
-  EmptyRecycleBinWarningMessage:
-    "Are you sure you want to permanently delete all the items? You cannot undo this action.",
+  EmptyRecycleBinWarningMessage: "Are you sure you want to permanently delete all the items? You cannot undo this action.",
   FileDeletionError: "Unable to delete file.",
   FileDragFromFavorites: "Unable to drag files from my favorites.",
   FileDragFromTrashError: "Unable to drag files from trash.",
@@ -61,8 +59,7 @@ export const Messages = {
   FileValidationError: "Invalid file name.",
   FolderDeletionError: "Unable to delete folder.",
   FolderRestoreError: "Unable to restore folder.",
-  FolderValidationError:
-    "The folder name cannot contain more than 100 characters.",
+  FolderValidationError: "The folder name cannot contain more than 100 characters.",
   NewFileCreationError: 'Unable to create file "%(name)s".',
   NewFilePrompt: "Enter a file name.",
   NewFileTitle: "New File",

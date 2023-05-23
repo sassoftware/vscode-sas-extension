@@ -305,28 +305,6 @@ class ContentDataProvider
     }
   }
 
-  public async addFileToMyContent(file: Uri): Promise<Uri | undefined> {
-    let fileData: Buffer;
-    try {
-      fileData = await promisify(readFile)(file.fsPath);
-    } catch (e) {
-      return undefined;
-    }
-
-    // There's a change we haven't connected to SAS content. Lets
-    // do that here.
-    if (!this.model.getDelegateFolder("@myFolder")) {
-      await this.model.getChildren();
-    }
-
-    const myFolder = this.model.getDelegateFolder("@myFolder");
-    if (!myFolder) {
-      return undefined;
-    }
-
-    return await this.createFile(myFolder, basename(file.path), fileData);
-  }
-
   public async createFile(
     item: ContentItem,
     fileName: string,
