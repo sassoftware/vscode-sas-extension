@@ -8,7 +8,6 @@ import {
   Disposable,
   ExtensionContext,
   TextDocumentChangeEvent,
-  TreeView,
   Uri,
   window,
   workspace,
@@ -38,7 +37,6 @@ const folderValidator = (value: string): string | null =>
 
 class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
-  private treeView: TreeView<ContentItem>;
 
   private dirtyFiles: Record<string, boolean>;
 
@@ -274,11 +272,7 @@ class ContentNavigator implements SubscriptionProvider {
       return;
     }
 
-    this.treeView.reveal(resource, {
-      expand: true,
-      select: false,
-      focus: false,
-    });
+    this.contentDataProvider.reveal(resource);
   }
 }
 

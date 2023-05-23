@@ -345,6 +345,14 @@ class ContentDataProvider
     throw new Error("Method not implemented.");
   }
 
+  public reveal(item: ContentItem): void {
+    this._treeView.reveal(item, {
+      expand: true,
+      select: false,
+      focus: false,
+    });
+  }
+
   private async handleContentItemDrop(
     target: ContentItem,
     item: ContentItem
