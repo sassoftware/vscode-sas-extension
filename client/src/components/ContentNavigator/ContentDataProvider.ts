@@ -7,7 +7,6 @@ import { sprintf } from "sprintf-js";
 import { promisify } from "util";
 import {
   DataTransfer,
-  DataTransferFile,
   DataTransferItem,
   Disposable,
   Event,
@@ -72,7 +71,6 @@ class ContentDataProvider
 
   public dropMimeTypes: string[] = [
     "application/vnd.code.tree.contentDataProvider",
-    "files",
     "text/uri-list",
   ];
   public dragMimeTypes: string[] = [
@@ -105,67 +103,13 @@ class ContentDataProvider
     target: ContentItem,
     sources: DataTransfer
   ): Promise<void> {
-    const files: DataTransferFile[] = [];
     sources.forEach(async (item: DataTransferItem) => {
       if (Array.isArray(item.value) && isContentItem(item.value[0])) {
-        let success = false;
-        let message = Messages.FileDropError;
-        if (item.value[0].flags.isInRecycleBin) {
-          message = Messages.FileDragFromTrashError;
-        } else if (isReference(item.value[0])) {
-          message = Messages.FileDragFromFavorites;
-        } else if (target.type === TRASH_FOLDER_TYPE) {
-          success = await this.recycleResource(item.value[0]);
-        } else if (target.type === FAVORITES_FOLDER_TYPE) {
-          success = await this.addToMyFavorites(item.value[0]);
-        } else {
-          success = await this.model.moveTo(item.value[0], target.uri);
-          if (success) {
-            this.refresh();
-          }
-        }
-
-        if (!success) {
-          await window.showErrorMessage(
-            sprintf(message, {
-              name: item.value[0].name,
-            })
-          );
-        }
-
-        return;
+        return this.handleContentItemDrop(target, item.value[0]);
       }
 
-      const file = item.asFile();
-      if (file) {
-        files.push(file);
-        return;
-      }
-
-      const itemUri = Uri.parse(item.value);
-      files.push({
-        name: basename(itemUri.path),
-        uri: itemUri,
-        data: async () => {
-          return await promisify(readFile)(itemUri.fsPath);
-        },
-      });
+      return this.handleDataTransferItemDrop(target, item);
     });
-
-    for (const file of files) {
-      const fileCreated = await this.createFile(
-        target,
-        file.name,
-        await file.data()
-      );
-      if (!fileCreated) {
-        await window.showErrorMessage(
-          sprintf(Messages.FileDropError, {
-            name: file.name,
-          })
-        );
-      }
-    }
   }
 
   public handleDrag(
@@ -223,44 +167,6 @@ class ContentDataProvider
   public async provideTextDocumentContent(uri: Uri): Promise<string> {
     // use text document content provider to display the readonly editor for the files in the recycle bin
     return await this.model.getContentByUri(uri);
-  }
-
-  private iconPathForItem(
-    item: ContentItem
-  ): ThemeIcon | { light: Uri; dark: Uri } {
-    const isContainer = getIsContainer(item);
-    let icon = "";
-    if (isContainer) {
-      const type = getTypeName(item);
-      switch (type) {
-        case ROOT_FOLDER_TYPE:
-          icon = "sasFolders";
-          break;
-        case TRASH_FOLDER_TYPE:
-          icon = "delete";
-          break;
-        case FAVORITES_FOLDER_TYPE:
-          icon = "favoritesFolder";
-          break;
-        default:
-          icon = "folder";
-          break;
-      }
-    } else {
-      const extension = item.name.split(".").pop().toLowerCase();
-      if (extension === "sas") {
-        icon = "sasProgramFile";
-      }
-    }
-    return icon !== ""
-      ? {
-          dark: Uri.joinPath(this.extensionUri, `icons/dark/${icon}Dark.svg`),
-          light: Uri.joinPath(
-            this.extensionUri,
-            `icons/light/${icon}Light.svg`
-          ),
-        }
-      : ThemeIcon.File;
   }
 
   public getChildren(item?: ContentItem): ProviderResult<ContentItem[]> {
@@ -437,6 +343,95 @@ class ContentDataProvider
 
   public createDirectory(): void | Thenable<void> {
     throw new Error("Method not implemented.");
+  }
+
+  private async handleContentItemDrop(
+    target: ContentItem,
+    item: ContentItem
+  ): Promise<void> {
+    let success = false;
+    let message = Messages.FileDropError;
+    if (item.flags.isInRecycleBin) {
+      message = Messages.FileDragFromTrashError;
+    } else if (isReference(item)) {
+      message = Messages.FileDragFromFavorites;
+    } else if (target.type === TRASH_FOLDER_TYPE) {
+      success = await this.recycleResource(item);
+    } else if (target.type === FAVORITES_FOLDER_TYPE) {
+      success = await this.addToMyFavorites(item);
+    } else {
+      success = await this.model.moveTo(item, target.uri);
+      if (success) {
+        this.refresh();
+      }
+    }
+
+    if (!success) {
+      await window.showErrorMessage(
+        sprintf(message, {
+          name: item.name,
+        })
+      );
+    }
+  }
+
+  private async handleDataTransferItemDrop(
+    target: ContentItem,
+    item: DataTransferItem
+  ): Promise<void> {
+    const itemUri = Uri.parse(item.value);
+    const name = basename(itemUri.path);
+    const fileCreated = await this.createFile(
+      target,
+      name,
+      await promisify(readFile)(itemUri.fsPath)
+    );
+
+    if (!fileCreated) {
+      await window.showErrorMessage(
+        sprintf(Messages.FileDropError, {
+          name,
+        })
+      );
+    }
+  }
+
+  private iconPathForItem(
+    item: ContentItem
+  ): ThemeIcon | { light: Uri; dark: Uri } {
+    const isContainer = getIsContainer(item);
+    let icon = "";
+    if (isContainer) {
+      const type = getTypeName(item);
+      switch (type) {
+        case ROOT_FOLDER_TYPE:
+          icon = "sasFolders";
+          break;
+        case TRASH_FOLDER_TYPE:
+          icon = "delete";
+          break;
+        case FAVORITES_FOLDER_TYPE:
+          icon = "favoritesFolder";
+          break;
+        default:
+          icon = "folder";
+          break;
+      }
+    } else {
+      const extension = item.name.split(".").pop().toLowerCase();
+      if (extension === "sas") {
+        icon = "sasProgramFile";
+      }
+    }
+    return icon !== ""
+      ? {
+          dark: Uri.joinPath(this.extensionUri, `icons/dark/${icon}Dark.svg`),
+          light: Uri.joinPath(
+            this.extensionUri,
+            `icons/light/${icon}Light.svg`
+          ),
+        }
+      : ThemeIcon.File;
   }
 }
 

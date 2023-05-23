@@ -226,6 +226,7 @@ export class ContentModel {
         contentType,
       }
     );
+
     if (!memberAdded) {
       return;
     }
