@@ -64,47 +64,49 @@ class ContentNavigator implements SubscriptionProvider {
   public getSubscriptions(): Disposable[] {
     return [
       ...this.contentDataProvider.getSubscriptions(),
-      commands.registerCommand(
-        "SAS.deleteResource",
-        async (resource: ContentItem) => {
-          const isContainer = getIsContainer(resource);
-          const moveToRecycleBin =
-            !isItemInRecycleBin(resource) && resource.permission.write;
-          if (
-            !moveToRecycleBin &&
-            !(await window.showWarningMessage(
-              Messages.DeleteWarningMessage.replace("{name}", resource.name),
-              { modal: true },
-              Messages.DeleteButtonLabel
-            ))
-          ) {
-            return;
+      commands.registerCommand("SAS.deleteResource", async () => {
+        this.contentDataProvider.treeView.selection.forEach(
+          async (resource: ContentItem) => {
+            const isContainer = getIsContainer(resource);
+            const moveToRecycleBin =
+              !isItemInRecycleBin(resource) && resource.permission.write;
+            if (
+              !moveToRecycleBin &&
+              !(await window.showWarningMessage(
+                Messages.DeleteWarningMessage.replace("{name}", resource.name),
+                { modal: true },
+                Messages.DeleteButtonLabel
+              ))
+            ) {
+              return;
+            }
+            const deleteResult = moveToRecycleBin
+              ? await this.contentDataProvider.recycleResource(resource)
+              : await this.contentDataProvider.deleteResource(resource);
+            if (!deleteResult) {
+              window.showErrorMessage(
+                isContainer
+                  ? Messages.FolderDeletionError
+                  : Messages.FileDeletionError
+              );
+            }
           }
-          const deleteResult = moveToRecycleBin
-            ? await this.contentDataProvider.recycleResource(resource)
-            : await this.contentDataProvider.deleteResource(resource);
-          if (!deleteResult) {
-            window.showErrorMessage(
-              isContainer
-                ? Messages.FolderDeletionError
-                : Messages.FileDeletionError
-            );
+        );
+      }),
+      commands.registerCommand("SAS.restoreResource", async () => {
+        this.contentDataProvider.treeView.selection.forEach(
+          async (resource: ContentItem) => {
+            const isContainer = getIsContainer(resource);
+            if (!(await this.contentDataProvider.restoreResource(resource))) {
+              window.showErrorMessage(
+                isContainer
+                  ? Messages.FolderRestoreError
+                  : Messages.FileRestoreError
+              );
+            }
           }
-        }
-      ),
-      commands.registerCommand(
-        "SAS.restoreResource",
-        async (resource: ContentItem) => {
-          const isContainer = getIsContainer(resource);
-          if (!(await this.contentDataProvider.restoreResource(resource))) {
-            window.showErrorMessage(
-              isContainer
-                ? Messages.FolderRestoreError
-                : Messages.FileRestoreError
-            );
-          }
-        }
-      ),
+        );
+      }),
       commands.registerCommand("SAS.emptyRecycleBin", async () => {
         if (
           !(await window.showWarningMessage(

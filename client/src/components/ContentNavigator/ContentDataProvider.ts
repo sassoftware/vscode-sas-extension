@@ -77,6 +77,10 @@ class ContentDataProvider
     "application/vnd.code.tree.contentDataProvider",
   ];
 
+  get treeView(): TreeView<ContentItem> {
+    return this._treeView;
+  }
+
   constructor(model: ContentModel, extensionUri: Uri) {
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
@@ -87,6 +91,7 @@ class ContentDataProvider
     this._treeView = window.createTreeView("contentDataProvider", {
       treeDataProvider: this,
       dragAndDropController: this,
+      canSelectMany: true,
     });
 
     this._treeView.onDidChangeVisibility(async () => {
@@ -105,10 +110,13 @@ class ContentDataProvider
   ): Promise<void> {
     sources.forEach(async (item: DataTransferItem) => {
       if (Array.isArray(item.value) && isContentItem(item.value[0])) {
-        return this.handleContentItemDrop(target, item.value[0]);
+        item.value.forEach(async (contentItem: ContentItem) => {
+          await this.handleContentItemDrop(target, contentItem);
+        });
+        return;
       }
 
-      return this.handleDataTransferItemDrop(target, item);
+      return await this.handleDataTransferItemDrop(target, item);
     });
   }
 
