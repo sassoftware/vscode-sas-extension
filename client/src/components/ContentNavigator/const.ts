@@ -53,7 +53,7 @@ export const Messages = {
   FileDeletionError: "Unable to delete file.",
   FileDragFromFavorites: "Unable to drag files from my favorites.",
   FileDragFromTrashError: "Unable to drag files from trash.",
-  FileDropError: 'Unable to drop file "%(name)s".',
+  FileDropError: 'Unable to drop item "%(name)s".',
   FileOpenError: "The file type is unsupported.",
   FileRestoreError: "Unable to restore file.",
   FileValidationError: "Invalid file name.",

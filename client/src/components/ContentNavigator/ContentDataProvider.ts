@@ -1,8 +1,8 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
-import { readFile } from "fs";
-import { basename } from "path";
+import { lstat, readFile, readdir } from "fs";
+import { basename, join } from "path";
 import { sprintf } from "sprintf-js";
 import { promisify } from "util";
 import {
@@ -383,6 +383,50 @@ class ContentDataProvider
     }
   }
 
+  private async handleFolderDrop(
+    target: ContentItem,
+    path: string
+  ): Promise<boolean> {
+    const folder = await this.model.createFolder(target, basename(path));
+    let success = true;
+    if (!folder) {
+      await window.showErrorMessage(
+        sprintf(Messages.FileDropError, {
+          name: basename(path),
+        })
+      );
+
+      return false;
+    }
+
+    // Read all the files in the folder and upload them
+    const filesOrFolders = await promisify(readdir)(path);
+    filesOrFolders.forEach(async (fileOrFolderName: string) => {
+      const fileOrFolder = join(path, fileOrFolderName);
+      const isDirectory = (await promisify(lstat)(fileOrFolder)).isDirectory();
+      if (isDirectory) {
+        success = await this.handleFolderDrop(folder, fileOrFolder);
+      } else {
+        const name = basename(fileOrFolder);
+        const fileCreated = await this.createFile(
+          folder,
+          name,
+          await promisify(readFile)(fileOrFolder)
+        );
+        if (!fileCreated) {
+          success = false;
+          await window.showErrorMessage(
+            sprintf(Messages.FileDropError, {
+              name,
+            })
+          );
+        }
+      }
+    });
+
+    return success;
+  }
+
   private async handleDataTransferItemDrop(
     target: ContentItem,
     item: DataTransferItem
@@ -392,6 +436,18 @@ class ContentDataProvider
     item.value.split("\n").forEach(async (uri: string) => {
       const itemUri = Uri.parse(uri.trim());
       const name = basename(itemUri.path);
+      const isDirectory = (
+        await promisify(lstat)(itemUri.fsPath)
+      ).isDirectory();
+      if (isDirectory) {
+        const success = await this.handleFolderDrop(target, itemUri.fsPath);
+        if (success) {
+          this.refresh();
+        }
+
+        return;
+      }
+
       const fileCreated = await this.createFile(
         target,
         name,
