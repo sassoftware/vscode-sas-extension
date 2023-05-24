@@ -2,7 +2,7 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 const CONTENT_FOLDER_ID = "CONTENT_FOLDER_ID";
-const ROOT_FOLDER_TYPE = "RootFolder";
+export const ROOT_FOLDER_TYPE = "RootFolder";
 
 export const ROOT_FOLDER = {
   // actual root for service
@@ -27,18 +27,19 @@ export const ROOT_FOLDER = {
 };
 
 export const FILE_TYPE = "file";
-export const FOLDER_TYPE = "folder";
-export const TRASH_FOLDER = "trashFolder";
 export const FILE_TYPES = [FILE_TYPE];
-export const FAVORITES_FOLDER = "favoritesFolder";
+export const FOLDER_TYPE = "folder";
+export const MYFOLDER_TYPE = "myFolder";
+export const TRASH_FOLDER_TYPE = "trashFolder";
+export const FAVORITES_FOLDER_TYPE = "favoritesFolder";
 export const FOLDER_TYPES = [
   ROOT_FOLDER_TYPE,
   FOLDER_TYPE,
-  "myFolder",
-  FAVORITES_FOLDER,
+  MYFOLDER_TYPE,
+  FAVORITES_FOLDER_TYPE,
   "userFolder",
   "userRoot",
-  TRASH_FOLDER,
+  TRASH_FOLDER_TYPE,
 ];
 
 export const Messages = {

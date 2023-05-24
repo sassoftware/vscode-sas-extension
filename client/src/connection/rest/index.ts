@@ -222,8 +222,7 @@ async function close() {
 }
 
 export function getSession(c: Config): Session {
-  config = { ...c };
-  config.endpoint = config.endpoint.replace(/\/$/, "");
+  config = c;
   getApiConfig().basePath = config.endpoint + "/compute";
 
   return {

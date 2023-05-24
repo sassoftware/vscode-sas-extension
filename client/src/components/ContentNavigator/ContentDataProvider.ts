@@ -29,9 +29,15 @@ import {
   getLabel,
   getLink,
   getModifyDate,
+  getTypeName,
   getUri,
   resourceType,
 } from "./utils";
+import {
+  FAVORITES_FOLDER_TYPE,
+  ROOT_FOLDER_TYPE,
+  TRASH_FOLDER_TYPE,
+} from "./const";
 
 class ContentDataProvider
   implements
@@ -102,25 +108,38 @@ class ContentDataProvider
     item: ContentItem
   ): ThemeIcon | { light: Uri; dark: Uri } {
     const isContainer = getIsContainer(item);
+    let icon = "";
     if (isContainer) {
-      return ThemeIcon.Folder;
+      const type = getTypeName(item);
+      switch (type) {
+        case ROOT_FOLDER_TYPE:
+          icon = "sasFolders";
+          break;
+        case TRASH_FOLDER_TYPE:
+          icon = "delete";
+          break;
+        case FAVORITES_FOLDER_TYPE:
+          icon = "favoritesFolder";
+          break;
+        default:
+          icon = "folder";
+          break;
+      }
+    } else {
+      const extension = item.name.split(".").pop().toLowerCase();
+      if (extension === "sas") {
+        icon = "sasProgramFile";
+      }
     }
-
-    const extension = item.name.split(".").pop().toLowerCase();
-    if (extension === "sas") {
-      return {
-        dark: Uri.joinPath(
-          this.extensionUri,
-          "icons/dark/sasProgramFileDark.svg"
-        ),
-        light: Uri.joinPath(
-          this.extensionUri,
-          "icons/light/sasProgramFileLight.svg"
-        ),
-      };
-    }
-
-    return isContainer ? ThemeIcon.Folder : ThemeIcon.File;
+    return icon !== ""
+      ? {
+          dark: Uri.joinPath(this.extensionUri, `icons/dark/${icon}Dark.svg`),
+          light: Uri.joinPath(
+            this.extensionUri,
+            `icons/light/${icon}Light.svg`
+          ),
+        }
+      : ThemeIcon.File;
   }
 
   public getChildren(item?: ContentItem): ProviderResult<ContentItem[]> {

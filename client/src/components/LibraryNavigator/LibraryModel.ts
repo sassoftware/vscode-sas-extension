@@ -1,16 +1,21 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
+import { AxiosResponse } from "axios";
+import { sprintf } from "sprintf-js";
 import { ProgressLocation, window } from "vscode";
 import { getSession } from "../../connection";
 import { DataAccessApi } from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
-import { LibraryItemType, LibraryItem, TableData } from "./types";
-import { sprintf } from "sprintf-js";
+import PaginatedResultSet from "./PaginatedResultSet";
 import { DefaultRecordLimit, Messages } from "./const";
-import { AxiosResponse } from "axios";
+import { LibraryItem, LibraryItemType, TableData } from "./types";
 
 const sortById = (a: LibraryItem, b: LibraryItem) => a.id.localeCompare(b.id);
+
+const requestOptions = {
+  headers: { Accept: "application/vnd.sas.collection+json" },
+};
 
 class LibraryModel {
   protected dataAccessApi: ReturnType<typeof DataAccessApi>;
@@ -41,22 +46,34 @@ class LibraryModel {
     await this.connect();
   }
 
-  public async loadViewData(item: LibraryItem): Promise<TableData> {
-    await this.setup();
-    const response = await this.retryOnFail(
-      async () =>
-        await this.dataAccessApi.getRows({
-          sessionId: this.sessionId,
-          libref: item.library,
-          tableName: item.name,
-          includeColumnNames: true,
-        })
-    );
+  public reset(): void {
+    this.sessionId = undefined;
+  }
 
-    return {
-      headers: response.data.items[0],
-      rows: response.data.items.slice(1),
-    };
+  public getTableResultSet(item: LibraryItem): PaginatedResultSet<TableData> {
+    return new PaginatedResultSet<TableData>(
+      async (start: number) => {
+        await this.setup();
+        return await this.retryOnFail(
+          async () =>
+            await this.dataAccessApi.getRows(
+              {
+                sessionId: this.sessionId,
+                libref: item.library || "",
+                tableName: item.name,
+                includeColumnNames: true,
+                start,
+                limit: 100,
+              },
+              requestOptions
+            )
+        );
+      },
+      (response) => ({
+        headers: response.data.items[0],
+        rows: response.data.items.slice(1),
+      })
+    );
   }
 
   public async getTable(item: LibraryItem) {
@@ -65,7 +82,7 @@ class LibraryModel {
       async () =>
         await this.dataAccessApi.getTable({
           sessionId: this.sessionId,
-          libref: item.library,
+          libref: item.library || "",
           tableName: item.name,
         })
     );
@@ -101,9 +118,6 @@ class LibraryModel {
 
   private async getLibraries(): Promise<LibraryItem[]> {
     await this.setup();
-    const options = {
-      headers: { Accept: "application/vnd.sas.collection+json" },
-    };
 
     let offset = -1 * DefaultRecordLimit;
     let items = [];
@@ -118,7 +132,7 @@ class LibraryModel {
               limit: DefaultRecordLimit,
               start: offset,
             },
-            options
+            requestOptions
           )
       );
 
@@ -132,10 +146,13 @@ class LibraryModel {
       items.map(async (item: LibraryItem): Promise<LibraryItem> => {
         const { data } = await this.retryOnFail(
           async () =>
-            await this.dataAccessApi.getLibrarySummary({
-              sessionId: this.sessionId,
-              libref: item.id,
-            })
+            await this.dataAccessApi.getLibrarySummary(
+              {
+                sessionId: this.sessionId,
+                libref: item.id,
+              },
+              requestOptions
+            )
         );
 
         return { ...item, readOnly: data.readOnly };
@@ -147,9 +164,6 @@ class LibraryModel {
 
   private async getTables(item?: LibraryItem): Promise<LibraryItem[]> {
     await this.setup();
-    const options = {
-      headers: { Accept: "application/vnd.sas.collection+json" },
-    };
 
     let offset = -1 * DefaultRecordLimit;
     let items = [];
@@ -165,7 +179,7 @@ class LibraryModel {
               limit: DefaultRecordLimit,
               start: offset,
             },
-            options
+            requestOptions
           )
       );
       items = [...items, ...data.items];

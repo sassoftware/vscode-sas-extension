@@ -19,7 +19,7 @@ const buildOptions = {
   entryPoints: {
     "./client/dist/node/extension": "./client/src/node/extension.ts",
     "./server/dist/node/server": "./server/src/node/server.ts",
-    "./client/dist/webview": "./client/src/webview/index.ts",
+    "./client/dist/webview/DataViewer": "./client/src/webview/DataViewer.tsx",
   },
   bundle: true,
   outdir: ".",
@@ -32,6 +32,9 @@ const buildOptions = {
   sourcemap: !!dev,
   minify: !dev,
   plugins: dev ? plugins : [],
+  define: {
+    "process.env.NODE_ENV": dev ? `"development"` : `"production"`,
+  },
 };
 
 const ctx = await esbuild.context(buildOptions);

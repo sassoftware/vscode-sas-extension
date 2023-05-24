@@ -57,6 +57,12 @@ export enum ConnectionType {
  * Profile is an interface that represents a users profile.  Currently
  * supports two different authentication flows, token and password
  * flow with the clientId and clientSecret.
+ *
+ * Direct connect is also supported where a server is already started with
+ * a static serverId. Setting serverId in the profile indicates that a connection
+ * to that specific server with Id will be created. This overrides the context
+ * value. Normally this option should not be set by the user since it is most likely
+ * being set by an automated process.
  */
 export interface ViyaProfile {
   connectionType: ConnectionType.Rest;
@@ -64,6 +70,7 @@ export interface ViyaProfile {
   clientId?: string;
   clientSecret?: string;
   context?: string;
+  serverId?: string;
 }
 
 export interface SSHProfile {
@@ -275,9 +282,16 @@ export class ProfileConfig {
 
     const profileList = this.getAllProfiles();
     if (activeProfileName in profileList) {
+      const profile = { ...profileList[activeProfileName] };
+      if (
+        profile.connectionType === ConnectionType.Rest &&
+        /\/$/.test(profile.endpoint)
+      ) {
+        profile.endpoint = profile.endpoint.replace(/\/$/, "");
+      }
       const detail: ProfileDetail = {
         name: activeProfileName,
-        profile: profileList[activeProfileName],
+        profile,
       };
       return detail;
     } else {
