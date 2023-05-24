@@ -387,21 +387,25 @@ class ContentDataProvider
     target: ContentItem,
     item: DataTransferItem
   ): Promise<void> {
-    const itemUri = Uri.parse(item.value);
-    const name = basename(itemUri.path);
-    const fileCreated = await this.createFile(
-      target,
-      name,
-      await promisify(readFile)(itemUri.fsPath)
-    );
-
-    if (!fileCreated) {
-      await window.showErrorMessage(
-        sprintf(Messages.FileDropError, {
-          name,
-        })
+    // If a user drops multiple files, there will be multiple
+    // uris separated by newlines
+    item.value.split("\n").forEach(async (uri: string) => {
+      const itemUri = Uri.parse(uri.trim());
+      const name = basename(itemUri.path);
+      const fileCreated = await this.createFile(
+        target,
+        name,
+        await promisify(readFile)(itemUri.fsPath)
       );
-    }
+
+      if (!fileCreated) {
+        await window.showErrorMessage(
+          sprintf(Messages.FileDropError, {
+            name,
+          })
+        );
+      }
+    });
   }
 
   private iconPathForItem(
