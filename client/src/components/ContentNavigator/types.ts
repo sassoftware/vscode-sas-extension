@@ -12,6 +12,8 @@ export interface ContentItem {
   uri: string;
   uid?: string;
   __trash__: boolean;
+  __isFavorite__: boolean;
+  __hasFavorite__?: string;
   memberCount?: number;
   permission: Permission;
 }

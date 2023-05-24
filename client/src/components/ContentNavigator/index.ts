@@ -237,7 +237,7 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.addToFavorites",
         async (resource: ContentItem) => {
-          if (!(await this.contentDataProvider.addToFavorites(resource))) {
+          if (!(await this.contentDataProvider.addToMyFavorites(resource))) {
             window.showErrorMessage(Messages.AddToFavoritesError);
           }
         }
@@ -245,7 +245,9 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.removeFromFavorites",
         async (resource: ContentItem) => {
-          if (!(await this.contentDataProvider.removeFromFavorites(resource))) {
+          if (
+            !(await this.contentDataProvider.removeFromMyFavorites(resource))
+          ) {
             window.showErrorMessage(Messages.RemoveFromFavoritesError);
           }
         }

@@ -61,14 +61,16 @@ export const resourceType = (item: ContentItem): string | undefined => {
     write && (!isRecycled ? "update" : "restore"),
   ].filter((action) => !!action);
 
-  if (getTypeName(item) === TRASH_FOLDER_TYPE && item?.memberCount) {
+  const type = getTypeName(item);
+  if (type === TRASH_FOLDER_TYPE && item?.memberCount) {
     actions.push("empty");
   }
 
-  if (item.type === "reference" && !isRecycled) {
+  if (item.__isFavorite__ || item.__hasFavorite__) {
     actions.push("removeFromFavorites");
   } else if (
-    [FOLDER_TYPE, FILE_TYPE].includes(item.contentType) &&
+    item.type !== "reference" &&
+    [FOLDER_TYPE, FILE_TYPE].includes(type) &&
     !isRecycled
   ) {
     actions.push("addToFavorites");

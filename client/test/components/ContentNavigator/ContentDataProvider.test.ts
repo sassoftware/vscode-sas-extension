@@ -38,6 +38,7 @@ const mockContentItem = (
   name: "testFile",
   uri: "uri://test",
   __trash__: false,
+  __isFavorite__: false,
   permission: {
     write: false,
     addMember: false,
@@ -672,7 +673,7 @@ describe("ContentDataProvider", async function () {
     axiosInstance.post.withArgs("uri://addMember").resolves({ data: {} });
 
     await dataProvider.connect("http://test.io");
-    const success = await dataProvider.addToFavorites(item);
+    const success = await dataProvider.addToMyFavorites(item);
 
     expect(success).to.equal(true);
   });
@@ -699,7 +700,7 @@ describe("ContentDataProvider", async function () {
     axiosInstance.delete.withArgs("uri://delete").resolves({ data: {} });
 
     await dataProvider.connect("http://test.io");
-    const success = await dataProvider.removeFromFavorites(item);
+    const success = await dataProvider.removeFromMyFavorites(item);
 
     expect(success).to.equal(true);
   });

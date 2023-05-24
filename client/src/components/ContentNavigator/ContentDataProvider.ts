@@ -273,25 +273,16 @@ class ContentDataProvider
     return success;
   }
 
-  public async addToFavorites(item: ContentItem): Promise<boolean> {
-    const myFavorites = this.model.getDelegateFolder("@myFavorites");
-    const success = await this.model.addMember(
-      getLink(item.links, "GET", "getResource").uri,
-      getLink(myFavorites.links, "POST", "addMember").uri,
-      {
-        type: "reference",
-        name: item.name,
-        contentType: item.contentType,
-      }
-    );
+  public async addToMyFavorites(item: ContentItem): Promise<boolean> {
+    const success = await this.model.addFavorite(item);
     if (success) {
       this.refresh();
     }
     return success;
   }
 
-  public async removeFromFavorites(item: ContentItem): Promise<boolean> {
-    const success = await this.model.removeMember(item);
+  public async removeFromMyFavorites(item: ContentItem): Promise<boolean> {
+    const success = await this.model.removeFavorite(item);
     if (success) {
       this.refresh();
     }
