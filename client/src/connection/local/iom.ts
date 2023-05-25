@@ -74,7 +74,8 @@ const run = async (
         });
         logStream.on("error", (error) => reject(error));
 
-        let odsBuffer = Buffer.alloc(4096);
+        const odsChunkSize = 32768;
+        let odsBuffer = Buffer.alloc(odsChunkSize);
 
         const odsStream = client.fetchODS(new Empty());
         odsStream.on("data", (chunk: FileChunk) => {
