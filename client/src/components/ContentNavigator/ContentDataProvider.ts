@@ -108,16 +108,20 @@ class ContentDataProvider
     target: ContentItem,
     sources: DataTransfer
   ): Promise<void> {
-    sources.forEach(async (item: DataTransferItem) => {
+    for (const source of sources) {
+      const [, item] = source;
       if (Array.isArray(item.value) && isContentItem(item.value[0])) {
-        item.value.forEach(async (contentItem: ContentItem) => {
-          await this.handleContentItemDrop(target, contentItem);
-        });
-        return;
+        await Promise.all(
+          item.value.map(async (contentItem: ContentItem) => {
+            await this.handleContentItemDrop(target, contentItem);
+          })
+        );
+
+        continue;
       }
 
-      return await this.handleDataTransferItemDrop(target, item);
-    });
+      await this.handleDataTransferItemDrop(target, item);
+    }
   }
 
   public handleDrag(
@@ -417,28 +421,32 @@ class ContentDataProvider
 
     // Read all the files in the folder and upload them
     const filesOrFolders = await promisify(readdir)(path);
-    filesOrFolders.forEach(async (fileOrFolderName: string) => {
-      const fileOrFolder = join(path, fileOrFolderName);
-      const isDirectory = (await promisify(lstat)(fileOrFolder)).isDirectory();
-      if (isDirectory) {
-        success = await this.handleFolderDrop(folder, fileOrFolder);
-      } else {
-        const name = basename(fileOrFolder);
-        const fileCreated = await this.createFile(
-          folder,
-          name,
-          await promisify(readFile)(fileOrFolder)
-        );
-        if (!fileCreated) {
-          success = false;
-          await window.showErrorMessage(
-            sprintf(Messages.FileDropError, {
-              name,
-            })
+    await Promise.all(
+      filesOrFolders.map(async (fileOrFolderName: string) => {
+        const fileOrFolder = join(path, fileOrFolderName);
+        const isDirectory = (
+          await promisify(lstat)(fileOrFolder)
+        ).isDirectory();
+        if (isDirectory) {
+          success = await this.handleFolderDrop(folder, fileOrFolder);
+        } else {
+          const name = basename(fileOrFolder);
+          const fileCreated = await this.createFile(
+            folder,
+            name,
+            await promisify(readFile)(fileOrFolder)
           );
+          if (!fileCreated) {
+            success = false;
+            await window.showErrorMessage(
+              sprintf(Messages.FileDropError, {
+                name,
+              })
+            );
+          }
         }
-      }
-    });
+      })
+    );
 
     return success;
   }
@@ -449,35 +457,38 @@ class ContentDataProvider
   ): Promise<void> {
     // If a user drops multiple files, there will be multiple
     // uris separated by newlines
-    item.value.split("\n").forEach(async (uri: string) => {
-      const itemUri = Uri.parse(uri.trim());
-      const name = basename(itemUri.path);
-      const isDirectory = (
-        await promisify(lstat)(itemUri.fsPath)
-      ).isDirectory();
-      if (isDirectory) {
-        const success = await this.handleFolderDrop(target, itemUri.fsPath);
-        if (success) {
-          this.refresh();
+    await Promise.all(
+      item.value.split("\n").map(async (uri: string) => {
+        const itemUri = Uri.parse(uri.trim());
+        const name = basename(itemUri.path);
+        const isDirectory = (
+          await promisify(lstat)(itemUri.fsPath)
+        ).isDirectory();
+
+        if (isDirectory) {
+          const success = await this.handleFolderDrop(target, itemUri.fsPath);
+          if (success) {
+            this.refresh();
+          }
+
+          return;
         }
 
-        return;
-      }
-
-      const fileCreated = await this.createFile(
-        target,
-        name,
-        await promisify(readFile)(itemUri.fsPath)
-      );
-
-      if (!fileCreated) {
-        await window.showErrorMessage(
-          sprintf(Messages.FileDropError, {
-            name,
-          })
+        const fileCreated = await this.createFile(
+          target,
+          name,
+          await promisify(readFile)(itemUri.fsPath)
         );
-      }
-    });
+
+        if (!fileCreated) {
+          await window.showErrorMessage(
+            sprintf(Messages.FileDropError, {
+              name,
+            })
+          );
+        }
+      })
+    );
   }
 
   private iconPathForItem(

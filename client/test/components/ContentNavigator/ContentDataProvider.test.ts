@@ -3,6 +3,8 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import { StubbedInstance, stubInterface } from "ts-sinon";
 import {
+  DataTransfer,
+  DataTransferItem,
   FileStat,
   FileType,
   ThemeIcon,
@@ -12,9 +14,17 @@ import {
 } from "vscode";
 import ContentDataProvider from "../../../src/components/ContentNavigator/ContentDataProvider";
 import { ContentModel } from "../../../src/components/ContentNavigator/ContentModel";
-import { ROOT_FOLDER } from "../../../src/components/ContentNavigator/const";
+import {
+  FAVORITES_FOLDER_TYPE,
+  ROOT_FOLDER,
+  TRASH_FOLDER_TYPE,
+} from "../../../src/components/ContentNavigator/const";
 import { ContentItem } from "../../../src/components/ContentNavigator/types";
-import { getUri } from "../../../src/components/ContentNavigator/utils";
+import {
+  getLink,
+  getUri,
+} from "../../../src/components/ContentNavigator/utils";
+import { getUri as getTestUri } from "../../utils";
 
 let stub;
 let axiosInstance: StubbedInstance<AxiosInstance>;
@@ -627,6 +637,7 @@ describe("ContentDataProvider", async function () {
         },
       ],
     });
+
     const dataProvider = createDataProvider();
 
     axiosInstance.post.withArgs("uri://addMember").resolves({ data: {} });
@@ -682,5 +693,197 @@ describe("ContentDataProvider", async function () {
     const success = await dataProvider.removeFromMyFavorites(item);
 
     expect(success).to.equal(true);
+  });
+
+  it("handleDrop - allows dropping files", async function () {
+    const parentItem = mockContentItem({
+      type: "folder",
+      name: "parent",
+    });
+
+    const uri = getTestUri("SampleCode.sas").toString();
+    const item = mockContentItem();
+
+    const model = new ContentModel();
+    const stub: sinon.SinonStub = sinon.stub(model, "createFile");
+
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" })
+    );
+
+    const dataTransfer = new DataTransfer();
+    const dataTransferItem = new DataTransferItem(uri);
+    dataTransfer.set(
+      "application/vnd.code.tree.contentDataProvider",
+      dataTransferItem
+    );
+
+    stub.returns(new Promise((resolve) => resolve(item)));
+
+    await dataProvider.handleDrop(parentItem, dataTransfer);
+
+    expect(stub.calledOnceWith(parentItem, "SampleCode.sas")).to.be.true;
+  });
+
+  it("handleDrop - allows dropping folder", async function () {
+    const parentItem = mockContentItem({
+      type: "folder",
+      name: "parent",
+    });
+    const newParentItem = mockContentItem({
+      type: "folder",
+      name: "new-parent",
+    });
+
+    const uriObject = getTestUri("TestFolder");
+    const uri = uriObject.toString();
+    const item = mockContentItem();
+
+    const model = new ContentModel();
+    const createFileStub: sinon.SinonStub = sinon.stub(model, "createFile");
+    const createFolderStub: sinon.SinonStub = sinon.stub(model, "createFolder");
+
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" })
+    );
+
+    const dataTransfer = new DataTransfer();
+    const dataTransferItem = new DataTransferItem(uri);
+    dataTransfer.set(
+      "application/vnd.code.tree.contentDataProvider",
+      dataTransferItem
+    );
+
+    createFileStub.returns(new Promise((resolve) => resolve(item)));
+    createFolderStub.returns(new Promise((resolve) => resolve(newParentItem)));
+
+    await dataProvider.handleDrop(parentItem, dataTransfer);
+
+    expect(createFolderStub.calledWith(parentItem, "TestFolder")).to.be.true;
+    expect(createFileStub.calledWith(newParentItem, "SampleCode1.sas")).to.be
+      .true;
+    expect(createFolderStub.calledWith(newParentItem, "TestSubFolder")).to.be
+      .true;
+    expect(createFileStub.calledWith(newParentItem, "SampleCode2.sas")).to.be
+      .true;
+  });
+
+  it("handleDrop - allows dropping content items", async function () {
+    const parentItem = mockContentItem({
+      type: "folder",
+      name: "parent",
+    });
+    const item = mockContentItem();
+
+    const model = new ContentModel();
+    const stub: sinon.SinonStub = sinon.stub(model, "moveTo");
+    stub.returns(new Promise((resolve) => resolve(true)));
+
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" })
+    );
+
+    const dataTransfer = new DataTransfer();
+    const dataTransferItem = new DataTransferItem([item]);
+    dataTransfer.set(
+      "application/vnd.code.tree.contentDataProvider",
+      dataTransferItem
+    );
+
+    await dataProvider.handleDrop(parentItem, dataTransfer);
+
+    expect(stub.calledWith(item, parentItem.uri)).to.be.true;
+  });
+
+  it("handleDrop - allows dropping content items to favorites", async function () {
+    const parentItem = mockContentItem({
+      type: FAVORITES_FOLDER_TYPE,
+      name: "favorites",
+      links: [
+        {
+          rel: "addMember",
+          uri: "uri://addfav",
+          method: "POST",
+          href: "uri://addfav",
+          type: "test",
+        },
+      ],
+    });
+    const item = mockContentItem({
+      links: [
+        {
+          rel: "getResource",
+          uri: "uri://favitem",
+          method: "GET",
+          href: "uri://favitem",
+          type: "test",
+        },
+      ],
+    });
+
+    const model = new ContentModel();
+    const stub: sinon.SinonStub = sinon.stub(model, "addMember");
+    stub.returns(new Promise((resolve) => resolve(true)));
+
+    sinon.stub(model, "getDelegateFolder").returns(parentItem);
+
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" })
+    );
+
+    const dataTransfer = new DataTransfer();
+    const dataTransferItem = new DataTransferItem([item]);
+    dataTransfer.set(
+      "application/vnd.code.tree.contentDataProvider",
+      dataTransferItem
+    );
+
+    await dataProvider.handleDrop(parentItem, dataTransfer);
+
+    expect(stub.calledWith("uri://favitem", "uri://addfav")).to.be.true;
+  });
+
+  it("handleDrop - allows dropping content items to trash", async function () {
+    const parentItem = mockContentItem({
+      type: TRASH_FOLDER_TYPE,
+      name: "trash",
+      links: [
+        {
+          rel: "self",
+          uri: "uri://trash",
+          method: "GET",
+          href: "uri://trash",
+          type: "test",
+        },
+      ],
+    });
+    const item = mockContentItem();
+
+    const model = new ContentModel();
+    const stub: sinon.SinonStub = sinon.stub(model, "moveTo");
+    stub.returns(new Promise((resolve) => resolve(true)));
+
+    sinon.stub(model, "getDelegateFolder").returns(parentItem);
+
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" })
+    );
+
+    const dataTransfer = new DataTransfer();
+    const dataTransferItem = new DataTransferItem([item]);
+    dataTransfer.set(
+      "application/vnd.code.tree.contentDataProvider",
+      dataTransferItem
+    );
+
+    await dataProvider.handleDrop(parentItem, dataTransfer);
+
+    expect(stub.calledWith(item, getLink(parentItem.links, "GET", "self")?.uri))
+      .to.be.true;
   });
 });
