@@ -11,9 +11,11 @@ export interface ContentItem {
   type?: string;
   uri: string;
   uid?: string;
-  __trash__: boolean;
-  __isFavorite__: boolean;
-  __hasFavorite__?: string;
+  flags?: {
+    isInRecycleBin?: boolean;
+    isInMyFavorites?: boolean;
+    hasFavoriteId?: string;
+  };
   memberCount?: number;
   permission: Permission;
 }

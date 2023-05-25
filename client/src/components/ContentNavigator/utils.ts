@@ -66,7 +66,7 @@ export const resourceType = (item: ContentItem): string | undefined => {
     actions.push("empty");
   }
 
-  if (item.__isFavorite__ || item.__hasFavorite__) {
+  if (item.flags?.isInMyFavorites || item.flags?.hasFavoriteId) {
     actions.push("removeFromFavorites");
   } else if (
     item.type !== "reference" &&
@@ -103,4 +103,4 @@ export const isValidItem = (item: ContentItem): boolean =>
   !!item && !!item.id && !!item.name && !!item.links;
 
 export const isItemInRecycleBin = (item: ContentItem): boolean =>
-  !!item && item.__trash__;
+  !!item && item.flags?.isInRecycleBin;

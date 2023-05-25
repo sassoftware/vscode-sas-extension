@@ -126,11 +126,12 @@ export class ContentModel {
     if (!result.items) {
       return Promise.reject();
     }
-    const myFavoritesFolder = this.delegateFolders["@myFavorites"];
-    const isTrash = TRASH_FOLDER_TYPE === getTypeName(item) || item.__trash__;
-    const parentIsMyFavorites =
+    const myFavoritesFolder = this.getDelegateFolder("@myFavorites");
+    const isInRecycleBin =
+      TRASH_FOLDER_TYPE === getTypeName(item) || item.flags?.isInRecycleBin;
+    const isInMyFavorites =
       getResourceIdFromItem(item) === getResourceIdFromItem(myFavoritesFolder);
-    const all_favorites = parentIsMyFavorites
+    const all_favorites = isInMyFavorites
       ? []
       : await this.getChildren(myFavoritesFolder);
 
@@ -138,12 +139,14 @@ export class ContentModel {
       ...childItem,
       uid: `${item.uid}/${index}`,
       permission: getPermission(childItem),
-      __trash__: isTrash,
-      __isFavorite__: parentIsMyFavorites,
-      __hasFavorite__: all_favorites.find(
-        (favorite) =>
-          getResourceIdFromItem(favorite) === getResourceIdFromItem(childItem)
-      )?.id,
+      flags: {
+        isInRecycleBin,
+        isInMyFavorites,
+        hasFavoriteId: all_favorites.find(
+          (favorite) =>
+            getResourceIdFromItem(favorite) === getResourceIdFromItem(childItem)
+        )?.id,
+      },
     }));
   }
 
@@ -439,7 +442,7 @@ export class ContentModel {
   }
 
   public async addFavorite(item: ContentItem): Promise<boolean> {
-    const myFavorites = this.delegateFolders["@myFavorites"];
+    const myFavorites = this.getDelegateFolder("@myFavorites");
     return await this.addMember(
       getLink(item.links, "GET", "getResource").uri,
       getLink(myFavorites.links, "POST", "addMember").uri,
@@ -452,12 +455,12 @@ export class ContentModel {
   }
 
   public async removeFavorite(item: ContentItem): Promise<boolean> {
-    const deleteMemberUri = item.__isFavorite__
+    const deleteMemberUri = item.flags?.isInMyFavorites
       ? getLink(item.links, "DELETE", "delete")?.uri
-      : item.__hasFavorite__
+      : item.flags?.hasFavoriteId
       ? `${getResourceIdFromItem(
-          this.delegateFolders["@myFavorites"]
-        )}/members/${item.__hasFavorite__}`
+          this.getDelegateFolder("@myFavorites")
+        )}/members/${item.flags?.hasFavoriteId}`
       : undefined;
     if (!deleteMemberUri) {
       return false;

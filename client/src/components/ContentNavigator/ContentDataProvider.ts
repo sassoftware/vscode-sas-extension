@@ -31,6 +31,7 @@ import {
   getModifyDate,
   getTypeName,
   getUri,
+  isItemInRecycleBin,
   resourceType,
 } from "./utils";
 import {
@@ -199,7 +200,7 @@ class ContentDataProvider
     item: ContentItem,
     name: string
   ): Promise<Uri | undefined> {
-    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+    if (!(await closeFileIfOpen(item))) {
       return;
     }
     const newItem = await this.model.renameResource(item, name);
@@ -213,7 +214,7 @@ class ContentDataProvider
   }
 
   public async deleteResource(item: ContentItem): Promise<boolean> {
-    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+    if (!(await closeFileIfOpen(item))) {
       return false;
     }
     const success = await this.model.delete(item);
@@ -233,7 +234,7 @@ class ContentDataProvider
     if (!recycleBinUri) {
       return false;
     }
-    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+    if (!(await closeFileIfOpen(item))) {
       return false;
     }
     const success = await this.model.moveTo(item, recycleBinUri);
@@ -250,7 +251,7 @@ class ContentDataProvider
     if (!previousParentUri) {
       return false;
     }
-    if (!(await closeFileIfOpen(getUri(item, item.__trash__)))) {
+    if (!(await closeFileIfOpen(item))) {
       return false;
     }
     const success = await this.model.moveTo(item, previousParentUri);
@@ -320,11 +321,12 @@ class ContentDataProvider
 
 export default ContentDataProvider;
 
-const closeFileIfOpen = (file: Uri): boolean | Thenable<boolean> => {
+const closeFileIfOpen = (item: ContentItem): boolean | Thenable<boolean> => {
+  const fileUri = getUri(item, isItemInRecycleBin(item));
   const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
   const tab = tabs.find(
     (tab) =>
-      tab.input instanceof TabInputText && tab.input.uri.query === file.query // compare the file id
+      tab.input instanceof TabInputText && tab.input.uri.query === fileUri.query // compare the file id
   );
   if (tab) {
     return window.tabGroups.close(tab);
