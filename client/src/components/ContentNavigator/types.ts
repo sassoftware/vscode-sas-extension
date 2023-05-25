@@ -18,6 +18,7 @@ export interface ContentItem {
   };
   memberCount?: number;
   permission: Permission;
+  parentFolderUri?: string;
 }
 
 export interface Link {

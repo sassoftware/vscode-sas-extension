@@ -54,58 +54,47 @@ class ContentNavigator implements SubscriptionProvider {
     this.watchForFileChanges();
   }
 
-  private watchForFileChanges(): void {
-    this.dirtyFiles = {};
-    workspace.onDidChangeTextDocument((e: TextDocumentChangeEvent) => {
-      this.dirtyFiles[e.document.uri.query] = e.document.isDirty;
-    });
-  }
-
   public getSubscriptions(): Disposable[] {
     return [
       ...this.contentDataProvider.getSubscriptions(),
       commands.registerCommand("SAS.deleteResource", async () => {
-        this.contentDataProvider.treeView.selection.forEach(
-          async (resource: ContentItem) => {
-            const isContainer = getIsContainer(resource);
-            const moveToRecycleBin =
-              !isItemInRecycleBin(resource) && resource.permission.write;
-            if (
-              !moveToRecycleBin &&
-              !(await window.showWarningMessage(
-                Messages.DeleteWarningMessage.replace("{name}", resource.name),
-                { modal: true },
-                Messages.DeleteButtonLabel
-              ))
-            ) {
-              return;
-            }
-            const deleteResult = moveToRecycleBin
-              ? await this.contentDataProvider.recycleResource(resource)
-              : await this.contentDataProvider.deleteResource(resource);
-            if (!deleteResult) {
-              window.showErrorMessage(
-                isContainer
-                  ? Messages.FolderDeletionError
-                  : Messages.FileDeletionError
-              );
-            }
+        this.treeViewSelections().forEach(async (resource: ContentItem) => {
+          const isContainer = getIsContainer(resource);
+          const moveToRecycleBin =
+            !isItemInRecycleBin(resource) && resource.permission.write;
+          if (
+            !moveToRecycleBin &&
+            !(await window.showWarningMessage(
+              Messages.DeleteWarningMessage.replace("{name}", resource.name),
+              { modal: true },
+              Messages.DeleteButtonLabel
+            ))
+          ) {
+            return;
           }
-        );
+          const deleteResult = moveToRecycleBin
+            ? await this.contentDataProvider.recycleResource(resource)
+            : await this.contentDataProvider.deleteResource(resource);
+          if (!deleteResult) {
+            window.showErrorMessage(
+              isContainer
+                ? Messages.FolderDeletionError
+                : Messages.FileDeletionError
+            );
+          }
+        });
       }),
       commands.registerCommand("SAS.restoreResource", async () => {
-        this.contentDataProvider.treeView.selection.forEach(
-          async (resource: ContentItem) => {
-            const isContainer = getIsContainer(resource);
-            if (!(await this.contentDataProvider.restoreResource(resource))) {
-              window.showErrorMessage(
-                isContainer
-                  ? Messages.FolderRestoreError
-                  : Messages.FileRestoreError
-              );
-            }
+        this.treeViewSelections().forEach(async (resource: ContentItem) => {
+          const isContainer = getIsContainer(resource);
+          if (!(await this.contentDataProvider.restoreResource(resource))) {
+            window.showErrorMessage(
+              isContainer
+                ? Messages.FolderRestoreError
+                : Messages.FileRestoreError
+            );
           }
-        );
+        });
       }),
       commands.registerCommand("SAS.emptyRecycleBin", async () => {
         if (
@@ -275,6 +264,24 @@ class ContentNavigator implements SubscriptionProvider {
     }
 
     this.contentDataProvider.reveal(resource);
+  }
+
+  private watchForFileChanges(): void {
+    this.dirtyFiles = {};
+    workspace.onDidChangeTextDocument((e: TextDocumentChangeEvent) => {
+      this.dirtyFiles[e.document.uri.query] = e.document.isDirty;
+    });
+  }
+
+  private treeViewSelections(): ContentItem[] {
+    const uris: string[] = this.contentDataProvider.treeView.selection.map(
+      ({ uri }: ContentItem) => uri
+    );
+    // If we have a selection that is a child of something we've already selected,
+    // lets filter it out (i.e. we don't need to include it twice)
+    return this.contentDataProvider.treeView.selection.filter(
+      ({ parentFolderUri }: ContentItem) => !uris.includes(parentFolderUri)
+    );
   }
 }
 
