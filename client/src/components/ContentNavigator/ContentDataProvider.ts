@@ -383,7 +383,10 @@ class ContentDataProvider
       // First we try to use target.uri to move our files. This works in instances where the
       // folder is not a root folder. If this fails, then our best guess is that the target
       // folder is a root folder, so we uri the "self" link instead
-      success = await this.model.moveTo(item, target.uri);
+      if (target.uri) {
+        success = await this.model.moveTo(item, target.uri);
+      }
+
       const targetUri = getLink(target.links, "GET", "self")?.uri;
       if (!success && targetUri) {
         success = await this.model.moveTo(item, targetUri);
