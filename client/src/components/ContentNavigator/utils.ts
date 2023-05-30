@@ -57,7 +57,7 @@ export const resourceType = (item: ContentItem): string | undefined => {
   const isRecycled = isItemInRecycleBin(item);
   const actions = [
     addMember && !isRecycled && "createChild",
-    del && "delete",
+    del && !item.flags?.isInMyFavorites && "delete",
     write && (!isRecycled ? "update" : "restore"),
   ].filter((action) => !!action);
 
