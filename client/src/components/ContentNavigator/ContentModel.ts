@@ -444,7 +444,7 @@ export class ContentModel {
   public async addFavorite(item: ContentItem): Promise<boolean> {
     const myFavorites = this.getDelegateFolder("@myFavorites");
     return await this.addMember(
-      getLink(item.links, "GET", "getResource").uri,
+      getResourceIdFromItem(item),
       getLink(myFavorites.links, "POST", "addMember").uri,
       {
         type: "reference",
