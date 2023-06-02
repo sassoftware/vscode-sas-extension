@@ -14,9 +14,9 @@ import {
   workspace,
 } from "vscode";
 import { profileConfig } from "../commands/profile";
-import { ConnectionType } from "../components/profile";
 import { getTokens, refreshToken } from "../connection/rest/auth";
 import { getCurrentUser } from "../connection/rest/identities";
+import { ConnectionType } from "../components/profile";
 
 const SECRET_KEY = "SASAuth";
 
@@ -202,15 +202,11 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
   private async getStoredSessions(): Promise<
     Record<string, SASAuthSession> | undefined
   > {
-    try {
-      const storedSessionData = await this.secretStorage.get(SECRET_KEY);
-      if (!storedSessionData) {
-        return;
-      }
-
-      return JSON.parse(storedSessionData);
-    } catch (e) {
+    const storedSessionData = await this.secretStorage.get(SECRET_KEY);
+    if (!storedSessionData) {
       return;
     }
+
+    return JSON.parse(storedSessionData);
   }
 }
