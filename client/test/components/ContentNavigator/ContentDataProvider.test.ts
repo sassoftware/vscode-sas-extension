@@ -813,6 +813,7 @@ describe("ContentDataProvider", async function () {
       ],
     });
     const item = mockContentItem({
+      uri: "uri://favitem",
       links: [
         {
           rel: "getResource",
