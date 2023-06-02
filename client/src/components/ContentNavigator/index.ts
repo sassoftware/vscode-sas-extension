@@ -57,45 +57,58 @@ class ContentNavigator implements SubscriptionProvider {
   public getSubscriptions(): Disposable[] {
     return [
       ...this.contentDataProvider.getSubscriptions(),
-      commands.registerCommand("SAS.deleteResource", async () => {
-        this.treeViewSelections().forEach(async (resource: ContentItem) => {
-          const isContainer = getIsContainer(resource);
-          const moveToRecycleBin =
-            !isItemInRecycleBin(resource) && resource.permission.write;
-          if (
-            !moveToRecycleBin &&
-            !(await window.showWarningMessage(
-              Messages.DeleteWarningMessage.replace("{name}", resource.name),
-              { modal: true },
-              Messages.DeleteButtonLabel
-            ))
-          ) {
-            return;
-          }
-          const deleteResult = moveToRecycleBin
-            ? await this.contentDataProvider.recycleResource(resource)
-            : await this.contentDataProvider.deleteResource(resource);
-          if (!deleteResult) {
-            window.showErrorMessage(
-              isContainer
-                ? Messages.FolderDeletionError
-                : Messages.FileDeletionError
-            );
-          }
-        });
-      }),
-      commands.registerCommand("SAS.restoreResource", async () => {
-        this.treeViewSelections().forEach(async (resource: ContentItem) => {
-          const isContainer = getIsContainer(resource);
-          if (!(await this.contentDataProvider.restoreResource(resource))) {
-            window.showErrorMessage(
-              isContainer
-                ? Messages.FolderRestoreError
-                : Messages.FileRestoreError
-            );
-          }
-        });
-      }),
+      commands.registerCommand(
+        "SAS.deleteResource",
+        async (item: ContentItem) => {
+          this.treeViewSelections(item).forEach(
+            async (resource: ContentItem) => {
+              const isContainer = getIsContainer(resource);
+              const moveToRecycleBin =
+                !isItemInRecycleBin(resource) && resource.permission.write;
+              if (
+                !moveToRecycleBin &&
+                !(await window.showWarningMessage(
+                  Messages.DeleteWarningMessage.replace(
+                    "{name}",
+                    resource.name
+                  ),
+                  { modal: true },
+                  Messages.DeleteButtonLabel
+                ))
+              ) {
+                return;
+              }
+              const deleteResult = moveToRecycleBin
+                ? await this.contentDataProvider.recycleResource(resource)
+                : await this.contentDataProvider.deleteResource(resource);
+              if (!deleteResult) {
+                window.showErrorMessage(
+                  isContainer
+                    ? Messages.FolderDeletionError
+                    : Messages.FileDeletionError
+                );
+              }
+            }
+          );
+        }
+      ),
+      commands.registerCommand(
+        "SAS.restoreResource",
+        async (item: ContentItem) => {
+          this.treeViewSelections(item).forEach(
+            async (resource: ContentItem) => {
+              const isContainer = getIsContainer(resource);
+              if (!(await this.contentDataProvider.restoreResource(resource))) {
+                window.showErrorMessage(
+                  isContainer
+                    ? Messages.FolderRestoreError
+                    : Messages.FileRestoreError
+                );
+              }
+            }
+          );
+        }
+      ),
       commands.registerCommand("SAS.emptyRecycleBin", async () => {
         if (
           !(await window.showWarningMessage(
@@ -273,13 +286,16 @@ class ContentNavigator implements SubscriptionProvider {
     });
   }
 
-  private treeViewSelections(): ContentItem[] {
-    const uris: string[] = this.contentDataProvider.treeView.selection.map(
-      ({ uri }: ContentItem) => uri
-    );
+  private treeViewSelections(item: ContentItem): ContentItem[] {
+    const items =
+      this.contentDataProvider.treeView.selection.length > 1
+        ? this.contentDataProvider.treeView.selection
+        : [item];
+    const uris: string[] = items.map(({ uri }: ContentItem) => uri);
+
     // If we have a selection that is a child of something we've already selected,
     // lets filter it out (i.e. we don't need to include it twice)
-    return this.contentDataProvider.treeView.selection.filter(
+    return items.filter(
       ({ parentFolderUri }: ContentItem) => !uris.includes(parentFolderUri)
     );
   }
