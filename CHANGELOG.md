@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Support SAS Notebook ([#174](https://github.com/sassoftware/vscode-sas-extension/issues/174))
+- Support Add to My Favorites and Remove from My Favorites action ([#283](https://github.com/sassoftware/vscode-sas-extension/issues/283))
 
 ### Fixed
 
