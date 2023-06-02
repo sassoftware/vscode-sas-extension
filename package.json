@@ -340,6 +340,16 @@
         "category": "SAS"
       },
       {
+        "command": "SAS.addToFavorites",
+        "title": "%commands.SAS.addToFavorites%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.removeFromFavorites",
+        "title": "%commands.SAS.removeFromFavorites%",
+        "category": "SAS"
+      },
+      {
         "command": "SAS.refreshContent",
         "title": "%commands.SAS.refresh%",
         "category": "SAS",
@@ -420,6 +430,16 @@
           "group": "addgroup@1"
         },
         {
+          "command": "SAS.addToFavorites",
+          "when": "viewItem =~ /addToFavorites/ && view == sas-content-navigator",
+          "group": "favoritesgroup@0"
+        },
+        {
+          "command": "SAS.removeFromFavorites",
+          "when": "viewItem =~ /removeFromFavorites/ && view == sas-content-navigator",
+          "group": "favoritesgroup@1"
+        },
+        {
           "command": "SAS.renameResource",
           "when": "viewItem =~ /update/ && view == sas-content-navigator",
           "group": "delrenamegroup@0"
@@ -498,6 +518,14 @@
         {
           "when": "false",
           "command": "SAS.addFolderResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.addToFavorites"
+        },
+        {
+          "when": "false",
+          "command": "SAS.removeFromFavorites"
         },
         {
           "when": "false",

@@ -23,6 +23,7 @@ import { ContentItem, Link, Permission } from "./types";
 import {
   getLink,
   getResourceId,
+  getResourceIdFromItem,
   getTypeName,
   getUri,
   isContainer,
@@ -31,6 +32,7 @@ import {
 interface AddMemberProperties {
   name?: string;
   contentType?: string;
+  type?: string;
 }
 
 export class ContentModel {
@@ -124,13 +126,27 @@ export class ContentModel {
     if (!result.items) {
       return Promise.reject();
     }
-    const isTrash = TRASH_FOLDER_TYPE === getTypeName(item) || item.__trash__;
+    const myFavoritesFolder = this.getDelegateFolder("@myFavorites");
+    const isInRecycleBin =
+      TRASH_FOLDER_TYPE === getTypeName(item) || item.flags?.isInRecycleBin;
+    const isInMyFavorites =
+      getResourceIdFromItem(item) === getResourceIdFromItem(myFavoritesFolder);
+    const all_favorites = isInMyFavorites
+      ? []
+      : await this.getChildren(myFavoritesFolder);
 
     return result.items.map((childItem: ContentItem, index) => ({
       ...childItem,
       uid: `${item.uid}/${index}`,
       permission: getPermission(childItem),
-      __trash__: isTrash,
+      flags: {
+        isInRecycleBin,
+        isInMyFavorites,
+        hasFavoriteId: all_favorites.find(
+          (favorite) =>
+            getResourceIdFromItem(favorite) === getResourceIdFromItem(childItem)
+        )?.id,
+      },
     }));
   }
 
@@ -422,6 +438,38 @@ export class ContentModel {
       return false;
     }
 
+    return true;
+  }
+
+  public async addFavorite(item: ContentItem): Promise<boolean> {
+    const myFavorites = this.getDelegateFolder("@myFavorites");
+    return await this.addMember(
+      getResourceIdFromItem(item),
+      getLink(myFavorites.links, "POST", "addMember").uri,
+      {
+        type: "reference",
+        name: item.name,
+        contentType: item.contentType,
+      }
+    );
+  }
+
+  public async removeFavorite(item: ContentItem): Promise<boolean> {
+    const deleteMemberUri = item.flags?.isInMyFavorites
+      ? getLink(item.links, "DELETE", "delete")?.uri
+      : item.flags?.hasFavoriteId
+      ? `${getResourceIdFromItem(
+          this.getDelegateFolder("@myFavorites")
+        )}/members/${item.flags?.hasFavoriteId}`
+      : undefined;
+    if (!deleteMemberUri) {
+      return false;
+    }
+    try {
+      await this.connection.delete(deleteMemberUri);
+    } catch (error) {
+      return false;
+    }
     return true;
   }
 
