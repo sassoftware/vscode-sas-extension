@@ -22,6 +22,7 @@
   "devDependencies": {
     "@types/ssh2": "^1.11.7",
     "@types/vscode": "^1.71.0",
+    "@types/vscode-notebook-renderer": "^1.72.0",
     "@vscode/test-electron": "^1.6.2"
   }
 }

@@ -89,7 +89,9 @@ export class ComputeJob extends Compute {
   }
 
   //Get the job log as a stream.
-  async *getLogStream(options?: { timeout?: number }): AsyncGenerator<LogLine> {
+  async *getLogStream(options?: {
+    timeout?: number;
+  }): AsyncGenerator<LogLine[]> {
     let state = await this.getState();
     const timeout = options?.timeout ?? 10;
     let start = 0;
@@ -108,9 +110,8 @@ export class ComputeJob extends Compute {
       if (resp.status === 200) {
         const items = resp.data.items;
         const num = items.length;
-        for (let i = 0; i < num; i++) {
-          yield items[i];
-        }
+
+        yield items;
 
         //increase start location
         start += num;
@@ -138,10 +139,7 @@ export class ComputeJob extends Compute {
       if (resp.status === 200) {
         nextLink = resp.links?.find((link) => link.rel === "next");
         const items = resp.data.items;
-        const num = items.length;
-        for (let i = 0; i < num; i++) {
-          yield items[i];
-        }
+        yield items;
 
         if (nextLink) {
           resp = await this.requestLink(nextLink);

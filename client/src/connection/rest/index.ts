@@ -146,13 +146,20 @@ async function setup(): Promise<void> {
   setContextValue("SAS.sessionId", computeSession.sessionId);
 }
 
+async function cancel(): Promise<void> {
+  if (computeSession) {
+    await computeSession.self();
+    await computeSession.cancel();
+  }
+}
+
 /*
 Prints the job log in an async manner.
 */
 async function printLog(job: ComputeJob, onLog?: (logs: LogLine[]) => void) {
-  const log = await job.getLogStream();
-  for await (const line of log) {
-    onLog([line]);
+  const logs = await job.getLogStream();
+  for await (const log of logs) {
+    onLog(log);
   }
 }
 
@@ -191,7 +198,7 @@ async function run(code: string, onLog?: (logs: LogLine[]) => void) {
   */
   for (const result of results.reverse()) {
     const link = result.links[0];
-    if (link.type === "text/html") {
+    if (link?.type === "text/html") {
       const html5 = (await job.requestLink<string>(link)).data;
 
       //Make sure that the html has a valid body
@@ -228,6 +235,7 @@ export function getSession(c: Config): Session {
   return {
     setup,
     run,
+    cancel,
     close,
     sessionId,
   };
