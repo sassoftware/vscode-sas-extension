@@ -128,9 +128,14 @@ async function runCode(selected?: boolean) {
     {
       location: ProgressLocation.Notification,
       title: "SAS code running...",
+      cancellable: typeof session.cancel === "function",
     },
-    () =>
-      session
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (_progress, cancellationToken) => {
+      cancellationToken.onCancellationRequested(() => {
+        session.cancel?.();
+      });
+      return session
         .run(code, (logs) => {
           if (!outputChannel) {
             outputChannel = window.createOutputChannel("SAS Log", "sas-log");
@@ -151,7 +156,8 @@ async function runCode(selected?: boolean) {
             );
             odsResult.webview.html = results.html5;
           }
-        })
+        });
+    }
   );
 }
 
