@@ -12,7 +12,6 @@ import { Empty } from "google-protobuf/google/protobuf/empty_pb";
 let client: ExecutionServiceClient;
 let config: Config;
 
-
 export interface Config {
   sasOptions: string[];
   port: number;
