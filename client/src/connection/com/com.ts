@@ -184,7 +184,7 @@ const run = async (
  * @returns void promise.
  */
 const close = async (): Promise<void> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     if (shellProcess) {
       shellProcess.stdin.write("$runner.Close()\n", onWriteComplete);
       shellProcess.kill();

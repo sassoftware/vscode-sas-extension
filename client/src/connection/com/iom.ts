@@ -8,11 +8,10 @@ import {
   LogChunk,
 } from "./api/iom_broker_pb";
 import { Empty } from "google-protobuf/google/protobuf/empty_pb";
-import { LogLineTypeEnum } from "../rest/api/compute";
 
 let client: ExecutionServiceClient;
 let config: Config;
-const logLines: LogLine[] = [];
+
 
 export interface Config {
   sasOptions: string[];
