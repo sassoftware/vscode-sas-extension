@@ -101,9 +101,9 @@ describe("Profiles", async function () {
           host: "host",
           sasOptions: [],
           ConnectionType: "com",
-        }
-      }
-    }
+        },
+      },
+    };
     legacyProfile = {
       activeProfile: "",
       profiles: {
@@ -778,7 +778,6 @@ describe("Profiles", async function () {
       });
     });
   });
-    
 
   describe("Empty Item Profile", async function () {
     beforeEach(async () => {

@@ -87,7 +87,7 @@ export interface SSHProfile {
 
 export interface COMProfile {
   connectionType: ConnectionType.COM;
-  host:string;
+  host: string;
   sasOptions: string[];
 }
 
@@ -484,7 +484,7 @@ export class ProfileConfig {
       await this.upsertProfile(name, profileClone);
     } else if (profileClone.connectionType === ConnectionType.COM) {
       profileClone.sasOptions = [];
-      profileClone.host = "localhost"  //once remote support rolls out this should be set via prompting
+      profileClone.host = "localhost"; //once remote support rolls out this should be set via prompting
       await this.upsertProfile(name, profileClone);
     }
   }

@@ -19,7 +19,7 @@ let workDirectory: string;
  */
 export interface Config {
   sasOptions: string[];
-  host:string;
+  host: string;
 }
 
 /**
@@ -54,7 +54,7 @@ const setup = async (): Promise<void> => {
     will not exist. The work dir should only be deleted when close is invoked.
     */
     if (!workDirectory) {
-      shellProcess.stdin.write(`$host = ${config.host}`)
+      shellProcess.stdin.write(`$host = ${config.host}`);
       shellProcess.stdin.write("$runner.Setup($host)\n", onWriteComplete);
       shellProcess.stdin.write(
         "$runner.ResolveSystemVars()\n",
