@@ -8,6 +8,7 @@ import {
   ViyaProfile,
   ConnectionType,
   SSHProfile,
+  COMProfile,
 } from "../../../src/components/profile";
 import { assert, expect } from "chai";
 import { ConfigurationTarget, workspace } from "vscode";
@@ -20,6 +21,7 @@ let testOverloadedProfile;
 let testEmptyProfile;
 let testEmptyItemsProfile;
 let testSSHProfile;
+let testCOMProfile;
 let legacyProfile;
 
 async function initProfile(): Promise<void> {
@@ -91,6 +93,17 @@ describe("Profiles", async function () {
         },
       },
     };
+
+    testCOMProfile = {
+      activeProfile: "",
+      profiles: {
+        testProfile: {
+          host: "host",
+          sasOptions: [],
+          ConnectionType: "com",
+        }
+      }
+    }
     legacyProfile = {
       activeProfile: "",
       profiles: {
@@ -662,7 +675,7 @@ describe("Profiles", async function () {
           `Profile ${testProfileName} should exist`
         );
 
-        const addedProfile: SSHProfile =
+        const addedProfile: COMProfile =
           profileConfig.getProfileByName(testProfileNewName);
 
         expect(addedProfile).to.eql(
@@ -692,6 +705,80 @@ describe("Profiles", async function () {
       });
     });
   });
+
+  describe("COM Profile", async function () {
+    beforeEach(async () => {
+      testProfileName = "testProfile";
+      testProfileNewName = "testProfile2";
+      await initProfile();
+      await workspace
+        .getConfiguration(EXTENSION_CONFIG_KEY)
+        .update(
+          EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+          testCOMProfile,
+          ConfigurationTarget.Global
+        );
+    });
+    describe("CRUD Operations", async function () {
+      it("add a new profile", async function () {
+        const requestCOMProfile: COMProfile = {
+          connectionType: ConnectionType.COM,
+          host: "com.host",
+          sasOptions: ["-nonews"],
+        };
+        // Arrange
+        // Act
+        await profileConfig.upsertProfile(
+          testProfileNewName,
+          requestCOMProfile
+        );
+        const profilesList = profileConfig.listProfile();
+
+        // Assert
+        expect(profilesList).to.have.length(
+          2,
+          "A second profile should be in the list"
+        );
+        expect(profilesList).to.include(
+          testProfileNewName,
+          `Profile ${testProfileNewName} should exist`
+        );
+        expect(profilesList).to.include(
+          testProfileName,
+          `Profile ${testProfileName} should exist`
+        );
+
+        const addedProfile: COMProfile =
+          profileConfig.getProfileByName(testProfileNewName);
+
+        expect(addedProfile).to.eql(
+          requestCOMProfile,
+          `Profile ${testProfileNewName} should have expected contents after creation`
+        );
+      });
+      it("delete a profile", async function () {
+        // Arrange
+        // Act
+        await profileConfig.deleteProfile(testProfileName);
+
+        // Assert
+        const profiles = await profileConfig.listProfile();
+        expect(profiles).to.have.length(0);
+      });
+      it("list the expected profiles", async function () {
+        // Arrange
+        // Act
+        const profileList = profileConfig.listProfile();
+
+        // Assert
+        expect(profileList).to.eql(
+          [testProfileName],
+          "Expected com profile name does not exist"
+        );
+      });
+    });
+  });
+    
 
   describe("Empty Item Profile", async function () {
     beforeEach(async () => {

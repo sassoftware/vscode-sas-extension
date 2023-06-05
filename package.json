@@ -154,7 +154,8 @@
                       "description": "%configurations.SAS.connectionProfiles.profiles.connectionType%",
                       "enum": [
                         "rest",
-                        "ssh"
+                        "ssh",
+                        "com"
                       ]
                     }
                   },

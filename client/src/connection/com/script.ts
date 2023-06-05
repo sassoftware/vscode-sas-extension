@@ -14,12 +14,12 @@ class SASRunner{
     $varLogs = $this.FlushLog(4096)
     Write-Host $varLogs
   }
-  [void]Setup() {
+  [void]Setup([string]$host) {
     try {
         # create the Integration Technologies objects
         $objFactory = New-Object -ComObject SASObjectManager.ObjectFactoryMulti2
         $objServerDef = New-Object -ComObject SASObjectManager.ServerDef
-        $objServerDef.MachineDNSName = "localhost" # SAS Workspace node
+        $objServerDef.MachineDNSName = $host # SAS Workspace node
         $objServerDef.Port = 0  # workspace server port
         $objServerDef.Protocol = 0     # 0 = COM protocol
         # Class Identifier for SAS Workspace

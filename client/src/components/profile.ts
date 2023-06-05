@@ -17,12 +17,13 @@ export const EXTENSION_ACTIVE_PROFILE_CONFIG_KEY = "activeProfile";
 enum ConnectionOptions {
   SASViya = "SAS Viya",
   SAS94Remote = "SAS 9.4 (remote)",
-  SAS9Local = "SAS 9.4 (local)",
+  SAS9COM = "SAS 9.4 (local - COM)",
 }
 
 const CONNECTION_PICK_OPTS: string[] = [
   ConnectionOptions.SASViya,
   ConnectionOptions.SAS94Remote,
+  ConnectionOptions.SAS9COM,
 ];
 
 /**
@@ -52,7 +53,7 @@ export enum AuthType {
 export enum ConnectionType {
   Rest = "rest",
   SSH = "ssh",
-  Local = "local",
+  COM = "com",
 }
 
 /**
@@ -84,14 +85,13 @@ export interface SSHProfile {
   sasOptions: string[];
 }
 
-export interface LocalProfile {
-  connectionType: ConnectionType.Local;
-  sasPath: string;
+export interface COMProfile {
+  connectionType: ConnectionType.COM;
+  host:string;
   sasOptions: string[];
-  port: number;
 }
 
-export type Profile = ViyaProfile | SSHProfile | LocalProfile;
+export type Profile = ViyaProfile | SSHProfile | COMProfile;
 
 /**
  * Profile detail is an interface that encapsulates the name of the profile
@@ -482,6 +482,10 @@ export class ProfileConfig {
       );
 
       await this.upsertProfile(name, profileClone);
+    } else if (profileClone.connectionType === ConnectionType.COM) {
+      profileClone.sasOptions = [];
+      profileClone.host = "localhost"  //once remote support rolls out this should be set via prompting
+      await this.upsertProfile(name, profileClone);
     }
   }
 
@@ -675,8 +679,8 @@ function mapQuickPickToEnum(connectionTypePickInput: string): ConnectionType {
       return ConnectionType.Rest;
     case ConnectionOptions.SAS94Remote:
       return ConnectionType.SSH;
-    case ConnectionOptions.SAS9Local:
-      return ConnectionType.Local;
+    case ConnectionOptions.SAS9COM:
+      return ConnectionType.COM;
     default:
       return undefined;
   }

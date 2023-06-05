@@ -7,7 +7,7 @@ import {
 } from "./rest/api/compute";
 import { getSession as getRestSession } from "./rest";
 import { getSession as getSSHSession } from "./ssh";
-import { getSession as getLocalSession } from "./local";
+import { getSession as getCOMSession } from "./com";
 import { AuthType, ConnectionType, ProfileConfig } from "../components/profile";
 
 let profileConfig: ProfileConfig;
@@ -43,8 +43,8 @@ export function getSession(): Session {
     return getRestSession(validProfile.profile);
   } else if (validProfile.profile?.connectionType === ConnectionType.SSH) {
     return getSSHSession(validProfile.profile);
-  } else if (validProfile.profile?.connectionType === ConnectionType.Local) {
-    return getLocalSession(validProfile.profile);
+  } else if (validProfile.profile?.connectionType === ConnectionType.COM) {
+    return getCOMSession(validProfile.profile);
   }
 
   throw new Error("Invalid connectionType. Check Profile settings.");
