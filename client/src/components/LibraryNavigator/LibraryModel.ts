@@ -151,7 +151,11 @@ class LibraryModel {
                 sessionId: this.sessionId,
                 libref: item.id,
               },
-              requestOptions
+              {
+                headers: {
+                  Accept: "application/json",
+                },
+              }
             )
         );
 
