@@ -130,7 +130,6 @@ async function runCode(selected?: boolean) {
       title: "SAS code running...",
       cancellable: typeof session.cancel === "function",
     },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (_progress, cancellationToken) => {
       cancellationToken.onCancellationRequested(() => {
         session.cancel?.();
