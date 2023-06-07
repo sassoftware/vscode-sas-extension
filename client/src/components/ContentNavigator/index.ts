@@ -14,7 +14,7 @@ import {
   workspace,
 } from "vscode";
 import { profileConfig } from "../../commands/profile";
-import { ViyaProfile } from "../profile";
+import { ConnectionType, ViyaProfile } from "../profile";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { Messages } from "./const";
 import ContentDataProvider from "./ContentDataProvider";
@@ -260,10 +260,15 @@ class ContentNavigator implements SubscriptionProvider {
       workspace.onDidChangeConfiguration(
         async (event: ConfigurationChangeEvent) => {
           if (event.affectsConfiguration("SAS.connectionProfiles")) {
-            const activeProfile: ViyaProfile = profileConfig.getProfileByName(
+            const activeProfile = profileConfig.getProfileByName(
               profileConfig.getActiveProfile()
             );
-            await this.contentDataProvider.connect(activeProfile.endpoint);
+            if (
+              activeProfile.connectionType === ConnectionType.Rest &&
+              !activeProfile.serverId
+            ) {
+              await this.contentDataProvider.connect(activeProfile.endpoint);
+            }
           }
         }
       ),
