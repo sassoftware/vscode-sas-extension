@@ -13,7 +13,7 @@ import {
   workspace,
 } from "vscode";
 import { profileConfig } from "../../commands/profile";
-import { ConnectionType, ViyaProfile } from "../profile";
+import { ConnectionType } from "../profile";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { Messages } from "./const";
 import ContentDataProvider from "./ContentDataProvider";
