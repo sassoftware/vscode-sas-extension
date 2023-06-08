@@ -348,7 +348,8 @@
       },
       {
         "command": "SAS.removeFromFavorites",
-        "title": "%commands.SAS.removeFromFavorites%"
+        "title": "%commands.SAS.removeFromFavorites%",
+        "category": "SAS"
       },
       {
         "command": "SAS.refreshContent",
@@ -438,12 +439,12 @@
         },
         {
           "command": "SAS.addToFavorites",
-          "when": "viewItem =~ /addToFavorites/ && view == sas-content-navigator",
+          "when": "viewItem =~ /addToFavorites/ && view == contentDataProvider",
           "group": "favoritesgroup@0"
         },
         {
           "command": "SAS.removeFromFavorites",
-          "when": "viewItem =~ /removeFromFavorites/ && view == sas-content-navigator",
+          "when": "viewItem =~ /removeFromFavorites/ && view == contentDataProvider",
           "group": "favoritesgroup@1"
         },
         {
