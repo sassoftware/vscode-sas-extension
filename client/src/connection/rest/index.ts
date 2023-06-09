@@ -183,7 +183,7 @@ async function run(code: string, onLog?: (logs: LogLine[]) => void) {
   await retLog;
 
   //Now get the results
-  const results = await job.results();
+  const results = state === ComputeState.Error ? [] : await job.results();
 
   const res: RunResult = {
     html5: "",
