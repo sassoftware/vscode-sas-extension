@@ -65,9 +65,14 @@ const setup = async (): Promise<void> => {
       );
 
       if (config.sasOptions.length > 0) {
-        const sasOptsInput = `$sasOpts=${formatSASOptions(config.sasOptions)}\n`;
-        shellProcess.stdin.write( sasOptsInput,onWriteComplete     );
-        shellProcess.stdin.write(`$runner.SetOptions($sasOpts)\n`, onWriteComplete);
+        const sasOptsInput = `$sasOpts=${formatSASOptions(
+          config.sasOptions
+        )}\n`;
+        shellProcess.stdin.write(sasOptsInput, onWriteComplete);
+        shellProcess.stdin.write(
+          `$runner.SetOptions($sasOpts)\n`,
+          onWriteComplete
+        );
       }
     }
 
