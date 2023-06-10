@@ -54,12 +54,21 @@ const setup = async (): Promise<void> => {
     will not exist. The work dir should only be deleted when close is invoked.
     */
     if (!workDirectory) {
-      shellProcess.stdin.write(`$host = ${config.host}`);
-      shellProcess.stdin.write("$runner.Setup($host)\n", onWriteComplete);
+      shellProcess.stdin.write(`$profileHost = "${config.host}"\n`);
+      shellProcess.stdin.write(
+        "$runner.Setup($profileHost)\n",
+        onWriteComplete
+      );
       shellProcess.stdin.write(
         "$runner.ResolveSystemVars()\n",
         onWriteComplete
       );
+
+      if (config.sasOptions.length > 0) {
+        const sasOptsInput = `$sasOpts=${formatSASOptions(config.sasOptions)}\n`;
+        shellProcess.stdin.write( sasOptsInput,onWriteComplete     );
+        shellProcess.stdin.write(`$runner.SetOptions($sasOpts)\n`, onWriteComplete);
+      }
     }
 
     // free objects in the scripting env
@@ -67,6 +76,11 @@ const setup = async (): Promise<void> => {
       await close();
     });
   });
+};
+
+const formatSASOptions = (sasOptions: string[]) => {
+  const optionsVariable = `@("${sasOptions.join(`","`) + `"`})`;
+  return optionsVariable;
 };
 
 /**

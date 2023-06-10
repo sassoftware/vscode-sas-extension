@@ -14,14 +14,15 @@ class SASRunner{
     $varLogs = $this.FlushLog(4096)
     Write-Host $varLogs
   }
-  [void]Setup([string]$host) {
+  [void]Setup([string]$profileHost) {
     try {
         # create the Integration Technologies objects
         $objFactory = New-Object -ComObject SASObjectManager.ObjectFactoryMulti2
         $objServerDef = New-Object -ComObject SASObjectManager.ServerDef
-        $objServerDef.MachineDNSName = $host # SAS Workspace node
+        $objServerDef.MachineDNSName = $profileHost # SAS Workspace node
         $objServerDef.Port = 0  # workspace server port
         $objServerDef.Protocol = 0     # 0 = COM protocol
+        
         # Class Identifier for SAS Workspace
         $objServerDef.ClassIdentifier = "440196d4-90f0-11d0-9f41-00a024bb830c"
 
@@ -33,8 +34,39 @@ class SASRunner{
             "", # user ID
             ""    # password
         )
+
     } catch {
       throw "Setup error"
+    }
+  }
+
+  [void]SetOptions([array] $sasOptions) {
+    $names = [string[]]@()
+    $values = [string[]]@()
+
+    foreach ($item in $sasOptions) {
+        $parts = $item -split '=| '
+        $names += $parts[0] -replace '^-'
+        if ($parts.Length -gt 1) {
+            $values += $parts[1]
+        } else {
+            $values += ""
+        }
+    }
+
+    [ref] $errorIndices = [int[]]::new($names.Length)
+    [ref]$errors = [string[]]::new($names.Length)
+    [ref]$errorCodes = [int[]]::new($names.Length)
+    
+    try{
+      $this.objSAS.Utilities.OptionService.SetOptions([string[]]$names, [string[]]$values, $errorIndices, $errorCodes, $errors)
+
+      $errVals = $errors.Value
+      if($errVals.Length -gt 0){
+          throw $errVals
+      }
+    } catch{
+        Write-Error $Error[0].Exception.Message
     }
   }
 
