@@ -186,8 +186,9 @@ const run = async (
 
     //write an end mnemonic so that the handler knows when execution has finished
     const codeWithEnd = `${codeWithODSPath}\n%put ${endCode};`;
+    const codeToRun = `$code=@"\n${codeWithEnd}\n"@\n`;
 
-    shellProcess.stdin.write(`$code=@"\n${codeWithEnd}\n"@\n`);
+    shellProcess.stdin.write(codeToRun);
     shellProcess.stdin.write(`$runner.Run($code)\n`, async (error) => {
       if (error) {
         runReject(error);
