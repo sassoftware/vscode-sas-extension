@@ -83,7 +83,13 @@ const setup = async (): Promise<void> => {
   });
 };
 
-const formatSASOptions = (sasOptions: string[]) => {
+/**
+ * Formats the SAS Options provided in the profile into a format
+ * that the shell process can understand.
+ * @param sasOptions SAS Options array from the connection profile.
+ * @returns a string  denoting powershell syntax for an array literal.
+ */
+const formatSASOptions = (sasOptions: string[]): string => {
   const optionsVariable = `@("${sasOptions.join(`","`) + `"`})`;
   return optionsVariable;
 };
