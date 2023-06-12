@@ -236,8 +236,8 @@ const sessionId = (): string => {
  * Fetches the ODS output results for the latest html results file.
  */
 const fetchResults = () => {
-  const htmlResults = fs.readFileSync(
-    path.resolve(workDirectory, html5FileName + ".htm"),
+  const htmlResults = readFileSync(
+    resolve(workDirectory, html5FileName + ".htm"),
     { encoding: "utf-8" }
   );
   const runResult: RunResult = { html5: htmlResults, title: "Results" };
