@@ -7,7 +7,7 @@ import { scriptContent } from "../../../src/connection/com/script";
 
 import { SinonSandbox, SinonStub, createSandbox } from "sinon";
 
-describe.only("COM connection", () => {
+describe("COM connection", () => {
   let sandbox: SinonSandbox;
   let spawnStub: SinonStub;
   let stdoutStub: SinonStub;

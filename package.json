@@ -241,6 +241,32 @@
                           }
                         }
                       }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "connectionType": {
+                            "const": "com"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "host"
+                        ],
+                        "properties": {
+                          "host": {
+                            "type": "string",
+                            "default": "localhost",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.com.host%"
+                          },
+                          "sasOptions": {
+                            "type": "array",
+                            "default": [],
+                            "description": "%configuration.SAS.connectionProfiles.profiles.com.sasOptions%"
+                          }
+                        }
+                      }
                     }
                   ]
                 }

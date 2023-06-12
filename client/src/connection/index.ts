@@ -39,13 +39,15 @@ export function getSession(): Session {
   if (validProfile.type === AuthType.Error) {
     throw new Error(validProfile.error);
   }
-  if (validProfile.profile?.connectionType === ConnectionType.Rest) {
-    return getRestSession(validProfile.profile);
-  } else if (validProfile.profile?.connectionType === ConnectionType.SSH) {
-    return getSSHSession(validProfile.profile);
-  } else if (validProfile.profile?.connectionType === ConnectionType.COM) {
-    return getCOMSession(validProfile.profile);
-  }
 
-  throw new Error("Invalid connectionType. Check Profile settings.");
+  switch (validProfile.profile?.connectionType) {
+    case ConnectionType.Rest:
+      return getRestSession(validProfile.profile);
+    case ConnectionType.SSH:
+      return getSSHSession(validProfile.profile);
+    case ConnectionType.COM:
+      return getCOMSession(validProfile.profile);
+    default:
+      throw new Error("Invalid connectionType. Check Profile settings.");
+  }
 }
