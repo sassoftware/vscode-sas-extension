@@ -146,7 +146,7 @@ Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift
 
 ## Profile Anatomy (SAS 9.4 local)
 
-On Windoews, during the install of SAS 9.4, make sure that "Integration Technologies Client" checkbox is checked If using an order that doesnt provide this option, make sure the ITC is installed by visiting the following [link](https://support.sas.com/downloads/browse.htm?fil=&cat=56). Make sure to download the 9.4m8 option.
+On Windows, during the install of SAS 9.4, make sure that "Integration Technologies Client" checkbox is checked. If using an order that doesn't provide this option, make sure the ITC is installed by visiting the following [link](https://support.sas.com/downloads/browse.htm?fil=&cat=56). Make sure to download the 9.4m8 option.
 
 The parameters listed below make up the profile settings for configuring a connection to a local SAS 9.4 instance.
 
