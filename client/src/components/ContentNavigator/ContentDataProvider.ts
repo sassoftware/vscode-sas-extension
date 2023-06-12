@@ -1,7 +1,13 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
+import { lstat, readFile, readdir } from "fs";
+import { basename, join } from "path";
+import { sprintf } from "sprintf-js";
+import { promisify } from "util";
 import {
+  DataTransfer,
+  DataTransferItem,
   Disposable,
   Event,
   EventEmitter,
@@ -15,12 +21,23 @@ import {
   TextDocumentContentProvider,
   ThemeIcon,
   TreeDataProvider,
+  TreeDragAndDropController,
   TreeItem,
   TreeItemCollapsibleState,
+  TreeView,
   Uri,
   window,
 } from "vscode";
+import { profileConfig } from "../../commands/profile";
+import { SubscriptionProvider } from "../SubscriptionProvider";
+import { ViyaProfile } from "../profile";
 import { ContentModel } from "./ContentModel";
+import {
+  FAVORITES_FOLDER_TYPE,
+  Messages,
+  ROOT_FOLDER_TYPE,
+  TRASH_FOLDER_TYPE,
+} from "./const";
 import { ContentItem } from "./types";
 import {
   getCreationDate,
@@ -29,28 +46,41 @@ import {
   getLabel,
   getLink,
   getModifyDate,
+  getResourceIdFromItem,
   getTypeName,
   getUri,
+  isContentItem,
   isItemInRecycleBin,
+  isReference,
   resourceType,
 } from "./utils";
-import {
-  FAVORITES_FOLDER_TYPE,
-  ROOT_FOLDER_TYPE,
-  TRASH_FOLDER_TYPE,
-} from "./const";
 
 class ContentDataProvider
   implements
     TreeDataProvider<ContentItem>,
     FileSystemProvider,
-    TextDocumentContentProvider
+    TextDocumentContentProvider,
+    SubscriptionProvider,
+    TreeDragAndDropController<ContentItem>
 {
   private _onDidChangeFile: EventEmitter<FileChangeEvent[]>;
   private _onDidChangeTreeData: EventEmitter<ContentItem | undefined>;
   private _onDidChange: EventEmitter<Uri>;
+  private _treeView: TreeView<ContentItem>;
   private readonly model: ContentModel;
   private extensionUri: Uri;
+
+  public dropMimeTypes: string[] = [
+    "application/vnd.code.tree.contentDataProvider",
+    "text/uri-list",
+  ];
+  public dragMimeTypes: string[] = [
+    "application/vnd.code.tree.contentDataProvider",
+  ];
+
+  get treeView(): TreeView<ContentItem> {
+    return this._treeView;
+  }
 
   constructor(model: ContentModel, extensionUri: Uri) {
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
@@ -58,6 +88,53 @@ class ContentDataProvider
     this._onDidChange = new EventEmitter<Uri>();
     this.model = model;
     this.extensionUri = extensionUri;
+
+    this._treeView = window.createTreeView("contentDataProvider", {
+      treeDataProvider: this,
+      dragAndDropController: this,
+      canSelectMany: true,
+    });
+
+    this._treeView.onDidChangeVisibility(async () => {
+      if (this._treeView.visible) {
+        const activeProfile: ViyaProfile = profileConfig.getProfileByName(
+          profileConfig.getActiveProfile()
+        );
+        await this.connect(activeProfile.endpoint);
+      }
+    });
+  }
+
+  public async handleDrop(
+    target: ContentItem,
+    sources: DataTransfer
+  ): Promise<void> {
+    for (const source of sources) {
+      const [, item] = source;
+      if (Array.isArray(item.value) && isContentItem(item.value[0])) {
+        await Promise.all(
+          item.value.map(async (contentItem: ContentItem) => {
+            await this.handleContentItemDrop(target, contentItem);
+          })
+        );
+
+        continue;
+      }
+
+      await this.handleDataTransferItemDrop(target, item);
+    }
+  }
+
+  public handleDrag(
+    source: ContentItem[],
+    dataTransfer: DataTransfer
+  ): void | Thenable<void> {
+    const dataTransferItem = new DataTransferItem(source);
+    dataTransfer.set(this.dragMimeTypes[0], dataTransferItem);
+  }
+
+  public getSubscriptions(): Disposable[] {
+    return [this._treeView];
   }
 
   get onDidChangeFile(): Event<FileChangeEvent[]> {
@@ -105,44 +182,6 @@ class ContentDataProvider
     return await this.model.getContentByUri(uri);
   }
 
-  private iconPathForItem(
-    item: ContentItem
-  ): ThemeIcon | { light: Uri; dark: Uri } {
-    const isContainer = getIsContainer(item);
-    let icon = "";
-    if (isContainer) {
-      const type = getTypeName(item);
-      switch (type) {
-        case ROOT_FOLDER_TYPE:
-          icon = "sasFolders";
-          break;
-        case TRASH_FOLDER_TYPE:
-          icon = "delete";
-          break;
-        case FAVORITES_FOLDER_TYPE:
-          icon = "favoritesFolder";
-          break;
-        default:
-          icon = "folder";
-          break;
-      }
-    } else {
-      const extension = item.name.split(".").pop().toLowerCase();
-      if (extension === "sas") {
-        icon = "sasProgramFile";
-      }
-    }
-    return icon !== ""
-      ? {
-          dark: Uri.joinPath(this.extensionUri, `icons/dark/${icon}Dark.svg`),
-          light: Uri.joinPath(
-            this.extensionUri,
-            `icons/light/${icon}Light.svg`
-          ),
-        }
-      : ThemeIcon.File;
-  }
-
   public getChildren(item?: ContentItem): ProviderResult<ContentItem[]> {
     return this.model.getChildren(item);
   }
@@ -187,9 +226,10 @@ class ContentDataProvider
 
   public async createFile(
     item: ContentItem,
-    fileName: string
+    fileName: string,
+    buffer?: ArrayBufferLike
   ): Promise<Uri | undefined> {
-    const newItem = await this.model.createFile(item, fileName);
+    const newItem = await this.model.createFile(item, fileName, buffer);
     if (newItem) {
       this.refresh();
       return getUri(newItem);
@@ -316,6 +356,174 @@ class ContentDataProvider
 
   public createDirectory(): void | Thenable<void> {
     throw new Error("Method not implemented.");
+  }
+
+  public reveal(item: ContentItem): void {
+    this._treeView.reveal(item, {
+      expand: true,
+      select: false,
+      focus: false,
+    });
+  }
+
+  private async handleContentItemDrop(
+    target: ContentItem,
+    item: ContentItem
+  ): Promise<void> {
+    let success = false;
+    let message = Messages.FileDropError;
+    if (item.flags.isInRecycleBin) {
+      message = Messages.FileDragFromTrashError;
+    } else if (isReference(item)) {
+      message = Messages.FileDragFromFavorites;
+    } else if (target.type === TRASH_FOLDER_TYPE) {
+      success = await this.recycleResource(item);
+    } else if (target.type === FAVORITES_FOLDER_TYPE) {
+      success = await this.addToMyFavorites(item);
+    } else {
+      const targetUri = getResourceIdFromItem(target);
+      if (targetUri) {
+        success = await this.model.moveTo(item, targetUri);
+      }
+
+      if (success) {
+        this.refresh();
+      }
+    }
+
+    if (!success) {
+      await window.showErrorMessage(
+        sprintf(message, {
+          name: item.name,
+        })
+      );
+    }
+  }
+
+  private async handleFolderDrop(
+    target: ContentItem,
+    path: string
+  ): Promise<boolean> {
+    const folder = await this.model.createFolder(target, basename(path));
+    let success = true;
+    if (!folder) {
+      await window.showErrorMessage(
+        sprintf(Messages.FileDropError, {
+          name: basename(path),
+        })
+      );
+
+      return false;
+    }
+
+    // Read all the files in the folder and upload them
+    const filesOrFolders = await promisify(readdir)(path);
+    await Promise.all(
+      filesOrFolders.map(async (fileOrFolderName: string) => {
+        const fileOrFolder = join(path, fileOrFolderName);
+        const isDirectory = (
+          await promisify(lstat)(fileOrFolder)
+        ).isDirectory();
+        if (isDirectory) {
+          success = await this.handleFolderDrop(folder, fileOrFolder);
+        } else {
+          const name = basename(fileOrFolder);
+          const fileCreated = await this.createFile(
+            folder,
+            name,
+            await promisify(readFile)(fileOrFolder)
+          );
+          if (!fileCreated) {
+            success = false;
+            await window.showErrorMessage(
+              sprintf(Messages.FileDropError, {
+                name,
+              })
+            );
+          }
+        }
+      })
+    );
+
+    return success;
+  }
+
+  private async handleDataTransferItemDrop(
+    target: ContentItem,
+    item: DataTransferItem
+  ): Promise<void> {
+    // If a user drops multiple files, there will be multiple
+    // uris separated by newlines
+    await Promise.all(
+      item.value.split("\n").map(async (uri: string) => {
+        const itemUri = Uri.parse(uri.trim());
+        const name = basename(itemUri.path);
+        const isDirectory = (
+          await promisify(lstat)(itemUri.fsPath)
+        ).isDirectory();
+
+        if (isDirectory) {
+          const success = await this.handleFolderDrop(target, itemUri.fsPath);
+          if (success) {
+            this.refresh();
+          }
+
+          return;
+        }
+
+        const fileCreated = await this.createFile(
+          target,
+          name,
+          await promisify(readFile)(itemUri.fsPath)
+        );
+
+        if (!fileCreated) {
+          await window.showErrorMessage(
+            sprintf(Messages.FileDropError, {
+              name,
+            })
+          );
+        }
+      })
+    );
+  }
+
+  private iconPathForItem(
+    item: ContentItem
+  ): ThemeIcon | { light: Uri; dark: Uri } {
+    const isContainer = getIsContainer(item);
+    let icon = "";
+    if (isContainer) {
+      const type = getTypeName(item);
+      switch (type) {
+        case ROOT_FOLDER_TYPE:
+          icon = "sasFolders";
+          break;
+        case TRASH_FOLDER_TYPE:
+          icon = "delete";
+          break;
+        case FAVORITES_FOLDER_TYPE:
+          icon = "favoritesFolder";
+          break;
+        default:
+          icon = "folder";
+          break;
+      }
+    } else {
+      const extension = item.name.split(".").pop().toLowerCase();
+      if (extension === "sas") {
+        icon = "sasProgramFile";
+      }
+    }
+    return icon !== ""
+      ? {
+          dark: Uri.joinPath(this.extensionUri, `icons/dark/${icon}Dark.svg`),
+          light: Uri.joinPath(
+            this.extensionUri,
+            `icons/light/${icon}Light.svg`
+          ),
+        }
+      : ThemeIcon.File;
   }
 }
 

@@ -43,6 +43,8 @@ export const FOLDER_TYPES = [
 ];
 
 export const Messages = {
+  AddFileToMyFolderFailure: "Unable to add file to my folder.",
+  AddFileToMyFolderSuccess: "File added to my folder.",
   AddToFavoritesError: "The item could not be added to My Favorites.",
   DeleteButtonLabel: "Delete",
   DeleteWarningMessage:
@@ -51,6 +53,9 @@ export const Messages = {
   EmptyRecycleBinWarningMessage:
     "Are you sure you want to permanently delete all the items? You cannot undo this action.",
   FileDeletionError: "Unable to delete file.",
+  FileDragFromFavorites: "Unable to drag files from my favorites.",
+  FileDragFromTrashError: "Unable to drag files from trash.",
+  FileDropError: 'Unable to drop item "%(name)s".',
   FileOpenError: "The file type is unsupported.",
   FileRestoreError: "Unable to restore file.",
   FileValidationError: "Invalid file name.",

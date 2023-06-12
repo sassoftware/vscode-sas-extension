@@ -403,12 +403,12 @@
       "view/title": [
         {
           "command": "SAS.refreshContent",
-          "when": "view == sas-content-navigator",
+          "when": "view == contentDataProvider",
           "group": "navigation@0"
         },
         {
           "command": "SAS.collapseAllContent",
-          "when": "view == sas-content-navigator",
+          "when": "view == contentDataProvider",
           "group": "navigation@1"
         },
         {
@@ -429,42 +429,42 @@
         },
         {
           "command": "SAS.addFolderResource",
-          "when": "viewItem =~ /createChild/ && view == sas-content-navigator",
+          "when": "viewItem =~ /createChild/ && view == contentDataProvider",
           "group": "addgroup@0"
         },
         {
           "command": "SAS.addFileResource",
-          "when": "viewItem =~ /createChild/ && view == sas-content-navigator",
+          "when": "viewItem =~ /createChild/ && view == contentDataProvider",
           "group": "addgroup@1"
         },
         {
           "command": "SAS.addToFavorites",
-          "when": "viewItem =~ /addToFavorites/ && view == sas-content-navigator",
+          "when": "viewItem =~ /addToFavorites/ && view == contentDataProvider",
           "group": "favoritesgroup@0"
         },
         {
           "command": "SAS.removeFromFavorites",
-          "when": "viewItem =~ /removeFromFavorites/ && view == sas-content-navigator",
+          "when": "viewItem =~ /removeFromFavorites/ && view == contentDataProvider",
           "group": "favoritesgroup@1"
         },
         {
           "command": "SAS.renameResource",
-          "when": "viewItem =~ /update/ && view == sas-content-navigator",
+          "when": "viewItem =~ /update/ && view == contentDataProvider && !listMultiSelection",
           "group": "delrenamegroup@0"
         },
         {
           "command": "SAS.deleteResource",
-          "when": "viewItem =~ /delete/ && view == sas-content-navigator",
+          "when": "viewItem =~ /delete/ && view == contentDataProvider",
           "group": "delrenamegroup@1"
         },
         {
           "command": "SAS.restoreResource",
-          "when": "viewItem =~ /restore/ && view == sas-content-navigator",
+          "when": "viewItem =~ /restore/ && view == contentDataProvider",
           "group": "restoregroup@0"
         },
         {
           "command": "SAS.emptyRecycleBin",
-          "when": "viewItem =~ /empty/ && view == sas-content-navigator",
+          "when": "viewItem =~ /empty/ && view == contentDataProvider",
           "group": "emptygroup@0"
         }
       ],
@@ -625,7 +625,7 @@
     "views": {
       "sas-view-container": [
         {
-          "id": "sas-content-navigator",
+          "id": "contentDataProvider",
           "name": "Explorer",
           "when": "SAS.authorized && SAS.connectionType == rest"
         },
