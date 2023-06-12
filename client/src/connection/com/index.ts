@@ -90,7 +90,7 @@ const setup = async (): Promise<void> => {
  * @returns a string  denoting powershell syntax for an array literal.
  */
 const formatSASOptions = (sasOptions: string[]): string => {
-  const optionsVariable = `@("${sasOptions.join(`","`) + `"`})`;
+  const optionsVariable = `@("${sasOptions.join(`","`)}")`;
   return optionsVariable;
 };
 
