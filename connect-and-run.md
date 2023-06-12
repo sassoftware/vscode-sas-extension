@@ -130,7 +130,7 @@ Note: the default path to the SAS executable (saspath) is /opt/sasinside/SASHome
 
 ### Profile Anatomy (SAS 9.4 Remote)
 
-The parameters listed below make up the profile settings for configuring a connection to SAS 9.4.
+The parameters listed below make up the profile settings for configuring a connection to a remote SAS 9.4 instance.
 
 | Name         | Description                          | Additional Notes                                                     |
 | ------------ | ------------------------------------ | -------------------------------------------------------------------- |
@@ -143,6 +143,19 @@ The parameters listed below make up the profile settings for configuring a conne
 ## Add New SAS 9.4 Remote Profile
 
 Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, select the SAS 9.4 (remote) connection type and complete the prompts (using values from the preceeding table) to create a new profile.
+
+## Profile Anatomy (SAS 9.4 local)
+
+The parameters listed below make up the profile settings for configuring a connection to a local SAS 9.4 instance.
+
+| Name     | Description                      | Additional Notes                    |
+| -------- | -------------------------------- | ----------------------------------- |
+| **Name** | Name of the profile              | This will display on the status bar |
+| **Host** | Indicates SAS 9.4 local instance | Defaults to localhost for com       |
+
+## Add New SAS 9.4 Local Profile
+
+Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, select the SAS 9.4 (local - COM) connection type to create a new profile.
 
 ## Delete Connection Profile
 

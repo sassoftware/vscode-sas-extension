@@ -12,14 +12,17 @@ Welcome to the SAS Extension for Visual Studio Code! This extension provides sup
     - [Snippets](#snippets)
     - [Code Folding and Code Outline](#code-folding-and-code-outline)
     - [Configuring the SAS Extension](#configuring-the-sas-extension)
-    - [Profiles](#profiles)
-      - [Profile Anatomy (Viya)](#profile-anatomy-viya)
-      - [Profile Anatomy (SAS 9.4 Remote)](#profile-anatomy-sas-94-remote)
-      - [Add New SAS Profile](#add-new-sas-profile)
-      - [Delete SAS Profile](#delete-sas-profile)
-      - [Switch Current SAS Profile](#switch-current-sas-profile)
-      - [Update SAS Profile](#update-sas-profile)
-    - [Running SAS Code](#running-sas-code)
+    - [Profiles](/connect-and-run.md/#profiles)
+      - [Profile Anatomy (Viya)](/connect-and-run.md/#profile-anatomy-sas-viya)
+      - [Add New SAS Viya Profile](/connect-and-run.md#add-new-sas-viya-profile)
+      - [Profile Anatomy (SAS 9.4 Remote)](/connect-and-run.md/#profile-anatomy-sas-94-remote)
+      - [Add New SAS 9.4 Remote Profile](/connect-and-run.md#add-new-sas-94-remote-profile)
+      - [Profile Anatomy (SAS 9.4 Local)](/connect-and-run.md/#profile-anatomy-sas-94-local)
+      - [Add New SAS 9.4 Local Profile](/connect-and-run.md/#add-new-sas-94-local-profile)
+      - [Delete SAS Profile](/connect-and-run.md#delete-connection-profile)
+      - [Switch Current SAS Profile](/connect-and-run.md#switch-current-connection-profile)
+      - [Update SAS Profile](/connect-and-run.md#update-connection-profile)
+    - [Running SAS Code](/connect-and-run.md#running-sas-code)
     - [Accessing SAS Content](#accessing-sas-content)
     - [Accessing Libraries and Tables](#accessing-libraries-and-tables)
   - [Support](#support)
@@ -114,7 +117,7 @@ _Tip_: You can define a custom region by adding `/*region*/` and `/*endregion*/`
 
 ### Configuring the SAS Extension
 
-Before running SAS code, you must configure the SAS extension to access a SAS 9.4 or Viya server. You must license SAS 9.4 or Viya to run SAS code.
+Before running SAS code, you must configure the SAS extension to access a SAS 9.4 (remote or local) or Viya server. You must license SAS 9.4 or Viya to run SAS code.
 
 1. When first configuring, open up a file with the SAS language. "No Profile" can be located on the Status Bar located at the bottom left of your VSCode window
 
@@ -170,6 +173,15 @@ To access SAS Content:
 After configuring the SAS extension for a SAS Viya environment, you will be able to access your connected libraries.
 
 You can use the libraries pane to delete a table, drag and drop tables into your SAS program code, or view a sample of the table data.
+
+### SAS Notebook
+
+Notebook is an interactive experience with Markdown, executable code snippets and corresponding rich outputs organized in cells.
+
+- To create a SAS notebook, select `SAS Notebook` from the `New File...` menu.
+- To change a code language, click the `Select Cell Language Mode` button at the bottom end of a code cell.
+- To toggle log or ODS output display, click `...` at the side of the output and select `Change Presentation`.
+- SAS Notebook can be saved to a `.sasnb` file, shared to others, and open in another VS Code window.
 
 ## Support
 

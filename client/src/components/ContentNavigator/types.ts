@@ -11,9 +11,14 @@ export interface ContentItem {
   type?: string;
   uri: string;
   uid?: string;
-  __trash__: boolean;
+  flags?: {
+    isInRecycleBin?: boolean;
+    isInMyFavorites?: boolean;
+    hasFavoriteId?: string;
+  };
   memberCount?: number;
   permission: Permission;
+  parentFolderUri?: string;
 }
 
 export interface Link {

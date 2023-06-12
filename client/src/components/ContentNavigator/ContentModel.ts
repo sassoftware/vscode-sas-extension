@@ -10,19 +10,20 @@ import axios, {
 import { Uri, authentication } from "vscode";
 import { SASAuthProvider } from "../AuthProvider";
 import {
-  FAVORITES_FOLDER,
+  FAVORITES_FOLDER_TYPE,
   FILE_TYPE,
   FILE_TYPES,
   FOLDER_TYPE,
   FOLDER_TYPES,
   Messages,
   ROOT_FOLDER,
-  TRASH_FOLDER,
+  TRASH_FOLDER_TYPE,
 } from "./const";
 import { ContentItem, Link, Permission } from "./types";
 import {
   getLink,
   getResourceId,
+  getResourceIdFromItem,
   getTypeName,
   getUri,
   isContainer,
@@ -31,6 +32,7 @@ import {
 interface AddMemberProperties {
   name?: string;
   contentType?: string;
+  type?: string;
 }
 
 export class ContentModel {
@@ -124,13 +126,27 @@ export class ContentModel {
     if (!result.items) {
       return Promise.reject();
     }
-    const isTrash = TRASH_FOLDER === getTypeName(item) || item.__trash__;
+    const myFavoritesFolder = this.getDelegateFolder("@myFavorites");
+    const isInRecycleBin =
+      TRASH_FOLDER_TYPE === getTypeName(item) || item.flags?.isInRecycleBin;
+    const isInMyFavorites =
+      getResourceIdFromItem(item) === getResourceIdFromItem(myFavoritesFolder);
+    const all_favorites = isInMyFavorites
+      ? []
+      : await this.getChildren(myFavoritesFolder);
 
-    return result.items.map((childItem: ContentItem) => ({
+    return result.items.map((childItem: ContentItem, index) => ({
       ...childItem,
-      uid: `${childItem.id}${item.name}`.replace(/\s/g, ""),
+      uid: `${item.uid}/${index}`,
       permission: getPermission(childItem),
-      __trash__: isTrash,
+      flags: {
+        isInRecycleBin,
+        isInMyFavorites,
+        hasFavoriteId: all_favorites.find(
+          (favorite) =>
+            getResourceIdFromItem(favorite) === getResourceIdFromItem(childItem)
+        )?.id,
+      },
     }));
   }
 
@@ -178,14 +194,15 @@ export class ContentModel {
 
   public async createFile(
     item: ContentItem,
-    fileName: string
+    fileName: string,
+    buffer?: ArrayBufferLike
   ): Promise<ContentItem | undefined> {
     const contentType = await this.getFileContentType(fileName);
     let createdResource: ContentItem;
     try {
       const fileCreationResponse = await this.connection.post<ContentItem>(
         `/files/files#rawUpload?typeDefName=${contentType}`,
-        Buffer.from("", "binary"),
+        buffer || Buffer.from("", "binary"),
         {
           headers: {
             "Content-Type": "text/plain",
@@ -209,6 +226,7 @@ export class ContentModel {
         contentType,
       }
     );
+
     if (!memberAdded) {
       return;
     }
@@ -403,7 +421,7 @@ export class ContentModel {
     return true;
   }
 
-  private async addMember(
+  public async addMember(
     uri: string | undefined,
     addMemberUri: string | undefined,
     properties: AddMemberProperties
@@ -422,6 +440,38 @@ export class ContentModel {
       return false;
     }
 
+    return true;
+  }
+
+  public async addFavorite(item: ContentItem): Promise<boolean> {
+    const myFavorites = this.getDelegateFolder("@myFavorites");
+    return await this.addMember(
+      getResourceIdFromItem(item),
+      getLink(myFavorites.links, "POST", "addMember").uri,
+      {
+        type: "reference",
+        name: item.name,
+        contentType: item.contentType,
+      }
+    );
+  }
+
+  public async removeFavorite(item: ContentItem): Promise<boolean> {
+    const deleteMemberUri = item.flags?.isInMyFavorites
+      ? getLink(item.links, "DELETE", "delete")?.uri
+      : item.flags?.hasFavoriteId
+      ? `${getResourceIdFromItem(
+          this.getDelegateFolder("@myFavorites")
+        )}/members/${item.flags?.hasFavoriteId}`
+      : undefined;
+    if (!deleteMemberUri) {
+      return false;
+    }
+    try {
+      await this.connection.delete(deleteMemberUri);
+    } catch (error) {
+      return false;
+    }
     return true;
   }
 
@@ -476,7 +526,7 @@ export class ContentModel {
     let numberCompletedServiceCalls = 0;
 
     return new Promise<ContentItem[]>((resolve) => {
-      supportedDelegateFolders.forEach(async (sDelegate) => {
+      supportedDelegateFolders.forEach(async (sDelegate, index) => {
         let result;
         if (sDelegate === "@sasRoot") {
           result = {
@@ -487,6 +537,7 @@ export class ContentModel {
         }
         this.delegateFolders[sDelegate] = {
           ...result.data,
+          uid: `${index}`,
           permission: getPermission(result.data),
         };
 
@@ -532,8 +583,8 @@ const getPermission = (item: ContentItem): Permission => {
         write: false,
         delete: false,
         addMember:
-          itemType !== TRASH_FOLDER &&
-          itemType !== FAVORITES_FOLDER &&
+          itemType !== TRASH_FOLDER_TYPE &&
+          itemType !== FAVORITES_FOLDER_TYPE &&
           !!getLink(item.links, "POST", "createChild"),
       };
 };

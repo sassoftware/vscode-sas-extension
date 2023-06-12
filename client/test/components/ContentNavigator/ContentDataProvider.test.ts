@@ -3,6 +3,8 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import { StubbedInstance, stubInterface } from "ts-sinon";
 import {
+  DataTransfer,
+  DataTransferItem,
   FileStat,
   FileType,
   ThemeIcon,
@@ -12,9 +14,17 @@ import {
 } from "vscode";
 import ContentDataProvider from "../../../src/components/ContentNavigator/ContentDataProvider";
 import { ContentModel } from "../../../src/components/ContentNavigator/ContentModel";
-import { ROOT_FOLDER } from "../../../src/components/ContentNavigator/const";
+import {
+  FAVORITES_FOLDER_TYPE,
+  ROOT_FOLDER,
+  TRASH_FOLDER_TYPE,
+} from "../../../src/components/ContentNavigator/const";
 import { ContentItem } from "../../../src/components/ContentNavigator/types";
-import { getUri } from "../../../src/components/ContentNavigator/utils";
+import {
+  getLink,
+  getUri,
+} from "../../../src/components/ContentNavigator/utils";
+import { getUri as getTestUri } from "../../utils";
 
 let stub;
 let axiosInstance: StubbedInstance<AxiosInstance>;
@@ -37,14 +47,56 @@ const mockContentItem = (
   modifiedTimeStamp: 1234,
   name: "testFile",
   uri: "uri://test",
-  __trash__: false,
   permission: {
     write: false,
     addMember: false,
     delete: false,
   },
+  flags: {
+    isInRecycleBin: false,
+    isInMyFavorites: false,
+  },
+  uid: "unique-id",
   ...contentItem,
 });
+
+const createDataProvider = () => {
+  const model = new ContentModel();
+  const mockGetDelegateFolder = sinon.stub(model, "getDelegateFolder");
+  mockGetDelegateFolder.withArgs("@myRecycleBin").returns(
+    mockContentItem({
+      type: "trashFolder",
+      name: "Recycle Bin",
+      links: [
+        {
+          rel: "self",
+          uri: "uri://self",
+          method: "GET",
+          href: "uri://self",
+          type: "test",
+        },
+      ],
+      uri: "uri://recyleBin",
+    })
+  );
+  mockGetDelegateFolder.withArgs("@myFavorites").returns(
+    mockContentItem({
+      type: "favoritesFolder",
+      name: "My Favorites",
+      links: [
+        {
+          rel: "addMember",
+          uri: "uri://addMember",
+          method: "POST",
+          href: "uri://addMember",
+          type: "test",
+        },
+      ],
+      uri: "uri://myFavorites",
+    })
+  );
+  return new ContentDataProvider(model, Uri.from({ scheme: "http" }));
+};
 
 describe("ContentDataProvider", async function () {
   let authStub;
@@ -88,16 +140,13 @@ describe("ContentDataProvider", async function () {
 
   it("getTreeItem - returns a file tree item for file reference", async () => {
     const contentItem: ContentItem = mockContentItem();
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     const treeItem = await dataProvider.getTreeItem(contentItem);
     const uri = await dataProvider.getUri(contentItem, false);
     const expectedTreeItem: TreeItem = {
       iconPath: ThemeIcon.File,
-      id: "uri://selffile",
+      id: "unique-id",
       label: "testFile",
       command: {
         command: "vscode.open",
@@ -114,15 +163,11 @@ describe("ContentDataProvider", async function () {
       type: "folder",
       name: "testFolder",
     });
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     const treeItem = await dataProvider.getTreeItem(contentItem);
     const expectedTreeItem: TreeItem = {
-      iconPath: ThemeIcon.Folder,
-      id: "uri://selffolder",
+      id: "unique-id",
       label: "testFolder",
     };
 
@@ -130,19 +175,13 @@ describe("ContentDataProvider", async function () {
   });
 
   it("getChildren - returns no children if not authorized", async () => {
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
     const children = await dataProvider.getChildren();
     expect(children.length).to.equal(0);
   });
 
   it("getChildren - returns root children without content item", async function () {
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     axiosInstance.get.withArgs("/folders/folders/@myFavorites").resolves({
       data: mockContentItem({
@@ -176,15 +215,19 @@ describe("ContentDataProvider", async function () {
   });
 
   it("getChildren - returns children with content item", async function () {
-    const childItem = mockContentItem();
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const childItem = mockContentItem({
+      flags: {
+        isInMyFavorites: true,
+        isInRecycleBin: false,
+        hasFavoriteId: undefined,
+      },
+      uid: "my-favorite/0",
+    });
+    const dataProvider = createDataProvider();
 
     axiosInstance.get
       .withArgs(
-        "uri://myFolders?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending"
+        "uri://myFavorites?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending"
       )
       .resolves({
         data: {
@@ -201,26 +244,24 @@ describe("ContentDataProvider", async function () {
         links: [
           {
             rel: "members",
-            uri: "uri://myFolders",
+            uri: "uri://myFavorites",
             method: "GET",
-            href: "uri://@myFolders",
+            href: "uri://@myFavorites",
             type: "test",
           },
         ],
+        uri: "uri://myFavorites",
+        uid: "my-favorite",
       })
     );
 
     expect(children.length).to.equal(1);
     expect(children[0]).to.deep.include(childItem);
-    expect(children[0].uid).to.equal("abc123@myFavorites");
   });
 
   it("stat - returns file data", async function () {
     const childItem = mockContentItem();
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     axiosInstance.get.withArgs("uri://test").resolves({
       data: childItem,
@@ -240,10 +281,7 @@ describe("ContentDataProvider", async function () {
 
   it("stat - returns folder data", async function () {
     const childItem = mockContentItem({ type: "folder" });
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     axiosInstance.get.withArgs("uri://test").resolves({
       data: childItem,
@@ -263,10 +301,7 @@ describe("ContentDataProvider", async function () {
 
   it("readFile - returns file contents", async function () {
     const childItem = mockContentItem();
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     axiosInstance.get.withArgs("uri://test/content").resolves({
       data: "/* file content */",
@@ -288,10 +323,7 @@ describe("ContentDataProvider", async function () {
       type: "folder",
       name: "folder-test",
     });
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     axiosInstance.post
       .withArgs("/folders/folders?parentFolderUri=uri://parent-folder", {
@@ -308,10 +340,7 @@ describe("ContentDataProvider", async function () {
 
   it("createFolder - fails to create a folder without parent folder", async function () {
     const parentItem = mockContentItem({ type: "folder", uri: "" });
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     const item = await dataProvider.createFolder(parentItem, "folder-test");
 
@@ -337,10 +366,7 @@ describe("ContentDataProvider", async function () {
       name: "file.sas",
     });
 
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     axiosInstance.post
       .withArgs(
@@ -393,10 +419,7 @@ describe("ContentDataProvider", async function () {
         },
       });
 
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.renameResource(
@@ -430,10 +453,7 @@ describe("ContentDataProvider", async function () {
         headers: { etag: "1234", "last-modified": "5678" },
       });
 
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.renameResource(
@@ -455,10 +475,7 @@ describe("ContentDataProvider", async function () {
       name: "the-real-file.sas",
     });
 
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     axiosInstance.get.withArgs("uri://self").resolves({
       data: item,
@@ -490,10 +507,7 @@ describe("ContentDataProvider", async function () {
       name: "file.sas",
     });
 
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     // Make initial request and store file token data
     axiosInstance.get.withArgs("uri://test/content").resolves({
@@ -540,10 +554,7 @@ describe("ContentDataProvider", async function () {
       ],
     });
 
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     axiosInstance.delete.withArgs("uri://delete").resolves({ data: {} });
     axiosInstance.delete
@@ -570,26 +581,7 @@ describe("ContentDataProvider", async function () {
         },
       ],
     });
-    const model = new ContentModel();
-    sinon.stub(model, "getDelegateFolder").returns(
-      mockContentItem({
-        type: "trashFolder",
-        name: "Recycle Bin",
-        links: [
-          {
-            rel: "self",
-            uri: "uri://self",
-            method: "GET",
-            href: "uri://self",
-            type: "test",
-          },
-        ],
-      })
-    );
-    const dataProvider = new ContentDataProvider(
-      model,
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     axiosInstance.put.withArgs("uri://update").resolves({ data: {} });
 
@@ -621,10 +613,7 @@ describe("ContentDataProvider", async function () {
       ],
     });
 
-    const dataProvider = new ContentDataProvider(
-      new ContentModel(),
-      Uri.from({ scheme: "http" })
-    );
+    const dataProvider = createDataProvider();
 
     axiosInstance.put.withArgs("uri://update").resolves({ data: {} });
 
@@ -632,5 +621,270 @@ describe("ContentDataProvider", async function () {
     const deleted = await dataProvider.restoreResource(item);
 
     expect(deleted).to.equal(true);
+  });
+
+  it("add to favorites - Add the reference of an item to My Favorites folder", async function () {
+    const item = mockContentItem({
+      type: "file",
+      name: "file.sas",
+      links: [
+        {
+          rel: "getResource",
+          uri: "uri://resource",
+          method: "GET",
+          href: "uri://resource",
+          type: "test",
+        },
+      ],
+    });
+
+    const dataProvider = createDataProvider();
+
+    axiosInstance.post.withArgs("uri://addMember").resolves({ data: {} });
+
+    await dataProvider.connect("http://test.io");
+    const success = await dataProvider.addToMyFavorites(item);
+
+    expect(success).to.equal(true);
+  });
+
+  it("remove from favorites - Remove the reference of an item from My Favorites folder", async function () {
+    const item = mockContentItem({
+      type: "reference",
+      name: "file.sas",
+      links: [
+        {
+          rel: "delete",
+          uri: "uri://delete",
+          method: "DELETE",
+          href: "uri://delete",
+          type: "test",
+        },
+      ],
+      flags: {
+        isInMyFavorites: true,
+      },
+    });
+    const dataProvider = createDataProvider();
+
+    axiosInstance.delete.withArgs("uri://delete").resolves({ data: {} });
+
+    await dataProvider.connect("http://test.io");
+    const success = await dataProvider.removeFromMyFavorites(item);
+
+    expect(success).to.equal(true);
+  });
+
+  it("remove from favorites - Remove the reference of an item from the resource", async function () {
+    const item = mockContentItem({
+      type: "file",
+      name: "file.sas",
+      flags: {
+        hasFavoriteId: "favorite-id",
+      },
+    });
+    const dataProvider = createDataProvider();
+
+    axiosInstance.delete
+      .withArgs("uri://myFavorites/members/favorite-id")
+      .resolves({ data: {} });
+
+    await dataProvider.connect("http://test.io");
+    const success = await dataProvider.removeFromMyFavorites(item);
+
+    expect(success).to.equal(true);
+  });
+
+  it("handleDrop - allows dropping files", async function () {
+    const parentItem = mockContentItem({
+      type: "folder",
+      name: "parent",
+    });
+
+    const uri = getTestUri("SampleCode.sas").toString();
+    const item = mockContentItem();
+
+    const model = new ContentModel();
+    const stub: sinon.SinonStub = sinon.stub(model, "createFile");
+
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" })
+    );
+
+    const dataTransfer = new DataTransfer();
+    const dataTransferItem = new DataTransferItem(uri);
+    dataTransfer.set(
+      "application/vnd.code.tree.contentDataProvider",
+      dataTransferItem
+    );
+
+    stub.returns(new Promise((resolve) => resolve(item)));
+
+    await dataProvider.handleDrop(parentItem, dataTransfer);
+
+    expect(stub.calledOnceWith(parentItem, "SampleCode.sas")).to.be.true;
+  });
+
+  it("handleDrop - allows dropping folder", async function () {
+    const parentItem = mockContentItem({
+      type: "folder",
+      name: "parent",
+    });
+    const newParentItem = mockContentItem({
+      type: "folder",
+      name: "new-parent",
+    });
+
+    const uriObject = getTestUri("TestFolder");
+    const uri = uriObject.toString();
+    const item = mockContentItem();
+
+    const model = new ContentModel();
+    const createFileStub: sinon.SinonStub = sinon.stub(model, "createFile");
+    const createFolderStub: sinon.SinonStub = sinon.stub(model, "createFolder");
+
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" })
+    );
+
+    const dataTransfer = new DataTransfer();
+    const dataTransferItem = new DataTransferItem(uri);
+    dataTransfer.set(
+      "application/vnd.code.tree.contentDataProvider",
+      dataTransferItem
+    );
+
+    createFileStub.returns(new Promise((resolve) => resolve(item)));
+    createFolderStub.returns(new Promise((resolve) => resolve(newParentItem)));
+
+    await dataProvider.handleDrop(parentItem, dataTransfer);
+
+    expect(createFolderStub.calledWith(parentItem, "TestFolder")).to.be.true;
+    expect(createFileStub.calledWith(newParentItem, "SampleCode1.sas")).to.be
+      .true;
+    expect(createFolderStub.calledWith(newParentItem, "TestSubFolder")).to.be
+      .true;
+    expect(createFileStub.calledWith(newParentItem, "SampleCode2.sas")).to.be
+      .true;
+  });
+
+  it("handleDrop - allows dropping content items", async function () {
+    const parentItem = mockContentItem({
+      type: "folder",
+      name: "parent",
+    });
+    const item = mockContentItem();
+
+    const model = new ContentModel();
+    const stub: sinon.SinonStub = sinon.stub(model, "moveTo");
+    stub.returns(new Promise((resolve) => resolve(true)));
+
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" })
+    );
+
+    const dataTransfer = new DataTransfer();
+    const dataTransferItem = new DataTransferItem([item]);
+    dataTransfer.set(
+      "application/vnd.code.tree.contentDataProvider",
+      dataTransferItem
+    );
+
+    await dataProvider.handleDrop(parentItem, dataTransfer);
+
+    expect(stub.calledWith(item, parentItem.uri)).to.be.true;
+  });
+
+  it("handleDrop - allows dropping content items to favorites", async function () {
+    const parentItem = mockContentItem({
+      type: FAVORITES_FOLDER_TYPE,
+      name: "favorites",
+      links: [
+        {
+          rel: "addMember",
+          uri: "uri://addfav",
+          method: "POST",
+          href: "uri://addfav",
+          type: "test",
+        },
+      ],
+    });
+    const item = mockContentItem({
+      uri: "uri://favitem",
+      links: [
+        {
+          rel: "getResource",
+          uri: "uri://favitem",
+          method: "GET",
+          href: "uri://favitem",
+          type: "test",
+        },
+      ],
+    });
+
+    const model = new ContentModel();
+    const stub: sinon.SinonStub = sinon.stub(model, "addMember");
+    stub.returns(new Promise((resolve) => resolve(true)));
+
+    sinon.stub(model, "getDelegateFolder").returns(parentItem);
+
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" })
+    );
+
+    const dataTransfer = new DataTransfer();
+    const dataTransferItem = new DataTransferItem([item]);
+    dataTransfer.set(
+      "application/vnd.code.tree.contentDataProvider",
+      dataTransferItem
+    );
+
+    await dataProvider.handleDrop(parentItem, dataTransfer);
+
+    expect(stub.calledWith("uri://favitem", "uri://addfav")).to.be.true;
+  });
+
+  it("handleDrop - allows dropping content items to trash", async function () {
+    const parentItem = mockContentItem({
+      type: TRASH_FOLDER_TYPE,
+      name: "trash",
+      links: [
+        {
+          rel: "self",
+          uri: "uri://trash",
+          method: "GET",
+          href: "uri://trash",
+          type: "test",
+        },
+      ],
+    });
+    const item = mockContentItem();
+
+    const model = new ContentModel();
+    const stub: sinon.SinonStub = sinon.stub(model, "moveTo");
+    stub.returns(new Promise((resolve) => resolve(true)));
+
+    sinon.stub(model, "getDelegateFolder").returns(parentItem);
+
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" })
+    );
+
+    const dataTransfer = new DataTransfer();
+    const dataTransferItem = new DataTransferItem([item]);
+    dataTransfer.set(
+      "application/vnd.code.tree.contentDataProvider",
+      dataTransferItem
+    );
+
+    await dataProvider.handleDrop(parentItem, dataTransfer);
+
+    expect(stub.calledWith(item, getLink(parentItem.links, "GET", "self")?.uri))
+      .to.be.true;
   });
 });

@@ -8,6 +8,9 @@ import {
   ConfigurationChangeEvent,
   ExtensionContext,
   languages,
+  NotebookCellData,
+  NotebookCellKind,
+  NotebookData,
   StatusBarAlignment,
   StatusBarItem,
   window,
@@ -36,6 +39,8 @@ import LibraryNavigator from "../components/LibraryNavigator";
 import { legend, LogTokensProvider } from "../components/LogViewer";
 import { ConnectionType } from "../components/profile";
 import { installCAs } from "../components/CAHelper";
+import { NotebookController } from "../components/notebook/Controller";
+import { NotebookSerializer } from "../components/notebook/Serializer";
 
 let client: LanguageClient;
 // Create Profile status bar item
@@ -129,6 +134,21 @@ export function activate(context: ExtensionContext): void {
       if (event.affectsConfiguration("SAS.connectionProfiles")) {
         triggerProfileUpdate();
       }
+    }),
+    workspace.registerNotebookSerializer(
+      "sas-notebook",
+      new NotebookSerializer()
+    ),
+    new NotebookController(),
+    commands.registerCommand("SAS.notebook.new", async () => {
+      await window.showNotebookDocument(
+        await workspace.openNotebookDocument(
+          "sas-notebook",
+          new NotebookData([
+            new NotebookCellData(NotebookCellKind.Code, "", "sas"),
+          ])
+        )
+      );
     })
   );
 
@@ -146,10 +166,19 @@ function triggerProfileUpdate(): void {
   const activeProfileName = profileConfig.getActiveProfile();
   if (profileList[activeProfileName]) {
     updateStatusBarProfile(activeProfileStatusBarIcon);
+
+    const connectionType =
+      profileList[activeProfileName].connectionType || ConnectionType.Rest;
+
+    //Set the connection type
+    commands.executeCommand("setContext", "SAS.connectionType", connectionType);
+
+    //See if the connection is direct (ie. serverId)
     commands.executeCommand(
       "setContext",
-      "SAS.connectionType",
-      profileList[activeProfileName]?.connectionType || ConnectionType.Rest
+      "SAS.connection.direct",
+      connectionType === ConnectionType.Rest &&
+        "serverId" in profileList[activeProfileName]
     );
   } else {
     profileConfig.updateActiveProfileSetting("");

@@ -11,17 +11,20 @@ import {
   window,
   workspace,
 } from "vscode";
-import DataTable from "../../panels/DataTable";
+import DataViewer from "../../panels/DataViewer";
+import { WebViewManager } from "../../panels/WebviewManager";
 import DragAndDropController from "../DragAndDropController";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
+import PaginatedResultSet from "./PaginatedResultSet";
 import { LibraryItem, TableData } from "./types";
 
 class LibraryNavigator implements SubscriptionProvider {
   private libraryDataProvider: LibraryDataProvider;
   private treeView: TreeView<LibraryItem>;
   private extensionUri: Uri;
+  private webviewManager: WebViewManager;
 
   constructor(context: ExtensionContext) {
     this.extensionUri = context.extensionUri;
@@ -38,6 +41,7 @@ class LibraryNavigator implements SubscriptionProvider {
       treeDataProvider: this.libraryDataProvider,
       dragAndDropController,
     });
+    this.webviewManager = new WebViewManager();
   }
 
   public getSubscriptions(): Disposable[] {
@@ -45,14 +49,10 @@ class LibraryNavigator implements SubscriptionProvider {
       this.treeView,
       commands.registerCommand(
         "SAS.viewTable",
-        async (
-          item: LibraryItem,
-          viewDataCallback: () => Promise<TableData>
-        ) => {
-          DataTable.render(
-            this.extensionUri,
-            item.uid,
-            await viewDataCallback()
+        async (item: LibraryItem, paginator: PaginatedResultSet<TableData>) => {
+          this.webviewManager.render(
+            new DataViewer(this.extensionUri, item.uid, paginator),
+            item.uid
           );
         }
       ),

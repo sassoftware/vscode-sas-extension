@@ -2,7 +2,12 @@
 // Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
 
 import { Uri } from "vscode";
-import { FOLDER_TYPES, TRASH_FOLDER } from "./const";
+import {
+  FILE_TYPE,
+  FOLDER_TYPE,
+  FOLDER_TYPES,
+  TRASH_FOLDER_TYPE,
+} from "./const";
 import { ContentItem, Link } from "./types";
 
 export const getLink = (
@@ -52,12 +57,23 @@ export const resourceType = (item: ContentItem): string | undefined => {
   const isRecycled = isItemInRecycleBin(item);
   const actions = [
     addMember && !isRecycled && "createChild",
-    del && "delete",
+    del && !item.flags?.isInMyFavorites && "delete",
     write && (!isRecycled ? "update" : "restore"),
   ].filter((action) => !!action);
 
-  if (getTypeName(item) === TRASH_FOLDER && item?.memberCount) {
+  const type = getTypeName(item);
+  if (type === TRASH_FOLDER_TYPE && item?.memberCount) {
     actions.push("empty");
+  }
+
+  if (item.flags?.isInMyFavorites || item.flags?.hasFavoriteId) {
+    actions.push("removeFromFavorites");
+  } else if (
+    item.type !== "reference" &&
+    [FOLDER_TYPE, FILE_TYPE].includes(type) &&
+    !isRecycled
+  ) {
+    actions.push("addToFavorites");
   }
 
   if (actions.length === 0) {
@@ -87,4 +103,6 @@ export const isValidItem = (item: ContentItem): boolean =>
   !!item && !!item.id && !!item.name && !!item.links;
 
 export const isItemInRecycleBin = (item: ContentItem): boolean =>
-  !!item && item.__trash__;
+  !!item && item.flags?.isInRecycleBin;
+
+export const isContentItem = (item): item is ContentItem => isValidItem(item);
