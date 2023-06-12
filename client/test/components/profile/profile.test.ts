@@ -675,7 +675,7 @@ describe("Profiles", async function () {
           `Profile ${testProfileName} should exist`
         );
 
-        const addedProfile: COMProfile =
+        const addedProfile: SSHProfile =
           profileConfig.getProfileByName(testProfileNewName);
 
         expect(addedProfile).to.eql(
