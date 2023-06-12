@@ -1,6 +1,6 @@
 import { LogLine, RunResult, Session } from "..";
-import * as fs from "fs";
-import path = require("path");
+import { readFileSync } from "fs";
+import { resolve } from "path";
 import { scriptContent } from "./script";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 
