@@ -28,7 +28,7 @@ class SASRunner{
 
         # create and connect to the SAS session 
         $this.objSAS = $objFactory.CreateObjectByServer(
-            "SASApp", # server name
+            "Local", # server name
             $true, 
             $objServerDef, # built server definition
             "", # user ID
