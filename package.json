@@ -154,7 +154,8 @@
                       "description": "%configurations.SAS.connectionProfiles.profiles.connectionType%",
                       "enum": [
                         "rest",
-                        "ssh"
+                        "ssh",
+                        "com"
                       ]
                     }
                   },
@@ -237,6 +238,32 @@
                             "type": "array",
                             "default": [],
                             "description": "%configuration.SAS.connectionProfiles.profiles.ssh.sasOptions%"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "connectionType": {
+                            "const": "com"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "host"
+                        ],
+                        "properties": {
+                          "host": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.com.host%"
+                          },
+                          "sasOptions": {
+                            "type": "array",
+                            "default": [],
+                            "description": "%configuration.SAS.connectionProfiles.profiles.clientSecret%"
                           }
                         }
                       }

@@ -19,6 +19,9 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.port": "SAS SSH Connection port",
   "configuration.SAS.connectionProfiles.profiles.ssh.sasOptions": "SAS SSH Connection SAS system options",
 
+  "configuration.SAS.connectionProfiles.profiles.com.host": "SAS COM Connection Host",
+  "configuration.SAS.connectionProfiles.profiles.com.sasOptions": "SAS COM Connection SAS options",
+
   "commands.SAS.addFileResource": "New File...",
   "commands.SAS.addFolderResource": "New Folder...",
   "commands.SAS.addProfile": "Add New Connection Profile",
