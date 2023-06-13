@@ -130,7 +130,7 @@ Note: the default path to the SAS executable (saspath) is /opt/sasinside/SASHome
 
 ### Profile Anatomy (SAS 9.4 Remote)
 
-The parameters listed below make up the profile settings for configuring a connection to SAS 9.4.
+The parameters listed below make up the profile settings for configuring a connection to a remote SAS 9.4 instance.
 
 | Name         | Description                          | Additional Notes                                                     |
 | ------------ | ------------------------------------ | -------------------------------------------------------------------- |
@@ -143,6 +143,21 @@ The parameters listed below make up the profile settings for configuring a conne
 ## Add New SAS 9.4 Remote Profile
 
 Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, select the SAS 9.4 (remote) connection type and complete the prompts (using values from the preceeding table) to create a new profile.
+
+## Profile Anatomy (SAS 9.4 local)
+
+On Windows, during the install of SAS 9.4, make sure that "Integration Technologies Client" checkbox is checked. If using an order that doesn't provide this option, make sure the ITC is installed by visiting the following [link](https://support.sas.com/downloads/browse.htm?fil=&cat=56). Make sure to download the 9.4m8 option.
+
+The parameters listed below make up the profile settings for configuring a connection to a local SAS 9.4 instance.
+
+| Name     | Description                      | Additional Notes                    |
+| -------- | -------------------------------- | ----------------------------------- |
+| **Name** | Name of the profile              | This will display on the status bar |
+| **Host** | Indicates SAS 9.4 local instance | Defaults to localhost for com       |
+
+## Add New SAS 9.4 Local Profile
+
+Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows). After executing the `SAS.addProfile` command, select the SAS 9.4 (local - COM) connection type to create a new profile.
 
 ## Delete Connection Profile
 
@@ -198,6 +213,8 @@ To run a SAS program connection to a SAS Viya instance:
    2.4. SAS returns an authorization code. Copy this code.
 
    2.5. Paste the authorization code in VS Code where indicated at the top of the screen.
+
+**Note:** Your sign in status will persist in VS Code. You can view it and sign out from VS Code's `Accounts` menu.
 
 3. VS Code connects to SAS and runs the code.
 

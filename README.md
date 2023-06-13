@@ -17,6 +17,8 @@ Welcome to the SAS Extension for Visual Studio Code! This extension provides sup
       - [Add New SAS Viya Profile](/connect-and-run.md#add-new-sas-viya-profile)
       - [Profile Anatomy (SAS 9.4 Remote)](/connect-and-run.md/#profile-anatomy-sas-94-remote)
       - [Add New SAS 9.4 Remote Profile](/connect-and-run.md#add-new-sas-94-remote-profile)
+      - [Profile Anatomy (SAS 9.4 Local)](/connect-and-run.md/#profile-anatomy-sas-94-local)
+      - [Add New SAS 9.4 Local Profile](/connect-and-run.md/#add-new-sas-94-local-profile)
       - [Delete SAS Profile](/connect-and-run.md#delete-connection-profile)
       - [Switch Current SAS Profile](/connect-and-run.md#switch-current-connection-profile)
       - [Update SAS Profile](/connect-and-run.md#update-connection-profile)
@@ -115,7 +117,7 @@ _Tip_: You can define a custom region by adding `/*region*/` and `/*endregion*/`
 
 ### Configuring the SAS Extension
 
-Before running SAS code, you must configure the SAS extension to access a SAS 9.4 or Viya server. You must license SAS 9.4 or Viya to run SAS code.
+Before running SAS code, you must configure the SAS extension to access a SAS 9.4 (remote or local) or Viya server. You must license SAS 9.4 or Viya to run SAS code.
 
 1. When first configuring, open up a file with the SAS language. "No Profile" can be located on the Status Bar located at the bottom left of your VSCode window
 
