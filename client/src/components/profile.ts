@@ -67,8 +67,8 @@ export enum ConnectionType {
  * value. Normally this option should not be set by the user since it is most likely
  * being set by an automated process.
  */
-export interface ViyaProfile {
-  connectionType: ConnectionType.Rest;
+export interface ViyaProfile extends BaseProfile {
+  readonly connectionType: ConnectionType.Rest;
   endpoint: string;
   clientId?: string;
   clientSecret?: string;
@@ -76,22 +76,25 @@ export interface ViyaProfile {
   serverId?: string;
 }
 
-export interface SSHProfile {
-  connectionType: ConnectionType.SSH;
+export interface SSHProfile extends BaseProfile {
+  readonly connectionType: ConnectionType.SSH;
   host: string;
   saspath: string;
   port: number;
   username: string;
-  sasOptions: string[];
 }
 
-export interface COMProfile {
-  connectionType: ConnectionType.COM;
+export interface COMProfile extends BaseProfile {
+  readonly connectionType: ConnectionType.COM;
   host: string;
-  sasOptions: string[];
 }
 
 export type Profile = ViyaProfile | SSHProfile | COMProfile;
+
+export class BaseProfile {
+  readonly connectionType: ConnectionType;
+  sasOptions?: string[];
+}
 
 /**
  * Profile detail is an interface that encapsulates the name of the profile
@@ -129,8 +132,11 @@ export class ProfileConfig {
       for (const key in profiles) {
         const profile = profiles[key];
         if (profile.connectionType === undefined) {
-          profile.connectionType = ConnectionType.Rest;
-          await this.upsertProfile(key, profile);
+          const migrated = {
+            connectionType: ConnectionType.Rest,
+            ...profile,
+          };
+          await this.upsertProfile(key, migrated);
         }
         if (
           profile.connectionType === ConnectionType.Rest &&

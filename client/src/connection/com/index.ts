@@ -18,7 +18,7 @@ let workDirectory: string;
  * Configuration parameters for this connection provider
  */
 export interface Config {
-  sasOptions: string[];
+  sasOptions?: string[];
   host: string;
 }
 

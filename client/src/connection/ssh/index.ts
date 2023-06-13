@@ -12,7 +12,7 @@ export interface Config {
   host: string;
   username: string;
   saspath: string;
-  sasOptions: string[];
+  sasOptions?: string[];
   port: number;
 }
 
