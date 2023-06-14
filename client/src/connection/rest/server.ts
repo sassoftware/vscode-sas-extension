@@ -6,9 +6,16 @@ import { ServersApi, Server, Link } from "./api/compute";
 import { ComputeSession } from "./session";
 import axios, { AxiosResponse } from "axios";
 
+const DEFAULT_COMPUTE_OPTS = [
+  "-validmemname EXTEND",
+  "-validvarname ANY",
+  "-memsize 0",
+];
+
 export class ComputeServer extends Compute {
   api;
   _self: Server & BaseCompute;
+  _options?: string[];
 
   constructor(id: string) {
     super();
@@ -24,6 +31,10 @@ export class ComputeServer extends Compute {
 
   get links(): Array<Link> {
     return this._self?.links || [];
+  }
+
+  set options(value: string[]) {
+    this._options = value;
   }
 
   static fromInterface(server: Server): ComputeServer {
@@ -74,7 +85,7 @@ export class ComputeServer extends Compute {
       description: "This is a session",
       attributes: {},
       environment: {
-        options: ["-validmemname EXTEND", "-validvarname ANY", "-memsize 0"],
+        options: [...DEFAULT_COMPUTE_OPTS, ...this._options],
         autoExecLines: [],
       },
     };

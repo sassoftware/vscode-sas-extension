@@ -21,6 +21,7 @@ export interface Config {
   context?: string;
   serverId?: string;
   reconnect?: boolean;
+  sasOptions?: string[];
 }
 
 let config: Config;
@@ -78,6 +79,12 @@ async function reconnectComputeSession(): Promise<ComputeSession> {
 
 async function setup(): Promise<void> {
   const apiConfig = getApiConfig();
+  let formattedOpts: string[] = [];
+
+  if (config.sasOptions) {
+    formattedOpts = formatSASOptions();
+  }
+
   if (!config.serverId) {
     const session = await authentication.getSession(SASAuthProvider.id, [], {
       createIfNone: true,
@@ -117,6 +124,7 @@ async function setup(): Promise<void> {
   //Start a new session
   if (config.serverId) {
     const server1 = new ComputeServer(config.serverId);
+    server1._options = formattedOpts;
     computeSession = await server1.getSession();
 
     //Maybe wait for session to be initialized?
@@ -135,7 +143,10 @@ async function setup(): Promise<void> {
 
     const sess = (
       await contextsApi.createSession(
-        { contextId: context.id },
+        {
+          contextId: context.id,
+          sessionRequest: { environment: { options: [...formattedOpts] } },
+        },
         { headers: { "accept-language": locale } }
       )
     ).data;
@@ -144,6 +155,28 @@ async function setup(): Promise<void> {
 
   //Save the current sessionId
   setContextValue("SAS.sessionId", computeSession.sessionId);
+}
+
+/**
+ * Formats the connection profile sasOptions into a format that the compute
+ * API can understand.
+ *
+ * Examples:
+ *
+ * ```
+ * ["-PAGESIZE=MAX"] -> ["-PAGESIZE MAX"]
+ * ["-NOTERMINAL"] -> ["-NOTERMINAL"]
+ * ```
+ *
+ * @returns formatted SAS Options
+ */
+function formatSASOptions() {
+  const formattedOpts = config.sasOptions.map((opt) => {
+    let formatted = opt;
+    formatted = formatted.replace(/-/gi, "");
+    return formatted;
+  });
+  return formattedOpts;
 }
 
 async function cancel(): Promise<void> {
