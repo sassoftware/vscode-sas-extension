@@ -1,5 +1,5 @@
-// Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
-// Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
+// Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 // This declares a global type for DedicatedWorkerGlobalScope which
 // doesn't exist in the DOM library. This is necessary because there are conflicts

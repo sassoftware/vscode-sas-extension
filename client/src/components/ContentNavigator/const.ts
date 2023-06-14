@@ -1,5 +1,5 @@
-// Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
-// Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
+// Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 const CONTENT_FOLDER_ID = "CONTENT_FOLDER_ID";
 export const ROOT_FOLDER_TYPE = "RootFolder";
