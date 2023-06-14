@@ -5,7 +5,7 @@ just a few small guidelines you need to follow.
 
 ## Agreement Covering Contributions
 
-Contributions are subject to the SAS Code Extension Terms, a copy of which is included as [Code_Extension_Agreement.pdf](Code_Extension_Agreement.pdf)
+Contributions are subject to the Apache License Version 2.0, a copy of which is included as [LICENSE](LICENSE)
 
 ## Code reviews
 
