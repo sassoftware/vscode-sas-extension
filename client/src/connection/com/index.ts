@@ -64,7 +64,7 @@ const setup = async (): Promise<void> => {
         onWriteComplete
       );
 
-      if (config.sasOptions.length > 0) {
+      if (config.sasOptions?.length > 0) {
         const sasOptsInput = `$sasOpts=${formatSASOptions(
           config.sasOptions
         )}\n`;
