@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Support SAS Notebook ([#174](https://github.com/sassoftware/vscode-sas-extension/issues/174))
 - Support Add to My Favorites and Remove from My Favorites action ([#283](https://github.com/sassoftware/vscode-sas-extension/issues/283))
 - Support Drag & Drop for SAS content ([#310](https://github.com/sassoftware/vscode-sas-extension/issues/310))
+
+### Changed
+
 - Changed license to official Apache License, Version 2.0 ([#341](https://github.com/sassoftware/vscode-sas-extension/pull/341))
 
 ### Fixed
