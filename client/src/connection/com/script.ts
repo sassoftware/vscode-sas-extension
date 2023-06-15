@@ -1,14 +1,17 @@
+// Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 export const scriptContent = `
 class SASRunner{
   [System.__ComObject] $objSAS
-  
+
   [void]ResolveSystemVars(){
   $code =
 @'
    %let workDir = %sysfunc(pathname(work));
    %put &=workDir;
    %let rc = %sysfunc(dlgcdir("&workDir"));
-   run; 
+   run;
 '@
     $this.Run($code)
     $varLogs = $this.FlushLog(4096)
@@ -22,14 +25,14 @@ class SASRunner{
         $objServerDef.MachineDNSName = $profileHost # SAS Workspace node
         $objServerDef.Port = 0  # workspace server port
         $objServerDef.Protocol = 0     # 0 = COM protocol
-        
+
         # Class Identifier for SAS Workspace
         $objServerDef.ClassIdentifier = "440196d4-90f0-11d0-9f41-00a024bb830c"
 
-        # create and connect to the SAS session 
+        # create and connect to the SAS session
         $this.objSAS = $objFactory.CreateObjectByServer(
             "Local", # server name
-            $true, 
+            $true,
             $objServerDef, # built server definition
             "", # user ID
             ""    # password
@@ -57,7 +60,7 @@ class SASRunner{
     [ref] $errorIndices = [int[]]::new($names.Length)
     [ref]$errors = [string[]]::new($names.Length)
     [ref]$errorCodes = [int[]]::new($names.Length)
-    
+
     try{
       $this.objSAS.Utilities.OptionService.SetOptions([string[]]$names, [string[]]$values, $errorIndices, $errorCodes, $errors)
 
