@@ -3,9 +3,13 @@
 We'd love to accept your patches and contributions to this project. There are
 just a few small guidelines you need to follow.
 
-## Agreement Covering Contributions
+## Contributor License Agreement
 
-Contributions are subject to the Apache License Version 2.0, a copy of which is included as [LICENSE](LICENSE)
+Contributions to this project must be accompanied by a signed
+[Contributor Agreement](ContributorAgreement.txt).
+You (or your employer) retain the copyright to your contribution,
+this simply gives us permission to use and redistribute your contributions as
+part of the project.
 
 ## Code reviews
 
