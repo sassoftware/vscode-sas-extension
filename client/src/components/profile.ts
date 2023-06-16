@@ -67,7 +67,7 @@ export enum ConnectionType {
  * value. Normally this option should not be set by the user since it is most likely
  * being set by an automated process.
  */
-export interface ViyaProfile {
+export interface ViyaProfile extends BaseProfile {
   connectionType: ConnectionType.Rest;
   endpoint: string;
   clientId?: string;
@@ -76,22 +76,24 @@ export interface ViyaProfile {
   serverId?: string;
 }
 
-export interface SSHProfile {
+export interface SSHProfile extends BaseProfile {
   connectionType: ConnectionType.SSH;
   host: string;
   saspath: string;
   port: number;
   username: string;
-  sasOptions: string[];
 }
 
-export interface COMProfile {
+export interface COMProfile extends BaseProfile {
   connectionType: ConnectionType.COM;
   host: string;
-  sasOptions: string[];
 }
 
 export type Profile = ViyaProfile | SSHProfile | COMProfile;
+
+export class BaseProfile {
+  sasOptions?: string[];
+}
 
 /**
  * Profile detail is an interface that encapsulates the name of the profile

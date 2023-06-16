@@ -12,7 +12,7 @@ export interface Config {
   host: string;
   username: string;
   saspath: string;
-  sasOptions: string[];
+  sasOptions?: string[];
   port: number;
 }
 
@@ -222,7 +222,7 @@ export class SSHSession implements Session {
 
     const resolvedSasOpts: string[] = ["-nodms", "-terminal", "-nosyntaxcheck"];
 
-    if (this._config.sasOptions) {
+    if (this._config.sasOptions?.length > 0) {
       resolvedSasOpts.push(...this._config.sasOptions);
     }
     const execSasOpts: string = resolvedSasOpts.join(" ");
