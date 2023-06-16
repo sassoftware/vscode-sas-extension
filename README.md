@@ -207,4 +207,4 @@ We welcome your contributions! Please read [CONTRIBUTING.md](/CONTRIBUTING.md) f
 
 ## License
 
-This project is subject to the SAS Code Extension Terms, a copy of which is included as [Code_Extension_Agreement.pdf](/Code_Extension_Agreement.pdf)
+This project is subject to the Apache License Version 2.0, a copy of which is included as [LICENSE](LICENSE)

@@ -1,25 +1,202 @@
-This project is subject to the SAS Code Extension Terms, a copy of which is included in the [Code_Extension_Agreement](https://github.com/sassoftware/vscode-sas-extension/blob/main/Code_Extension_Agreement.pdf)
 
-SAS Code Extension Terms
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
 
-PLEASE CAREFULLY READ THE TERMS AND CONDITIONS OF THESE SAS CODE EXTENSION TERMS (“Terms”). BY ACCEPTING THESE TERMS AND/OR USING THE CODE YOU ARE AGREEING TO THESE TERMS ON BEHALF OF CUSTOMER. YOU WARRANT THAT YOU HAVE THE AUTHORITY TO BIND CUSTOMER TO THESE TERMS. IF YOU DO NOT HAVE AUTHORITY TO BIND CUSTOMER, DO NOT ACCEPT THIS AGREEMENT OR ATTEMPT TO DOWNLOAD THE CODE.
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
 
-You are downloading computer code ("Code") which SAS is providing at no additional charge for use in connection with SAS software ("Software") licensed or otherwise provided by SAS Institute Inc. or its subsidiary ("SAS") to Customer under a separate agreement (“End User Agreement”). “Customer” means the legal entity that entered into the End User Agreement with SAS. If you are not an authorized user under the End User Agreement, you may not download the Code.
+   1. Definitions.
 
-The Code is governed by the End User Agreement and these Terms. If these Terms conflict with the End User Agreement, these Terms will control.
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
 
-Usage Rights and Source Code. The Code includes source code. SAS grants Customer a non-exclusive, nontransferable, limited license: (a) to modify the Code (including its source code); and (b) to use and reproduce the original or modified Code (including its source code) solely for Customer’s internal use and benefit in connection with the Software and for the same purposes set forth for the Software in the End User Agreement. Nothing in these Terms is intended to allow to access source code in the Software or attempt to reverse engineer, reverse assemble or decompile the Software to recreate source code. Ownership in the Code remains with SAS.
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
 
-Ownership of Feedback. If Customer provides any feedback to SAS concerning the Code, Customer grants SAS a non-exclusive, royalty free, perpetual right to use such feedback at SAS’ discretion. If Customer provides any modifications to the Code to SAS, Customer grants SAS a non-exclusive, royalty free, perpetual right to use, redistribute and alter such modified Code for any purpose at SAS’ discretion without the right to attribution.
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
 
-Restrictions. Customer may not (i) remove any SAS license or copyright information from the Code, (ii) use, modify, or create derivative works for purposes other than using the Code (or modified version of the Code) in connection with internal use of SAS Software under your Software License Agreement, or (iii) use the Code in connection with the use, development, or support of any offering that competes with SAS.
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
 
-Technical Support. SAS will not provide technical support for the Code.
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
 
-Export Restrictions. The Code originates from the United States (“US”). US export laws and regulations apply to the Code. Both parties agree to comply with these and other applicable export and import laws and regulations (“Trade Laws”). Customer will not export, reexport, transfer, or otherwise provide access to, the Code to any person, entity or other party that is a Restricted Party. Customer warrants that Customer and its Users are not Restricted Parties and will not use the Code for the benefit of any Restricted Party. “Restricted Party” means a person or entity: (a) prohibited by Trade Law from accessing the Code without government approval; (b) designated on the List of Specially Designated Nationals and Blocked Persons or Consolidated Sanctions List currently administered by the US Office of Foreign Assets Control, the Denied Persons List, Unverified List, Entity List or Military End User List currently administered by the US Bureau of Industry and Security, or in any other list of restricted parties maintained by OFAC, BIS or other applicable US agencies, or in a successor to any of these lists; (c) located in or under control of Crimea, Donetsk or Luhansk Regions of Ukraine, Belarus, Cuba, Iran, North Korea, Russia, Syria, Venezuela or any country or other territory subject to general export or trade embargo under Trade Laws; (d) engaged in any of the following end-uses: nuclear, chemical or biological weapons; nuclear facilities not under International Atomic Energy Agency safeguards; missiles or unmanned aerial vehicles capable of long-range use or weapons delivery; military training or assistance; military, national police or intelligence end-use; or (e) owned 50% or more either individually or in the aggregate by any of the foregoing Restricted Parties.
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
 
-WARRANTY DISCLAIMER. THE CODE IS PROVIDED “AS IS.” SAS AND ITS LICENSORS DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR ARISING AS A RESULT OF CUSTOM OR USAGE IN THE TRADE OR BY COURSE OF DEALING.
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
 
-LIMITATION OF LIABILITY. SAS’ AND ITS LICENSORS ARE NOT LIABLE FOR DIRECT, SPECIAL, INCIDENTAL, INDIRECT, CONSEQUENTIAL, PUNITIVE, OR RELIANCE DAMAGES (ARISING IN TORT, CONTRACT OR OTHERWISE), EVEN IF THEY HAVE BEEN INFORMED OF THE POSSIBILITY OF SUCH DAMAGES. THE PARTIES MAKE THESE EXCLUSIONS IN CONSIDERATION OF THE LICENSES GRANTED UNDER THE AGREEMENT.
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
 
-TERMINATION. Either party may terminate these Terms at any time. These Terms and Customer’s right to use the Code will termination automatically upon expiration or termination of the End User Agreement.
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.

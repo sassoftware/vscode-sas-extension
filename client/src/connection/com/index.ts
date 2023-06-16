@@ -1,8 +1,11 @@
-import { LogLine, RunResult, Session } from "..";
+// Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { LogLine, RunResult, Session } from "..";
 import { scriptContent } from "./script";
-import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 
 const endCode = "--vscode-sas-extension-submit-end--";
 

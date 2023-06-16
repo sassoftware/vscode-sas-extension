@@ -10,7 +10,7 @@
     "Notebooks"
   ],
   "publisher": "SAS",
-  "license": "SAS Code Extension Terms",
+  "license": "Apache-2.0",
   "icon": "icons/sas.png",
   "engines": {
     "vscode": "^1.71.0"

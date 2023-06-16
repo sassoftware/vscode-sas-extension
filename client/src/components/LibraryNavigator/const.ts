@@ -1,5 +1,5 @@
-// Copyright © 2023, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
-// Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
+// Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 export const Messages = {
   DataTableHeader: "Viewing a sample of the first 100 rows of %(tableName)s.",

@@ -3,7 +3,7 @@
   "description": "SAS language server",
   "version": "0.0.1",
   "author": "SAS Institute Inc.",
-  "license": "SAS Code Extension Terms",
+  "license": "Apache-2.0",
   "engines": {
     "node": "*"
   },

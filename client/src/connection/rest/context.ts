@@ -1,5 +1,5 @@
-// Copyright © 2022, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
-// Licensed under SAS Code Extension Terms, available at Code_Extension_Agreement.pdf
+// Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import { BaseCompute, Compute, getApiConfig } from "./common";
 import { ContextsApi, Context, Link, ContextSummary } from "./api/compute";

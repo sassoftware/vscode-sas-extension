@@ -2,7 +2,7 @@
   "name": "sas-lsp-client",
   "description": "VS Code client for SAS language server",
   "author": "SAS Institute Inc.",
-  "license": "SAS Code Extension Terms",
+  "license": "Apache-2.0",
   "version": "0.0.1",
   "publisher": "SAS",
   "engines": {
