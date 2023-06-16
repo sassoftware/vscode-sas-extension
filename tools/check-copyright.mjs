@@ -3,13 +3,13 @@ import glob from "glob";
 
 // These files will not be checked for copyright information
 const filesToIgnore = [
+  "**/dist/**",
   "**/node_modules/**",
   "**/out/**",
-  "**/dist/**",
-  "tools/*",
+  "**/test/**",
   "*.config.js",
   "*.test.tsx?",
-  "**/test/**",
+  "tools/**",
 ];
 
 const COPYRIGHT_REGEX = /^\/\/ Copyright © ([0-9-\s]+), SAS Institute/;
