@@ -25,6 +25,7 @@ Welcome to the SAS Extension for Visual Studio Code! This extension provides sup
     - [Running SAS Code](/connect-and-run.md#running-sas-code)
     - [Accessing SAS Content](#accessing-sas-content)
     - [Accessing Libraries and Tables](#accessing-libraries-and-tables)
+    - [SAS Notebook](#sas-notebook)
   - [Support](#support)
     - [SAS Communities](#sas-communities)
     - [SAS Programming Documentation](#sas-programming-documentation)
