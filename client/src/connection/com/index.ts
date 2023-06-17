@@ -138,7 +138,7 @@ const onShellStdOut = (data: Buffer): void => {
         fetchResults();
       } else {
         html5FileName =
-          line.match(/NOTE: .+ HTML5.* Body .+: (.+)\.htm/)?.[1] ??
+          line.match(/NOTE: .+ HTML5.* Body.+: (.+)\.htm/)?.[1] ??
           html5FileName;
         onLogFn?.([{ type: "normal", line }]);
       }
