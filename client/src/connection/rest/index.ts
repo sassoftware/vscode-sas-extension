@@ -126,7 +126,7 @@ async function setup(): Promise<void> {
   if (config.serverId) {
     const server1 = new ComputeServer(config.serverId);
     server1._options = formattedOpts;
-    server1;
+    server1._autoExecLines = config.autoExecLines;
     computeSession = await server1.getSession();
 
     //Maybe wait for session to be initialized?
