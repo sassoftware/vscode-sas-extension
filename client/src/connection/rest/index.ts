@@ -22,6 +22,7 @@ export interface Config {
   serverId?: string;
   reconnect?: boolean;
   sasOptions?: string[];
+  autoExecLines?: string[];
 }
 
 let config: Config;
@@ -125,6 +126,7 @@ async function setup(): Promise<void> {
   if (config.serverId) {
     const server1 = new ComputeServer(config.serverId);
     server1._options = formattedOpts;
+    server1;
     computeSession = await server1.getSession();
 
     //Maybe wait for session to be initialized?
@@ -145,7 +147,12 @@ async function setup(): Promise<void> {
       await contextsApi.createSession(
         {
           contextId: context.id,
-          sessionRequest: { environment: { options: [...formattedOpts] } },
+          sessionRequest: {
+            environment: {
+              options: [...formattedOpts],
+              autoExecLines: [...config.autoExecLines],
+            },
+          },
         },
         { headers: { "accept-language": locale } }
       )
