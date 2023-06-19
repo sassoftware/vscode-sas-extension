@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Added support for `npm run copyright:check --fix`. This automatically prepends files with the corrrect copyright information.
+- Added support for `npm run copyright:check --fix`. This automatically prepends files with the correct copyright information.
 
 ### Fixed
 
