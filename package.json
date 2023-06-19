@@ -213,7 +213,7 @@
                               "filePaths"
                             ],
                             "properties": {
-                              "lines": {
+                              "filePaths": {
                                 "type": "array",
                                 "default": [],
                                 "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.filePaths%"

@@ -138,7 +138,7 @@ export const toAutoExecLines = (autoExec: AutoExec): string[] => {
  */
 const toAutoExecLinesFromPaths = (paths: string[]): string[] => {
   const lines: string[] = [];
-  for (const filePath in paths) {
+  for (const filePath of paths) {
     try {
       const content = readFileSync(filePath, "utf8").split(/\n|\r\n/);
       lines.push(...content);
