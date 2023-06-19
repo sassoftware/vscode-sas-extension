@@ -91,8 +91,9 @@ export interface COMProfile extends BaseProfile {
 
 export type Profile = ViyaProfile | SSHProfile | COMProfile;
 
-export class BaseProfile {
+export interface BaseProfile {
   sasOptions?: string[];
+  autoExec?: string[];
 }
 
 /**

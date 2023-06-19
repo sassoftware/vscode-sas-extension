@@ -28,6 +28,11 @@ export interface Session {
   sessionId?(): string | undefined;
 }
 
+export interface BaseConfig {
+  sasOptions?: string[];
+  autoExecLines?: string[];
+}
+
 export function getSession(): Session {
   if (!profileConfig) {
     profileConfig = new ProfileConfig();

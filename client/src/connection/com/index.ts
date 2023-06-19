@@ -4,7 +4,7 @@
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { LogLine, RunResult, Session } from "..";
+import { BaseConfig, LogLine, RunResult, Session } from "..";
 import { scriptContent } from "./script";
 
 const endCode = "--vscode-sas-extension-submit-end--";
@@ -20,8 +20,7 @@ let workDirectory: string;
 /**
  * Configuration parameters for this connection provider
  */
-export interface Config {
-  sasOptions?: string[];
+export interface Config extends BaseConfig {
   host: string;
 }
 

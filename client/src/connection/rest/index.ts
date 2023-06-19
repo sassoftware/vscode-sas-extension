@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { authentication } from "vscode";
-import { RunResult, Session } from "..";
+import { BaseConfig, RunResult, Session } from "..";
 import { SASAuthProvider } from "../../components/AuthProvider";
 import {
   getContextValue,
@@ -14,15 +14,13 @@ import { ComputeJob } from "./job";
 import { ComputeServer } from "./server";
 import { ComputeSession } from "./session";
 
-export interface Config {
+export interface Config extends BaseConfig {
   endpoint: string;
   clientId?: string;
   clientSecret?: string;
   context?: string;
   serverId?: string;
   reconnect?: boolean;
-  sasOptions?: string[];
-  autoExecLines?: string[];
 }
 
 let config: Config;
@@ -81,6 +79,7 @@ async function reconnectComputeSession(): Promise<ComputeSession> {
 async function setup(): Promise<void> {
   const apiConfig = getApiConfig();
   let formattedOpts: string[] = [];
+  const autoExecLines = config.autoExecLines || [];
 
   if (config.sasOptions) {
     formattedOpts = formatSASOptions();
@@ -125,8 +124,8 @@ async function setup(): Promise<void> {
   //Start a new session
   if (config.serverId) {
     const server1 = new ComputeServer(config.serverId);
-    server1._options = formattedOpts;
-    server1._autoExecLines = config.autoExecLines;
+    server1.options = formattedOpts;
+    server1.autoExecLines = config.autoExecLines;
     computeSession = await server1.getSession();
 
     //Maybe wait for session to be initialized?
@@ -150,7 +149,7 @@ async function setup(): Promise<void> {
           sessionRequest: {
             environment: {
               options: [...formattedOpts],
-              autoExecLines: [...config.autoExecLines],
+              autoExecLines: [...autoExecLines],
             },
           },
         },

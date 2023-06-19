@@ -2,17 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Client, ClientChannel, ConnectConfig } from "ssh2";
-import { RunResult, Session, LogLine } from "..";
+import { RunResult, Session, LogLine, BaseConfig } from "..";
 
 const endCode = "--vscode-sas-extension-submit-end--";
 const sasLaunchTimeout = 10000;
 let sessionInstance: SSHSession;
 
-export interface Config {
+export interface Config extends BaseConfig {
   host: string;
   username: string;
   saspath: string;
-  sasOptions?: string[];
   port: number;
 }
 
