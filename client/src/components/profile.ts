@@ -9,6 +9,8 @@ import {
   QuickPickOptions,
 } from "vscode";
 
+import { readFileSync } from "fs";
+
 export const EXTENSION_CONFIG_KEY = "SAS";
 export const EXTENSION_DEFINE_PROFILES_CONFIG_KEY = "connectionProfiles";
 export const EXTENSION_PROFILES_CONFIG_KEY = "profiles";
@@ -91,10 +93,64 @@ export interface COMProfile extends BaseProfile {
 
 export type Profile = ViyaProfile | SSHProfile | COMProfile;
 
+export enum AutoExecType {
+  Files = "files",
+  Lines = "lines",
+}
+
+export type AutoExec = AutoExecLines | AutoExecFiles;
+
+export interface AutoExecLines {
+  type: AutoExecType.Lines;
+  lines: string[];
+}
+
+export interface AutoExecFiles {
+  type: AutoExecType.Files;
+  filePaths: string[];
+}
+
 export interface BaseProfile {
   sasOptions?: string[];
-  autoExec?: string[];
+  autoExec?: AutoExec;
 }
+
+export const toAutoExecLines = (autoExec: AutoExec): string[] => {
+  switch (autoExec.type) {
+    case AutoExecType.Lines:
+      return autoExec.lines;
+    case AutoExecType.Files:
+      return toAutoExecLinesFromPaths(autoExec.filePaths);
+    default:
+      return [];
+  }
+};
+
+/**
+ * Reads content from the given string paths.
+ * Content is read sequentially from each path starting at the zeroth path,
+ * appending each content line into the output array.
+ *
+ * If there is an error reading a file in the paths array, then
+ * the file is skipped and content is not added.
+ * @param paths string array of paths to read content from.
+ * @returns string array of lines
+ */
+const toAutoExecLinesFromPaths = (paths: string[]): string[] => {
+  const lines: string[] = [];
+  for (const filePath in paths) {
+    try {
+      const content = readFileSync(filePath, "utf8").split(/\n|\r\n/);
+      lines.push(...content);
+    } catch (e) {
+      const err: Error = e;
+      console.warn(
+        `Error reading file: ${filePath}, error: ${err.message}, skipping...`
+      );
+    }
+  }
+  return lines;
+};
 
 /**
  * Profile detail is an interface that encapsulates the name of the profile

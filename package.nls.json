@@ -1,4 +1,9 @@
 {
+  "configuration.SAS.connectionProfiles.profiles.autoExec": "SAS Connection AutoExec",
+  "configuration.SAS.connectionProfiles.profiles.autoExec.lines": "SAS Connection AutoExec Lines",
+  "configuration.SAS.connectionProfiles.profiles.autoExec.filePaths": "SAS Connection AutoExec File paths",
+  "configuration.SAS.connectionProfiles.profiles.autoExec.type": "SAS Connection AutoExec type",
+
   "configuration.SAS.connectionProfiles": "Define the connection profiles to connect to SAS Viya servers. If you define more than one profile, you can switch between them.",
   "configuration.SAS.connectionProfiles.activeProfile": "Active SAS Connection Profile",
   "configuration.SAS.connectionProfiles.profiles": "SAS Connection Profiles",
@@ -8,6 +13,7 @@
   "configuration.SAS.connectionProfiles.profiles.context": "SAS Viya Context",
   "configuration.SAS.connectionProfiles.profiles.endpoint": "SAS Viya Connection Profile Endpoint",
   "configuration.SAS.connectionProfiles.profiles.name": "SAS Connection Profile Name",
+  "configuration.SAS.connectionProfiles.profiles.sasOptions": "SAS Connection SAS options",
   "configuration.SAS.connectionProfiles.profiles.tokenFile": "SAS Viya Token File",
   "configuration.SAS.connectionProfiles.profiles.username": "SAS Viya User ID",
   "configuration.SAS.session.outputHtml": "Enable/disable ODS HTML5 output",
@@ -17,10 +23,8 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "SAS SSH Connection username",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "SAS SSH Connection executable path",
   "configuration.SAS.connectionProfiles.profiles.ssh.port": "SAS SSH Connection port",
-  "configuration.SAS.connectionProfiles.profiles.ssh.sasOptions": "SAS SSH Connection SAS system options",
 
   "configuration.SAS.connectionProfiles.profiles.com.host": "SAS COM Connection Host",
-  "configuration.SAS.connectionProfiles.profiles.com.sasOptions": "SAS COM Connection SAS options",
 
   "commands.SAS.addFileResource": "New File...",
   "commands.SAS.addFolderResource": "New Folder...",

@@ -157,6 +157,71 @@
                         "ssh",
                         "com"
                       ]
+                    },
+                    "sasOptions": {
+                      "type": "array",
+                      "default": null,
+                      "description": "%configuration.SAS.connectionProfiles.profiles.sasOptions%"
+                    },
+                    "autoExec": {
+                      "type": "object",
+                      "default": null,
+                      "description": "%configuration.SAS.connectionProfiles.profiles.autoExec%",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "default": "lines",
+                          "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.type%",
+                          "enum": [
+                            "lines",
+                            "files"
+                          ]
+                        }
+                      },
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "lines"
+                              }
+                            }
+                          },
+                          "then": {
+                            "required": [
+                              "lines"
+                            ],
+                            "properties": {
+                              "lines": {
+                                "type": "array",
+                                "default": [],
+                                "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.lines%"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "files"
+                              }
+                            }
+                          },
+                          "then": {
+                            "required": [
+                              "filePaths"
+                            ],
+                            "properties": {
+                              "lines": {
+                                "type": "array",
+                                "default": [],
+                                "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.filePaths%"
+                              }
+                            }
+                          }
+                        }
+                      ]
                     }
                   },
                   "allOf": [
@@ -237,7 +302,7 @@
                           "sasOptions": {
                             "type": "array",
                             "default": [],
-                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.sasOptions%"
+                            "description": "%configuration.SAS.connectionProfiles.profiles.sasOptions%"
                           }
                         }
                       }
@@ -259,11 +324,6 @@
                             "type": "string",
                             "default": "",
                             "description": "%configuration.SAS.connectionProfiles.profiles.com.host%"
-                          },
-                          "sasOptions": {
-                            "type": "array",
-                            "default": [],
-                            "description": "%configuration.SAS.connectionProfiles.profiles.clientSecret%"
                           }
                         }
                       }
