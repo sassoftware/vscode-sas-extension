@@ -164,64 +164,67 @@
                       "description": "%configuration.SAS.connectionProfiles.profiles.sasOptions%"
                     },
                     "autoExec": {
-                      "type": "object",
-                      "default": null,
+                      "type": "array",
+                      "default": [],
                       "description": "%configuration.SAS.connectionProfiles.profiles.autoExec%",
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "default": "lines",
-                          "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.type%",
-                          "enum": [
-                            "lines",
-                            "files"
-                          ]
-                        }
-                      },
-                      "allOf": [
-                        {
-                          "if": {
-                            "properties": {
-                              "type": {
-                                "const": "lines"
-                              }
-                            }
-                          },
-                          "then": {
-                            "required": [
-                              "lines"
-                            ],
-                            "properties": {
-                              "lines": {
-                                "type": "array",
-                                "default": [],
-                                "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.lines%"
-                              }
-                            }
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "default": "line",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.type%",
+                            "enum": [
+                              "line",
+                              "file"
+                            ]
                           }
                         },
-                        {
-                          "if": {
-                            "properties": {
-                              "type": {
-                                "const": "files"
+                        "allOf": [
+                          {
+                            "if": {
+                              "properties": {
+                                "type": {
+                                  "const": "line"
+                                }
+                              }
+                            },
+                            "then": {
+                              "required": [
+                                "line"
+                              ],
+                              "properties": {
+                                "lines": {
+                                  "type": "string",
+                                  "default": "",
+                                  "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.line%"
+                                }
                               }
                             }
                           },
-                          "then": {
-                            "required": [
-                              "filePaths"
-                            ],
-                            "properties": {
-                              "filePaths": {
-                                "type": "array",
-                                "default": [],
-                                "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.filePaths%"
+                          {
+                            "if": {
+                              "properties": {
+                                "type": {
+                                  "const": "file"
+                                }
+                              }
+                            },
+                            "then": {
+                              "required": [
+                                "filePath"
+                              ],
+                              "properties": {
+                                "filePaths": {
+                                  "type": "string",
+                                  "default": "",
+                                  "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.filePath%"
+                                }
                               }
                             }
                           }
-                        }
-                      ]
+                        ]
+                      }
                     }
                   },
                   "allOf": [

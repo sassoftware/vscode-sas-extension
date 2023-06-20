@@ -1,7 +1,7 @@
 {
   "configuration.SAS.connectionProfiles.profiles.autoExec": "SAS Connection AutoExec",
-  "configuration.SAS.connectionProfiles.profiles.autoExec.filePaths": "SAS Connection AutoExec File paths",
-  "configuration.SAS.connectionProfiles.profiles.autoExec.lines": "SAS Connection AutoExec Lines",
+  "configuration.SAS.connectionProfiles.profiles.autoExec.filePath": "SAS Connection AutoExec File path",
+  "configuration.SAS.connectionProfiles.profiles.autoExec.line": "SAS Connection AutoExec Line",
   "configuration.SAS.connectionProfiles.profiles.autoExec.type": "SAS Connection AutoExec type",
 
   "configuration.SAS.connectionProfiles": "Define the connection profiles to connect to SAS Viya servers. If you define more than one profile, you can switch between them.",

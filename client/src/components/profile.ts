@@ -94,35 +94,40 @@ export interface COMProfile extends BaseProfile {
 export type Profile = ViyaProfile | SSHProfile | COMProfile;
 
 export enum AutoExecType {
-  Files = "files",
-  Lines = "lines",
+  File = "file",
+  Line = "line",
 }
 
-export type AutoExec = AutoExecLines | AutoExecFiles;
+export type AutoExec = AutoExecLine | AutoExecFile;
 
-export interface AutoExecLines {
-  type: AutoExecType.Lines;
-  lines: string[];
+export interface AutoExecLine {
+  type: AutoExecType.Line;
+  line: string;
 }
 
-export interface AutoExecFiles {
-  type: AutoExecType.Files;
-  filePaths: string[];
+export interface AutoExecFile {
+  type: AutoExecType.File;
+  filePath: string;
 }
 
 export interface BaseProfile {
   sasOptions?: string[];
-  autoExec?: AutoExec;
+  autoExec?: AutoExec[];
 }
 
-export const toAutoExecLines = (autoExec: AutoExec): string[] => {
-  switch (autoExec.type) {
-    case AutoExecType.Lines:
-      return autoExec.lines;
-    case AutoExecType.Files:
-      return toAutoExecLinesFromPaths(autoExec.filePaths);
-    default:
-      return [];
+export const toAutoExecLines = (autoExec: AutoExec[]): string[] => {
+  const lines: string[] = [];
+  for (const item of autoExec) {
+    switch (item.type) {
+      case AutoExecType.Line:
+        lines.push(item.line);
+        break;
+      case AutoExecType.File:
+        lines.push(...toAutoExecLinesFromPaths(item.filePath));
+        break;
+      default:
+        return [];
+    }
   }
 };
 
@@ -136,18 +141,16 @@ export const toAutoExecLines = (autoExec: AutoExec): string[] => {
  * @param paths string array of paths to read content from.
  * @returns string array of lines
  */
-const toAutoExecLinesFromPaths = (paths: string[]): string[] => {
+const toAutoExecLinesFromPaths = (filePath: string): string[] => {
   const lines: string[] = [];
-  for (const filePath of paths) {
-    try {
-      const content = readFileSync(filePath, "utf8").split(/\n|\r\n/);
-      lines.push(...content);
-    } catch (e) {
-      const err: Error = e;
-      console.warn(
-        `Error reading file: ${filePath}, error: ${err.message}, skipping...`
-      );
-    }
+  try {
+    const content = readFileSync(filePath, "utf8").split(/\n|\r\n/);
+    lines.push(...content);
+  } catch (e) {
+    const err: Error = e;
+    console.warn(
+      `Error reading file: ${filePath}, error: ${err.message}, skipping...`
+    );
   }
   return lines;
 };
