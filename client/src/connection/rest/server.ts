@@ -91,7 +91,7 @@ export class ComputeServer extends Compute {
       attributes: {},
       environment: {
         options: [...DEFAULT_COMPUTE_OPTS, ...this._options],
-        autoExecLines: [...this._autoExecLines],
+        autoExecLines: this._autoExecLines || [],
       },
     };
 
