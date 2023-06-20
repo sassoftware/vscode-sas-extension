@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Client, ClientChannel, ConnectConfig } from "ssh2";
-import { RunResult, Session, LogLine, BaseConfig } from "..";
+import { RunResult, BaseConfig } from "..";
+import { BaseSession, Session } from "../session";
 
 const endCode = "--vscode-sas-extension-submit-end--";
 const sasLaunchTimeout = 10000;
@@ -27,18 +28,18 @@ export function getSession(c: Config): Session {
   return sessionInstance;
 }
 
-export class SSHSession implements Session {
+export class SSHSession extends BaseSession implements Session {
   private conn: Client;
   private stream: ClientChannel | undefined;
   private _config: Config;
   private resolve: ((value?) => void) | undefined;
   private reject: ((reason?) => void) | undefined;
-  private onLog: ((logs: LogLine[]) => void) | undefined;
   private logs: string[] = [];
   private html5FileName = "";
   private timer: NodeJS.Timeout;
 
   constructor(c?: Config) {
+    super();
     this._config = c;
     this.conn = new Client();
   }
@@ -80,14 +81,10 @@ export class SSHSession implements Session {
     });
   };
 
-  public run = (
-    code: string,
-    onLog?: (logs: LogLine[]) => void
-  ): Promise<RunResult> => {
-    this.onLog = onLog;
+  public run = (code: string): Promise<RunResult> => {
     this.html5FileName = "";
     if (this.logs.length) {
-      this.onLog?.(this.logs.map((line) => ({ type: "normal", line })));
+      this._onLogFn(this.logs.map((line) => ({ type: "normal", line })));
       this.logs = [];
     }
 
@@ -164,7 +161,6 @@ export class SSHSession implements Session {
   };
 
   private onStreamClose = (): void => {
-    this.onLog = undefined;
     this.stream = undefined;
     this.resolve = undefined;
     this.reject = undefined;
@@ -176,8 +172,16 @@ export class SSHSession implements Session {
 
   private onStreamData = (data: Buffer): void => {
     const output = data.toString().trimEnd();
+
+    this.logs.push(output);
+    if (output.endsWith("?")) {
+      this.clearTimer();
+      this.resolve?.();
+      return;
+    }
+
     const outputLines = output.split(/\n|\r\n/);
-    if (this.onLog) {
+    if (this._onLogFn) {
       outputLines.forEach((line) => {
         if (!line) {
           return;
@@ -190,15 +194,9 @@ export class SSHSession implements Session {
           this.html5FileName =
             line.match(/NOTE: .+ HTML5.* Body .+: (.+)\.htm/)?.[1] ??
             this.html5FileName;
-          this.onLog?.([{ type: "normal", line }]);
+          this._onLogFn([{ type: "normal", line }]);
         }
       });
-    } else {
-      this.logs.push(output);
-      if (output.endsWith("?")) {
-        this.clearTimer();
-        this.resolve?.();
-      }
     }
   };
 

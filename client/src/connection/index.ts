@@ -15,23 +15,17 @@ import {
   ViyaProfile,
   toAutoExecLines,
 } from "../components/profile";
+import { Session } from "./session";
 
 let profileConfig: ProfileConfig;
 
 export type LogLine = ComputeLogLine;
 export type LogLineTypeEnum = ComputeLogLineTypeEnum;
+export type OnLogFn = (logs: LogLine[]) => void;
 
 export interface RunResult {
   html5?: string;
   title?: string;
-}
-
-export interface Session {
-  setup(): Promise<void>;
-  run(code: string, onLog?: (logs: LogLine[]) => void): Promise<RunResult>;
-  cancel?(): Promise<void>;
-  close(): Promise<void> | void;
-  sessionId?(): string | undefined;
 }
 
 export interface BaseConfig {

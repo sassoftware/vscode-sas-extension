@@ -115,6 +115,16 @@ async function runCode(selected?: boolean) {
   const code = getCode(outputHtml, selected);
 
   const session = getSession();
+  session.onLogFn = (logs) => {
+    if (!outputChannel) {
+      outputChannel = window.createOutputChannel("SAS Log", "sas-log");
+    }
+    outputChannel.show();
+    for (const line of logs) {
+      appendLog(line.type);
+      outputChannel.appendLine(line.line);
+    }
+  };
 
   await window.withProgress(
     {
@@ -134,28 +144,17 @@ async function runCode(selected?: boolean) {
       cancellationToken.onCancellationRequested(() => {
         session.cancel?.();
       });
-      return session
-        .run(code, (logs) => {
-          if (!outputChannel) {
-            outputChannel = window.createOutputChannel("SAS Log", "sas-log");
-          }
-          outputChannel.show();
-          for (const line of logs) {
-            appendLog(line.type);
-            outputChannel.appendLine(line.line);
-          }
-        })
-        .then((results) => {
-          if (outputHtml && results.html5) {
-            const odsResult = window.createWebviewPanel(
-              "SASSession", // Identifies the type of the webview. Used internally
-              "Result", // Title of the panel displayed to the user
-              { preserveFocus: true, viewColumn: ViewColumn.Beside }, // Editor column to show the new webview panel in.
-              {} // Webview options. More on these later.
-            );
-            odsResult.webview.html = results.html5;
-          }
-        });
+      return session.run(code).then((results) => {
+        if (outputHtml && results.html5) {
+          const odsResult = window.createWebviewPanel(
+            "SASSession", // Identifies the type of the webview. Used internally
+            "Result", // Title of the panel displayed to the user
+            { preserveFocus: true, viewColumn: ViewColumn.Beside }, // Editor column to show the new webview panel in.
+            {} // Webview options. More on these later.
+          );
+          odsResult.webview.html = results.html5;
+        }
+      });
     }
   );
 }
