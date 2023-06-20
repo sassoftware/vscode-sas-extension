@@ -1,7 +1,7 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { authentication } from "vscode";
+import { authentication, l10n } from "vscode";
 import { BaseConfig, RunResult } from "..";
 import { SASAuthProvider } from "../../components/AuthProvider";
 import {
@@ -73,7 +73,11 @@ class RestSession extends Session {
     }
 
     //Set the locale in the base options so it appears on all api calls
-    const locale = JSON.parse(process.env.VSCODE_NLS_CONFIG ?? "{}").locale;
+    let locale = JSON.parse(process.env.VSCODE_NLS_CONFIG ?? "{}").locale;
+    if (locale === "qps-ploc") {
+      // VS Code's pseudo locale, not supported in Viya server
+      locale = "en";
+    }
     apiConfig.baseOptions.headers = { "Accept-Language": locale };
 
     //Check to see if we can reconnect to a session first
@@ -103,7 +107,9 @@ class RestSession extends Session {
         })
       ).data.items[0];
       if (!context?.id) {
-        throw new Error("Compute Context not found: " + contextName);
+        throw new Error(
+          l10n.t("Compute Context not found: {name}", { name: contextName }),
+        );
       }
 
       const sess = (

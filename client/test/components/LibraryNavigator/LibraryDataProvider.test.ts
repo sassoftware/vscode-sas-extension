@@ -1,4 +1,4 @@
-import { Uri, TreeItemCollapsibleState } from "vscode";
+import { Uri, TreeItemCollapsibleState, l10n } from "vscode";
 import LibraryDataProvider from "../../../src/components/LibraryNavigator/LibraryDataProvider";
 import LibraryModel from "../../../src/components/LibraryNavigator/LibraryModel";
 import {
@@ -8,7 +8,6 @@ import {
 import { DataAccessApi } from "../../../src/connection/rest/api/compute";
 import { getApiConfig } from "../../../src/connection/rest/common";
 import { expect } from "chai";
-import { sprintf } from "sprintf-js";
 import * as nock from "nock";
 import { LibraryItem } from "../../../src/components/LibraryNavigator/types";
 
@@ -211,7 +210,7 @@ describe("LibraryDataProvider", async function () {
       await provider.deleteTable(item);
     } catch (error) {
       expect(error.message).to.equal(
-        new Error(sprintf(Messages.TableDeletionError, { tableName: "test" }))
+        new Error(l10n.t(Messages.TableDeletionError, { tableName: "test" }))
           .message,
       );
     }

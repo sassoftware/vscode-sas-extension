@@ -20,6 +20,7 @@ import {
 } from "./api/compute";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { ComputeJob } from "./job";
+import { l10n } from "vscode";
 
 export class ComputeSession extends Compute {
   api; //Session api
@@ -59,13 +60,18 @@ export class ComputeSession extends Compute {
     if (res.status === 200) {
       return res.data;
     } else {
-      throw new Error(`Error getting session with ID  ${id} - ${res.message}`);
+      throw new Error(
+        l10n.t("Error getting session with ID  {id} - {message}", {
+          id,
+          message: res.message,
+        }),
+      );
     }
   }
 
   async self<Session>(): Promise<Session> {
     if (this._self.id === undefined) {
-      throw new Error("Cannot call self on ComputeSession with no id");
+      throw new Error(l10n.t("Cannot call self on ComputeSession with no id"));
     }
 
     const res = await this.api.getSession({ sessionId: this.sessionId });
@@ -75,7 +81,10 @@ export class ComputeSession extends Compute {
       return res.data;
     } else {
       throw new Error(
-        `Error getting server with ID  ${this._self.id} - ${res.message}`,
+        l10n.t("Error getting server with ID  {id} - {message}", {
+          id: this._self.id,
+          message: res.message,
+        }),
       );
     }
   }
@@ -94,7 +103,11 @@ export class ComputeSession extends Compute {
       return resp.data;
     }
 
-    throw new Error(`Failed to get state from Session ${this.sessionId}`);
+    throw new Error(
+      l10n.t("Failed to get state from Session {sessionId}", {
+        sessionId: this.sessionId,
+      }),
+    );
   }
 
   async followLink<T>(
@@ -106,7 +119,9 @@ export class ComputeSession extends Compute {
     }
     const link = this.getLink(this._self.links, linkName);
     if (link === undefined) {
-      throw new Error(`Session does not have '${linkName}' link`);
+      throw new Error(
+        l10n.t("Session does not have '{linkName}' link", { linkName }),
+      );
     }
 
     return await this.requestLink(link, options);

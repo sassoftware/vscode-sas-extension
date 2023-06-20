@@ -7,6 +7,7 @@ import {
   workspace,
   ConfigurationTarget,
   QuickPickOptions,
+  l10n,
 } from "vscode";
 
 import { readFileSync } from "fs";
@@ -424,37 +425,37 @@ export class ProfileConfig {
 
     //Validate active profile, return early if not valid
     if (!profileDetail?.profile) {
-      pv.error = "No Active Profile";
+      pv.error = l10n.t("No Active Profile");
       return pv;
     }
 
     const profile: Profile = profileDetail.profile;
     if (profile.connectionType === undefined) {
-      pv.error = "Missing connectionType in active profile.";
+      pv.error = l10n.t("Missing connectionType in active profile.");
       return pv;
     }
     if (profile.connectionType === ConnectionType.Rest) {
       if (!profile.endpoint) {
-        pv.error = "Missing endpoint in active profile.";
+        pv.error = l10n.t("Missing endpoint in active profile.");
         return pv;
       }
     } else if (profile.connectionType === ConnectionType.SSH) {
       if (!profile.host) {
-        pv.error = "Missing host in active profile.";
+        pv.error = l10n.t("Missing host in active profile.");
         return pv;
       }
 
       if (!profile.port) {
-        pv.error = "Missing port in active profile.";
+        pv.error = l10n.t("Missing port in active profile.");
         return pv;
       }
 
       if (!profile.saspath) {
-        pv.error = "Missing sas path in active profile.";
+        pv.error = l10n.t("Missing sas path in active profile.");
         return pv;
       }
       if (!profile.username) {
-        pv.error = "Missing username in active profile.";
+        pv.error = l10n.t("Missing username in active profile.");
         return pv;
       }
     }
@@ -693,61 +694,67 @@ export async function createInputQuickPick(
  */
 const input: ProfilePromptInput = {
   [ProfilePromptType.Profile]: {
-    title: "Switch Current SAS Profile",
-    placeholder: "Select a SAS connection profile",
+    title: l10n.t("Switch Current SAS Profile"),
+    placeholder: l10n.t("Select a SAS connection profile"),
     description: "",
   },
   [ProfilePromptType.NewProfile]: {
-    title: "New SAS Connection Profile Name",
-    placeholder: "Enter connection name",
-    description:
+    title: l10n.t("New SAS Connection Profile Name"),
+    placeholder: l10n.t("Enter connection name"),
+    description: l10n.t(
       "You can also specify connection profile using the settings.json file.",
+    ),
   },
   [ProfilePromptType.Endpoint]: {
-    title: "SAS Viya Server",
-    placeholder: "Enter the URL",
-    description:
+    title: l10n.t("SAS Viya Server"),
+    placeholder: l10n.t("Enter the URL"),
+    description: l10n.t(
       "Enter the URL for the SAS Viya server. An example is https://example.sas.com.",
+    ),
   },
   [ProfilePromptType.ComputeContext]: {
-    title: "SAS Compute Context",
-    placeholder: "Enter the SAS compute context",
-    description: "Enter the SAS compute context.",
+    title: l10n.t("SAS Compute Context"),
+    placeholder: l10n.t("Enter the SAS compute context"),
+    description: l10n.t("Enter the SAS compute context."),
   },
   [ProfilePromptType.ClientId]: {
-    title: "Client ID",
-    placeholder: "Enter a client ID",
-    description: "Enter the registered client ID. An example is myapp.client.",
+    title: l10n.t("Client ID"),
+    placeholder: l10n.t("Enter a client ID"),
+    description: l10n.t(
+      "Enter the registered client ID. An example is myapp.client.",
+    ),
   },
   [ProfilePromptType.ClientSecret]: {
-    title: "Client Secret",
-    placeholder: "Enter a client secret",
-    description: "Enter secret for client ID. An example is myapp.secret.",
+    title: l10n.t("Client Secret"),
+    placeholder: l10n.t("Enter a client secret"),
+    description: l10n.t(
+      "Enter secret for client ID. An example is myapp.secret.",
+    ),
   },
   [ProfilePromptType.ConnectionType]: {
-    title: "Connection Type",
-    placeholder: "Select a Connection Type",
-    description: "Select a Connection Type.",
+    title: l10n.t("Connection Type"),
+    placeholder: l10n.t("Select a Connection Type"),
+    description: l10n.t("Select a Connection Type."),
   },
   [ProfilePromptType.Host]: {
-    title: "SAS 9 SSH Server",
-    placeholder: "Enter the server name",
-    description: "Enter the name of the SAS 9 SSH server.",
+    title: l10n.t("SAS 9 SSH Server"),
+    placeholder: l10n.t("Enter the server name"),
+    description: l10n.t("Enter the name of the SAS 9 SSH server."),
   },
   [ProfilePromptType.SASPath]: {
-    title: "Server Path",
-    placeholder: "Enter the server path",
-    description: "Enter the server path of the SAS Executable.",
+    title: l10n.t("Server Path"),
+    placeholder: l10n.t("Enter the server path"),
+    description: l10n.t("Enter the server path of the SAS Executable."),
   },
   [ProfilePromptType.Port]: {
-    title: "Port Number",
-    placeholder: "Enter a port number",
-    description: "Enter a port number.",
+    title: l10n.t("Port Number"),
+    placeholder: l10n.t("Enter a port number"),
+    description: l10n.t("Enter a port number."),
   },
   [ProfilePromptType.Username]: {
-    title: "SAS Server Username",
-    placeholder: "Enter your username",
-    description: "Enter your SAS server username.",
+    title: l10n.t("SAS Server Username"),
+    placeholder: l10n.t("Enter your username"),
+    description: l10n.t("Enter your SAS server username."),
   },
 };
 

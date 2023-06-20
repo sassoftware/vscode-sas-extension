@@ -14,6 +14,7 @@ import {
 } from "./api/compute";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { throttle } from "../../components/utils";
+import { l10n } from "vscode";
 
 export class ComputeJob extends Compute {
   api;
@@ -56,7 +57,11 @@ export class ComputeJob extends Compute {
     }
     const link = this.getLink(this._self.links, linkName);
     if (link === undefined) {
-      throw new Error(`Job does not have '${linkName}' link`);
+      throw new Error(
+        l10n.t("Job does not have '{linkName}' link", {
+          linkName,
+        }),
+      );
     }
 
     return await this.requestLink(link, options);
@@ -85,7 +90,7 @@ export class ComputeJob extends Compute {
       //Not modified
       return await this.getState(); //This is bad. We need to cache the last state value
     } else {
-      throw new Error("Something went wrong");
+      throw new Error(l10n.t("Something went wrong"));
     }
   }
 

@@ -9,6 +9,7 @@ import {
   commands,
   window,
   workspace,
+  l10n,
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 import { LogFn as LogChannelFn } from "../components/LogChannel";
@@ -118,7 +119,7 @@ async function runCode(selected?: boolean) {
   await window.withProgress(
     {
       location: ProgressLocation.Notification,
-      title: "Connecting to SAS session...",
+      title: l10n.t("Connecting to SAS session..."),
     },
     session.setup,
   );
@@ -126,7 +127,7 @@ async function runCode(selected?: boolean) {
   await window.withProgress(
     {
       location: ProgressLocation.Notification,
-      title: "SAS code running...",
+      title: l10n.t("SAS code running..."),
       cancellable: typeof session.cancel === "function",
     },
     (_progress, cancellationToken) => {
@@ -137,7 +138,7 @@ async function runCode(selected?: boolean) {
         if (outputHtml && results.html5) {
           const odsResult = window.createWebviewPanel(
             "SASSession", // Identifies the type of the webview. Used internally
-            "Result", // Title of the panel displayed to the user
+            l10n.t("Result"), // Title of the panel displayed to the user
             { preserveFocus: true, viewColumn: ViewColumn.Beside }, // Editor column to show the new webview panel in.
             {}, // Webview options. More on these later.
           );

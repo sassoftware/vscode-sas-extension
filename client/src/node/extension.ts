@@ -8,6 +8,7 @@ import {
   ConfigurationChangeEvent,
   ExtensionContext,
   languages,
+  l10n,
   NotebookCellData,
   NotebookCellKind,
   NotebookData,
@@ -109,7 +110,9 @@ export function activate(context: ExtensionContext): void {
       await libraryNavigator.refresh();
     }),
     commands.registerCommand("SAS.close", (silent) => {
-      closeSession(silent === true ? undefined : "The SAS session has closed.");
+      closeSession(
+        silent === true ? undefined : l10n.t("The SAS session has closed."),
+      );
     }),
     commands.registerCommand("SAS.switchProfile", switchProfile),
     commands.registerCommand("SAS.addProfile", addProfile),
@@ -217,8 +220,8 @@ function updateStatusBarItem(
 }
 
 function resetStatusBarItem(statusBarItem: StatusBarItem): void {
-  statusBarItem.text = "$(debug-disconnect) No Profile";
-  statusBarItem.tooltip = "No SAS Connection Profile";
+  statusBarItem.text = `$(debug-disconnect) ${l10n.t("No Profile")}`;
+  statusBarItem.tooltip = l10n.t("No SAS Connection Profile");
   statusBarItem.show();
 }
 

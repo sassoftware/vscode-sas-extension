@@ -16,6 +16,7 @@ import {
   toAutoExecLines,
 } from "../components/profile";
 import { Session } from "./session";
+import { l10n } from "vscode";
 
 let profileConfig: ProfileConfig;
 
@@ -53,7 +54,9 @@ export function getSession(): Session {
     case ConnectionType.COM:
       return getCOMSession(validProfile.profile);
     default:
-      throw new Error("Invalid connectionType. Check Profile settings.");
+      throw new Error(
+        l10n.t("Invalid connectionType. Check Profile settings."),
+      );
   }
 }
 

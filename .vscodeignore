@@ -17,3 +17,4 @@ ContributorAgreement.txt
 .travis.yml
 .eslintignore
 pull_request_template.md
+l10n/bundle.l10n.json

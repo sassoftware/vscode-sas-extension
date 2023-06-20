@@ -40,7 +40,7 @@ export class NotebookController {
       await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: "Connecting to SAS session...",
+          title: vscode.l10n.t("Connecting to SAS session..."),
         },
         session.setup,
       );
@@ -113,7 +113,7 @@ export class NotebookController {
     vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: "Cancelling job...",
+        title: vscode.l10n.t("Cancelling job..."),
       },
       () => this._interrupted.promise,
     );

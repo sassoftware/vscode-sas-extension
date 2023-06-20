@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AxiosResponse } from "axios";
-import { sprintf } from "sprintf-js";
-import { ProgressLocation, window } from "vscode";
+import { ProgressLocation, l10n, window } from "vscode";
 import { getSession } from "../../connection";
 import { DataAccessApi } from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
@@ -29,7 +28,7 @@ class LibraryModel {
     await window.withProgress(
       {
         location: ProgressLocation.Notification,
-        title: "Connecting to SAS session...",
+        title: l10n.t("Connecting to SAS session..."),
       },
       async () => {
         await session.setup();
@@ -105,7 +104,7 @@ class LibraryModel {
       );
     } catch (error) {
       throw new Error(
-        sprintf(Messages.TableDeletionError, { tableName: item.uid }),
+        l10n.t(Messages.TableDeletionError, { tableName: item.uid }),
       );
     }
   }

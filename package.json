@@ -13,7 +13,7 @@
   "license": "Apache-2.0",
   "icon": "icons/sas.png",
   "engines": {
-    "vscode": "^1.71.0"
+    "vscode": "^1.73.0"
   },
   "activationEvents": [
     "onLanguage:sas",
@@ -21,6 +21,7 @@
   ],
   "main": "./client/dist/node/extension",
   "browser": "./client/dist/browser/extension",
+  "l10n": "./l10n",
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": true
@@ -151,7 +152,7 @@
                     "connectionType": {
                       "type": "string",
                       "default": "rest",
-                      "description": "%configurations.SAS.connectionProfiles.profiles.connectionType%",
+                      "description": "%configuration.SAS.connectionProfiles.profiles.connectionType%",
                       "enum": [
                         "rest",
                         "ssh",
@@ -678,17 +679,17 @@
     ],
     "themes": [
       {
-        "label": "SAS Light",
+        "label": "%themes.SAS.light%",
         "uiTheme": "vs",
         "path": "./themes/sas-light-color-theme.json"
       },
       {
-        "label": "SAS Dark",
+        "label": "%themes.SAS.dark%",
         "uiTheme": "vs-dark",
         "path": "./themes/sas-dark-color-theme.json"
       },
       {
-        "label": "SAS High Contrast",
+        "label": "%themes.SAS.highContrast%",
         "uiTheme": "hc-black",
         "path": "./themes/sas-highcontrast-color-theme.json"
       }
@@ -716,22 +717,22 @@
       "sas-view-container": [
         {
           "id": "contentDataProvider",
-          "name": "Explorer",
+          "name": "%views.SAS.explorer%",
           "when": "SAS.authorized && SAS.connectionType == rest"
         },
         {
           "id": "sas-library-navigator",
-          "name": "Libraries",
+          "name": "%views.SAS.libraries%",
           "when": "(SAS.authorized && SAS.connectionType == rest) || SAS.connection.direct"
         },
         {
           "id": "sas-content-get-started",
-          "name": "Sign In",
+          "name": "%views.SAS.signIn%",
           "when": "(!SAS.authorized && SAS.connectionType == rest) && !SAS.connection.direct"
         },
         {
           "id": "sas-content-invalid-connection",
-          "name": "Sign In",
+          "name": "%views.SAS.signIn%",
           "when": "!SAS.authorized && SAS.connectionType != rest"
         }
       ]
@@ -752,7 +753,7 @@
     "notebooks": [
       {
         "type": "sas-notebook",
-        "displayName": "SAS Notebook",
+        "displayName": "%notebooks.SAS.sasNotebook%",
         "selector": [
           {
             "filenamePattern": "*.sasnb"
@@ -763,7 +764,7 @@
     "notebookRenderer": [
       {
         "id": "sas-log-renderer",
-        "displayName": "SAS Log Renderer",
+        "displayName": "%notebooks.SAS.logRenderer%",
         "entrypoint": "./client/dist/notebook/LogRenderer.js",
         "mimeTypes": [
           "application/vnd.sas.compute.log.lines"
@@ -771,7 +772,7 @@
       },
       {
         "id": "sas-html-renderer",
-        "displayName": "SAS HTML Renderer",
+        "displayName": "%notebooks.SAS.logRenderer%",
         "entrypoint": "./client/dist/notebook/HTMLRenderer.js",
         "mimeTypes": [
           "application/vnd.sas.ods.html5"
@@ -799,6 +800,7 @@
     "format": "prettier --write .",
     "pretest": "npm run compile && tsc -p ./client",
     "test": "node ./client/out/test/runTest.js",
+    "pseudoLocalize": "npx @vscode/l10n-dev export -o ./l10n ./client/src && npx @vscode/l10n-dev generate-pseudo -o ./l10n/ ./l10n/bundle.l10n.json ./package.nls.json",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
     "copyright:check": "node ./tools/check-copyright.mjs"
   },
@@ -809,6 +811,7 @@
     "@types/sinon": "^10.0.15",
     "@typescript-eslint/eslint-plugin": "^6.1.0",
     "@typescript-eslint/parser": "^6.1.0",
+    "@vscode/l10n-dev": "^0.0.28",
     "chai": "^4.3.7",
     "esbuild": "^0.18.11",
     "eslint": "^8.45.0",

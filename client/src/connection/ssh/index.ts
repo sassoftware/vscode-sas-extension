@@ -4,6 +4,7 @@
 import { Client, ClientChannel, ConnectConfig } from "ssh2";
 import { RunResult, BaseConfig } from "..";
 import { Session } from "../session";
+import { l10n } from "vscode";
 
 const endCode = "--vscode-sas-extension-submit-end--";
 const sasLaunchTimeout = 10000;
@@ -18,7 +19,9 @@ export interface Config extends BaseConfig {
 
 export function getSession(c: Config): Session {
   if (!process.env.SSH_AUTH_SOCK) {
-    throw new Error("SSH_AUTH_SOCK not set. Check Environment Variables.");
+    throw new Error(
+      l10n.t("SSH_AUTH_SOCK not set. Check Environment Variables."),
+    );
   }
 
   if (!sessionInstance) {
@@ -45,7 +48,7 @@ export class SSHSession extends Session {
   }
 
   public sessionId? = (): string => {
-    throw new Error("Method not implemented.");
+    throw new Error(l10n.t("Method not implemented."));
   };
 
   public cancel? = (): Promise<void> => {
@@ -118,7 +121,9 @@ export class SSHSession extends Session {
     this.clearTimer();
     this.timer = setTimeout(() => {
       this.reject?.(
-        new Error("Failed to connect to Session. Check profile settings."),
+        new Error(
+          l10n.t("Failed to connect to Session. Check profile settings."),
+        ),
       );
       this.timer = undefined;
       this.close();
@@ -155,7 +160,7 @@ export class SSHSession extends Session {
             //TODO #185: should this be refactored into a shared location?
             if (fileContents.search('<*id="IDX*.+">') !== -1) {
               runResult.html5 = fileContents;
-              runResult.title = "Result";
+              runResult.title = l10n.t("Result");
             }
           }
           this.resolve?.(runResult);

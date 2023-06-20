@@ -9,7 +9,7 @@
   "configuration.SAS.connectionProfiles.profiles": "SAS Connection Profiles",
   "configuration.SAS.connectionProfiles.profiles.clientId": "SAS Viya Client ID",
   "configuration.SAS.connectionProfiles.profiles.clientSecret": "SAS Viya Client Secret",
-  "configurations.SAS.connectionProfiles.profiles.connectionType": "SAS Profile Connection Type",
+  "configuration.SAS.connectionProfiles.profiles.connectionType": "SAS Profile Connection Type",
   "configuration.SAS.connectionProfiles.profiles.context": "SAS Viya Context",
   "configuration.SAS.connectionProfiles.profiles.endpoint": "SAS Viya Connection Profile Endpoint",
   "configuration.SAS.connectionProfiles.profiles.name": "SAS Connection Profile Name",
@@ -50,5 +50,16 @@
   "commands.SAS.notebook.new.short": "SAS Notebook",
 
   "views.SAS.welcome": "To use the SAS Extension for Visual Studio Code, you must sign in to SAS.\n[Sign In](command:SAS.authorize)",
-  "views.SAS.unsupportedConnection": "Your connection does not support SAS content navigation within the SAS Extension for Visual Studio Code. You can access files only using the Explorer view."
+  "views.SAS.unsupportedConnection": "Your connection does not support SAS content navigation within the SAS Extension for Visual Studio Code. You can access files only using the Explorer view.",
+  "views.SAS.explorer": "Explorer",
+  "views.SAS.libraries": "Libraries",
+  "views.SAS.signIn": "Sign In",
+
+  "notebooks.SAS.sasNotebook": "SAS Notebook",
+  "notebooks.SAS.logRenderer": "SAS Log Renderer",
+  "notebooks.SAS.htmlRenderer": "SAS HTML Renderer",
+
+  "themes.SAS.light": "SAS Light",
+  "themes.SAS.dark": "SAS Dark",
+  "themes.SAS.highContrast": "SAS High Contrast"
 }

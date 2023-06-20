@@ -5,6 +5,7 @@ import { BaseCompute, Compute, getApiConfig, stateOptions } from "./common";
 import { ServersApi, Server, Link } from "./api/compute";
 import { ComputeSession } from "./session";
 import axios, { AxiosResponse } from "axios";
+import { l10n } from "vscode";
 
 const DEFAULT_COMPUTE_OPTS = [
   "-validmemname EXTEND",
@@ -56,7 +57,7 @@ export class ComputeServer extends Compute {
 
   async self<Server>(): Promise<Server> {
     if (this._self.id === undefined) {
-      throw new Error("Cannot call self on object with no id");
+      throw new Error(l10n.t("Cannot call self on object with no id"));
     }
 
     const res = await this.api.getServer({ serverId: this.id });
@@ -66,7 +67,10 @@ export class ComputeServer extends Compute {
       return res.data;
     } else {
       throw new Error(
-        `Error getting server with ID  ${this.id} - ${res.message}`,
+        l10n.t("Error getting server with ID  {id} - {message}", {
+          id: this.id,
+          message: res.message,
+        }),
       );
     }
   }
@@ -78,7 +82,7 @@ export class ComputeServer extends Compute {
 
     const link = this.getLink(this.links, "createSession");
     if (link === undefined) {
-      throw new Error("Server does not have createSession link");
+      throw new Error(l10n.t("Server does not have createSession link"));
     }
 
     //Create the session
@@ -139,7 +143,7 @@ export class ComputeServer extends Compute {
 
     const link = this.getLink(this._self.links, "state");
     if (link === undefined) {
-      throw new Error("Server does not have state link");
+      throw new Error(l10n.t("Server does not have state link"));
     }
 
     const { data, status } = await this.requestLink<string>(link, {
@@ -150,7 +154,7 @@ export class ComputeServer extends Compute {
     if (status === 200) {
       return data;
     } else {
-      throw new Error("Something went wrong");
+      throw new Error(l10n.t("Something went wrong"));
     }
   }
 }
