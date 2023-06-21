@@ -173,7 +173,7 @@ async function setup(): Promise<void> {
 function formatSASOptions() {
   const formattedOpts = config.sasOptions.map((opt) => {
     let formatted = opt;
-    formatted = formatted.replace(/-/gi, "");
+    formatted = formatted.replace(/=/gi, " ");
     return formatted;
   });
   return formattedOpts;
