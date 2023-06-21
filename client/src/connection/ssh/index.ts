@@ -3,7 +3,7 @@
 
 import { Client, ClientChannel, ConnectConfig } from "ssh2";
 import { RunResult, BaseConfig } from "..";
-import { BaseSession, Session } from "../session";
+import { Session } from "../session";
 
 const endCode = "--vscode-sas-extension-submit-end--";
 const sasLaunchTimeout = 10000;
@@ -28,7 +28,7 @@ export function getSession(c: Config): Session {
   return sessionInstance;
 }
 
-export class SSHSession extends BaseSession implements Session {
+export class SSHSession extends Session {
   private conn: Client;
   private stream: ClientChannel | undefined;
   private _config: Config;
@@ -44,9 +44,13 @@ export class SSHSession extends BaseSession implements Session {
     this.conn = new Client();
   }
 
-  sessionId?(): string {
+  public sessionId? = (): string => {
     throw new Error("Method not implemented.");
-  }
+  };
+
+  public cancel? = (): Promise<void> => {
+    throw new Error("Method not implemented.");
+  };
 
   set config(newValue: Config) {
     this._config = newValue;

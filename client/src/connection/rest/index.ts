@@ -13,7 +13,7 @@ import { ComputeState, getApiConfig } from "./common";
 import { ComputeJob } from "./job";
 import { ComputeServer } from "./server";
 import { ComputeSession } from "./session";
-import { BaseSession, Session } from "../session";
+import { Session } from "../session";
 
 let sessionInstance: RestSession;
 
@@ -26,7 +26,7 @@ export interface Config extends BaseConfig {
   reconnect?: boolean;
 }
 
-class RestSession extends BaseSession implements Session {
+class RestSession extends Session {
   private _config: Config;
   private _computeSession: ComputeSession | undefined;
 

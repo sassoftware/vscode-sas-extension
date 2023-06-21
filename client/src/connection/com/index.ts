@@ -6,7 +6,7 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { BaseConfig, RunResult } from "..";
 import { scriptContent } from "./script";
-import { BaseSession, Session } from "../session";
+import { Session } from "../session";
 
 const endCode = "--vscode-sas-extension-submit-end--";
 let sessionInstance: COMSession;
@@ -18,7 +18,7 @@ export interface Config extends BaseConfig {
   host: string;
 }
 
-export class COMSession extends BaseSession implements Session {
+export class COMSession extends Session {
   private _config: Config;
   private _shellProcess: ChildProcessWithoutNullStreams;
   private _html5FileName: string;
@@ -153,6 +153,13 @@ export class COMSession extends BaseSession implements Session {
       resolve();
     });
   };
+
+  /**
+   * Cancel a running code execution.
+   */
+  public cancel(): Promise<void> {
+    throw new Error("Not Implemented");
+  }
 
   /**
    * Formats the SAS Options provided in the profile into a format

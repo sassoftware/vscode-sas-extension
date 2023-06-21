@@ -64,6 +64,8 @@ export function getSession(): Session {
  */
 function toRestConfig(profile: ViyaProfile): RestConfig {
   const mapped: RestConfig = profile;
-  mapped.autoExecLines = toAutoExecLines(profile.autoExec);
+  if (profile.autoExec) {
+    mapped.autoExecLines = toAutoExecLines(profile.autoExec);
+  }
   return mapped;
 }

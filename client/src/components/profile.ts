@@ -117,6 +117,7 @@ export interface BaseProfile {
 
 export const toAutoExecLines = (autoExec: AutoExec[]): string[] => {
   const lines: string[] = [];
+
   for (const item of autoExec) {
     switch (item.type) {
       case AutoExecType.Line:
