@@ -114,10 +114,7 @@ describe("COM connection", () => {
       fsStub.returns("content");
 
       const runPromise = session.run(
-        "ods html5;\nproc print data=sashelp.cars;\nrun;",
-        () => {
-          return;
-        }
+        "ods html5;\nproc print data=sashelp.cars;\nrun;"
       );
 
       //simulate log message for body file

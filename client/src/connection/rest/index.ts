@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { authentication } from "vscode";
-import { BaseConfig, RunResult } from "..";
+import { BaseConfig, OnLogFn, RunResult } from "..";
 import { SASAuthProvider } from "../../components/AuthProvider";
 import {
   getContextValue,
   setContextValue,
 } from "../../components/ExtensionContext";
-import { ContextsApi, LogLine, SessionsApi } from "./api/compute";
+import { ContextsApi, SessionsApi } from "./api/compute";
 import { ComputeState, getApiConfig } from "./common";
 import { ComputeJob } from "./job";
 import { ComputeServer } from "./server";
@@ -274,7 +274,7 @@ class RestSession extends Session {
 /*
 Prints the job log in an async manner.
 */
-async function printLog(job: ComputeJob, onLog?: (logs: LogLine[]) => void) {
+async function printLog(job: ComputeJob, onLog?: OnLogFn) {
   const logs = await job.getLogStream();
   for await (const log of logs) {
     onLog(log);
