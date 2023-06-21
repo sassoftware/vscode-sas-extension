@@ -9,6 +9,7 @@ import { scriptContent } from "./script";
 import { BaseSession, Session } from "../session";
 
 const endCode = "--vscode-sas-extension-submit-end--";
+let sessionInstance: COMSession;
 
 /**
  * Configuration parameters for this connection provider
@@ -25,10 +26,14 @@ export class COMSession extends BaseSession implements Session {
   private _runReject: ((reason?) => void) | undefined;
   private _workDirectory: string;
 
-  constructor(c: Config) {
+  constructor() {
     super();
-    this._config = c;
   }
+
+  public set config(value: Config) {
+    this._config = value;
+  }
+
   /**
    * Initialization logic that should be performed prior to execution.
    * @returns void promise.
@@ -255,8 +260,12 @@ do {
 /**
  * Creates a new SAS 9 Local Session.
  * @param c Instance denoting configuration parameters for this connection profile.
- * @returns  void
+ * @returns  created COM session.
  */
 export const getSession = (c: Config): Session => {
-  return new COMSession(c);
+  if (!sessionInstance) {
+    sessionInstance = new COMSession();
+  }
+  sessionInstance.config = c;
+  return sessionInstance;
 };

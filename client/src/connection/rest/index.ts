@@ -15,6 +15,8 @@ import { ComputeServer } from "./server";
 import { ComputeSession } from "./session";
 import { BaseSession, Session } from "../session";
 
+let sessionInstance: RestSession;
+
 export interface Config extends BaseConfig {
   endpoint: string;
   clientId?: string;
@@ -28,9 +30,12 @@ class RestSession extends BaseSession implements Session {
   private _config: Config;
   private _computeSession: ComputeSession | undefined;
 
-  constructor(c: Config) {
+  constructor() {
     super();
-    this._config = c;
+  }
+
+  public set config(value: Config) {
+    this._config = value;
   }
 
   public setup = async (): Promise<void> => {
@@ -279,5 +284,10 @@ async function printLog(job: ComputeJob, onLog?: (logs: LogLine[]) => void) {
 export function getSession(c: Config): Session {
   getApiConfig().basePath = c.endpoint + "/compute";
 
-  return new RestSession(c);
+  if (!sessionInstance) {
+    sessionInstance = new RestSession();
+  }
+  sessionInstance.config = c;
+
+  return sessionInstance;
 }
