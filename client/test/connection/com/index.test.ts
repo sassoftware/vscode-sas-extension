@@ -150,4 +150,77 @@ describe("COM connection", () => {
       await closePromise;
     });
   });
+
+  describe("Find html5 file name in zh_CN local", () => {
+    let fsStub: SinonStub;
+    beforeEach(async () => {
+      fsStub = sandbox.stub(fs, "readFileSync");
+
+      const setupPromise = session.setup();
+      onDataCallback(Buffer.from(`WORKDIR=/work/dir`));
+      await setupPromise;
+    });
+    it("calls run function from script with zh_CN local", async () => {
+      fsStub.returns("content");
+
+      const runPromise = session.run(
+        "ods html5;\nproc print data=sashelp.cars;\nrun;",
+        () => {
+          return;
+        }
+      );
+
+      //simulate log message for body file
+      onDataCallback(Buffer.from("NOTE: 正在写入 HTML5 Body（主体）文件: sashtml.htm"));
+      //simulate end of submission
+      onDataCallback(Buffer.from("--vscode-sas-extension-submit-end--"));
+
+      const runResult = await runPromise;
+      expect(runResult.html5).to.equal("content");
+      expect(runResult.title).to.equal("Results");
+
+      expect(stdinStub.args[7][0]).to.deep.equal(
+        `$code=@"\nods html5 path="/work/dir";\nproc print data=sashelp.cars;\nrun;\n%put --vscode-sas-extension-submit-end--;\n"@\n`
+      );
+
+      expect(stdinStub.args[8][0]).to.deep.equal(`$runner.Run($code)\n`);
+    });
+  });
+
+  describe("Find html5 file name in mixed local", () => {
+    let fsStub: SinonStub;
+    beforeEach(async () => {
+      fsStub = sandbox.stub(fs, "readFileSync");
+
+      const setupPromise = session.setup();
+      onDataCallback(Buffer.from(`WORKDIR=/work/dir`));
+      await setupPromise;
+    });
+    it("calls run function from script with mixed local", async () => {
+      fsStub.returns("content");
+
+      const runPromise = session.run(
+        "ods html5;\nproc print data=sashelp.cars;\nrun;",
+        () => {
+          return;
+        }
+      );
+
+      //simulate log message for body file
+      onDataCallback(Buffer.from("NOTE: ����д�� HTML5 Body�����壩�ļ�: sashtml.htm"));
+      //simulate end of submission
+      onDataCallback(Buffer.from("--vscode-sas-extension-submit-end--"));
+
+      const runResult = await runPromise;
+      expect(runResult.html5).to.equal("content");
+      expect(runResult.title).to.equal("Results");
+
+      expect(stdinStub.args[7][0]).to.deep.equal(
+        `$code=@"\nods html5 path="/work/dir";\nproc print data=sashelp.cars;\nrun;\n%put --vscode-sas-extension-submit-end--;\n"@\n`
+      );
+
+      expect(stdinStub.args[8][0]).to.deep.equal(`$runner.Run($code)\n`);
+    });
+  });
+
 });
