@@ -80,7 +80,7 @@ class RestSession extends Session {
     this._computeSession = await this.reconnectComputeSession();
     if (this._computeSession) {
       //reconnected to a running session, so just return
-      this.printSessionLog(this._computeSession);
+      await this.printSessionLog(this._computeSession);
       return;
     }
 
@@ -121,7 +121,8 @@ class RestSession extends Session {
         )
       ).data;
       this._computeSession = ComputeSession.fromInterface(sess);
-      this.printSessionLog(this._computeSession);
+      const sessionLog = this.printSessionLog(this._computeSession);
+      await sessionLog;
     }
 
     //Save the current sessionId

@@ -190,7 +190,7 @@ export class ComputeSession extends Compute {
     //To clear out the log, we yeild all lines until there is not "next" link
     do {
       if (resp.status === 200) {
-        nextLink = resp.links?.find((link) => link.rel === "next");
+        nextLink = resp.data.links?.find((link) => link.rel === "next");
         const items = resp.data.items;
         yield items;
 
