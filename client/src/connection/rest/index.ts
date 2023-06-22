@@ -2,18 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { authentication } from "vscode";
-import { BaseConfig, OnLogFn, RunResult } from "..";
+import { BaseConfig, RunResult } from "..";
 import { SASAuthProvider } from "../../components/AuthProvider";
 import {
   getContextValue,
   setContextValue,
 } from "../../components/ExtensionContext";
+import { Session } from "../session";
 import { ContextsApi, SessionsApi } from "./api/compute";
 import { ComputeState, getApiConfig } from "./common";
 import { ComputeJob } from "./job";
 import { ComputeServer } from "./server";
 import { ComputeSession } from "./session";
-import { Session } from "../session";
 
 let sessionInstance: RestSession;
 
@@ -80,6 +80,7 @@ class RestSession extends Session {
     this._computeSession = await this.reconnectComputeSession();
     if (this._computeSession) {
       //reconnected to a running session, so just return
+      this.printSessionLog(this._computeSession);
       return;
     }
 
@@ -120,6 +121,7 @@ class RestSession extends Session {
         )
       ).data;
       this._computeSession = ComputeSession.fromInterface(sess);
+      this.printSessionLog(this._computeSession);
     }
 
     //Save the current sessionId
@@ -135,7 +137,7 @@ class RestSession extends Session {
     const job = await this._computeSession.execute({ code: [code] });
     let state = await job.getState();
 
-    const retLog = printLog(job, this._onLogFn);
+    const retLog = this.printJobLog(job);
 
     //Wait until the job is complete
     do {
@@ -269,16 +271,28 @@ class RestSession extends Session {
 
     return session;
   };
-}
 
-/*
-Prints the job log in an async manner.
-*/
-async function printLog(job: ComputeJob, onLog?: OnLogFn) {
-  const logs = await job.getLogStream();
-  for await (const log of logs) {
-    onLog(log);
-  }
+  /**
+   * Prints the job log in an async manner.
+   * @param job a job id to print logs for.
+   */
+  private printJobLog = async (job: ComputeJob) => {
+    const logs = await job.getLogStream();
+    for await (const log of logs) {
+      this._onLogFn(log);
+    }
+  };
+
+  /**
+   * Prints the session log in an async manner.
+   * @param session a session id to print logs for.
+   */
+  private printSessionLog = async (session: ComputeSession) => {
+    const logs = await session.getLogStream();
+    for await (const log of logs) {
+      this._onLogFn(log);
+    }
+  };
 }
 
 export function getSession(c: Config): Session {

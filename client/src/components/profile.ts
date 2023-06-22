@@ -127,9 +127,10 @@ export const toAutoExecLines = (autoExec: AutoExec[]): string[] => {
         lines.push(...toAutoExecLinesFromPaths(item.filePath));
         break;
       default:
-        return [];
+        break;
     }
   }
+  return lines;
 };
 
 /**
