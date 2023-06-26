@@ -15,6 +15,8 @@ import {
   LogsApi,
   JobRequest,
   JobsApiAxiosParamCreator,
+  LogLine,
+  Link,
 } from "./api/compute";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { ComputeJob } from "./job";
@@ -170,5 +172,34 @@ export class ComputeSession extends Compute {
    */
   async delete(): Promise<void> {
     await this.followLink("delete");
+  }
+
+  async *getLogStream(options?: {
+    timeout?: number;
+  }): AsyncGenerator<LogLine[]> {
+    const timeout = options?.timeout ?? 10;
+    const start = 0;
+
+    let nextLink: Link = undefined;
+    let resp = await this.logs.getSessionLog({
+      sessionId: this.sessionId,
+      start: start,
+      timeout: timeout,
+    });
+
+    //To clear out the log, we yeild all lines until there is not "next" link
+    do {
+      if (resp.status === 200) {
+        nextLink = resp.data.links?.find((link) => link.rel === "next");
+        const items = resp.data.items;
+        yield items;
+
+        if (nextLink) {
+          resp = await this.requestLink(nextLink);
+        }
+      } else {
+        break;
+      }
+    } while (nextLink !== undefined);
   }
 }

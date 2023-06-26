@@ -27,6 +27,9 @@ describe("ssh connection", () => {
     };
 
     session = new SSHSession(config);
+    session.onLogFn = () => {
+      return;
+    };
   });
 
   afterEach(() => {
@@ -158,6 +161,9 @@ describe("ssh connection", () => {
     };
 
     const session = new SSHSession(config);
+    session.onLogFn = () => {
+      return;
+    };
 
     beforeEach(() => {
       streamStub = stubInterface<ClientChannel>();

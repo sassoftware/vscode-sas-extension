@@ -9,6 +9,8 @@ import {
   QuickPickOptions,
 } from "vscode";
 
+import { readFileSync } from "fs";
+
 export const EXTENSION_CONFIG_KEY = "SAS";
 export const EXTENSION_DEFINE_PROFILES_CONFIG_KEY = "connectionProfiles";
 export const EXTENSION_PROFILES_CONFIG_KEY = "profiles";
@@ -91,9 +93,69 @@ export interface COMProfile extends BaseProfile {
 
 export type Profile = ViyaProfile | SSHProfile | COMProfile;
 
-export class BaseProfile {
-  sasOptions?: string[];
+export enum AutoExecType {
+  File = "file",
+  Line = "line",
 }
+
+export type AutoExec = AutoExecLine | AutoExecFile;
+
+export interface AutoExecLine {
+  type: AutoExecType.Line;
+  line: string;
+}
+
+export interface AutoExecFile {
+  type: AutoExecType.File;
+  filePath: string;
+}
+
+export interface BaseProfile {
+  sasOptions?: string[];
+  autoExec?: AutoExec[];
+}
+
+export const toAutoExecLines = (autoExec: AutoExec[]): string[] => {
+  const lines: string[] = [];
+
+  for (const item of autoExec) {
+    switch (item.type) {
+      case AutoExecType.Line:
+        lines.push(item.line);
+        break;
+      case AutoExecType.File:
+        lines.push(...toAutoExecLinesFromPaths(item.filePath));
+        break;
+      default:
+        break;
+    }
+  }
+  return lines;
+};
+
+/**
+ * Reads content from the given string paths.
+ * Content is read sequentially from each path starting at the zeroth path,
+ * appending each content line into the output array.
+ *
+ * If there is an error reading a file in the paths array, then
+ * the file is skipped and content is not added.
+ * @param paths string array of paths to read content from.
+ * @returns string array of lines
+ */
+const toAutoExecLinesFromPaths = (filePath: string): string[] => {
+  const lines: string[] = [];
+  try {
+    const content = readFileSync(filePath, "utf8").split(/\n|\r\n/);
+    lines.push(...content);
+  } catch (e) {
+    const err: Error = e;
+    console.warn(
+      `Error reading file: ${filePath}, error: ${err.message}, skipping...`
+    );
+  }
+  return lines;
+};
 
 /**
  * Profile detail is an interface that encapsulates the name of the profile
