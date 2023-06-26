@@ -57,7 +57,7 @@ class SASRunner{
         }
     }
 
-    [ref] $errorIndices = [int[]]::new($names.Length)
+    [ref]$errorIndices = [int[]]::new($names.Length)
     [ref]$errors = [string[]]::new($names.Length)
     [ref]$errorCodes = [int[]]::new($names.Length)
 
