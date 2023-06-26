@@ -171,7 +171,9 @@ describe("COM connection", () => {
       );
 
       //simulate log message for body file
-      onDataCallback(Buffer.from("NOTE: 正在写入 HTML5 Body（主体）文件: sashtml.htm"));
+      onDataCallback(
+        Buffer.from("NOTE: 正在写入 HTML5 Body（主体）文件: sashtml.htm")
+      );
       //simulate end of submission
       onDataCallback(Buffer.from("--vscode-sas-extension-submit-end--"));
 
@@ -207,7 +209,9 @@ describe("COM connection", () => {
       );
 
       //simulate log message for body file
-      onDataCallback(Buffer.from("NOTE: ����д�� HTML5 Body�����壩�ļ�: sashtml.htm"));
+      onDataCallback(
+        Buffer.from("NOTE: ����д�� HTML5 Body�����壩�ļ�: sashtml.htm")
+      );
       //simulate end of submission
       onDataCallback(Buffer.from("--vscode-sas-extension-submit-end--"));
 
@@ -222,5 +226,4 @@ describe("COM connection", () => {
       expect(stdinStub.args[8][0]).to.deep.equal(`$runner.Run($code)\n`);
     });
   });
-
 });
