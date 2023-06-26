@@ -16,6 +16,7 @@ export class ComputeServer extends Compute {
   api;
   _self: Server & BaseCompute;
   _options?: string[];
+  _autoExecLines?: string[];
 
   constructor(id: string) {
     super();
@@ -35,6 +36,10 @@ export class ComputeServer extends Compute {
 
   set options(value: string[]) {
     this._options = value;
+  }
+
+  set autoExecLines(value: string[]) {
+    this._autoExecLines = value;
   }
 
   static fromInterface(server: Server): ComputeServer {
@@ -86,7 +91,7 @@ export class ComputeServer extends Compute {
       attributes: {},
       environment: {
         options: [...DEFAULT_COMPUTE_OPTS, ...this._options],
-        autoExecLines: [],
+        autoExecLines: this._autoExecLines || [],
       },
     };
 

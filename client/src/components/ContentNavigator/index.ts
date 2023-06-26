@@ -254,11 +254,13 @@ class ContentNavigator implements SubscriptionProvider {
             const activeProfile = profileConfig.getProfileByName(
               profileConfig.getActiveProfile()
             );
-            if (
-              activeProfile.connectionType === ConnectionType.Rest &&
-              !activeProfile.serverId
-            ) {
-              await this.contentDataProvider.connect(activeProfile.endpoint);
+            if (activeProfile) {
+              if (
+                activeProfile.connectionType === ConnectionType.Rest &&
+                !activeProfile.serverId
+              ) {
+                await this.contentDataProvider.connect(activeProfile.endpoint);
+              }
             }
           }
         }

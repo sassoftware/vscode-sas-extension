@@ -66,11 +66,13 @@ export class NotebookController {
     execution.start(Date.now()); // Keep track of elapsed time to execute cell.
 
     const session = getSession();
+    session.onLogFn = (logLines) => {
+      logs = logs.concat(logLines);
+    };
+
     let logs = [];
     try {
-      const result = await session.run(getCode(cell.document), (logLines) => {
-        logs = logs.concat(logLines);
-      });
+      const result = await session.run(getCode(cell.document));
 
       execution.replaceOutput([
         new vscode.NotebookCellOutput([

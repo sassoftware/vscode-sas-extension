@@ -1,11 +1,11 @@
 import { expect } from "chai";
 import * as proc from "child_process";
 import * as fs from "fs";
-import { Session } from "../../../src/connection";
 import { getSession } from "../../../src/connection/com";
 import { scriptContent } from "../../../src/connection/com/script";
 
 import { SinonSandbox, SinonStub, createSandbox } from "sinon";
+import { Session } from "../../../src/connection/session";
 
 describe("COM connection", () => {
   let sandbox: SinonSandbox;
@@ -53,6 +53,9 @@ describe("COM connection", () => {
     };
 
     session = getSession(config);
+    session.onLogFn = () => {
+      return;
+    };
   });
 
   afterEach(() => {
@@ -66,7 +69,7 @@ describe("COM connection", () => {
     it("creates a well-formed local session", async () => {
       const setupPromise = session.setup();
 
-      onDataCallback(Buffer.from(`WORKDIR="/work/dir"`));
+      onDataCallback(Buffer.from(`WORKDIR="/work/dir"\n`));
 
       await setupPromise;
 
@@ -111,10 +114,7 @@ describe("COM connection", () => {
       fsStub.returns("content");
 
       const runPromise = session.run(
-        "ods html5;\nproc print data=sashelp.cars;\nrun;",
-        () => {
-          return;
-        }
+        "ods html5;\nproc print data=sashelp.cars;\nrun;"
       );
 
       //simulate log message for body file
