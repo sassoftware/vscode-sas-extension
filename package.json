@@ -194,7 +194,7 @@
                                 "line"
                               ],
                               "properties": {
-                                "lines": {
+                                "line": {
                                   "type": "string",
                                   "default": "",
                                   "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.line%"
@@ -215,7 +215,7 @@
                                 "filePath"
                               ],
                               "properties": {
-                                "filePaths": {
+                                "filePath": {
                                   "type": "string",
                                   "default": "",
                                   "description": "%configuration.SAS.connectionProfiles.profiles.autoExec.filePath%"
