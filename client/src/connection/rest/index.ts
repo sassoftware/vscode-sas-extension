@@ -117,12 +117,13 @@ class RestSession extends Session {
               },
             },
           },
-          { headers: { "accept-language": locale } },
+          { headers: { "accept-language": locale } }
         )
       ).data;
       this._computeSession = ComputeSession.fromInterface(sess);
-      await this.printSessionLog(this._computeSession);
     }
+
+    await this.printSessionLog(this._computeSession);
 
     //Save the current sessionId
     setContextValue("SAS.sessionId", this._computeSession.sessionId);
@@ -246,7 +247,7 @@ class RestSession extends Session {
         session = await computeServer.getSession(sessionId);
       } catch (error) {
         console.log(
-          `Attempt to reconnect to session ${sessionId} failed. A new session will be started`,
+          `Attempt to reconnect to session ${sessionId} failed. A new session will be started`
         );
       }
     } else {
@@ -259,7 +260,7 @@ class RestSession extends Session {
         session = ComputeSession.fromInterface(mySession);
       } catch (error) {
         console.log(
-          `Attempt to reconnect to session ${sessionId} failed. A new session will be started`,
+          `Attempt to reconnect to session ${sessionId} failed. A new session will be started`
         );
       }
     }

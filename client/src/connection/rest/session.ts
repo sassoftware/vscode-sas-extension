@@ -80,7 +80,7 @@ export class ComputeSession extends Compute {
     }
   }
 
-  async getState(options?: stateOptions): Promise<AxiosResponse<string>> {
+  async getState(options?: stateOptions): Promise<string> {
     const parms: SessionsApiGetSessionStateRequest = {
       sessionId: this.sessionId,
       wait: options?.wait,
@@ -177,8 +177,45 @@ export class ComputeSession extends Compute {
   async *getLogStream(options?: {
     timeout?: number;
   }): AsyncGenerator<LogLine[]> {
+    let state = await this.getState();
     const timeout = options?.timeout ?? 10;
-    const start = 0;
+    let start = 0;
+
+    const states = [
+      "done",
+      "canceled",
+      "error",
+      "warning",
+      "completed",
+      "idle",
+    ];
+
+    while (states.indexOf(state) === -1) {
+      //Get a log page
+      const resp = await this.logs.getSessionLog({
+        sessionId: this.sessionId,
+        start: start,
+        timeout: timeout,
+      });
+
+      if (resp.status === 200) {
+        const items = resp.data.items;
+        const num = items.length;
+
+        yield items;
+
+        //increase start location
+        start += num;
+
+        //get new state
+        state = await this.getState();
+      } else {
+        break;
+      }
+    }
+
+    //There is a chance that the job ended between our last read and now.
+    //Need to make sure we clear out the log
 
     let nextLink: Link = undefined;
     let resp = await this.logs.getSessionLog({
@@ -190,7 +227,7 @@ export class ComputeSession extends Compute {
     //To clear out the log, we yeild all lines until there is not "next" link
     do {
       if (resp.status === 200) {
-        nextLink = resp.data.links?.find((link) => link.rel === "next");
+        nextLink = resp.links?.find((link) => link.rel === "next");
         const items = resp.data.items;
         yield items;
 
