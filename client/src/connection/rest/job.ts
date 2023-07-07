@@ -13,6 +13,7 @@ import {
   Link,
 } from "./api/compute";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
+import { throttle } from "../../components/utils";
 
 export class ComputeJob extends Compute {
   api;
@@ -166,11 +167,35 @@ export class ComputeJob extends Compute {
   Return job results
   */
   async results(type?: string): Promise<Result[]> {
-    const resp = await this.followLink<ResultCollection>("results");
-
-    if (type) {
-      return [resp.data.items.reverse().find((result) => result.type === type)];
+    const link = this.getLink(this._self.links, "results");
+    const resp = await this.requestLink<ResultCollection>(link, {
+      params: {
+        filter: `eq(type,${type ?? "ODS"})`,
+      },
+    });
+    const count = resp.data.count;
+    const limit = resp.data.limit;
+    if (count <= limit) {
+      return resp.data.items;
     }
-    return resp.data.items;
+
+    // get all pages
+    const requests: Array<() => Promise<AxiosResponse<ResultCollection>>> = [];
+    for (let i = limit; i < count; i += limit) {
+      requests.push(() =>
+        this.requestLink<ResultCollection>(link, {
+          params: {
+            filter: `eq(type,${type ?? "ODS"})`,
+            start: i,
+            limit,
+          },
+        })
+      );
+    }
+    const results = await throttle(requests, 3);
+    return results.reduce(
+      (prev, resp) => prev.concat(resp.data.items),
+      resp.data.items
+    );
   }
 }
