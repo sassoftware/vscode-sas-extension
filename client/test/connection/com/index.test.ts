@@ -1,6 +1,6 @@
 import { expect } from "chai";
-import * as proc from "child_process";
-import * as fs from "fs";
+import proc from "child_process";
+import fs from "fs";
 import { getSession } from "../../../src/connection/com";
 import { scriptContent } from "../../../src/connection/com/script";
 
