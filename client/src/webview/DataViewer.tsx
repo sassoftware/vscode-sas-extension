@@ -4,16 +4,23 @@
 import ".";
 
 import { AgGridReact } from "ag-grid-react";
-import * as React from "react";
+import { createElement, useState } from "react";
 import * as ReactDOMClient from "react-dom/client";
 import useDataViewer from "./useDataViewer";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 
+const gridStyles = {
+  "--ag-borders": "none",
+  "--ag-row-border-width": "0px",
+  height: "100%",
+  width: "100%",
+};
+
 const DataViewer = () => {
   const { columns, onGridReady } = useDataViewer();
-  const [theme] = React.useState(
+  const [theme] = useState(
     document.querySelector(".vscode-dark")
       ? "ag-theme-alpine-dark"
       : "ag-theme-alpine"
@@ -24,15 +31,7 @@ const DataViewer = () => {
   }
 
   return (
-    <div
-      className={`ag-grid-wrapper ${theme}`}
-      style={{
-        "--ag-borders": "none",
-        "--ag-row-border-width": "0px",
-        height: "100%",
-        width: "100%",
-      }}
-    >
+    <div className={`ag-grid-wrapper ${theme}`} style={gridStyles}>
       <AgGridReact
         cacheBlockSize={100}
         columnDefs={columns}

@@ -1,16 +1,16 @@
-import { Uri, TreeItemCollapsibleState } from "vscode";
+import { expect } from "chai";
+import nock from "nock";
+import { sprintf } from "sprintf-js";
+import { TreeItemCollapsibleState, Uri } from "vscode";
 import LibraryDataProvider from "../../../src/components/LibraryNavigator/LibraryDataProvider";
 import LibraryModel from "../../../src/components/LibraryNavigator/LibraryModel";
 import {
   Icons,
   Messages,
 } from "../../../src/components/LibraryNavigator/const";
+import { LibraryItem } from "../../../src/components/LibraryNavigator/types";
 import { DataAccessApi } from "../../../src/connection/rest/api/compute";
 import { getApiConfig } from "../../../src/connection/rest/common";
-import { expect } from "chai";
-import { sprintf } from "sprintf-js";
-import * as nock from "nock";
-import { LibraryItem } from "../../../src/components/LibraryNavigator/types";
 
 class MockLibraryModel extends LibraryModel {
   constructor() {

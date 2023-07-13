@@ -22,6 +22,8 @@
     "vscode-languageclient": "^8.0.1"
   },
   "devDependencies": {
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
     "@types/ssh2": "^1.11.7",
     "@types/vscode": "^1.71.0",
     "@types/vscode-notebook-renderer": "^1.72.0",
