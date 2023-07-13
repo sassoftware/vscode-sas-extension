@@ -3,119 +3,45 @@
 
 import ".";
 
-import {
-  BodyScrollEndEvent,
-  GridReadyEvent,
-  IGetRowsParams,
-} from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import * as React from "react";
 import * as ReactDOMClient from "react-dom/client";
-import { TableData } from "../components/LibraryNavigator/types";
-import { queryTableData, vscode } from "./useDataViewer";
+import useDataViewer from "./useDataViewer";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 
-const { useCallback, useState, useEffect, useRef } = React;
-
 const DataViewer = () => {
-  const [columns, setColumns] = useState([]);
-  const [persistData, setPersistData] = useState<boolean>(false);
-  const gridRef = useRef<AgGridReact>(null);
-
-  const persistChanges = (event: BodyScrollEndEvent) => {
-    if (!persistData) {
-      return;
-    }
-
-    const displayedRow = event.api.getFirstDisplayedRow();
-    console.log("displayedRow", displayedRow);
-    vscode.setState({ displayedRow });
-  };
-
-  const startPersistingData = () => {
-    console.log("starting to persist data");
-    setPersistData(true);
-  };
-
-  const onGridReady = useCallback(
-    (event: GridReadyEvent) => {
-      const dataSource = {
-        rowCount: undefined,
-        getRows: (params: IGetRowsParams) => {
-          queryTableData(params.startRow, params.endRow).then(
-            ({ rows, headers, count }: TableData) => {
-              const rowData = rows.map(({ cells }) =>
-                cells.reduce(
-                  (carry, cell, index) => ({
-                    ...carry,
-                    [headers.columns[index]]: cell,
-                  }),
-                  {}
-                )
-              );
-
-              params.successCallback(rowData, count);
-              !persistData && startPersistingData();
-            }
-          );
-        },
-      };
-
-      event.api.setDatasource(dataSource);
-      const { displayedRow = 0 } = vscode.getState() || {};
-      if (displayedRow !== 0) {
-        console.log("setting displayed row to ", displayedRow);
-        if ((event.api.getInfiniteRowCount() || 0) < displayedRow + 1) {
-          console.log("setting row count");
-          event.api.setRowCount(displayedRow + 1, false);
-        }
-
-        console.log("ensuring things");
-        event.api.ensureIndexVisible(displayedRow, "top");
-      }
-    },
-    [persistData]
+  const { columns, onGridReady } = useDataViewer();
+  const [theme] = React.useState(
+    document.querySelector(".vscode-dark")
+      ? "ag-theme-alpine-dark"
+      : "ag-theme-alpine"
   );
-
-  // const updateFocusedCell = useCallback(() => {
-  //   const { displayedRow = 0 } = vscode.getState() || {};
-  //   if (displayedRow !== 0) {
-  //     console.log("setting displayed row to ", displayedRow);
-  //     gridRef.current.api.setFocusedCell(displayedRow, columns[0].field);
-  //   }
-  // }, [columns]);
-
-  useEffect(() => {
-    if (columns.length > 0) {
-      return;
-    }
-
-    queryTableData(0, 100).then((data: TableData) => {
-      setColumns(
-        (data.headers.columns || []).map((field) => ({
-          field,
-        }))
-      );
-    });
-  }, [columns.length]);
 
   if (columns.length === 0) {
     return null;
   }
 
   return (
-    <AgGridReact
-      cacheBlockSize={100}
-      columnDefs={columns}
-      infiniteInitialRowCount={100}
-      maxBlocksInCache={10}
-      onBodyScrollEnd={persistChanges}
-      onGridReady={onGridReady}
-      ref={gridRef}
-      rowModelType="infinite"
-    />
+    <div
+      className={`ag-grid-wrapper ${theme}`}
+      style={{
+        "--ag-borders": "none",
+        "--ag-row-border-width": "0px",
+        height: "100%",
+        width: "100%",
+      }}
+    >
+      <AgGridReact
+        cacheBlockSize={100}
+        columnDefs={columns}
+        infiniteInitialRowCount={100}
+        maxBlocksInCache={10}
+        onGridReady={onGridReady}
+        rowModelType="infinite"
+      />
+    </div>
   );
 };
 

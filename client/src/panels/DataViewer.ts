@@ -35,7 +35,7 @@ class DataViewer extends WebView {
           )}">
           <title>${this._uid}</title>
         </head>
-        <body style="min-height:100%;height:100%;">
+        <body style="min-height:100%;height:100%;padding:0;">
           <vscode-data-grid
             class="data-view-${this._uid.replace(/\./g, "")}"
             aria-label="${this._uid} contents"
