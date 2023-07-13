@@ -2,12 +2,47 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useEffect, useState } from "react";
+import { TableData } from "../components/LibraryNavigator/types";
 
 declare const acquireVsCodeApi;
-const vscode = acquireVsCodeApi();
+export const vscode = acquireVsCodeApi();
 
 const contextMenuHandler = (e) => {
   e.stopImmediatePropagation();
+};
+
+const queryTableTimeout = 60 * 1000; // 60 seconds (accounting for compute session expiration)
+let queryTableDataTimeoutId = null;
+const clearQueryTimeout = () =>
+  queryTableDataTimeoutId && clearTimeout(queryTableDataTimeoutId);
+
+export const queryTableData = (
+  start: number,
+  end: number
+): Promise<TableData> => {
+  vscode.postMessage({
+    command: "request:loadData",
+    data: { start, end },
+  });
+
+  return new Promise((resolve, reject) => {
+    const commandHandler = (event) => {
+      const { data } = event.data;
+      if (event.data.command === "response:loadData") {
+        window.removeEventListener("message", commandHandler);
+        clearQueryTimeout();
+        resolve(data);
+      }
+    };
+
+    clearQueryTimeout();
+    queryTableDataTimeoutId = setTimeout(() => {
+      window.removeEventListener("message", commandHandler);
+      reject(new Error("Timeout exceeded"));
+    }, queryTableTimeout);
+
+    window.addEventListener("message", commandHandler);
+  });
 };
 
 const useDataViewer = () => {
@@ -72,7 +107,11 @@ const useDataViewer = () => {
     };
   }, []);
 
-  return { loadMoreResults, headers, rows, hasMore };
+  const getRowsOrWhatever = () => {
+    return rows;
+  };
+
+  return { loadMoreResults, headers, rows, hasMore, getRowsOrWhatever };
 };
 
 export default useDataViewer;

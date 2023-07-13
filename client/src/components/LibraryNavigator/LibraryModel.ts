@@ -52,8 +52,9 @@ class LibraryModel {
 
   public getTableResultSet(item: LibraryItem): PaginatedResultSet<TableData> {
     return new PaginatedResultSet<TableData>(
-      async (start: number) => {
+      async (start: number, end: number) => {
         await this.setup();
+        const limit = end - start;
         return await this.retryOnFail(
           async () =>
             await this.dataAccessApi.getRows(
@@ -63,7 +64,7 @@ class LibraryModel {
                 tableName: item.name,
                 includeColumnNames: true,
                 start,
-                limit: 100,
+                limit,
               },
               requestOptions
             )
@@ -72,6 +73,7 @@ class LibraryModel {
       (response) => ({
         headers: response.data.items[0],
         rows: response.data.items.slice(1),
+        count: response.data.count,
       })
     );
   }

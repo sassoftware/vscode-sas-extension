@@ -25,21 +25,25 @@ class DataViewer extends WebView {
   public render(): WebView {
     this.panel.webview.html = `
       <!DOCTYPE html>
-      <html lang="en">
+      <html lang="en" style="min-height:100%;height:100%;">
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <link rel="stylesheet" href="${this.webviewUri(
+            this._extensionUri,
+            "DataViewer.css"
+          )}">
           <title>${this._uid}</title>
         </head>
-        <body>
+        <body style="min-height:100%;height:100%;">
           <vscode-data-grid
             class="data-view-${this._uid.replace(/\./g, "")}"
             aria-label="${this._uid} contents"
           ></vscode-data-grid>
-          <div class="data-viewer"></div>
+          <div class="data-viewer" style="height:100%;"></div>
           <script type="module" src="${this.webviewUri(
             this._extensionUri,
-            "DataViewer"
+            "DataViewer.js"
           )}"></script>
         </body>
       </html>
@@ -49,13 +53,13 @@ class DataViewer extends WebView {
   }
 
   public async processMessage(
-    event: Event & { command: string; data?: { start?: number } }
+    event: Event & { command: string; data?: { start?: number; end?: number } }
   ): Promise<void> {
     switch (event.command) {
       case "request:loadData":
         this.panel.webview.postMessage({
           command: "response:loadData",
-          data: await this._paginator.getData(),
+          data: await this._paginator.getData(event.data.start, event.data.end),
         });
         break;
       case "request:loadMoreResults":
