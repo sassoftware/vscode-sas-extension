@@ -4,15 +4,15 @@
 import { AxiosResponse } from "axios";
 
 class PaginatedResultSet<T> {
-  private queryForData: (start: number) => Promise<AxiosResponse>;
+  private queryForData: (start: number, end: number) => Promise<AxiosResponse>;
   private transformData: (response: AxiosResponse) => T;
   private start: number;
   private limit: number;
   private count: number;
 
   constructor(
-    queryForData: (start: number) => Promise<AxiosResponse>,
-    transformData: (response: AxiosResponse) => T,
+    queryForData: (start: number, end: number) => Promise<AxiosResponse>,
+    transformData: (response: AxiosResponse) => T
   ) {
     this.queryForData = queryForData;
     this.transformData = transformData;
@@ -25,8 +25,8 @@ class PaginatedResultSet<T> {
     this.start = start;
   }
 
-  public async getData(): Promise<T> {
-    const response = await this.queryForData(this.start);
+  public async getData(start: number, end: number): Promise<T> {
+    const response = await this.queryForData(start, end);
     this.limit = response.data.limit;
     this.count = response.data.count;
     return this.prepareResponse(response);
@@ -46,7 +46,7 @@ class PaginatedResultSet<T> {
   }
 
   private prepareResponse(
-    response: AxiosResponse,
+    response: AxiosResponse
   ): T & { hasMore: boolean; start: number } {
     return {
       ...this.transformData(response),

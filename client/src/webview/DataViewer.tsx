@@ -4,72 +4,118 @@
 import ".";
 
 import {
-  VSCodeDataGrid,
-  VSCodeDataGridCell,
-  VSCodeDataGridRow,
-} from "@vscode/webview-ui-toolkit/react";
+  BodyScrollEndEvent,
+  GridReadyEvent,
+  IGetRowsParams,
+} from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import * as React from "react";
 import * as ReactDOMClient from "react-dom/client";
-import InfiniteScroll from "react-infinite-scroller";
-import useDataViewer from "./useDataViewer";
+import { TableData } from "../components/LibraryNavigator/types";
+import { queryTableData, vscode } from "./useDataViewer";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 
-const { useState } = React;
+const { useCallback, useState, useEffect, useRef } = React;
 
 const DataViewer = () => {
-  const { loadMoreResults, headers, rows, hasMore } = useDataViewer();
-  const [rowData] = useState([
-    { make: "Toyota", model: "Celica", price: 35000 },
-    { make: "Ford", model: "Mondeo", price: 32000 },
-    { make: "Porsche", model: "Boxster", price: 72000 },
-  ]);
+  const [columns, setColumns] = useState([]);
+  const [persistData, setPersistData] = useState<boolean>(false);
+  const gridRef = useRef<AgGridReact>(null);
 
-  const [columnDefs] = useState([
-    { field: "make" },
-    { field: "model" },
-    { field: "price" },
-  ]);
+  const persistChanges = (event: BodyScrollEndEvent) => {
+    if (!persistData) {
+      return;
+    }
+
+    const displayedRow = event.api.getFirstDisplayedRow();
+    console.log("displayedRow", displayedRow);
+    vscode.setState({ displayedRow });
+  };
+
+  const startPersistingData = () => {
+    console.log("starting to persist data");
+    setPersistData(true);
+  };
+
+  const onGridReady = useCallback(
+    (event: GridReadyEvent) => {
+      const dataSource = {
+        rowCount: undefined,
+        getRows: (params: IGetRowsParams) => {
+          queryTableData(params.startRow, params.endRow).then(
+            ({ rows, headers, count }: TableData) => {
+              const rowData = rows.map(({ cells }) =>
+                cells.reduce(
+                  (carry, cell, index) => ({
+                    ...carry,
+                    [headers.columns[index]]: cell,
+                  }),
+                  {}
+                )
+              );
+
+              params.successCallback(rowData, count);
+              !persistData && startPersistingData();
+            }
+          );
+        },
+      };
+
+      event.api.setDatasource(dataSource);
+      const { displayedRow = 0 } = vscode.getState() || {};
+      if (displayedRow !== 0) {
+        console.log("setting displayed row to ", displayedRow);
+        if ((event.api.getInfiniteRowCount() || 0) < displayedRow + 1) {
+          console.log("setting row count");
+          event.api.setRowCount(displayedRow + 1, false);
+        }
+
+        console.log("ensuring things");
+        event.api.ensureIndexVisible(displayedRow, "top");
+      }
+    },
+    [persistData]
+  );
+
+  // const updateFocusedCell = useCallback(() => {
+  //   const { displayedRow = 0 } = vscode.getState() || {};
+  //   if (displayedRow !== 0) {
+  //     console.log("setting displayed row to ", displayedRow);
+  //     gridRef.current.api.setFocusedCell(displayedRow, columns[0].field);
+  //   }
+  // }, [columns]);
+
+  useEffect(() => {
+    if (columns.length > 0) {
+      return;
+    }
+
+    queryTableData(0, 100).then((data: TableData) => {
+      setColumns(
+        (data.headers.columns || []).map((field) => ({
+          field,
+        }))
+      );
+    });
+  }, [columns.length]);
+
+  if (columns.length === 0) {
+    return null;
+  }
 
   return (
-    <div>
-      <AgGridReact rowData={rowData} columnDefs={columnDefs}></AgGridReact>
-      <InfiniteScroll
-        pageStart={0}
-        loadMore={loadMoreResults}
-        hasMore={hasMore}
-      >
-        <VSCodeDataGrid>
-          <VSCodeDataGridRow row-type="header">
-            {(headers.columns || []).map((column, idx) => (
-              <VSCodeDataGridCell
-                style={{ minWidth: "100px" }}
-                cell-type="columnheader"
-                key={idx}
-                grid-column={idx + 1}
-              >
-                {column}
-              </VSCodeDataGridCell>
-            ))}
-          </VSCodeDataGridRow>
-          {rows.map((row, idx) => (
-            <VSCodeDataGridRow key={idx}>
-              {row.cells.map((cell, idx) => (
-                <VSCodeDataGridCell
-                  key={idx}
-                  grid-column={idx + 1}
-                  style={{ minWidth: "100px" }}
-                >
-                  {cell}
-                </VSCodeDataGridCell>
-              ))}
-            </VSCodeDataGridRow>
-          ))}
-        </VSCodeDataGrid>
-      </InfiniteScroll>
-    </div>
+    <AgGridReact
+      cacheBlockSize={100}
+      columnDefs={columns}
+      infiniteInitialRowCount={100}
+      maxBlocksInCache={10}
+      onBodyScrollEnd={persistChanges}
+      onGridReady={onGridReady}
+      ref={gridRef}
+      rowModelType="infinite"
+    />
   );
 };
 

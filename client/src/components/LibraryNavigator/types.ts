@@ -24,4 +24,5 @@ export interface TableHeader {
 export interface TableData {
   headers: TableHeader;
   rows: TableRow[];
+  count: number;
 }

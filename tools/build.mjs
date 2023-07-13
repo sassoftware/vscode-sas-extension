@@ -1,6 +1,8 @@
+import concurrently from "concurrently";
+import esbuild from "esbuild";
+
 console.log("start");
 const dev = process.argv[2];
-import esbuild from "esbuild";
 
 const plugins = [
   {
@@ -15,15 +17,9 @@ const plugins = [
   },
 ];
 
-const buildOptions = {
-  entryPoints: {
-    "./client/dist/node/extension": "./client/src/node/extension.ts",
-    "./server/dist/node/server": "./server/src/node/server.ts",
-    "./client/dist/webview/DataViewer": "./client/src/webview/DataViewer.tsx",
-  },
+const commonBuildOptions = {
   bundle: true,
   outdir: ".",
-  platform: "node",
   external: ["vscode"],
   loader: {
     ".properties": "text",
@@ -37,11 +33,53 @@ const buildOptions = {
   },
 };
 
-const ctx = await esbuild.context(buildOptions);
-await ctx.rebuild();
+const nodeBuildOptions = {
+  ...commonBuildOptions,
+  entryPoints: {
+    "./client/dist/node/extension": "./client/src/node/extension.ts",
+    "./server/dist/node/server": "./server/src/node/server.ts",
+  },
+  platform: "node",
+};
 
-if (dev) {
-  await ctx.watch();
+const browserBuildOptions = {
+  ...commonBuildOptions,
+  entryPoints: {
+    "./client/dist/webview/DataViewer": "./client/src/webview/DataViewer.tsx",
+  },
+};
+
+if (process.env.npm_config_browser || process.env.npm_config_node) {
+  const ctx = await esbuild.context(
+    process.env.npm_config_browser ? browserBuildOptions : nodeBuildOptions
+  );
+  await ctx.rebuild();
+
+  if (dev) {
+    await ctx.watch();
+  } else {
+    await ctx.dispose();
+  }
 } else {
-  await ctx.dispose();
+  const { result } = concurrently(
+    [
+      {
+        command: `npm run ${process.env.npm_lifecycle_event} --browser`,
+        name: "browser",
+      },
+      {
+        command: `npm run ${process.env.npm_lifecycle_event} --node`,
+        name: "node",
+      },
+    ],
+    {
+      killOthers: ["failure", "success"],
+      restartTries: 3,
+    }
+  );
+
+  await result.then(
+    () => {},
+    () => console.error("Assets failed to build successfully")
+  );
 }
