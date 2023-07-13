@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es2019",
+    "esModuleInterop": true,
+    "jsx": "react",
+    "jsxFactory": "createElement",
     "lib": ["ES2019", "DOM"],
+    "module": "commonjs",
     "outDir": "out",
     "rootDir": ".",
     "sourceMap": true,
-    "jsx": "react"
+    "target": "es2019"
   },
   "include": ["src", "test"],
   "exclude": ["node_modules", ".vscode-test"]

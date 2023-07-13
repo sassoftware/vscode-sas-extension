@@ -62,15 +62,6 @@ class DataViewer extends WebView {
           data: await this._paginator.getData(event.data.start, event.data.end),
         });
         break;
-      case "request:loadMoreResults":
-        this.panel.webview.postMessage({
-          command: "response:loadMoreResults",
-          data: await this._paginator.getMoreResults(),
-        });
-        break;
-      case "request:updateStart":
-        this._paginator.updateStartOffset(event.data.start);
-        break;
       default:
         break;
     }
