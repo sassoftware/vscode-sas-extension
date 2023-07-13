@@ -54,7 +54,7 @@ class LibraryModel {
     return new PaginatedResultSet<TableData>(
       async (start: number, end: number) => {
         await this.setup();
-        const limit = end - start;
+        const limit = end - start + 1;
         return await this.retryOnFail(
           async () =>
             await this.dataAccessApi.getRows(
