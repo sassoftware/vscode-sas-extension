@@ -5,7 +5,7 @@ import ".";
 
 import { AgGridReact } from "ag-grid-react";
 import { createElement, useState } from "react";
-import * as ReactDOMClient from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import useDataViewer from "./useDataViewer";
 
 import "ag-grid-community/styles/ag-grid.css";
@@ -44,5 +44,5 @@ const DataViewer = () => {
   );
 };
 
-const root = ReactDOMClient.createRoot(document.querySelector(".data-viewer"));
+const root = createRoot(document.querySelector(".data-viewer"));
 root.render(<DataViewer />);
