@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { TableData } from "../components/LibraryNavigator/types";
 
 declare const acquireVsCodeApi;
-export const vscode = acquireVsCodeApi();
+const vscode = acquireVsCodeApi();
 
 const contextMenuHandler = (e) => {
   e.stopImmediatePropagation();
