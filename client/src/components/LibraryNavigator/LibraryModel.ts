@@ -64,6 +64,7 @@ class LibraryModel {
                 libref: item.library || "",
                 tableName: item.name,
                 includeColumnNames: true,
+                includeIndex: true,
                 start,
                 limit,
               },
