@@ -62,7 +62,6 @@ class LibraryModel {
                 sessionId: this.sessionId,
                 libref: item.library || "",
                 tableName: item.name,
-                includeColumnNames: true,
                 includeIndex: true,
                 start,
                 limit,
@@ -72,11 +71,37 @@ class LibraryModel {
         );
       },
       (response) => ({
-        headers: response.data.items[0],
-        rows: response.data.items.slice(1),
+        rows: response.data.items,
         count: response.data.count,
       })
     );
+  }
+
+  public async fetchColumns(item: LibraryItem) {
+    let offset = -1 * DefaultRecordLimit;
+    let items = [];
+    let totalItemCount = Infinity;
+    do {
+      offset += DefaultRecordLimit;
+      const { data } = await this.retryOnFail(
+        async () =>
+          await this.dataAccessApi.getColumns(
+            {
+              sessionId: this.sessionId,
+              limit: DefaultRecordLimit,
+              start: offset,
+              libref: item.library || "",
+              tableName: item.name,
+            },
+            requestOptions
+          )
+      );
+
+      items = [...items, ...data.items];
+      totalItemCount = data.count;
+    } while (offset < totalItemCount);
+
+    return items;
   }
 
   public async getTable(item: LibraryItem) {

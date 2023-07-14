@@ -4,6 +4,7 @@
 import { ColDef, GridReadyEvent, IGetRowsParams } from "ag-grid-community";
 import { useCallback, useEffect, useState } from "react";
 import { TableData } from "../components/LibraryNavigator/types";
+import { Column } from "../connection/rest/api/compute";
 
 declare const acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
@@ -12,15 +13,12 @@ const contextMenuHandler = (e) => {
   e.stopImmediatePropagation();
 };
 
-const queryTableTimeout = 60 * 1000; // 60 seconds (accounting for compute session expiration)
+const defaultTimeout = 60 * 1000; // 60 seconds (accounting for compute session expiration)
+
 let queryTableDataTimeoutId = null;
 const clearQueryTimeout = () =>
   queryTableDataTimeoutId && clearTimeout(queryTableDataTimeoutId);
-
-export const queryTableData = (
-  start: number,
-  end: number
-): Promise<TableData> => {
+const queryTableData = (start: number, end: number): Promise<TableData> => {
   vscode.postMessage({
     command: "request:loadData",
     data: { start, end },
@@ -40,7 +38,33 @@ export const queryTableData = (
     queryTableDataTimeoutId = setTimeout(() => {
       window.removeEventListener("message", commandHandler);
       reject(new Error("Timeout exceeded"));
-    }, queryTableTimeout);
+    }, defaultTimeout);
+
+    window.addEventListener("message", commandHandler);
+  });
+};
+
+let fetchColumnsTimeoutId = null;
+const clearFetchColumnsTimeout = () =>
+  fetchColumnsTimeoutId && clearTimeout(fetchColumnsTimeoutId);
+const fetchColumns = (): Promise<Column[]> => {
+  vscode.postMessage({ command: "request:loadColumns" });
+
+  return new Promise((resolve, reject) => {
+    const commandHandler = (event) => {
+      const { data } = event.data;
+      if (event.data.command === "response:loadColumns") {
+        window.removeEventListener("message", commandHandler);
+        clearFetchColumnsTimeout();
+        resolve(data);
+      }
+    };
+
+    clearFetchColumnsTimeout();
+    fetchColumnsTimeoutId = setTimeout(() => {
+      window.removeEventListener("message", commandHandler);
+      reject(new Error("Timeout exceeded"));
+    }, defaultTimeout);
 
     window.addEventListener("message", commandHandler);
   });
@@ -84,13 +108,16 @@ const useDataViewer = () => {
       return;
     }
 
-    queryTableData(0, 100).then((data: TableData) => {
-      setColumns(
-        (data.headers.columns || []).map((name) => ({
-          field: name === "" ? "#" : name,
-          suppressMovable: name === "",
-        }))
-      );
+    fetchColumns().then((columnsData) => {
+      const columns: ColDef[] = columnsData.map(({ name: field }) => ({
+        field,
+      }));
+      columns.unshift({
+        field: "#",
+        suppressMovable: true,
+      });
+
+      setColumns(columns);
     });
   }, [columns.length]);
 
