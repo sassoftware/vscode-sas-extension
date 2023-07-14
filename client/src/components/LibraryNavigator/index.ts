@@ -11,6 +11,7 @@ import {
   window,
   workspace,
 } from "vscode";
+import { Column } from "../../connection/rest/api/compute";
 import DataViewer from "../../panels/DataViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import DragAndDropController from "../DragAndDropController";
@@ -49,10 +50,19 @@ class LibraryNavigator implements SubscriptionProvider {
       this.treeView,
       commands.registerCommand(
         "SAS.viewTable",
-        async (item: LibraryItem, paginator: PaginatedResultSet<TableData>) => {
+        async (
+          item: LibraryItem,
+          paginator: PaginatedResultSet<TableData>,
+          fetchColumns: () => Column[]
+        ) => {
           this.webviewManager.render(
-            new DataViewer(this.extensionUri, item.uid, paginator),
-            item.uid,
+            new DataViewer(
+              this.extensionUri,
+              item.uid,
+              paginator,
+              fetchColumns
+            ),
+            item.uid
           );
         },
       ),

@@ -4,22 +4,26 @@
 import { Uri } from "vscode";
 import PaginatedResultSet from "../components/LibraryNavigator/PaginatedResultSet";
 import { TableData } from "../components/LibraryNavigator/types";
+import { Column } from "../connection/rest/api/compute";
 import { WebView } from "./WebviewManager";
 
 class DataViewer extends WebView {
   private _uid: string;
   private _extensionUri: Uri;
   private _paginator: PaginatedResultSet<TableData>;
+  private _fetchColumns: () => Column[];
 
   public constructor(
     extensionUri: Uri,
     uid: string,
     paginator: PaginatedResultSet<TableData>,
+    fetchColumns: () => Column[]
   ) {
     super();
     this._uid = uid;
     this._extensionUri = extensionUri;
     this._paginator = paginator;
+    this._fetchColumns = fetchColumns;
   }
 
   public render(): WebView {
@@ -60,6 +64,12 @@ class DataViewer extends WebView {
         this.panel.webview.postMessage({
           command: "response:loadData",
           data: await this._paginator.getData(event.data.start, event.data.end),
+        });
+        break;
+      case "request:loadColumns":
+        this.panel.webview.postMessage({
+          command: "response:loadColumns",
+          data: await this._fetchColumns(),
         });
         break;
       default:

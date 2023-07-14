@@ -47,7 +47,11 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
         item.type === TableType
           ? {
               command: "SAS.viewTable",
-              arguments: [item, this.model.getTableResultSet(item)],
+              arguments: [
+                item,
+                this.model.getTableResultSet(item),
+                () => this.model.fetchColumns(item),
+              ],
               title: Messages.ViewTableCommandTitle,
             }
           : undefined,
