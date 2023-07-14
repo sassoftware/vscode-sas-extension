@@ -484,6 +484,9 @@ export class ProfileConfig {
       CONNECTION_PICK_OPTS,
       ProfilePromptType.ConnectionType
     );
+    if (inputConnectionType === undefined) {
+      return;
+    }
 
     profileClone.connectionType = mapQuickPickToEnum(inputConnectionType);
 
@@ -502,6 +505,9 @@ export class ProfileConfig {
         ProfilePromptType.ComputeContext,
         profileClone.context || DEFAULT_COMPUTE_CONTEXT
       );
+      if (profileClone.context === undefined) {
+        return;
+      }
       if (
         profileClone.context === "" ||
         profileClone.context === DEFAULT_COMPUTE_CONTEXT
@@ -513,6 +519,9 @@ export class ProfileConfig {
         ProfilePromptType.ClientId,
         profileClone.clientId
       );
+      if (profileClone.clientId === undefined) {
+        return;
+      }
       if (profileClone.clientId === "") {
         delete profileClone.clientId;
       }
@@ -522,6 +531,9 @@ export class ProfileConfig {
           ProfilePromptType.ClientSecret,
           profileClone.clientSecret
         );
+        if (profileClone.clientSecret === undefined) {
+          return;
+        }
       }
 
       await this.upsertProfile(name, profileClone);
@@ -530,20 +542,32 @@ export class ProfileConfig {
         ProfilePromptType.Host,
         profileClone.host
       );
+      if (!profileClone.host) {
+        return;
+      }
 
       profileClone.saspath = await createInputTextBox(
         ProfilePromptType.SASPath,
         profileClone.saspath
       );
+      if (profileClone.saspath === undefined) {
+        return;
+      }
 
       profileClone.username = await createInputTextBox(
         ProfilePromptType.Username,
         profileClone.username
       );
+      if (profileClone.username === undefined) {
+        return;
+      }
 
       profileClone.port = parseInt(
         await createInputTextBox(ProfilePromptType.Port, DEFAULT_SSH_PORT)
       );
+      if (isNaN(profileClone.port)) {
+        return;
+      }
 
       await this.upsertProfile(name, profileClone);
     } else if (profileClone.connectionType === ConnectionType.COM) {
