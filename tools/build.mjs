@@ -24,6 +24,7 @@ const commonBuildOptions = {
   loader: {
     ".properties": "text",
     ".node": "copy",
+    ".svg": "dataurl",
   },
   sourcemap: !!dev,
   minify: !dev,

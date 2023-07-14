@@ -5,6 +5,7 @@ import { ColDef, GridReadyEvent, IGetRowsParams } from "ag-grid-community";
 import { useCallback, useEffect, useState } from "react";
 import { TableData } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
+import columnHeaderTemplate from "./columnHeaderTemplate";
 
 declare const acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
@@ -109,8 +110,11 @@ const useDataViewer = () => {
     }
 
     fetchColumns().then((columnsData) => {
-      const columns: ColDef[] = columnsData.map(({ name: field }) => ({
-        field,
+      const columns: ColDef[] = columnsData.map((column) => ({
+        field: column.name,
+        headerComponentParams: {
+          template: columnHeaderTemplate(column.type),
+        },
       }));
       columns.unshift({
         field: "#",
