@@ -1,7 +1,7 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { GridReadyEvent, IGetRowsParams } from "ag-grid-community";
+import { ColDef, GridReadyEvent, IGetRowsParams } from "ag-grid-community";
 import { useCallback, useEffect, useState } from "react";
 import { TableData } from "../components/LibraryNavigator/types";
 
@@ -47,32 +47,37 @@ export const queryTableData = (
 };
 
 const useDataViewer = () => {
-  const [columns, setColumns] = useState([]);
+  const [columns, setColumns] = useState<ColDef[]>([]);
 
-  const onGridReady = useCallback((event: GridReadyEvent) => {
-    const dataSource = {
-      rowCount: undefined,
-      getRows: (params: IGetRowsParams) => {
-        queryTableData(params.startRow, params.endRow).then(
-          ({ rows, headers, count }: TableData) => {
-            const rowData = rows.map(({ cells }) =>
-              cells.reduce(
-                (carry, cell, index) => ({
-                  ...carry,
-                  [headers.columns[index]]: cell,
-                }),
-                {}
-              )
-            );
+  const onGridReady = useCallback(
+    (event: GridReadyEvent) => {
+      const dataSource = {
+        rowCount: undefined,
+        getRows: (params: IGetRowsParams) => {
+          queryTableData(params.startRow, params.endRow).then(
+            ({ rows, count }: TableData) => {
+              const rowData = rows.map(({ cells }) => {
+                const row = cells.reduce(
+                  (carry, cell, index) => ({
+                    ...carry,
+                    [columns[index].field]: cell,
+                  }),
+                  {}
+                );
 
-            params.successCallback(rowData, count);
-          }
-        );
-      },
-    };
+                return row;
+              });
 
-    event.api.setDatasource(dataSource);
-  }, []);
+              params.successCallback(rowData, count);
+            }
+          );
+        },
+      };
+
+      event.api.setDatasource(dataSource);
+    },
+    [columns]
+  );
 
   useEffect(() => {
     if (columns.length > 0) {
@@ -81,8 +86,9 @@ const useDataViewer = () => {
 
     queryTableData(0, 100).then((data: TableData) => {
       setColumns(
-        (data.headers.columns || []).map((field) => ({
-          field,
+        (data.headers.columns || []).map((name) => ({
+          field: name === "" ? "#" : name,
+          suppressMovable: name === "",
         }))
       );
     });
