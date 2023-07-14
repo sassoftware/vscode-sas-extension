@@ -10,6 +10,7 @@ import useDataViewer from "./useDataViewer";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
+import "./DataViewer.css";
 
 const gridStyles = {
   "--ag-borders": "none",

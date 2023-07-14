@@ -1,0 +1,52 @@
+.header-icon.float,
+.header-icon.date,
+.header-icon.time,
+.header-icon.date-time,
+.header-icon.currency,
+.header-icon.char {
+  width: 16px;
+  height: 22px;
+  margin-right: 0.25rem;
+}
+
+.header-icon.float {
+  background: url(../../../icons/light/numericTypeLight.svg) center no-repeat;
+}
+
+/* DEFAULT ICONS */
+
+/* TODO Chat with Sam about icons for time/date-time */
+.header-icon.time,
+.header-icon.date-time,
+.header-icon.date {
+  background: url(../../../icons/light/DateLight.svg) center no-repeat;
+}
+
+.header-icon.currency {
+  background: url(../../../icons/light/currencyLight.svg) center no-repeat;
+}
+
+.header-icon.char {
+  background: url(../../../icons/light/characterTypeLight.svg) center no-repeat;
+}
+
+/* DARK MODE ICONS */
+
+.vscode-dark .header-icon.float {
+  background: url(../../../icons/dark/numericTypeDark.svg) center no-repeat;
+}
+
+/* TODO Chat with Sam about icons for time/date-time */
+.vscode-dark .header-icon.time,
+.vscode-dark .header-icon.date-time,
+.vscode-dark .header-icon.date {
+  background: url(../../../icons/dark/DateDark.svg) center no-repeat;
+}
+
+.vscode-dark .header-icon.currency {
+  background: url(../../../icons/dark/currencyDark.svg) center no-repeat;
+}
+
+.vscode-dark .header-icon.char {
+  background: url(../../../icons/dark/currencyDark.svg) center no-repeat;
+}
