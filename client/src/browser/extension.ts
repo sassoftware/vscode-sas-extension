@@ -25,12 +25,12 @@ export function activate(context: ExtensionContext): void {
 
 function createWorkerLanguageClient(
   context: ExtensionContext,
-  clientOptions: LanguageClientOptions
+  clientOptions: LanguageClientOptions,
 ) {
   // Create a worker. The worker main file implements the language server.
   const serverMain = Uri.joinPath(
     context.extensionUri,
-    "server/dist/browser/server.js"
+    "server/dist/browser/server.js",
   );
   const worker = new Worker(serverMain.toString());
 
@@ -39,7 +39,7 @@ function createWorkerLanguageClient(
     "sas-lsp",
     "SAS Language Server",
     clientOptions,
-    worker
+    worker,
   );
 }
 

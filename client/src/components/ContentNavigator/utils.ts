@@ -13,7 +13,7 @@ import { ContentItem, Link } from "./types";
 export const getLink = (
   links: Array<Link>,
   method: string,
-  relationship: string
+  relationship: string,
 ): Link | null =>
   !links || links.length === 0
     ? null
@@ -86,8 +86,8 @@ export const resourceType = (item: ContentItem): string | undefined => {
 export const getUri = (item: ContentItem, readOnly?: boolean): Uri =>
   Uri.parse(
     `${readOnly ? "sasReadOnly" : "sas"}:/${getLabel(
-      item
-    )}?id=${getResourceIdFromItem(item)}`
+      item,
+    )}?id=${getResourceIdFromItem(item)}`,
   );
 
 export const getModifyDate = (item: ContentItem): number =>

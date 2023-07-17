@@ -31,11 +31,11 @@ class LibraryNavigator implements SubscriptionProvider {
     const dragAndDropController = new DragAndDropController<LibraryItem>(
       context,
       "application/vnd.code.tree.sas-library-navigator",
-      (item: LibraryItem | undefined) => (item.library ? item.uid : undefined)
+      (item: LibraryItem | undefined) => (item.library ? item.uid : undefined),
     );
     this.libraryDataProvider = new LibraryDataProvider(
       new LibraryModel(),
-      context.extensionUri
+      context.extensionUri,
     );
     this.treeView = window.createTreeView("sas-library-navigator", {
       treeDataProvider: this.libraryDataProvider,
@@ -52,9 +52,9 @@ class LibraryNavigator implements SubscriptionProvider {
         async (item: LibraryItem, paginator: PaginatedResultSet<TableData>) => {
           this.webviewManager.render(
             new DataViewer(this.extensionUri, item.uid, paginator),
-            item.uid
+            item.uid,
           );
-        }
+        },
       ),
       commands.registerCommand("SAS.refreshLibraries", () => this.refresh()),
       commands.registerCommand("SAS.deleteTable", async (item: LibraryItem) => {
@@ -66,7 +66,7 @@ class LibraryNavigator implements SubscriptionProvider {
       }),
       commands.registerCommand("SAS.collapseAllLibraries", () => {
         commands.executeCommand(
-          "workbench.actions.treeView.sas-library-navigator.collapseAll"
+          "workbench.actions.treeView.sas-library-navigator.collapseAll",
         );
       }),
       workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {

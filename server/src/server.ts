@@ -101,7 +101,7 @@ export const init = (conn: Connection): void => {
       return;
     }
     servicePool[event.document.uri] = new LanguageServiceProvider(
-      event.document
+      event.document,
     );
   });
 
@@ -122,7 +122,7 @@ function getLanguageService(uri: string) {
       servicePool[uri].setLibService((libId, resolve) =>
         connection
           .sendRequest<LibCompleteItem[]>("sas/getLibList", { libId: libId })
-          .then(resolve)
+          .then(resolve),
       );
     }
     delete documentPool[uri];

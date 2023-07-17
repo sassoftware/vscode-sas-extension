@@ -66,7 +66,7 @@ export class ComputeServer extends Compute {
       return res.data;
     } else {
       throw new Error(
-        `Error getting server with ID  ${this.id} - ${res.message}`
+        `Error getting server with ID  ${this.id} - ${res.message}`,
       );
     }
   }

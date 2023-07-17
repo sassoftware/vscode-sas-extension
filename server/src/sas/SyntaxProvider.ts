@@ -54,11 +54,11 @@ export class SyntaxProvider {
     startLine = this.parsedRange.endLine + 1;
     this.tailUnchangedSyntaxTable = this.syntaxTable.splice(
       startLine,
-      this.syntaxTable.length - startLine
+      this.syntaxTable.length - startLine,
     );
     this.removedSyntaxTable = this.syntaxTable.splice(
       this.parsedRange.startLine,
-      startLine - this.parsedRange.startLine
+      startLine - this.parsedRange.startLine,
     );
 
     /*
@@ -197,7 +197,7 @@ export class SyntaxProvider {
         // merge syntax table
         //_addEndMarkForSkippedLines(token, e.token.start.line);
         this.syntaxTable = this.syntaxTable.concat(
-          this.tailUnchangedSyntaxTable
+          this.tailUnchangedSyntaxTable,
         );
         this._endParse(change);
       } else {
@@ -208,7 +208,7 @@ export class SyntaxProvider {
   private _tryToAddBlank(
     line: number,
     syntax: SyntaxToken[],
-    added: SyntaxToken[]
+    added: SyntaxToken[],
   ) {
     if (syntax.length) {
       const token = syntax[syntax.length - 1];
@@ -229,7 +229,7 @@ export class SyntaxProvider {
   }
   private _addEndMarkForSkippedLines(
     token: Omit<Token, "text">,
-    endLine: number
+    endLine: number,
   ) {
     let line = 0,
       column = 0,
@@ -242,7 +242,7 @@ export class SyntaxProvider {
         if (this.currTokenIndex < syntaxLine.length) {
           syntaxLine.splice(
             this.currTokenIndex,
-            syntaxLine.length - this.currTokenIndex
+            syntaxLine.length - this.currTokenIndex,
           ); //clear the garbages
         }
         //add end marks
@@ -264,7 +264,7 @@ export class SyntaxProvider {
       // (2) end all, add marks for all skipped lines
       this._addEndMarkForSkippedLines(
         this.lastToken,
-        token ? token.start.line : this.model.getLineCount()
+        token ? token.start.line : this.model.getLineCount(),
       );
     }
     if (!token) {
@@ -285,7 +285,7 @@ export class SyntaxProvider {
       if (this.currTokenIndex < syntaxLine.length) {
         syntaxLine.splice(
           this.currTokenIndex,
-          syntaxLine.length - this.currTokenIndex
+          syntaxLine.length - this.currTokenIndex,
         );
       }
       syntaxLine.push({
@@ -306,7 +306,7 @@ export class SyntaxProvider {
         //clear the unused elements
         syntaxLine.splice(
           this.currTokenIndex,
-          syntaxLine.length - this.currTokenIndex
+          syntaxLine.length - this.currTokenIndex,
         );
       }
       syntaxLine.push({
@@ -361,7 +361,7 @@ export class SyntaxProvider {
   getFoldingBlock(
     line: number,
     col?: number,
-    strict?: boolean
+    strict?: boolean,
   ): FoldingBlock | null {
     return this.lexer.getFoldingBlock(line, col, strict);
   }

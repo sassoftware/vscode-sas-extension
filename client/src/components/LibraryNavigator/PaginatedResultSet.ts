@@ -12,7 +12,7 @@ class PaginatedResultSet<T> {
 
   constructor(
     queryForData: (start: number) => Promise<AxiosResponse>,
-    transformData: (response: AxiosResponse) => T
+    transformData: (response: AxiosResponse) => T,
   ) {
     this.queryForData = queryForData;
     this.transformData = transformData;
@@ -46,7 +46,7 @@ class PaginatedResultSet<T> {
   }
 
   private prepareResponse(
-    response: AxiosResponse
+    response: AxiosResponse,
   ): T & { hasMore: boolean; start: number } {
     return {
       ...this.transformData(response),

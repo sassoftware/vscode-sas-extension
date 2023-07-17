@@ -31,7 +31,7 @@ class LibraryModel {
       },
       async () => {
         await session.setup();
-      }
+      },
     );
 
     this.sessionId = session?.sessionId();
@@ -65,14 +65,14 @@ class LibraryModel {
                 start,
                 limit: 100,
               },
-              requestOptions
-            )
+              requestOptions,
+            ),
         );
       },
       (response) => ({
         headers: response.data.items[0],
         rows: response.data.items.slice(1),
-      })
+      }),
     );
   }
 
@@ -84,7 +84,7 @@ class LibraryModel {
           sessionId: this.sessionId,
           libref: item.library || "",
           tableName: item.name,
-        })
+        }),
     );
 
     return response.data;
@@ -99,11 +99,11 @@ class LibraryModel {
             sessionId: this.sessionId,
             libref: item.library,
             tableName: item.name,
-          })
+          }),
       );
     } catch (error) {
       throw new Error(
-        sprintf(Messages.TableDeletionError, { tableName: item.uid })
+        sprintf(Messages.TableDeletionError, { tableName: item.uid }),
       );
     }
   }
@@ -132,8 +132,8 @@ class LibraryModel {
               limit: DefaultRecordLimit,
               start: offset,
             },
-            requestOptions
-          )
+            requestOptions,
+          ),
       );
 
       items = [...items, ...data.items];
@@ -155,12 +155,12 @@ class LibraryModel {
                 headers: {
                   Accept: "application/json",
                 },
-              }
-            )
+              },
+            ),
         );
 
         return { ...item, readOnly: data.readOnly };
-      })
+      }),
     );
 
     return this.processItems(libraryItems, "library", undefined);
@@ -183,8 +183,8 @@ class LibraryModel {
               limit: DefaultRecordLimit,
               start: offset,
             },
-            requestOptions
-          )
+            requestOptions,
+          ),
       );
       items = [...items, ...data.items];
       totalItemCount = data.count;
@@ -196,7 +196,7 @@ class LibraryModel {
   private processItems(
     items: LibraryItem[],
     type: LibraryItemType,
-    library: LibraryItem | undefined
+    library: LibraryItem | undefined,
   ): LibraryItem[] {
     return items
       .map(
@@ -209,13 +209,13 @@ class LibraryModel {
               ? libraryItem.readOnly
               : library?.readOnly || false,
           type,
-        })
+        }),
       )
       .sort(sortById);
   }
 
   private async retryOnFail(
-    callbackFn: () => Promise<AxiosResponse>
+    callbackFn: () => Promise<AxiosResponse>,
   ): Promise<AxiosResponse> {
     try {
       return await callbackFn();

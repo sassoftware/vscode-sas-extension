@@ -113,7 +113,7 @@ export class CodeZoneManager {
   constructor(
     private _model: Model,
     private _syntaxDb: SyntaxDataProvider,
-    private _syntaxProvider: SyntaxProvider
+    private _syntaxProvider: SyntaxProvider,
   ) {
     this._lexer = new Lexer(_model);
   }
@@ -146,7 +146,7 @@ export class CodeZoneManager {
       type = this._syntaxDb.getProcedureStatementOptionType(
         this._procName,
         this._stmtName,
-        name
+        name,
       );
     }
     if (type && this._syntaxDb.isDataSetType(type)) {
@@ -176,7 +176,7 @@ export class CodeZoneManager {
   private _getFullStmtName(
     context: Context,
     procName: string,
-    stmt: TokenWithPos
+    stmt: TokenWithPos,
   ) {
     const stmts = this._getStmts(procName),
       tmpContext2 = this._cloneContext(context),
@@ -380,7 +380,7 @@ export class CodeZoneManager {
         type = syntax[i].style;
         text = line.substring(
           col,
-          syntax[i + 1] ? syntax[i + 1].start : lineLen
+          syntax[i + 1] ? syntax[i + 1].start : lineLen,
         );
       }
       // adjust pointer
@@ -625,7 +625,7 @@ export class CodeZoneManager {
       startLine: number;
       startCol: number;
     },
-    token: TokenEx
+    token: TokenEx,
   ) {
     if (token.endLine && token.endLine !== token.line) {
       //multiple line token
@@ -648,7 +648,7 @@ export class CodeZoneManager {
   }
   private _isBlockStart(
     block: { startLine: number; startCol: number },
-    token: TokenEx
+    token: TokenEx,
   ) {
     /* FOR S1182067*/
     return block.startLine === token.line && block.startCol === token.col;
@@ -721,13 +721,13 @@ export class CodeZoneManager {
   private _isStatgraph(
     parentBlock: { startLine: number; startCol: number },
     cursor: { line: number; col: number },
-    stmtName: string
+    stmtName: string,
   ) {
     const block = this._findEmbeddedBlock(
       parentBlock,
       cursor,
       { BEGINGRAPH: 1 },
-      { ENDGRAPH: 1 }
+      { ENDGRAPH: 1 },
     );
     if (block && block.type === "statgraph" && stmtName !== "BEGINGRAPH") {
       return true;
@@ -736,7 +736,7 @@ export class CodeZoneManager {
   }
   private _embeddedBlock(
     parentBlock: { startLine: number; startCol: number },
-    cursor: { line: number; col: number }
+    cursor: { line: number; col: number },
   ) {
     return this._findEmbeddedBlock(parentBlock, cursor, _secStarts, _secEnds);
   }
@@ -744,7 +744,7 @@ export class CodeZoneManager {
     parentBlock: { startLine: number; startCol: number },
     cursor: { line: number; col: number },
     starts: Record<string, 1>,
-    ends: Record<string, 1>
+    ends: Record<string, 1>,
   ) {
     let token = null,
       secName = null,
@@ -807,7 +807,7 @@ export class CodeZoneManager {
     if (token.pos >= 0) {
       block = this._syntaxProvider.getFoldingBlock(
         tmpContext.line,
-        tmpContext.col
+        tmpContext.col,
       );
       if (block) {
         if (this._inBlock(block, token)! < 0 && !this._endedReally(block)) {
@@ -860,7 +860,7 @@ export class CodeZoneManager {
         this._syntaxDb.isStatementSubOptKeyword(
           this._stmtName,
           this._optName,
-          this._subOptName
+          this._subOptName,
         ) ||
         this._subOptName
       ) {
@@ -948,7 +948,7 @@ export class CodeZoneManager {
         this._syntaxDb.isProcedureSubOptKeyword(
           this._procName,
           this._optName,
-          this._subOptName
+          this._subOptName,
         )
       ) {
         return CodeZoneManager.ZONE_TYPE.PROC_SUB_OPT_NAME;
@@ -963,7 +963,7 @@ export class CodeZoneManager {
   private _context(
     root: any,
     stack: any[],
-    obj?: { type?: string; argIndex?: number; value?: any }
+    obj?: { type?: string; argIndex?: number; value?: any },
   ): any {
     let i,
       len,
@@ -1133,7 +1133,7 @@ export class CodeZoneManager {
           this._procName,
           this._stmtName,
           this._optName,
-          this._subOptName
+          this._subOptName,
         )
       ) {
         type = CodeZoneManager.ZONE_TYPE.PROC_STMT_SUB_OPT;
@@ -1141,7 +1141,7 @@ export class CodeZoneManager {
         this._syntaxDb.isProcedureStatementKeyword(
           this._procName,
           this._stmtName,
-          this._subOptName
+          this._subOptName,
         )
       ) {
         type = CodeZoneManager.ZONE_TYPE.PROC_STMT_OPT;
@@ -1246,7 +1246,7 @@ export class CodeZoneManager {
       this._emit1(
         token,
         CodeZoneManager.ZONE_TYPE.RESTRICTED,
-        CodeZoneManager.ZONE_TYPE.STYLE_ATTR
+        CodeZoneManager.ZONE_TYPE.STYLE_ATTR,
       );
       ret["op1"] = {
         op: token,
@@ -1255,7 +1255,7 @@ export class CodeZoneManager {
           context,
           null,
           CodeZoneManager.ZONE_TYPE.STYLE_ATTR,
-          CodeZoneManager.ZONE_TYPE.RESTRICTED
+          CodeZoneManager.ZONE_TYPE.RESTRICTED,
         ),
       };
     } else {
@@ -1289,7 +1289,7 @@ export class CodeZoneManager {
       op2: any;
       op1: any;
     },
-    cb: { (i: any): void }
+    cb: { (i: any): void },
   ) {
     if (top instanceof Array) {
       top.forEach((i) => {
@@ -1353,7 +1353,7 @@ export class CodeZoneManager {
         this,
         context,
         stmt,
-        CodeZoneManager.ZONE_TYPE.DATA_STEP_STMT_OPT
+        CodeZoneManager.ZONE_TYPE.DATA_STEP_STMT_OPT,
       );
     } else if (this._needOptionDelimiter()) {
       token = ret.token;
@@ -1361,7 +1361,7 @@ export class CodeZoneManager {
         this._emit1(
           token,
           CodeZoneManager.ZONE_TYPE.OPT_NAME_REQ,
-          CodeZoneManager.ZONE_TYPE.OPT_NAME
+          CodeZoneManager.ZONE_TYPE.OPT_NAME,
         );
         return {
           op: stmt,
@@ -1369,8 +1369,8 @@ export class CodeZoneManager {
             this._stmtOptions(
               context,
               stmt,
-              CodeZoneManager.ZONE_TYPE.OPT_NAME
-            ) as any
+              CodeZoneManager.ZONE_TYPE.OPT_NAME,
+            ) as any,
           ),
         };
       }
@@ -1465,7 +1465,7 @@ export class CodeZoneManager {
             this._emitArgList(
               expr.op1,
               CodeZoneManager.ZONE_TYPE.STYLE_LOC,
-              CodeZoneManager.ZONE_TYPE.RESTRICTED
+              CodeZoneManager.ZONE_TYPE.RESTRICTED,
             );
           }
         } else {
@@ -1483,7 +1483,7 @@ export class CodeZoneManager {
             this._emitArgList(
               subOpts,
               CodeZoneManager.ZONE_TYPE.STYLE_ATTR,
-              CodeZoneManager.ZONE_TYPE.RESTRICTED
+              CodeZoneManager.ZONE_TYPE.RESTRICTED,
             );
           }
         } else {
@@ -1503,7 +1503,7 @@ export class CodeZoneManager {
               this._emitArgList(
                 expr.op1,
                 CodeZoneManager.ZONE_TYPE.VIEW_OR_PGM_OPT_NAME,
-                CodeZoneManager.ZONE_TYPE.VIEW_OR_PGM_OPT_VALUE
+                CodeZoneManager.ZONE_TYPE.VIEW_OR_PGM_OPT_VALUE,
               );
             }
           } else {
@@ -1523,14 +1523,14 @@ export class CodeZoneManager {
         this._emitArgList(
           expr,
           CodeZoneManager.ZONE_TYPE.COLOR,
-          CodeZoneManager.ZONE_TYPE.RESTRICTED
+          CodeZoneManager.ZONE_TYPE.RESTRICTED,
         );
       }
     } else if (expr.op1 instanceof Array) {
       this._emitArgList(
         expr.op1,
         CodeZoneManager.ZONE_TYPE.SUB_OPT_NAME,
-        CodeZoneManager.ZONE_TYPE.SUB_OPT_VALUE
+        CodeZoneManager.ZONE_TYPE.SUB_OPT_VALUE,
       );
     }
   }
@@ -1538,7 +1538,7 @@ export class CodeZoneManager {
     context: Context,
     stmt: any,
     nameType?: number,
-    valType?: number
+    valType?: number,
   ) {
     let name: any,
       next: any,
@@ -1647,7 +1647,7 @@ export class CodeZoneManager {
     context: Context,
     obj?: any,
     nameType?: number,
-    valType?: number
+    valType?: number,
   ) {
     let token = this._getNextEx(context),
       tmpContext = null,
@@ -1670,7 +1670,7 @@ export class CodeZoneManager {
     this._emit1(
       token,
       obj ? obj.zone : CodeZoneManager.ZONE_TYPE.RESTRICTED,
-      nameType
+      nameType,
     );
     this._startScope(context, CodeZoneManager.ZONE_TYPE.ARG_LIST, obj);
     items.push(token);
@@ -1771,7 +1771,7 @@ export class CodeZoneManager {
   private _expr(
     context: Context,
     ends?: Record<string, 1>,
-    one?: boolean
+    one?: boolean,
   ): any {
     let text,
       ret,
@@ -1794,7 +1794,7 @@ export class CodeZoneManager {
         token1,
         token1.text[0] === "%"
           ? CodeZoneManager.ZONE_TYPE.MACRO_FUNC
-          : CodeZoneManager.ZONE_TYPE.SIMPLE_ITEM
+          : CodeZoneManager.ZONE_TYPE.SIMPLE_ITEM,
       );
       this._copyContext(tmpContext, context);
     }
@@ -1881,12 +1881,12 @@ export class CodeZoneManager {
             token1,
             token1.text === "_NULL_"
               ? CodeZoneManager.ZONE_TYPE.DATA_STEP_DEF_OPT
-              : CodeZoneManager.ZONE_TYPE.DATA_SET_NAME
+              : CodeZoneManager.ZONE_TYPE.DATA_SET_NAME,
           );
           this._emit1(
             token2,
             CodeZoneManager.ZONE_TYPE.DATA_SET_NAME,
-            CodeZoneManager.ZONE_TYPE.DATA_STEP_OPT_NAME
+            CodeZoneManager.ZONE_TYPE.DATA_STEP_OPT_NAME,
           );
           this._copyContext(tmpContext, context);
           opts.push(token1, token2, this._datastepOptions(context));
@@ -1896,7 +1896,7 @@ export class CodeZoneManager {
           this._emit1(
             token2,
             CodeZoneManager.ZONE_TYPE.DATA_STEP_DEF_OPT,
-            CodeZoneManager.ZONE_TYPE.VIEW_OR_PGM_NAME
+            CodeZoneManager.ZONE_TYPE.VIEW_OR_PGM_NAME,
           );
           name = token1.text;
           viewOrPrg = { op: token2, op1: token1 };
@@ -1916,7 +1916,7 @@ export class CodeZoneManager {
                   context,
                   token1,
                   CodeZoneManager.ZONE_TYPE.VIEW_OR_PGM_OPT_NAME,
-                  CodeZoneManager.ZONE_TYPE.VIEW_OR_PGM_OPT_VALUE
+                  CodeZoneManager.ZONE_TYPE.VIEW_OR_PGM_OPT_VALUE,
                 ),
               };
               token2 = this._getNextEx(context);
@@ -1927,7 +1927,7 @@ export class CodeZoneManager {
             ) {
               this._emit(
                 token2,
-                CodeZoneManager.ZONE_TYPE.VIEW_OR_PGM_SUB_OPT_NAME
+                CodeZoneManager.ZONE_TYPE.VIEW_OR_PGM_SUB_OPT_NAME,
               ); //NOLIST
               opts.push(token2);
             }
@@ -1943,7 +1943,7 @@ export class CodeZoneManager {
               token1,
               token1.text === "_NULL_"
                 ? CodeZoneManager.ZONE_TYPE.DATA_STEP_DEF_OPT
-                : CodeZoneManager.ZONE_TYPE.VIEW_OR_DATA_SET_NAME
+                : CodeZoneManager.ZONE_TYPE.VIEW_OR_DATA_SET_NAME,
             );
             if (token2.text === "(") {
               // data set option
@@ -1958,7 +1958,7 @@ export class CodeZoneManager {
             if (token1.text === "") {
               this._emit(
                 token1,
-                CodeZoneManager.ZONE_TYPE.VIEW_OR_DATA_SET_NAME
+                CodeZoneManager.ZONE_TYPE.VIEW_OR_DATA_SET_NAME,
               );
               opts.push(token1);
               break;
@@ -1966,7 +1966,7 @@ export class CodeZoneManager {
               this._emit1(
                 token1,
                 CodeZoneManager.ZONE_TYPE.VIEW_OR_DATA_SET_NAME,
-                CodeZoneManager.ZONE_TYPE.DATA_STEP_OPT_NAME
+                CodeZoneManager.ZONE_TYPE.DATA_STEP_OPT_NAME,
               );
               opts.push(token1, this._datastepOptions(context));
               break;
@@ -1980,7 +1980,7 @@ export class CodeZoneManager {
       this._emit1(
         token1,
         CodeZoneManager.ZONE_TYPE.STMT_NAME,
-        CodeZoneManager.ZONE_TYPE.DATA_STEP_OPT_NAME
+        CodeZoneManager.ZONE_TYPE.DATA_STEP_OPT_NAME,
       );
       opts.push(token1, this._datastepOptions(context));
     } else {
@@ -2012,7 +2012,7 @@ export class CodeZoneManager {
     this._emit1(
       token1,
       CodeZoneManager.ZONE_TYPE.VIEW_OR_DATA_SET_NAME,
-      CodeZoneManager.ZONE_TYPE.DATA_SET_OPT_NAME
+      CodeZoneManager.ZONE_TYPE.DATA_SET_OPT_NAME,
     );
     opts.push(token1);
     for (;;) {
@@ -2028,7 +2028,7 @@ export class CodeZoneManager {
           this._emit1(
             token1,
             CodeZoneManager.ZONE_TYPE.DATA_SET_OPT_NAME,
-            CodeZoneManager.ZONE_TYPE.RESTRICTED
+            CodeZoneManager.ZONE_TYPE.RESTRICTED,
           );
           opts.push(token1);
           this._copyContext(tmpContext, context);
@@ -2050,7 +2050,7 @@ export class CodeZoneManager {
       this._emit1(
         equal,
         CodeZoneManager.ZONE_TYPE.DATA_SET_OPT_NAME,
-        CodeZoneManager.ZONE_TYPE.DATA_SET_OPT_VALUE
+        CodeZoneManager.ZONE_TYPE.DATA_SET_OPT_VALUE,
       );
 
       switch (token1.text) {
@@ -2079,7 +2079,7 @@ export class CodeZoneManager {
           if (token1.text === "DROP" || token1.text === "KEEP") {
             moreVals = this._tryGetMoreVals(
               context,
-              CodeZoneManager.ZONE_TYPE.DATA_SET_OPT_VALUE
+              CodeZoneManager.ZONE_TYPE.DATA_SET_OPT_VALUE,
             );
             if (moreVals.length) {
               optVal = [optVal].concat(moreVals);
@@ -2121,7 +2121,7 @@ export class CodeZoneManager {
       context,
       null,
       CodeZoneManager.ZONE_TYPE.DATA_STEP_OPT_NAME,
-      CodeZoneManager.ZONE_TYPE.DATA_STEP_OPT_VALUE
+      CodeZoneManager.ZONE_TYPE.DATA_STEP_OPT_VALUE,
     );
   }
   private _dataStmt(context: Context, stmt: TokenWithPos) {
@@ -2195,7 +2195,7 @@ export class CodeZoneManager {
           this._emit1(
             next,
             CodeZoneManager.ZONE_TYPE.DATA_STEP_STMT_OPT,
-            CodeZoneManager.ZONE_TYPE.DATA_STEP_STMT_OPT_VALUE
+            CodeZoneManager.ZONE_TYPE.DATA_STEP_STMT_OPT_VALUE,
           );
           this._copyContext(tmpContext, context);
           item = { op: next, op1: item, op2: this._expr(context) };
@@ -2301,7 +2301,7 @@ export class CodeZoneManager {
       this._emit1(
         token,
         CodeZoneManager.ZONE_TYPE.RESTRICTED,
-        CodeZoneManager.ZONE_TYPE.MACRO_DEF_OPT
+        CodeZoneManager.ZONE_TYPE.MACRO_DEF_OPT,
       );
       opts.push(
         token,
@@ -2309,8 +2309,8 @@ export class CodeZoneManager {
           context,
           null,
           CodeZoneManager.ZONE_TYPE.MACRO_DEF_OPT,
-          CodeZoneManager.ZONE_TYPE.RESTRICTED
-        )
+          CodeZoneManager.ZONE_TYPE.RESTRICTED,
+        ),
       );
     }
     this._context({ op: "%MACRO", op1: opts }, stack);
@@ -2336,7 +2336,7 @@ export class CodeZoneManager {
           this,
           context,
           stmt,
-          CodeZoneManager.ZONE_TYPE.MACRO_STMT_OPT
+          CodeZoneManager.ZONE_TYPE.MACRO_STMT_OPT,
         );
       } else if (
         this._stmtName === "%SYSCALL" &&
@@ -2361,7 +2361,7 @@ export class CodeZoneManager {
               context,
               null,
               CodeZoneManager.ZONE_TYPE.MACRO_STMT_OPT,
-              CodeZoneManager.ZONE_TYPE.MACRO_STMT_OPT_VALUE
+              CodeZoneManager.ZONE_TYPE.MACRO_STMT_OPT_VALUE,
             ),
           };
         }

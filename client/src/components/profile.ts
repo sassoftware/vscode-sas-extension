@@ -151,7 +151,7 @@ const toAutoExecLinesFromPaths = (filePath: string): string[] => {
   } catch (e) {
     const err: Error = e;
     console.warn(
-      `Error reading file: ${filePath}, error: ${err.message}, skipping...`
+      `Error reading file: ${filePath}, error: ${err.message}, skipping...`,
     );
   }
   return lines;
@@ -225,7 +225,7 @@ export class ProfileConfig {
           activeProfile: "",
           profiles: {},
         },
-        ConfigurationTarget.Global
+        ConfigurationTarget.Global,
       );
       return false;
     }
@@ -281,7 +281,7 @@ export class ProfileConfig {
       .update(
         EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
         profiles,
-        ConfigurationTarget.Global
+        ConfigurationTarget.Global,
       );
   }
 
@@ -306,7 +306,7 @@ export class ProfileConfig {
       .update(
         EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
         profiles,
-        ConfigurationTarget.Global
+        ConfigurationTarget.Global,
       );
   }
 
@@ -482,7 +482,7 @@ export class ProfileConfig {
 
     const inputConnectionType: string = await createInputQuickPick(
       CONNECTION_PICK_OPTS,
-      ProfilePromptType.ConnectionType
+      ProfilePromptType.ConnectionType,
     );
     if (inputConnectionType === undefined) {
       return;
@@ -493,7 +493,7 @@ export class ProfileConfig {
     if (profileClone.connectionType === ConnectionType.Rest) {
       profileClone.endpoint = await createInputTextBox(
         ProfilePromptType.Endpoint,
-        profileClone.endpoint
+        profileClone.endpoint,
       );
 
       if (!profileClone.endpoint) {
@@ -503,7 +503,7 @@ export class ProfileConfig {
 
       profileClone.context = await createInputTextBox(
         ProfilePromptType.ComputeContext,
-        profileClone.context || DEFAULT_COMPUTE_CONTEXT
+        profileClone.context || DEFAULT_COMPUTE_CONTEXT,
       );
       if (profileClone.context === undefined) {
         return;
@@ -517,7 +517,7 @@ export class ProfileConfig {
 
       profileClone.clientId = await createInputTextBox(
         ProfilePromptType.ClientId,
-        profileClone.clientId
+        profileClone.clientId,
       );
       if (profileClone.clientId === undefined) {
         return;
@@ -529,7 +529,7 @@ export class ProfileConfig {
       if (profileClone.clientId) {
         profileClone.clientSecret = await createInputTextBox(
           ProfilePromptType.ClientSecret,
-          profileClone.clientSecret
+          profileClone.clientSecret,
         );
         if (profileClone.clientSecret === undefined) {
           return;
@@ -540,7 +540,7 @@ export class ProfileConfig {
     } else if (profileClone.connectionType === ConnectionType.SSH) {
       profileClone.host = await createInputTextBox(
         ProfilePromptType.Host,
-        profileClone.host
+        profileClone.host,
       );
       if (!profileClone.host) {
         return;
@@ -548,7 +548,7 @@ export class ProfileConfig {
 
       profileClone.saspath = await createInputTextBox(
         ProfilePromptType.SASPath,
-        profileClone.saspath
+        profileClone.saspath,
       );
       if (profileClone.saspath === undefined) {
         return;
@@ -556,14 +556,14 @@ export class ProfileConfig {
 
       profileClone.username = await createInputTextBox(
         ProfilePromptType.Username,
-        profileClone.username
+        profileClone.username,
       );
       if (profileClone.username === undefined) {
         return;
       }
 
       profileClone.port = parseInt(
-        await createInputTextBox(ProfilePromptType.Port, DEFAULT_SSH_PORT)
+        await createInputTextBox(ProfilePromptType.Port, DEFAULT_SSH_PORT),
       );
       if (isNaN(profileClone.port)) {
         return;
@@ -649,7 +649,7 @@ export function getProfilePrompt(type: ProfilePromptType): ProfilePrompt {
 export async function createInputTextBox(
   profilePromptType: ProfilePromptType,
   defaultValue: string | undefined = null,
-  maskValue = false
+  maskValue = false,
 ): Promise<string> {
   const profilePrompt = getProfilePrompt(profilePromptType);
 
@@ -672,7 +672,7 @@ export async function createInputTextBox(
  */
 export async function createInputQuickPick(
   items: readonly string[] | Thenable<readonly string[]> = [],
-  profilePromptType: ProfilePromptType
+  profilePromptType: ProfilePromptType,
 ): Promise<string> {
   const profilePrompt = getProfilePrompt(profilePromptType);
 

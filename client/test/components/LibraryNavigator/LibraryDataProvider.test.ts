@@ -105,7 +105,7 @@ describe("LibraryDataProvider", async function () {
     const treeItem = await provider.getTreeItem(item);
     expect(treeItem.id).to.equal(item.id);
     expect(Object.values(treeItem.iconPath)[0].path).to.contain(
-      Icons.DataSet.light
+      Icons.DataSet.light,
     );
     expect(treeItem.contextValue).to.contain("table-actionable");
     expect(treeItem.collapsibleState).to.equal(TreeItemCollapsibleState.None);
@@ -125,11 +125,11 @@ describe("LibraryDataProvider", async function () {
     const treeItem = await provider.getTreeItem(item);
     expect(treeItem.id).to.equal(item.id);
     expect(Object.values(treeItem.iconPath)[0].path).to.contain(
-      Icons.ReadOnlyLibrary.light
+      Icons.ReadOnlyLibrary.light,
     );
     expect(treeItem.contextValue).to.contain("library-readonly");
     expect(treeItem.collapsibleState).to.equal(
-      TreeItemCollapsibleState.Collapsed
+      TreeItemCollapsibleState.Collapsed,
     );
     expect(treeItem.command === undefined).to.equal(true);
   });
@@ -147,11 +147,11 @@ describe("LibraryDataProvider", async function () {
     const treeItem = await provider.getTreeItem(item);
     expect(treeItem.id).to.equal(item.id);
     expect(Object.values(treeItem.iconPath)[0].path).to.contain(
-      Icons.Library.light
+      Icons.Library.light,
     );
     expect(treeItem.contextValue).to.contain("library-actionable");
     expect(treeItem.collapsibleState).to.equal(
-      TreeItemCollapsibleState.Collapsed
+      TreeItemCollapsibleState.Collapsed,
     );
     expect(treeItem.command === undefined).to.equal(true);
   });
@@ -169,11 +169,11 @@ describe("LibraryDataProvider", async function () {
     const treeItem = await provider.getTreeItem(item);
     expect(treeItem.id).to.equal(item.id);
     expect(Object.values(treeItem.iconPath)[0].path).to.contain(
-      Icons.WorkLibrary.light
+      Icons.WorkLibrary.light,
     );
     expect(treeItem.contextValue).to.contain("library-actionable");
     expect(treeItem.collapsibleState).to.equal(
-      TreeItemCollapsibleState.Collapsed
+      TreeItemCollapsibleState.Collapsed,
     );
     expect(treeItem.command === undefined).to.equal(true);
   });
@@ -212,7 +212,7 @@ describe("LibraryDataProvider", async function () {
     } catch (error) {
       expect(error.message).to.equal(
         new Error(sprintf(Messages.TableDeletionError, { tableName: "test" }))
-          .message
+          .message,
       );
     }
   });

@@ -26,19 +26,19 @@ class DragAndDropController<T>
   constructor(
     context: ExtensionContext,
     dragMimeType: string,
-    draggableItem: (item: T | undefined) => string | undefined
+    draggableItem: (item: T | undefined) => string | undefined,
   ) {
     this.dragMimeTypes = [dragMimeType];
     this.draggableItem = draggableItem;
 
     context.subscriptions.push(
-      languages.registerDocumentDropEditProvider(this.selector(), this)
+      languages.registerDocumentDropEditProvider(this.selector(), this),
     );
   }
 
   public handleDrag(
     source: T[],
-    dataTransfer: DataTransfer
+    dataTransfer: DataTransfer,
   ): void | Thenable<void> {
     this.draggedItem = this.draggableItem(source?.[0]);
 
@@ -50,7 +50,7 @@ class DragAndDropController<T>
     _document: TextDocument,
     position: Position,
     dataTransfer: DataTransfer,
-    token: CancellationToken
+    token: CancellationToken,
   ): Promise<DocumentDropEdit | undefined> {
     const dataTransferItem = dataTransfer.get(this.dragMimeTypes[0]);
     if (

@@ -98,7 +98,7 @@ class ContentDataProvider
     this._treeView.onDidChangeVisibility(async () => {
       if (this._treeView.visible) {
         const activeProfile: ViyaProfile = profileConfig.getProfileByName(
-          profileConfig.getActiveProfile()
+          profileConfig.getActiveProfile(),
         );
         await this.connect(activeProfile.endpoint);
       }
@@ -107,7 +107,7 @@ class ContentDataProvider
 
   public async handleDrop(
     target: ContentItem,
-    sources: DataTransfer
+    sources: DataTransfer,
   ): Promise<void> {
     for (const source of sources) {
       const [, item] = source;
@@ -115,7 +115,7 @@ class ContentDataProvider
         await Promise.all(
           item.value.map(async (contentItem: ContentItem) => {
             await this.handleContentItemDrop(target, contentItem);
-          })
+          }),
         );
 
         continue;
@@ -127,7 +127,7 @@ class ContentDataProvider
 
   public handleDrag(
     source: ContentItem[],
-    dataTransfer: DataTransfer
+    dataTransfer: DataTransfer,
   ): void | Thenable<void> {
     const dataTransferItem = new DataTransferItem(source);
     dataTransfer.set(this.dragMimeTypes[0], dataTransferItem);
@@ -199,7 +199,7 @@ class ContentDataProvider
         ctime: getCreationDate(resource),
         mtime: getModifyDate(resource),
         size: 0,
-      })
+      }),
     );
   }
 
@@ -215,7 +215,7 @@ class ContentDataProvider
 
   public async createFolder(
     item: ContentItem,
-    folderName: string
+    folderName: string,
   ): Promise<Uri | undefined> {
     const newItem = await this.model.createFolder(item, folderName);
     if (newItem) {
@@ -227,7 +227,7 @@ class ContentDataProvider
   public async createFile(
     item: ContentItem,
     fileName: string,
-    buffer?: ArrayBufferLike
+    buffer?: ArrayBufferLike,
   ): Promise<Uri | undefined> {
     const newItem = await this.model.createFile(item, fileName, buffer);
     if (newItem) {
@@ -238,7 +238,7 @@ class ContentDataProvider
 
   public async renameResource(
     item: ContentItem,
-    name: string
+    name: string,
   ): Promise<Uri | undefined> {
     if (!(await closeFileIfOpen(item))) {
       return;
@@ -305,7 +305,7 @@ class ContentDataProvider
     const recycleBin = this.model.getDelegateFolder("@myRecycleBin");
     const children = await this.getChildren(recycleBin);
     const result = await Promise.all(
-      children.map((child) => this.deleteResource(child))
+      children.map((child) => this.deleteResource(child)),
     );
     const success = result.length === children.length;
     if (success) {
@@ -335,7 +335,7 @@ class ContentDataProvider
   }
 
   public async getParent(
-    element: ContentItem
+    element: ContentItem,
   ): Promise<ContentItem | undefined> {
     return await this.model.getParent(element);
   }
@@ -368,7 +368,7 @@ class ContentDataProvider
 
   private async handleContentItemDrop(
     target: ContentItem,
-    item: ContentItem
+    item: ContentItem,
   ): Promise<void> {
     let success = false;
     let message = Messages.FileDropError;
@@ -395,14 +395,14 @@ class ContentDataProvider
       await window.showErrorMessage(
         sprintf(message, {
           name: item.name,
-        })
+        }),
       );
     }
   }
 
   private async handleFolderDrop(
     target: ContentItem,
-    path: string
+    path: string,
   ): Promise<boolean> {
     const folder = await this.model.createFolder(target, basename(path));
     let success = true;
@@ -410,7 +410,7 @@ class ContentDataProvider
       await window.showErrorMessage(
         sprintf(Messages.FileDropError, {
           name: basename(path),
-        })
+        }),
       );
 
       return false;
@@ -431,18 +431,18 @@ class ContentDataProvider
           const fileCreated = await this.createFile(
             folder,
             name,
-            await promisify(readFile)(fileOrFolder)
+            await promisify(readFile)(fileOrFolder),
           );
           if (!fileCreated) {
             success = false;
             await window.showErrorMessage(
               sprintf(Messages.FileDropError, {
                 name,
-              })
+              }),
             );
           }
         }
-      })
+      }),
     );
 
     return success;
@@ -450,7 +450,7 @@ class ContentDataProvider
 
   private async handleDataTransferItemDrop(
     target: ContentItem,
-    item: DataTransferItem
+    item: DataTransferItem,
   ): Promise<void> {
     // If a user drops multiple files, there will be multiple
     // uris separated by newlines
@@ -474,22 +474,22 @@ class ContentDataProvider
         const fileCreated = await this.createFile(
           target,
           name,
-          await promisify(readFile)(itemUri.fsPath)
+          await promisify(readFile)(itemUri.fsPath),
         );
 
         if (!fileCreated) {
           await window.showErrorMessage(
             sprintf(Messages.FileDropError, {
               name,
-            })
+            }),
           );
         }
-      })
+      }),
     );
   }
 
   private iconPathForItem(
-    item: ContentItem
+    item: ContentItem,
   ): ThemeIcon | { light: Uri; dark: Uri } {
     const isContainer = getIsContainer(item);
     let icon = "";
@@ -520,7 +520,7 @@ class ContentDataProvider
           dark: Uri.joinPath(this.extensionUri, `icons/dark/${icon}Dark.svg`),
           light: Uri.joinPath(
             this.extensionUri,
-            `icons/light/${icon}Light.svg`
+            `icons/light/${icon}Light.svg`,
           ),
         }
       : ThemeIcon.File;
@@ -534,7 +534,8 @@ const closeFileIfOpen = (item: ContentItem): boolean | Thenable<boolean> => {
   const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
   const tab = tabs.find(
     (tab) =>
-      tab.input instanceof TabInputText && tab.input.uri.query === fileUri.query // compare the file id
+      tab.input instanceof TabInputText &&
+      tab.input.uri.query === fileUri.query, // compare the file id
   );
   if (tab) {
     return window.tabGroups.close(tab);

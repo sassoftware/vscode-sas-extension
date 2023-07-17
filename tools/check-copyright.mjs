@@ -34,7 +34,7 @@ const processChanges = (filesToCheck, fix = false) => {
     console.log(
       fix
         ? "The following files have been updated with copyright information"
-        : "The following files are missing copyright information"
+        : "The following files are missing copyright information",
     );
     console.log(invalidFiles.map((file) => `- ${file}`).join("\n"));
     process.exit(1);
@@ -45,5 +45,5 @@ await processChanges(
   glob.sync("**/*.{mjs,js,ts,tsx,jsx}", {
     ignore: filesToIgnore,
   }),
-  process.env.npm_config_fix || false
+  process.env.npm_config_fix || false,
 );

@@ -136,7 +136,7 @@ function _cleanUpKeyword(keyword: string) {
   if (/^(TITLE|FOOTNOTE|AXIS|LEGEND|PATTERN|SYMBOL)\d{0,}$/i.test(keyword)) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const results = keyword.match(
-      /^(TITLE|FOOTNOTE|AXIS|LEGEND|PATTERN|SYMBOL)|\d{0,}$/gi
+      /^(TITLE|FOOTNOTE|AXIS|LEGEND|PATTERN|SYMBOL)|\d{0,}$/gi,
     )!;
     let nbr = 0,
       upperLimit = 0;
@@ -212,7 +212,10 @@ export class CompletionProvider {
   private loader;
   private popupContext: any = {};
 
-  constructor(private model: Model, private syntaxProvider: SyntaxProvider) {
+  constructor(
+    private model: Model,
+    private syntaxProvider: SyntaxProvider,
+  ) {
     this.loader = syntaxProvider.lexer.syntaxDb;
     this.czMgr = new CodeZoneManager(model, this.loader, syntaxProvider);
   }
@@ -230,7 +233,7 @@ export class CompletionProvider {
         });
         const zone = this.czMgr.getCurrentZone(
           position.line,
-          position.character
+          position.character,
         );
         return new Promise((resolve) => {
           this._loadHelp({
@@ -270,7 +273,7 @@ export class CompletionProvider {
           data?.map((item) => ({
             label: (typeof item === "string" ? item : item.name).toLowerCase(),
             kind: getItemKind(
-              typeof item === "string" ? this.popupContext.zone : item.type
+              typeof item === "string" ? this.popupContext.zone : item.type,
             ),
             insertText:
               typeof item === "string" ||
@@ -281,7 +284,7 @@ export class CompletionProvider {
                 }))
                 ? undefined
                 : `'${item.name.replace(/'/g, "''")}'n`,
-          }))
+          })),
         );
       });
     });
@@ -308,7 +311,7 @@ export class CompletionProvider {
 
   private _loadAutoCompleteItems(
     zone: number,
-    cb: (data?: (string | LibCompleteItem)[]) => void
+    cb: (data?: (string | LibCompleteItem)[]) => void,
   ) {
     let stmtName = _cleanUpKeyword(this.czMgr.getStmtName());
     const optName = _cleanUpKeyword(this.czMgr.getOptionName()),
@@ -331,7 +334,7 @@ export class CompletionProvider {
           optName + "=",
           (data) => {
             this._notifyOptValue(cb, data, optName);
-          }
+          },
         );
         break;
       case ZONE_TYPE.PROC_SUB_OPT_NAME:
@@ -355,7 +358,7 @@ export class CompletionProvider {
           procName,
           stmtName,
           cb,
-          zone === ZONE_TYPE.PROC_STMT_OPT_REQ
+          zone === ZONE_TYPE.PROC_STMT_OPT_REQ,
         );
         break;
       case ZONE_TYPE.PROC_STMT_OPT_VALUE:
@@ -368,7 +371,7 @@ export class CompletionProvider {
           optName,
           (data) => {
             this._notifyOptValue(cb, data, optName);
-          }
+          },
         );
         break;
       case ZONE_TYPE.PROC_STMT_SUB_OPT:
@@ -381,7 +384,7 @@ export class CompletionProvider {
           optName,
           function (data) {
             cb(_distinctList(data));
-          }
+          },
         );
         break;
       case ZONE_TYPE.STYLE_ELEMENT:
@@ -474,10 +477,10 @@ export class CompletionProvider {
                 optName,
                 (data) => {
                   this._notifyOptValue(cb, data, optName);
-                }
+                },
               );
             }
-          }
+          },
         );
         break;
       case ZONE_TYPE.MACRO_STMT:
@@ -505,7 +508,7 @@ export class CompletionProvider {
           optName,
           (data) => {
             this._notifyOptValue(cb, data, optName);
-          }
+          },
         );
         break;
       case ZONE_TYPE.CALL_ROUTINE:
@@ -545,12 +548,12 @@ export class CompletionProvider {
                 optName,
                 (data) => {
                   this._notifyOptValue(cb, data, optName);
-                }
+                },
               );
             } else {
               this._notifyOptValue(cb, data, optName);
             }
-          }
+          },
         );
         break;
       case ZONE_TYPE.GBL_STMT_SUB_OPT_NAME:
@@ -564,12 +567,12 @@ export class CompletionProvider {
                 "standalone",
                 stmtName,
                 optName,
-                cb
+                cb,
               );
             } else {
               cb(data);
             }
-          }
+          },
         );
         break;
       case ZONE_TYPE.COLOR:
@@ -596,7 +599,7 @@ export class CompletionProvider {
         this.loader.getStatementOptions(
           "global",
           _cleanUpODSStmtName(stmtName),
-          cb
+          cb,
         );
         break;
       case ZONE_TYPE.ODS_STMT_OPT_VALUE:
@@ -606,7 +609,7 @@ export class CompletionProvider {
           optName,
           (data) => {
             this._notifyOptValue(cb, data, optName);
-          }
+          },
         );
         break;
       case ZONE_TYPE.LIB:
@@ -663,7 +666,7 @@ export class CompletionProvider {
         help = this.loader.getProcedureOptionHelp(
           context.procName,
           keyword,
-          cb
+          cb,
         );
         break;
       case ZONE_TYPE.PROC_SUB_OPT_NAME:
@@ -671,7 +674,7 @@ export class CompletionProvider {
           context.procName,
           context.optName,
           keyword,
-          cb
+          cb,
         );
         break;
       case ZONE_TYPE.PROC_OPT_VALUE:
@@ -679,7 +682,7 @@ export class CompletionProvider {
           context.procName,
           context.optName,
           keyword,
-          cb
+          cb,
         );
         break;
       case ZONE_TYPE.PROC_STMT:
@@ -692,7 +695,7 @@ export class CompletionProvider {
         help = this.loader.getProcedureStatementHelp(
           context.procName,
           keyword,
-          cb
+          cb,
         );
         break;
       case ZONE_TYPE.PROC_STMT_OPT:
@@ -705,7 +708,7 @@ export class CompletionProvider {
           context.procName,
           context.stmtName,
           keyword,
-          cb
+          cb,
         );
         break;
       case ZONE_TYPE.PROC_STMT_SUB_OPT:
@@ -714,7 +717,7 @@ export class CompletionProvider {
           context.stmtName,
           context.optName,
           keyword,
-          cb
+          cb,
         );
         break;
       case ZONE_TYPE.PROC_STMT_OPT_VALUE:
@@ -726,7 +729,7 @@ export class CompletionProvider {
           context.stmtName,
           context.optName,
           keyword,
-          cb
+          cb,
         );
         break;
       case ZONE_TYPE.GBL_STMT_SUB_OPT_NAME:
@@ -734,7 +737,7 @@ export class CompletionProvider {
           "global",
           _cleanUpKeyword(context.stmtName),
           context.optName,
-          keyword
+          keyword,
         );
         if (help) {
           _notify(cb, help);
@@ -744,7 +747,7 @@ export class CompletionProvider {
             _cleanUpKeyword(context.stmtName),
             context.optName,
             keyword,
-            cb
+            cb,
           );
         }
         break;
@@ -752,7 +755,7 @@ export class CompletionProvider {
         help = this.loader.getStatementOptionHelp(
           "global",
           _cleanUpKeyword(context.stmtName),
-          keyword
+          keyword,
         );
         if (help) {
           _notify(cb, help);
@@ -761,7 +764,7 @@ export class CompletionProvider {
             "standalone",
             _cleanUpKeyword(context.stmtName),
             keyword,
-            cb
+            cb,
           );
         }
         break;
@@ -770,7 +773,7 @@ export class CompletionProvider {
           "global",
           context.stmtName,
           context.optName,
-          keyword
+          keyword,
         );
         if (help) {
           _notify(cb, help);
@@ -780,7 +783,7 @@ export class CompletionProvider {
             context.stmtName,
             context.optName,
             keyword,
-            cb
+            cb,
           );
         }
         break;
@@ -797,7 +800,7 @@ export class CompletionProvider {
           "datastep",
           context.stmtName,
           keyword,
-          cb
+          cb,
         );
         if (help) {
           _notify(cb, help);
@@ -806,13 +809,13 @@ export class CompletionProvider {
             help = this.loader.getDataStepOptionHelp(
               keyword,
               cb,
-              "datastep-option"
+              "datastep-option",
             );
           } else {
             help = this.loader.getProcedureStatementOptionHelp(
               "DATA",
               context.stmtName,
-              keyword
+              keyword,
             ); // always sync
           }
         }
@@ -823,7 +826,7 @@ export class CompletionProvider {
           context.stmtName,
           context.optName,
           keyword,
-          cb
+          cb,
         );
         if (help) {
           _notify(cb, help);
@@ -832,14 +835,14 @@ export class CompletionProvider {
             help = this.loader.getDataStepOptionValueHelp(
               context.optName,
               keyword,
-              cb
+              cb,
             );
           } else {
             help = this.loader.getProcedureStatementOptionValueHelp(
               "DATA",
               context.stmtName,
               context.optName,
-              keyword
+              keyword,
             ); // sync
             if (!help) {
               help = this.loader.getStatementOptionValueHelp(
@@ -847,7 +850,7 @@ export class CompletionProvider {
                 context.stmtName,
                 context.optName,
                 keyword,
-                cb
+                cb,
               );
             } else {
               _notify(cb, help);
@@ -859,7 +862,7 @@ export class CompletionProvider {
         help = this.loader.getDataSetOptionValueHelp(
           context.optName,
           keyword,
-          cb
+          cb,
         );
         break;
       case ZONE_TYPE.DATA_STEP_DEF_OPT:
@@ -867,7 +870,7 @@ export class CompletionProvider {
         help = this.loader.getDataStepOptionHelp(
           keyword,
           cb,
-          "datastep-option2"
+          "datastep-option2",
         );
         break;
       case ZONE_TYPE.DATA_SET_OPT_NAME:
@@ -877,7 +880,7 @@ export class CompletionProvider {
         help = this.loader.getDataStepOptionHelp(
           keyword,
           cb,
-          "datastep-option"
+          "datastep-option",
         );
         break;
       case ZONE_TYPE.DATA_STEP_OPT_VALUE:
@@ -885,7 +888,7 @@ export class CompletionProvider {
         help = this.loader.getDataStepOptionValueHelp(
           context.optName,
           keyword,
-          cb
+          cb,
         );
         break;
       case ZONE_TYPE.MACRO_DEF_OPT:
@@ -896,7 +899,7 @@ export class CompletionProvider {
           "macro",
           context.stmtName,
           keyword,
-          cb
+          cb,
         );
         break;
       case ZONE_TYPE.MACRO_STMT_OPT_VALUE:
@@ -905,7 +908,7 @@ export class CompletionProvider {
           context.stmtName,
           context.optName,
           keyword,
-          cb
+          cb,
         );
         break;
       case ZONE_TYPE.ODS_STMT:
@@ -917,7 +920,7 @@ export class CompletionProvider {
           "global",
           _cleanUpODSStmtName(context.stmtName),
           keyword,
-          cb
+          cb,
         );
         //stmtName = context.stmtName.replace('TAGSETS.','');
         //this.loader.getProcedureStatementOptionHelp('ODS', stmtName, keyword, cb);
@@ -928,7 +931,7 @@ export class CompletionProvider {
           _cleanUpODSStmtName(context.stmtName),
           context.optName,
           keyword,
-          cb
+          cb,
         );
         break;
       default: {
@@ -1263,8 +1266,8 @@ export class CompletionProvider {
         _getContextMain(
           zone,
           _cleanUpKeyword(
-            /*_getOptionName(tmpHintInfo)*/ content.key.toUpperCase()
-          )
+            /*_getOptionName(tmpHintInfo)*/ content.key.toUpperCase(),
+          ),
         ) +
         "**\n\n";
     }
@@ -1311,7 +1314,7 @@ export class CompletionProvider {
   private _notifyOptValue(
     cb: (data?: (string | LibCompleteItem)[]) => void,
     data: OptionValues,
-    optName: string
+    optName: string,
   ) {
     if (data) {
       if (this.loader.isColorType(data.type)) {
@@ -1368,7 +1371,7 @@ export class CompletionProvider {
         .getLine(position.line)
         .substring(0, position.character),
       lastWorldStart = textBeforeCaret.search(
-        /[%&](\w|[^\x00-\xff])*$|(\w|[^\x00-\xff])+$/ // eslint-disable-line no-control-regex
+        /[%&](\w|[^\x00-\xff])*$|(\w|[^\x00-\xff])+$/, // eslint-disable-line no-control-regex
       );
     return lastWorldStart === -1
       ? ""

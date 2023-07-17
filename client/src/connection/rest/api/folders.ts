@@ -1057,7 +1057,7 @@ export interface Validation {
  * @export
  */
 export const FolderApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -1071,7 +1071,7 @@ export const FolderApiAxiosParamCreator = function (
     createFolder: async (
       parentFolderUri: string,
       folderIn?: FolderIn,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'parentFolderUri' is not null or undefined
       assertParamExists("createFolder", "parentFolderUri", parentFolderUri);
@@ -1109,7 +1109,7 @@ export const FolderApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         folderIn,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -1128,13 +1128,13 @@ export const FolderApiAxiosParamCreator = function (
     deleteFolder: async (
       folderId: string,
       recursive?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("deleteFolder", "folderId", folderId);
       const localVarPath = `/folders/{folderId}`.replace(
         `{${"folderId"}}`,
-        encodeURIComponent(String(folderId))
+        encodeURIComponent(String(folderId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1178,7 +1178,7 @@ export const FolderApiAxiosParamCreator = function (
      */
     findByPath: async (
       path: Path,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'path' is not null or undefined
       assertParamExists("findByPath", "path", path);
@@ -1212,7 +1212,7 @@ export const FolderApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         path,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -1229,7 +1229,7 @@ export const FolderApiAxiosParamCreator = function (
      */
     getDelegateFolders: async (
       name?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/delegateFolders`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -1276,13 +1276,13 @@ export const FolderApiAxiosParamCreator = function (
     getFolder: async (
       folderId: string,
       acceptLanguage?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("getFolder", "folderId", folderId);
       const localVarPath = `/folders/{folderId}`.replace(
         `{${"folderId"}}`,
-        encodeURIComponent(String(folderId))
+        encodeURIComponent(String(folderId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1328,7 +1328,7 @@ export const FolderApiAxiosParamCreator = function (
     getFolderItem: async (
       childUri?: string,
       path?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/folders/@item`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -1393,7 +1393,7 @@ export const FolderApiAxiosParamCreator = function (
       memberUri?: string,
       acceptLanguage?: string,
       acceptItem?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/folders`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -1476,7 +1476,7 @@ export const FolderApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/rootFolders`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -1535,13 +1535,13 @@ export const FolderApiAxiosParamCreator = function (
     headersForFolder: async (
       folderId: string,
       acceptLanguage?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("headersForFolder", "folderId", folderId);
       const localVarPath = `/folders/{folderId}`.replace(
         `{${"folderId"}}`,
-        encodeURIComponent(String(folderId))
+        encodeURIComponent(String(folderId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1591,13 +1591,13 @@ export const FolderApiAxiosParamCreator = function (
       ifMatch?: string,
       ifUnmodifiedSince?: string,
       folderIn?: FolderIn,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("patchFolder", "folderId", folderId);
       const localVarPath = `/folders/{folderId}`.replace(
         `{${"folderId"}}`,
-        encodeURIComponent(String(folderId))
+        encodeURIComponent(String(folderId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1637,7 +1637,7 @@ export const FolderApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         folderIn,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -1656,7 +1656,7 @@ export const FolderApiAxiosParamCreator = function (
     patchMoveFolderItem: async (
       childUri?: string,
       parentFolderUri?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/folders/@item`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -1711,13 +1711,13 @@ export const FolderApiAxiosParamCreator = function (
       ifMatch?: string,
       ifUnmodifiedSince?: string,
       folderIn?: FolderIn,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("updateFolder", "folderId", folderId);
       const localVarPath = `/folders/{folderId}`.replace(
         `{${"folderId"}}`,
-        encodeURIComponent(String(folderId))
+        encodeURIComponent(String(folderId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1757,7 +1757,7 @@ export const FolderApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         folderIn,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -1784,12 +1784,12 @@ export const FolderApi = function (configuration?: Configuration) {
      */
     async createFolder(
       requestParameters: FolderApiCreateFolderRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Folder>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.createFolder(
         requestParameters.parentFolderUri,
         requestParameters.folderIn,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -1803,12 +1803,12 @@ export const FolderApi = function (configuration?: Configuration) {
      */
     async deleteFolder(
       requestParameters: FolderApiDeleteFolderRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteFolder(
         requestParameters.folderId,
         requestParameters.recursive,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -1822,11 +1822,11 @@ export const FolderApi = function (configuration?: Configuration) {
      */
     async findByPath(
       requestParameters: FolderApiFindByPathRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Summary>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.findByPath(
         requestParameters.path,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -1840,12 +1840,12 @@ export const FolderApi = function (configuration?: Configuration) {
      */
     async getDelegateFolders(
       requestParameters: FolderApiGetDelegateFoldersRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FolderCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getDelegateFolders(
           requestParameters.name,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -1859,12 +1859,12 @@ export const FolderApi = function (configuration?: Configuration) {
      */
     async getFolder(
       requestParameters: FolderApiGetFolderRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Folder>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getFolder(
         requestParameters.folderId,
         requestParameters.acceptLanguage,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -1878,12 +1878,12 @@ export const FolderApi = function (configuration?: Configuration) {
      */
     async getFolderItem(
       requestParameters: FolderApiGetFolderItemRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Folder>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getFolderItem(
         requestParameters.childUri,
         requestParameters.path,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -1897,7 +1897,7 @@ export const FolderApi = function (configuration?: Configuration) {
      */
     async getFolders(
       requestParameters: FolderApiGetFoldersRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FolderCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getFolders(
         requestParameters.start,
@@ -1909,7 +1909,7 @@ export const FolderApi = function (configuration?: Configuration) {
         requestParameters.memberUri,
         requestParameters.acceptLanguage,
         requestParameters.acceptItem,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -1923,14 +1923,14 @@ export const FolderApi = function (configuration?: Configuration) {
      */
     async getRootFolders(
       requestParameters: FolderApiGetRootFoldersRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FolderCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getRootFolders(
         requestParameters.start,
         requestParameters.limit,
         requestParameters.filter,
         requestParameters.sortBy,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -1944,13 +1944,13 @@ export const FolderApi = function (configuration?: Configuration) {
      */
     async headersForFolder(
       requestParameters: FolderApiHeadersForFolderRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForFolder(
           requestParameters.folderId,
           requestParameters.acceptLanguage,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -1964,14 +1964,14 @@ export const FolderApi = function (configuration?: Configuration) {
      */
     async patchFolder(
       requestParameters: FolderApiPatchFolderRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Folder>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.patchFolder(
         requestParameters.folderId,
         requestParameters.ifMatch,
         requestParameters.ifUnmodifiedSince,
         requestParameters.folderIn,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -1985,13 +1985,13 @@ export const FolderApi = function (configuration?: Configuration) {
      */
     async patchMoveFolderItem(
       requestParameters: FolderApiPatchMoveFolderItemRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Folder>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.patchMoveFolderItem(
           requestParameters.childUri,
           requestParameters.parentFolderUri,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2005,14 +2005,14 @@ export const FolderApi = function (configuration?: Configuration) {
      */
     async updateFolder(
       requestParameters: FolderApiUpdateFolderRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Folder>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.updateFolder(
         requestParameters.folderId,
         requestParameters.ifMatch,
         requestParameters.ifUnmodifiedSince,
         requestParameters.folderIn,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2353,7 +2353,7 @@ export interface FolderApiUpdateFolderRequest {
  * @export
  */
 export const MemberApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -2371,13 +2371,13 @@ export const MemberApiAxiosParamCreator = function (
       abortOnMetadataFailure?: boolean,
       forceMove?: boolean,
       memberIn?: MemberIn,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("createFolderMember", "folderId", folderId);
       const localVarPath = `/folders/{folderId}/members`.replace(
         `{${"folderId"}}`,
-        encodeURIComponent(String(folderId))
+        encodeURIComponent(String(folderId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -2417,7 +2417,7 @@ export const MemberApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         memberIn,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -2438,13 +2438,13 @@ export const MemberApiAxiosParamCreator = function (
       folderId: string,
       abortOnMetadataFailure?: boolean,
       memberIn?: MemberIn,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("createHistory", "folderId", folderId);
       const localVarPath = `/folders/{folderId}/histories`.replace(
         `{${"folderId"}}`,
-        encodeURIComponent(String(folderId))
+        encodeURIComponent(String(folderId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -2480,7 +2480,7 @@ export const MemberApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         memberIn,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -2499,7 +2499,7 @@ export const MemberApiAxiosParamCreator = function (
     deleteFolderMember: async (
       folderId: string,
       memberId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("deleteFolderMember", "folderId", folderId);
@@ -2548,7 +2548,7 @@ export const MemberApiAxiosParamCreator = function (
     getFolderMember: async (
       folderId: string,
       memberId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("getFolderMember", "folderId", folderId);
@@ -2609,13 +2609,13 @@ export const MemberApiAxiosParamCreator = function (
       recursive?: boolean,
       followReferences?: boolean,
       acceptLanguage?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("getFolderMembers", "folderId", folderId);
       const localVarPath = `/folders/{folderId}/members`.replace(
         `{${"folderId"}}`,
-        encodeURIComponent(String(folderId))
+        encodeURIComponent(String(folderId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -2685,7 +2685,7 @@ export const MemberApiAxiosParamCreator = function (
     headersForFolderMember: async (
       folderId: string,
       memberId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("headersForFolderMember", "folderId", folderId);
@@ -2746,13 +2746,13 @@ export const MemberApiAxiosParamCreator = function (
       recursive?: boolean,
       followReferences?: boolean,
       acceptLanguage?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("headersForFolderMembers", "folderId", folderId);
       const localVarPath = `/folders/{folderId}/members`.replace(
         `{${"folderId"}}`,
-        encodeURIComponent(String(folderId))
+        encodeURIComponent(String(folderId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -2828,7 +2828,7 @@ export const MemberApiAxiosParamCreator = function (
       ifMatch?: string,
       ifUnmodifiedSince?: string,
       memberIn?: MemberIn,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("patchFolderMember", "folderId", folderId);
@@ -2875,7 +2875,7 @@ export const MemberApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         memberIn,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -2900,7 +2900,7 @@ export const MemberApiAxiosParamCreator = function (
       ifMatch?: string,
       ifUnmodifiedSince?: string,
       memberIn?: MemberIn,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("updateFolderMember", "folderId", folderId);
@@ -2947,7 +2947,7 @@ export const MemberApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         memberIn,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -2972,7 +2972,7 @@ export const MemberApiAxiosParamCreator = function (
       value: string,
       type: string,
       typeDefName?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'folderId' is not null or undefined
       assertParamExists("validateMemberName", "folderId", folderId);
@@ -3046,7 +3046,7 @@ export const MemberApi = function (configuration?: Configuration) {
      */
     async createFolderMember(
       requestParameters: MemberApiCreateFolderMemberRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Member>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.createFolderMember(
@@ -3054,7 +3054,7 @@ export const MemberApi = function (configuration?: Configuration) {
           requestParameters.abortOnMetadataFailure,
           requestParameters.forceMove,
           requestParameters.memberIn,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3068,13 +3068,13 @@ export const MemberApi = function (configuration?: Configuration) {
      */
     async createHistory(
       requestParameters: MemberApiCreateHistoryRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Member>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.createHistory(
         requestParameters.folderId,
         requestParameters.abortOnMetadataFailure,
         requestParameters.memberIn,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3088,13 +3088,13 @@ export const MemberApi = function (configuration?: Configuration) {
      */
     async deleteFolderMember(
       requestParameters: MemberApiDeleteFolderMemberRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.deleteFolderMember(
           requestParameters.folderId,
           requestParameters.memberId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3108,12 +3108,12 @@ export const MemberApi = function (configuration?: Configuration) {
      */
     async getFolderMember(
       requestParameters: MemberApiGetFolderMemberRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Member>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getFolderMember(
         requestParameters.folderId,
         requestParameters.memberId,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3127,7 +3127,7 @@ export const MemberApi = function (configuration?: Configuration) {
      */
     async getFolderMembers(
       requestParameters: MemberApiGetFolderMembersRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<MemberCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getFolderMembers(
@@ -3139,7 +3139,7 @@ export const MemberApi = function (configuration?: Configuration) {
           requestParameters.recursive,
           requestParameters.followReferences,
           requestParameters.acceptLanguage,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3153,13 +3153,13 @@ export const MemberApi = function (configuration?: Configuration) {
      */
     async headersForFolderMember(
       requestParameters: MemberApiHeadersForFolderMemberRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForFolderMember(
           requestParameters.folderId,
           requestParameters.memberId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3173,7 +3173,7 @@ export const MemberApi = function (configuration?: Configuration) {
      */
     async headersForFolderMembers(
       requestParameters: MemberApiHeadersForFolderMembersRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForFolderMembers(
@@ -3185,7 +3185,7 @@ export const MemberApi = function (configuration?: Configuration) {
           requestParameters.recursive,
           requestParameters.followReferences,
           requestParameters.acceptLanguage,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3199,7 +3199,7 @@ export const MemberApi = function (configuration?: Configuration) {
      */
     async patchFolderMember(
       requestParameters: MemberApiPatchFolderMemberRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Member>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.patchFolderMember(
@@ -3208,7 +3208,7 @@ export const MemberApi = function (configuration?: Configuration) {
           requestParameters.ifMatch,
           requestParameters.ifUnmodifiedSince,
           requestParameters.memberIn,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3222,7 +3222,7 @@ export const MemberApi = function (configuration?: Configuration) {
      */
     async updateFolderMember(
       requestParameters: MemberApiUpdateFolderMemberRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Member>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.updateFolderMember(
@@ -3231,7 +3231,7 @@ export const MemberApi = function (configuration?: Configuration) {
           requestParameters.ifMatch,
           requestParameters.ifUnmodifiedSince,
           requestParameters.memberIn,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3245,7 +3245,7 @@ export const MemberApi = function (configuration?: Configuration) {
      */
     async validateMemberName(
       requestParameters: MemberApiValidateMemberNameRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Validation>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.validateMemberName(
@@ -3254,7 +3254,7 @@ export const MemberApi = function (configuration?: Configuration) {
           requestParameters.value,
           requestParameters.type,
           requestParameters.typeDefName,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3644,7 +3644,7 @@ export interface MemberApiValidateMemberNameRequest {
  * @export
  */
 export const MetainfoApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -3658,7 +3658,7 @@ export const MetainfoApiAxiosParamCreator = function (
     createBulkAncestors: async (
       requestBody: Array<string>,
       allowPartialPath?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'requestBody' is not null or undefined
       assertParamExists("createBulkAncestors", "requestBody", requestBody);
@@ -3695,7 +3695,7 @@ export const MetainfoApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         requestBody,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -3714,7 +3714,7 @@ export const MetainfoApiAxiosParamCreator = function (
     getAncestors: async (
       childUri: string,
       allowPartialPath?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'childUri' is not null or undefined
       assertParamExists("getAncestors", "childUri", childUri);
@@ -3763,7 +3763,7 @@ export const MetainfoApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     getDelegateInfo: async (
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/delegateInfo`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -3802,7 +3802,7 @@ export const MetainfoApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     getFolderTypes: async (
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/folderTypes`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -3853,13 +3853,13 @@ export const MetainfoApi = function (configuration?: Configuration) {
      */
     async createBulkAncestors(
       requestParameters: MetainfoApiCreateBulkAncestorsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<AncestorCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.createBulkAncestors(
           requestParameters.requestBody,
           requestParameters.allowPartialPath,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3873,12 +3873,12 @@ export const MetainfoApi = function (configuration?: Configuration) {
      */
     async getAncestors(
       requestParameters: MetainfoApiGetAncestorsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Ancestor>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getAncestors(
         requestParameters.childUri,
         requestParameters.allowPartialPath,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3890,10 +3890,10 @@ export const MetainfoApi = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async getDelegateInfo(
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<DelegateCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getDelegateInfo(
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3905,10 +3905,10 @@ export const MetainfoApi = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async getFolderTypes(
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FolderTypeCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getFolderTypes(
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3962,7 +3962,7 @@ export interface MetainfoApiGetAncestorsRequest {
  * @export
  */
 export const RootApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -4019,7 +4019,7 @@ export const RootApi = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async root(
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FolderCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.root(options);
       return createRequestFunction(localVarAxiosArgs, configuration);

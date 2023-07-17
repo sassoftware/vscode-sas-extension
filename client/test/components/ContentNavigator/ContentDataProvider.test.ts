@@ -30,7 +30,7 @@ let stub;
 let axiosInstance: StubbedInstance<AxiosInstance>;
 
 const mockContentItem = (
-  contentItem: Partial<ContentItem> = {}
+  contentItem: Partial<ContentItem> = {},
 ): ContentItem => ({
   id: "abc123",
   type: "file",
@@ -77,7 +77,7 @@ const createDataProvider = () => {
         },
       ],
       uri: "uri://recyleBin",
-    })
+    }),
   );
   mockGetDelegateFolder.withArgs("@myFavorites").returns(
     mockContentItem({
@@ -93,7 +93,7 @@ const createDataProvider = () => {
         },
       ],
       uri: "uri://myFavorites",
-    })
+    }),
   );
   return new ContentDataProvider(model, Uri.from({ scheme: "http" }));
 };
@@ -227,7 +227,7 @@ describe("ContentDataProvider", async function () {
 
     axiosInstance.get
       .withArgs(
-        "uri://myFavorites?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending"
+        "uri://myFavorites?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
       )
       .resolves({
         data: {
@@ -252,7 +252,7 @@ describe("ContentDataProvider", async function () {
         ],
         uri: "uri://myFavorites",
         uid: "my-favorite",
-      })
+      }),
     );
 
     expect(children.length).to.equal(1);
@@ -371,7 +371,7 @@ describe("ContentDataProvider", async function () {
     axiosInstance.post
       .withArgs(
         "/files/files#rawUpload?typeDefName=programFile",
-        Buffer.from("", "binary")
+        Buffer.from("", "binary"),
       )
       .resolves({
         data: createdFile,
@@ -424,7 +424,7 @@ describe("ContentDataProvider", async function () {
     await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.renameResource(
       origItem,
-      "new-file.sas"
+      "new-file.sas",
     );
     expect(uri).to.equal(undefined);
   });
@@ -458,7 +458,7 @@ describe("ContentDataProvider", async function () {
     await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.renameResource(
       origItem,
-      "new-file.sas"
+      "new-file.sas",
     );
     expect(uri).to.deep.equal(getUri(newItem));
   });
@@ -495,7 +495,7 @@ describe("ContentDataProvider", async function () {
     await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.renameResource(
       item,
-      "favorite-link.sas"
+      "favorite-link.sas",
     );
 
     expect(uri).to.deep.equal(getUri(referencedFile));
@@ -528,7 +528,7 @@ describe("ContentDataProvider", async function () {
     await dataProvider.connect("http://test.io");
     await dataProvider.writeFile(
       getUri(item),
-      new TextEncoder().encode("/* This is the content */")
+      new TextEncoder().encode("/* This is the content */"),
     );
   });
 
@@ -709,14 +709,14 @@ describe("ContentDataProvider", async function () {
 
     const dataProvider = new ContentDataProvider(
       model,
-      Uri.from({ scheme: "http" })
+      Uri.from({ scheme: "http" }),
     );
 
     const dataTransfer = new DataTransfer();
     const dataTransferItem = new DataTransferItem(uri);
     dataTransfer.set(
       "application/vnd.code.tree.contentDataProvider",
-      dataTransferItem
+      dataTransferItem,
     );
 
     stub.returns(new Promise((resolve) => resolve(item)));
@@ -746,14 +746,14 @@ describe("ContentDataProvider", async function () {
 
     const dataProvider = new ContentDataProvider(
       model,
-      Uri.from({ scheme: "http" })
+      Uri.from({ scheme: "http" }),
     );
 
     const dataTransfer = new DataTransfer();
     const dataTransferItem = new DataTransferItem(uri);
     dataTransfer.set(
       "application/vnd.code.tree.contentDataProvider",
-      dataTransferItem
+      dataTransferItem,
     );
 
     createFileStub.returns(new Promise((resolve) => resolve(item)));
@@ -783,14 +783,14 @@ describe("ContentDataProvider", async function () {
 
     const dataProvider = new ContentDataProvider(
       model,
-      Uri.from({ scheme: "http" })
+      Uri.from({ scheme: "http" }),
     );
 
     const dataTransfer = new DataTransfer();
     const dataTransferItem = new DataTransferItem([item]);
     dataTransfer.set(
       "application/vnd.code.tree.contentDataProvider",
-      dataTransferItem
+      dataTransferItem,
     );
 
     await dataProvider.handleDrop(parentItem, dataTransfer);
@@ -833,14 +833,14 @@ describe("ContentDataProvider", async function () {
 
     const dataProvider = new ContentDataProvider(
       model,
-      Uri.from({ scheme: "http" })
+      Uri.from({ scheme: "http" }),
     );
 
     const dataTransfer = new DataTransfer();
     const dataTransferItem = new DataTransferItem([item]);
     dataTransfer.set(
       "application/vnd.code.tree.contentDataProvider",
-      dataTransferItem
+      dataTransferItem,
     );
 
     await dataProvider.handleDrop(parentItem, dataTransfer);
@@ -872,14 +872,14 @@ describe("ContentDataProvider", async function () {
 
     const dataProvider = new ContentDataProvider(
       model,
-      Uri.from({ scheme: "http" })
+      Uri.from({ scheme: "http" }),
     );
 
     const dataTransfer = new DataTransfer();
     const dataTransferItem = new DataTransferItem([item]);
     dataTransfer.set(
       "application/vnd.code.tree.contentDataProvider",
-      dataTransferItem
+      dataTransferItem,
     );
 
     await dataProvider.handleDrop(parentItem, dataTransfer);

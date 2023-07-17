@@ -58,7 +58,7 @@ export abstract class WebView {
 
   public webviewUri(extensionUri: Uri, name: string): Uri {
     return this.panel.webview.asWebviewUri(
-      Uri.joinPath(extensionUri, "client", "dist", "webview", `${name}.js`)
+      Uri.joinPath(extensionUri, "client", "dist", "webview", `${name}.js`),
     );
   }
 }

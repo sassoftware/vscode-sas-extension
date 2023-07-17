@@ -14,7 +14,7 @@ export function setContext(c: ExtensionContext) {
  */
 export async function setContextValue(
   key: string,
-  value: string
+  value: string,
 ): Promise<void> {
   context.workspaceState.update(key, value);
 }
@@ -23,7 +23,7 @@ export async function setContextValue(
  * Get an extension context value.
  */
 export async function getContextValue(
-  key: string
+  key: string,
 ): Promise<string | undefined> {
   return context.workspaceState.get(key);
 }

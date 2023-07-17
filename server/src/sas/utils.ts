@@ -74,7 +74,7 @@ export function getText(key: string, arg?: string): string {
     if (locale !== "en") {
       const localeString = locale.replace("-", "_").toLowerCase();
       let index = supportedLanguages.findIndex(
-        (l) => l.toLowerCase() === localeString
+        (l) => l.toLowerCase() === localeString,
       );
       if (index === -1) {
         const parentLocale = locale.split("-")[0];
@@ -87,7 +87,7 @@ export function getText(key: string, arg?: string): string {
             const [key, value] = pair.split("=");
             if (key && value) {
               bundle[key] = value.replace(/\\u(.{4})/g, (_, p1) =>
-                String.fromCodePoint(parseInt(p1, 16))
+                String.fromCodePoint(parseInt(p1, 16)),
               );
             }
           });

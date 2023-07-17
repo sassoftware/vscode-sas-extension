@@ -46,13 +46,13 @@ let client: LanguageClient;
 // Create Profile status bar item
 const activeProfileStatusBarIcon = window.createStatusBarItem(
   StatusBarAlignment.Left,
-  0
+  0,
 );
 
 export function activate(context: ExtensionContext): void {
   // The server is implemented in node
   const serverModule = context.asAbsolutePath(
-    path.join("server", "dist", "node", "server.js")
+    path.join("server", "dist", "node", "server.js"),
   );
   // The debug options for the server
   // --inspect=6009: runs the server in Node's Inspector mode so VS Code can attach to the server for debugging
@@ -80,7 +80,7 @@ export function activate(context: ExtensionContext): void {
     "sas-lsp",
     "SAS Language Server",
     serverOptions,
-    clientOptions
+    clientOptions,
   );
 
   activeProfileStatusBarIcon.command = "SAS.switchProfile";
@@ -119,12 +119,12 @@ export function activate(context: ExtensionContext): void {
     authentication.registerAuthenticationProvider(
       SASAuthProvider.id,
       "SAS",
-      new SASAuthProvider(context.secrets)
+      new SASAuthProvider(context.secrets),
     ),
     languages.registerDocumentSemanticTokensProvider(
       { language: "sas-log" },
       LogTokensProvider,
-      legend
+      legend,
     ),
     activeProfileStatusBarIcon,
     ...libraryNavigator.getSubscriptions(),
@@ -137,7 +137,7 @@ export function activate(context: ExtensionContext): void {
     }),
     workspace.registerNotebookSerializer(
       "sas-notebook",
-      new NotebookSerializer()
+      new NotebookSerializer(),
     ),
     new NotebookController(),
     commands.registerCommand("SAS.notebook.new", async () => {
@@ -146,10 +146,10 @@ export function activate(context: ExtensionContext): void {
           "sas-notebook",
           new NotebookData([
             new NotebookCellData(NotebookCellKind.Code, "", "sas"),
-          ])
-        )
+          ]),
+        ),
       );
-    })
+    }),
   );
 
   // Reset first to set "No Active Profiles"
@@ -178,14 +178,14 @@ function triggerProfileUpdate(): void {
       "setContext",
       "SAS.connection.direct",
       connectionType === ConnectionType.Rest &&
-        "serverId" in profileList[activeProfileName]
+        "serverId" in profileList[activeProfileName],
     );
   } else {
     profileConfig.updateActiveProfileSetting("");
     commands.executeCommand(
       "setContext",
       "SAS.connectionType",
-      ConnectionType.Rest
+      ConnectionType.Rest,
     );
   }
 }
@@ -201,7 +201,7 @@ async function updateStatusBarProfile(profileStatusBarIcon: StatusBarItem) {
     updateStatusBarItem(
       profileStatusBarIcon,
       `${activeProfileName}`,
-      `${activeProfileName}\n${statusBarTooltip}`
+      `${activeProfileName}\n${statusBarTooltip}`,
     );
   }
 }
@@ -209,7 +209,7 @@ async function updateStatusBarProfile(profileStatusBarIcon: StatusBarItem) {
 function updateStatusBarItem(
   statusBarItem: StatusBarItem,
   text: string,
-  tooltip: string
+  tooltip: string,
 ): void {
   statusBarItem.text = `$(account) ${text}`;
   statusBarItem.tooltip = tooltip;

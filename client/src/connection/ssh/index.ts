@@ -118,7 +118,7 @@ export class SSHSession extends Session {
     this.clearTimer();
     this.timer = setTimeout(() => {
       this.reject?.(
-        new Error("Failed to connect to Session. Check profile settings.")
+        new Error("Failed to connect to Session. Check profile settings."),
       );
       this.timer = undefined;
       this.close();
@@ -160,7 +160,7 @@ export class SSHSession extends Session {
           }
           this.resolve?.(runResult);
         });
-      }
+      },
     );
   };
 

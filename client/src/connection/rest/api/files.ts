@@ -933,7 +933,7 @@ export interface Settings {
  * @export
  */
 export const FilesApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -951,13 +951,13 @@ export const FilesApiAxiosParamCreator = function (
       contentDisposition?: string,
       expirationTimeStamp?: string,
       parentFolderUri?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists("createCopyOfFile", "fileId", fileId);
       const localVarPath = `/files/{fileId}/copy`.replace(
         `{${"fileId"}}`,
-        encodeURIComponent(String(fileId))
+        encodeURIComponent(String(fileId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1024,7 +1024,7 @@ export const FilesApiAxiosParamCreator = function (
       typeDefName?: string,
       versioned?: boolean,
       body?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/files#rawUpload`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -1084,7 +1084,7 @@ export const FilesApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         body,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -1119,7 +1119,7 @@ export const FilesApiAxiosParamCreator = function (
       recoverable?: boolean,
       filename?: string,
       file?: File,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/files#multipartUpload`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -1207,13 +1207,13 @@ export const FilesApiAxiosParamCreator = function (
      */
     deleteFileResource: async (
       fileId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists("deleteFileResource", "fileId", fileId);
       const localVarPath = `/files/{fileId}`.replace(
         `{${"fileId"}}`,
-        encodeURIComponent(String(fileId))
+        encodeURIComponent(String(fileId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1253,13 +1253,13 @@ export const FilesApiAxiosParamCreator = function (
      */
     deleteFileResourceForGivenParentUri: async (
       parentUri: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'parentUri' is not null or undefined
       assertParamExists(
         "deleteFileResourceForGivenParentUri",
         "parentUri",
-        parentUri
+        parentUri,
       );
       const localVarPath = `/files`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -1306,7 +1306,7 @@ export const FilesApiAxiosParamCreator = function (
     fetchFilesForParentUris: async (
       selection: Selection,
       acceptItem?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'selection' is not null or undefined
       assertParamExists("fetchFilesForParentUris", "selection", selection);
@@ -1344,7 +1344,7 @@ export const FilesApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         selection,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -1361,13 +1361,13 @@ export const FilesApiAxiosParamCreator = function (
      */
     getFile: async (
       fileId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists("getFile", "fileId", fileId);
       const localVarPath = `/files/{fileId}`.replace(
         `{${"fileId"}}`,
-        encodeURIComponent(String(fileId))
+        encodeURIComponent(String(fileId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1417,7 +1417,7 @@ export const FilesApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/files`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -1486,17 +1486,17 @@ export const FilesApiAxiosParamCreator = function (
       fileId: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists(
         "getFileVersionResourceForFilterQuery",
         "fileId",
-        fileId
+        fileId,
       );
       const localVarPath = `/files/{fileId}/versions`.replace(
         `{${"fileId"}}`,
-        encodeURIComponent(String(fileId))
+        encodeURIComponent(String(fileId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1550,13 +1550,13 @@ export const FilesApiAxiosParamCreator = function (
       changeContentDisposition?: boolean,
       ifRange?: string,
       range?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists("getfileContentForGivenId", "fileId", fileId);
       const localVarPath = `/files/{fileId}/content`.replace(
         `{${"fileId"}}`,
-        encodeURIComponent(String(fileId))
+        encodeURIComponent(String(fileId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1617,7 +1617,7 @@ export const FilesApiAxiosParamCreator = function (
       changeContentDisposition?: boolean,
       ifRange?: string,
       range?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists("getfileContentForGivenVersion", "fileId", fileId);
@@ -1625,7 +1625,7 @@ export const FilesApiAxiosParamCreator = function (
       assertParamExists(
         "getfileContentForGivenVersion",
         "fileVersion",
-        fileVersion
+        fileVersion,
       );
       const localVarPath = `/files/{fileId}/version/{fileVersion}/content`
         .replace(`{${"fileId"}}`, encodeURIComponent(String(fileId)))
@@ -1683,7 +1683,7 @@ export const FilesApiAxiosParamCreator = function (
     getfileIdForGivenVersion: async (
       fileId: string,
       fileVersion: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists("getfileIdForGivenVersion", "fileId", fileId);
@@ -1730,7 +1730,7 @@ export const FilesApiAxiosParamCreator = function (
      */
     getfileindexschema: async (
       accept?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/files#schema`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -1775,13 +1775,13 @@ export const FilesApiAxiosParamCreator = function (
      */
     headersForFile: async (
       fileId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists("headersForFile", "fileId", fileId);
       const localVarPath = `/files/{fileId}`.replace(
         `{${"fileId"}}`,
-        encodeURIComponent(String(fileId))
+        encodeURIComponent(String(fileId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1823,7 +1823,7 @@ export const FilesApiAxiosParamCreator = function (
     headersForfileIdForGivenVersion: async (
       fileId: string,
       fileVersion: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists("headersForfileIdForGivenVersion", "fileId", fileId);
@@ -1831,7 +1831,7 @@ export const FilesApiAxiosParamCreator = function (
       assertParamExists(
         "headersForfileIdForGivenVersion",
         "fileVersion",
-        fileVersion
+        fileVersion,
       );
       const localVarPath = `/files/{fileId}/version/{fileVersion}`
         .replace(`{${"fileId"}}`, encodeURIComponent(String(fileId)))
@@ -1880,7 +1880,7 @@ export const FilesApiAxiosParamCreator = function (
       fileToPatch: FileToPatch,
       ifMatch?: string,
       ifUnmodifiedSince?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists("patchFileResourceInfo", "fileId", fileId);
@@ -1888,7 +1888,7 @@ export const FilesApiAxiosParamCreator = function (
       assertParamExists("patchFileResourceInfo", "fileToPatch", fileToPatch);
       const localVarPath = `/files/{fileId}`.replace(
         `{${"fileId"}}`,
-        encodeURIComponent(String(fileId))
+        encodeURIComponent(String(fileId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1927,7 +1927,7 @@ export const FilesApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         fileToPatch,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -1950,7 +1950,7 @@ export const FilesApiAxiosParamCreator = function (
       fileToPatch: FileToPatch,
       ifMatch?: string,
       ifUnmodifiedSince?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists("updateFileResource", "fileId", fileId);
@@ -1958,7 +1958,7 @@ export const FilesApiAxiosParamCreator = function (
       assertParamExists("updateFileResource", "fileToPatch", fileToPatch);
       const localVarPath = `/files/{fileId}`.replace(
         `{${"fileId"}}`,
-        encodeURIComponent(String(fileId))
+        encodeURIComponent(String(fileId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1997,7 +1997,7 @@ export const FilesApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         fileToPatch,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -2024,7 +2024,7 @@ export const FilesApiAxiosParamCreator = function (
       ifMatch?: string,
       ifUnmodifiedSince?: string,
       contentDisposition?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists("updatedFileContent", "fileId", fileId);
@@ -2034,7 +2034,7 @@ export const FilesApiAxiosParamCreator = function (
       assertParamExists("updatedFileContent", "file", file);
       const localVarPath = `/files/{fileId}/content`.replace(
         `{${"fileId"}}`,
-        encodeURIComponent(String(fileId))
+        encodeURIComponent(String(fileId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -2112,7 +2112,7 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async createCopyOfFile(
       requestParameters: FilesApiCreateCopyOfFileRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResource>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.createCopyOfFile(
@@ -2120,7 +2120,7 @@ export const FilesApi = function (configuration?: Configuration) {
           requestParameters.contentDisposition,
           requestParameters.expirationTimeStamp,
           requestParameters.parentFolderUri,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2134,7 +2134,7 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async createNewFile(
       requestParameters: FilesApiCreateNewFileRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResource>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.createNewFile(
         requestParameters.contentType,
@@ -2145,7 +2145,7 @@ export const FilesApi = function (configuration?: Configuration) {
         requestParameters.typeDefName,
         requestParameters.versioned,
         requestParameters.body,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2159,7 +2159,7 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async createNewFileMultiPart(
       requestParameters: FilesApiCreateNewFileMultiPartRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResource>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.createNewFileMultiPart(
@@ -2173,7 +2173,7 @@ export const FilesApi = function (configuration?: Configuration) {
           requestParameters.recoverable,
           requestParameters.filename,
           requestParameters.file,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2187,12 +2187,12 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async deleteFileResource(
       requestParameters: FilesApiDeleteFileResourceRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.deleteFileResource(
           requestParameters.fileId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2206,12 +2206,12 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async deleteFileResourceForGivenParentUri(
       requestParameters: FilesApiDeleteFileResourceForGivenParentUriRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.deleteFileResourceForGivenParentUri(
           requestParameters.parentUri,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2225,13 +2225,13 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async fetchFilesForParentUris(
       requestParameters: FilesApiFetchFilesForParentUrisRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResourceCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.fetchFilesForParentUris(
           requestParameters.selection,
           requestParameters.acceptItem,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2245,11 +2245,11 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async getFile(
       requestParameters: FilesApiGetFileRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResource>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getFile(
         requestParameters.fileId,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2263,7 +2263,7 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async getFileResourceForFilterQuery(
       requestParameters: FilesApiGetFileResourceForFilterQueryRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResourceCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getFileResourceForFilterQuery(
@@ -2273,7 +2273,7 @@ export const FilesApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.filter,
           requestParameters.sortBy,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2287,14 +2287,14 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async getFileVersionResourceForFilterQuery(
       requestParameters: FilesApiGetFileVersionResourceForFilterQueryRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResourceCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getFileVersionResourceForFilterQuery(
           requestParameters.fileId,
           requestParameters.start,
           requestParameters.limit,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2308,7 +2308,7 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async getfileContentForGivenId(
       requestParameters: FilesApiGetfileContentForGivenIdRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getfileContentForGivenId(
@@ -2316,7 +2316,7 @@ export const FilesApi = function (configuration?: Configuration) {
           requestParameters.changeContentDisposition,
           requestParameters.ifRange,
           requestParameters.range,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2330,7 +2330,7 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async getfileContentForGivenVersion(
       requestParameters: FilesApiGetfileContentForGivenVersionRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getfileContentForGivenVersion(
@@ -2339,7 +2339,7 @@ export const FilesApi = function (configuration?: Configuration) {
           requestParameters.changeContentDisposition,
           requestParameters.ifRange,
           requestParameters.range,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2353,13 +2353,13 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async getfileIdForGivenVersion(
       requestParameters: FilesApiGetfileIdForGivenVersionRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResource>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getfileIdForGivenVersion(
           requestParameters.fileId,
           requestParameters.fileVersion,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2373,12 +2373,12 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async getfileindexschema(
       requestParameters: FilesApiGetfileindexschemaRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Schema>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getfileindexschema(
           requestParameters.accept,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2392,11 +2392,11 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async headersForFile(
       requestParameters: FilesApiHeadersForFileRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.headersForFile(
         requestParameters.fileId,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2410,13 +2410,13 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async headersForfileIdForGivenVersion(
       requestParameters: FilesApiHeadersForfileIdForGivenVersionRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForfileIdForGivenVersion(
           requestParameters.fileId,
           requestParameters.fileVersion,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2430,7 +2430,7 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async patchFileResourceInfo(
       requestParameters: FilesApiPatchFileResourceInfoRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResource>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.patchFileResourceInfo(
@@ -2438,7 +2438,7 @@ export const FilesApi = function (configuration?: Configuration) {
           requestParameters.fileToPatch,
           requestParameters.ifMatch,
           requestParameters.ifUnmodifiedSince,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2452,7 +2452,7 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async updateFileResource(
       requestParameters: FilesApiUpdateFileResourceRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResource>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.updateFileResource(
@@ -2460,7 +2460,7 @@ export const FilesApi = function (configuration?: Configuration) {
           requestParameters.fileToPatch,
           requestParameters.ifMatch,
           requestParameters.ifUnmodifiedSince,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -2474,7 +2474,7 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async updatedFileContent(
       requestParameters: FilesApiUpdatedFileContentRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResource>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.updatedFileContent(
@@ -2484,7 +2484,7 @@ export const FilesApi = function (configuration?: Configuration) {
           requestParameters.ifMatch,
           requestParameters.ifUnmodifiedSince,
           requestParameters.contentDisposition,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3077,7 +3077,7 @@ export interface FilesApiUpdatedFileContentRequest {
  * @export
  */
 export const IndexApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -3091,19 +3091,19 @@ export const IndexApiAxiosParamCreator = function (
     fetchFilesIndexableRepForParentUris: async (
       acceptItem: string,
       selection: Selection,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'acceptItem' is not null or undefined
       assertParamExists(
         "fetchFilesIndexableRepForParentUris",
         "acceptItem",
-        acceptItem
+        acceptItem,
       );
       // verify required parameter 'selection' is not null or undefined
       assertParamExists(
         "fetchFilesIndexableRepForParentUris",
         "selection",
-        selection
+        selection,
       );
       const localVarPath = `/files#fetchIndexableRepresentationCollection`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -3139,7 +3139,7 @@ export const IndexApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         selection,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -3156,13 +3156,13 @@ export const IndexApiAxiosParamCreator = function (
      */
     getFileIndexableRep: async (
       fileId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists("getFileIndexableRep", "fileId", fileId);
       const localVarPath = `/files/{fileId}#getIndexableRepresentation`.replace(
         `{${"fileId"}}`,
-        encodeURIComponent(String(fileId))
+        encodeURIComponent(String(fileId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -3212,7 +3212,7 @@ export const IndexApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'acceptItem' is not null or undefined
       assertParamExists("getFilesIndexableResource", "acceptItem", acceptItem);
@@ -3289,13 +3289,13 @@ export const IndexApi = function (configuration?: Configuration) {
      */
     async fetchFilesIndexableRepForParentUris(
       requestParameters: IndexApiFetchFilesIndexableRepForParentUrisRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResourceCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.fetchFilesIndexableRepForParentUris(
           requestParameters.acceptItem,
           requestParameters.selection,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3309,12 +3309,12 @@ export const IndexApi = function (configuration?: Configuration) {
      */
     async getFileIndexableRep(
       requestParameters: IndexApiGetFileIndexableRepRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResourceIndex>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getFileIndexableRep(
           requestParameters.fileId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3328,7 +3328,7 @@ export const IndexApi = function (configuration?: Configuration) {
      */
     async getFilesIndexableResource(
       requestParameters: IndexApiGetFilesIndexableResourceRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResourceIndexCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getFilesIndexableResource(
@@ -3338,7 +3338,7 @@ export const IndexApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.filter,
           requestParameters.sortBy,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3434,7 +3434,7 @@ export interface IndexApiGetFilesIndexableResourceRequest {
  * @export
  */
 export const RootApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -3444,7 +3444,7 @@ export const RootApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     headersForRoot: async (
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -3530,10 +3530,10 @@ export const RootApi = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async headersForRoot(
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.headersForRoot(
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3556,7 +3556,7 @@ export const RootApi = function (configuration?: Configuration) {
  * @export
  */
 export const SecurityApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -3574,7 +3574,7 @@ export const SecurityApiAxiosParamCreator = function (
       quarantineFileToPatch: QuarantineFileToPatch,
       ifMatch?: string,
       ifUnmodifiedSince?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists("patchFileResourceQuarantine", "fileId", fileId);
@@ -3582,11 +3582,11 @@ export const SecurityApiAxiosParamCreator = function (
       assertParamExists(
         "patchFileResourceQuarantine",
         "quarantineFileToPatch",
-        quarantineFileToPatch
+        quarantineFileToPatch,
       );
       const localVarPath = `/files/{fileId}/quarantine`.replace(
         `{${"fileId"}}`,
-        encodeURIComponent(String(fileId))
+        encodeURIComponent(String(fileId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -3625,7 +3625,7 @@ export const SecurityApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         quarantineFileToPatch,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -3652,7 +3652,7 @@ export const SecurityApi = function (configuration?: Configuration) {
      */
     async patchFileResourceQuarantine(
       requestParameters: SecurityApiPatchFileResourceQuarantineRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResource>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.patchFileResourceQuarantine(
@@ -3660,7 +3660,7 @@ export const SecurityApi = function (configuration?: Configuration) {
           requestParameters.quarantineFileToPatch,
           requestParameters.ifMatch,
           requestParameters.ifUnmodifiedSince,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3707,7 +3707,7 @@ export interface SecurityApiPatchFileResourceQuarantineRequest {
  * @export
  */
 export const SettingsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -3717,7 +3717,7 @@ export const SettingsApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     getSettings: async (
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/commons/settings`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -3766,10 +3766,10 @@ export const SettingsApi = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async getSettings(
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Settings>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getSettings(
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3781,7 +3781,7 @@ export const SettingsApi = function (configuration?: Configuration) {
  * @export
  */
 export const SummaryApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -3803,7 +3803,7 @@ export const SummaryApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'acceptItem' is not null or undefined
       assertParamExists("getFilesSummaryForFilter", "acceptItem", acceptItem);
@@ -3870,13 +3870,13 @@ export const SummaryApiAxiosParamCreator = function (
      */
     getfileSummaryRepForGivenId: async (
       fileId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'fileId' is not null or undefined
       assertParamExists("getfileSummaryRepForGivenId", "fileId", fileId);
       const localVarPath = `/files/{fileId}#getSummaryRepresentation`.replace(
         `{${"fileId"}}`,
-        encodeURIComponent(String(fileId))
+        encodeURIComponent(String(fileId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -3926,7 +3926,7 @@ export const SummaryApi = function (configuration?: Configuration) {
      */
     async getFilesSummaryForFilter(
       requestParameters: SummaryApiGetFilesSummaryForFilterRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResourceSummaryCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getFilesSummaryForFilter(
@@ -3936,7 +3936,7 @@ export const SummaryApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.filter,
           requestParameters.sortBy,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -3950,12 +3950,12 @@ export const SummaryApi = function (configuration?: Configuration) {
      */
     async getfileSummaryRepForGivenId(
       requestParameters: SummaryApiGetfileSummaryRepForGivenIdRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResourceSummary>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getfileSummaryRepForGivenId(
           requestParameters.fileId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
