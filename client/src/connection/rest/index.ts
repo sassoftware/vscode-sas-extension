@@ -121,8 +121,7 @@ class RestSession extends Session {
         )
       ).data;
       this._computeSession = ComputeSession.fromInterface(sess);
-      const sessionLog = this.printSessionLog(this._computeSession);
-      await sessionLog;
+      await this.printSessionLog(this._computeSession);
     }
 
     //Save the current sessionId
@@ -289,9 +288,11 @@ class RestSession extends Session {
    * @param session a session id to print logs for.
    */
   private printSessionLog = async (session: ComputeSession) => {
-    const logs = await session.getLogStream();
-    for await (const log of logs) {
-      this._onLogFn(log);
+    if (this._onLogFn) {
+      const logs = await session.getLogStream();
+      for await (const log of logs) {
+        this._onLogFn(log);
+      }
     }
   };
 }
