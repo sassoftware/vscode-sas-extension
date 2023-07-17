@@ -79,6 +79,7 @@ class LibraryModel {
   }
 
   public async fetchColumns(item: LibraryItem) {
+    await this.setup();
     let offset = -1 * DefaultRecordLimit;
     let items = [];
     let totalItemCount = Infinity;
