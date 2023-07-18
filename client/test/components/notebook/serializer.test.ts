@@ -5,7 +5,7 @@ import * as assert from "assert";
 const testCell = new vscode.NotebookCellData(
   vscode.NotebookCellKind.Code,
   "test",
-  "sas"
+  "sas",
 );
 testCell.outputs = [
   new vscode.NotebookCellOutput([
@@ -17,7 +17,7 @@ const testData = new vscode.NotebookData([
   new vscode.NotebookCellData(
     vscode.NotebookCellKind.Markup,
     "test",
-    "markdown"
+    "markdown",
   ),
   testCell,
 ]);
@@ -28,12 +28,12 @@ describe("notebook serializer", () => {
     const serializer = new NotebookSerializer();
     const serializedData = await serializer.serializeNotebook(testData);
     const newData = await serializer.serializeNotebook(
-      await serializer.deserializeNotebook(serializedData)
+      await serializer.deserializeNotebook(serializedData),
     );
     assert.equal(
       decoder.decode(newData),
       decoder.decode(serializedData),
-      "The data don't match after serialize/deserialize"
+      "The data don't match after serialize/deserialize",
     );
   });
 });

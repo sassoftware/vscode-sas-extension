@@ -35,7 +35,7 @@ describe("Profiles", async function () {
       .update(
         EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
         undefined,
-        ConfigurationTarget.Global
+        ConfigurationTarget.Global,
       );
     testProfileClientId = {
       activeProfile: "",
@@ -150,7 +150,7 @@ describe("Profiles", async function () {
         .update(
           EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
           legacyProfile,
-          ConfigurationTarget.Global
+          ConfigurationTarget.Global,
         );
     });
 
@@ -160,7 +160,7 @@ describe("Profiles", async function () {
         .update(
           EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
           undefined,
-          ConfigurationTarget.Global
+          ConfigurationTarget.Global,
         );
     });
 
@@ -191,7 +191,7 @@ describe("Profiles", async function () {
           /\/$/.test(profile.endpoint)
         ) {
           assert.fail(
-            `Found trailing slash in endpoint of profile named ${key}`
+            `Found trailing slash in endpoint of profile named ${key}`,
           );
         }
       }
@@ -212,11 +212,11 @@ describe("Profiles", async function () {
       expect(validateProfile.data).to.equal(undefined);
       expect(validateProfile.type).to.equal(
         AuthType.Error,
-        "legacy profile did not return correct AuthType"
+        "legacy profile did not return correct AuthType",
       );
       expect(validateProfile.error).to.equal(
         "Missing connectionType in active profile.",
-        "should return messing connectionType error"
+        "should return messing connectionType error",
       );
     });
   });
@@ -249,12 +249,12 @@ describe("Profiles", async function () {
         // Assert
         expect(profiles).to.have.length(
           1,
-          "A single profile should be in the list"
+          "A single profile should be in the list",
         );
 
         expect(profiles).to.include(
           testProfileNewName,
-          `Profile ${testProfileName} should exist`
+          `Profile ${testProfileName} should exist`,
         );
       });
     });
@@ -270,7 +270,7 @@ describe("Profiles", async function () {
         .update(
           EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
           testProfileClientId,
-          ConfigurationTarget.Global
+          ConfigurationTarget.Global,
         );
     });
 
@@ -288,15 +288,15 @@ describe("Profiles", async function () {
         // Assert
         expect(profilesList).to.have.length(
           2,
-          "A second profile should be in the list"
+          "A second profile should be in the list",
         );
         expect(profilesList).to.include(
           testProfileNewName,
-          `Profile ${testProfileNewName} should exist`
+          `Profile ${testProfileNewName} should exist`,
         );
         expect(profilesList).to.include(
           testProfileName,
-          `Profile ${testProfileName} should exist`
+          `Profile ${testProfileName} should exist`,
         );
       });
 
@@ -318,7 +318,7 @@ describe("Profiles", async function () {
         // Assert
         expect(profileList).to.eql(
           [testProfileName],
-          "Expected profile name does not exist"
+          "Expected profile name does not exist",
         );
       });
 
@@ -331,19 +331,19 @@ describe("Profiles", async function () {
         // Assert
         expect(testProfile.endpoint).to.equal(
           "https://test-host.sas.com",
-          "Host is not matching"
+          "Host is not matching",
         );
         expect(testProfile.clientId).to.equal(
           "sas.test",
-          "Client ID is not matching"
+          "Client ID is not matching",
         );
         expect(testProfile.clientSecret).to.equal(
           "",
-          "Client Secret is not matching"
+          "Client Secret is not matching",
         );
         expect(testProfile.context).to.equal(
           "SAS Studio context",
-          "Compute Context is not matching"
+          "Compute Context is not matching",
         );
       });
 
@@ -376,7 +376,7 @@ describe("Profiles", async function () {
         const testProfile = profileConfig.getActiveProfile();
         expect(testProfileName).to.equal(
           testProfile,
-          "Active profile not successfully set"
+          "Active profile not successfully set",
         );
       });
 
@@ -391,11 +391,11 @@ describe("Profiles", async function () {
         // Assert
         expect(activeProfileName).to.equal(
           testProfileName,
-          "Active profile has not been set"
+          "Active profile has not been set",
         );
         expect(activeProfile.endpoint).to.equal(
           "https://test-host.sas.com",
-          "Active profile endpoint not expected"
+          "Active profile endpoint not expected",
         );
       });
 
@@ -413,11 +413,11 @@ describe("Profiles", async function () {
         expect(validateProfile.data).to.equal(undefined);
         expect(validateProfile.type).to.equal(
           AuthType.AuthCode,
-          "client id/secret profile did not return correct AuthType"
+          "client id/secret profile did not return correct AuthType",
         );
         expect(validateProfile.error).to.equal(
           "",
-          "client id/secret profile should not return error"
+          "client id/secret profile should not return error",
         );
       });
     });
@@ -433,7 +433,7 @@ describe("Profiles", async function () {
         .update(
           EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
           testEmptyProfile,
-          ConfigurationTarget.Global
+          ConfigurationTarget.Global,
         );
     });
     describe("CRUD Operations", async function () {
@@ -451,11 +451,11 @@ describe("Profiles", async function () {
         // Assert
         expect(profiles).to.have.length(
           2,
-          "A second profile should be in the list"
+          "A second profile should be in the list",
         );
         expect(profiles).to.include(
           testProfileNewName,
-          `Profile ${testProfileName} should exist`
+          `Profile ${testProfileName} should exist`,
         );
       });
 
@@ -478,11 +478,11 @@ describe("Profiles", async function () {
         // Assert
         expect(testProfile.endpoint).to.equal(
           undefined,
-          "Host is not matching"
+          "Host is not matching",
         );
         expect(testProfile.context).to.equal(
           undefined,
-          "Compute Context is not matching"
+          "Compute Context is not matching",
         );
       });
 
@@ -494,7 +494,7 @@ describe("Profiles", async function () {
         // Assert
         expect(profileList).to.eql(
           [testProfileName],
-          "Expected profile name does not exist"
+          "Expected profile name does not exist",
         );
       });
 
@@ -513,7 +513,7 @@ describe("Profiles", async function () {
           .update(
             EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
             newProfileSetting,
-            ConfigurationTarget.Global
+            ConfigurationTarget.Global,
           );
         // get profile after settings update
         testProfile = profileConfig.getProfileByName(testProfileName);
@@ -537,11 +537,11 @@ describe("Profiles", async function () {
         expect(validateProfile.data).to.equal(undefined);
         expect(validateProfile.type).to.equal(
           AuthType.Error,
-          "No active profile did not return correct AuthType"
+          "No active profile did not return correct AuthType",
         );
         expect(validateProfile.error).to.equal(
           "No Active Profile",
-          "No active profile did not return error"
+          "No active profile did not return error",
         );
       });
 
@@ -554,7 +554,7 @@ describe("Profiles", async function () {
         // Assert
         expect(activeProfile).to.be.equal(
           undefined,
-          "No active profile should be found"
+          "No active profile should be found",
         );
       });
     });
@@ -569,7 +569,7 @@ describe("Profiles", async function () {
         .update(
           EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
           testOverloadedProfile,
-          ConfigurationTarget.Global
+          ConfigurationTarget.Global,
         );
     });
     describe("Validate Profiles", async function () {
@@ -582,7 +582,7 @@ describe("Profiles", async function () {
         // Assert
         expect(activeProfile).to.equal(
           testProfileName,
-          "Active profile not successfully set"
+          "Active profile not successfully set",
         );
       });
 
@@ -597,11 +597,11 @@ describe("Profiles", async function () {
         // Assert
         expect(activeProfileName).to.equal(
           testProfileName,
-          "Active profile has not been set"
+          "Active profile has not been set",
         );
         expect(activeProfile.endpoint).to.equal(
           "https://test-host.sas.com",
-          "Active profile endpoint not expected"
+          "Active profile endpoint not expected",
         );
       });
 
@@ -620,11 +620,11 @@ describe("Profiles", async function () {
         expect(validateProfile.data).to.equal(undefined);
         expect(validateProfile.type).to.equal(
           AuthType.AuthCode,
-          "validate overloaded file profile did not return correct AuthType"
+          "validate overloaded file profile did not return correct AuthType",
         );
         expect(validateProfile.error).to.equal(
           "",
-          "validate overloaded file profile should not return error"
+          "validate overloaded file profile should not return error",
         );
       });
     });
@@ -640,7 +640,7 @@ describe("Profiles", async function () {
         .update(
           EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
           testSSHProfile,
-          ConfigurationTarget.Global
+          ConfigurationTarget.Global,
         );
     });
     describe("CRUD Operations", async function () {
@@ -657,22 +657,22 @@ describe("Profiles", async function () {
         // Act
         await profileConfig.upsertProfile(
           testProfileNewName,
-          requestSSHProfile
+          requestSSHProfile,
         );
         const profilesList = profileConfig.listProfile();
 
         // Assert
         expect(profilesList).to.have.length(
           2,
-          "A second profile should be in the list"
+          "A second profile should be in the list",
         );
         expect(profilesList).to.include(
           testProfileNewName,
-          `Profile ${testProfileNewName} should exist`
+          `Profile ${testProfileNewName} should exist`,
         );
         expect(profilesList).to.include(
           testProfileName,
-          `Profile ${testProfileName} should exist`
+          `Profile ${testProfileName} should exist`,
         );
 
         const addedProfile: SSHProfile =
@@ -680,7 +680,7 @@ describe("Profiles", async function () {
 
         expect(addedProfile).to.eql(
           requestSSHProfile,
-          `Profile ${testProfileNewName} should have expected contents after creation`
+          `Profile ${testProfileNewName} should have expected contents after creation`,
         );
       });
       it("delete a profile", async function () {
@@ -700,7 +700,7 @@ describe("Profiles", async function () {
         // Assert
         expect(profileList).to.eql(
           [testProfileName],
-          "Expected ssh profile name does not exist"
+          "Expected ssh profile name does not exist",
         );
       });
     });
@@ -716,7 +716,7 @@ describe("Profiles", async function () {
         .update(
           EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
           testCOMProfile,
-          ConfigurationTarget.Global
+          ConfigurationTarget.Global,
         );
     });
     describe("CRUD Operations", async function () {
@@ -730,22 +730,22 @@ describe("Profiles", async function () {
         // Act
         await profileConfig.upsertProfile(
           testProfileNewName,
-          requestCOMProfile
+          requestCOMProfile,
         );
         const profilesList = profileConfig.listProfile();
 
         // Assert
         expect(profilesList).to.have.length(
           2,
-          "A second profile should be in the list"
+          "A second profile should be in the list",
         );
         expect(profilesList).to.include(
           testProfileNewName,
-          `Profile ${testProfileNewName} should exist`
+          `Profile ${testProfileNewName} should exist`,
         );
         expect(profilesList).to.include(
           testProfileName,
-          `Profile ${testProfileName} should exist`
+          `Profile ${testProfileName} should exist`,
         );
 
         const addedProfile: COMProfile =
@@ -753,7 +753,7 @@ describe("Profiles", async function () {
 
         expect(addedProfile).to.eql(
           requestCOMProfile,
-          `Profile ${testProfileNewName} should have expected contents after creation`
+          `Profile ${testProfileNewName} should have expected contents after creation`,
         );
       });
       it("delete a profile", async function () {
@@ -773,7 +773,7 @@ describe("Profiles", async function () {
         // Assert
         expect(profileList).to.eql(
           [testProfileName],
-          "Expected com profile name does not exist"
+          "Expected com profile name does not exist",
         );
       });
     });
@@ -788,7 +788,7 @@ describe("Profiles", async function () {
         .update(
           EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
           testEmptyItemsProfile,
-          ConfigurationTarget.Global
+          ConfigurationTarget.Global,
         );
     });
     describe("Validate Profiles", async function () {
@@ -801,7 +801,7 @@ describe("Profiles", async function () {
         // Assert
         expect(testProfile).to.equal(
           testProfileName,
-          "Active profile not successfully set"
+          "Active profile not successfully set",
         );
       });
 
@@ -816,11 +816,11 @@ describe("Profiles", async function () {
         // Assert
         expect(activeProfileName).to.equal(
           testProfileName,
-          "Active profile has not been set"
+          "Active profile has not been set",
         );
         expect(activeProfile.endpoint).to.equal(
           "",
-          "Active profile endpoint not expected"
+          "Active profile endpoint not expected",
         );
       });
     });
@@ -836,11 +836,11 @@ describe("Profiles", async function () {
       expect(result).to.not.equal(undefined);
       expect(result.title).to.equal(
         "Switch Current SAS Profile",
-        "Profile title does not match expected"
+        "Profile title does not match expected",
       );
       expect(result.placeholder).to.equal(
         "Select a SAS connection profile",
-        "Profile placeholder does not match expected"
+        "Profile placeholder does not match expected",
       );
     });
 
@@ -853,11 +853,11 @@ describe("Profiles", async function () {
       expect(result).to.not.equal(undefined);
       expect(result.title).to.equal(
         "New SAS Connection Profile Name",
-        "NewProfile title does not match expected"
+        "NewProfile title does not match expected",
       );
       expect(result.placeholder).to.equal(
         "Enter connection name",
-        "NewProfile placeholder does not match expected"
+        "NewProfile placeholder does not match expected",
       );
     });
 
@@ -870,11 +870,11 @@ describe("Profiles", async function () {
       expect(result).to.not.equal(undefined);
       expect(result.title).to.equal(
         "SAS Viya Server",
-        "Endpoint title does not match expected"
+        "Endpoint title does not match expected",
       );
       expect(result.placeholder).to.equal(
         "Enter the URL",
-        "Endpoint placeholder does not match expected"
+        "Endpoint placeholder does not match expected",
       );
     });
 
@@ -887,11 +887,11 @@ describe("Profiles", async function () {
       expect(result).to.not.equal(undefined);
       expect(result.title).to.equal(
         "SAS Compute Context",
-        "ComputeContext title does not match expected"
+        "ComputeContext title does not match expected",
       );
       expect(result.placeholder).to.equal(
         "Enter the SAS compute context",
-        "ComputeContext placeholder does not match expected"
+        "ComputeContext placeholder does not match expected",
       );
     });
 
@@ -904,11 +904,11 @@ describe("Profiles", async function () {
       expect(result).to.not.equal(undefined);
       expect(result.title).to.equal(
         "Client ID",
-        "ClientId title does not match expected"
+        "ClientId title does not match expected",
       );
       expect(result.placeholder).to.equal(
         "Enter a client ID",
-        "ClientId placeholder does not match expected"
+        "ClientId placeholder does not match expected",
       );
     });
 
@@ -921,11 +921,11 @@ describe("Profiles", async function () {
       expect(result).to.not.equal(undefined);
       expect(result.title).to.equal(
         "Client Secret",
-        "ClientSecret title does not match expected"
+        "ClientSecret title does not match expected",
       );
       expect(result.placeholder).to.equal(
         "Enter a client secret",
-        "ClientSecret placeholder does not match expected"
+        "ClientSecret placeholder does not match expected",
       );
     });
   });
@@ -976,15 +976,15 @@ describe("Profiles", async function () {
 
         expect(foundPrompt.title).to.equal(
           testCase.wantTitle,
-          `${testCase.name} title does not match expected`
+          `${testCase.name} title does not match expected`,
         );
         expect(foundPrompt.placeholder).to.equal(
           testCase.wantPlaceHolder,
-          `${testCase.name} placeholder does not match expected`
+          `${testCase.name} placeholder does not match expected`,
         );
         expect(foundPrompt.description).to.equal(
           testCase.wantDescription,
-          `${testCase.name} description does not match expected`
+          `${testCase.name} description does not match expected`,
         );
       });
     });

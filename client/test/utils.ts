@@ -30,7 +30,7 @@ export const assertThrowsAsync = async (fn, expectedMsg?: string) => {
       assert.include(
         typedError.message,
         expectedMsg,
-        "Expected Message not found in returned error message"
+        "Expected Message not found in returned error message",
       );
     }
     return;

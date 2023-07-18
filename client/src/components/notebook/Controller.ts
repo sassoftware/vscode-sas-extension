@@ -19,7 +19,7 @@ export class NotebookController {
     this._controller = vscode.notebooks.createNotebookController(
       this.controllerId,
       this.notebookType,
-      this.label
+      this.label,
     );
 
     this._controller.supportedLanguages = this.supportedLanguages;
@@ -42,11 +42,11 @@ export class NotebookController {
           location: vscode.ProgressLocation.Notification,
           title: "Connecting to SAS session...",
         },
-        session.setup
+        session.setup,
       );
     } catch (err) {
       vscode.window.showErrorMessage(
-        err.response?.data ? JSON.stringify(err.response.data) : err.message
+        err.response?.data ? JSON.stringify(err.response.data) : err.message,
       );
       return;
     }
@@ -80,13 +80,13 @@ export class NotebookController {
             ? [
                 vscode.NotebookCellOutputItem.text(
                   result.html5,
-                  "application/vnd.sas.ods.html5"
+                  "application/vnd.sas.ods.html5",
                 ),
               ]
             : []),
           vscode.NotebookCellOutputItem.json(
             logs,
-            "application/vnd.sas.compute.log.lines"
+            "application/vnd.sas.compute.log.lines",
           ),
         ]),
       ]);
@@ -115,7 +115,7 @@ export class NotebookController {
         location: vscode.ProgressLocation.Notification,
         title: "Cancelling job...",
       },
-      () => this._interrupted.promise
+      () => this._interrupted.promise,
     );
     const session = getSession();
     session.cancel?.();

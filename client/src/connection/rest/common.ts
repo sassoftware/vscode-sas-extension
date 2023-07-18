@@ -124,7 +124,7 @@ export class Compute {
   */
   async requestLink<T>(
     link: Link,
-    options?: AxiosRequestConfig
+    options?: AxiosRequestConfig,
   ): Promise<AxiosResponse<T>> {
     const apiConfig = getApiConfig();
 

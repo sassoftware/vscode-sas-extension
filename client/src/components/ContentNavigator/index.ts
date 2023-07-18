@@ -28,7 +28,7 @@ import {
 const fileValidator = (value: string): string | null =>
   /^([^/<>;\\{}?#]+)\.\w+$/.test(
     // file service does not allow /, <, >, ;, \, {, } while vscode does not allow ? and #
-    value
+    value,
   )
     ? null
     : Messages.FileValidationError;
@@ -43,13 +43,13 @@ class ContentNavigator implements SubscriptionProvider {
   constructor(context: ExtensionContext) {
     this.contentDataProvider = new ContentDataProvider(
       new ContentModel(),
-      context.extensionUri
+      context.extensionUri,
     );
 
     workspace.registerFileSystemProvider("sas", this.contentDataProvider);
     workspace.registerTextDocumentContentProvider(
       "sasReadOnly",
-      this.contentDataProvider
+      this.contentDataProvider,
     );
     this.watchForFileChanges();
   }
@@ -70,10 +70,10 @@ class ContentNavigator implements SubscriptionProvider {
                 !(await window.showWarningMessage(
                   Messages.DeleteWarningMessage.replace(
                     "{name}",
-                    resource.name
+                    resource.name,
                   ),
                   { modal: true },
-                  Messages.DeleteButtonLabel
+                  Messages.DeleteButtonLabel,
                 ))
               ) {
                 return;
@@ -85,12 +85,12 @@ class ContentNavigator implements SubscriptionProvider {
                 window.showErrorMessage(
                   isContainer
                     ? Messages.FolderDeletionError
-                    : Messages.FileDeletionError
+                    : Messages.FileDeletionError,
                 );
               }
-            }
+            },
           );
-        }
+        },
       ),
       commands.registerCommand(
         "SAS.restoreResource",
@@ -102,19 +102,19 @@ class ContentNavigator implements SubscriptionProvider {
                 window.showErrorMessage(
                   isContainer
                     ? Messages.FolderRestoreError
-                    : Messages.FileRestoreError
+                    : Messages.FileRestoreError,
                 );
               }
-            }
+            },
           );
-        }
+        },
       ),
       commands.registerCommand("SAS.emptyRecycleBin", async () => {
         if (
           !(await window.showWarningMessage(
             Messages.EmptyRecycleBinWarningMessage,
             { modal: true },
-            Messages.DeleteButtonLabel
+            Messages.DeleteButtonLabel,
           ))
         ) {
           return;
@@ -124,7 +124,7 @@ class ContentNavigator implements SubscriptionProvider {
         }
       }),
       commands.registerCommand("SAS.refreshContent", () =>
-        this.contentDataProvider.refresh()
+        this.contentDataProvider.refresh(),
       ),
       commands.registerCommand(
         "SAS.addFileResource",
@@ -140,18 +140,18 @@ class ContentNavigator implements SubscriptionProvider {
 
           const newUri = await this.contentDataProvider.createFile(
             resource,
-            fileName
+            fileName,
           );
           this.handleCreationResponse(
             resource,
             newUri,
-            sprintf(Messages.NewFileCreationError, { name: fileName })
+            sprintf(Messages.NewFileCreationError, { name: fileName }),
           );
 
           if (newUri) {
             await commands.executeCommand("vscode.open", newUri);
           }
-        }
+        },
       ),
       commands.registerCommand(
         "SAS.addFolderResource",
@@ -167,14 +167,14 @@ class ContentNavigator implements SubscriptionProvider {
 
           const newUri = await this.contentDataProvider.createFolder(
             resource,
-            folderName
+            folderName,
           );
           this.handleCreationResponse(
             resource,
             newUri,
-            sprintf(Messages.NewFolderCreationError, { name: folderName })
+            sprintf(Messages.NewFolderCreationError, { name: folderName }),
           );
-        }
+        },
       ),
       commands.registerCommand(
         "SAS.renameResource",
@@ -203,7 +203,7 @@ class ContentNavigator implements SubscriptionProvider {
 
           const newUri = await this.contentDataProvider.renameResource(
             resource,
-            name
+            name,
           );
 
           if (!newUri) {
@@ -211,7 +211,7 @@ class ContentNavigator implements SubscriptionProvider {
               sprintf(Messages.RenameError, {
                 oldName: resource.name,
                 newName: name,
-              })
+              }),
             );
             return;
           }
@@ -223,7 +223,7 @@ class ContentNavigator implements SubscriptionProvider {
           }
 
           this.contentDataProvider.refresh();
-        }
+        },
       ),
       commands.registerCommand(
         "SAS.addToFavorites",
@@ -231,7 +231,7 @@ class ContentNavigator implements SubscriptionProvider {
           if (!(await this.contentDataProvider.addToMyFavorites(resource))) {
             window.showErrorMessage(Messages.AddToFavoritesError);
           }
-        }
+        },
       ),
       commands.registerCommand(
         "SAS.removeFromFavorites",
@@ -241,18 +241,18 @@ class ContentNavigator implements SubscriptionProvider {
           ) {
             window.showErrorMessage(Messages.RemoveFromFavoritesError);
           }
-        }
+        },
       ),
       commands.registerCommand("SAS.collapseAllContent", () => {
         commands.executeCommand(
-          "workbench.actions.treeView.contentDataProvider.collapseAll"
+          "workbench.actions.treeView.contentDataProvider.collapseAll",
         );
       }),
       workspace.onDidChangeConfiguration(
         async (event: ConfigurationChangeEvent) => {
           if (event.affectsConfiguration("SAS.connectionProfiles")) {
             const activeProfile = profileConfig.getProfileByName(
-              profileConfig.getActiveProfile()
+              profileConfig.getActiveProfile(),
             );
             if (activeProfile) {
               if (
@@ -263,7 +263,7 @@ class ContentNavigator implements SubscriptionProvider {
               }
             }
           }
-        }
+        },
       ),
     ];
   }
@@ -271,7 +271,7 @@ class ContentNavigator implements SubscriptionProvider {
   private async handleCreationResponse(
     resource: ContentItem,
     newUri: Uri | undefined,
-    errorMessage: string
+    errorMessage: string,
   ): Promise<void> {
     if (!newUri) {
       window.showErrorMessage(errorMessage);
@@ -298,7 +298,7 @@ class ContentNavigator implements SubscriptionProvider {
     // If we have a selection that is a child of something we've already selected,
     // lets filter it out (i.e. we don't need to include it twice)
     return items.filter(
-      ({ parentFolderUri }: ContentItem) => !uris.includes(parentFolderUri)
+      ({ parentFolderUri }: ContentItem) => !uris.includes(parentFolderUri),
     );
   }
 }

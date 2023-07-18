@@ -9,7 +9,7 @@ import type { ActivationFunction } from "vscode-notebook-renderer";
 function replaceLast(
   base: string,
   searchValue: string,
-  replaceValue: string
+  replaceValue: string,
 ): string {
   const index = base.lastIndexOf(searchValue);
   if (index < 0) {
@@ -31,7 +31,7 @@ export const activate: ActivationFunction = () => ({
       // it's not a whole webview, body not allowed
       html.replace("<body ", "<div "),
       "</body>",
-      "</div>"
+      "</div>",
     );
   },
 });

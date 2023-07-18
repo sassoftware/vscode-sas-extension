@@ -49,7 +49,7 @@ export class ComputeJob extends Compute {
 
   async followLink<T>(
     linkName: string,
-    options?: AxiosRequestConfig
+    options?: AxiosRequestConfig,
   ): Promise<AxiosResponse<T>> {
     if (this._self.links === undefined) {
       await this.self();
@@ -189,13 +189,13 @@ export class ComputeJob extends Compute {
             start: i,
             limit,
           },
-        })
+        }),
       );
     }
     const results = await throttle(requests, 3);
     return results.reduce(
       (prev, resp) => prev.concat(resp.data.items),
-      resp.data.items
+      resp.data.items,
     );
   }
 }

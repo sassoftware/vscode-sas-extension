@@ -228,8 +228,8 @@ describe("ssh connection", () => {
       expect(streamStub.write.calledWith("test code\n")).to.be.true;
       expect(
         streamStub.write.calledWith(
-          "%put --vscode-sas-extension-submit-end--;\n"
-        )
+          "%put --vscode-sas-extension-submit-end--;\n",
+        ),
       ).to.be.true;
     });
 

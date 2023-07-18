@@ -26,7 +26,7 @@ describe("PaginatedResultSet", async function () {
 
     const paginatedResultSet = new PaginatedResultSet(
       async () => mockAxiosResponse,
-      transformData
+      transformData,
     );
 
     expect(await paginatedResultSet.getData()).to.deep.equal({
@@ -52,7 +52,7 @@ describe("PaginatedResultSet", async function () {
 
     const paginatedResultSet = new PaginatedResultSet(
       async () => mockAxiosResponse,
-      transformData
+      transformData,
     );
 
     expect(await paginatedResultSet.getData()).to.deep.equal({
@@ -86,7 +86,7 @@ describe("PaginatedResultSet", async function () {
 
     const paginatedResultSet = new PaginatedResultSet(
       async () => mockAxiosResponse,
-      transformData
+      transformData,
     );
 
     paginatedResultSet.updateStartOffset(10);

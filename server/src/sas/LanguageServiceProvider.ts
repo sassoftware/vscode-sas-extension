@@ -50,7 +50,7 @@ export class LanguageServiceProvider {
     this.syntaxProvider = new SyntaxProvider(this.model);
     this.completionProvider = new CompletionProvider(
       this.model,
-      this.syntaxProvider
+      this.syntaxProvider,
     );
 
     const lineCount = this.model.getLineCount();
@@ -102,7 +102,7 @@ export class LanguageServiceProvider {
           prevLine === i ? tokens[j].start - prevChar : tokens[j].start,
           end - tokens[j].start,
           type,
-          0
+          0,
         );
         prevLine = i;
         prevChar = tokens[j].start;

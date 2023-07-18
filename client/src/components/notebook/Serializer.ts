@@ -35,16 +35,16 @@ export class NotebookSerializer implements vscode.NotebookSerializer {
       const cell = new vscode.NotebookCellData(
         item.kind,
         item.value,
-        item.language
+        item.language,
       );
       if (item.outputs) {
         cell.outputs = item.outputs.map(
           (output) =>
             new vscode.NotebookCellOutput(
               output.items.map((item) =>
-                vscode.NotebookCellOutputItem.text(item.data, item.mime)
-              )
-            )
+                vscode.NotebookCellOutputItem.text(item.data, item.mime),
+              ),
+            ),
         );
       }
       return cell;

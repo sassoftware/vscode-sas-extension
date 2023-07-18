@@ -251,12 +251,12 @@ export class Lexer {
         this.quoting = checkQuote(
           this.quoting,
           !!Lexer.isQuoting[token.text],
-          token.text
+          token.text,
         );
         this.bquoting = checkQuote(
           this.bquoting,
           !!Lexer.isBQuoting[token.text],
-          token.text
+          token.text,
         );
         if (this.quoting === -1 && this.bquoting === -1) {
           if (!this.ignoreFormat && token.text === "%PUT") {
@@ -347,7 +347,7 @@ export class Lexer {
             type = "text";
             if (
               this.isMacroKeyword(
-                text.substr(this.start.column + 1, i - this.start.column - 1)
+                text.substr(this.start.column + 1, i - this.start.column - 1),
               )
             ) {
               type = "macro-keyword";
@@ -662,7 +662,7 @@ export class Lexer {
             DATE_DDMMMYY_YYQ_REG.lastIndex = 0;
             text = this.model.getLine(this.curr.line);
             let matched = DATE_DDMMMYY_YYQ_REG.exec(
-              text.substring(this.curr.column)
+              text.substring(this.curr.column),
             );
             if (matched) {
               const q = matched[0][2];
@@ -705,7 +705,7 @@ export class Lexer {
             };
           } else {
             const matches = Lexer.longBiOprs.exec(
-              text.substring(this.curr.column)
+              text.substring(this.curr.column),
             );
             if (matches) {
               this.curr.column += matches[0].length;

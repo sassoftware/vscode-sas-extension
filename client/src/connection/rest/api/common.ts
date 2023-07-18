@@ -43,7 +43,10 @@ export interface RequestArgs {
  */
 export class RequiredError extends Error {
   name: "RequiredError" = "RequiredError";
-  constructor(public field: string, msg?: string) {
+  constructor(
+    public field: string,
+    msg?: string,
+  ) {
     super(msg);
   }
 }
@@ -56,12 +59,12 @@ export class RequiredError extends Error {
 export const assertParamExists = function (
   functionName: string,
   paramName: string,
-  paramValue: unknown
+  paramValue: unknown,
 ) {
   if (paramValue === null || paramValue === undefined) {
     throw new RequiredError(
       paramName,
-      `Required parameter ${paramName} was null or undefined when calling ${functionName}.`
+      `Required parameter ${paramName} was null or undefined when calling ${functionName}.`,
     );
   }
 };
@@ -69,20 +72,20 @@ export const assertParamExists = function (
 function setFlattenedQueryParams(
   urlSearchParams: URLSearchParams,
   parameter: any,
-  key: string = ""
+  key: string = "",
 ): void {
   if (typeof parameter === "object") {
     if (Array.isArray(parameter)) {
       (parameter as any[]).forEach((item) =>
-        setFlattenedQueryParams(urlSearchParams, item, key)
+        setFlattenedQueryParams(urlSearchParams, item, key),
       );
     } else {
       Object.keys(parameter).forEach((currentKey) =>
         setFlattenedQueryParams(
           urlSearchParams,
           parameter[currentKey],
-          `${key}${key !== "" ? "." : ""}${currentKey}`
-        )
+          `${key}${key !== "" ? "." : ""}${currentKey}`,
+        ),
       );
     }
   } else {
@@ -111,7 +114,7 @@ export const setSearchParams = function (url: URL, ...objects: any[]) {
 export const serializeDataIfNeeded = function (
   value: any,
   requestOptions: any,
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   const nonString = typeof value !== "string";
   const needsSerialization =
@@ -137,7 +140,7 @@ export const toPathString = function (url: URL) {
  */
 export const createRequestFunction = function <T>(
   axiosArgs: RequestArgs,
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   const axiosRequestArgs = {
     ...axiosArgs.options,

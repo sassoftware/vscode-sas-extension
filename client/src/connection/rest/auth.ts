@@ -16,7 +16,7 @@ interface Tokens {
 
 export async function refreshToken(
   config: Config,
-  tokens: Tokens
+  tokens: Tokens,
 ): Promise<Tokens | undefined> {
   const clientId = config.clientId || "vscode";
   const clientSecret = config.clientSecret ?? "";
@@ -24,7 +24,7 @@ export async function refreshToken(
     new Configuration({
       basePath: config.endpoint + "/compute",
       accessToken: tokens.access_token,
-    })
+    }),
   );
   await rootApi.headersForRoot().catch((err) => {
     if (err.response?.status === 401) {
@@ -37,7 +37,7 @@ export async function refreshToken(
             client_secret: clientSecret,
             grant_type: "refresh_token",
             refresh_token: tokens?.refresh_token,
-          }).toString()
+          }).toString(),
         )
         .then(
           (res) => {
@@ -46,7 +46,7 @@ export async function refreshToken(
           () => {
             // refresh token failed, has to login again
             tokens = undefined;
-          }
+          },
         );
     }
     throw err;
@@ -57,7 +57,7 @@ export async function refreshToken(
 
 export async function getTokens(
   config: Config,
-  tokens?: Tokens
+  tokens?: Tokens,
 ): Promise<Tokens> {
   const clientId = config.clientId || "vscode";
   const clientSecret = config.clientSecret ?? "";
@@ -65,7 +65,7 @@ export async function getTokens(
   const { codeVerifier, codeChallenge } = getPKCE();
 
   const callbackUrl = await env.asExternalUri(
-    Uri.parse(`${env.uriScheme}://sas.sas-lsp`)
+    Uri.parse(`${env.uriScheme}://sas.sas-lsp`),
   );
 
   const params = new URLSearchParams([
@@ -77,8 +77,8 @@ export async function getTokens(
   ]);
   await env.openExternal(
     Uri.parse(
-      `${config.endpoint}/SASLogon/oauth/authorize?${params.toString()}`
-    )
+      `${config.endpoint}/SASLogon/oauth/authorize?${params.toString()}`,
+    ),
   );
 
   const cancellationToken = new CancellationTokenSource();
@@ -98,7 +98,7 @@ export async function getTokens(
       password: true,
       ignoreFocusOut: true,
     },
-    cancellationToken.token
+    cancellationToken.token,
   );
   handler.dispose();
   if (!authCode && inputCode) {
@@ -117,7 +117,7 @@ export async function getTokens(
         grant_type: "authorization_code",
         code: authCode,
         code_verifier: codeVerifier,
-      }).toString()
+      }).toString(),
     )
   ).data;
   return tokens;
@@ -131,7 +131,7 @@ function getPKCE() {
   let codeVerifier = "";
   for (let i = 0; i < LENGTH; i++) {
     codeVerifier += possible.charAt(
-      Math.floor(Math.random() * possible.length)
+      Math.floor(Math.random() * possible.length),
     );
   }
   const codeChallenge = createHash("sha256")

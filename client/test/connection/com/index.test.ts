@@ -79,24 +79,24 @@ describe("COM connection", () => {
       //using args here allows use of deep equal, that generates a concise diff in the test output on failures
       expect(stdinStub.args[0][0]).to.deep.equal(scriptContent + "\n");
       expect(stdinStub.args[1][0]).to.deep.equal(
-        "$runner = New-Object -TypeName SASRunner\n"
+        "$runner = New-Object -TypeName SASRunner\n",
       );
 
       expect(stdinStub.args[2][0]).to.deep.equal(
-        `$profileHost = "localhost"\n`
+        `$profileHost = "localhost"\n`,
       );
       expect(stdinStub.args[3][0]).to.deep.equal(
-        "$runner.Setup($profileHost)\n"
+        "$runner.Setup($profileHost)\n",
       );
       expect(stdinStub.args[4][0]).to.deep.equal(
-        "$runner.ResolveSystemVars()\n"
+        "$runner.ResolveSystemVars()\n",
       );
 
       expect(stdinStub.args[5][0]).to.deep.equal(
-        `$sasOpts=@("-PAGESIZE=MAX")\n`
+        `$sasOpts=@("-PAGESIZE=MAX")\n`,
       );
       expect(stdinStub.args[6][0]).to.deep.equal(
-        `$runner.SetOptions($sasOpts)\n`
+        `$runner.SetOptions($sasOpts)\n`,
       );
     });
   });
@@ -114,7 +114,7 @@ describe("COM connection", () => {
       fsStub.returns("content");
 
       const runPromise = session.run(
-        "ods html5;\nproc print data=sashelp.cars;\nrun;"
+        "ods html5;\nproc print data=sashelp.cars;\nrun;",
       );
 
       //simulate log message for body file
@@ -127,7 +127,7 @@ describe("COM connection", () => {
       expect(runResult.title).to.equal("Results");
 
       expect(stdinStub.args[7][0]).to.deep.equal(
-        `$code=@"\nods html5 path="/work/dir";\nproc print data=sashelp.cars;\nrun;\n%put --vscode-sas-extension-submit-end--;\n"@\n`
+        `$code=@"\nods html5 path="/work/dir";\nproc print data=sashelp.cars;\nrun;\n%put --vscode-sas-extension-submit-end--;\n"@\n`,
       );
 
       expect(stdinStub.args[8][0]).to.deep.equal(`$runner.Run($code)\n`);

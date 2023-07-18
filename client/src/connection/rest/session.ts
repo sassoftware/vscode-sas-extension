@@ -75,7 +75,7 @@ export class ComputeSession extends Compute {
       return res.data;
     } else {
       throw new Error(
-        `Error getting server with ID  ${this._self.id} - ${res.message}`
+        `Error getting server with ID  ${this._self.id} - ${res.message}`,
       );
     }
   }
@@ -99,7 +99,7 @@ export class ComputeSession extends Compute {
 
   async followLink<T>(
     linkName: string,
-    options?: AxiosRequestConfig
+    options?: AxiosRequestConfig,
   ): Promise<AxiosResponse<T>> {
     if (this._self.links === undefined) {
       await this.self();
@@ -125,7 +125,7 @@ export class ComputeSession extends Compute {
         value: state,
         ifMatch: this.etag,
       },
-      { headers: { "Content-Type": "text/plain" } }
+      { headers: { "Content-Type": "text/plain" } },
     );
   }
 

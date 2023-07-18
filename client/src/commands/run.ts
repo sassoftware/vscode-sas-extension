@@ -53,7 +53,7 @@ function getCode(outputHtml: boolean, selected = false): string {
 }
 
 async function getSelectedRegions(
-  client: BaseLanguageClient
+  client: BaseLanguageClient,
 ): Promise<Selection[]> {
   const result: string[] = [];
 
@@ -64,7 +64,7 @@ async function getSelectedRegions(
         textDocument: { uri: window.activeTextEditor.document.uri.toString() },
         line,
         col,
-      }
+      },
     );
     if (block) {
       const start = doc.offsetAt(new Position(block.startLine, block.startCol));
@@ -98,7 +98,7 @@ async function getSelectedRegions(
     const [start, end] = key.split("-");
     return new Selection(
       doc.positionAt(parseInt(start)),
-      doc.positionAt(parseInt(end))
+      doc.positionAt(parseInt(end)),
     );
   });
 }
@@ -131,7 +131,7 @@ async function runCode(selected?: boolean) {
       location: ProgressLocation.Notification,
       title: "Connecting to SAS session...",
     },
-    session.setup
+    session.setup,
   );
 
   await window.withProgress(
@@ -150,12 +150,12 @@ async function runCode(selected?: boolean) {
             "SASSession", // Identifies the type of the webview. Used internally
             "Result", // Title of the panel displayed to the user
             { preserveFocus: true, viewColumn: ViewColumn.Beside }, // Editor column to show the new webview panel in.
-            {} // Webview options. More on these later.
+            {}, // Webview options. More on these later.
           );
           odsResult.webview.html = results.html5;
         }
       });
-    }
+    },
   );
 }
 
@@ -170,7 +170,7 @@ const _run = async (selected = false) => {
     .catch((err) => {
       console.dir(err);
       window.showErrorMessage(
-        err.response?.data ? JSON.stringify(err.response.data) : err.message
+        err.response?.data ? JSON.stringify(err.response.data) : err.message,
       );
     })
     .finally(() => {

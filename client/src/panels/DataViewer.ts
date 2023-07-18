@@ -14,7 +14,7 @@ class DataViewer extends WebView {
   public constructor(
     extensionUri: Uri,
     uid: string,
-    paginator: PaginatedResultSet<TableData>
+    paginator: PaginatedResultSet<TableData>,
   ) {
     super();
     this._uid = uid;
@@ -39,7 +39,7 @@ class DataViewer extends WebView {
           <div class="data-viewer"></div>
           <script type="module" src="${this.webviewUri(
             this._extensionUri,
-            "DataViewer"
+            "DataViewer",
           )}"></script>
         </body>
       </html>
@@ -49,7 +49,7 @@ class DataViewer extends WebView {
   }
 
   public async processMessage(
-    event: Event & { command: string; data?: { start?: number } }
+    event: Event & { command: string; data?: { start?: number } },
   ): Promise<void> {
     switch (event.command) {
       case "request:loadData":

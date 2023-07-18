@@ -4004,7 +4004,7 @@ export interface ViewRequest {
  * @export
  */
 export const ContextsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -4016,7 +4016,7 @@ export const ContextsApiAxiosParamCreator = function (
      */
     createContext: async (
       contextRequest: ContextRequest,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'contextRequest' is not null or undefined
       assertParamExists("createContext", "contextRequest", contextRequest);
@@ -4050,7 +4050,7 @@ export const ContextsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         contextRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -4069,13 +4069,13 @@ export const ContextsApiAxiosParamCreator = function (
     createSession: async (
       contextId: string,
       sessionRequest?: SessionRequest,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'contextId' is not null or undefined
       assertParamExists("createSession", "contextId", contextId);
       const localVarPath = `/contexts/{contextId}/sessions`.replace(
         `{${"contextId"}}`,
-        encodeURIComponent(String(contextId))
+        encodeURIComponent(String(contextId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -4106,7 +4106,7 @@ export const ContextsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         sessionRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -4123,13 +4123,13 @@ export const ContextsApiAxiosParamCreator = function (
      */
     deleteContext: async (
       contextId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'contextId' is not null or undefined
       assertParamExists("deleteContext", "contextId", contextId);
       const localVarPath = `/contexts/{contextId}`.replace(
         `{${"contextId"}}`,
-        encodeURIComponent(String(contextId))
+        encodeURIComponent(String(contextId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -4169,13 +4169,13 @@ export const ContextsApiAxiosParamCreator = function (
      */
     getContext: async (
       contextId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'contextId' is not null or undefined
       assertParamExists("getContext", "contextId", contextId);
       const localVarPath = `/contexts/{contextId}`.replace(
         `{${"contextId"}}`,
-        encodeURIComponent(String(contextId))
+        encodeURIComponent(String(contextId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -4225,7 +4225,7 @@ export const ContextsApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/contexts`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -4286,13 +4286,13 @@ export const ContextsApiAxiosParamCreator = function (
      */
     headersForContext: async (
       contextId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'contextId' is not null or undefined
       assertParamExists("headersForContext", "contextId", contextId);
       const localVarPath = `/contexts/{contextId}`.replace(
         `{${"contextId"}}`,
-        encodeURIComponent(String(contextId))
+        encodeURIComponent(String(contextId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -4338,7 +4338,7 @@ export const ContextsApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/contexts`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -4399,7 +4399,7 @@ export const ContextsApiAxiosParamCreator = function (
       contextId: string,
       ifMatch: string,
       context: Context,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'contextId' is not null or undefined
       assertParamExists("updateContext", "contextId", contextId);
@@ -4409,7 +4409,7 @@ export const ContextsApiAxiosParamCreator = function (
       assertParamExists("updateContext", "context", context);
       const localVarPath = `/contexts/{contextId}`.replace(
         `{${"contextId"}}`,
-        encodeURIComponent(String(contextId))
+        encodeURIComponent(String(contextId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -4444,7 +4444,7 @@ export const ContextsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         context,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -4471,11 +4471,11 @@ export const ContextsApi = function (configuration?: Configuration) {
      */
     async createContext(
       requestParameters: ContextsApiCreateContextRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Context>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.createContext(
         requestParameters.contextRequest,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -4489,12 +4489,12 @@ export const ContextsApi = function (configuration?: Configuration) {
      */
     async createSession(
       requestParameters: ContextsApiCreateSessionRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Session>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.createSession(
         requestParameters.contextId,
         requestParameters.sessionRequest,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -4508,11 +4508,11 @@ export const ContextsApi = function (configuration?: Configuration) {
      */
     async deleteContext(
       requestParameters: ContextsApiDeleteContextRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteContext(
         requestParameters.contextId,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -4526,11 +4526,11 @@ export const ContextsApi = function (configuration?: Configuration) {
      */
     async getContext(
       requestParameters: ContextsApiGetContextRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Context>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getContext(
         requestParameters.contextId,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -4544,7 +4544,7 @@ export const ContextsApi = function (configuration?: Configuration) {
      */
     async getContexts(
       requestParameters: ContextsApiGetContextsRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<ContextSummaryCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getContexts(
         requestParameters.acceptItem,
@@ -4552,7 +4552,7 @@ export const ContextsApi = function (configuration?: Configuration) {
         requestParameters.limit,
         requestParameters.filter,
         requestParameters.sortBy,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -4566,12 +4566,12 @@ export const ContextsApi = function (configuration?: Configuration) {
      */
     async headersForContext(
       requestParameters: ContextsApiHeadersForContextRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForContext(
           requestParameters.contextId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -4585,7 +4585,7 @@ export const ContextsApi = function (configuration?: Configuration) {
      */
     async headersForContexts(
       requestParameters: ContextsApiHeadersForContextsRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForContexts(
@@ -4593,7 +4593,7 @@ export const ContextsApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.filter,
           requestParameters.sortBy,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -4607,13 +4607,13 @@ export const ContextsApi = function (configuration?: Configuration) {
      */
     async updateContext(
       requestParameters: ContextsApiUpdateContextRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Context>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.updateContext(
         requestParameters.contextId,
         requestParameters.ifMatch,
         requestParameters.context,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -4809,7 +4809,7 @@ export interface ContextsApiUpdateContextRequest {
  * @export
  */
 export const DataAccessApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -4823,7 +4823,7 @@ export const DataAccessApiAxiosParamCreator = function (
     createLibrary: async (
       sessionId: string,
       libraryRequest: LibraryRequest,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("createLibrary", "sessionId", sessionId);
@@ -4831,7 +4831,7 @@ export const DataAccessApiAxiosParamCreator = function (
       assertParamExists("createLibrary", "libraryRequest", libraryRequest);
       const localVarPath = `/sessions/{sessionId}/data`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -4862,7 +4862,7 @@ export const DataAccessApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         libraryRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -4885,7 +4885,7 @@ export const DataAccessApiAxiosParamCreator = function (
       libref: string,
       tableName: string,
       viewRequest: ViewRequest,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("createView", "sessionId", sessionId);
@@ -4929,7 +4929,7 @@ export const DataAccessApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         viewRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -4948,7 +4948,7 @@ export const DataAccessApiAxiosParamCreator = function (
     deleteLibrary: async (
       sessionId: string,
       libref: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("deleteLibrary", "sessionId", sessionId);
@@ -4999,7 +4999,7 @@ export const DataAccessApiAxiosParamCreator = function (
       sessionId: string,
       libref: string,
       tableName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("deleteTable", "sessionId", sessionId);
@@ -5055,7 +5055,7 @@ export const DataAccessApiAxiosParamCreator = function (
       libref: string,
       tableName: string,
       columnName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getColumn", "sessionId", sessionId);
@@ -5117,7 +5117,7 @@ export const DataAccessApiAxiosParamCreator = function (
       tableName: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getColumns", "sessionId", sessionId);
@@ -5186,7 +5186,7 @@ export const DataAccessApiAxiosParamCreator = function (
       start?: number,
       limit?: number,
       columnsRequest?: ColumnsRequest,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getColumnsWithRequest", "sessionId", sessionId);
@@ -5236,7 +5236,7 @@ export const DataAccessApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         columnsRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -5263,13 +5263,13 @@ export const DataAccessApiAxiosParamCreator = function (
       start?: number,
       limit?: number,
       noCache?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getLibraries", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/data`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -5327,7 +5327,7 @@ export const DataAccessApiAxiosParamCreator = function (
     getLibrary: async (
       sessionId: string,
       libref: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getLibrary", "sessionId", sessionId);
@@ -5376,7 +5376,7 @@ export const DataAccessApiAxiosParamCreator = function (
     getLibrarySummary: async (
       sessionId: string,
       libref: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getLibrarySummary", "sessionId", sessionId);
@@ -5441,7 +5441,7 @@ export const DataAccessApiAxiosParamCreator = function (
       start?: number,
       limit?: number,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getPromptContent", "sessionId", sessionId);
@@ -5530,7 +5530,7 @@ export const DataAccessApiAxiosParamCreator = function (
       promptContentRequest: PromptContentRequest,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getPromptContentWithRequest", "sessionId", sessionId);
@@ -5542,7 +5542,7 @@ export const DataAccessApiAxiosParamCreator = function (
       assertParamExists(
         "getPromptContentWithRequest",
         "promptContentRequest",
-        promptContentRequest
+        promptContentRequest,
       );
       const localVarPath =
         `/sessions/{sessionId}/data/{libref}/{tableName}/promptContent`
@@ -5586,7 +5586,7 @@ export const DataAccessApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         promptContentRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -5625,7 +5625,7 @@ export const DataAccessApiAxiosParamCreator = function (
       limit?: number,
       sortBy?: string,
       formatMissingValues?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getRowSet", "sessionId", sessionId);
@@ -5726,7 +5726,7 @@ export const DataAccessApiAxiosParamCreator = function (
       start?: number,
       limit?: number,
       formatMissingValues?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getRowSetWithRequest", "sessionId", sessionId);
@@ -5786,7 +5786,7 @@ export const DataAccessApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         rowSetRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -5821,7 +5821,7 @@ export const DataAccessApiAxiosParamCreator = function (
       where?: string,
       includeColumnNames?: boolean,
       formatMissingValues?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getRows", "sessionId", sessionId);
@@ -5926,7 +5926,7 @@ export const DataAccessApiAxiosParamCreator = function (
       enableQuoting?: boolean,
       enableEscaping?: boolean,
       formatMissingValues?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getRowsAsCSV", "sessionId", sessionId);
@@ -6037,7 +6037,7 @@ export const DataAccessApiAxiosParamCreator = function (
       format?: boolean,
       includeIndex?: boolean,
       formatMissingValues?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getRowsWithRequest", "sessionId", sessionId);
@@ -6101,7 +6101,7 @@ export const DataAccessApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         rowsRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -6122,7 +6122,7 @@ export const DataAccessApiAxiosParamCreator = function (
       sessionId: string,
       libref: string,
       tableName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getTable", "sessionId", sessionId);
@@ -6176,7 +6176,7 @@ export const DataAccessApiAxiosParamCreator = function (
       sessionId: string,
       libref: string,
       tableName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getTableSummary", "sessionId", sessionId);
@@ -6237,7 +6237,7 @@ export const DataAccessApiAxiosParamCreator = function (
       start?: number,
       limit?: number,
       noCache?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getTables", "sessionId", sessionId);
@@ -6306,7 +6306,7 @@ export const DataAccessApiAxiosParamCreator = function (
       libref: string,
       tableName: string,
       columnName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForColumn", "sessionId", sessionId);
@@ -6368,7 +6368,7 @@ export const DataAccessApiAxiosParamCreator = function (
       tableName: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForColumns", "sessionId", sessionId);
@@ -6429,7 +6429,7 @@ export const DataAccessApiAxiosParamCreator = function (
     headersForLibrary: async (
       sessionId: string,
       libref: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForLibrary", "sessionId", sessionId);
@@ -6494,7 +6494,7 @@ export const DataAccessApiAxiosParamCreator = function (
       start?: number,
       limit?: number,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForPromptContent", "sessionId", sessionId);
@@ -6591,7 +6591,7 @@ export const DataAccessApiAxiosParamCreator = function (
       where?: string,
       includeColumnNames?: boolean,
       formatMissingValues?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForRow", "sessionId", sessionId);
@@ -6692,7 +6692,7 @@ export const DataAccessApiAxiosParamCreator = function (
       limit?: number,
       sortBy?: string,
       formatMissingValues?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForRowSet", "sessionId", sessionId);
@@ -6805,7 +6805,7 @@ export const DataAccessApiAxiosParamCreator = function (
       enableQuoting?: boolean,
       enableEscaping?: boolean,
       formatMissingValues?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForRowsAsCSV", "sessionId", sessionId);
@@ -6906,13 +6906,13 @@ export const DataAccessApiAxiosParamCreator = function (
       start?: number,
       limit?: number,
       noCache?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForSessionLibraries", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/data`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -6968,7 +6968,7 @@ export const DataAccessApiAxiosParamCreator = function (
       sessionId: string,
       libref: string,
       tableName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForTable", "sessionId", sessionId);
@@ -7028,7 +7028,7 @@ export const DataAccessApiAxiosParamCreator = function (
       columnName: string,
       ifMatch: string,
       column: Column,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("updateColumn", "sessionId", sessionId);
@@ -7081,7 +7081,7 @@ export const DataAccessApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         column,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -7106,7 +7106,7 @@ export const DataAccessApiAxiosParamCreator = function (
       tableName: string,
       ifMatch: string,
       tableInfo: TableInfo,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("updateTable", "sessionId", sessionId);
@@ -7155,7 +7155,7 @@ export const DataAccessApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         tableInfo,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -7183,12 +7183,12 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async createLibrary(
       requestParameters: DataAccessApiCreateLibraryRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.createLibrary(
         requestParameters.sessionId,
         requestParameters.libraryRequest,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7202,14 +7202,14 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async createView(
       requestParameters: DataAccessApiCreateViewRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<TableInfo>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.createView(
         requestParameters.sessionId,
         requestParameters.libref,
         requestParameters.tableName,
         requestParameters.viewRequest,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7223,12 +7223,12 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async deleteLibrary(
       requestParameters: DataAccessApiDeleteLibraryRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteLibrary(
         requestParameters.sessionId,
         requestParameters.libref,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7242,13 +7242,13 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async deleteTable(
       requestParameters: DataAccessApiDeleteTableRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteTable(
         requestParameters.sessionId,
         requestParameters.libref,
         requestParameters.tableName,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7262,14 +7262,14 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getColumn(
       requestParameters: DataAccessApiGetColumnRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Column>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getColumn(
         requestParameters.sessionId,
         requestParameters.libref,
         requestParameters.tableName,
         requestParameters.columnName,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7283,7 +7283,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getColumns(
       requestParameters: DataAccessApiGetColumnsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<ColumnCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getColumns(
         requestParameters.sessionId,
@@ -7291,7 +7291,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
         requestParameters.tableName,
         requestParameters.start,
         requestParameters.limit,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7305,7 +7305,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getColumnsWithRequest(
       requestParameters: DataAccessApiGetColumnsWithRequestRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<ColumnCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getColumnsWithRequest(
@@ -7315,7 +7315,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
           requestParameters.start,
           requestParameters.limit,
           requestParameters.columnsRequest,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7329,7 +7329,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getLibraries(
       requestParameters: DataAccessApiGetLibrariesRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<LibrarySummaryCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getLibraries(
         requestParameters.sessionId,
@@ -7337,7 +7337,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
         requestParameters.start,
         requestParameters.limit,
         requestParameters.noCache,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7351,12 +7351,12 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getLibrary(
       requestParameters: DataAccessApiGetLibraryRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Library>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getLibrary(
         requestParameters.sessionId,
         requestParameters.libref,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7370,13 +7370,13 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getLibrarySummary(
       requestParameters: DataAccessApiGetLibrarySummaryRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<LibrarySummary>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getLibrarySummary(
           requestParameters.sessionId,
           requestParameters.libref,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7390,7 +7390,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getPromptContent(
       requestParameters: DataAccessApiGetPromptContentRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<PromptContent>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getPromptContent(
@@ -7404,7 +7404,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
           requestParameters.start,
           requestParameters.limit,
           requestParameters.sortBy,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7418,7 +7418,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getPromptContentWithRequest(
       requestParameters: DataAccessApiGetPromptContentWithRequestRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<PromptContent>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getPromptContentWithRequest(
@@ -7428,7 +7428,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
           requestParameters.promptContentRequest,
           requestParameters.start,
           requestParameters.limit,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7442,7 +7442,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getRowSet(
       requestParameters: DataAccessApiGetRowSetRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<RowSet>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getRowSet(
         requestParameters.sessionId,
@@ -7457,7 +7457,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
         requestParameters.limit,
         requestParameters.sortBy,
         requestParameters.formatMissingValues,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7471,7 +7471,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getRowSetWithRequest(
       requestParameters: DataAccessApiGetRowSetWithRequestRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<RowSet>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getRowSetWithRequest(
@@ -7483,7 +7483,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
           requestParameters.start,
           requestParameters.limit,
           requestParameters.formatMissingValues,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7497,7 +7497,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getRows(
       requestParameters: DataAccessApiGetRowsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<RowCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getRows(
         requestParameters.sessionId,
@@ -7510,7 +7510,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
         requestParameters.where,
         requestParameters.includeColumnNames,
         requestParameters.formatMissingValues,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7524,7 +7524,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getRowsAsCSV(
       requestParameters: DataAccessApiGetRowsAsCSVRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getRowsAsCSV(
         requestParameters.sessionId,
@@ -7541,7 +7541,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
         requestParameters.enableQuoting,
         requestParameters.enableEscaping,
         requestParameters.formatMissingValues,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7555,7 +7555,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getRowsWithRequest(
       requestParameters: DataAccessApiGetRowsWithRequestRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<RowCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getRowsWithRequest(
@@ -7568,7 +7568,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
           requestParameters.format,
           requestParameters.includeIndex,
           requestParameters.formatMissingValues,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7582,13 +7582,13 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getTable(
       requestParameters: DataAccessApiGetTableRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<TableInfo>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getTable(
         requestParameters.sessionId,
         requestParameters.libref,
         requestParameters.tableName,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7602,13 +7602,13 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getTableSummary(
       requestParameters: DataAccessApiGetTableSummaryRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<TableSummary>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getTableSummary(
         requestParameters.sessionId,
         requestParameters.libref,
         requestParameters.tableName,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7622,7 +7622,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async getTables(
       requestParameters: DataAccessApiGetTablesRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<TableSummaryCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getTables(
         requestParameters.sessionId,
@@ -7631,7 +7631,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
         requestParameters.start,
         requestParameters.limit,
         requestParameters.noCache,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7645,7 +7645,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async headersForColumn(
       requestParameters: DataAccessApiHeadersForColumnRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForColumn(
@@ -7653,7 +7653,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
           requestParameters.libref,
           requestParameters.tableName,
           requestParameters.columnName,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7667,7 +7667,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async headersForColumns(
       requestParameters: DataAccessApiHeadersForColumnsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForColumns(
@@ -7676,7 +7676,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
           requestParameters.tableName,
           requestParameters.start,
           requestParameters.limit,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7690,13 +7690,13 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async headersForLibrary(
       requestParameters: DataAccessApiHeadersForLibraryRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForLibrary(
           requestParameters.sessionId,
           requestParameters.libref,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7710,7 +7710,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async headersForPromptContent(
       requestParameters: DataAccessApiHeadersForPromptContentRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForPromptContent(
@@ -7724,7 +7724,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
           requestParameters.start,
           requestParameters.limit,
           requestParameters.sortBy,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7738,7 +7738,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async headersForRow(
       requestParameters: DataAccessApiHeadersForRowRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.headersForRow(
         requestParameters.sessionId,
@@ -7751,7 +7751,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
         requestParameters.where,
         requestParameters.includeColumnNames,
         requestParameters.formatMissingValues,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7765,7 +7765,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async headersForRowSet(
       requestParameters: DataAccessApiHeadersForRowSetRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForRowSet(
@@ -7781,7 +7781,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.sortBy,
           requestParameters.formatMissingValues,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7795,7 +7795,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async headersForRowsAsCSV(
       requestParameters: DataAccessApiHeadersForRowsAsCSVRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForRowsAsCSV(
@@ -7813,7 +7813,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
           requestParameters.enableQuoting,
           requestParameters.enableEscaping,
           requestParameters.formatMissingValues,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7827,7 +7827,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async headersForSessionLibraries(
       requestParameters: DataAccessApiHeadersForSessionLibrariesRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForSessionLibraries(
@@ -7835,7 +7835,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
           requestParameters.start,
           requestParameters.limit,
           requestParameters.noCache,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7849,13 +7849,13 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async headersForTable(
       requestParameters: DataAccessApiHeadersForTableRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.headersForTable(
         requestParameters.sessionId,
         requestParameters.libref,
         requestParameters.tableName,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7869,7 +7869,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async updateColumn(
       requestParameters: DataAccessApiUpdateColumnRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Column>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.updateColumn(
         requestParameters.sessionId,
@@ -7878,7 +7878,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
         requestParameters.columnName,
         requestParameters.ifMatch,
         requestParameters.column,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -7892,7 +7892,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
      */
     async updateTable(
       requestParameters: DataAccessApiUpdateTableRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<TableInfo>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.updateTable(
         requestParameters.sessionId,
@@ -7900,7 +7900,7 @@ export const DataAccessApi = function (configuration?: Configuration) {
         requestParameters.tableName,
         requestParameters.ifMatch,
         requestParameters.tableInfo,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -9468,7 +9468,7 @@ export interface DataAccessApiUpdateTableRequest {
  * @export
  */
 export const EnginesApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -9482,7 +9482,7 @@ export const EnginesApiAxiosParamCreator = function (
     getEngine: async (
       sessionId: string,
       engineName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getEngine", "sessionId", sessionId);
@@ -9535,7 +9535,7 @@ export const EnginesApiAxiosParamCreator = function (
       engineName: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getEngineDefinition", "sessionId", sessionId);
@@ -9597,13 +9597,13 @@ export const EnginesApiAxiosParamCreator = function (
       filter?: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getEngines", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/engines`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -9657,7 +9657,7 @@ export const EnginesApiAxiosParamCreator = function (
     headersForEngine: async (
       sessionId: string,
       engineName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForEngine", "sessionId", sessionId);
@@ -9710,7 +9710,7 @@ export const EnginesApiAxiosParamCreator = function (
       engineName: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForEngineDefinition", "sessionId", sessionId);
@@ -9772,13 +9772,13 @@ export const EnginesApiAxiosParamCreator = function (
       filter?: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForEngines", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/engines`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -9840,12 +9840,12 @@ export const EnginesApi = function (configuration?: Configuration) {
      */
     async getEngine(
       requestParameters: EnginesApiGetEngineRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Engine>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getEngine(
         requestParameters.sessionId,
         requestParameters.engineName,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -9859,7 +9859,7 @@ export const EnginesApi = function (configuration?: Configuration) {
      */
     async getEngineDefinition(
       requestParameters: EnginesApiGetEngineDefinitionRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getEngineDefinition(
@@ -9867,7 +9867,7 @@ export const EnginesApi = function (configuration?: Configuration) {
           requestParameters.engineName,
           requestParameters.start,
           requestParameters.limit,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -9881,14 +9881,14 @@ export const EnginesApi = function (configuration?: Configuration) {
      */
     async getEngines(
       requestParameters: EnginesApiGetEnginesRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<EngineCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getEngines(
         requestParameters.sessionId,
         requestParameters.filter,
         requestParameters.start,
         requestParameters.limit,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -9902,13 +9902,13 @@ export const EnginesApi = function (configuration?: Configuration) {
      */
     async headersForEngine(
       requestParameters: EnginesApiHeadersForEngineRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForEngine(
           requestParameters.sessionId,
           requestParameters.engineName,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -9922,7 +9922,7 @@ export const EnginesApi = function (configuration?: Configuration) {
      */
     async headersForEngineDefinition(
       requestParameters: EnginesApiHeadersForEngineDefinitionRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForEngineDefinition(
@@ -9930,7 +9930,7 @@ export const EnginesApi = function (configuration?: Configuration) {
           requestParameters.engineName,
           requestParameters.start,
           requestParameters.limit,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -9944,7 +9944,7 @@ export const EnginesApi = function (configuration?: Configuration) {
      */
     async headersForEngines(
       requestParameters: EnginesApiHeadersForEnginesRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForEngines(
@@ -9952,7 +9952,7 @@ export const EnginesApi = function (configuration?: Configuration) {
           requestParameters.filter,
           requestParameters.start,
           requestParameters.limit,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -10146,7 +10146,7 @@ export interface EnginesApiHeadersForEnginesRequest {
  * @export
  */
 export const FileSystemApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -10166,7 +10166,7 @@ export const FileSystemApiAxiosParamCreator = function (
       fileRequest: FileRequest,
       overwrite?: boolean,
       expandPath?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("copyFileOrDirectory", "sessionId", sessionId);
@@ -10174,7 +10174,7 @@ export const FileSystemApiAxiosParamCreator = function (
       assertParamExists(
         "copyFileOrDirectory",
         "destinationFileOrDirectoryPath",
-        destinationFileOrDirectoryPath
+        destinationFileOrDirectoryPath,
       );
       // verify required parameter 'fileRequest' is not null or undefined
       assertParamExists("copyFileOrDirectory", "fileRequest", fileRequest);
@@ -10183,7 +10183,7 @@ export const FileSystemApiAxiosParamCreator = function (
           .replace(`{${"sessionId"}}`, encodeURIComponent(String(sessionId)))
           .replace(
             `{${"destinationFileOrDirectoryPath"}}`,
-            encodeURIComponent(String(destinationFileOrDirectoryPath))
+            encodeURIComponent(String(destinationFileOrDirectoryPath)),
           );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10222,7 +10222,7 @@ export const FileSystemApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         fileRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -10245,7 +10245,7 @@ export const FileSystemApiAxiosParamCreator = function (
       fileOrDirectoryPath: string,
       fileProperties: FileProperties,
       expandPath?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("createFileOrDirectory", "sessionId", sessionId);
@@ -10253,20 +10253,20 @@ export const FileSystemApiAxiosParamCreator = function (
       assertParamExists(
         "createFileOrDirectory",
         "fileOrDirectoryPath",
-        fileOrDirectoryPath
+        fileOrDirectoryPath,
       );
       // verify required parameter 'fileProperties' is not null or undefined
       assertParamExists(
         "createFileOrDirectory",
         "fileProperties",
-        fileProperties
+        fileProperties,
       );
       const localVarPath =
         `/sessions/{sessionId}/files/{fileOrDirectoryPath}#touchFileOrDirectory`
           .replace(`{${"sessionId"}}`, encodeURIComponent(String(sessionId)))
           .replace(
             `{${"fileOrDirectoryPath"}}`,
-            encodeURIComponent(String(fileOrDirectoryPath))
+            encodeURIComponent(String(fileOrDirectoryPath)),
           );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10301,7 +10301,7 @@ export const FileSystemApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         fileProperties,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -10322,19 +10322,19 @@ export const FileSystemApiAxiosParamCreator = function (
       sessionId: string,
       fileOrDirectoryPath: string,
       ifMatch: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists(
         "deleteFileOrDirectoryFromSystem",
         "sessionId",
-        sessionId
+        sessionId,
       );
       // verify required parameter 'fileOrDirectoryPath' is not null or undefined
       assertParamExists(
         "deleteFileOrDirectoryFromSystem",
         "fileOrDirectoryPath",
-        fileOrDirectoryPath
+        fileOrDirectoryPath,
       );
       // verify required parameter 'ifMatch' is not null or undefined
       assertParamExists("deleteFileOrDirectoryFromSystem", "ifMatch", ifMatch);
@@ -10342,7 +10342,7 @@ export const FileSystemApiAxiosParamCreator = function (
         .replace(`{${"sessionId"}}`, encodeURIComponent(String(sessionId)))
         .replace(
           `{${"fileOrDirectoryPath"}}`,
-          encodeURIComponent(String(fileOrDirectoryPath))
+          encodeURIComponent(String(fileOrDirectoryPath)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10396,7 +10396,7 @@ export const FileSystemApiAxiosParamCreator = function (
       expandPath?: boolean,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getDirectoryMembers", "sessionId", sessionId);
@@ -10406,7 +10406,7 @@ export const FileSystemApiAxiosParamCreator = function (
         .replace(`{${"sessionId"}}`, encodeURIComponent(String(sessionId)))
         .replace(
           `{${"directoryPath"}}`,
-          encodeURIComponent(String(directoryPath))
+          encodeURIComponent(String(directoryPath)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10464,7 +10464,7 @@ export const FileSystemApiAxiosParamCreator = function (
     getFileContentFromSystem: async (
       sessionId: string,
       filePath: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getFileContentFromSystem", "sessionId", sessionId);
@@ -10515,7 +10515,7 @@ export const FileSystemApiAxiosParamCreator = function (
       sessionId: string,
       fileOrDirectoryPath: string,
       expandPath?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getFileorDirectoryProperties", "sessionId", sessionId);
@@ -10523,13 +10523,13 @@ export const FileSystemApiAxiosParamCreator = function (
       assertParamExists(
         "getFileorDirectoryProperties",
         "fileOrDirectoryPath",
-        fileOrDirectoryPath
+        fileOrDirectoryPath,
       );
       const localVarPath = `/sessions/{sessionId}/files/{fileOrDirectoryPath}`
         .replace(`{${"sessionId"}}`, encodeURIComponent(String(sessionId)))
         .replace(
           `{${"fileOrDirectoryPath"}}`,
-          encodeURIComponent(String(fileOrDirectoryPath))
+          encodeURIComponent(String(fileOrDirectoryPath)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10577,25 +10577,25 @@ export const FileSystemApiAxiosParamCreator = function (
       sessionId: string,
       fileOrDirectoryPath: string,
       expandPath?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists(
         "headersForFileorDirectoryProperties",
         "sessionId",
-        sessionId
+        sessionId,
       );
       // verify required parameter 'fileOrDirectoryPath' is not null or undefined
       assertParamExists(
         "headersForFileorDirectoryProperties",
         "fileOrDirectoryPath",
-        fileOrDirectoryPath
+        fileOrDirectoryPath,
       );
       const localVarPath = `/sessions/{sessionId}/files/{fileOrDirectoryPath}`
         .replace(`{${"sessionId"}}`, encodeURIComponent(String(sessionId)))
         .replace(
           `{${"fileOrDirectoryPath"}}`,
-          encodeURIComponent(String(fileOrDirectoryPath))
+          encodeURIComponent(String(fileOrDirectoryPath)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10645,7 +10645,7 @@ export const FileSystemApiAxiosParamCreator = function (
       filePath: string,
       body: File,
       ifMatch?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("updateFileContentOnSystem", "sessionId", sessionId);
@@ -10688,7 +10688,7 @@ export const FileSystemApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         body,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -10715,19 +10715,19 @@ export const FileSystemApiAxiosParamCreator = function (
       fileProperties: FileProperties,
       overwrite?: boolean,
       expandPath?: boolean,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists(
         "updateFileOrDirectoryOnSystem",
         "sessionId",
-        sessionId
+        sessionId,
       );
       // verify required parameter 'fileOrDirectoryPath' is not null or undefined
       assertParamExists(
         "updateFileOrDirectoryOnSystem",
         "fileOrDirectoryPath",
-        fileOrDirectoryPath
+        fileOrDirectoryPath,
       );
       // verify required parameter 'ifMatch' is not null or undefined
       assertParamExists("updateFileOrDirectoryOnSystem", "ifMatch", ifMatch);
@@ -10735,13 +10735,13 @@ export const FileSystemApiAxiosParamCreator = function (
       assertParamExists(
         "updateFileOrDirectoryOnSystem",
         "fileProperties",
-        fileProperties
+        fileProperties,
       );
       const localVarPath = `/sessions/{sessionId}/files/{fileOrDirectoryPath}`
         .replace(`{${"sessionId"}}`, encodeURIComponent(String(sessionId)))
         .replace(
           `{${"fileOrDirectoryPath"}}`,
-          encodeURIComponent(String(fileOrDirectoryPath))
+          encodeURIComponent(String(fileOrDirectoryPath)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10784,7 +10784,7 @@ export const FileSystemApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         fileProperties,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -10812,7 +10812,7 @@ export const FileSystemApi = function (configuration?: Configuration) {
      */
     async copyFileOrDirectory(
       requestParameters: FileSystemApiCopyFileOrDirectoryRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileProperties>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.copyFileOrDirectory(
@@ -10821,7 +10821,7 @@ export const FileSystemApi = function (configuration?: Configuration) {
           requestParameters.fileRequest,
           requestParameters.overwrite,
           requestParameters.expandPath,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -10835,7 +10835,7 @@ export const FileSystemApi = function (configuration?: Configuration) {
      */
     async createFileOrDirectory(
       requestParameters: FileSystemApiCreateFileOrDirectoryRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileProperties>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.createFileOrDirectory(
@@ -10843,7 +10843,7 @@ export const FileSystemApi = function (configuration?: Configuration) {
           requestParameters.fileOrDirectoryPath,
           requestParameters.fileProperties,
           requestParameters.expandPath,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -10857,14 +10857,14 @@ export const FileSystemApi = function (configuration?: Configuration) {
      */
     async deleteFileOrDirectoryFromSystem(
       requestParameters: FileSystemApiDeleteFileOrDirectoryFromSystemRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.deleteFileOrDirectoryFromSystem(
           requestParameters.sessionId,
           requestParameters.fileOrDirectoryPath,
           requestParameters.ifMatch,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -10878,7 +10878,7 @@ export const FileSystemApi = function (configuration?: Configuration) {
      */
     async getDirectoryMembers(
       requestParameters: FileSystemApiGetDirectoryMembersRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FilePropertiesCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getDirectoryMembers(
@@ -10888,7 +10888,7 @@ export const FileSystemApi = function (configuration?: Configuration) {
           requestParameters.expandPath,
           requestParameters.start,
           requestParameters.limit,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -10902,13 +10902,13 @@ export const FileSystemApi = function (configuration?: Configuration) {
      */
     async getFileContentFromSystem(
       requestParameters: FileSystemApiGetFileContentFromSystemRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getFileContentFromSystem(
           requestParameters.sessionId,
           requestParameters.filePath,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -10922,14 +10922,14 @@ export const FileSystemApi = function (configuration?: Configuration) {
      */
     async getFileorDirectoryProperties(
       requestParameters: FileSystemApiGetFileorDirectoryPropertiesRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileProperties>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getFileorDirectoryProperties(
           requestParameters.sessionId,
           requestParameters.fileOrDirectoryPath,
           requestParameters.expandPath,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -10943,14 +10943,14 @@ export const FileSystemApi = function (configuration?: Configuration) {
      */
     async headersForFileorDirectoryProperties(
       requestParameters: FileSystemApiHeadersForFileorDirectoryPropertiesRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForFileorDirectoryProperties(
           requestParameters.sessionId,
           requestParameters.fileOrDirectoryPath,
           requestParameters.expandPath,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -10964,7 +10964,7 @@ export const FileSystemApi = function (configuration?: Configuration) {
      */
     async updateFileContentOnSystem(
       requestParameters: FileSystemApiUpdateFileContentOnSystemRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileProperties>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.updateFileContentOnSystem(
@@ -10972,7 +10972,7 @@ export const FileSystemApi = function (configuration?: Configuration) {
           requestParameters.filePath,
           requestParameters.body,
           requestParameters.ifMatch,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -10986,7 +10986,7 @@ export const FileSystemApi = function (configuration?: Configuration) {
      */
     async updateFileOrDirectoryOnSystem(
       requestParameters: FileSystemApiUpdateFileOrDirectoryOnSystemRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileProperties>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.updateFileOrDirectoryOnSystem(
@@ -10996,7 +10996,7 @@ export const FileSystemApi = function (configuration?: Configuration) {
           requestParameters.fileProperties,
           requestParameters.overwrite,
           requestParameters.expandPath,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -11323,7 +11323,7 @@ export interface FileSystemApiUpdateFileOrDirectoryOnSystemRequest {
  * @export
  */
 export const FilesApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -11339,7 +11339,7 @@ export const FilesApiAxiosParamCreator = function (
       sessionId: string,
       filerefRequest: FilerefRequest,
       parent?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("assignFileref", "sessionId", sessionId);
@@ -11347,7 +11347,7 @@ export const FilesApiAxiosParamCreator = function (
       assertParamExists("assignFileref", "filerefRequest", filerefRequest);
       const localVarPath = `/sessions/{sessionId}/filerefs`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -11382,7 +11382,7 @@ export const FilesApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         filerefRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -11401,7 +11401,7 @@ export const FilesApiAxiosParamCreator = function (
     deleteFile: async (
       sessionId: string,
       fileref: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("deleteFile", "sessionId", sessionId);
@@ -11450,7 +11450,7 @@ export const FilesApiAxiosParamCreator = function (
     deleteFileref: async (
       sessionId: string,
       fileref: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("deleteFileref", "sessionId", sessionId);
@@ -11501,7 +11501,7 @@ export const FilesApiAxiosParamCreator = function (
       sessionId: string,
       fileref: string,
       member: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getDirectoryFileref", "sessionId", sessionId);
@@ -11560,7 +11560,7 @@ export const FilesApiAxiosParamCreator = function (
       fileref: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getDirectoryFilerefContents", "sessionId", sessionId);
@@ -11618,7 +11618,7 @@ export const FilesApiAxiosParamCreator = function (
     getFile: async (
       sessionId: string,
       fileref: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getFile", "sessionId", sessionId);
@@ -11667,7 +11667,7 @@ export const FilesApiAxiosParamCreator = function (
     getFileref: async (
       sessionId: string,
       fileref: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getFileref", "sessionId", sessionId);
@@ -11716,7 +11716,7 @@ export const FilesApiAxiosParamCreator = function (
     getFilerefSummary: async (
       sessionId: string,
       fileref: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getFilerefSummary", "sessionId", sessionId);
@@ -11771,7 +11771,7 @@ export const FilesApiAxiosParamCreator = function (
       filter?: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'acceptItem' is not null or undefined
       assertParamExists("getFilerefs", "acceptItem", acceptItem);
@@ -11779,7 +11779,7 @@ export const FilesApiAxiosParamCreator = function (
       assertParamExists("getFilerefs", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/filerefs`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -11837,7 +11837,7 @@ export const FilesApiAxiosParamCreator = function (
     headersForFileref: async (
       sessionId: string,
       fileref: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForFileref", "sessionId", sessionId);
@@ -11890,13 +11890,13 @@ export const FilesApiAxiosParamCreator = function (
       filter?: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForFilerefs", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/filerefs`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -11950,7 +11950,7 @@ export const FilesApiAxiosParamCreator = function (
     headersForGetFile: async (
       sessionId: string,
       fileref: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForGetFile", "sessionId", sessionId);
@@ -12003,7 +12003,7 @@ export const FilesApiAxiosParamCreator = function (
       fileref: string,
       ifMatch: string,
       body: File,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("updateFileContent", "sessionId", sessionId);
@@ -12048,7 +12048,7 @@ export const FilesApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         body,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -12075,13 +12075,13 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async assignFileref(
       requestParameters: FilesApiAssignFilerefRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Fileref>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.assignFileref(
         requestParameters.sessionId,
         requestParameters.filerefRequest,
         requestParameters.parent,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12095,12 +12095,12 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async deleteFile(
       requestParameters: FilesApiDeleteFileRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteFile(
         requestParameters.sessionId,
         requestParameters.fileref,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12114,12 +12114,12 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async deleteFileref(
       requestParameters: FilesApiDeleteFilerefRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteFileref(
         requestParameters.sessionId,
         requestParameters.fileref,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12133,14 +12133,14 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async getDirectoryFileref(
       requestParameters: FilesApiGetDirectoryFilerefRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<DirMember>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getDirectoryFileref(
           requestParameters.sessionId,
           requestParameters.fileref,
           requestParameters.member,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12154,7 +12154,7 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async getDirectoryFilerefContents(
       requestParameters: FilesApiGetDirectoryFilerefContentsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<DirectoryCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getDirectoryFilerefContents(
@@ -12162,7 +12162,7 @@ export const FilesApi = function (configuration?: Configuration) {
           requestParameters.fileref,
           requestParameters.start,
           requestParameters.limit,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12176,12 +12176,12 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async getFile(
       requestParameters: FilesApiGetFileRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getFile(
         requestParameters.sessionId,
         requestParameters.fileref,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12195,12 +12195,12 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async getFileref(
       requestParameters: FilesApiGetFilerefRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Fileref>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getFileref(
         requestParameters.sessionId,
         requestParameters.fileref,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12214,13 +12214,13 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async getFilerefSummary(
       requestParameters: FilesApiGetFilerefSummaryRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FilerefSummary>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getFilerefSummary(
           requestParameters.sessionId,
           requestParameters.fileref,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12234,7 +12234,7 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async getFilerefs(
       requestParameters: FilesApiGetFilerefsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FilerefSummaryCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getFilerefs(
         requestParameters.acceptItem,
@@ -12242,7 +12242,7 @@ export const FilesApi = function (configuration?: Configuration) {
         requestParameters.filter,
         requestParameters.start,
         requestParameters.limit,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12256,13 +12256,13 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async headersForFileref(
       requestParameters: FilesApiHeadersForFilerefRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForFileref(
           requestParameters.sessionId,
           requestParameters.fileref,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12276,7 +12276,7 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async headersForFilerefs(
       requestParameters: FilesApiHeadersForFilerefsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForFilerefs(
@@ -12284,7 +12284,7 @@ export const FilesApi = function (configuration?: Configuration) {
           requestParameters.filter,
           requestParameters.start,
           requestParameters.limit,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12298,13 +12298,13 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async headersForGetFile(
       requestParameters: FilesApiHeadersForGetFileRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForGetFile(
           requestParameters.sessionId,
           requestParameters.fileref,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12318,7 +12318,7 @@ export const FilesApi = function (configuration?: Configuration) {
      */
     async updateFileContent(
       requestParameters: FilesApiUpdateFileContentRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.updateFileContent(
@@ -12326,7 +12326,7 @@ export const FilesApi = function (configuration?: Configuration) {
           requestParameters.fileref,
           requestParameters.ifMatch,
           requestParameters.body,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12688,7 +12688,7 @@ export interface FilesApiUpdateFileContentRequest {
  * @export
  */
 export const FormatsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -12702,7 +12702,7 @@ export const FormatsApiAxiosParamCreator = function (
     getFormat: async (
       sessionId: string,
       formatName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getFormat", "sessionId", sessionId);
@@ -12759,13 +12759,13 @@ export const FormatsApiAxiosParamCreator = function (
       filter?: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getFormats", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/formats`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -12823,7 +12823,7 @@ export const FormatsApiAxiosParamCreator = function (
     headersForFormat: async (
       sessionId: string,
       formatName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForFormat", "sessionId", sessionId);
@@ -12876,13 +12876,13 @@ export const FormatsApiAxiosParamCreator = function (
       filter?: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForFormats", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/formats`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -12944,12 +12944,12 @@ export const FormatsApi = function (configuration?: Configuration) {
      */
     async getFormat(
       requestParameters: FormatsApiGetFormatRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Format>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getFormat(
         requestParameters.sessionId,
         requestParameters.formatName,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12963,7 +12963,7 @@ export const FormatsApi = function (configuration?: Configuration) {
      */
     async getFormats(
       requestParameters: FormatsApiGetFormatsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FormatSummaryCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getFormats(
         requestParameters.sessionId,
@@ -12971,7 +12971,7 @@ export const FormatsApi = function (configuration?: Configuration) {
         requestParameters.filter,
         requestParameters.start,
         requestParameters.limit,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -12985,13 +12985,13 @@ export const FormatsApi = function (configuration?: Configuration) {
      */
     async headersForFormat(
       requestParameters: FormatsApiHeadersForFormatRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForFormat(
           requestParameters.sessionId,
           requestParameters.formatName,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -13005,7 +13005,7 @@ export const FormatsApi = function (configuration?: Configuration) {
      */
     async headersForFormats(
       requestParameters: FormatsApiHeadersForFormatsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForFormats(
@@ -13013,7 +13013,7 @@ export const FormatsApi = function (configuration?: Configuration) {
           requestParameters.filter,
           requestParameters.start,
           requestParameters.limit,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -13146,7 +13146,7 @@ export interface FormatsApiHeadersForFormatsRequest {
  * @export
  */
 export const InformatsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -13160,7 +13160,7 @@ export const InformatsApiAxiosParamCreator = function (
     getInformat: async (
       sessionId: string,
       informatName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getInformat", "sessionId", sessionId);
@@ -13170,7 +13170,7 @@ export const InformatsApiAxiosParamCreator = function (
         .replace(`{${"sessionId"}}`, encodeURIComponent(String(sessionId)))
         .replace(
           `{${"informatName"}}`,
-          encodeURIComponent(String(informatName))
+          encodeURIComponent(String(informatName)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -13220,13 +13220,13 @@ export const InformatsApiAxiosParamCreator = function (
       filter?: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getInformats", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/informats`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -13284,7 +13284,7 @@ export const InformatsApiAxiosParamCreator = function (
     headersForInformat: async (
       sessionId: string,
       informatName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForInformat", "sessionId", sessionId);
@@ -13294,7 +13294,7 @@ export const InformatsApiAxiosParamCreator = function (
         .replace(`{${"sessionId"}}`, encodeURIComponent(String(sessionId)))
         .replace(
           `{${"informatName"}}`,
-          encodeURIComponent(String(informatName))
+          encodeURIComponent(String(informatName)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -13340,13 +13340,13 @@ export const InformatsApiAxiosParamCreator = function (
       filter?: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForInformats", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/informats`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -13409,12 +13409,12 @@ export const InformatsApi = function (configuration?: Configuration) {
      */
     async getInformat(
       requestParameters: InformatsApiGetInformatRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Format>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getInformat(
         requestParameters.sessionId,
         requestParameters.informatName,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -13428,7 +13428,7 @@ export const InformatsApi = function (configuration?: Configuration) {
      */
     async getInformats(
       requestParameters: InformatsApiGetInformatsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FormatSummaryCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getInformats(
         requestParameters.sessionId,
@@ -13436,7 +13436,7 @@ export const InformatsApi = function (configuration?: Configuration) {
         requestParameters.filter,
         requestParameters.start,
         requestParameters.limit,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -13450,13 +13450,13 @@ export const InformatsApi = function (configuration?: Configuration) {
      */
     async headersForInformat(
       requestParameters: InformatsApiHeadersForInformatRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForInformat(
           requestParameters.sessionId,
           requestParameters.informatName,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -13470,7 +13470,7 @@ export const InformatsApi = function (configuration?: Configuration) {
      */
     async headersForInformats(
       requestParameters: InformatsApiHeadersForInformatsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForInformats(
@@ -13478,7 +13478,7 @@ export const InformatsApi = function (configuration?: Configuration) {
           requestParameters.filter,
           requestParameters.start,
           requestParameters.limit,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -13611,7 +13611,7 @@ export interface InformatsApiHeadersForInformatsRequest {
  * @export
  */
 export const JobsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -13625,7 +13625,7 @@ export const JobsApiAxiosParamCreator = function (
     createJob: async (
       sessionId: string,
       jobRequest: JobRequest,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("createJob", "sessionId", sessionId);
@@ -13633,7 +13633,7 @@ export const JobsApiAxiosParamCreator = function (
       assertParamExists("createJob", "jobRequest", jobRequest);
       const localVarPath = `/sessions/{sessionId}/jobs`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -13664,7 +13664,7 @@ export const JobsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         jobRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -13683,7 +13683,7 @@ export const JobsApiAxiosParamCreator = function (
     deleteJob: async (
       sessionId: string,
       jobId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("deleteJob", "sessionId", sessionId);
@@ -13732,7 +13732,7 @@ export const JobsApiAxiosParamCreator = function (
     getJob: async (
       sessionId: string,
       jobId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getJob", "sessionId", sessionId);
@@ -13785,7 +13785,7 @@ export const JobsApiAxiosParamCreator = function (
       jobId: string,
       wait?: number,
       ifNoneMatch?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getJobState", "sessionId", sessionId);
@@ -13850,13 +13850,13 @@ export const JobsApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getJobs", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/jobs`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -13918,7 +13918,7 @@ export const JobsApiAxiosParamCreator = function (
     headersForJob: async (
       sessionId: string,
       jobId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForJob", "sessionId", sessionId);
@@ -13971,7 +13971,7 @@ export const JobsApiAxiosParamCreator = function (
       jobId: string,
       wait?: number,
       ifNoneMatch?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForJobState", "sessionId", sessionId);
@@ -14036,13 +14036,13 @@ export const JobsApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForJobs", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/jobs`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -14108,7 +14108,7 @@ export const JobsApiAxiosParamCreator = function (
       jobId: string,
       value: "canceled" | "deleted",
       ifMatch: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("updateJobState", "sessionId", sessionId);
@@ -14177,12 +14177,12 @@ export const JobsApi = function (configuration?: Configuration) {
      */
     async createJob(
       requestParameters: JobsApiCreateJobRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Job>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.createJob(
         requestParameters.sessionId,
         requestParameters.jobRequest,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -14196,12 +14196,12 @@ export const JobsApi = function (configuration?: Configuration) {
      */
     async deleteJob(
       requestParameters: JobsApiDeleteJobRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteJob(
         requestParameters.sessionId,
         requestParameters.jobId,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -14215,12 +14215,12 @@ export const JobsApi = function (configuration?: Configuration) {
      */
     async getJob(
       requestParameters: JobsApiGetJobRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Job>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getJob(
         requestParameters.sessionId,
         requestParameters.jobId,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -14234,14 +14234,14 @@ export const JobsApi = function (configuration?: Configuration) {
      */
     async getJobState(
       requestParameters: JobsApiGetJobStateRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<string>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getJobState(
         requestParameters.sessionId,
         requestParameters.jobId,
         requestParameters.wait,
         requestParameters.ifNoneMatch,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -14255,7 +14255,7 @@ export const JobsApi = function (configuration?: Configuration) {
      */
     async getJobs(
       requestParameters: JobsApiGetJobsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<JobCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getJobs(
         requestParameters.sessionId,
@@ -14264,7 +14264,7 @@ export const JobsApi = function (configuration?: Configuration) {
         requestParameters.limit,
         requestParameters.filter,
         requestParameters.sortBy,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -14278,12 +14278,12 @@ export const JobsApi = function (configuration?: Configuration) {
      */
     async headersForJob(
       requestParameters: JobsApiHeadersForJobRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.headersForJob(
         requestParameters.sessionId,
         requestParameters.jobId,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -14297,7 +14297,7 @@ export const JobsApi = function (configuration?: Configuration) {
      */
     async headersForJobState(
       requestParameters: JobsApiHeadersForJobStateRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForJobState(
@@ -14305,7 +14305,7 @@ export const JobsApi = function (configuration?: Configuration) {
           requestParameters.jobId,
           requestParameters.wait,
           requestParameters.ifNoneMatch,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -14319,7 +14319,7 @@ export const JobsApi = function (configuration?: Configuration) {
      */
     async headersForJobs(
       requestParameters: JobsApiHeadersForJobsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.headersForJobs(
         requestParameters.sessionId,
@@ -14328,7 +14328,7 @@ export const JobsApi = function (configuration?: Configuration) {
         requestParameters.limit,
         requestParameters.filter,
         requestParameters.sortBy,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -14342,14 +14342,14 @@ export const JobsApi = function (configuration?: Configuration) {
      */
     async updateJobState(
       requestParameters: JobsApiUpdateJobStateRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.updateJobState(
         requestParameters.sessionId,
         requestParameters.jobId,
         requestParameters.value,
         requestParameters.ifMatch,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -14648,7 +14648,7 @@ export interface JobsApiUpdateJobStateRequest {
  * @export
  */
 export const ListingsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -14670,7 +14670,7 @@ export const ListingsApiAxiosParamCreator = function (
       limit?: number,
       type?: string,
       timeout?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getJobListing", "sessionId", sessionId);
@@ -14735,7 +14735,7 @@ export const ListingsApiAxiosParamCreator = function (
     getJobListingAsText: async (
       sessionId: string,
       jobId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getJobListingAsText", "sessionId", sessionId);
@@ -14790,13 +14790,13 @@ export const ListingsApiAxiosParamCreator = function (
       limit?: number,
       type?: string,
       timeout?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getSessionListing", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/listing`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -14852,13 +14852,13 @@ export const ListingsApiAxiosParamCreator = function (
      */
     getSessionListingAsText: async (
       sessionId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getSessionListingAsText", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/listing#asText`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -14908,7 +14908,7 @@ export const ListingsApiAxiosParamCreator = function (
       limit?: number,
       type?: string,
       timeout?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForJobListing", "sessionId", sessionId);
@@ -14973,7 +14973,7 @@ export const ListingsApiAxiosParamCreator = function (
     headersForJobListingAsText: async (
       sessionId: string,
       jobId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForJobListingAsText", "sessionId", sessionId);
@@ -15028,13 +15028,13 @@ export const ListingsApiAxiosParamCreator = function (
       limit?: number,
       type?: string,
       timeout?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForSessionListing", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/listing`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -15090,17 +15090,17 @@ export const ListingsApiAxiosParamCreator = function (
      */
     headersForSessionListingAsText: async (
       sessionId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists(
         "headersForSessionListingAsText",
         "sessionId",
-        sessionId
+        sessionId,
       );
       const localVarPath = `/sessions/{sessionId}/listing#asText`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -15144,7 +15144,7 @@ export const ListingsApiAxiosParamCreator = function (
       sessionId: string,
       jobId: string,
       outputStreamFileRequest: OutputStreamFileRequest,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("streamJobListingAsFile", "sessionId", sessionId);
@@ -15154,7 +15154,7 @@ export const ListingsApiAxiosParamCreator = function (
       assertParamExists(
         "streamJobListingAsFile",
         "outputStreamFileRequest",
-        outputStreamFileRequest
+        outputStreamFileRequest,
       );
       const localVarPath = `/sessions/{sessionId}/jobs/{jobId}/listing`
         .replace(`{${"sessionId"}}`, encodeURIComponent(String(sessionId)))
@@ -15188,7 +15188,7 @@ export const ListingsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         outputStreamFileRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -15207,7 +15207,7 @@ export const ListingsApiAxiosParamCreator = function (
     streamSessionListingAsFile: async (
       sessionId: string,
       outputStreamFileRequest: OutputStreamFileRequest,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("streamSessionListingAsFile", "sessionId", sessionId);
@@ -15215,11 +15215,11 @@ export const ListingsApiAxiosParamCreator = function (
       assertParamExists(
         "streamSessionListingAsFile",
         "outputStreamFileRequest",
-        outputStreamFileRequest
+        outputStreamFileRequest,
       );
       const localVarPath = `/sessions/{sessionId}/listing`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -15250,7 +15250,7 @@ export const ListingsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         outputStreamFileRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -15277,7 +15277,7 @@ export const ListingsApi = function (configuration?: Configuration) {
      */
     async getJobListing(
       requestParameters: ListingsApiGetJobListingRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<JobListingCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getJobListing(
         requestParameters.sessionId,
@@ -15286,7 +15286,7 @@ export const ListingsApi = function (configuration?: Configuration) {
         requestParameters.limit,
         requestParameters.type,
         requestParameters.timeout,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -15300,13 +15300,13 @@ export const ListingsApi = function (configuration?: Configuration) {
      */
     async getJobListingAsText(
       requestParameters: ListingsApiGetJobListingAsTextRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getJobListingAsText(
           requestParameters.sessionId,
           requestParameters.jobId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -15320,7 +15320,7 @@ export const ListingsApi = function (configuration?: Configuration) {
      */
     async getSessionListing(
       requestParameters: ListingsApiGetSessionListingRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<SessionListingCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getSessionListing(
@@ -15329,7 +15329,7 @@ export const ListingsApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.type,
           requestParameters.timeout,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -15343,12 +15343,12 @@ export const ListingsApi = function (configuration?: Configuration) {
      */
     async getSessionListingAsText(
       requestParameters: ListingsApiGetSessionListingAsTextRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getSessionListingAsText(
           requestParameters.sessionId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -15362,7 +15362,7 @@ export const ListingsApi = function (configuration?: Configuration) {
      */
     async headersForJobListing(
       requestParameters: ListingsApiHeadersForJobListingRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForJobListing(
@@ -15372,7 +15372,7 @@ export const ListingsApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.type,
           requestParameters.timeout,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -15386,13 +15386,13 @@ export const ListingsApi = function (configuration?: Configuration) {
      */
     async headersForJobListingAsText(
       requestParameters: ListingsApiHeadersForJobListingAsTextRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForJobListingAsText(
           requestParameters.sessionId,
           requestParameters.jobId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -15406,7 +15406,7 @@ export const ListingsApi = function (configuration?: Configuration) {
      */
     async headersForSessionListing(
       requestParameters: ListingsApiHeadersForSessionListingRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForSessionListing(
@@ -15415,7 +15415,7 @@ export const ListingsApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.type,
           requestParameters.timeout,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -15429,12 +15429,12 @@ export const ListingsApi = function (configuration?: Configuration) {
      */
     async headersForSessionListingAsText(
       requestParameters: ListingsApiHeadersForSessionListingAsTextRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForSessionListingAsText(
           requestParameters.sessionId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -15448,14 +15448,14 @@ export const ListingsApi = function (configuration?: Configuration) {
      */
     async streamJobListingAsFile(
       requestParameters: ListingsApiStreamJobListingAsFileRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResource>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.streamJobListingAsFile(
           requestParameters.sessionId,
           requestParameters.jobId,
           requestParameters.outputStreamFileRequest,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -15469,13 +15469,13 @@ export const ListingsApi = function (configuration?: Configuration) {
      */
     async streamSessionListingAsFile(
       requestParameters: ListingsApiStreamSessionListingAsFileRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResource>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.streamSessionListingAsFile(
           requestParameters.sessionId,
           requestParameters.outputStreamFileRequest,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -15788,7 +15788,7 @@ export interface ListingsApiStreamSessionListingAsFileRequest {
  * @export
  */
 export const LogsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -15810,7 +15810,7 @@ export const LogsApiAxiosParamCreator = function (
       limit?: number,
       type?: string,
       timeout?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getJobLog", "sessionId", sessionId);
@@ -15875,7 +15875,7 @@ export const LogsApiAxiosParamCreator = function (
     getJobLogAsText: async (
       sessionId: string,
       jobId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getJobLogAsText", "sessionId", sessionId);
@@ -15930,13 +15930,13 @@ export const LogsApiAxiosParamCreator = function (
       limit?: number,
       type?: string,
       timeout?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getSessionLog", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/log`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -15992,13 +15992,13 @@ export const LogsApiAxiosParamCreator = function (
      */
     getSessionLogAsText: async (
       sessionId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getSessionLogAsText", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/log#asText`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -16048,7 +16048,7 @@ export const LogsApiAxiosParamCreator = function (
       limit?: number,
       type?: string,
       timeout?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForJobLog", "sessionId", sessionId);
@@ -16113,7 +16113,7 @@ export const LogsApiAxiosParamCreator = function (
     headersForJobLogAsText: async (
       sessionId: string,
       jobId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForJobLogAsText", "sessionId", sessionId);
@@ -16168,13 +16168,13 @@ export const LogsApiAxiosParamCreator = function (
       limit?: number,
       type?: string,
       timeout?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForSessionLog", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/log`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -16230,13 +16230,13 @@ export const LogsApiAxiosParamCreator = function (
      */
     headersForSessionLogAsText: async (
       sessionId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForSessionLogAsText", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/log#asText`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -16280,7 +16280,7 @@ export const LogsApiAxiosParamCreator = function (
       sessionId: string,
       jobId: string,
       outputStreamFileRequest: OutputStreamFileRequest,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("streamJobLogAsFile", "sessionId", sessionId);
@@ -16290,7 +16290,7 @@ export const LogsApiAxiosParamCreator = function (
       assertParamExists(
         "streamJobLogAsFile",
         "outputStreamFileRequest",
-        outputStreamFileRequest
+        outputStreamFileRequest,
       );
       const localVarPath = `/sessions/{sessionId}/jobs/{jobId}/log`
         .replace(`{${"sessionId"}}`, encodeURIComponent(String(sessionId)))
@@ -16324,7 +16324,7 @@ export const LogsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         outputStreamFileRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -16343,7 +16343,7 @@ export const LogsApiAxiosParamCreator = function (
     streamSessionLogAsFile: async (
       sessionId: string,
       outputStreamFileRequest: OutputStreamFileRequest,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("streamSessionLogAsFile", "sessionId", sessionId);
@@ -16351,11 +16351,11 @@ export const LogsApiAxiosParamCreator = function (
       assertParamExists(
         "streamSessionLogAsFile",
         "outputStreamFileRequest",
-        outputStreamFileRequest
+        outputStreamFileRequest,
       );
       const localVarPath = `/sessions/{sessionId}/log`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -16386,7 +16386,7 @@ export const LogsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         outputStreamFileRequest,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -16413,7 +16413,7 @@ export const LogsApi = function (configuration?: Configuration) {
      */
     async getJobLog(
       requestParameters: LogsApiGetJobLogRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<JobLogCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getJobLog(
         requestParameters.sessionId,
@@ -16422,7 +16422,7 @@ export const LogsApi = function (configuration?: Configuration) {
         requestParameters.limit,
         requestParameters.type,
         requestParameters.timeout,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -16436,12 +16436,12 @@ export const LogsApi = function (configuration?: Configuration) {
      */
     async getJobLogAsText(
       requestParameters: LogsApiGetJobLogAsTextRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getJobLogAsText(
         requestParameters.sessionId,
         requestParameters.jobId,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -16455,7 +16455,7 @@ export const LogsApi = function (configuration?: Configuration) {
      */
     async getSessionLog(
       requestParameters: LogsApiGetSessionLogRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<SessionLogCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getSessionLog(
         requestParameters.sessionId,
@@ -16463,7 +16463,7 @@ export const LogsApi = function (configuration?: Configuration) {
         requestParameters.limit,
         requestParameters.type,
         requestParameters.timeout,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -16477,12 +16477,12 @@ export const LogsApi = function (configuration?: Configuration) {
      */
     async getSessionLogAsText(
       requestParameters: LogsApiGetSessionLogAsTextRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getSessionLogAsText(
           requestParameters.sessionId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -16496,7 +16496,7 @@ export const LogsApi = function (configuration?: Configuration) {
      */
     async headersForJobLog(
       requestParameters: LogsApiHeadersForJobLogRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForJobLog(
@@ -16506,7 +16506,7 @@ export const LogsApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.type,
           requestParameters.timeout,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -16520,13 +16520,13 @@ export const LogsApi = function (configuration?: Configuration) {
      */
     async headersForJobLogAsText(
       requestParameters: LogsApiHeadersForJobLogAsTextRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForJobLogAsText(
           requestParameters.sessionId,
           requestParameters.jobId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -16540,7 +16540,7 @@ export const LogsApi = function (configuration?: Configuration) {
      */
     async headersForSessionLog(
       requestParameters: LogsApiHeadersForSessionLogRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForSessionLog(
@@ -16549,7 +16549,7 @@ export const LogsApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.type,
           requestParameters.timeout,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -16563,12 +16563,12 @@ export const LogsApi = function (configuration?: Configuration) {
      */
     async headersForSessionLogAsText(
       requestParameters: LogsApiHeadersForSessionLogAsTextRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForSessionLogAsText(
           requestParameters.sessionId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -16582,14 +16582,14 @@ export const LogsApi = function (configuration?: Configuration) {
      */
     async streamJobLogAsFile(
       requestParameters: LogsApiStreamJobLogAsFileRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResource>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.streamJobLogAsFile(
           requestParameters.sessionId,
           requestParameters.jobId,
           requestParameters.outputStreamFileRequest,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -16603,13 +16603,13 @@ export const LogsApi = function (configuration?: Configuration) {
      */
     async streamSessionLogAsFile(
       requestParameters: LogsApiStreamSessionLogAsFileRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FileResource>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.streamSessionLogAsFile(
           requestParameters.sessionId,
           requestParameters.outputStreamFileRequest,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -16922,7 +16922,7 @@ export interface LogsApiStreamSessionLogAsFileRequest {
  * @export
  */
 export const OptionsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -16936,7 +16936,7 @@ export const OptionsApiAxiosParamCreator = function (
     getOptionValue: async (
       sessionId: string,
       optionName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getOptionValue", "sessionId", sessionId);
@@ -16985,7 +16985,7 @@ export const OptionsApiAxiosParamCreator = function (
     getOptionValueFull: async (
       sessionId: string,
       optionName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getOptionValueFull", "sessionId", sessionId);
@@ -17035,7 +17035,7 @@ export const OptionsApiAxiosParamCreator = function (
     headersForOptionValue: async (
       sessionId: string,
       optionName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForOptionValue", "sessionId", sessionId);
@@ -17084,7 +17084,7 @@ export const OptionsApiAxiosParamCreator = function (
     headersForOptionValueFull: async (
       sessionId: string,
       optionName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForOptionValueFull", "sessionId", sessionId);
@@ -17136,7 +17136,7 @@ export const OptionsApiAxiosParamCreator = function (
       sessionId: string,
       optionName: string,
       body: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("updateOptionValue", "sessionId", sessionId);
@@ -17175,7 +17175,7 @@ export const OptionsApiAxiosParamCreator = function (
       localVarRequestOptions.data = serializeDataIfNeeded(
         body,
         localVarRequestOptions,
-        configuration
+        configuration,
       );
 
       return {
@@ -17202,12 +17202,12 @@ export const OptionsApi = function (configuration?: Configuration) {
      */
     async getOptionValue(
       requestParameters: OptionsApiGetOptionValueRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<string>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getOptionValue(
         requestParameters.sessionId,
         requestParameters.optionName,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -17221,13 +17221,13 @@ export const OptionsApi = function (configuration?: Configuration) {
      */
     async getOptionValueFull(
       requestParameters: OptionsApiGetOptionValueFullRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<SessionOption>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getOptionValueFull(
           requestParameters.sessionId,
           requestParameters.optionName,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -17241,13 +17241,13 @@ export const OptionsApi = function (configuration?: Configuration) {
      */
     async headersForOptionValue(
       requestParameters: OptionsApiHeadersForOptionValueRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForOptionValue(
           requestParameters.sessionId,
           requestParameters.optionName,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -17261,13 +17261,13 @@ export const OptionsApi = function (configuration?: Configuration) {
      */
     async headersForOptionValueFull(
       requestParameters: OptionsApiHeadersForOptionValueFullRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForOptionValueFull(
           requestParameters.sessionId,
           requestParameters.optionName,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -17281,14 +17281,14 @@ export const OptionsApi = function (configuration?: Configuration) {
      */
     async updateOptionValue(
       requestParameters: OptionsApiUpdateOptionValueRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<string>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.updateOptionValue(
           requestParameters.sessionId,
           requestParameters.optionName,
           requestParameters.body,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -17412,7 +17412,7 @@ export interface OptionsApiUpdateOptionValueRequest {
  * @export
  */
 export const ResultsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -17434,7 +17434,7 @@ export const ResultsApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getJobResults", "sessionId", sessionId);
@@ -17501,13 +17501,13 @@ export const ResultsApiAxiosParamCreator = function (
       sessionId: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getSessionResults", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/results`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -17565,7 +17565,7 @@ export const ResultsApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForJobResults", "sessionId", sessionId);
@@ -17632,13 +17632,13 @@ export const ResultsApiAxiosParamCreator = function (
       sessionId: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForSessionResults", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/results`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -17696,7 +17696,7 @@ export const ResultsApi = function (configuration?: Configuration) {
      */
     async getJobResults(
       requestParameters: ResultsApiGetJobResultsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<ResultCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getJobResults(
         requestParameters.sessionId,
@@ -17705,7 +17705,7 @@ export const ResultsApi = function (configuration?: Configuration) {
         requestParameters.limit,
         requestParameters.filter,
         requestParameters.sortBy,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -17719,14 +17719,14 @@ export const ResultsApi = function (configuration?: Configuration) {
      */
     async getSessionResults(
       requestParameters: ResultsApiGetSessionResultsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<ResultCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getSessionResults(
           requestParameters.sessionId,
           requestParameters.start,
           requestParameters.limit,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -17740,7 +17740,7 @@ export const ResultsApi = function (configuration?: Configuration) {
      */
     async headersForJobResults(
       requestParameters: ResultsApiHeadersForJobResultsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForJobResults(
@@ -17750,7 +17750,7 @@ export const ResultsApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.filter,
           requestParameters.sortBy,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -17764,14 +17764,14 @@ export const ResultsApi = function (configuration?: Configuration) {
      */
     async headersForSessionResults(
       requestParameters: ResultsApiHeadersForSessionResultsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForSessionResults(
           requestParameters.sessionId,
           requestParameters.start,
           requestParameters.limit,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -17937,7 +17937,7 @@ export interface ResultsApiHeadersForSessionResultsRequest {
  * @export
  */
 export const RootApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -17947,7 +17947,7 @@ export const RootApiAxiosParamCreator = function (
      * @throws {RequiredError}
      */
     headersForRoot: async (
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -18033,10 +18033,10 @@ export const RootApi = function (configuration?: Configuration) {
      * @throws {RequiredError}
      */
     async headersForRoot(
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.headersForRoot(
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -18059,7 +18059,7 @@ export const RootApi = function (configuration?: Configuration) {
  * @export
  */
 export const ServersApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -18071,13 +18071,13 @@ export const ServersApiAxiosParamCreator = function (
      */
     deleteServer: async (
       serverId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'serverId' is not null or undefined
       assertParamExists("deleteServer", "serverId", serverId);
       const localVarPath = `/servers/{serverId}`.replace(
         `{${"serverId"}}`,
-        encodeURIComponent(String(serverId))
+        encodeURIComponent(String(serverId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -18117,13 +18117,13 @@ export const ServersApiAxiosParamCreator = function (
      */
     getServer: async (
       serverId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'serverId' is not null or undefined
       assertParamExists("getServer", "serverId", serverId);
       const localVarPath = `/servers/{serverId}`.replace(
         `{${"serverId"}}`,
-        encodeURIComponent(String(serverId))
+        encodeURIComponent(String(serverId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -18175,13 +18175,13 @@ export const ServersApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'serverId' is not null or undefined
       assertParamExists("getServerSessions", "serverId", serverId);
       const localVarPath = `/servers/{serverId}/sessions`.replace(
         `{${"serverId"}}`,
-        encodeURIComponent(String(serverId))
+        encodeURIComponent(String(serverId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -18241,13 +18241,13 @@ export const ServersApiAxiosParamCreator = function (
      */
     getServerState: async (
       serverId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'serverId' is not null or undefined
       assertParamExists("getServerState", "serverId", serverId);
       const localVarPath = `/servers/{serverId}/state`.replace(
         `{${"serverId"}}`,
-        encodeURIComponent(String(serverId))
+        encodeURIComponent(String(serverId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -18301,7 +18301,7 @@ export const ServersApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/servers`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -18370,13 +18370,13 @@ export const ServersApiAxiosParamCreator = function (
      */
     headersForServer: async (
       serverId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'serverId' is not null or undefined
       assertParamExists("headersForServer", "serverId", serverId);
       const localVarPath = `/servers/{serverId}`.replace(
         `{${"serverId"}}`,
-        encodeURIComponent(String(serverId))
+        encodeURIComponent(String(serverId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -18424,13 +18424,13 @@ export const ServersApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'serverId' is not null or undefined
       assertParamExists("headersForServerSessions", "serverId", serverId);
       const localVarPath = `/servers/{serverId}/sessions`.replace(
         `{${"serverId"}}`,
-        encodeURIComponent(String(serverId))
+        encodeURIComponent(String(serverId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -18486,13 +18486,13 @@ export const ServersApiAxiosParamCreator = function (
      */
     headersForServerState: async (
       serverId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'serverId' is not null or undefined
       assertParamExists("headersForServerState", "serverId", serverId);
       const localVarPath = `/servers/{serverId}/state`.replace(
         `{${"serverId"}}`,
-        encodeURIComponent(String(serverId))
+        encodeURIComponent(String(serverId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -18542,7 +18542,7 @@ export const ServersApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/servers`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -18617,11 +18617,11 @@ export const ServersApi = function (configuration?: Configuration) {
      */
     async deleteServer(
       requestParameters: ServersApiDeleteServerRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteServer(
         requestParameters.serverId,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -18635,11 +18635,11 @@ export const ServersApi = function (configuration?: Configuration) {
      */
     async getServer(
       requestParameters: ServersApiGetServerRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Server>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getServer(
         requestParameters.serverId,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -18653,7 +18653,7 @@ export const ServersApi = function (configuration?: Configuration) {
      */
     async getServerSessions(
       requestParameters: ServersApiGetServerSessionsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<SessionSummaryCollection>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.getServerSessions(
@@ -18663,7 +18663,7 @@ export const ServersApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.filter,
           requestParameters.sortBy,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -18677,11 +18677,11 @@ export const ServersApi = function (configuration?: Configuration) {
      */
     async getServerState(
       requestParameters: ServersApiGetServerStateRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<string>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getServerState(
         requestParameters.serverId,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -18695,7 +18695,7 @@ export const ServersApi = function (configuration?: Configuration) {
      */
     async getServers(
       requestParameters: ServersApiGetServersRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<ServerSummaryCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getServers(
         requestParameters.acceptItem,
@@ -18705,7 +18705,7 @@ export const ServersApi = function (configuration?: Configuration) {
         requestParameters.limit,
         requestParameters.filter,
         requestParameters.sortBy,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -18719,12 +18719,12 @@ export const ServersApi = function (configuration?: Configuration) {
      */
     async headersForServer(
       requestParameters: ServersApiHeadersForServerRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForServer(
           requestParameters.serverId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -18738,7 +18738,7 @@ export const ServersApi = function (configuration?: Configuration) {
      */
     async headersForServerSessions(
       requestParameters: ServersApiHeadersForServerSessionsRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForServerSessions(
@@ -18747,7 +18747,7 @@ export const ServersApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.filter,
           requestParameters.sortBy,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -18761,12 +18761,12 @@ export const ServersApi = function (configuration?: Configuration) {
      */
     async headersForServerState(
       requestParameters: ServersApiHeadersForServerStateRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForServerState(
           requestParameters.serverId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -18780,7 +18780,7 @@ export const ServersApi = function (configuration?: Configuration) {
      */
     async headersForServers(
       requestParameters: ServersApiHeadersForServersRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForServers(
@@ -18790,7 +18790,7 @@ export const ServersApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.filter,
           requestParameters.sortBy,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -19072,7 +19072,7 @@ export interface ServersApiHeadersForServersRequest {
  * @export
  */
 export const SessionsApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -19084,13 +19084,13 @@ export const SessionsApiAxiosParamCreator = function (
      */
     deleteSession: async (
       sessionId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("deleteSession", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -19130,13 +19130,13 @@ export const SessionsApiAxiosParamCreator = function (
      */
     getSession: async (
       sessionId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getSession", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -19180,13 +19180,13 @@ export const SessionsApiAxiosParamCreator = function (
       sessionId: string,
       wait?: number,
       ifNoneMatch?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getSessionState", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/state`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -19244,7 +19244,7 @@ export const SessionsApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/sessions`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -19305,13 +19305,13 @@ export const SessionsApiAxiosParamCreator = function (
      */
     headersForSession: async (
       sessionId: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForSession", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -19355,13 +19355,13 @@ export const SessionsApiAxiosParamCreator = function (
       sessionId: string,
       wait?: number,
       ifNoneMatch?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForSessionState", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/state`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -19415,7 +19415,7 @@ export const SessionsApiAxiosParamCreator = function (
       limit?: number,
       filter?: string,
       sortBy?: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/sessions`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -19476,7 +19476,7 @@ export const SessionsApiAxiosParamCreator = function (
       sessionId: string,
       value: "canceled" | "deleted",
       ifMatch: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("updateSessionState", "sessionId", sessionId);
@@ -19486,7 +19486,7 @@ export const SessionsApiAxiosParamCreator = function (
       assertParamExists("updateSessionState", "ifMatch", ifMatch);
       const localVarPath = `/sessions/{sessionId}/state`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -19544,11 +19544,11 @@ export const SessionsApi = function (configuration?: Configuration) {
      */
     async deleteSession(
       requestParameters: SessionsApiDeleteSessionRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.deleteSession(
         requestParameters.sessionId,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -19562,11 +19562,11 @@ export const SessionsApi = function (configuration?: Configuration) {
      */
     async getSession(
       requestParameters: SessionsApiGetSessionRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Session>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getSession(
         requestParameters.sessionId,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -19580,13 +19580,13 @@ export const SessionsApi = function (configuration?: Configuration) {
      */
     async getSessionState(
       requestParameters: SessionsApiGetSessionStateRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<string>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getSessionState(
         requestParameters.sessionId,
         requestParameters.wait,
         requestParameters.ifNoneMatch,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -19600,7 +19600,7 @@ export const SessionsApi = function (configuration?: Configuration) {
      */
     async getSessions(
       requestParameters: SessionsApiGetSessionsRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<SessionSummaryCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getSessions(
         requestParameters.acceptItem,
@@ -19608,7 +19608,7 @@ export const SessionsApi = function (configuration?: Configuration) {
         requestParameters.limit,
         requestParameters.filter,
         requestParameters.sortBy,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -19622,12 +19622,12 @@ export const SessionsApi = function (configuration?: Configuration) {
      */
     async headersForSession(
       requestParameters: SessionsApiHeadersForSessionRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForSession(
           requestParameters.sessionId,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -19641,14 +19641,14 @@ export const SessionsApi = function (configuration?: Configuration) {
      */
     async headersForSessionState(
       requestParameters: SessionsApiHeadersForSessionStateRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForSessionState(
           requestParameters.sessionId,
           requestParameters.wait,
           requestParameters.ifNoneMatch,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -19662,7 +19662,7 @@ export const SessionsApi = function (configuration?: Configuration) {
      */
     async headersForSessions(
       requestParameters: SessionsApiHeadersForSessionsRequest = {},
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForSessions(
@@ -19670,7 +19670,7 @@ export const SessionsApi = function (configuration?: Configuration) {
           requestParameters.limit,
           requestParameters.filter,
           requestParameters.sortBy,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -19684,14 +19684,14 @@ export const SessionsApi = function (configuration?: Configuration) {
      */
     async updateSessionState(
       requestParameters: SessionsApiUpdateSessionStateRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.updateSessionState(
           requestParameters.sessionId,
           requestParameters.value,
           requestParameters.ifMatch,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -19908,7 +19908,7 @@ export interface SessionsApiUpdateSessionStateRequest {
  * @export
  */
 export const VariablesApiAxiosParamCreator = function (
-  configuration?: Configuration
+  configuration?: Configuration,
 ) {
   return {
     /**
@@ -19922,7 +19922,7 @@ export const VariablesApiAxiosParamCreator = function (
     getVariable: async (
       sessionId: string,
       variableName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getVariable", "sessionId", sessionId);
@@ -19932,7 +19932,7 @@ export const VariablesApiAxiosParamCreator = function (
         .replace(`{${"sessionId"}}`, encodeURIComponent(String(sessionId)))
         .replace(
           `{${"variableName"}}`,
-          encodeURIComponent(String(variableName))
+          encodeURIComponent(String(variableName)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -19978,13 +19978,13 @@ export const VariablesApiAxiosParamCreator = function (
       filter?: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("getVariables", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/variables`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -20038,7 +20038,7 @@ export const VariablesApiAxiosParamCreator = function (
     headersForVariable: async (
       sessionId: string,
       variableName: string,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForVariable", "sessionId", sessionId);
@@ -20048,7 +20048,7 @@ export const VariablesApiAxiosParamCreator = function (
         .replace(`{${"sessionId"}}`, encodeURIComponent(String(sessionId)))
         .replace(
           `{${"variableName"}}`,
-          encodeURIComponent(String(variableName))
+          encodeURIComponent(String(variableName)),
         );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -20094,13 +20094,13 @@ export const VariablesApiAxiosParamCreator = function (
       filter?: string,
       start?: number,
       limit?: number,
-      options: AxiosRequestConfig = {}
+      options: AxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       // verify required parameter 'sessionId' is not null or undefined
       assertParamExists("headersForVariables", "sessionId", sessionId);
       const localVarPath = `/sessions/{sessionId}/variables`.replace(
         `{${"sessionId"}}`,
-        encodeURIComponent(String(sessionId))
+        encodeURIComponent(String(sessionId)),
       );
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -20163,12 +20163,12 @@ export const VariablesApi = function (configuration?: Configuration) {
      */
     async getVariable(
       requestParameters: VariablesApiGetVariableRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Variable>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getVariable(
         requestParameters.sessionId,
         requestParameters.variableName,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -20182,14 +20182,14 @@ export const VariablesApi = function (configuration?: Configuration) {
      */
     async getVariables(
       requestParameters: VariablesApiGetVariablesRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<SessionVariableCollection>> {
       const localVarAxiosArgs = await localVarAxiosParamCreator.getVariables(
         requestParameters.sessionId,
         requestParameters.filter,
         requestParameters.start,
         requestParameters.limit,
-        options
+        options,
       );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -20203,13 +20203,13 @@ export const VariablesApi = function (configuration?: Configuration) {
      */
     async headersForVariable(
       requestParameters: VariablesApiHeadersForVariableRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForVariable(
           requestParameters.sessionId,
           requestParameters.variableName,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
@@ -20223,7 +20223,7 @@ export const VariablesApi = function (configuration?: Configuration) {
      */
     async headersForVariables(
       requestParameters: VariablesApiHeadersForVariablesRequest,
-      options?: AxiosRequestConfig
+      options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
       const localVarAxiosArgs =
         await localVarAxiosParamCreator.headersForVariables(
@@ -20231,7 +20231,7 @@ export const VariablesApi = function (configuration?: Configuration) {
           requestParameters.filter,
           requestParameters.start,
           requestParameters.limit,
-          options
+          options,
         );
       return createRequestFunction(localVarAxiosArgs, configuration);
     },

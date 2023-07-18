@@ -56,11 +56,11 @@ export class COMSession extends Session {
       this._shellProcess.stderr.on("data", this.onShellStdErr);
       this._shellProcess.stdin.write(
         scriptContent + "\n",
-        this.onWriteComplete
+        this.onWriteComplete,
       );
       this._shellProcess.stdin.write(
         "$runner = New-Object -TypeName SASRunner\n",
-        this.onWriteComplete
+        this.onWriteComplete,
       );
 
       /*
@@ -70,25 +70,25 @@ export class COMSession extends Session {
     */
       if (!this._workDirectory) {
         this._shellProcess.stdin.write(
-          `$profileHost = "${this._config.host}"\n`
+          `$profileHost = "${this._config.host}"\n`,
         );
         this._shellProcess.stdin.write(
           "$runner.Setup($profileHost)\n",
-          this.onWriteComplete
+          this.onWriteComplete,
         );
         this._shellProcess.stdin.write(
           "$runner.ResolveSystemVars()\n",
-          this.onWriteComplete
+          this.onWriteComplete,
         );
 
         if (this._config.sasOptions?.length > 0) {
           const sasOptsInput = `$sasOpts=${this.formatSASOptions(
-            this._config.sasOptions
+            this._config.sasOptions,
           )}\n`;
           this._shellProcess.stdin.write(sasOptsInput, this.onWriteComplete);
           this._shellProcess.stdin.write(
             `$runner.SetOptions($sasOpts)\n`,
-            this.onWriteComplete
+            this.onWriteComplete,
           );
         }
       }
@@ -114,7 +114,7 @@ export class COMSession extends Session {
       //write ODS output to work so that the session cleans up after itself
       const codeWithODSPath = code.replace(
         "ods html5;",
-        `ods html5 path="${this._workDirectory}";`
+        `ods html5 path="${this._workDirectory}";`,
       );
 
       //write an end mnemonic so that the handler knows when execution has finished
@@ -141,7 +141,7 @@ export class COMSession extends Session {
       if (this._shellProcess) {
         this._shellProcess.stdin.write(
           "$runner.Close()\n",
-          this.onWriteComplete
+          this.onWriteComplete,
         );
         this._shellProcess.kill();
         this._shellProcess = undefined;
@@ -185,7 +185,7 @@ do {
   Write-Host $log
 } while ($log.Length -gt 0)\n
   `,
-      this.onWriteComplete
+      this.onWriteComplete,
     );
   };
 
@@ -198,8 +198,8 @@ do {
     console.warn("shellProcess stderr: " + msg);
     this._runReject(
       new Error(
-        "There was an error executing the SAS Program.\nSee console log for more details."
-      )
+        "There was an error executing the SAS Program.\nSee console log for more details.",
+      ),
     );
   };
 
@@ -257,7 +257,7 @@ do {
   private fetchResults = () => {
     const htmlResults = readFileSync(
       resolve(this._workDirectory, this._html5FileName + ".htm"),
-      { encoding: "utf-8" }
+      { encoding: "utf-8" },
     );
     const runResult: RunResult = { html5: htmlResults, title: "Results" };
     this._runResolve(runResult);

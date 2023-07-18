@@ -24,7 +24,7 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
 
   constructor(
     private readonly model: LibraryModel,
-    private readonly extensionUri: Uri
+    private readonly extensionUri: Uri,
   ) {}
 
   public getTreeItem(item: LibraryItem): TreeItem | Promise<TreeItem> {
@@ -55,7 +55,7 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
   }
 
   private iconPathForItem(
-    item: LibraryItem
+    item: LibraryItem,
   ): { light: string; dark: string } | undefined {
     switch (item.type) {
       case TableType:

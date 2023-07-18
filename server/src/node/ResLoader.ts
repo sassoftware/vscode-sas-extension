@@ -12,7 +12,7 @@ export const ResLoader = {
   },
   getBundle: function (locale: string): string {
     return readFileSync(
-      path.resolve(__dirname, `../../messagebundle_${locale}.properties`)
+      path.resolve(__dirname, `../../messagebundle_${locale}.properties`),
     ).toString();
   },
 };

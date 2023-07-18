@@ -16,7 +16,7 @@ describe("lsp", () => {
       await vscode.commands.executeCommand(
         "vscode.executeCompletionItemProvider",
         docUri,
-        new vscode.Position(0, 0)
+        new vscode.Position(0, 0),
       );
     assert.ok(actualCompletionList.items.length > 0);
   });
@@ -26,7 +26,7 @@ describe("lsp", () => {
     const [actualHover]: vscode.Hover[] = await vscode.commands.executeCommand(
       "vscode.executeHoverProvider",
       docUri,
-      new vscode.Position(0, 0)
+      new vscode.Position(0, 0),
     );
     assert.ok(actualHover.contents[0]);
   });
@@ -36,7 +36,7 @@ describe("lsp", () => {
     const actualDocumentSymbol: vscode.DocumentSymbol[] =
       await vscode.commands.executeCommand(
         "vscode.executeDocumentSymbolProvider",
-        docUri
+        docUri,
       );
     assert.ok(actualDocumentSymbol.length > 0);
   });

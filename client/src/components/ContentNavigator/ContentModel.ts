@@ -64,7 +64,7 @@ export class ContentModel {
         }
 
         return Promise.reject(error);
-      }
+      },
     );
     await this.updateAccessToken();
     this.authorized = true;
@@ -92,7 +92,7 @@ export class ContentModel {
       const selfLink = getLink(item.links, "GET", "self");
       if (!selfLink) {
         console.error(
-          "Invalid state: FolderService object has no self link : " + item.name
+          "Invalid state: FolderService object has no self link : " + item.name,
         );
         return Promise.reject({ status: 404 });
       }
@@ -144,7 +144,8 @@ export class ContentModel {
         isInMyFavorites,
         hasFavoriteId: all_favorites.find(
           (favorite) =>
-            getResourceIdFromItem(favorite) === getResourceIdFromItem(childItem)
+            getResourceIdFromItem(favorite) ===
+            getResourceIdFromItem(childItem),
         )?.id,
       },
     }));
@@ -195,7 +196,7 @@ export class ContentModel {
   public async createFile(
     item: ContentItem,
     fileName: string,
-    buffer?: ArrayBufferLike
+    buffer?: ArrayBufferLike,
   ): Promise<ContentItem | undefined> {
     const contentType = await this.getFileContentType(fileName);
     let createdResource: ContentItem;
@@ -209,7 +210,7 @@ export class ContentModel {
             "Content-Disposition": `filename*=UTF-8''${encodeURI(fileName)}`,
             Accept: "application/vnd.sas.file+json",
           },
-        }
+        },
       );
       createdResource = fileCreationResponse.data;
     } catch (error) {
@@ -224,7 +225,7 @@ export class ContentModel {
       {
         name: fileName,
         contentType,
-      }
+      },
     );
 
     if (!memberAdded) {
@@ -236,7 +237,7 @@ export class ContentModel {
 
   public async createFolder(
     item: ContentItem,
-    name: string
+    name: string,
   ): Promise<ContentItem | undefined> {
     const parentFolderUri =
       item.uri || getLink(item.links || [], "GET", "self")?.uri || null;
@@ -249,7 +250,7 @@ export class ContentModel {
         `/folders/folders?parentFolderUri=${parentFolderUri}`,
         {
           name,
-        }
+        },
       );
       return createFolderResponse.data;
     } catch (error) {
@@ -259,7 +260,7 @@ export class ContentModel {
 
   public async renameResource(
     item: ContentItem,
-    name: string
+    name: string,
   ): Promise<ContentItem | undefined> {
     const itemIsReference = item.type === "reference";
     const uri = itemIsReference
@@ -279,7 +280,7 @@ export class ContentModel {
         await this.connection.put(
           validationUri
             .replace("{newname}", encodeURI(name))
-            .replace("{newtype}", getTypeName(item))
+            .replace("{newtype}", getTypeName(item)),
         );
       }
 
@@ -291,7 +292,7 @@ export class ContentModel {
             "If-Unmodified-Since": fileTokenMap.lastModified,
             "If-Match": fileTokenMap.etag,
           },
-        }
+        },
       );
       this.fileTokenMaps[uri] = {
         etag: patchResponse.headers.etag,
@@ -356,13 +357,10 @@ export class ContentModel {
       const deleteRecursivelyLink = getLink(
         item.links,
         "DELETE",
-        "deleteRecursively"
+        "deleteRecursively",
       )?.uri;
-      const deleteResourceLink = getLink(
-        item.links,
-        "DELETE",
-        "deleteResource"
-      )?.uri;
+      const deleteResourceLink = getLink(item.links, "DELETE", "deleteResource")
+        ?.uri;
       if (!deleteRecursivelyLink && !deleteResourceLink) {
         return false;
       }
@@ -376,11 +374,8 @@ export class ContentModel {
   }
 
   private async deleteResource(item: ContentItem): Promise<boolean> {
-    const deleteResourceLink = getLink(
-      item.links,
-      "DELETE",
-      "deleteResource"
-    )?.uri;
+    const deleteResourceLink = getLink(item.links, "DELETE", "deleteResource")
+      ?.uri;
     if (!deleteResourceLink) {
       return false;
     }
@@ -406,7 +401,7 @@ export class ContentModel {
 
   public async moveTo(
     item: ContentItem,
-    targetParentFolderUri: string
+    targetParentFolderUri: string,
   ): Promise<boolean> {
     const newItemData = {
       ...item,
@@ -424,7 +419,7 @@ export class ContentModel {
   public async addMember(
     uri: string | undefined,
     addMemberUri: string | undefined,
-    properties: AddMemberProperties
+    properties: AddMemberProperties,
   ): Promise<boolean> {
     if (!uri || !addMemberUri) {
       return false;
@@ -452,7 +447,7 @@ export class ContentModel {
         type: "reference",
         name: item.name,
         contentType: item.contentType,
-      }
+      },
     );
   }
 
@@ -461,7 +456,7 @@ export class ContentModel {
       ? getLink(item.links, "DELETE", "delete")?.uri
       : item.flags?.hasFavoriteId
       ? `${getResourceIdFromItem(
-          this.getDelegateFolder("@myFavorites")
+          this.getDelegateFolder("@myFavorites"),
         )}/members/${item.flags?.hasFavoriteId}`
       : undefined;
     if (!deleteMemberUri) {
@@ -503,7 +498,7 @@ export class ContentModel {
 
     try {
       const typeResponse = await this.connection.get(
-        `/types/types?filter=contains('extensions', '${ext}')`
+        `/types/types?filter=contains('extensions', '${ext}')`,
       );
 
       if (typeResponse.data.items && typeResponse.data.items.length !== 0) {
@@ -549,9 +544,9 @@ export class ContentModel {
                 // sort the delegate folders as the order in the supportedDelegateFolders
                 (a, b) =>
                   supportedDelegateFolders.indexOf(a[0]) -
-                  supportedDelegateFolders.indexOf(b[0])
+                  supportedDelegateFolders.indexOf(b[0]),
               )
-              .map((entry) => entry[1])
+              .map((entry) => entry[1]),
           );
         }
       });

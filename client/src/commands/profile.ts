@@ -79,7 +79,7 @@ export async function deleteProfile(): Promise<void> {
   if (selected) {
     profileConfig.deleteProfile(selected);
     window.showInformationMessage(
-      `The ${selected} SAS connection profile has been deleted from the settings.json file.`
+      `The ${selected} SAS connection profile has been deleted from the settings.json file.`,
     );
   }
 }
