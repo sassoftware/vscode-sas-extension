@@ -15,21 +15,21 @@
 /* tslint:disable */
 /* eslint-disable */
 
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { Configuration } from "./configuration";
-import { AxiosResponse, AxiosRequestConfig } from "axios";
 // URLSearchParams not necessarily used
 // @ts-ignore
-import { URL, URLSearchParams } from "url";
+import { URL } from "url";
 // Some imports not used depending on template conditions
 // @ts-ignore
 import {
   DUMMY_BASE_URL,
   RequestArgs,
   assertParamExists,
-  setSearchParams,
-  serializeDataIfNeeded,
-  toPathString,
   createRequestFunction,
+  serializeDataIfNeeded,
+  setSearchParams,
+  toPathString,
 } from "./common";
 
 /**

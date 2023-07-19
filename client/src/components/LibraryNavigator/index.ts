@@ -1,6 +1,7 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { writeFileSync } from "fs";
 import {
   commands,
   ConfigurationChangeEvent,
@@ -74,6 +75,30 @@ class LibraryNavigator implements SubscriptionProvider {
           window.showErrorMessage(error.message);
         }
       }),
+      commands.registerCommand(
+        "SAS.downloadTable",
+        async (item: LibraryItem) => {
+          await Promise.all([
+            window.showSaveDialog({
+              defaultUri: Uri.file(
+                `${item.library}.${item.name}.csv`.toLocaleLowerCase()
+              ),
+            }),
+            this.libraryDataProvider.getTableContents(item),
+          ]).then(
+            ([uri, tableContents]: [
+              uri: Uri | undefined,
+              tableContents: string
+            ]) => {
+              if (!uri || !tableContents) {
+                return;
+              }
+
+              writeFileSync(uri.fsPath, tableContents);
+            }
+          );
+        }
+      ),
       commands.registerCommand("SAS.collapseAllLibraries", () => {
         commands.executeCommand(
           "workbench.actions.treeView.sas-library-navigator.collapseAll"

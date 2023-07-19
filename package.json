@@ -471,6 +471,11 @@
         "category": "SAS"
       },
       {
+        "command": "SAS.downloadTable",
+        "title": "%commands.SAS.download%",
+        "category": "SAS"
+      },
+      {
         "command": "SAS.notebook.new",
         "shortTitle": "%commands.SAS.notebook.new.short%",
         "title": "%commands.SAS.notebook.new%",
@@ -513,6 +518,10 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "SAS.downloadTable",
+          "when": "viewItem =~ /table-/ && view == sas-library-navigator"
+        },
         {
           "command": "SAS.deleteTable",
           "when": "viewItem =~ /table-actionable/ && view == sas-library-navigator"
@@ -648,6 +657,10 @@
         {
           "when": "false",
           "command": "SAS.deleteTable"
+        },
+        {
+          "when": "false",
+          "command": "SAS.downloadTable"
         }
       ],
       "file/newFile": [

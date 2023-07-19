@@ -83,6 +83,10 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
     return this.model.getChildren(item);
   }
 
+  public getTableContents(item: LibraryItem) {
+    return this.model.getTableContents(item);
+  }
+
   public async deleteTable(item: LibraryItem): Promise<void> {
     await this.model.deleteTable(item);
     this.refresh();
