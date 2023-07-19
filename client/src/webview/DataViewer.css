@@ -9,15 +9,15 @@
   margin-right: 0.25rem;
 }
 
+/* DEFAULT ICONS */
+
+/* TODO #405 time/date-time should be using their respective */
+.header-icon.time,
+.header-icon.date-time,
 .header-icon.float {
   background: url(../../../icons/light/numericTypeLight.svg) center no-repeat;
 }
 
-/* DEFAULT ICONS */
-
-/* TODO Chat with Sam about icons for time/date-time */
-.header-icon.time,
-.header-icon.date-time,
 .header-icon.date {
   background: url(../../../icons/light/DateLight.svg) center no-repeat;
 }
@@ -32,13 +32,13 @@
 
 /* DARK MODE ICONS */
 
+/* TODO #405 time/date-time should be using their respective */
+.header-icon.time,
+.header-icon.date-time,
 .vscode-dark .header-icon.float {
   background: url(../../../icons/dark/numericTypeDark.svg) center no-repeat;
 }
 
-/* TODO Chat with Sam about icons for time/date-time */
-.vscode-dark .header-icon.time,
-.vscode-dark .header-icon.date-time,
 .vscode-dark .header-icon.date {
   background: url(../../../icons/dark/DateDark.svg) center no-repeat;
 }

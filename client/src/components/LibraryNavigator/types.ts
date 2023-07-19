@@ -13,7 +13,7 @@ export interface LibraryItem {
   readOnly: boolean;
 }
 
-interface TableRow {
+export interface TableRow {
   cells: string[];
 }
 

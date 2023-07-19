@@ -2,21 +2,46 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+  CancellationToken,
+  DataTransfer,
+  DataTransferItem,
   Disposable,
+  DocumentDropEdit,
+  DocumentSelector,
   Event,
   EventEmitter,
+  Position,
   ProviderResult,
+  TextDocument,
   TreeDataProvider,
+  TreeDragAndDropController,
   TreeItem,
   TreeItemCollapsibleState,
+  TreeView,
   Uri,
+  languages,
+  window,
 } from "vscode";
+import { SubscriptionProvider } from "../SubscriptionProvider";
 import LibraryModel from "./LibraryModel";
 import { Icons, Messages, WorkLibraryId } from "./const";
 import { LibraryItem, LibraryType, TableType } from "./types";
 
-class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
+export const libraryItemMimeType =
+  "application/vnd.code.tree.librarydataprovider";
+const tableTextMimeType = `${libraryItemMimeType}.text`;
+class LibraryDataProvider
+  implements
+    TreeDataProvider<LibraryItem>,
+    TreeDragAndDropController<LibraryItem>,
+    SubscriptionProvider
+{
   private _onDidChangeTreeData = new EventEmitter<LibraryItem | undefined>();
+  private _treeView: TreeView<LibraryItem>;
+  private _dropEditProvider: Disposable;
+
+  public dropMimeTypes: string[] = [];
+  public dragMimeTypes: string[] = [libraryItemMimeType, tableTextMimeType];
 
   get onDidChangeTreeData(): Event<LibraryItem> {
     return this._onDidChangeTreeData.event;
@@ -24,8 +49,54 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
 
   constructor(
     private readonly model: LibraryModel,
-    private readonly extensionUri: Uri,
-  ) {}
+    private readonly extensionUri: Uri
+  ) {
+    this._treeView = window.createTreeView("librarydataprovider", {
+      treeDataProvider: this,
+      dragAndDropController: this,
+      canSelectMany: true,
+    });
+    this._dropEditProvider = languages.registerDocumentDropEditProvider(
+      this.selector(),
+      this
+    );
+  }
+
+  public getSubscriptions(): Disposable[] {
+    return [this._treeView, this._dropEditProvider];
+  }
+
+  public handleDrag(
+    source: LibraryItem[],
+    dataTransfer: DataTransfer
+  ): void | Thenable<void> {
+    const dataTransferItem = new DataTransferItem(source);
+    dataTransfer.set(libraryItemMimeType, dataTransferItem);
+    if (source?.[0].library) {
+      dataTransfer.set(
+        tableTextMimeType,
+        new DataTransferItem(source?.[0].uid)
+      );
+    }
+  }
+
+  public async provideDocumentDropEdits(
+    _document: TextDocument,
+    position: Position,
+    dataTransfer: DataTransfer,
+    token: CancellationToken
+  ): Promise<DocumentDropEdit | undefined> {
+    const dataTransferItem = dataTransfer.get(this.dragMimeTypes[1]);
+    if (token.isCancellationRequested || !dataTransferItem) {
+      return undefined;
+    }
+
+    return { insertText: dataTransferItem.value };
+  }
+
+  public selector(): DocumentSelector {
+    return { language: "sas" };
+  }
 
   public getTreeItem(item: LibraryItem): TreeItem | Promise<TreeItem> {
     const iconPath = this.iconPathForItem(item);
@@ -81,6 +152,10 @@ class LibraryDataProvider implements TreeDataProvider<LibraryItem> {
 
   public getChildren(item?: LibraryItem): ProviderResult<LibraryItem[]> {
     return this.model.getChildren(item);
+  }
+
+  public getTableContents(item: LibraryItem) {
+    return this.model.getTableContents(item);
   }
 
   public async deleteTable(item: LibraryItem): Promise<void> {

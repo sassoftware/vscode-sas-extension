@@ -9,7 +9,7 @@ import { getApiConfig } from "../../connection/rest/common";
 import { LogFn as LogChannelFn } from "../LogChannel";
 import PaginatedResultSet from "./PaginatedResultSet";
 import { DefaultRecordLimit, Messages } from "./const";
-import { LibraryItem, LibraryItemType, TableData } from "./types";
+import { LibraryItem, LibraryItemType, TableData, TableRow } from "./types";
 
 const sortById = (a: LibraryItem, b: LibraryItem) => a.id.localeCompare(b.id);
 
@@ -76,6 +76,52 @@ class LibraryModel {
         count: response.data.count,
       }),
     );
+  }
+
+  public async getTableContents(item: LibraryItem) {
+    await this.setup();
+    let start = 0;
+    let items: TableData["rows"] = [];
+    let headers: { columns: string[] } | undefined;
+    let totalItemCount = Infinity;
+    do {
+      const { data } = await this.retryOnFail(
+        async () =>
+          await this.dataAccessApi.getRowsAsCSV(
+            {
+              includeColumnNames: true,
+              includeIndex: true,
+              libref: item.library || "",
+              limit: DefaultRecordLimit,
+              sessionId: this.sessionId,
+              start,
+              tableName: item.name,
+            },
+            requestOptions
+          )
+      );
+
+      headers = data.items.shift();
+      items = [...items, ...data.items];
+      totalItemCount = data.count;
+      start += DefaultRecordLimit;
+    } while (start < totalItemCount);
+
+    if (!headers) {
+      return "";
+    }
+
+    const processStringForCsv = (item: string | null) =>
+      (item || "").toString().replace(/"/g, '""');
+    const headerString =
+      '"' + headers.columns.map(processStringForCsv).join('","') + '"';
+    const contentStrings = items.map(
+      (item: TableRow) =>
+        '"' + item.cells.map(processStringForCsv).join('","') + '"'
+    );
+    contentStrings.unshift(headerString);
+
+    return contentStrings.join("\n");
   }
 
   public async fetchColumns(item: LibraryItem) {

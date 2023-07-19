@@ -244,7 +244,7 @@ class ContentNavigator implements SubscriptionProvider {
       ),
       commands.registerCommand("SAS.collapseAllContent", () => {
         commands.executeCommand(
-          "workbench.actions.treeView.contentDataProvider.collapseAll",
+          "workbench.actions.treeView.contentdataprovider.collapseAll",
         );
       }),
       workspace.onDidChangeConfiguration(

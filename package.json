@@ -472,6 +472,11 @@
         "category": "SAS"
       },
       {
+        "command": "SAS.downloadTable",
+        "title": "%commands.SAS.download%",
+        "category": "SAS"
+      },
+      {
         "command": "SAS.notebook.new",
         "shortTitle": "%commands.SAS.notebook.new.short%",
         "title": "%commands.SAS.notebook.new%",
@@ -494,68 +499,74 @@
       "view/title": [
         {
           "command": "SAS.refreshContent",
-          "when": "view == contentDataProvider",
+          "when": "view == contentdataprovider",
           "group": "navigation@0"
         },
         {
           "command": "SAS.collapseAllContent",
-          "when": "view == contentDataProvider",
+          "when": "view == contentdataprovider",
           "group": "navigation@1"
         },
         {
           "command": "SAS.refreshLibraries",
-          "when": "view == sas-library-navigator",
+          "when": "view == librarydataprovider",
           "group": "navigation@0"
         },
         {
           "command": "SAS.collapseAllLibraries",
-          "when": "view == sas-library-navigator",
+          "when": "view == librarydataprovider",
           "group": "navigation@1"
         }
       ],
       "view/item/context": [
         {
           "command": "SAS.deleteTable",
-          "when": "viewItem =~ /table-actionable/ && view == sas-library-navigator"
+          "when": "viewItem =~ /table-actionable/ && view == librarydataprovider",
+          "group": "delete@0"
+        },
+        {
+          "command": "SAS.downloadTable",
+          "when": "viewItem =~ /table-/ && view == librarydataprovider",
+          "group": "download@0"
         },
         {
           "command": "SAS.addFolderResource",
-          "when": "viewItem =~ /createChild/ && view == contentDataProvider",
+          "when": "viewItem =~ /createChild/ && view == contentdataprovider",
           "group": "addgroup@0"
         },
         {
           "command": "SAS.addFileResource",
-          "when": "viewItem =~ /createChild/ && view == contentDataProvider",
+          "when": "viewItem =~ /createChild/ && view == contentdataprovider",
           "group": "addgroup@1"
         },
         {
           "command": "SAS.addToFavorites",
-          "when": "viewItem =~ /addToFavorites/ && view == contentDataProvider",
+          "when": "viewItem =~ /addToFavorites/ && view == contentdataprovider",
           "group": "favoritesgroup@0"
         },
         {
           "command": "SAS.removeFromFavorites",
-          "when": "viewItem =~ /removeFromFavorites/ && view == contentDataProvider",
+          "when": "viewItem =~ /removeFromFavorites/ && view == contentdataprovider",
           "group": "favoritesgroup@1"
         },
         {
           "command": "SAS.renameResource",
-          "when": "viewItem =~ /update/ && view == contentDataProvider && !listMultiSelection",
+          "when": "viewItem =~ /update/ && view == contentdataprovider && !listMultiSelection",
           "group": "delrenamegroup@0"
         },
         {
           "command": "SAS.deleteResource",
-          "when": "viewItem =~ /delete/ && view == contentDataProvider",
+          "when": "viewItem =~ /delete/ && view == contentdataprovider",
           "group": "delrenamegroup@1"
         },
         {
           "command": "SAS.restoreResource",
-          "when": "viewItem =~ /restore/ && view == contentDataProvider",
+          "when": "viewItem =~ /restore/ && view == contentdataprovider",
           "group": "restoregroup@0"
         },
         {
           "command": "SAS.emptyRecycleBin",
-          "when": "viewItem =~ /empty/ && view == contentDataProvider",
+          "when": "viewItem =~ /empty/ && view == contentdataprovider",
           "group": "emptygroup@0"
         }
       ],
@@ -649,6 +660,10 @@
         {
           "when": "false",
           "command": "SAS.deleteTable"
+        },
+        {
+          "when": "false",
+          "command": "SAS.downloadTable"
         }
       ],
       "file/newFile": [
@@ -716,12 +731,12 @@
     "views": {
       "sas-view-container": [
         {
-          "id": "contentDataProvider",
+          "id": "contentdataprovider",
           "name": "%views.SAS.explorer%",
           "when": "SAS.authorized && SAS.connectionType == rest"
         },
         {
-          "id": "sas-library-navigator",
+          "id": "librarydataprovider",
           "name": "%views.SAS.libraries%",
           "when": "(SAS.authorized && SAS.connectionType == rest) || SAS.connection.direct"
         },
