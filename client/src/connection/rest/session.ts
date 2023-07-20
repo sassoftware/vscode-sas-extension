@@ -221,7 +221,6 @@ export class ComputeSession extends Compute {
     let resp = await this.logs.getSessionLog({
       sessionId: this.sessionId,
       start: start,
-      timeout: timeout,
     });
 
     //To clear out the log, we yeild all lines until there is not "next" link
