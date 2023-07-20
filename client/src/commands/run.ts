@@ -2,19 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-  OutputChannel,
+  Position,
   ProgressLocation,
+  Selection,
   ViewColumn,
+  commands,
   window,
   workspace,
-  commands,
-  Position,
-  Selection,
 } from "vscode";
-import { appendLog } from "../components/LogViewer";
+import type { BaseLanguageClient } from "vscode-languageclient";
+import { LogFn as LogChannelFn } from "../components/LogChannel";
 import { getSession } from "../connection";
 import { profileConfig, switchProfile } from "./profile";
-import type { BaseLanguageClient } from "vscode-languageclient";
 
 interface FoldingBlock {
   startLine: number;
@@ -23,7 +22,6 @@ interface FoldingBlock {
   endCol: number;
 }
 
-let outputChannel: OutputChannel;
 let running = false;
 
 function getCode(outputHtml: boolean, selected = false): string {
@@ -115,16 +113,7 @@ async function runCode(selected?: boolean) {
   const code = getCode(outputHtml, selected);
 
   const session = getSession();
-  session.onLogFn = (logs) => {
-    if (!outputChannel) {
-      outputChannel = window.createOutputChannel("SAS Log", "sas-log");
-    }
-    outputChannel.show();
-    for (const line of logs) {
-      appendLog(line.type);
-      outputChannel.appendLine(line.line);
-    }
-  };
+  session.onLogFn = LogChannelFn;
 
   await window.withProgress(
     {

@@ -121,8 +121,9 @@ class RestSession extends Session {
         )
       ).data;
       this._computeSession = ComputeSession.fromInterface(sess);
-      await this.printSessionLog(this._computeSession);
     }
+
+    await this.printSessionLog(this._computeSession);
 
     //Save the current sessionId
     setContextValue("SAS.sessionId", this._computeSession.sessionId);

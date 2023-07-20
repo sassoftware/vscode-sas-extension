@@ -4,7 +4,7 @@
 import { OnLogFn, RunResult } from ".";
 
 export abstract class Session {
-  protected _onLogFn: OnLogFn;
+  protected _onLogFn: OnLogFn | undefined;
   public set onLogFn(value: OnLogFn) {
     this._onLogFn = value;
   }

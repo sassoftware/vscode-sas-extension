@@ -7,6 +7,7 @@ import { ProgressLocation, window } from "vscode";
 import { getSession } from "../../connection";
 import { DataAccessApi } from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
+import { LogFn as LogChannelFn } from "../LogChannel";
 import PaginatedResultSet from "./PaginatedResultSet";
 import { DefaultRecordLimit, Messages } from "./const";
 import { LibraryItem, LibraryItemType, TableData } from "./types";
@@ -23,6 +24,7 @@ class LibraryModel {
 
   public async connect(): Promise<void> {
     const session = getSession();
+    session.onLogFn = LogChannelFn;
 
     await window.withProgress(
       {
