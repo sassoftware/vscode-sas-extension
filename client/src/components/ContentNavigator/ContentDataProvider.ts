@@ -119,6 +119,11 @@ class ContentDataProvider
       switch (mimeType) {
         case libraryItemMimeType: {
           const libraryItem = JSON.parse(item.value)[0];
+          // If we drag in an item that doesn't have an associated library,
+          // lets bail
+          if (!libraryItem.library) {
+            return;
+          }
           const contents = await new LibraryModel().getTableContents(
             libraryItem,
           );
