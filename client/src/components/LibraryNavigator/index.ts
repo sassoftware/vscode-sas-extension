@@ -42,16 +42,16 @@ class LibraryNavigator implements SubscriptionProvider {
         async (
           item: LibraryItem,
           paginator: PaginatedResultSet<TableData>,
-          fetchColumns: () => Column[]
+          fetchColumns: () => Column[],
         ) => {
           this.webviewManager.render(
             new DataViewer(
               this.extensionUri,
               item.uid,
               paginator,
-              fetchColumns
+              fetchColumns,
             ),
-            item.uid
+            item.uid,
           );
         },
       ),
@@ -69,27 +69,27 @@ class LibraryNavigator implements SubscriptionProvider {
           await Promise.all([
             window.showSaveDialog({
               defaultUri: Uri.file(
-                `${item.library}.${item.name}.csv`.toLocaleLowerCase()
+                `${item.library}.${item.name}.csv`.toLocaleLowerCase(),
               ),
             }),
             this.libraryDataProvider.getTableContents(item),
           ]).then(
             ([uri, tableContents]: [
               uri: Uri | undefined,
-              tableContents: string
+              tableContents: string,
             ]) => {
               if (!uri || !tableContents) {
                 return;
               }
 
               writeFileSync(uri.fsPath, tableContents);
-            }
+            },
           );
-        }
+        },
       ),
       commands.registerCommand("SAS.collapseAllLibraries", () => {
         commands.executeCommand(
-          "workbench.actions.treeView.librarydataprovider.collapseAll"
+          "workbench.actions.treeView.librarydataprovider.collapseAll",
         );
       }),
       workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {

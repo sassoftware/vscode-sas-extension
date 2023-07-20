@@ -87,21 +87,21 @@ const useDataViewer = () => {
                     ...carry,
                     [columns[index].field]: cell,
                   }),
-                  {}
+                  {},
                 );
 
                 return row;
               });
 
               params.successCallback(rowData, count);
-            }
+            },
           );
         },
       };
 
       event.api.setDatasource(dataSource);
     },
-    [columns]
+    [columns],
   );
 
   useEffect(() => {

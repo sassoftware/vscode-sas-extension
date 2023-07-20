@@ -52,7 +52,7 @@ const browserBuildOptions = {
 
 if (process.env.npm_config_browser || process.env.npm_config_node) {
   const ctx = await esbuild.context(
-    process.env.npm_config_browser ? browserBuildOptions : nodeBuildOptions
+    process.env.npm_config_browser ? browserBuildOptions : nodeBuildOptions,
   );
   await ctx.rebuild();
 
@@ -76,11 +76,11 @@ if (process.env.npm_config_browser || process.env.npm_config_node) {
     {
       killOthers: ["failure", "success"],
       restartTries: 3,
-    }
+    },
   );
 
   await result.then(
     () => {},
-    () => console.error("Assets failed to build successfully")
+    () => console.error("Assets failed to build successfully"),
   );
 }

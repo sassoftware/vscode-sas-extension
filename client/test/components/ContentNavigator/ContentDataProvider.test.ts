@@ -716,7 +716,7 @@ describe("ContentDataProvider", async function () {
     const dataTransferItem = new DataTransferItem(uri);
     dataTransfer.set(
       "application/vnd.code.tree.contentdataprovider",
-      dataTransferItem
+      dataTransferItem,
     );
 
     stub.returns(new Promise((resolve) => resolve(item)));
@@ -752,13 +752,8 @@ describe("ContentDataProvider", async function () {
     const dataTransfer = new DataTransfer();
     const dataTransferItem = new DataTransferItem(uri);
     dataTransfer.set(
-<<<<<<< HEAD
-      "application/vnd.code.tree.contentDataProvider",
-      dataTransferItem,
-=======
       "application/vnd.code.tree.contentdataprovider",
-      dataTransferItem
->>>>>>> 86886535 (Implement download functionality)
+      dataTransferItem,
     );
 
     createFileStub.returns(new Promise((resolve) => resolve(item)));
@@ -794,13 +789,8 @@ describe("ContentDataProvider", async function () {
     const dataTransfer = new DataTransfer();
     const dataTransferItem = new DataTransferItem([item]);
     dataTransfer.set(
-<<<<<<< HEAD
-      "application/vnd.code.tree.contentDataProvider",
-      dataTransferItem,
-=======
       "application/vnd.code.tree.contentdataprovider",
-      dataTransferItem
->>>>>>> 86886535 (Implement download functionality)
+      dataTransferItem,
     );
 
     await dataProvider.handleDrop(parentItem, dataTransfer);
@@ -849,13 +839,8 @@ describe("ContentDataProvider", async function () {
     const dataTransfer = new DataTransfer();
     const dataTransferItem = new DataTransferItem([item]);
     dataTransfer.set(
-<<<<<<< HEAD
-      "application/vnd.code.tree.contentDataProvider",
-      dataTransferItem,
-=======
       "application/vnd.code.tree.contentdataprovider",
-      dataTransferItem
->>>>>>> 86886535 (Implement download functionality)
+      dataTransferItem,
     );
 
     await dataProvider.handleDrop(parentItem, dataTransfer);
@@ -893,13 +878,8 @@ describe("ContentDataProvider", async function () {
     const dataTransfer = new DataTransfer();
     const dataTransferItem = new DataTransferItem([item]);
     dataTransfer.set(
-<<<<<<< HEAD
-      "application/vnd.code.tree.contentDataProvider",
-      dataTransferItem,
-=======
       "application/vnd.code.tree.contentdataprovider",
-      dataTransferItem
->>>>>>> 86886535 (Implement download functionality)
+      dataTransferItem,
     );
 
     await dataProvider.handleDrop(parentItem, dataTransfer);

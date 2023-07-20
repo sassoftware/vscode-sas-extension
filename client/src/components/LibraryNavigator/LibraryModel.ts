@@ -97,8 +97,8 @@ class LibraryModel {
               start,
               tableName: item.name,
             },
-            requestOptions
-          )
+            requestOptions,
+          ),
       );
 
       headers = data.items.shift();
@@ -117,7 +117,7 @@ class LibraryModel {
       '"' + headers.columns.map(processStringForCsv).join('","') + '"';
     const contentStrings = items.map(
       (item: TableRow) =>
-        '"' + item.cells.map(processStringForCsv).join('","') + '"'
+        '"' + item.cells.map(processStringForCsv).join('","') + '"',
     );
     contentStrings.unshift(headerString);
 
@@ -141,8 +141,8 @@ class LibraryModel {
               libref: item.library || "",
               tableName: item.name,
             },
-            requestOptions
-          )
+            requestOptions,
+          ),
       );
 
       items = [...items, ...data.items];

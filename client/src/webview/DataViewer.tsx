@@ -24,7 +24,7 @@ const DataViewer = () => {
   const [theme] = useState(
     document.querySelector(".vscode-dark")
       ? "ag-theme-alpine-dark"
-      : "ag-theme-alpine"
+      : "ag-theme-alpine",
   );
 
   if (columns.length === 0) {

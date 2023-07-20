@@ -120,12 +120,12 @@ class ContentDataProvider
         case libraryItemMimeType: {
           const libraryItem = JSON.parse(item.value)[0];
           const contents = await new LibraryModel().getTableContents(
-            libraryItem
+            libraryItem,
           );
           await this.createFile(
             target,
             `${libraryItem.library}.${libraryItem.name}.csv`.toLocaleLowerCase(),
-            Buffer.from(contents, "binary")
+            Buffer.from(contents, "binary"),
           );
           this.refresh();
           break;
@@ -134,8 +134,8 @@ class ContentDataProvider
           await Promise.all(
             item.value.map(
               async (contentItem: ContentItem) =>
-                await this.handleContentItemDrop(target, contentItem)
-            )
+                await this.handleContentItemDrop(target, contentItem),
+            ),
           );
           break;
         case "text/uri-list":

@@ -17,7 +17,7 @@ class DataViewer extends WebView {
     extensionUri: Uri,
     uid: string,
     paginator: PaginatedResultSet<TableData>,
-    fetchColumns: () => Column[]
+    fetchColumns: () => Column[],
   ) {
     super();
     this._uid = uid;
@@ -35,7 +35,7 @@ class DataViewer extends WebView {
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <link rel="stylesheet" href="${this.webviewUri(
             this._extensionUri,
-            "DataViewer.css"
+            "DataViewer.css",
           )}">
           <title>${this._uid}</title>
         </head>
@@ -47,7 +47,7 @@ class DataViewer extends WebView {
           <div class="data-viewer" style="height:100%;"></div>
           <script type="module" src="${this.webviewUri(
             this._extensionUri,
-            "DataViewer.js"
+            "DataViewer.js",
           )}"></script>
         </body>
       </html>
@@ -57,7 +57,7 @@ class DataViewer extends WebView {
   }
 
   public async processMessage(
-    event: Event & { command: string; data?: { start?: number; end?: number } }
+    event: Event & { command: string; data?: { start?: number; end?: number } },
   ): Promise<void> {
     switch (event.command) {
       case "request:loadData":

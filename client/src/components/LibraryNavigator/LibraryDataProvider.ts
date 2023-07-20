@@ -49,7 +49,7 @@ class LibraryDataProvider
 
   constructor(
     private readonly model: LibraryModel,
-    private readonly extensionUri: Uri
+    private readonly extensionUri: Uri,
   ) {
     this._treeView = window.createTreeView("librarydataprovider", {
       treeDataProvider: this,
@@ -58,7 +58,7 @@ class LibraryDataProvider
     });
     this._dropEditProvider = languages.registerDocumentDropEditProvider(
       this.selector(),
-      this
+      this,
     );
   }
 
@@ -68,14 +68,14 @@ class LibraryDataProvider
 
   public handleDrag(
     source: LibraryItem[],
-    dataTransfer: DataTransfer
+    dataTransfer: DataTransfer,
   ): void | Thenable<void> {
     const dataTransferItem = new DataTransferItem(source);
     dataTransfer.set(libraryItemMimeType, dataTransferItem);
     if (source?.[0].library) {
       dataTransfer.set(
         tableTextMimeType,
-        new DataTransferItem(source?.[0].uid)
+        new DataTransferItem(source?.[0].uid),
       );
     }
   }
@@ -84,7 +84,7 @@ class LibraryDataProvider
     _document: TextDocument,
     position: Position,
     dataTransfer: DataTransfer,
-    token: CancellationToken
+    token: CancellationToken,
   ): Promise<DocumentDropEdit | undefined> {
     const dataTransferItem = dataTransfer.get(this.dragMimeTypes[1]);
     if (token.isCancellationRequested || !dataTransferItem) {
