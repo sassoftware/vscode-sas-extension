@@ -110,10 +110,10 @@ class ContentDataProvider
     target: ContentItem,
     sources: DataTransfer,
   ): Promise<void> {
-    this.dropMimeTypes.forEach(async (mimeType: string) => {
+    for (const mimeType of this.dropMimeTypes) {
       const item = sources.get(mimeType);
       if (!item || !item.value) {
-        return;
+        continue;
       }
 
       switch (mimeType) {
@@ -149,7 +149,7 @@ class ContentDataProvider
         default:
           break;
       }
-    });
+    }
   }
 
   public handleDrag(
