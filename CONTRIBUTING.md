@@ -55,7 +55,7 @@ For each pull request, you are expected to test the defaults to make sure no reg
 
 ## Get started
 
-- Download the NodeJS version that matches the version listed in the `node-version` field in .github/workflows/pr.yml.
+- Download and install the current NodeJS LTS version. 
 - Run `npm install` in this folder. This installs all necessary npm modules in both the client and server folder.
 - Open VS Code on this folder.
 - Press Ctrl+Shift+B to compile the client and server.
