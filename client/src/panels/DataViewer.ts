@@ -29,7 +29,7 @@ class DataViewer extends WebView {
   public render(): WebView {
     this.panel.webview.html = `
       <!DOCTYPE html>
-      <html lang="en" style="min-height:100%;height:100%;">
+      <html lang="en">
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -39,12 +39,12 @@ class DataViewer extends WebView {
           )}">
           <title>${this._uid}</title>
         </head>
-        <body style="min-height:100%;height:100%;padding:0;">
+        <body>
           <vscode-data-grid
             class="data-view-${this._uid.replace(/\./g, "")}"
             aria-label="${this._uid} contents"
           ></vscode-data-grid>
-          <div class="data-viewer" style="height:100%;"></div>
+          <div class="data-viewer"></div>
           <script type="module" src="${this.webviewUri(
             this._extensionUri,
             "DataViewer.js",

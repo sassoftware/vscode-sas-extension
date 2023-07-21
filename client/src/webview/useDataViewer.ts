@@ -17,8 +17,13 @@ const contextMenuHandler = (e) => {
 const defaultTimeout = 60 * 1000; // 60 seconds (accounting for compute session expiration)
 
 let queryTableDataTimeoutId = null;
-const clearQueryTimeout = () =>
-  queryTableDataTimeoutId && clearTimeout(queryTableDataTimeoutId);
+const clearQueryTimeout = (): void => {
+  if (!queryTableDataTimeoutId) {
+    return;
+  }
+  clearTimeout(queryTableDataTimeoutId);
+  queryTableDataTimeoutId = null;
+};
 const queryTableData = (start: number, end: number): Promise<TableData> => {
   vscode.postMessage({
     command: "request:loadData",

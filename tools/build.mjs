@@ -62,22 +62,16 @@ if (process.env.npm_config_browser || process.env.npm_config_node) {
     await ctx.dispose();
   }
 } else {
-  const { result } = concurrently(
-    [
-      {
-        command: `npm run ${process.env.npm_lifecycle_event} --browser`,
-        name: "browser",
-      },
-      {
-        command: `npm run ${process.env.npm_lifecycle_event} --node`,
-        name: "node",
-      },
-    ],
+  const { result } = concurrently([
     {
-      killOthers: ["failure", "success"],
-      restartTries: 3,
+      command: `npm run ${process.env.npm_lifecycle_event} --browser`,
+      name: "browser",
     },
-  );
+    {
+      command: `npm run ${process.env.npm_lifecycle_event} --node`,
+      name: "node",
+    },
+  ]);
 
   await result.then(
     () => {},
