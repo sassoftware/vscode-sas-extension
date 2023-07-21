@@ -55,6 +55,7 @@ For each pull request, you are expected to test the defaults to make sure no reg
 
 ## Get started
 
+- Install NodeJS LTS.
 - Run `npm install` in this folder. This installs all necessary npm modules in both the client and server folder.
 - Open VS Code on this folder.
 - Press Ctrl+Shift+B to compile the client and server.
