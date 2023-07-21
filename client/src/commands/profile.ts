@@ -6,7 +6,7 @@ import {
   ProfilePromptType,
   ProfileConfig,
 } from "../components/profile";
-import { window } from "vscode";
+import { l10n, window } from "vscode";
 
 export const profileConfig = new ProfileConfig();
 /**
@@ -37,7 +37,7 @@ export async function updateProfile(): Promise<void> {
     return;
   }
   const selected = await window.showQuickPick(profileList, {
-    placeHolder: "Select a SAS connection profile",
+    placeHolder: l10n.t("Select a SAS connection profile"),
   });
   if (selected) {
     await profileConfig.prompt(selected);
@@ -55,7 +55,7 @@ export async function switchProfile(): Promise<void> {
     return;
   }
   const selected = await window.showQuickPick(profileList, {
-    placeHolder: "Select a SAS connection profile",
+    placeHolder: l10n.t("Select a SAS connection profile"),
   });
   if (selected) {
     profileConfig.updateActiveProfileSetting(selected);
@@ -70,16 +70,19 @@ export async function switchProfile(): Promise<void> {
 export async function deleteProfile(): Promise<void> {
   const profileList = profileConfig.listProfile();
   if (profileList.length === 0) {
-    window.showErrorMessage("No Profiles available to delete");
+    window.showErrorMessage(l10n.t("No Profiles available to delete"));
     return;
   }
   const selected = await window.showQuickPick(profileList, {
-    placeHolder: "Select a SAS connection profile",
+    placeHolder: l10n.t("Select a SAS connection profile"),
   });
   if (selected) {
     profileConfig.deleteProfile(selected);
     window.showInformationMessage(
-      `The ${selected} SAS connection profile has been deleted from the settings.json file.`,
+      l10n.t(
+        "The {selected} SAS connection profile has been deleted from the settings.json file.",
+        { selected },
+      ),
     );
   }
 }

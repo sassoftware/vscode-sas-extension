@@ -4,3 +4,5 @@ node_modules
 .vscode-test*
 *.vsix
 *.node
+*.qps-ploc.json
+l10n/bundle.l10n.json

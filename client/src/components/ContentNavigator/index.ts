@@ -1,12 +1,12 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { sprintf } from "sprintf-js";
 import {
   commands,
   ConfigurationChangeEvent,
   Disposable,
   ExtensionContext,
+  l10n,
   TextDocumentChangeEvent,
   Uri,
   window,
@@ -68,10 +68,9 @@ class ContentNavigator implements SubscriptionProvider {
               if (
                 !moveToRecycleBin &&
                 !(await window.showWarningMessage(
-                  Messages.DeleteWarningMessage.replace(
-                    "{name}",
-                    resource.name,
-                  ),
+                  l10n.t(Messages.DeleteWarningMessage, {
+                    name: resource.name,
+                  }),
                   { modal: true },
                   Messages.DeleteButtonLabel,
                 ))
@@ -145,7 +144,7 @@ class ContentNavigator implements SubscriptionProvider {
           this.handleCreationResponse(
             resource,
             newUri,
-            sprintf(Messages.NewFileCreationError, { name: fileName }),
+            l10n.t(Messages.NewFileCreationError, { name: fileName }),
           );
 
           if (newUri) {
@@ -172,7 +171,7 @@ class ContentNavigator implements SubscriptionProvider {
           this.handleCreationResponse(
             resource,
             newUri,
-            sprintf(Messages.NewFolderCreationError, { name: folderName }),
+            l10n.t(Messages.NewFolderCreationError, { name: folderName }),
           );
         },
       ),
@@ -208,7 +207,7 @@ class ContentNavigator implements SubscriptionProvider {
 
           if (!newUri) {
             window.showErrorMessage(
-              sprintf(Messages.RenameError, {
+              l10n.t(Messages.RenameError, {
                 oldName: resource.name,
                 newName: name,
               }),

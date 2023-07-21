@@ -5,6 +5,7 @@ import { BaseCompute, Compute, getApiConfig } from "./common";
 import { ContextsApi, Context, Link, ContextSummary } from "./api/compute";
 import { ComputeSession } from "./session";
 import axios, { AxiosResponse } from "axios";
+import { l10n } from "vscode";
 
 export class ComputeContext extends Compute {
   api;
@@ -38,7 +39,7 @@ export class ComputeContext extends Compute {
       })
     ).data.items[0];
     if (!context?.id) {
-      throw new Error("Compute Context not found: " + name);
+      throw new Error(l10n.t("Compute Context not found: {name}", { name }));
     }
 
     return ComputeContext.fromInterface(context);
@@ -54,10 +55,10 @@ export class ComputeContext extends Compute {
 
   async self<Context>(): Promise<Context> {
     if (this._self.id === undefined) {
-      throw new Error("Cannot call self on object with no id");
+      throw new Error(l10n.t("Cannot call self on object with no id"));
     }
 
-    throw new Error("Not implemented");
+    throw new Error(l10n.t("Not implemented"));
   }
 
   async createSession(): Promise<ComputeSession> {
@@ -67,7 +68,7 @@ export class ComputeContext extends Compute {
 
     const link = this.getLink(this.links, "createSession");
     if (link === undefined) {
-      throw new Error("Server does not have createSession link");
+      throw new Error(l10n.t("Server does not have createSession link"));
     }
 
     //Create the session

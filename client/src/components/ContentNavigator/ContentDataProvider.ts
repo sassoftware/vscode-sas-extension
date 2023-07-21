@@ -3,7 +3,6 @@
 
 import { lstat, readFile, readdir } from "fs";
 import { basename, join } from "path";
-import { sprintf } from "sprintf-js";
 import { promisify } from "util";
 import {
   DataTransfer,
@@ -26,6 +25,7 @@ import {
   TreeItemCollapsibleState,
   TreeView,
   Uri,
+  l10n,
   window,
 } from "vscode";
 import { profileConfig } from "../../commands/profile";
@@ -393,7 +393,7 @@ class ContentDataProvider
 
     if (!success) {
       await window.showErrorMessage(
-        sprintf(message, {
+        l10n.t(message, {
           name: item.name,
         }),
       );
@@ -408,7 +408,7 @@ class ContentDataProvider
     let success = true;
     if (!folder) {
       await window.showErrorMessage(
-        sprintf(Messages.FileDropError, {
+        l10n.t(Messages.FileDropError, {
           name: basename(path),
         }),
       );
@@ -436,7 +436,7 @@ class ContentDataProvider
           if (!fileCreated) {
             success = false;
             await window.showErrorMessage(
-              sprintf(Messages.FileDropError, {
+              l10n.t(Messages.FileDropError, {
                 name,
               }),
             );
@@ -479,7 +479,7 @@ class ContentDataProvider
 
         if (!fileCreated) {
           await window.showErrorMessage(
-            sprintf(Messages.FileDropError, {
+            l10n.t(Messages.FileDropError, {
               name,
             }),
           );

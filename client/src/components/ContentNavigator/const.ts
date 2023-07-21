@@ -1,6 +1,8 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { l10n } from "vscode";
+
 const CONTENT_FOLDER_ID = "CONTENT_FOLDER_ID";
 export const ROOT_FOLDER_TYPE = "RootFolder";
 
@@ -43,36 +45,43 @@ export const FOLDER_TYPES = [
 ];
 
 export const Messages = {
-  AddFileToMyFolderFailure: "Unable to add file to my folder.",
-  AddFileToMyFolderSuccess: "File added to my folder.",
-  AddToFavoritesError: "The item could not be added to My Favorites.",
-  DeleteButtonLabel: "Delete",
-  DeleteWarningMessage:
+  AddFileToMyFolderFailure: l10n.t("Unable to add file to my folder."),
+  AddFileToMyFolderSuccess: l10n.t("File added to my folder."),
+  AddToFavoritesError: l10n.t("The item could not be added to My Favorites."),
+  DeleteButtonLabel: l10n.t("Delete"),
+  DeleteWarningMessage: l10n.t(
     'Are you sure you want to permanently delete the item "{name}"?',
-  EmptyRecycleBinError: "Unable to empty the recycle bin.",
-  EmptyRecycleBinWarningMessage:
+  ),
+  EmptyRecycleBinError: l10n.t("Unable to empty the recycle bin."),
+  EmptyRecycleBinWarningMessage: l10n.t(
     "Are you sure you want to permanently delete all the items? You cannot undo this action.",
-  FileDeletionError: "Unable to delete file.",
-  FileDragFromFavorites: "Unable to drag files from my favorites.",
-  FileDragFromTrashError: "Unable to drag files from trash.",
-  FileDropError: 'Unable to drop item "%(name)s".',
-  FileOpenError: "The file type is unsupported.",
-  FileRestoreError: "Unable to restore file.",
-  FileValidationError: "Invalid file name.",
-  FolderDeletionError: "Unable to delete folder.",
-  FolderRestoreError: "Unable to restore folder.",
-  FolderValidationError:
+  ),
+  FileDeletionError: l10n.t("Unable to delete file."),
+  FileDragFromFavorites: l10n.t("Unable to drag files from my favorites."),
+  FileDragFromTrashError: l10n.t("Unable to drag files from trash."),
+  FileDropError: l10n.t('Unable to drop item "{name}".'),
+  FileOpenError: l10n.t("The file type is unsupported."),
+  FileRestoreError: l10n.t("Unable to restore file."),
+  FileValidationError: l10n.t("Invalid file name."),
+  FolderDeletionError: l10n.t("Unable to delete folder."),
+  FolderRestoreError: l10n.t("Unable to restore folder."),
+  FolderValidationError: l10n.t(
     "The folder name cannot contain more than 100 characters.",
-  NewFileCreationError: 'Unable to create file "%(name)s".',
-  NewFilePrompt: "Enter a file name.",
-  NewFileTitle: "New File",
-  NewFolderCreationError: 'Unable to create folder "%(name)s".',
-  NewFolderPrompt: "Enter a folder name.",
-  NewFolderTitle: "New Folder",
-  RemoveFromFavoritesError: "The item could not be removed from My Favorites.",
-  RenameError: 'Unable to rename "%(oldName)s" to "%(newName)s".',
-  RenameFileTitle: "Rename File",
-  RenameFolderTitle: "Rename Folder",
-  RenamePrompt: "Enter a new name.",
-  RenameUnsavedFileError: "You must save your file before you can rename it.",
+  ),
+  NewFileCreationError: l10n.t('Unable to create file "{name}").'),
+  NewFilePrompt: l10n.t("Enter a file name."),
+  NewFileTitle: l10n.t("New File"),
+  NewFolderCreationError: l10n.t('Unable to create folder "{name}".'),
+  NewFolderPrompt: l10n.t("Enter a folder name."),
+  NewFolderTitle: l10n.t("New Folder"),
+  RemoveFromFavoritesError: l10n.t(
+    "The item could not be removed from My Favorites.",
+  ),
+  RenameError: l10n.t('Unable to rename "{oldName}" to "{newName}".'),
+  RenameFileTitle: l10n.t("Rename File"),
+  RenameFolderTitle: l10n.t("Rename Folder"),
+  RenamePrompt: l10n.t("Enter a new name."),
+  RenameUnsavedFileError: l10n.t(
+    "You must save your file before you can rename it.",
+  ),
 };

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import axios from "axios";
-import { CancellationTokenSource, env, Uri, window } from "vscode";
+import { CancellationTokenSource, env, l10n, Uri, window } from "vscode";
 import { URLSearchParams } from "url";
 import { createHash } from "crypto";
 import { Config } from ".";
@@ -94,7 +94,7 @@ export async function getTokens(
   });
   const inputCode = await window.showInputBox(
     {
-      placeHolder: `Paste authorization code here`,
+      placeHolder: l10n.t("Paste authorization code here"),
       password: true,
       ignoreFocusOut: true,
     },
@@ -105,7 +105,7 @@ export async function getTokens(
     authCode = inputCode;
   }
   if (!authCode) {
-    throw new Error("No authorization code");
+    throw new Error(l10n.t("No authorization code"));
   }
 
   tokens = (
