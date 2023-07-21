@@ -114,10 +114,7 @@ class LibraryModel {
                 ),
             );
 
-            const headers: { columns: string[] } = data.items.shift();
-            const rows: TableData["rows"] = data.items;
-
-            return { headers, rows };
+            return { headers: data.items.shift(), rows: data.items };
           };
         })(offset),
       );
@@ -127,28 +124,22 @@ class LibraryModel {
 
     const results = await throttle(promiseStack, 5);
 
-    let headers: { columns: string[] } | undefined;
-    const items: TableData["rows"] = [];
+    const contentStrings = [];
+    const stringArrayToCsvString = (strings: string[]): string =>
+      `"${strings
+        .map((item: string) => (item || "").toString().replace(/"/g, '""'))
+        .join('","')}"`;
+
     results.forEach((result) => {
-      if (!headers) {
-        headers = result.headers;
+      if (contentStrings.length === 0) {
+        contentStrings.push(stringArrayToCsvString(result.headers.columns));
       }
-      items.push(...result.rows);
+      contentStrings.push(
+        ...result.rows.map((item: TableRow) =>
+          stringArrayToCsvString(item.cells),
+        ),
+      );
     });
-
-    if (!headers) {
-      return "";
-    }
-
-    const processStringForCsv = (item: string | null) =>
-      (item || "").toString().replace(/"/g, '""');
-    const headerString =
-      '"' + headers.columns.map(processStringForCsv).join('","') + '"';
-    const contentStrings = items.map(
-      (item: TableRow) =>
-        '"' + item.cells.map(processStringForCsv).join('","') + '"',
-    );
-    contentStrings.unshift(headerString);
 
     return contentStrings.join("\n");
   }
