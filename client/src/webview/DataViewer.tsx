@@ -36,6 +36,9 @@ const DataViewer = () => {
       <AgGridReact
         cacheBlockSize={100}
         columnDefs={columns}
+        defaultColDef={{
+          resizable: true,
+        }}
         infiniteInitialRowCount={100}
         maxBlocksInCache={10}
         onGridReady={onGridReady}

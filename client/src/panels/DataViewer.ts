@@ -27,12 +27,22 @@ class DataViewer extends WebView {
   }
 
   public render(): WebView {
+    const policies = [
+      `default-src 'none';`,
+      `font-src ${this.panel.webview.cspSource} data:;`,
+      `img-src ${this.panel.webview.cspSource} data:;`,
+      `script-src ${this.panel.webview.cspSource};`,
+      `style-src ${this.panel.webview.cspSource};`,
+    ];
     this.panel.webview.html = `
       <!DOCTYPE html>
       <html lang="en">
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <meta http-equiv="Content-Security-Policy" content="${policies.join(
+            " ",
+          )}" />
           <link rel="stylesheet" href="${this.webviewUri(
             this._extensionUri,
             "DataViewer.css",
