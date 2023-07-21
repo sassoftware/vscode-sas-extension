@@ -155,13 +155,6 @@ export class COMSession extends Session {
   };
 
   /**
-   * Cancel a running code execution.
-   */
-  public cancel(): Promise<void> {
-    throw new Error("Not Implemented");
-  }
-
-  /**
    * Formats the SAS Options provided in the profile into a format
    * that the shell process can understand.
    * @param sasOptions SAS Options array from the connection profile.
