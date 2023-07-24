@@ -68,7 +68,7 @@ export const Messages = {
   FolderValidationError: l10n.t(
     "The folder name cannot contain more than 100 characters.",
   ),
-  NewFileCreationError: l10n.t('Unable to create file "{name}").'),
+  NewFileCreationError: l10n.t('Unable to create file "{name}".'),
   NewFilePrompt: l10n.t("Enter a file name."),
   NewFileTitle: l10n.t("New File"),
   NewFolderCreationError: l10n.t('Unable to create folder "{name}".'),
