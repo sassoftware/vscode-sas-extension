@@ -226,7 +226,7 @@ do {
           this.fetchResults();
         } else {
           this._html5FileName =
-            line.match(/NOTE: .+ HTML5.* Body .+: (.+)\.htm/)?.[1] ??
+            line.match(/NOTE: .+ HTML5.* Body.+: (.+)\.htm/)?.[1] ??
             this._html5FileName;
           this._onLogFn?.([{ type: "normal", line }]);
         }
