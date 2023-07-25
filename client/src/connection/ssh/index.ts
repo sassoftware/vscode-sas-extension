@@ -51,10 +51,6 @@ export class SSHSession extends Session {
     throw new Error(l10n.t("Method not implemented."));
   };
 
-  public cancel? = (): Promise<void> => {
-    throw new Error("Method not implemented.");
-  };
-
   set config(newValue: Config) {
     this._config = newValue;
   }

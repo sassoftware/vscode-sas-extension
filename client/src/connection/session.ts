@@ -11,7 +11,7 @@ export abstract class Session {
 
   abstract setup(): Promise<void>;
   abstract run(code: string): Promise<RunResult>;
-  abstract cancel?(): Promise<void>;
+  cancel?(): Promise<void>;
   abstract close(): Promise<void> | void;
   abstract sessionId?(): string | undefined;
 }
