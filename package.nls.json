@@ -4,7 +4,7 @@
   "configuration.SAS.connectionProfiles.profiles.autoExec.line": "SAS Connection AutoExec Line",
   "configuration.SAS.connectionProfiles.profiles.autoExec.type": "SAS Connection AutoExec type",
 
-  "configuration.SAS.connectionProfiles": "Define the connection profiles to connect to SAS Viya servers. If you define more than one profile, you can switch between them.",
+  "configuration.SAS.connectionProfiles": "Define the connection profiles to connect to SAS servers. If you define more than one profile, you can switch between them.",
   "configuration.SAS.connectionProfiles.activeProfile": "Active SAS Connection Profile",
   "configuration.SAS.connectionProfiles.profiles": "SAS Connection Profiles",
   "configuration.SAS.connectionProfiles.profiles.clientId": "SAS Viya Client ID",

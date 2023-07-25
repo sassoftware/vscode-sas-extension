@@ -772,7 +772,7 @@
       },
       {
         "id": "sas-html-renderer",
-        "displayName": "%notebooks.SAS.logRenderer%",
+        "displayName": "%notebooks.SAS.htmlRenderer%",
         "entrypoint": "./client/dist/notebook/HTMLRenderer.js",
         "mimeTypes": [
           "application/vnd.sas.ods.html5"
