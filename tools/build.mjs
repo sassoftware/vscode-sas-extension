@@ -50,9 +50,9 @@ const browserBuildOptions = {
   },
 };
 
-if (process.env.npm_config_browser || process.env.npm_config_node) {
+if (process.env.npm_config_webviews || process.env.npm_config_client) {
   const ctx = await esbuild.context(
-    process.env.npm_config_browser ? browserBuildOptions : nodeBuildOptions,
+    process.env.npm_config_webviews ? browserBuildOptions : nodeBuildOptions,
   );
   await ctx.rebuild();
 
@@ -64,11 +64,11 @@ if (process.env.npm_config_browser || process.env.npm_config_node) {
 } else {
   const { result } = concurrently([
     {
-      command: `npm run ${process.env.npm_lifecycle_event} --browser`,
+      command: `npm run ${process.env.npm_lifecycle_event} --webviews`,
       name: "browser",
     },
     {
-      command: `npm run ${process.env.npm_lifecycle_event} --node`,
+      command: `npm run ${process.env.npm_lifecycle_event} --client`,
       name: "node",
     },
   ]);
