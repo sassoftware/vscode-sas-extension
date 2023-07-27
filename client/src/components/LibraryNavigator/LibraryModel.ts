@@ -146,11 +146,10 @@ class LibraryModel {
 
   public async fetchColumns(item: LibraryItem) {
     await this.setup();
-    let offset = -1 * DefaultRecordLimit;
+    let offset = 0;
     let items = [];
     let totalItemCount = Infinity;
     do {
-      offset += DefaultRecordLimit;
       const { data } = await this.retryOnFail(
         async () =>
           await this.dataAccessApi.getColumns(
@@ -167,6 +166,7 @@ class LibraryModel {
 
       items = [...items, ...data.items];
       totalItemCount = data.count;
+      offset += DefaultRecordLimit;
     } while (offset < totalItemCount);
 
     return items;
@@ -215,11 +215,10 @@ class LibraryModel {
   private async getLibraries(): Promise<LibraryItem[]> {
     await this.setup();
 
-    let offset = -1 * DefaultRecordLimit;
+    let offset = 0;
     let items = [];
     let totalItemCount = Infinity;
     do {
-      offset += DefaultRecordLimit;
       const { data } = await this.retryOnFail(
         async () =>
           await this.dataAccessApi.getLibraries(
@@ -234,6 +233,7 @@ class LibraryModel {
 
       items = [...items, ...data.items];
       totalItemCount = data.count;
+      offset += DefaultRecordLimit;
     } while (offset < totalItemCount);
 
     items.sort(sortById);
@@ -265,11 +265,10 @@ class LibraryModel {
   private async getTables(item?: LibraryItem): Promise<LibraryItem[]> {
     await this.setup();
 
-    let offset = -1 * DefaultRecordLimit;
+    let offset = 0;
     let items = [];
     let totalItemCount = Infinity;
     do {
-      offset += DefaultRecordLimit;
       const { data } = await this.retryOnFail(
         async () =>
           await this.dataAccessApi.getTables(
@@ -284,6 +283,7 @@ class LibraryModel {
       );
       items = [...items, ...data.items];
       totalItemCount = data.count;
+      offset += DefaultRecordLimit;
     } while (offset < totalItemCount);
 
     return this.processItems(items, "table", item);
