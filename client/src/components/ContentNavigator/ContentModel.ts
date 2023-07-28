@@ -41,12 +41,14 @@ export class ContentModel {
     [id: string]: { etag: string; lastModified: string };
   };
   private authorized: boolean;
+  private viyaCadence: string;
   private delegateFolders: { [name: string]: ContentItem };
 
   constructor() {
     this.fileTokenMaps = {};
     this.authorized = false;
     this.delegateFolders = {};
+    this.viyaCadence = "";
   }
 
   public async connect(baseURL: string): Promise<void> {
@@ -67,6 +69,7 @@ export class ContentModel {
       },
     );
     await this.updateAccessToken();
+    this.viyaCadence = "";
     this.authorized = true;
   }
 
@@ -77,6 +80,10 @@ export class ContentModel {
 
     if (!item) {
       return this.getRootChildren();
+    }
+
+    if (!this.viyaCadence) {
+      this.viyaCadence = await this.getViyaCadence();
     }
 
     const parentIsContent = item.uri === ROOT_FOLDER.uri;
@@ -118,7 +125,9 @@ export class ContentModel {
     membersUrl =
       membersUrl +
       `&sortBy=${
-        parentIsContent ? "" : "eq(contentType,'folder'):descending,"
+        parentIsContent || this.viyaCadence === "2023.03" // 2023.03 fails query with this sortBy param
+          ? ""
+          : "eq(contentType,'folder'):descending,"
       }name:primary:ascending,type:ascending`;
 
     const res = await this.connection.get(membersUrl);
@@ -562,6 +571,13 @@ export class ContentModel {
       createIfNone: true,
     });
     this.connection.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`;
+  }
+
+  private async getViyaCadence(): Promise<string> {
+    const { data } = await this.connection.get(
+      "/deploymentData/cadenceVersion",
+    );
+    return data.cadenceVersion;
   }
 }
 
