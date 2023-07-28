@@ -225,6 +225,10 @@ describe("ContentDataProvider", async function () {
     });
     const dataProvider = createDataProvider();
 
+    axiosInstance.get.withArgs("/deploymentData/cadenceVersion").resolves({
+      data: { cadenceVersion: "2023.07" },
+    });
+
     axiosInstance.get
       .withArgs(
         "uri://myFavorites?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
