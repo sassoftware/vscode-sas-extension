@@ -43,7 +43,7 @@ class ContentNavigator implements SubscriptionProvider {
   constructor(context: ExtensionContext) {
     this.contentDataProvider = new ContentDataProvider(
       new ContentModel(),
-      context,
+      context.extensionUri,
     );
 
     workspace.registerFileSystemProvider("sas", this.contentDataProvider);

@@ -50,10 +50,6 @@ class DataViewer extends WebView {
           <title>${this._uid}</title>
         </head>
         <body>
-          <vscode-data-grid
-            class="data-view-${this._uid.replace(/\./g, "")}"
-            aria-label="${this._uid} contents"
-          ></vscode-data-grid>
           <div class="data-viewer"></div>
           <script type="module" src="${this.webviewUri(
             this._extensionUri,

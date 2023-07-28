@@ -10,7 +10,6 @@ import {
   Disposable,
   Event,
   EventEmitter,
-  ExtensionContext,
   FileChangeEvent,
   FileStat,
   FileSystemProvider,
@@ -78,12 +77,12 @@ class ContentDataProvider
     return this._treeView;
   }
 
-  constructor(model: ContentModel, context: ExtensionContext) {
+  constructor(model: ContentModel, extensionUri: Uri) {
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
     this._onDidChange = new EventEmitter<Uri>();
     this.model = model;
-    this.extensionUri = context.extensionUri;
+    this.extensionUri = extensionUri;
 
     this._treeView = window.createTreeView("contentdataprovider", {
       treeDataProvider: this,
