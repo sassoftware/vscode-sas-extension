@@ -67,17 +67,26 @@ class DataViewer extends WebView {
   }
 
   public async processMessage(
-    event: Event & { command: string; data?: { start?: number; end?: number } },
+    event: Event & {
+      key: string;
+      command: string;
+      data?: { start?: number; end?: number };
+    },
   ): Promise<void> {
     switch (event.command) {
       case "request:loadData":
         this.panel.webview.postMessage({
           command: "response:loadData",
-          data: await this._paginator.getData(event.data.start, event.data.end),
+          key: event.key,
+          data: await this._paginator.getData(
+            event.data!.start!,
+            event.data!.end!,
+          ),
         });
         break;
       case "request:loadColumns":
         this.panel.webview.postMessage({
+          key: event.key,
           command: "response:loadColumns",
           data: await this._fetchColumns(),
         });

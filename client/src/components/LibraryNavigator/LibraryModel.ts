@@ -97,6 +97,7 @@ class LibraryModel {
       promiseStack.push(
         ((start: number) => {
           return async () => {
+            console.log("processing with start = ", start);
             const { data } = await this.retryOnFail(
               async () =>
                 await this.dataAccessApi.getRowsAsCSV(
@@ -124,10 +125,12 @@ class LibraryModel {
 
     const results = await throttle(promiseStack, 5);
 
-    const contentStrings = [];
+    const contentStrings: string[] = [];
     const stringArrayToCsvString = (strings: string[]): string =>
       `"${strings
-        .map((item: string) => (item || "").toString().replace(/"/g, '""'))
+        .map((item: string | number) =>
+          (item ?? "").toString().replace(/"/g, '""'),
+        )
         .join('","')}"`;
 
     results.forEach((result) => {
@@ -160,7 +163,7 @@ class LibraryModel {
               libref: item.library || "",
               tableName: item.name,
             },
-            requestOptions,
+            { headers: { Accept: "application/json" } },
           ),
       );
 
@@ -176,11 +179,14 @@ class LibraryModel {
     await this.setup();
     const response = await this.retryOnFail(
       async () =>
-        await this.dataAccessApi.getTable({
-          sessionId: this.sessionId,
-          libref: item.library || "",
-          tableName: item.name,
-        }),
+        await this.dataAccessApi.getTable(
+          {
+            sessionId: this.sessionId,
+            libref: item.library || "",
+            tableName: item.name,
+          },
+          { headers: { Accept: "application/json" } },
+        ),
     );
 
     return response.data;

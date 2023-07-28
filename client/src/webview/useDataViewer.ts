@@ -3,6 +3,7 @@
 
 import { ColDef, GridReadyEvent, IGetRowsParams } from "ag-grid-community";
 import { useCallback, useEffect, useState } from "react";
+import { v4 } from "uuid";
 import { TableData } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
 import columnHeaderTemplate from "./columnHeaderTemplate";
@@ -16,7 +17,7 @@ const contextMenuHandler = (e) => {
 
 const defaultTimeout = 60 * 1000; // 60 seconds (accounting for compute session expiration)
 
-let queryTableDataTimeoutId = null;
+let queryTableDataTimeoutId: ReturnType<typeof setTimeout> | null = null;
 const clearQueryTimeout = (): void => {
   if (!queryTableDataTimeoutId) {
     return;
@@ -25,14 +26,19 @@ const clearQueryTimeout = (): void => {
   queryTableDataTimeoutId = null;
 };
 const queryTableData = (start: number, end: number): Promise<TableData> => {
+  const requestKey = v4();
   vscode.postMessage({
     command: "request:loadData",
+    key: requestKey,
     data: { start, end },
   });
 
   return new Promise((resolve, reject) => {
     const commandHandler = (event) => {
       const { data } = event.data;
+      if (event.data.key !== requestKey) {
+        return;
+      }
       if (event.data.command === "response:loadData") {
         window.removeEventListener("message", commandHandler);
         clearQueryTimeout();
@@ -50,15 +56,19 @@ const queryTableData = (start: number, end: number): Promise<TableData> => {
   });
 };
 
-let fetchColumnsTimeoutId = null;
+let fetchColumnsTimeoutId: ReturnType<typeof setTimeout> | null = null;
 const clearFetchColumnsTimeout = () =>
   fetchColumnsTimeoutId && clearTimeout(fetchColumnsTimeoutId);
 const fetchColumns = (): Promise<Column[]> => {
-  vscode.postMessage({ command: "request:loadColumns" });
+  const requestKey = v4();
+  vscode.postMessage({ command: "request:loadColumns", key: requestKey });
 
   return new Promise((resolve, reject) => {
     const commandHandler = (event) => {
       const { data } = event.data;
+      if (event.data.key !== requestKey) {
+        return;
+      }
       if (event.data.command === "response:loadColumns") {
         window.removeEventListener("message", commandHandler);
         clearFetchColumnsTimeout();
