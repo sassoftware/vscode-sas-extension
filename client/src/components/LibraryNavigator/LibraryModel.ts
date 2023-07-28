@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AxiosResponse } from "axios";
+import { Writable } from "stream";
 import { ProgressLocation, l10n, window } from "vscode";
 import { getSession } from "../../connection";
 import { DataAccessApi } from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
 import { LogFn as LogChannelFn } from "../LogChannel";
-import { throttle } from "../utils";
 import PaginatedResultSet from "./PaginatedResultSet";
 import { DefaultRecordLimit, Messages } from "./const";
 import { LibraryItem, LibraryItemType, TableData, TableRow } from "./types";
@@ -79,53 +79,15 @@ class LibraryModel {
     );
   }
 
-  public async getTableContents(item: LibraryItem) {
+  public async writeTableContentsToStream(
+    fileStream: Writable,
+    item: LibraryItem,
+  ) {
     await this.setup();
     let offset = 0;
+    const limit = 1000;
     const { rowCount: totalItemCount } = await this.getTable(item);
-    const promiseStack: Array<
-      () => Promise<{
-        headers: { columns: string[] };
-        rows: TableData["rows"];
-      }>
-    > = [];
-
-    do {
-      // Given our total item count, this builds a promise stack to process all rows
-      // of a given table. NOTE: We bind offset as we are putting things on our stack. Otherwise,
-      // the updated value ends up being used for every call in our stack.
-      promiseStack.push(
-        ((start: number) => {
-          return async () => {
-            console.log("processing with start = ", start);
-            const { data } = await this.retryOnFail(
-              async () =>
-                await this.dataAccessApi.getRowsAsCSV(
-                  {
-                    includeColumnNames: true,
-                    includeIndex: true,
-                    libref: item.library || "",
-                    // Since we're including column names, we need to grab one more row
-                    limit: DefaultRecordLimit + 1,
-                    sessionId: this.sessionId,
-                    start,
-                    tableName: item.name,
-                  },
-                  requestOptions,
-                ),
-            );
-
-            return { headers: data.items.shift(), rows: data.items };
-          };
-        })(offset),
-      );
-
-      offset += DefaultRecordLimit;
-    } while (offset < totalItemCount);
-
-    const results = await throttle(promiseStack, 5);
-
-    const contentStrings: string[] = [];
+    let hasWrittenHeader: boolean = false;
     const stringArrayToCsvString = (strings: string[]): string =>
       `"${strings
         .map((item: string | number) =>
@@ -133,18 +95,54 @@ class LibraryModel {
         )
         .join('","')}"`;
 
-    results.forEach((result) => {
-      if (contentStrings.length === 0) {
-        contentStrings.push(stringArrayToCsvString(result.headers.columns));
-      }
-      contentStrings.push(
-        ...result.rows.map((item: TableRow) =>
-          stringArrayToCsvString(item.cells),
-        ),
-      );
-    });
+    await window.withProgress(
+      {
+        location: ProgressLocation.Notification,
+        title: l10n.t("Saving {itemName}.", {
+          itemName: `${item.library}.${item.name}`,
+        }),
+        cancellable: true,
+      },
+      async (_progress, cancellationToken) => {
+        cancellationToken.onCancellationRequested(() => {
+          fileStream.destroy();
+          return;
+        });
+        do {
+          const { data } = await this.retryOnFail(
+            async () =>
+              await this.dataAccessApi.getRowsAsCSV(
+                {
+                  includeColumnNames: true,
+                  includeIndex: true,
+                  libref: item.library || "",
+                  // Since we're including column names, we need to grab one more row
+                  limit: limit + 1,
+                  sessionId: this.sessionId,
+                  start: offset,
+                  tableName: item.name,
+                },
+                requestOptions,
+              ),
+          );
 
-    return contentStrings.join("\n");
+          // return { headers: data.items.shift(), rows: data.items };
+          const headers = data.items.shift();
+          if (!hasWrittenHeader) {
+            fileStream.write(stringArrayToCsvString(headers.columns));
+            hasWrittenHeader = true;
+          }
+
+          data.items.forEach((item: TableRow) =>
+            fileStream.write("\n" + stringArrayToCsvString(item.cells)),
+          );
+
+          offset += limit;
+        } while (offset < totalItemCount);
+
+        fileStream.end();
+      },
+    );
   }
 
   public async fetchColumns(item: LibraryItem) {

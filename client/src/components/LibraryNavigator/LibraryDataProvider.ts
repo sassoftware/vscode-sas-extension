@@ -1,6 +1,7 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { Writable } from "stream";
 import {
   CancellationToken,
   DataTransfer,
@@ -154,8 +155,8 @@ class LibraryDataProvider
     return this.model.getChildren(item);
   }
 
-  public getTableContents(item: LibraryItem) {
-    return this.model.getTableContents(item);
+  public writeTableContentsToStream(stream: Writable, item: LibraryItem) {
+    return this.model.writeTableContentsToStream(stream, item);
   }
 
   public async deleteTable(item: LibraryItem): Promise<void> {

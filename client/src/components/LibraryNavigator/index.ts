@@ -1,7 +1,7 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { writeFileSync } from "fs";
+import { createWriteStream } from "fs";
 import {
   commands,
   ConfigurationChangeEvent,
@@ -66,24 +66,20 @@ class LibraryNavigator implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.downloadTable",
         async (item: LibraryItem) => {
-          await Promise.all([
-            window.showSaveDialog({
-              defaultUri: Uri.file(
-                `${item.library}.${item.name}.csv`.toLocaleLowerCase(),
-              ),
-            }),
-            this.libraryDataProvider.getTableContents(item),
-          ]).then(
-            ([uri, tableContents]: [
-              uri: Uri | undefined,
-              tableContents: string,
-            ]) => {
-              if (!uri || !tableContents) {
-                return;
-              }
+          const uri = await window.showSaveDialog({
+            defaultUri: Uri.file(
+              `${item.library}.${item.name}.csv`.toLocaleLowerCase(),
+            ),
+          });
 
-              writeFileSync(uri.fsPath, tableContents);
-            },
+          if (!uri) {
+            return;
+          }
+
+          const stream = createWriteStream(uri.fsPath);
+          await this.libraryDataProvider.writeTableContentsToStream(
+            stream,
+            item,
           );
         },
       ),

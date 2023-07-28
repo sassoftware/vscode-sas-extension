@@ -10,6 +10,7 @@ import {
   Disposable,
   Event,
   EventEmitter,
+  ExtensionContext,
   FileChangeEvent,
   FileStat,
   FileSystemProvider,
@@ -29,8 +30,6 @@ import {
   window,
 } from "vscode";
 import { profileConfig } from "../../commands/profile";
-import { libraryItemMimeType } from "../LibraryNavigator/LibraryDataProvider";
-import LibraryModel from "../LibraryNavigator/LibraryModel";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ViyaProfile } from "../profile";
 import { ContentModel } from "./ContentModel";
@@ -72,23 +71,19 @@ class ContentDataProvider
   private readonly model: ContentModel;
   private extensionUri: Uri;
 
-  public dropMimeTypes: string[] = [
-    contentItemMimeType,
-    libraryItemMimeType,
-    "text/uri-list",
-  ];
+  public dropMimeTypes: string[] = [contentItemMimeType, "text/uri-list"];
   public dragMimeTypes: string[] = [contentItemMimeType];
 
   get treeView(): TreeView<ContentItem> {
     return this._treeView;
   }
 
-  constructor(model: ContentModel, extensionUri: Uri) {
+  constructor(model: ContentModel, context: ExtensionContext) {
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
     this._onDidChange = new EventEmitter<Uri>();
     this.model = model;
-    this.extensionUri = extensionUri;
+    this.extensionUri = context.extensionUri;
 
     this._treeView = window.createTreeView("contentdataprovider", {
       treeDataProvider: this,
@@ -117,24 +112,6 @@ class ContentDataProvider
       }
 
       switch (mimeType) {
-        case libraryItemMimeType: {
-          const libraryItem = JSON.parse(item.value)[0];
-          // If we drag in an item that doesn't have an associated library,
-          // lets bail
-          if (!libraryItem.library) {
-            return;
-          }
-          const contents = await new LibraryModel().getTableContents(
-            libraryItem,
-          );
-          await this.createFile(
-            target,
-            `${libraryItem.library}.${libraryItem.name}.csv`.toLocaleLowerCase(),
-            Buffer.from(contents, "binary"),
-          );
-          this.refresh();
-          break;
-        }
         case contentItemMimeType:
           await Promise.all(
             item.value.map(

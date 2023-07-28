@@ -3,17 +3,17 @@
 
 import * as path from "path";
 import {
-  authentication,
-  commands,
   ConfigurationChangeEvent,
   ExtensionContext,
-  languages,
-  l10n,
   NotebookCellData,
   NotebookCellKind,
   NotebookData,
   StatusBarAlignment,
   StatusBarItem,
+  authentication,
+  commands,
+  l10n,
+  languages,
   window,
   workspace,
 } from "vscode";
@@ -32,16 +32,16 @@ import {
   switchProfile,
   updateProfile,
 } from "../commands/profile";
-import { run, runSelected, runRegion } from "../commands/run";
+import { run, runRegion, runSelected } from "../commands/run";
 import { SASAuthProvider } from "../components/AuthProvider";
+import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
 import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
-import { legend, LogTokensProvider } from "../components/LogViewer";
-import { ConnectionType } from "../components/profile";
-import { installCAs } from "../components/CAHelper";
+import { LogTokensProvider, legend } from "../components/LogViewer";
 import { NotebookController } from "../components/notebook/Controller";
 import { NotebookSerializer } from "../components/notebook/Serializer";
+import { ConnectionType } from "../components/profile";
 
 let client: LanguageClient;
 // Create Profile status bar item
