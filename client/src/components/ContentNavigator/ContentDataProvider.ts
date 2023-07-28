@@ -17,6 +17,7 @@ import {
   ProviderResult,
   Tab,
   TabInputText,
+  TabInputNotebook,
   TextDocumentContentProvider,
   ThemeIcon,
   TreeDataProvider,
@@ -534,7 +535,8 @@ const closeFileIfOpen = (item: ContentItem): boolean | Thenable<boolean> => {
   const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
   const tab = tabs.find(
     (tab) =>
-      tab.input instanceof TabInputText &&
+      (tab.input instanceof TabInputText ||
+        tab.input instanceof TabInputNotebook) &&
       tab.input.uri.query === fileUri.query, // compare the file id
   );
   if (tab) {
