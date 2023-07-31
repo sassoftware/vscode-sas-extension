@@ -574,10 +574,15 @@ export class ContentModel {
   }
 
   private async getViyaCadence(): Promise<string> {
-    const { data } = await this.connection.get(
-      "/deploymentData/cadenceVersion",
-    );
-    return data.cadenceVersion;
+    try {
+      const { data } = await this.connection.get(
+        "/deploymentData/cadenceVersion",
+      );
+      return data.cadenceVersion;
+    } catch (e) {
+      console.error("fail to retrieve the viya cadence");
+    }
+    return "unknown";
   }
 }
 
