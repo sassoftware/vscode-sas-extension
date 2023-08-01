@@ -49,12 +49,12 @@ import {
   getResourceIdFromItem,
   getTypeName,
   getUri,
-  isContentItem,
   isItemInRecycleBin,
   isReference,
   resourceType,
 } from "./utils";
 
+const contentItemMimeType = "application/vnd.code.tree.contentdataprovider";
 class ContentDataProvider
   implements
     TreeDataProvider<ContentItem>,
@@ -70,13 +70,8 @@ class ContentDataProvider
   private readonly model: ContentModel;
   private extensionUri: Uri;
 
-  public dropMimeTypes: string[] = [
-    "application/vnd.code.tree.contentDataProvider",
-    "text/uri-list",
-  ];
-  public dragMimeTypes: string[] = [
-    "application/vnd.code.tree.contentDataProvider",
-  ];
+  public dropMimeTypes: string[] = [contentItemMimeType, "text/uri-list"];
+  public dragMimeTypes: string[] = [contentItemMimeType];
 
   get treeView(): TreeView<ContentItem> {
     return this._treeView;
@@ -89,7 +84,7 @@ class ContentDataProvider
     this.model = model;
     this.extensionUri = extensionUri;
 
-    this._treeView = window.createTreeView("contentDataProvider", {
+    this._treeView = window.createTreeView("contentdataprovider", {
       treeDataProvider: this,
       dragAndDropController: this,
       canSelectMany: true,
@@ -109,19 +104,27 @@ class ContentDataProvider
     target: ContentItem,
     sources: DataTransfer,
   ): Promise<void> {
-    for (const source of sources) {
-      const [, item] = source;
-      if (Array.isArray(item.value) && isContentItem(item.value[0])) {
-        await Promise.all(
-          item.value.map(async (contentItem: ContentItem) => {
-            await this.handleContentItemDrop(target, contentItem);
-          }),
-        );
-
+    for (const mimeType of this.dropMimeTypes) {
+      const item = sources.get(mimeType);
+      if (!item || !item.value) {
         continue;
       }
 
-      await this.handleDataTransferItemDrop(target, item);
+      switch (mimeType) {
+        case contentItemMimeType:
+          await Promise.all(
+            item.value.map(
+              async (contentItem: ContentItem) =>
+                await this.handleContentItemDrop(target, contentItem),
+            ),
+          );
+          break;
+        case "text/uri-list":
+          await this.handleDataTransferItemDrop(target, item);
+          break;
+        default:
+          break;
+      }
     }
   }
 

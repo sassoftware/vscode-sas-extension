@@ -714,10 +714,9 @@ describe("ContentDataProvider", async function () {
 
     const dataTransfer = new DataTransfer();
     const dataTransferItem = new DataTransferItem(uri);
-    dataTransfer.set(
-      "application/vnd.code.tree.contentDataProvider",
-      dataTransferItem,
-    );
+    dataTransfer.set("text/uri-list", dataTransferItem);
+
+    console.log("this bithc");
 
     stub.returns(new Promise((resolve) => resolve(item)));
 
@@ -751,10 +750,7 @@ describe("ContentDataProvider", async function () {
 
     const dataTransfer = new DataTransfer();
     const dataTransferItem = new DataTransferItem(uri);
-    dataTransfer.set(
-      "application/vnd.code.tree.contentDataProvider",
-      dataTransferItem,
-    );
+    dataTransfer.set("text/uri-list", dataTransferItem);
 
     createFileStub.returns(new Promise((resolve) => resolve(item)));
     createFolderStub.returns(new Promise((resolve) => resolve(newParentItem)));
@@ -789,7 +785,7 @@ describe("ContentDataProvider", async function () {
     const dataTransfer = new DataTransfer();
     const dataTransferItem = new DataTransferItem([item]);
     dataTransfer.set(
-      "application/vnd.code.tree.contentDataProvider",
+      "application/vnd.code.tree.contentdataprovider",
       dataTransferItem,
     );
 
@@ -839,7 +835,7 @@ describe("ContentDataProvider", async function () {
     const dataTransfer = new DataTransfer();
     const dataTransferItem = new DataTransferItem([item]);
     dataTransfer.set(
-      "application/vnd.code.tree.contentDataProvider",
+      "application/vnd.code.tree.contentdataprovider",
       dataTransferItem,
     );
 
@@ -878,7 +874,7 @@ describe("ContentDataProvider", async function () {
     const dataTransfer = new DataTransfer();
     const dataTransferItem = new DataTransferItem([item]);
     dataTransfer.set(
-      "application/vnd.code.tree.contentDataProvider",
+      "application/vnd.code.tree.contentdataprovider",
       dataTransferItem,
     );
 

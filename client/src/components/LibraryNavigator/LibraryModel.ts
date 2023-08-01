@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AxiosResponse } from "axios";
+import { Writable } from "stream";
 import { ProgressLocation, l10n, window } from "vscode";
 import { getSession } from "../../connection";
 import { DataAccessApi } from "../../connection/rest/api/compute";
@@ -9,7 +10,7 @@ import { getApiConfig } from "../../connection/rest/common";
 import { LogFn as LogChannelFn } from "../LogChannel";
 import PaginatedResultSet from "./PaginatedResultSet";
 import { DefaultRecordLimit, Messages } from "./const";
-import { LibraryItem, LibraryItemType, TableData } from "./types";
+import { LibraryItem, LibraryItemType, TableData, TableRow } from "./types";
 
 const sortById = (a: LibraryItem, b: LibraryItem) => a.id.localeCompare(b.id);
 
@@ -53,8 +54,9 @@ class LibraryModel {
 
   public getTableResultSet(item: LibraryItem): PaginatedResultSet<TableData> {
     return new PaginatedResultSet<TableData>(
-      async (start: number) => {
+      async (start: number, end: number) => {
         await this.setup();
+        const limit = end - start + 1;
         return await this.retryOnFail(
           async () =>
             await this.dataAccessApi.getRows(
@@ -62,30 +64,127 @@ class LibraryModel {
                 sessionId: this.sessionId,
                 libref: item.library || "",
                 tableName: item.name,
-                includeColumnNames: true,
+                includeIndex: true,
                 start,
-                limit: 100,
+                limit,
               },
               requestOptions,
             ),
         );
       },
       (response) => ({
-        headers: response.data.items[0],
-        rows: response.data.items.slice(1),
+        rows: response.data.items,
+        count: response.data.count,
       }),
     );
+  }
+
+  public async writeTableContentsToStream(
+    fileStream: Writable,
+    item: LibraryItem,
+  ) {
+    await this.setup();
+    let offset = 0;
+    const limit = 1000;
+    const { rowCount: totalItemCount } = await this.getTable(item);
+    let hasWrittenHeader: boolean = false;
+    const stringArrayToCsvString = (strings: string[]): string =>
+      `"${strings
+        .map((item: string | number) =>
+          (item ?? "").toString().replace(/"/g, '""'),
+        )
+        .join('","')}"`;
+
+    await window.withProgress(
+      {
+        location: ProgressLocation.Notification,
+        title: l10n.t("Saving {itemName}.", {
+          itemName: `${item.library}.${item.name}`,
+        }),
+        cancellable: true,
+      },
+      async (_progress, cancellationToken) => {
+        cancellationToken.onCancellationRequested(() => {
+          fileStream.destroy();
+          return;
+        });
+        do {
+          const { data } = await this.retryOnFail(
+            async () =>
+              await this.dataAccessApi.getRowsAsCSV(
+                {
+                  includeColumnNames: true,
+                  includeIndex: true,
+                  libref: item.library || "",
+                  // Since we're including column names, we need to grab one more row
+                  limit: limit + 1,
+                  sessionId: this.sessionId,
+                  start: offset,
+                  tableName: item.name,
+                },
+                requestOptions,
+              ),
+          );
+
+          // return { headers: data.items.shift(), rows: data.items };
+          const headers = data.items.shift();
+          if (!hasWrittenHeader) {
+            fileStream.write(stringArrayToCsvString(headers.columns));
+            hasWrittenHeader = true;
+          }
+
+          data.items.forEach((item: TableRow) =>
+            fileStream.write("\n" + stringArrayToCsvString(item.cells)),
+          );
+
+          offset += limit;
+        } while (offset < totalItemCount);
+
+        fileStream.end();
+      },
+    );
+  }
+
+  public async fetchColumns(item: LibraryItem) {
+    await this.setup();
+    let offset = 0;
+    let items = [];
+    let totalItemCount = Infinity;
+    do {
+      const { data } = await this.retryOnFail(
+        async () =>
+          await this.dataAccessApi.getColumns(
+            {
+              sessionId: this.sessionId,
+              limit: DefaultRecordLimit,
+              start: offset,
+              libref: item.library || "",
+              tableName: item.name,
+            },
+            { headers: { Accept: "application/json" } },
+          ),
+      );
+
+      items = [...items, ...data.items];
+      totalItemCount = data.count;
+      offset += DefaultRecordLimit;
+    } while (offset < totalItemCount);
+
+    return items;
   }
 
   public async getTable(item: LibraryItem) {
     await this.setup();
     const response = await this.retryOnFail(
       async () =>
-        await this.dataAccessApi.getTable({
-          sessionId: this.sessionId,
-          libref: item.library || "",
-          tableName: item.name,
-        }),
+        await this.dataAccessApi.getTable(
+          {
+            sessionId: this.sessionId,
+            libref: item.library || "",
+            tableName: item.name,
+          },
+          { headers: { Accept: "application/json" } },
+        ),
     );
 
     return response.data;
@@ -120,11 +219,10 @@ class LibraryModel {
   private async getLibraries(): Promise<LibraryItem[]> {
     await this.setup();
 
-    let offset = -1 * DefaultRecordLimit;
+    let offset = 0;
     let items = [];
     let totalItemCount = Infinity;
     do {
-      offset += DefaultRecordLimit;
       const { data } = await this.retryOnFail(
         async () =>
           await this.dataAccessApi.getLibraries(
@@ -139,6 +237,7 @@ class LibraryModel {
 
       items = [...items, ...data.items];
       totalItemCount = data.count;
+      offset += DefaultRecordLimit;
     } while (offset < totalItemCount);
 
     items.sort(sortById);
@@ -170,11 +269,10 @@ class LibraryModel {
   private async getTables(item?: LibraryItem): Promise<LibraryItem[]> {
     await this.setup();
 
-    let offset = -1 * DefaultRecordLimit;
+    let offset = 0;
     let items = [];
     let totalItemCount = Infinity;
     do {
-      offset += DefaultRecordLimit;
       const { data } = await this.retryOnFail(
         async () =>
           await this.dataAccessApi.getTables(
@@ -189,6 +287,7 @@ class LibraryModel {
       );
       items = [...items, ...data.items];
       totalItemCount = data.count;
+      offset += DefaultRecordLimit;
     } while (offset < totalItemCount);
 
     return this.processItems(items, "table", item);

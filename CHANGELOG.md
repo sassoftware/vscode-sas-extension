@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Added support for `npm run copyright:check --fix`. This automatically prepends files with the correct copyright information.
+- Added the ability to download tables from the libraries view ([#395](https://github.com/sassoftware/vscode-sas-extension/pull/395))
+
+### Changed
+
+- Changed Data viewer to use AG Grid instead of VSCode data grid. Our data viewer now support infinite paging for large tables, a fixed header, and type icons for columns ([#395](https://github.com/sassoftware/vscode-sas-extension/pull/395))
 
 ### Fixed
 

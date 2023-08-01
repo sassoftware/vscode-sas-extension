@@ -17,11 +17,7 @@ export interface TableRow {
   cells: string[];
 }
 
-export interface TableHeader {
-  columns: string[];
-}
-
 export interface TableData {
-  headers: TableHeader;
   rows: TableRow[];
+  count: number;
 }
