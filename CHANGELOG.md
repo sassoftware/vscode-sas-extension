@@ -8,8 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Added support for `npm run copyright:check --fix`. This automatically prepends files with the correct copyright information.
+- Ability to specify SAS options for session startup ([#339](https://github.com/sassoftware/vscode-sas-extension/pull/339))
+- Autoexec support for Viya connection ([#355](https://github.com/sassoftware/vscode-sas-extension/pull/355))
+- Show session startup log ([#380](https://github.com/sassoftware/vscode-sas-extension/pull/380))
 - Added the ability to download tables from the libraries view ([#395](https://github.com/sassoftware/vscode-sas-extension/pull/395))
+- Simplified Chinese translation ([#409](https://github.com/sassoftware/vscode-sas-extension/pull/409))
+- (Engineering) Added support for `npm run copyright:check --fix`. This automatically prepends files with the correct copyright information. ([#344](https://github.com/sassoftware/vscode-sas-extension/pull/344))
+- (Engineering) l10n infrastructure ([#370](https://github.com/sassoftware/vscode-sas-extension/pull/370))
 
 ### Changed
 
@@ -17,7 +22,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
-- Fixed an issue with `npm run copyright:check` where some files were not being validated.
+- Result not shown when having many pages ([#330](https://github.com/sassoftware/vscode-sas-extension/issues/330))
+- Ability to cancel profile update ([#389](https://github.com/sassoftware/vscode-sas-extension/issues/389))
+- Local COM hang in zh-cn locale ([#346](https://github.com/sassoftware/vscode-sas-extension/issues/346))
+- SAS Log partially lost ([#420](https://github.com/sassoftware/vscode-sas-extension/issues/420))
+- SAS Content error on Viya 2023.03 ([#328](https://github.com/sassoftware/vscode-sas-extension/issues/328))
+- (Engineering) Fixed an issue with `npm run copyright:check` where some files were not being validated. ([#344](https://github.com/sassoftware/vscode-sas-extension/pull/344))
 
 ## [v1.0.0] - 2023-06-16
 
