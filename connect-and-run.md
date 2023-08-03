@@ -159,6 +159,13 @@ The parameters listed below make up the profile settings for configuring a conne
 
 Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows). After executing the `SAS.addProfile` command, select the SAS 9.4 (local - COM) connection type to create a new profile.
 
+## Additional settings in a profile
+
+| Name            | Description                             | Additional Notes |
+| --------------- | --------------------------------------- | ---------------- |
+| **SAS Options** | SAS options to apply to the SAS session |                  |
+| **AutoExec**    | SAS code to execute at session startup  |                  |
+
 ## Delete Connection Profile
 
 After executing the `SAS.deleteProfile` command:
