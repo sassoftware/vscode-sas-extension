@@ -438,6 +438,11 @@
         "category": "SAS"
       },
       {
+        "command": "SAS.convertSasnbToFlw",
+        "title": "%commands.SAS.convertSasnbToFlw%",
+        "category": "SAS"
+      },
+      {
         "command": "SAS.removeFromFavorites",
         "title": "%commands.SAS.removeFromFavorites%",
         "category": "SAS"
@@ -560,6 +565,11 @@
           "group": "delrenamegroup@1"
         },
         {
+          "command": "SAS.convertSasnbToFlw",
+          "when": "viewItem =~ /convertSasnbToFlw/ && view == contentdataprovider",
+          "group": "delrenamegroup@2"
+        },
+        {
           "command": "SAS.restoreResource",
           "when": "viewItem =~ /restore/ && view == contentdataprovider",
           "group": "restoregroup@0"
@@ -620,6 +630,10 @@
         {
           "when": "false",
           "command": "SAS.deleteResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.convertSasnbToFlw"
         },
         {
           "when": "false",
