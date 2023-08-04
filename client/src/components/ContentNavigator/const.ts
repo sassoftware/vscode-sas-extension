@@ -96,4 +96,7 @@ export const Messages = {
   InvalidSasnbFileError: l10n.t(
     "This command is only available for .sasnb files.",
   ),
+  InvalidFlwFileNameError: l10n.t(
+    "The output file name must end with the .flw extension.",
+  ),
 };

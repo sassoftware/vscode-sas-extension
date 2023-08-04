@@ -251,42 +251,57 @@ class ContentNavigator implements SubscriptionProvider {
           "workbench.actions.treeView.contentdataprovider.collapseAll",
         );
       }),
-      commands.registerCommand("SAS.convertSasnbToFlw", async (uri: Uri) => {
-        // Ensure that the command is only available for .sasnb files
-        if (!uri || !uri.fsPath.endsWith(".sasnb")) {
-          return;
-        }
+      commands.registerCommand(
+        "SAS.convertSasnbToFlw",
+        async (resource: ContentItem) => {
+          const resourceUri = getUri(resource);
+          // Ensure that the command is only available for .sasnb files
+          console.log(resourceUri.path);
+          if (resourceUri.path.endsWith(".sasnb")) {
+            // Open window to chose the name and location of the new .flw file
+            const name = await window.showInputBox({
+              prompt: "Enter the name for the new .flw file",
+              value: resource.name.replace(".sasnb", ".flw"),
+            });
 
-        const flwFileName = await window.showInputBox({
-          prompt: "Enter the name for the new .flw file",
-          value: uri
-            .with({ path: uri.path.replace(".sasnb", ".flw") })
-            .toString(),
-        });
+            if (!name) {
+              // User canceled the input box
+              return;
+            }
 
-        if (!flwFileName) {
-          // User canceled the input box
-          return;
-        }
+            if (!name.endsWith(".flw")) {
+              window.showErrorMessage(Messages.InvalidFlwFileNameError);
+              return;
+            }
 
-        const flwCodeList = convert_sasnb_to_flw(uri.fsPath);
+            if (name === resource.name) {
+              return;
+            }
 
-        if (flwCodeList.length === 0) {
-          window.showInformationMessage(Messages.NoCodeToConvert);
-          return;
-        }
+            const flwCodeList = convert_sasnb_to_flw(resourceUri.path);
 
-        const flwCodeString = flwCodeList
-          .map((item) => `* language: ${item.language}\n${item.code}\n`)
-          .join("\n");
+            if (flwCodeList.length === 0) {
+              window.showInformationMessage(Messages.NoCodeToConvert);
+              return;
+            }
 
-        try {
-          writeFileSync(flwFileName, flwCodeString);
-          window.showInformationMessage(Messages.SasnbToFlwConversionSuccess);
-        } catch (error) {
-          window.showErrorMessage(Messages.SasnbToFlwConversionError);
-        }
-      }),
+            const flwCodeString = flwCodeList
+              .map((item) => `* language: ${item.language}\n${item.code}\n`)
+              .join("\n");
+
+            try {
+              writeFileSync(name, flwCodeString);
+              window.showInformationMessage(
+                Messages.SasnbToFlwConversionSuccess,
+              );
+            } catch (error) {
+              window.showErrorMessage(Messages.SasnbToFlwConversionError);
+            }
+          } else {
+            window.showErrorMessage(Messages.InvalidSasnbFileError);
+          }
+        },
+      ),
       workspace.onDidChangeConfiguration(
         async (event: ConfigurationChangeEvent) => {
           if (event.affectsConfiguration("SAS.connectionProfiles")) {
