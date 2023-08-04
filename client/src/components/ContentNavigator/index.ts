@@ -12,6 +12,10 @@ import {
   window,
   workspace,
 } from "vscode";
+
+import { writeFileSync } from "fs";
+import { convert_sasnb_to_flw } from "./convert";
+
 import { profileConfig } from "../../commands/profile";
 import { ConnectionType } from "../profile";
 import { SubscriptionProvider } from "../SubscriptionProvider";
@@ -246,6 +250,42 @@ class ContentNavigator implements SubscriptionProvider {
         commands.executeCommand(
           "workbench.actions.treeView.contentdataprovider.collapseAll",
         );
+      }),
+      commands.registerCommand("SAS.convertSasnbToFlw", async (uri: Uri) => {
+        // Ensure that the command is only available for .sasnb files
+        if (!uri || !uri.fsPath.endsWith(".sasnb")) {
+          return;
+        }
+
+        const flwFileName = await window.showInputBox({
+          prompt: "Enter the name for the new .flw file",
+          value: uri
+            .with({ path: uri.path.replace(".sasnb", ".flw") })
+            .toString(),
+        });
+
+        if (!flwFileName) {
+          // User canceled the input box
+          return;
+        }
+
+        const flwCodeList = convert_sasnb_to_flw(uri.fsPath);
+
+        if (flwCodeList.length === 0) {
+          window.showInformationMessage(Messages.NoCodeToConvert);
+          return;
+        }
+
+        const flwCodeString = flwCodeList
+          .map((item) => `* language: ${item.language}\n${item.code}\n`)
+          .join("\n");
+
+        try {
+          writeFileSync(flwFileName, flwCodeString);
+          window.showInformationMessage(Messages.SasnbToFlwConversionSuccess);
+        } catch (error) {
+          window.showErrorMessage(Messages.SasnbToFlwConversionError);
+        }
       }),
       workspace.onDidChangeConfiguration(
         async (event: ConfigurationChangeEvent) => {

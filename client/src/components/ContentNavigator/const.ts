@@ -84,4 +84,16 @@ export const Messages = {
   RenameUnsavedFileError: l10n.t(
     "You must save your file before you can rename it.",
   ),
+  SasnbToFlwConversionSuccess: l10n.t(
+    "The .sasnb file has been successfully converted to .flw format.",
+  ),
+  SasnbToFlwConversionError: l10n.t(
+    "Error converting the .sasnb file to .flw format.",
+  ),
+  NoCodeToConvert: l10n.t(
+    "The .sasnb file does not contain any code to convert.",
+  ),
+  InvalidSasnbFileError: l10n.t(
+    "This command is only available for .sasnb files.",
+  ),
 };
