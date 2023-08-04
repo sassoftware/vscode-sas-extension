@@ -161,10 +161,10 @@ Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows). After executing t
 
 ## Additional settings in a profile
 
-| Name            | Description                             | Additional Notes |
-| --------------- | --------------------------------------- | ---------------- |
-| **SAS Options** | SAS options to apply to the SAS session |                  |
-| **AutoExec**    | SAS code to execute at session startup  |                  |
+| Name            | Description                             | Additional Notes              |
+| --------------- | --------------------------------------- | ----------------------------- |
+| **SAS Options** | SAS options to apply to the SAS session |                               |
+| **AutoExec**    | SAS code to execute at session startup  | Currently only works for Viya |
 
 ## Delete Connection Profile
 
