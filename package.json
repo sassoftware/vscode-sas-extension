@@ -828,7 +828,7 @@
     "@typescript-eslint/parser": "^6.2.1",
     "@vscode/l10n-dev": "^0.0.29",
     "chai": "^4.3.7",
-    "esbuild": "^0.18.17",
+    "esbuild": "^0.18.19",
     "concurrently": "^8.2.0",
     "eslint": "^8.46.0",
     "eslint-plugin-react": "^7.33.1",
