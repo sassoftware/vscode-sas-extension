@@ -161,8 +161,11 @@
                     },
                     "sasOptions": {
                       "type": "array",
-                      "default": null,
-                      "description": "%configuration.SAS.connectionProfiles.profiles.sasOptions%"
+                      "default": [],
+                      "description": "%configuration.SAS.connectionProfiles.profiles.sasOptions%",
+                      "items": {
+                        "type": "string"
+                      }
                     },
                     "autoExec": {
                       "type": "array",
@@ -302,11 +305,6 @@
                             "description": "%configuration.SAS.connectionProfiles.profiles.ssh.port%",
                             "exclusiveMinimum": 1,
                             "exclusiveMaximum": 65535
-                          },
-                          "sasOptions": {
-                            "type": "array",
-                            "default": [],
-                            "description": "%configuration.SAS.connectionProfiles.profiles.sasOptions%"
                           }
                         }
                       }
