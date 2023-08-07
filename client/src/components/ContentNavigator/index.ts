@@ -13,7 +13,6 @@ import {
   workspace,
 } from "vscode";
 
-import { writeFileSync } from "fs";
 import { convert_sasnb_to_flw } from "./convert";
 
 import { profileConfig } from "../../commands/profile";
@@ -256,7 +255,6 @@ class ContentNavigator implements SubscriptionProvider {
         async (resource: ContentItem) => {
           const resourceUri = getUri(resource);
           // Ensure that the command is only available for .sasnb files
-          console.log(resourceUri.path);
           if (resourceUri.path.endsWith(".sasnb")) {
             // Open window to chose the name and location of the new .flw file
             const name = await window.showInputBox({
@@ -278,21 +276,25 @@ class ContentNavigator implements SubscriptionProvider {
               return;
             }
 
-            const flwCodeList = convert_sasnb_to_flw(resourceUri.path);
-
-            if (flwCodeList.length === 0) {
-              window.showInformationMessage(Messages.NoCodeToConvert);
-              return;
-            }
-
-            const flwCodeString = flwCodeList
-              .map((item) => `* language: ${item.language}\n${item.code}\n`)
-              .join("\n");
-
             try {
-              writeFileSync(name, flwCodeString);
-              window.showInformationMessage(
-                Messages.SasnbToFlwConversionSuccess,
+              const contentUri: string =
+                await this.contentDataProvider.provideTextDocumentContent(
+                  resourceUri,
+                );
+              const flowDataUint8Array = convert_sasnb_to_flw(contentUri, name);
+              // error if content is empty
+              if (flowDataUint8Array.length === 0) {
+                window.showErrorMessage(Messages.NoCodeToConvert);
+                return;
+              }
+              const parent = await this.contentDataProvider.getParent(resource);
+              const newUri = await this.contentDataProvider.createFile(
+                parent,
+                name,
+              );
+              await this.contentDataProvider.writeFile(
+                newUri,
+                flowDataUint8Array,
               );
             } catch (error) {
               window.showErrorMessage(Messages.SasnbToFlwConversionError);

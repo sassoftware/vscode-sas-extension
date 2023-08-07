@@ -165,10 +165,9 @@ export class ContentModel {
     if (!ancestorsLink) {
       return;
     }
-
     const resp = await this.connection.get(ancestorsLink.uri);
-    if (resp.data.ancestors && resp.data.ancestors.length > 0) {
-      return resp.data.ancestors[0];
+    if (resp.data && resp.data.length > 0) {
+      return resp.data[0];
     }
   }
 
@@ -324,17 +323,36 @@ export class ContentModel {
 
   public async saveContentToUri(uri: Uri, content: string): Promise<void> {
     const resourceId = getResourceId(uri);
-    const res = await this.connection.put(resourceId + "/content", content, {
-      headers: {
+    let headers = {};
+    if (resourceId in this.fileTokenMaps) {
+      headers = {
         "Content-Type": "text/plain",
         "If-Match": this.fileTokenMaps[resourceId].etag,
         "If-Unmodified-Since": this.fileTokenMaps[resourceId].lastModified,
-      },
-    });
-    this.fileTokenMaps[resourceId] = {
-      etag: res.headers.etag,
-      lastModified: res.headers["last-modified"],
-    };
+      };
+    } else {
+      // create timestamp for now in this format Mon, 07 Aug 2023 13:28:40 GMT
+      const now = new Date();
+      const timestamp = now.toUTCString();
+      headers = {
+        "Content-Type": "text/plain",
+        "If-Unmodified-Since": timestamp,
+      };
+    }
+    try {
+      const res = await this.connection.put(resourceId + "/content", content, {
+        // if resourceId in this.fileTokenMaps
+        headers: headers,
+      });
+      if (resourceId in this.fileTokenMaps) {
+        this.fileTokenMaps[resourceId] = {
+          etag: res.headers.etag,
+          lastModified: res.headers["last-modified"],
+        };
+      }
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   public async getUri(item: ContentItem, readOnly: boolean): Promise<Uri> {
