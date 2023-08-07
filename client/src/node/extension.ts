@@ -10,6 +10,7 @@ import {
   NotebookData,
   StatusBarAlignment,
   StatusBarItem,
+  Uri,
   authentication,
   commands,
   l10n,
@@ -101,8 +102,8 @@ export function activate(context: ExtensionContext): void {
       await run();
       await libraryNavigator.refresh();
     }),
-    commands.registerCommand("SAS.runSelected", async () => {
-      await runSelected();
+    commands.registerCommand("SAS.runSelected", async (uri: Uri) => {
+      await runSelected(uri);
       await libraryNavigator.refresh();
     }),
     commands.registerCommand("SAS.runRegion", async () => {
