@@ -370,6 +370,9 @@
         }
       }
     ],
+    "configurationDefaults": {
+      "editor.formatOnType": true
+    },
     "commands": [
       {
         "command": "SAS.run",

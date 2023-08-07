@@ -47,6 +47,10 @@ export const init = (conn: Connection): void => {
           triggerCharacters: [" "],
           resolveProvider: true,
         },
+        documentOnTypeFormattingProvider: {
+          firstTriggerCharacter: "\n",
+          moreTriggerCharacter: [";"],
+        },
       },
     };
     return result;
@@ -93,6 +97,27 @@ export const init = (conn: Connection): void => {
   connection.onRequest("sas/getFoldingBlock", (params) => {
     const languageService = getLanguageService(params.textDocument.uri);
     return languageService.getFoldingBlock(params.line, params.col);
+  });
+
+  connection.onDocumentOnTypeFormatting(async (params) => {
+    const [tabSize, useSpace] = await connection.workspace.getConfiguration([
+      {
+        scopeUri: params.textDocument.uri,
+        section: "editor.tabSize",
+      },
+      {
+        scopeUri: params.textDocument.uri,
+        section: "editor.insertSpaces",
+      },
+    ]);
+    const languageService = getLanguageService(params.textDocument.uri);
+    return languageService.completionProvider.getIndentEdit(
+      params.position.line,
+      params.position.character,
+      params.ch,
+      tabSize,
+      useSpace,
+    );
   });
 
   documents.onDidChangeContent((event) => {

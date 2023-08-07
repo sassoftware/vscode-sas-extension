@@ -24,8 +24,8 @@
     ["\"", "\""]
   ],
   "indentationRules": {
-    "increaseIndentPattern": "^\\s*(data|proc|%macro)\\b.*;$",
-    "decreaseIndentPattern": "^\\s*(run;|quit;|%mend;)$"
+    "increaseIndentPattern": "(data|proc|%macro)\\b[^;]*;(\\s|/\\*.*\\*/|\\*[^;]*;)*$",
+    "decreaseIndentPattern": "(run|quit|%mend)(\\s|/\\*.*\\*/|\\*[^;]*;)*;$"
   },
   "wordPattern": "(-?\\d*\\.\\d\\w*)|(\\%?[^\\`\\~\\!\\@\\#\\%\\^\\&\\*\\(\\)\\-\\=\\+\\[\\{\\]\\}\\\\\\|\\;\\:\\'\\\"\\,\\.\\<\\>\\/\\?\\s]+)"
 }

@@ -1,2 +1,3 @@
-// take default
-module.exports = {};
+module.exports = {
+  trailingComma: "all",
+};
