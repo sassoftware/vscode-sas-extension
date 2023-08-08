@@ -2,21 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+  EventEmitter,
   Position,
   ProgressLocation,
   Selection,
+  Uri,
   ViewColumn,
   commands,
-  window,
-  workspace,
   l10n,
-  Uri,
+  window,
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
+import { wrapCodeWithOutputHtml } from "../components/Helper/SasCodeHelper";
+import { isOutputHtmlEnabled } from "../components/Helper/SettingHelper";
 import { LogFn as LogChannelFn } from "../components/LogChannel";
-import { getSession } from "../connection";
+import { OnLogFn, RunResult, getSession } from "../connection";
 import { profileConfig, switchProfile } from "./profile";
-import { wrapCode } from "../components/utils";
 
 interface FoldingBlock {
   startLine: number;
@@ -52,9 +53,7 @@ function getCode(selected = false, uri?: Uri): string {
     code = doc?.getText();
   }
 
-  code = wrapCode(code);
-
-  return code;
+  return wrapCodeWithOutputHtml(code);
 }
 
 async function getSelectedRegions(
@@ -114,10 +113,7 @@ async function runCode(selected?: boolean, uri?: Uri) {
     return;
   }
 
-  const outputHtml = !!workspace
-    .getConfiguration("SAS")
-    .get("results.html.enabled");
-
+  const outputHtml = isOutputHtmlEnabled();
   const code = getCode(selected, uri);
 
   const session = getSession();
@@ -188,4 +184,45 @@ export async function runRegion(client: BaseLanguageClient): Promise<void> {
   const selections = await getSelectedRegions(client);
   window.activeTextEditor.selections = selections;
   await _run(true);
+}
+
+export function hasRunningTask() {
+  return running;
+}
+export async function runTask(
+  code: string,
+  messageEmitter?: EventEmitter<string>,
+  closeEmitter?: EventEmitter<number>,
+  onLog?: OnLogFn,
+): Promise<RunResult> {
+  if (running) {
+    return;
+  }
+
+  if (profileConfig.getActiveProfile() === "") {
+    await switchProfile();
+    return;
+  }
+
+  running = true;
+  commands.executeCommand("setContext", "SAS.running", true);
+
+  let cancelled = false;
+  const session = getSession();
+  closeEmitter.event(async (e) => {
+    if (e > 0) {
+      cancelled = true;
+      await session.cancel();
+    }
+
+    running = false;
+    commands.executeCommand("setContext", "SAS.running", false);
+  });
+  session.onLogFn = onLog ?? LogChannelFn;
+
+  messageEmitter.fire(`${l10n.t("Connecting to SAS session...")}\r\n`);
+  !cancelled && (await session.setup());
+
+  messageEmitter.fire(`${l10n.t("SAS code running...")}\r\n`);
+  return cancelled ? undefined : session.run(code);
 }

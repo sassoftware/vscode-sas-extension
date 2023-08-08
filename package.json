@@ -29,6 +29,33 @@
     "virtualWorkspaces": true
   },
   "contributes": {
+    "taskDefinitions": [
+      {
+        "type": "sas",
+        "when": "!SAS.hideRunMenuItem",
+        "required": [
+          "task"
+        ],
+        "properties": {
+          "task": {
+            "type": "string",
+            "description": "Task name"
+          },
+          "file": {
+            "type": "string",
+            "description": "The name of sas file to run"
+          },
+          "preamble": {
+            "type": "string",
+            "description": "Specify the preamble SAS code that you want automatically inserted before running code. "
+          },
+          "postamble": {
+            "type": "string",
+            "description": "Specify the postamble SAS code that you want automatically inserted after running code. "
+          }
+        }
+      }
+    ],
     "semanticTokenTypes": [
       {
         "id": "date",
