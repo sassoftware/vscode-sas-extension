@@ -257,6 +257,14 @@ class ContentDataProvider
     return this.model.saveContentToUri(uri, new TextDecoder().decode(content));
   }
 
+  public associateFlow(
+    name: string,
+    uri: Uri,
+    parent: ContentItem,
+  ): void | Promise<void> {
+    return this.model.associateFlowObject(name, uri, parent);
+  }
+
   public async deleteResource(item: ContentItem): Promise<boolean> {
     if (!(await closeFileIfOpen(item))) {
       return false;

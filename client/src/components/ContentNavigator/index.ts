@@ -299,6 +299,11 @@ class ContentNavigator implements SubscriptionProvider {
                 newUri,
                 flowDataUint8Array,
               );
+              await this.contentDataProvider.associateFlow(
+                name,
+                newUri,
+                parent,
+              );
               window.showInformationMessage(
                 Messages.SasnbToFlwConversionSuccess,
               );

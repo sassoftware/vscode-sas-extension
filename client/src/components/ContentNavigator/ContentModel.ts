@@ -354,6 +354,61 @@ export class ContentModel {
     }
   }
 
+  public async associateFlowObject(
+    name: string,
+    uri: Uri,
+    parent: ContentItem,
+  ): Promise<void> {
+    // get the zone with format "GMT+02:00"
+    const date = new Date(); // Create a Date object representing the current date and time
+    const timeZoneOffset = date.getTimezoneOffset();
+    // Convert the time zone offset to the desired format (e.g., "GMT+02:00")
+    const hoursOffset = Math.floor(Math.abs(timeZoneOffset) / 60);
+    const minutesOffset = Math.abs(timeZoneOffset) % 60;
+    const formattedTimeZoneOffset = `GMT${
+      timeZoneOffset >= 0 ? "-" : "+"
+    }${hoursOffset.toString().padStart(2, "0")}:${minutesOffset
+      .toString()
+      .padStart(2, "0")}`;
+    try {
+      const res = await this.connection.post(
+        "/studio/sessions",
+        JSON.stringify({
+          baseUri: this.connection.getUri() + "/SASStudio/",
+          locale: "en_US",
+          zone: formattedTimeZoneOffset,
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        },
+      );
+      const sessionId = res.data.id;
+      await this.connection.post(
+        "/SASStudio/sasexec/{sessionId}/associateFlowObj".replace(
+          `{${"sessionId"}}`,
+          sessionId,
+        ),
+        JSON.stringify({
+          name: name,
+          uri: "sascontent:" + getResourceId(uri),
+          parentUri: "sascontent:" + getResourceIdFromItem(parent),
+          currentParentUri: null,
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "*/*",
+          },
+        },
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   public async getUri(item: ContentItem, readOnly: boolean): Promise<Uri> {
     if (item.type !== "reference") {
       return getUri(item, readOnly);
