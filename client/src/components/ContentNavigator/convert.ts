@@ -1,7 +1,7 @@
 const stepRef: Record<string, string> = {
-  sas: "/dataFlows/steps/a7190700-f59c-4a94-afe2-214ce639fcde",
-  sql: "/dataFlows/steps/a7190700-f59c-4a94-afe2-214ce639fcde",
-  python: "/dataFlows/steps/ab59f8c4-af9a-4608-a5d5-a8365357bb99",
+  sas: "a7190700-f59c-4a94-afe2-214ce639fcde",
+  sql: "a7190700-f59c-4a94-afe2-214ce639fcde",
+  python: "ab59f8c4-af9a-4608-a5d5-a8365357bb99",
 };
 
 const stepTitle: Record<string, string> = {
@@ -34,9 +34,12 @@ interface FlowData {
 }
 
 function generateFlowData(inputList: Entry[], outputFile: string): FlowData {
+  const now = new Date();
+  const nowString = now.toISOString();
+  const nowTimestamp = String(now.getTime());
   const flowData: FlowData = {
-    creationTimeStamp: "2023-07-25T15:19:29.821Z",
-    modifiedTimeStamp: "2023-07-25T15:38:15.771Z",
+    creationTimeStamp: nowString,
+    modifiedTimeStamp: nowString,
     createdBy: "user@sas.com",
     modifiedBy: "user@sas.com",
     version: 2,
@@ -82,15 +85,24 @@ function generateFlowData(inputList: Entry[], outputFile: string): FlowData {
         UI_PROP_COLORGRP: "0",
         UI_PROP_IS_INPUT_EXPANDED: "false",
         UI_PROP_IS_OUTPUT_EXPANDED: "false",
-        UI_PROP_NODE_DATA_ID: `id-${idx + 2}`,
-        UI_PROP_NODE_DATA_MODIFIED_DATE: "1684001468354",
-        UI_PROP_XPOS: String((idx + 1) * 150), // Adjust the X position as needed
-        UI_PROP_YPOS: "75", // Adjust the Y position as needed
+        UI_PROP_NODE_DATA_ID: stepRef[entry.language],
+        UI_PROP_NODE_DATA_MODIFIED_DATE: nowTimestamp,
+        UI_PROP_XPOS: String((idx + 1) * 150),
+        UI_PROP_YPOS: "75",
       },
-      portMappings: [],
+      portMappings: [
+        {
+          mappingType: "tableStructure",
+          portIndex: 0,
+          portName: "outTables",
+          tableStructure: {
+            columnDefinitions: null,
+          },
+        },
+      ],
       stepReference: {
         type: "uri",
-        path: stepRef[entry.language],
+        path: `/dataFlows/steps/${stepRef[entry.language]}`,
       },
       arguments: {
         codeOptions: {

@@ -331,7 +331,6 @@ export class ContentModel {
         "If-Unmodified-Since": this.fileTokenMaps[resourceId].lastModified,
       };
     } else {
-      // create timestamp for now in this format Mon, 07 Aug 2023 13:28:40 GMT
       const now = new Date();
       const timestamp = now.toUTCString();
       headers = {
