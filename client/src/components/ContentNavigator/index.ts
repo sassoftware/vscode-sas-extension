@@ -296,6 +296,9 @@ class ContentNavigator implements SubscriptionProvider {
                 newUri,
                 flowDataUint8Array,
               );
+              window.showInformationMessage(
+                Messages.SasnbToFlwConversionSuccess,
+              );
             } catch (error) {
               window.showErrorMessage(Messages.SasnbToFlwConversionError);
             }
