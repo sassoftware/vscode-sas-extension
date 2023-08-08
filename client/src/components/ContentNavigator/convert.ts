@@ -15,29 +15,35 @@ interface Entry {
   code: string;
 }
 
-interface FlowData {
-  creationTimeStamp: string;
-  modifiedTimeStamp: string;
-  createdBy: string;
-  modifiedBy: string;
-  version: number;
-  id: null | string;
-  name: string;
-  description: null | string;
-  properties: Record<string, string>;
-  links: any[];
-  nodes: Record<string, any>;
-  parameters: Record<string, any>;
-  connections: any[];
-  extendedProperties: Record<string, any>;
-  stickyNotes: any[];
+// create a function that takes idx as input
+// and returns a json depending if idx is first, last or in between
+function getPropPort(idx: number, inputList: Entry[]): Record<string, string> {
+  if (idx === 0) {
+    return {
+      "UI_PROP_PORT_DESCRIPTION|outTables|0": "Output tables",
+      "UI_PROP_PORT_LABEL|outTables|0": "Output table 1",
+    };
+  } else if (idx === inputList.length - 1) {
+    return {
+      "UI_PROP_PORT_DESCRIPTION|inTables|0": "Input tables",
+      "UI_PROP_PORT_LABEL|inTables|0": "Input table 1",
+    };
+  } else {
+    return {
+      "UI_PROP_PORT_DESCRIPTION|inTables|0": "Input tables",
+      "UI_PROP_PORT_LABEL|inTables|0": "Input table 1",
+      "UI_PROP_PORT_DESCRIPTION|outTables|0": "Output tables",
+      "UI_PROP_PORT_LABEL|outTables|0": "Output table 1",
+    };
+  }
 }
 
-function generateFlowData(inputList: Entry[], outputFile: string): FlowData {
+function generateFlowData(inputList: Entry[], outputFile: string) {
   const now = new Date();
   const nowString = now.toISOString();
   const nowTimestamp = String(now.getTime());
-  const flowData: FlowData = {
+  const arrayIdNode: string[] = [];
+  const flowData = {
     creationTimeStamp: nowString,
     modifiedTimeStamp: nowString,
     createdBy: "user@sas.com",
@@ -60,17 +66,19 @@ function generateFlowData(inputList: Entry[], outputFile: string): FlowData {
   };
 
   for (let idx = 0; idx < inputList.length; idx++) {
+    const idNode = `id-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    arrayIdNode.push(idNode);
+    const idNote = `id-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const entry = inputList[idx];
-    const nodeId = `id-${idx + 1}`;
-
+    const propports = getPropPort(idx, inputList);
     const stepNode = {
       nodeType: "step",
       version: 1,
-      id: nodeId,
+      id: idNode,
       name: stepTitle[entry.language],
       note: {
         version: 1,
-        id: nodeId,
+        id: idNote,
         name: null,
         description: null,
         properties: {
@@ -87,6 +95,7 @@ function generateFlowData(inputList: Entry[], outputFile: string): FlowData {
         UI_PROP_IS_OUTPUT_EXPANDED: "false",
         UI_PROP_NODE_DATA_ID: stepRef[entry.language],
         UI_PROP_NODE_DATA_MODIFIED_DATE: nowTimestamp,
+
         UI_PROP_XPOS: String((idx + 1) * 150),
         UI_PROP_YPOS: "75",
       },
@@ -132,18 +141,18 @@ function generateFlowData(inputList: Entry[], outputFile: string): FlowData {
         },
       },
     };
-
-    flowData.nodes[nodeId] = stepNode;
+    stepNode.properties = { ...stepNode.properties, ...propports };
+    flowData.nodes[idNode] = stepNode;
 
     if (idx > 0) {
       const connection = {
         sourcePort: {
-          node: `id-${idx}`,
+          node: arrayIdNode[idx - 1],
           portName: "outTables",
           index: 0,
         },
         targetPort: {
-          node: nodeId,
+          node: arrayIdNode[idx],
           portName: "inTables",
           index: 0,
         },
@@ -168,13 +177,9 @@ export function convert_sasnb_to_flw(
       if (code !== "") {
         const language = cell.language;
         if (language === "sql") {
-          code = `
-          PROC SQL;
-              ${code}
-              ;
-          QUIT;
-          RUN;
-          `;
+          code = `PROC SQL;
+${code};
+QUIT;`;
         }
         codeList.push({ code, language });
       }
