@@ -272,7 +272,11 @@ class ContentNavigator implements SubscriptionProvider {
               return;
             }
 
-            if (name === resource.name) {
+            // check that name does not exist
+            const parent = await this.contentDataProvider.getParent(resource);
+            const children = await this.contentDataProvider.getChildren(parent);
+            if (children.some((child) => child.name === name)) {
+              window.showErrorMessage(Messages.FileAlreadyExistsError);
               return;
             }
 
@@ -287,7 +291,6 @@ class ContentNavigator implements SubscriptionProvider {
                 window.showErrorMessage(Messages.NoCodeToConvert);
                 return;
               }
-              const parent = await this.contentDataProvider.getParent(resource);
               const newUri = await this.contentDataProvider.createFile(
                 parent,
                 name,
