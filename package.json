@@ -567,7 +567,7 @@
         {
           "command": "SAS.convertSasnbToFlw",
           "when": "viewItem =~ /convertSasnbToFlw/ && view == contentdataprovider",
-          "group": "delrenamegroup@2"
+          "group": "actionsgroup@0"
         },
         {
           "command": "SAS.restoreResource",
