@@ -1,8 +1,13 @@
-import * as fs from "fs";
-
 const stepRef: Record<string, string> = {
   sas: "/dataFlows/steps/a7190700-f59c-4a94-afe2-214ce639fcde",
+  sql: "/dataFlows/steps/a7190700-f59c-4a94-afe2-214ce639fcde",
   python: "/dataFlows/steps/ab59f8c4-af9a-4608-a5d5-a8365357bb99",
+};
+
+const stepTitle: Record<string, string> = {
+  sas: "SAS Program",
+  sql: "SQL Program",
+  python: "Python Program",
 };
 
 interface Entry {
@@ -20,12 +25,12 @@ interface FlowData {
   name: string;
   description: null | string;
   properties: Record<string, string>;
-  links: any[]; // Replace 'any' with the appropriate type when known
-  nodes: Record<string, any>; // Replace 'any' with the appropriate type when known
-  parameters: Record<string, any>; // Replace 'any' with the appropriate type when known
-  connections: any[]; // Replace 'any' with the appropriate type when known
-  extendedProperties: Record<string, any>; // Replace 'any' with the appropriate type when known
-  stickyNotes: any[]; // Replace 'any' with the appropriate type when known
+  links: any[];
+  nodes: Record<string, any>;
+  parameters: Record<string, any>;
+  connections: any[];
+  extendedProperties: Record<string, any>;
+  stickyNotes: any[];
 }
 
 function generateFlowData(inputList: Entry[], outputFile: string): FlowData {
@@ -59,7 +64,7 @@ function generateFlowData(inputList: Entry[], outputFile: string): FlowData {
       nodeType: "step",
       version: 1,
       id: nodeId,
-      name: `${entry.language} Program`,
+      name: stepTitle[entry.language],
       note: {
         version: 1,
         id: nodeId,
@@ -149,9 +154,8 @@ export function convert_sasnb_to_flw(
     for (const cell of notebookContent) {
       let code = cell.value;
       if (code !== "") {
-        let language = cell.language;
+        const language = cell.language;
         if (language === "sql") {
-          language = "sas";
           code = `
           PROC SQL;
               ${code}
