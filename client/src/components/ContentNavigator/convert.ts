@@ -1,3 +1,6 @@
+// Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 const stepRef: Record<string, string> = {
   sas: "a7190700-f59c-4a94-afe2-214ce639fcde",
   sql: "a7190700-f59c-4a94-afe2-214ce639fcde",
@@ -15,8 +18,6 @@ interface Entry {
   code: string;
 }
 
-// create a function that takes idx as input
-// and returns a json depending if idx is first, last or in between
 function getPropPort(idx: number, inputList: Entry[]): Record<string, string> {
   if (idx === 0) {
     return {
