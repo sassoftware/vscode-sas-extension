@@ -7,8 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Fixed
- 
- - Fixed column icons for data viewer ([#443](https://github.com/sassoftware/vscode-sas-extension/pull/443))
+
+- Fixed column icons for data viewer ([#443](https://github.com/sassoftware/vscode-sas-extension/pull/443))
 
 ## [v1.1.0] - 2023-08-04
 
