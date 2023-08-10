@@ -5,6 +5,7 @@
 import {
   CompletionItem,
   CompletionItemKind,
+  CompletionList,
   Hover,
   MarkupKind,
 } from "vscode-languageserver";
@@ -207,6 +208,20 @@ function getItemKind(zone: number | LibCompleteItem["type"]) {
   return CompletionItemKind.Keyword;
 }
 
+function processLabelCase(label: string, prefix: string): string {
+  const validPrefix = prefix.indexOf("&") === 0 ? prefix.substring(1) : prefix;
+
+  if (validPrefix.length === 0) {
+    return label.toLowerCase();
+  } else if (label.indexOf(validPrefix) === 0) {
+    return label;
+  } else if (validPrefix === validPrefix.toUpperCase()) {
+    return label.toUpperCase();
+  } else {
+    return label.toLowerCase();
+  }
+}
+
 export class CompletionProvider {
   private czMgr;
   private loader;
@@ -265,26 +280,40 @@ export class CompletionProvider {
     }
   }
 
-  getCompleteItems(position: Position): Promise<CompletionItem[] | undefined> {
+  getCompleteItems(
+    position: Position,
+  ): Promise<CompletionItem[] | CompletionList | undefined> {
     return new Promise((resolve) => {
       this._getZone(position);
+      const prefix = this.popupContext.prefix;
+
       this._loadAutoCompleteItems(this.popupContext.zone, (data) => {
+        const items = data?.map((item) => ({
+          label: processLabelCase(
+            typeof item === "string" ? item : item.name,
+            prefix,
+          ),
+          kind: getItemKind(
+            typeof item === "string" ? this.popupContext.zone : item.type,
+          ),
+          insertText:
+            typeof item === "string" ||
+            !/\W/.test(item.name) ||
+            (this.popupContext.datasetList &&
+              this.popupContext.datasetList.some((i: LibCompleteItem) => {
+                return item.name.toLowerCase() === i.name.toLowerCase();
+              }))
+              ? undefined
+              : `'${item.name.replace(/'/g, "''")}'n`,
+        }));
+
         resolve(
-          data?.map((item) => ({
-            label: (typeof item === "string" ? item : item.name).toLowerCase(),
-            kind: getItemKind(
-              typeof item === "string" ? this.popupContext.zone : item.type,
-            ),
-            insertText:
-              typeof item === "string" ||
-              !/\W/.test(item.name) ||
-              (this.popupContext.datasetList &&
-                this.popupContext.datasetList.some((i: LibCompleteItem) => {
-                  return item.name.toLowerCase() === i.name.toLowerCase();
-                }))
-                ? undefined
-                : `'${item.name.replace(/'/g, "''")}'n`,
-          })),
+          items === undefined
+            ? undefined
+            : {
+                isIncomplete: true,
+                items,
+              },
         );
       });
     });
