@@ -232,7 +232,10 @@ export class CompletionProvider {
   private loader;
   private popupContext: any = {};
 
-  constructor(private model: Model, private syntaxProvider: SyntaxProvider) {
+  constructor(
+    private model: Model,
+    private syntaxProvider: SyntaxProvider,
+  ) {
     this.loader = syntaxProvider.lexer.syntaxDb;
     this.czMgr = new CodeZoneManager(model, this.loader, syntaxProvider);
   }
