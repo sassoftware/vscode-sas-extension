@@ -7,7 +7,6 @@ import {
   Disposable,
   ExtensionContext,
   l10n,
-  TextDocumentChangeEvent,
   Uri,
   window,
   workspace,
@@ -19,11 +18,7 @@ import { Messages } from "./const";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
 import { ContentItem } from "./types";
-import {
-  isContainer as getIsContainer,
-  getUri,
-  isItemInRecycleBin,
-} from "./utils";
+import { isContainer as getIsContainer, isItemInRecycleBin } from "./utils";
 
 const fileValidator = (value: string): string | null =>
   /^([^/<>;\\{}?#]+)\.\w+$/.test(
@@ -38,8 +33,6 @@ const folderValidator = (value: string): string | null =>
 class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
 
-  private dirtyFiles: Record<string, boolean>;
-
   constructor(context: ExtensionContext) {
     this.contentDataProvider = new ContentDataProvider(
       new ContentModel(),
@@ -51,7 +44,6 @@ class ContentNavigator implements SubscriptionProvider {
       "sasReadOnly",
       this.contentDataProvider,
     );
-    this.watchForFileChanges();
   }
 
   public getSubscriptions(): Disposable[] {
@@ -179,13 +171,6 @@ class ContentNavigator implements SubscriptionProvider {
         "SAS.renameResource",
         async (resource: ContentItem) => {
           const isContainer = getIsContainer(resource);
-          const resourceUri = getUri(resource);
-
-          // Make sure the file is saved before renaming
-          if (this.dirtyFiles[resourceUri.query]) {
-            window.showErrorMessage(Messages.RenameUnsavedFileError);
-            return;
-          }
 
           const name = await window.showInputBox({
             prompt: Messages.RenamePrompt,
@@ -213,12 +198,6 @@ class ContentNavigator implements SubscriptionProvider {
               }),
             );
             return;
-          }
-
-          try {
-            !isContainer && (await window.showTextDocument(newUri));
-          } catch (error) {
-            // If we fail to show the file, there's nothing extra to do
           }
 
           this.contentDataProvider.refresh();
@@ -278,13 +257,6 @@ class ContentNavigator implements SubscriptionProvider {
     }
 
     this.contentDataProvider.reveal(resource);
-  }
-
-  private watchForFileChanges(): void {
-    this.dirtyFiles = {};
-    workspace.onDidChangeTextDocument((e: TextDocumentChangeEvent) => {
-      this.dirtyFiles[e.document.uri.query] = e.document.isDirty;
-    });
   }
 
   private treeViewSelections(item: ContentItem): ContentItem[] {
