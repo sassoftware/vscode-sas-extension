@@ -339,10 +339,7 @@ export class ContentModel {
       };
     }
     try {
-      const res = await this.connection.put(resourceId + "/content", content, {
-        // if resourceId in this.fileTokenMaps
-        headers: headers,
-      });
+      const res = await this.connection.put(resourceId + "/content", content, { headers });
       if (resourceId in this.fileTokenMaps) {
         this.fileTokenMaps[resourceId] = {
           etag: res.headers.etag,
