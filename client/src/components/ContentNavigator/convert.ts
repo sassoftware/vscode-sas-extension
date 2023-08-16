@@ -24,19 +24,21 @@ function getPropPort(idx: number, inputList: Entry[]): Record<string, string> {
       "UI_PROP_PORT_DESCRIPTION|outTables|0": "Output tables",
       "UI_PROP_PORT_LABEL|outTables|0": "Output table 1",
     };
-  } else if (idx === inputList.length - 1) {
+  } 
+  
+  if (idx === inputList.length - 1) {
     return {
       "UI_PROP_PORT_DESCRIPTION|inTables|0": "Input tables",
       "UI_PROP_PORT_LABEL|inTables|0": "Input table 1",
-    };
-  } else {
-    return {
-      "UI_PROP_PORT_DESCRIPTION|inTables|0": "Input tables",
-      "UI_PROP_PORT_LABEL|inTables|0": "Input table 1",
-      "UI_PROP_PORT_DESCRIPTION|outTables|0": "Output tables",
-      "UI_PROP_PORT_LABEL|outTables|0": "Output table 1",
     };
   }
+  
+  return {
+    "UI_PROP_PORT_DESCRIPTION|inTables|0": "Input tables",
+    "UI_PROP_PORT_LABEL|inTables|0": "Input table 1",
+    "UI_PROP_PORT_DESCRIPTION|outTables|0": "Output tables",
+    "UI_PROP_PORT_LABEL|outTables|0": "Output table 1",
+  };
 }
 
 function generateFlowData(inputList: Entry[], outputFile: string) {
