@@ -13,6 +13,8 @@ const stepTitle: Record<string, string> = {
   python: "Python Program",
 };
 
+const NODE_SPACING = 150;
+
 interface Entry {
   language: string;
   code: string;
@@ -96,7 +98,7 @@ function generateFlowData(inputList: Entry[], outputFile: string) {
         UI_PROP_IS_OUTPUT_EXPANDED: "false",
         UI_PROP_NODE_DATA_ID: stepRef[entry.language],
         UI_PROP_NODE_DATA_MODIFIED_DATE: nowTimestamp,
-        UI_PROP_XPOS: String((idx + 1) * 150),
+        UI_PROP_XPOS: ((idx + 1) * NODE_SPACING).toString(),
         UI_PROP_YPOS: "75",
       },
       portMappings: [
