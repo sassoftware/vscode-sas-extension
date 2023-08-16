@@ -73,7 +73,7 @@ function generateFlowData(inputList: Entry[], outputFile: string) {
     arrayIdNode.push(idNode);
     const idNote = `id-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const entry = inputList[idx];
-    const propports = getPropPort(idx, inputList);
+    const propPorts = getPropPort(idx, inputList);
     const stepNode = {
       nodeType: "step",
       version: 1,
@@ -143,7 +143,7 @@ function generateFlowData(inputList: Entry[], outputFile: string) {
         },
       },
     };
-    stepNode.properties = { ...stepNode.properties, ...propports };
+    stepNode.properties = { ...stepNode.properties, ...propPorts };
     flowData.nodes[idNode] = stepNode;
 
     if (idx > 0) {
