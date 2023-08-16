@@ -13,7 +13,7 @@ import {
   workspace,
 } from "vscode";
 
-import { convert_sasnb_to_flw } from "./convert";
+import { convertSASNotebookToFlow } from "./convert";
 
 import { profileConfig } from "../../commands/profile";
 import { ConnectionType } from "../profile";
@@ -285,7 +285,10 @@ class ContentNavigator implements SubscriptionProvider {
                 await this.contentDataProvider.provideTextDocumentContent(
                   resourceUri,
                 );
-              const flowDataUint8Array = convert_sasnb_to_flw(contentUri, name);
+              const flowDataUint8Array = convertSASNotebookToFlow(
+                contentUri,
+                name,
+              );
               // error if content is empty
               if (flowDataUint8Array.length === 0) {
                 window.showErrorMessage(Messages.NoCodeToConvert);

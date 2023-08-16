@@ -26,15 +26,15 @@ function getPropPort(idx: number, inputList: Entry[]): Record<string, string> {
       "UI_PROP_PORT_DESCRIPTION|outTables|0": "Output tables",
       "UI_PROP_PORT_LABEL|outTables|0": "Output table 1",
     };
-  } 
-  
+  }
+
   if (idx === inputList.length - 1) {
     return {
       "UI_PROP_PORT_DESCRIPTION|inTables|0": "Input tables",
       "UI_PROP_PORT_LABEL|inTables|0": "Input table 1",
     };
   }
-  
+
   return {
     "UI_PROP_PORT_DESCRIPTION|inTables|0": "Input tables",
     "UI_PROP_PORT_LABEL|inTables|0": "Input table 1",
@@ -167,7 +167,7 @@ function generateFlowData(inputList: Entry[], outputFile: string) {
   return flowData;
 }
 
-export function convert_sasnb_to_flw(
+export function convertSASNotebookToFlow(
   content: string,
   outputName: string,
 ): Uint8Array {
