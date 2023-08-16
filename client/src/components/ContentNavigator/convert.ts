@@ -96,7 +96,6 @@ function generateFlowData(inputList: Entry[], outputFile: string) {
         UI_PROP_IS_OUTPUT_EXPANDED: "false",
         UI_PROP_NODE_DATA_ID: stepRef[entry.language],
         UI_PROP_NODE_DATA_MODIFIED_DATE: nowTimestamp,
-
         UI_PROP_XPOS: String((idx + 1) * 150),
         UI_PROP_YPOS: "75",
       },
