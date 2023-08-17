@@ -281,12 +281,12 @@ class ContentNavigator implements SubscriptionProvider {
             }
 
             try {
-              const contentUri: string =
+              const contentString: string =
                 await this.contentDataProvider.provideTextDocumentContent(
                   resourceUri,
                 );
               const flowDataUint8Array = convertSASNotebookToFlow(
-                contentUri,
+                contentString,
                 name,
               );
               // error if content is empty
