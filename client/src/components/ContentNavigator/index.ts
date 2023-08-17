@@ -260,6 +260,7 @@ class ContentNavigator implements SubscriptionProvider {
             const name = await window.showInputBox({
               prompt: "Enter the name for the new .flw file",
               value: resource.name.replace(".sasnb", ".flw"),
+              validateInput: fileValidator,
             });
 
             if (!name) {
