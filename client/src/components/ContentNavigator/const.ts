@@ -85,7 +85,7 @@ export const Messages = {
     "You must save your file before you can rename it.",
   ),
   SasnbToFlwConversionSuccess: l10n.t(
-    "The .sasnb file has been successfully converted to .flw format.",
+    "The notebook has been successfully converted to a flow. You can now open it in SAS Studio.",
   ),
   SasnbToFlwConversionError: l10n.t(
     "Error converting the .sasnb file to .flw format.",

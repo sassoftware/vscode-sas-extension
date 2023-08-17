@@ -43,110 +43,146 @@ function getPropPort(idx: number, inputList: Entry[]): Record<string, string> {
   };
 }
 
+const baseFlow = {
+  creationTimeStamp: "",
+  modifiedTimeStamp: "",
+  createdBy: "",
+  modifiedBy: "",
+  version: 2,
+  id: null,
+  name: "",
+  description: null,
+  properties: {
+    UI_PROP_DF_OPTIMIZE: "false",
+    UI_PROP_DF_ID: "120081fc-2d7f-4cfc-bcd3-47f9684e9763",
+    UI_PROP_DF_EXECUTION_ORDERED: "false",
+  },
+  links: [],
+  nodes: {},
+  parameters: {},
+  connections: [],
+  extendedProperties: {},
+  stickyNotes: [],
+};
+
+const baseNode = {
+  nodeType: "step",
+  version: 1,
+  id: null,
+  name: null,
+  note: {
+    version: 1,
+    id: null,
+    name: null,
+    description: null,
+    properties: {
+      UI_NOTE_PROP_HEIGHT: "0",
+      UI_NOTE_PROP_IS_EXPANDED: "false",
+      UI_NOTE_PROP_IS_STICKYNOTE: "false",
+      UI_NOTE_PROP_WIDTH: "0",
+    },
+  },
+  priority: 0,
+  properties: {
+    UI_PROP_COLORGRP: "0",
+    UI_PROP_IS_INPUT_EXPANDED: "false",
+    UI_PROP_IS_OUTPUT_EXPANDED: "false",
+    UI_PROP_NODE_DATA_ID: null,
+    UI_PROP_NODE_DATA_MODIFIED_DATE: null,
+    UI_PROP_XPOS: "0",
+    UI_PROP_YPOS: "75",
+  },
+  portMappings: [
+    {
+      mappingType: "tableStructure",
+      portIndex: 0,
+      portName: "outTables",
+      tableStructure: {
+        columnDefinitions: null,
+      },
+    },
+  ],
+  stepReference: {
+    type: "uri",
+    path: null,
+  },
+  arguments: {
+    codeOptions: {
+      code: null,
+      contentType: "embedded",
+      logHTML: "",
+      resultsHTML: "",
+      variables: [
+        {
+          name: "_input1",
+          value: {
+            portIndex: 0,
+            portName: "inTables",
+            referenceType: "inputPort",
+          },
+        },
+        {
+          name: "_output1",
+          value: {
+            arguments: {},
+            portIndex: 0,
+            portName: "outTables",
+            referenceType: "outputPort",
+          },
+        },
+      ],
+    },
+  },
+};
+
 function generateFlowData(inputList: Entry[], outputFile: string) {
   const now = new Date();
   const nowString = now.toISOString();
   const nowTimestamp = String(now.getTime());
   const arrayIdNode: string[] = [];
-  const flowData = {
-    creationTimeStamp: nowString,
-    modifiedTimeStamp: nowString,
-    createdBy: "user@sas.com",
-    modifiedBy: "user@sas.com",
-    version: 2,
-    id: null,
-    name: outputFile,
-    description: null,
-    properties: {
-      UI_PROP_DF_OPTIMIZE: "false",
-      UI_PROP_DF_ID: "120081fc-2d7f-4cfc-bcd3-47f9684e9763",
-      UI_PROP_DF_EXECUTION_ORDERED: "false",
-    },
-    links: [],
-    nodes: {},
-    parameters: {},
-    connections: [],
-    extendedProperties: {},
-    stickyNotes: [],
-  };
+
+  const flowData = { ...baseFlow };
+  flowData.creationTimeStamp = nowString;
+  flowData.modifiedTimeStamp = nowString;
+  flowData.name = outputFile;
 
   for (let idx = 0; idx < inputList.length; idx++) {
     const idNode = `id-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-    arrayIdNode.push(idNode);
     const idNote = `id-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const entry = inputList[idx];
     const propPorts = getPropPort(idx, inputList);
+
     const stepNode = {
-      nodeType: "step",
-      version: 1,
+      ...baseNode,
       id: idNode,
       name: stepTitle[entry.language],
       note: {
-        version: 1,
+        ...baseNode.note,
         id: idNote,
-        name: null,
-        description: null,
-        properties: {
-          UI_NOTE_PROP_HEIGHT: "0",
-          UI_NOTE_PROP_IS_EXPANDED: "false",
-          UI_NOTE_PROP_IS_STICKYNOTE: "false",
-          UI_NOTE_PROP_WIDTH: "0",
-        },
       },
       priority: idx,
       properties: {
-        UI_PROP_COLORGRP: "0",
-        UI_PROP_IS_INPUT_EXPANDED: "false",
-        UI_PROP_IS_OUTPUT_EXPANDED: "false",
+        ...baseNode.properties,
+        ...propPorts,
         UI_PROP_NODE_DATA_ID: stepRef[entry.language],
         UI_PROP_NODE_DATA_MODIFIED_DATE: nowTimestamp,
         UI_PROP_XPOS: ((idx + 1) * NODE_SPACING).toString(),
-        UI_PROP_YPOS: "75",
       },
-      portMappings: [
-        {
-          mappingType: "tableStructure",
-          portIndex: 0,
-          portName: "outTables",
-          tableStructure: {
-            columnDefinitions: null,
-          },
-        },
-      ],
       stepReference: {
-        type: "uri",
+        ...baseNode.stepReference,
         path: `/dataFlows/steps/${stepRef[entry.language]}`,
       },
       arguments: {
+        ...baseNode.arguments,
         codeOptions: {
+          ...baseNode.arguments.codeOptions,
           code: entry.code,
-          contentType: "embedded",
-          logHTML: "",
-          resultsHTML: "",
-          variables: [
-            {
-              name: "_input1",
-              value: {
-                portIndex: 0,
-                portName: "inTables",
-                referenceType: "inputPort",
-              },
-            },
-            {
-              name: "_output1",
-              value: {
-                arguments: {},
-                portIndex: 0,
-                portName: "outTables",
-                referenceType: "outputPort",
-              },
-            },
-          ],
         },
       },
     };
-    stepNode.properties = { ...stepNode.properties, ...propPorts };
+
     flowData.nodes[idNode] = stepNode;
+    arrayIdNode.push(idNode);
 
     if (idx > 0) {
       const connection = {
