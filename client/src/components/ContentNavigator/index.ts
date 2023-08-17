@@ -268,23 +268,19 @@ class ContentNavigator implements SubscriptionProvider {
             }
 
             if (!name.endsWith(".flw")) {
+              // File name must end with .flw
               window.showErrorMessage(Messages.InvalidFlwFileNameError);
               return;
             }
 
-            // check that name does not exist
             const parent = await this.contentDataProvider.getParent(resource);
-            const children = await this.contentDataProvider.getChildren(parent);
-            if (children.some((child) => child.name === name)) {
-              window.showErrorMessage(Messages.FileAlreadyExistsError);
-              return;
-            }
-
             try {
+              // get the content of the .sasnb file
               const contentString: string =
                 await this.contentDataProvider.provideTextDocumentContent(
                   resourceUri,
                 );
+              // convert the .sasnb file to a flowData object
               const flowDataUint8Array = convertSASNotebookToFlow(
                 contentString,
                 name,
@@ -294,14 +290,21 @@ class ContentNavigator implements SubscriptionProvider {
                 window.showErrorMessage(Messages.NoCodeToConvert);
                 return;
               }
+              // create the new .flw file
               const newUri = await this.contentDataProvider.createFile(
                 parent,
                 name,
+              );
+              this.handleCreationResponse(
+                parent,
+                newUri,
+                l10n.t(Messages.NewFileCreationError, { name: name }),
               );
               await this.contentDataProvider.writeFile(
                 newUri,
                 flowDataUint8Array,
               );
+              // associate the new .flw file with SAS Studio
               await this.contentDataProvider.associateFlow(
                 name,
                 newUri,
