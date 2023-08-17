@@ -8,12 +8,9 @@ import {
   ExtensionContext,
   l10n,
   TextDocumentChangeEvent,
-  Uri,
   window,
   workspace,
 } from "vscode";
-
-import { convertSASNotebookToFlow } from "./convert";
 
 import { profileConfig } from "../../commands/profile";
 import { ConnectionType } from "../profile";
@@ -144,7 +141,7 @@ class ContentNavigator implements SubscriptionProvider {
             resource,
             fileName,
           );
-          this.handleCreationResponse(
+          this.contentDataProvider.handleCreationResponse(
             resource,
             newUri,
             l10n.t(Messages.NewFileCreationError, { name: fileName }),
@@ -171,7 +168,7 @@ class ContentNavigator implements SubscriptionProvider {
             resource,
             folderName,
           );
-          this.handleCreationResponse(
+          this.contentDataProvider.handleCreationResponse(
             resource,
             newUri,
             l10n.t(Messages.NewFolderCreationError, { name: folderName }),
@@ -274,44 +271,13 @@ class ContentNavigator implements SubscriptionProvider {
               return;
             }
 
-            const parent = await this.contentDataProvider.getParent(resource);
-            try {
-              // get the content of the .sasnb file
-              const contentString: string =
-                await this.contentDataProvider.provideTextDocumentContent(
-                  resourceUri,
-                );
-              // convert the .sasnb file to a flowData object
-              const flowDataUint8Array = convertSASNotebookToFlow(
-                contentString,
-                name,
-              );
-              // error if content is empty
-              if (flowDataUint8Array.length === 0) {
-                window.showErrorMessage(Messages.NoCodeToConvert);
-                return;
-              }
-              // create the new .flw file
-              const newUri = await this.contentDataProvider.createFile(
-                parent,
-                name,
-                flowDataUint8Array,
-              );
-              this.handleCreationResponse(
-                parent,
-                newUri,
-                l10n.t(Messages.NewFileCreationError, { name: name }),
-              );
-              // associate the new .flw file with SAS Studio
-              await this.contentDataProvider.associateFlow(
-                name,
-                newUri,
-                parent,
-              );
+            if (
+              await this.contentDataProvider.convertSasnbToFlw(resource, name)
+            ) {
               window.showInformationMessage(
                 Messages.SasnbToFlwConversionSuccess,
               );
-            } catch (error) {
+            } else {
               window.showErrorMessage(Messages.SasnbToFlwConversionError);
             }
           } else {
@@ -337,19 +303,6 @@ class ContentNavigator implements SubscriptionProvider {
         },
       ),
     ];
-  }
-
-  private async handleCreationResponse(
-    resource: ContentItem,
-    newUri: Uri | undefined,
-    errorMessage: string,
-  ): Promise<void> {
-    if (!newUri) {
-      window.showErrorMessage(errorMessage);
-      return;
-    }
-
-    this.contentDataProvider.reveal(resource);
   }
 
   private watchForFileChanges(): void {

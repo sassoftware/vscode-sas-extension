@@ -360,7 +360,7 @@ export class ContentModel {
     name: string,
     uri: Uri,
     parent: ContentItem,
-  ): Promise<void> {
+  ): Promise<string | undefined> {
     // get the zone with format "GMT+02:00"
     const date = new Date(); // Create a Date object representing the current date and time
     const timeZoneOffset = date.getTimezoneOffset();
@@ -388,7 +388,7 @@ export class ContentModel {
         },
       );
       const sessionId = res.data.id;
-      await this.connection.post(
+      const response = await this.connection.post(
         "/SASStudio/sasexec/{sessionId}/associateFlowObj".replace(
           `{${"sessionId"}}`,
           sessionId,
@@ -406,6 +406,7 @@ export class ContentModel {
           },
         },
       );
+      return response.data.uri;
     } catch (error) {
       console.log(error);
     }

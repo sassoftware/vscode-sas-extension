@@ -54,6 +54,7 @@ import {
   isReference,
   resourceType,
 } from "./utils";
+import { convertSASNotebookToFlow } from "./convert";
 
 const contentItemMimeType = "application/vnd.code.tree.contentdataprovider";
 class ContentDataProvider
@@ -261,7 +262,7 @@ class ContentDataProvider
     name: string,
     uri: Uri,
     parent: ContentItem,
-  ): void | Promise<void> {
+  ): Promise<string> {
     return this.model.associateFlowObject(name, uri, parent);
   }
 
@@ -340,6 +341,51 @@ class ContentDataProvider
       this.refresh();
     }
     return success;
+  }
+
+  public async handleCreationResponse(
+    resource: ContentItem,
+    newUri: Uri | undefined,
+    errorMessage: string,
+  ): Promise<void> {
+    if (!newUri) {
+      window.showErrorMessage(errorMessage);
+      return;
+    }
+
+    this.reveal(resource);
+  }
+
+  public async convertSasnbToFlw(
+    item: ContentItem,
+    name: string,
+  ): Promise<string | undefined> {
+    const parent = await this.getParent(item);
+    const resourceUri = getUri(item);
+    try {
+      // get the content of the .sasnb file
+      const contentString: string = await this.provideTextDocumentContent(
+        resourceUri,
+      );
+      // convert the .sasnb file to a flowData object
+      const flowDataUint8Array = convertSASNotebookToFlow(contentString, name);
+      // error if content is empty
+      if (flowDataUint8Array.length === 0) {
+        window.showErrorMessage(Messages.NoCodeToConvert);
+        return;
+      }
+      // create the new .flw file
+      const newUri = await this.createFile(parent, name, flowDataUint8Array);
+      this.handleCreationResponse(
+        parent,
+        newUri,
+        l10n.t(Messages.NewFileCreationError, { name: name }),
+      );
+      // associate the new .flw file with SAS Studio
+      return await this.associateFlow(name, newUri, parent);
+    } catch (error) {
+      window.showErrorMessage(error);
+    }
   }
 
   public refresh(): void {
