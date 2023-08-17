@@ -180,12 +180,14 @@ export function convertSASNotebookToFlow(
       let code = cell.value;
       if (code !== "") {
         const language = cell.language;
-        if (language === "sql") {
-          code = `PROC SQL;
+        if (["python", "sas", "sql"].includes(language)) {
+          if (language === "sql") {
+            code = `PROC SQL;
 ${code};
 QUIT;`;
+          }
+          codeList.push({ code, language });
         }
-        codeList.push({ code, language });
       }
     }
   } catch (error) {
