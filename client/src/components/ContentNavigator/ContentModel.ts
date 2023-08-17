@@ -321,31 +321,36 @@ export class ContentModel {
     }
   }
 
+  private getFileInfo(resourceId: string): {
+    etag: string;
+    lastModified: string;
+  } {
+    if (resourceId in this.fileTokenMaps) {
+      return this.fileTokenMaps[resourceId];
+    }
+    const now = new Date();
+    const timestamp = now.toUTCString();
+    return { etag: "", lastModified: timestamp };
+  }
+
   public async saveContentToUri(uri: Uri, content: string): Promise<void> {
     const resourceId = getResourceId(uri);
-    let headers = {};
-    if (resourceId in this.fileTokenMaps) {
-      headers = {
-        "Content-Type": "text/plain",
-        "If-Match": this.fileTokenMaps[resourceId].etag,
-        "If-Unmodified-Since": this.fileTokenMaps[resourceId].lastModified,
-      };
-    } else {
-      const now = new Date();
-      const timestamp = now.toUTCString();
-      headers = {
-        "Content-Type": "text/plain",
-        "If-Unmodified-Since": timestamp,
-      };
+    const { etag, lastModified } = this.getFileInfo(resourceId);
+    const headers = {
+      "Content-Type": "text/plain",
+      "If-Unmodified-Since": lastModified,
+    };
+    if (etag !== "") {
+      headers["If-Match"] = etag;
     }
     try {
-      const res = await this.connection.put(resourceId + "/content", content, { headers });
-      if (resourceId in this.fileTokenMaps) {
-        this.fileTokenMaps[resourceId] = {
-          etag: res.headers.etag,
-          lastModified: res.headers["last-modified"],
-        };
-      }
+      const res = await this.connection.put(resourceId + "/content", content, {
+        headers,
+      });
+      this.fileTokenMaps[resourceId] = {
+        etag: res.headers.etag,
+        lastModified: res.headers["last-modified"],
+      };
     } catch (error) {
       console.log(error);
     }
