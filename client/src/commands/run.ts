@@ -10,6 +10,7 @@ import {
   window,
   workspace,
   l10n,
+  Uri,
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 import { LogFn as LogChannelFn } from "../components/LogChannel";
@@ -25,8 +26,12 @@ interface FoldingBlock {
 
 let running = false;
 
-function getCode(outputHtml: boolean, selected = false): string {
-  const editor = window.activeTextEditor;
+function getCode(outputHtml: boolean, selected = false, uri?: Uri): string {
+  const editor = uri
+    ? window.visibleTextEditors.find(
+        (editor) => editor.document.uri.toString() === uri.toString(),
+      )
+    : window.activeTextEditor;
   const doc = editor?.document;
   let code = "";
   if (selected) {
@@ -102,7 +107,7 @@ async function getSelectedRegions(
   });
 }
 
-async function runCode(selected?: boolean) {
+async function runCode(selected?: boolean, uri?: Uri) {
   if (profileConfig.getActiveProfile() === "") {
     switchProfile();
     return;
@@ -111,7 +116,7 @@ async function runCode(selected?: boolean) {
   const outputHtml = !!workspace
     .getConfiguration("SAS")
     .get("session.outputHtml");
-  const code = getCode(outputHtml, selected);
+  const code = getCode(outputHtml, selected, uri);
 
   const session = getSession();
   session.onLogFn = LogChannelFn;
@@ -149,14 +154,14 @@ async function runCode(selected?: boolean) {
   );
 }
 
-const _run = async (selected = false) => {
+const _run = async (selected = false, uri?: Uri) => {
   if (running) {
     return;
   }
   running = true;
-  commands.executeCommand("setContext", "SAS.hideRunMenuItem", true);
+  commands.executeCommand("setContext", "SAS.running", true);
 
-  await runCode(selected)
+  await runCode(selected, uri)
     .catch((err) => {
       console.dir(err);
       window.showErrorMessage(
@@ -165,7 +170,7 @@ const _run = async (selected = false) => {
     })
     .finally(() => {
       running = false;
-      commands.executeCommand("setContext", "SAS.hideRunMenuItem", false);
+      commands.executeCommand("setContext", "SAS.running", false);
     });
 };
 
@@ -173,8 +178,8 @@ export async function run(): Promise<void> {
   await _run();
 }
 
-export async function runSelected(): Promise<void> {
-  await _run(true);
+export async function runSelected(uri: Uri): Promise<void> {
+  await _run(true, uri);
 }
 
 export async function runRegion(client: BaseLanguageClient): Promise<void> {

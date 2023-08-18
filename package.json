@@ -346,6 +346,7 @@
           "light": "icons/light/submitSASCode.svg",
           "dark": "icons/dark/submitSASCode.svg"
         },
+        "enablement": "!SAS.running",
         "category": "SAS"
       },
       {
@@ -355,6 +356,7 @@
           "light": "icons/light/submitSASCode.svg",
           "dark": "icons/dark/submitSASCode.svg"
         },
+        "enablement": "!SAS.running",
         "category": "SAS"
       },
       {
@@ -364,6 +366,7 @@
           "light": "icons/light/submitSASCode.svg",
           "dark": "icons/dark/submitSASCode.svg"
         },
+        "enablement": "!SAS.running",
         "category": "SAS"
       },
       {
@@ -580,13 +583,13 @@
       ],
       "editor/title/run": [
         {
-          "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected"
         }
       ],
       "editor/context": [
         {
-          "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
           "command": "SAS.run",
           "group": "navigation@2"
         },
