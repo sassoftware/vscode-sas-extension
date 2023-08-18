@@ -32,6 +32,18 @@ const fileValidator = (value: string): string | null =>
   )
     ? null
     : Messages.FileValidationError;
+
+const flowFileValidator = (value: string): string | null => {
+  let res = null;
+  if (!/^([^/<>;\\{}?#]+)\.\w+$/.test(value)) {
+    res = Messages.FileValidationError;
+  }
+  if (!value.endsWith(".flw")) {
+    res = Messages.InvalidFlwFileNameError;
+  }
+  return res;
+};
+
 const folderValidator = (value: string): string | null =>
   value.length <= 100 ? null : Messages.FolderValidationError;
 
@@ -257,17 +269,11 @@ class ContentNavigator implements SubscriptionProvider {
             const name = await window.showInputBox({
               prompt: "Enter the name for the new .flw file",
               value: resource.name.replace(".sasnb", ".flw"),
-              validateInput: fileValidator,
+              validateInput: flowFileValidator,
             });
 
             if (!name) {
               // User canceled the input box
-              return;
-            }
-
-            if (!name.endsWith(".flw")) {
-              // File name must end with .flw
-              window.showErrorMessage(Messages.InvalidFlwFileNameError);
               return;
             }
 
