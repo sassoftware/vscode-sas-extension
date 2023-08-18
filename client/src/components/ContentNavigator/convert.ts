@@ -1,6 +1,8 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { v4 } from "uuid";
+
 const stepRef: Record<string, string> = {
   sas: "a7190700-f59c-4a94-afe2-214ce639fcde",
   sql: "a7190700-f59c-4a94-afe2-214ce639fcde",
@@ -147,8 +149,8 @@ function generateFlowData(inputList: Entry[], outputFile: string) {
   flowData.name = outputFile;
 
   for (let idx = 0; idx < inputList.length; idx++) {
-    const idNode = `id-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-    const idNote = `id-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    const idNode = v4();
+    const idNote = v4();
     const entry = inputList[idx];
     const propPorts = getPropPort(idx, inputList);
 
