@@ -263,7 +263,7 @@ class ContentDataProvider
     uri: Uri,
     parent: ContentItem,
   ): Promise<string> {
-    return this.model.associateFlowObject(name, uri, parent);
+    return this.model.associateFlowFile(name, uri, parent);
   }
 
   public async deleteResource(item: ContentItem): Promise<boolean> {
