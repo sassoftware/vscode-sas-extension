@@ -371,7 +371,9 @@
       }
     ],
     "configurationDefaults": {
-      "editor.formatOnType": true
+      "[sas]": {
+        "editor.formatOnType": true
+      }
     },
     "commands": [
       {

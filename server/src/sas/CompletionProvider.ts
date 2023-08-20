@@ -19,7 +19,7 @@ import { arrayToMap, getText } from "./utils";
 import { Lexer } from "./Lexer";
 import { start } from "repl";
 import exp = require("constants");
-import { FoldingBlock } from "./LexerEx";
+import { FoldingBlock, LexerEx } from "./LexerEx";
 
 const ZONE_TYPE = CodeZoneManager.ZONE_TYPE;
 
@@ -353,13 +353,12 @@ export class CompletionProvider {
     if (triggerChar === "\n") {
       return this._getEnterTriggeredIndentEdit(line - 1, tabSize, useSpace);
     } else if (triggerChar === ";") {
-      // TODO: need recursive folding block support.
-      // return this._getSemicolonTriggeredIndentEdit(
-      //   line,
-      //   col - 1,
-      //   tabSize,
-      //   useSpace,
-      // );
+      return this._getSemicolonTriggeredIndentEdit(
+        line,
+        col - 1,
+        tabSize,
+        useSpace,
+      );
     }
     return [];
   }
@@ -381,6 +380,7 @@ export class CompletionProvider {
       semicolonCol + 1,
     );
     let shouldDecIndent;
+    let curBlockZoneType: "proc" | "data" | "macro" | undefined;
     if (
       zoneAfterSemicolon === ZONE_TYPE.GBL_STMT ||
       zoneAfterSemicolon === ZONE_TYPE.COMMENT ||
@@ -393,13 +393,18 @@ export class CompletionProvider {
         case ZT.PROC_STMT_OPT_VALUE:
         case ZT.PROC_STMT_SUB_OPT:
         case ZT.PROC_STMT_SUB_OPT_VALUE:
+          !curBlockZoneType && (curBlockZoneType = "proc");
+        // eslint-disable-next-line no-fallthrough
         case ZT.DATA_STEP_STMT:
         case ZT.DATA_STEP_STMT_OPT:
         case ZT.DATA_STEP_STMT_OPT_VALUE:
+          !curBlockZoneType && (curBlockZoneType = "data");
+        // eslint-disable-next-line no-fallthrough
         case ZT.MACRO_STMT:
         case ZT.MACRO_STMT_OPT:
         case ZT.MACRO_STMT_OPT_VALUE:
         case ZT.MACRO_STMT_BODY: {
+          !curBlockZoneType && (curBlockZoneType = "macro");
           shouldDecIndent = true;
           break;
         }
@@ -428,6 +433,27 @@ export class CompletionProvider {
       }
     } else {
       blockStartLine = foldingBlock.startLine;
+    }
+    // Detect recursive block, which is not supported yet
+    switch (curBlockZoneType) {
+      case "data": {
+        if (foldingBlock?.type !== LexerEx.SEC_TYPE.DATA) {
+          return [];
+        }
+        break;
+      }
+      case "proc": {
+        if (foldingBlock?.type !== LexerEx.SEC_TYPE.PROC) {
+          return [];
+        }
+        break;
+      }
+      case "macro": {
+        if (foldingBlock?.type !== LexerEx.SEC_TYPE.MACRO) {
+          return [];
+        }
+        break;
+      }
     }
     const blockStartLineText = this.model.getLine(blockStartLine);
     const blockStartIndentLen = this._getIndentLength(
@@ -688,13 +714,7 @@ export class CompletionProvider {
   }
 
   private _isEmptyLine(line: string) {
-    const validChars = new Set<string>([" ", "\t", "\r", "\n"]);
-    for (let i = 0; i < line.length; ++i) {
-      if (!validChars.has(line[i])) {
-        return false;
-      }
-    }
-    return true;
+    return !/\S/.test(line);
   }
 
   private _getTokenText(
