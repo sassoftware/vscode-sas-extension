@@ -366,17 +366,14 @@ export class ContentModel {
     parent: ContentItem,
   ): Promise<string | undefined> {
     try {
-      // create a studio session
       const sessionId = await createStudioSession(this.connection);
-      // associate flow object
-      const flowUri = associateFlowObject(
+      return await associateFlowObject(
         name,
         getResourceId(uri),
         getResourceIdFromItem(parent),
         sessionId,
         this.connection,
       );
-      return flowUri;
     } catch (error) {
       console.log(error);
     }

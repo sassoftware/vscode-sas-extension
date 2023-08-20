@@ -4,9 +4,7 @@
 import { AxiosInstance } from "axios";
 
 function getStudioSessionRequest(connection: AxiosInstance) {
-  // Create a Date object representing the current date and time
   const date = new Date();
-  // Get the time zone offset
   const timeZoneOffset = date.getTimezoneOffset();
   // Extract hours and minutes from the time zone offset
   const hoursOffset = Math.floor(Math.abs(timeZoneOffset) / 60);
@@ -18,12 +16,11 @@ function getStudioSessionRequest(connection: AxiosInstance) {
     .toString()
     .padStart(2, "0")}`;
   // Create the request body
-  const studioSessionRequest = JSON.stringify({
+  return JSON.stringify({
     baseUri: connection.getUri() + "/SASStudio/",
     locale: "en_US",
     zone: formattedTimeZoneOffset,
   });
-  return studioSessionRequest;
 }
 
 function getflowObjRequest(

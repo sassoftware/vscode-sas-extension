@@ -34,10 +34,7 @@ const fileValidator = (value: string): string | null =>
     : Messages.FileValidationError;
 
 const flowFileValidator = (value: string): string | null => {
-  let res = null;
-  if (!/^([^/<>;\\{}?#]+)\.\w+$/.test(value)) {
-    res = Messages.FileValidationError;
-  }
+  let res = fileValidator(value);
   if (!value.endsWith(".flw")) {
     res = Messages.InvalidFlwFileNameError;
   }
@@ -262,32 +259,24 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.convertSasnbToFlw",
         async (resource: ContentItem) => {
-          const resourceUri = getUri(resource);
-          // Ensure that the command is only available for .sasnb files
-          if (resourceUri.path.endsWith(".sasnb")) {
-            // Open window to chose the name and location of the new .flw file
-            const name = await window.showInputBox({
-              prompt: "Enter the name for the new .flw file",
-              value: resource.name.replace(".sasnb", ".flw"),
-              validateInput: flowFileValidator,
-            });
+          // Open window to chose the name and location of the new .flw file
+          const name = await window.showInputBox({
+            prompt: "Enter the name for the new .flw file",
+            value: resource.name.replace(".sasnb", ".flw"),
+            validateInput: flowFileValidator,
+          });
 
-            if (!name) {
-              // User canceled the input box
-              return;
-            }
+          if (!name) {
+            // User canceled the input box
+            return;
+          }
 
-            if (
-              await this.contentDataProvider.convertSasnbToFlw(resource, name)
-            ) {
-              window.showInformationMessage(
-                Messages.SasnbToFlwConversionSuccess,
-              );
-            } else {
-              window.showErrorMessage(Messages.SasnbToFlwConversionError);
-            }
+          if (
+            await this.contentDataProvider.convertSasnbToFlw(resource, name)
+          ) {
+            window.showInformationMessage(Messages.SasnbToFlwConversionSuccess);
           } else {
-            window.showErrorMessage(Messages.InvalidSasnbFileError);
+            window.showErrorMessage(Messages.SasnbToFlwConversionError);
           }
         },
       ),

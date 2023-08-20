@@ -367,14 +367,12 @@ class ContentDataProvider
       const contentString: string = await this.provideTextDocumentContent(
         resourceUri,
       );
-      // convert the .sasnb file to a flowData object
+      // convert the .sasnb file to a .flw file
       const flowDataUint8Array = convertSASNotebookToFlow(contentString, name);
-      // error if content is empty
       if (flowDataUint8Array.length === 0) {
         window.showErrorMessage(Messages.NoCodeToConvert);
         return;
       }
-      // create the new .flw file
       const newUri = await this.createFile(parent, name, flowDataUint8Array);
       this.handleCreationResponse(
         parent,
