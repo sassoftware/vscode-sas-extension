@@ -120,6 +120,20 @@
             "default": true,
             "description": "%configuration.SAS.session.outputHtml%"
           },
+          "SAS.flowConversionMode": {
+            "order": 0,
+            "type": "string",
+            "default": "Swimlane",
+            "enum": [
+              "Swimlane",
+              "Node"
+            ],
+            "description": "%configuration.SAS.flowConversionMode%",
+            "enumDescriptions": [
+              "%configuration.SAS.flowConversionModeSwimlane%",
+              "%configuration.SAS.flowConversionModeNode%"
+            ]
+          },
           "SAS.userProvidedCertificates": {
             "type": "array",
             "description": "%configuration.SAS.userProvidedCertificates%",

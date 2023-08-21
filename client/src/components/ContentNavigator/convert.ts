@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { v4 } from "uuid";
+import { workspace } from "vscode";
 
 const stepRef: Record<string, string> = {
   sas: "a7190700-f59c-4a94-afe2-214ce639fcde",
@@ -56,7 +57,7 @@ const baseFlow = {
   description: null,
   properties: {
     UI_PROP_DF_OPTIMIZE: "false",
-    UI_PROP_DF_ID: "120081fc-2d7f-4cfc-bcd3-47f9684e9763",
+    UI_PROP_DF_ID: null,
     UI_PROP_DF_EXECUTION_ORDERED: "false",
   },
   links: [],
@@ -65,6 +66,35 @@ const baseFlow = {
   connections: [],
   extendedProperties: {},
   stickyNotes: [],
+};
+
+const baseSwimlane = {
+  dataFlowAndBindings: {
+    dataFlow: {},
+    executionBindings: {
+      arguments: {
+        __NO_OPTIMIZE: {
+          argumentType: "string",
+          value: "true",
+          version: 1,
+        },
+      },
+      contextId: null,
+      environmentId: "compute",
+      sessionId: null,
+      tempTablePrefix: null,
+    },
+  },
+  id: null,
+  name: null,
+  nodeType: "dataFlow",
+  portMappings: [],
+  priority: 0,
+  properties: {
+    UI_PROP_IS_EXPANDED: "true",
+    UI_PROP_IS_SWIMLANE: "true",
+  },
+  version: 1,
 };
 
 const baseNode = {
@@ -137,7 +167,7 @@ const baseNode = {
   },
 };
 
-function generateFlowData(inputList: Entry[], outputFile: string) {
+function generateFlowDataNode(inputList: Entry[], outputFile: string) {
   const now = new Date();
   const nowString = now.toISOString();
   const nowTimestamp = String(now.getTime());
@@ -147,6 +177,12 @@ function generateFlowData(inputList: Entry[], outputFile: string) {
   flowData.creationTimeStamp = nowString;
   flowData.modifiedTimeStamp = nowString;
   flowData.name = outputFile;
+  flowData.properties = {
+    ...baseFlow.properties,
+    UI_PROP_DF_ID: "120081fc-2d7f-4cfc-bcd3-47f9684e9763",
+  };
+  flowData.nodes = {};
+  flowData.connections = [];
 
   for (let idx = 0; idx < inputList.length; idx++) {
     const idNode = v4();
@@ -203,6 +239,50 @@ function generateFlowData(inputList: Entry[], outputFile: string) {
     }
   }
   return flowData;
+}
+
+function generateFlowDataSwimlane(inputList: Entry[], outputFile: string) {
+  const now = new Date();
+  const nowString = now.toISOString();
+
+  const flowData = { ...baseFlow };
+  flowData.creationTimeStamp = nowString;
+  flowData.modifiedTimeStamp = nowString;
+  flowData.name = outputFile;
+  flowData.properties = {
+    ...baseFlow.properties,
+    UI_PROP_DF_ID: "58e4d421-705d-448c-b397-cc8c9fab6c48",
+    UI_PROP_DF_EXECUTION_ORDERED: "true",
+  };
+  flowData.nodes = {};
+  flowData.connections = [];
+
+  for (let idx = 0; idx < inputList.length; idx++) {
+    const swimlaneName = "Notebook Cell " + (idx + 1).toString();
+    const idNode = v4();
+    const swimlane = {
+      ...baseSwimlane,
+      id: idNode,
+      name: swimlaneName,
+      priority: idx + 1,
+      dataFlowAndBindings: {
+        ...baseSwimlane.dataFlowAndBindings,
+        dataFlow: generateFlowDataNode([inputList[idx]], null),
+      },
+    };
+    flowData.nodes[idNode] = swimlane;
+  }
+  return flowData;
+}
+
+function generateFlowData(inputList: Entry[], outputFile: string) {
+  const flowConversionMode = workspace
+    .getConfiguration("SAS")
+    .get("flowConversionMode");
+  if (flowConversionMode === "Node") {
+    return generateFlowDataNode(inputList, outputFile);
+  }
+  return generateFlowDataSwimlane(inputList, outputFile);
 }
 
 export function convertSASNotebookToFlow(

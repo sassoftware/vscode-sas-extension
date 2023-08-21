@@ -17,6 +17,9 @@
   "configuration.SAS.connectionProfiles.profiles.tokenFile": "SAS Viya Token File",
   "configuration.SAS.connectionProfiles.profiles.username": "SAS Viya User ID",
   "configuration.SAS.session.outputHtml": "Enable/disable ODS HTML5 output",
+  "configuration.SAS.flowConversionMode": "Choose the conversion mode for notebooks",
+  "configuration.SAS.flowConversionModeNode": "Convert each notebook cell to a node",
+  "configuration.SAS.flowConversionModeSwimlane": "Convert each notebook cell to a swimlane",
   "configuration.SAS.userProvidedCertificates": "Provide trusted CA certificate files",
 
   "configuration.SAS.connectionProfiles.profiles.ssh.host": "SAS SSH Connection SSH Host",
