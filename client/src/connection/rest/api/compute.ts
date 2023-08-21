@@ -18035,9 +18035,8 @@ export const RootApi = function (configuration?: Configuration) {
     async headersForRoot(
       options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
-      const localVarAxiosArgs = await localVarAxiosParamCreator.headersForRoot(
-        options,
-      );
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.headersForRoot(options);
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
 
