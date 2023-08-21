@@ -33,7 +33,7 @@
   "commands.SAS.addFolderResource": "New Folder...",
   "commands.SAS.addProfile": "Add New Connection Profile",
   "commands.SAS.addToFavorites": "Add to My Favorites",
-  "commands.SAS.convertSasnbToFlw": "Convert to Flow...",
+  "commands.SAS.convertNotebookToFlow": "Convert to Flow...",
   "commands.SAS.authorize": "Sign in",
   "commands.SAS.close": "Close Current Session",
   "commands.SAS.collapseAll": "Collapse All",

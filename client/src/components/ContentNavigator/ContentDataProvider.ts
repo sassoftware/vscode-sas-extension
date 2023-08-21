@@ -356,7 +356,7 @@ class ContentDataProvider
     this.reveal(resource);
   }
 
-  public async convertSasnbToFlw(
+  public async convertNotebookToFlow(
     item: ContentItem,
     name: string,
   ): Promise<string | undefined> {

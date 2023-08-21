@@ -36,7 +36,7 @@ const fileValidator = (value: string): string | null =>
 const flowFileValidator = (value: string): string | null => {
   let res = fileValidator(value);
   if (!value.endsWith(".flw")) {
-    res = Messages.InvalidFlwFileNameError;
+    res = Messages.InvalidFlowFileNameError;
   }
   return res;
 };
@@ -257,7 +257,7 @@ class ContentNavigator implements SubscriptionProvider {
         );
       }),
       commands.registerCommand(
-        "SAS.convertSasnbToFlw",
+        "SAS.convertNotebookToFlow",
         async (resource: ContentItem) => {
           // Open window to chose the name and location of the new .flw file
           const name = await window.showInputBox({
@@ -272,11 +272,13 @@ class ContentNavigator implements SubscriptionProvider {
           }
 
           if (
-            await this.contentDataProvider.convertSasnbToFlw(resource, name)
+            await this.contentDataProvider.convertNotebookToFlow(resource, name)
           ) {
-            window.showInformationMessage(Messages.SasnbToFlwConversionSuccess);
+            window.showInformationMessage(
+              Messages.NotebookToFlowConversionSuccess,
+            );
           } else {
-            window.showErrorMessage(Messages.SasnbToFlwConversionError);
+            window.showErrorMessage(Messages.NotebookToFlowConversionError);
           }
         },
       ),

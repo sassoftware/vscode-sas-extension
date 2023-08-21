@@ -84,16 +84,16 @@ export const Messages = {
   RenameUnsavedFileError: l10n.t(
     "You must save your file before you can rename it.",
   ),
-  SasnbToFlwConversionSuccess: l10n.t(
+  NotebookToFlowConversionSuccess: l10n.t(
     "The notebook has been successfully converted to a flow. You can now open it in SAS Studio.",
   ),
-  SasnbToFlwConversionError: l10n.t(
+  NotebookToFlowConversionError: l10n.t(
     "Error converting the .sasnb file to .flw format.",
   ),
   NoCodeToConvert: l10n.t(
     "The .sasnb file does not contain any code to convert.",
   ),
-  InvalidFlwFileNameError: l10n.t(
+  InvalidFlowFileNameError: l10n.t(
     "The output file name must end with the .flw extension.",
   ),
 };

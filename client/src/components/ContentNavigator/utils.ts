@@ -78,7 +78,7 @@ export const resourceType = (item: ContentItem): string | undefined => {
 
   // if item is .sasnb file add action
   if (item?.name?.endsWith(".sasnb")) {
-    actions.push("convertSasnbToFlw");
+    actions.push("convertNotebookToFlow");
   }
 
   if (actions.length === 0) {

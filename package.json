@@ -453,8 +453,8 @@
         "category": "SAS"
       },
       {
-        "command": "SAS.convertSasnbToFlw",
-        "title": "%commands.SAS.convertSasnbToFlw%",
+        "command": "SAS.convertNotebookToFlow",
+        "title": "%commands.SAS.convertNotebookToFlow%",
         "category": "SAS"
       },
       {
@@ -580,8 +580,8 @@
           "group": "delrenamegroup@1"
         },
         {
-          "command": "SAS.convertSasnbToFlw",
-          "when": "viewItem =~ /convertSasnbToFlw/ && view == contentdataprovider",
+          "command": "SAS.convertNotebookToFlow",
+          "when": "viewItem =~ /convertNotebookToFlow/ && view == contentdataprovider",
           "group": "actionsgroup@0"
         },
         {
@@ -648,7 +648,7 @@
         },
         {
           "when": "false",
-          "command": "SAS.convertSasnbToFlw"
+          "command": "SAS.convertNotebookToFlow"
         },
         {
           "when": "false",
