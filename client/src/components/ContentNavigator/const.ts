@@ -84,6 +84,7 @@ export const Messages = {
   RenameUnsavedFileError: l10n.t(
     "You must save your file before you can rename it.",
   ),
+  ConvertNotebookToFlowPrompt: l10n.t("Enter a name for the new .flw file"),
   NotebookToFlowConversionSuccess: l10n.t(
     "The notebook has been successfully converted to a flow. You can now open it in SAS Studio.",
   ),

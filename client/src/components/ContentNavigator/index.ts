@@ -261,7 +261,7 @@ class ContentNavigator implements SubscriptionProvider {
         async (resource: ContentItem) => {
           // Open window to chose the name and location of the new .flw file
           const name = await window.showInputBox({
-            prompt: "Enter the name for the new .flw file",
+            prompt: Messages.ConvertNotebookToFlowPrompt,
             value: resource.name.replace(".sasnb", ".flw"),
             validateInput: flowFileValidator,
           });
