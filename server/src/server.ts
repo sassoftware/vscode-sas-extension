@@ -139,7 +139,7 @@ export const init = (conn: Connection): void => {
     const useSpace: boolean =
       cachedConfigurations.editor?.insertSpaces ?? DEFAULT_INSERT_SPACES;
     const languageService = getLanguageService(params.textDocument.uri);
-    return languageService.completionProvider.getIndentEdit(
+    return languageService.formatOnTypeProvider.getIndentEdit(
       params.position.line,
       params.position.character,
       params.ch,

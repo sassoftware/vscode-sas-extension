@@ -1,1 +1,2 @@
+// take default
 module.exports = {};
