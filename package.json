@@ -120,6 +120,25 @@
             "default": true,
             "description": "%configuration.SAS.session.outputHtml%"
           },
+          "SAS.session.htmlStyle": {
+            "order": 1,
+            "type": "string",
+            "default": "(auto)",
+            "enum": [
+              "(auto)",
+              "(server default)",
+              "Dove",
+              "HighContrast",
+              "Ignite",
+              "Illuminate",
+              "Pearl"
+            ],
+            "enumDescriptions": [
+              "%configuration.SAS.session.htmlStyle.(auto)%",
+              "%configuration.SAS.session.htmlStyle.(server default)%"
+            ],  
+            "description": "%configuration.SAS.session.htmlStyle%"
+          },          
           "SAS.userProvidedCertificates": {
             "type": "array",
             "description": "%configuration.SAS.userProvidedCertificates%",
@@ -128,7 +147,7 @@
             }
           },
           "SAS.connectionProfiles": {
-            "order": 1,
+            "order": 2,
             "type": "object",
             "description": "%configuration.SAS.connectionProfiles%",
             "properties": {

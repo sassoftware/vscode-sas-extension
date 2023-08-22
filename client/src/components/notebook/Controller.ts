@@ -136,6 +136,7 @@ const getCode = (doc: vscode.TextDocument) => {
   return outputHtml ? wrapHTML5(code) : code;
 };
 
+/* TODO: Add similar style logic here as well */
 const wrapHTML5 = (code: string) => `ods html5;
 ${code}
 ;run;quit;ods html5 close;`;

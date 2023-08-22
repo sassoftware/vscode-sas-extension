@@ -11,7 +11,7 @@ import {
   workspace,
   l10n,
   Uri,
-  Color,
+  ColorThemeKind,
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 import { LogFn as LogChannelFn } from "../components/LogChannel";
@@ -28,10 +28,15 @@ interface FoldingBlock {
 
 let running = false;
 
-function getCode(outputHtml: boolean, selected = false, uri?: Uri): string {
+function getCode(
+  outputHtml: boolean,
+  htmlStyle: string,
+  selected = false,
+  uri?: Uri
+): string {
   const editor = uri
     ? window.visibleTextEditors.find(
-        (editor) => editor.document.uri.toString() === uri.toString(),
+        (editor) => editor.document.uri.toString() === uri.toString()
       )
     : window.activeTextEditor;
   const activeColorTheme = window.activeColorTheme;
@@ -54,36 +59,48 @@ function getCode(outputHtml: boolean, selected = false, uri?: Uri): string {
     code = doc?.getText();
   }
 
-  return outputHtml
-    ? "ods html5;\n" + code + "\n;run;quit;ods html5 close;"
-    : code;
-  let odsStyle = "";
-  switch (activeColorTheme.kind) {
-    case ColorThemeKind.Light: {
-      odsStyle = "Illuminate";
-      break;
+  if (outputHtml) {
+    let odsStyle = "";
+    switch (htmlStyle) {
+      case "(auto)":
+        switch (activeColorTheme.kind) {
+          case ColorThemeKind.Light: {
+            odsStyle = "Illuminate";
+            break;
+          }
+          case ColorThemeKind.Dark: {
+            odsStyle = "Ignite";
+            break;
+          }
+          case ColorThemeKind.HighContrast: {
+            odsStyle = "HighContrast";
+            break;
+          }
+          case ColorThemeKind.HighContrastLight: {
+            odsStyle = "Illuminate";
+            break;
+          }
+        }
+        break;
+      case "(server default)":
+        odsStyle = "";
+        break;
+      default:
+        odsStyle = htmlStyle;
+        break;
     }
-    case ColorThemeKind.Dark: {
-      odsStyle = "Ignite";
-      break;
-    }
-    case ColorThemeKind.HighContrast: {
-      odsStyle = "HighContrast";
-      break;
-    }
-    case ColorThemeKind.HighContrastLight: {
-      odsStyle = "Illuminate";
-      break;
-    }
+
+    let usercode = code;
+    code = `ods html5`;
+    if (odsStyle) code += ` style=${odsStyle}`;
+    code += ";\n" + usercode + "\n;run;quit;ods html5 close;";
   }
 
-  return outputHtml
-    ? `ods html5 style=${odsStyle};\n` + code + "\n;quit;ods html5 close;"
-    : code;
+  return code;
 }
 
 async function getSelectedRegions(
-  client: BaseLanguageClient,
+  client: BaseLanguageClient
 ): Promise<Selection[]> {
   const result: string[] = [];
 
@@ -94,7 +111,7 @@ async function getSelectedRegions(
         textDocument: { uri: window.activeTextEditor.document.uri.toString() },
         line,
         col,
-      },
+      }
     );
     if (block) {
       const start = doc.offsetAt(new Position(block.startLine, block.startCol));
@@ -128,7 +145,7 @@ async function getSelectedRegions(
     const [start, end] = key.split("-");
     return new Selection(
       doc.positionAt(parseInt(start)),
-      doc.positionAt(parseInt(end)),
+      doc.positionAt(parseInt(end))
     );
   });
 }
@@ -142,7 +159,10 @@ async function runCode(selected?: boolean, uri?: Uri) {
   const outputHtml = !!workspace
     .getConfiguration("SAS")
     .get("session.outputHtml");
-  const code = getCode(outputHtml, selected, uri);
+  const htmlStyle: string = workspace
+    .getConfiguration("SAS")
+    .get("session.htmlStyle");
+  const code = getCode(outputHtml, htmlStyle, selected, uri);
 
   const session = getSession();
   session.onLogFn = LogChannelFn;
@@ -152,7 +172,7 @@ async function runCode(selected?: boolean, uri?: Uri) {
       location: ProgressLocation.Notification,
       title: l10n.t("Connecting to SAS session..."),
     },
-    session.setup,
+    session.setup
   );
 
   await window.withProgress(
@@ -171,12 +191,12 @@ async function runCode(selected?: boolean, uri?: Uri) {
             "SASSession", // Identifies the type of the webview. Used internally
             l10n.t("Result"), // Title of the panel displayed to the user
             { preserveFocus: true, viewColumn: ViewColumn.Beside }, // Editor column to show the new webview panel in.
-            {}, // Webview options. More on these later.
+            {} // Webview options. More on these later.
           );
           odsResult.webview.html = results.html5;
         }
       });
-    },
+    }
   );
 }
 
@@ -191,7 +211,7 @@ const _run = async (selected = false, uri?: Uri) => {
     .catch((err) => {
       console.dir(err);
       window.showErrorMessage(
-        err.response?.data ? JSON.stringify(err.response.data) : err.message,
+        err.response?.data ? JSON.stringify(err.response.data) : err.message
       );
     })
     .finally(() => {
