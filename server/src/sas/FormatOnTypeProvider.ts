@@ -1,3 +1,6 @@
+// Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 import { TextEdit } from "vscode-languageserver";
 import { CodeZoneManager } from "./CodeZoneManager";
 import { Lexer } from "./Lexer";
@@ -241,9 +244,9 @@ export class FormatOnTypeProvider {
       if (
         (tokenBeforeSemicolon.style === Lexer.TOKEN_TYPES.SKEYWORD ||
           tokenBeforeSemicolon.style === Lexer.TOKEN_TYPES.MSKEYWORD) &&
-        (tokenBeforeSemicolonText === "run" ||
-          tokenBeforeSemicolonText === "quit" ||
-          tokenBeforeSemicolonText === "%mend")
+        (tokenBeforeSemicolonText.toLowerCase() === "run" ||
+          tokenBeforeSemicolonText.toLowerCase() === "quit" ||
+          tokenBeforeSemicolonText.toLowerCase() === "%mend")
       ) {
         return 0;
       }
