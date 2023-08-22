@@ -64,3 +64,14 @@ For each pull request, you are expected to test the defaults to make sure no reg
 - Run the launch config.
 - If you want to debug the server as well use the launch configuration `Attach to Server`.
 - In the [Extension Development Host] instance of VSCode, open a SAS file.
+
+# Adding a new locale
+
+Follow these steps to add a new locale for the SAS Extension for VSCode:
+
+- Follow the instructions in the [Get started](#get-started) section to setup your environment and view results
+- Run `LOCALE=<locale> npm run new-locale` (the locale specified here will need to be one of https://code.visualstudio.com/docs/getstarted/locales#_available-locales)
+- Translate the strings in package.nls.<locale>.json and l10/bundle.l10n.<locale>.json
+- Install the language pack for your chosen locale and change VSCode's language to the one you're testing
+- Verify your changes using `Launch Client`
+- After you've verified changes, you can create a [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) for review.
