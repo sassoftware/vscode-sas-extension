@@ -179,7 +179,7 @@ export class SSHSession extends Session {
     const output = data.toString().trimEnd();
 
     this.logs.push(output);
-    if (output.endsWith("?")) {
+    if (this.timer && output.endsWith("?")) {
       this.clearTimer();
       this.resolve?.();
       return;
