@@ -233,8 +233,6 @@ export class FormatOnTypeProvider {
       if (curIndex === -1) {
         return 0;
       }
-      const semicolonToken = cleanedTokens[curIndex];
-      this.czMgr.getCurrentZone(line, semicolonToken.start);
       const tokenBeforeSemicolon = cleanedTokens[curIndex - 1]; // curIndex must be > 0
       const tokenBeforeSemicolonText = this._getTokenText(
         cleanedTokens,
