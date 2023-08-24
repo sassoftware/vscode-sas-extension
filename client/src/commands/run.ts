@@ -30,7 +30,7 @@ let running = false;
 function getCode(selected = false, uri?: Uri): string {
   const editor = uri
     ? window.visibleTextEditors.find(
-        (editor) => editor.document.uri.toString() === uri.toString()
+        (editor) => editor.document.uri.toString() === uri.toString(),
       )
     : window.activeTextEditor;
   const doc = editor?.document;
@@ -58,7 +58,7 @@ function getCode(selected = false, uri?: Uri): string {
 }
 
 async function getSelectedRegions(
-  client: BaseLanguageClient
+  client: BaseLanguageClient,
 ): Promise<Selection[]> {
   const result: string[] = [];
 
@@ -69,7 +69,7 @@ async function getSelectedRegions(
         textDocument: { uri: window.activeTextEditor.document.uri.toString() },
         line,
         col,
-      }
+      },
     );
     if (block) {
       const start = doc.offsetAt(new Position(block.startLine, block.startCol));
@@ -103,7 +103,7 @@ async function getSelectedRegions(
     const [start, end] = key.split("-");
     return new Selection(
       doc.positionAt(parseInt(start)),
-      doc.positionAt(parseInt(end))
+      doc.positionAt(parseInt(end)),
     );
   });
 }
@@ -128,7 +128,7 @@ async function runCode(selected?: boolean, uri?: Uri) {
       location: ProgressLocation.Notification,
       title: l10n.t("Connecting to SAS session..."),
     },
-    session.setup
+    session.setup,
   );
 
   await window.withProgress(
@@ -147,12 +147,12 @@ async function runCode(selected?: boolean, uri?: Uri) {
             "SASSession", // Identifies the type of the webview. Used internally
             l10n.t("Result"), // Title of the panel displayed to the user
             { preserveFocus: true, viewColumn: ViewColumn.Beside }, // Editor column to show the new webview panel in.
-            {} // Webview options. More on these later.
+            {}, // Webview options. More on these later.
           );
           odsResult.webview.html = results.html5;
         }
       });
-    }
+    },
   );
 }
 
@@ -167,7 +167,7 @@ const _run = async (selected = false, uri?: Uri) => {
     .catch((err) => {
       console.dir(err);
       window.showErrorMessage(
-        err.response?.data ? JSON.stringify(err.response.data) : err.message
+        err.response?.data ? JSON.stringify(err.response.data) : err.message,
       );
     })
     .finally(() => {

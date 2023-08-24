@@ -4,7 +4,7 @@
 import * as vscode from "vscode";
 import { getSession } from "../../connection";
 import { Deferred, deferred } from "../utils";
-import { wrapCode } from '../../util';
+import { wrapCode } from "../../util";
 
 export class NotebookController {
   readonly controllerId = "sas-notebook-controller-id";
