@@ -44,9 +44,11 @@ export function wrapCode(code:string): string {
         break;
     }
 
-    let usercode = code;
+    const usercode = code;
     code = `ods html5`;
-    if (odsStyle) code += ` style=${odsStyle}`;
+    if (odsStyle) {
+      code += ` style=${odsStyle}`;
+    }
     code += ";\n" + usercode + "\n;run;quit;ods html5 close;";
   }
   return code;
