@@ -11,13 +11,13 @@ import {
   workspace,
   l10n,
   Uri,
-  ColorThemeKind,
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 import { LogFn as LogChannelFn } from "../components/LogChannel";
 import { appendLog } from "../components/LogViewer";
 import { getSession } from "../connection";
 import { profileConfig, switchProfile } from "./profile";
+import { wrapCode } from "../util";
 
 interface FoldingBlock {
   startLine: number;
@@ -28,18 +28,12 @@ interface FoldingBlock {
 
 let running = false;
 
-function getCode(
-  outputHtml: boolean,
-  htmlStyle: string,
-  selected = false,
-  uri?: Uri
-): string {
+function getCode(selected = false, uri?: Uri): string {
   const editor = uri
     ? window.visibleTextEditors.find(
         (editor) => editor.document.uri.toString() === uri.toString()
       )
     : window.activeTextEditor;
-  const activeColorTheme = window.activeColorTheme;
   const doc = editor?.document;
   let code = "";
   if (selected) {
@@ -59,42 +53,7 @@ function getCode(
     code = doc?.getText();
   }
 
-  if (outputHtml) {
-    let odsStyle = "";
-    switch (htmlStyle) {
-      case "(auto)":
-        switch (activeColorTheme.kind) {
-          case ColorThemeKind.Light: {
-            odsStyle = "Illuminate";
-            break;
-          }
-          case ColorThemeKind.Dark: {
-            odsStyle = "Ignite";
-            break;
-          }
-          case ColorThemeKind.HighContrast: {
-            odsStyle = "HighContrast";
-            break;
-          }
-          case ColorThemeKind.HighContrastLight: {
-            odsStyle = "Illuminate";
-            break;
-          }
-        }
-        break;
-      case "(server default)":
-        odsStyle = "";
-        break;
-      default:
-        odsStyle = htmlStyle;
-        break;
-    }
-
-    let usercode = code;
-    code = `ods html5`;
-    if (odsStyle) code += ` style=${odsStyle}`;
-    code += ";\n" + usercode + "\n;run;quit;ods html5 close;";
-  }
+  code = wrapCode(code);
 
   return code;
 }
@@ -159,10 +118,8 @@ async function runCode(selected?: boolean, uri?: Uri) {
   const outputHtml = !!workspace
     .getConfiguration("SAS")
     .get("session.outputHtml");
-  const htmlStyle: string = workspace
-    .getConfiguration("SAS")
-    .get("session.htmlStyle");
-  const code = getCode(outputHtml, htmlStyle, selected, uri);
+
+  const code = getCode(selected, uri);
 
   const session = getSession();
   session.onLogFn = LogChannelFn;

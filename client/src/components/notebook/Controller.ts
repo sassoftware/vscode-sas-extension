@@ -4,6 +4,7 @@
 import * as vscode from "vscode";
 import { getSession } from "../../connection";
 import { Deferred, deferred } from "../utils";
+import { wrapCode } from '../../util';
 
 export class NotebookController {
   readonly controllerId = "sas-notebook-controller-id";
@@ -133,13 +134,8 @@ const getCode = (doc: vscode.TextDocument) => {
   } else if (doc.languageId === "python") {
     code = wrapPython(code);
   }
-  return outputHtml ? wrapHTML5(code) : code;
+  return outputHtml ? wrapCode(code) : code;
 };
-
-/* TODO: Add similar style logic here as well */
-const wrapHTML5 = (code: string) => `ods html5;
-${code}
-;run;quit;ods html5 close;`;
 
 const wrapSQL = (code: string) => `proc sql;
 ${code}
