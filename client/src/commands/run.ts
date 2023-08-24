@@ -14,7 +14,6 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 import { LogFn as LogChannelFn } from "../components/LogChannel";
-import { appendLog } from "../components/LogViewer";
 import { getSession } from "../connection";
 import { profileConfig, switchProfile } from "./profile";
 import { wrapCode } from "../util";
