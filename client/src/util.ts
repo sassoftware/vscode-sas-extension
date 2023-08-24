@@ -1,17 +1,12 @@
-import {
-  window,
-  workspace,
-  ColorThemeKind,
-} from "vscode";
+import { window, workspace, ColorThemeKind } from "vscode";
 
-export function wrapCode(code:string): string {
-
+export function wrapCode(code: string): string {
   const outputHtml = !!workspace
     .getConfiguration("SAS")
     .get("session.outputHtml");
   const htmlStyle: string = workspace
     .getConfiguration("SAS")
-    .get("session.htmlStyle");
+    .get("results.html.style");
 
   if (outputHtml) {
     let odsStyle = "";
