@@ -11,9 +11,13 @@ export function run(): Promise<void> {
   mocha.timeout(100000);
 
   const testsRoot = __dirname;
+  const testFile = process.env.testFile;
+  const pattern = testFile
+    ? path.join(...testFile.replace(/\.ts$/, ".js").split(path.sep).slice(2))
+    : "**/**.test.js";
 
   return new Promise((resolve, reject) => {
-    glob("**/**.test.js", { cwd: testsRoot }, (err, files) => {
+    glob(pattern, { cwd: testsRoot }, (err, files) => {
       if (err) {
         return reject(err);
       }
