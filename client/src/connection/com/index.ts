@@ -203,28 +203,27 @@ do {
   private onShellStdOut = (data: Buffer): void => {
     const output = data.toString().trimEnd();
     const outputLines = output.split(/\n|\r\n/);
-    if (this._onLogFn) {
-      outputLines.forEach((line: string) => {
-        if (!line) {
-          return;
-        }
-        if (line.startsWith("WORKDIR=")) {
-          const parts = line.split("WORKDIR=");
-          this._workDirectory = parts[1].trim();
-          this._runResolve();
-          return;
-        }
-        if (line.endsWith(endCode)) {
-          // run completed
-          this.fetchResults();
-        } else {
-          this._html5FileName =
-            line.match(/NOTE: .+ HTML5.* Body.+: (.+)\.htm/)?.[1] ??
-            this._html5FileName;
-          this._onLogFn?.([{ type: "normal", line }]);
-        }
-      });
-    }
+
+    outputLines.forEach((line: string) => {
+      if (!line) {
+        return;
+      }
+      if (!this._workDirectory && line.startsWith("WORKDIR=")) {
+        const parts = line.split("WORKDIR=");
+        this._workDirectory = parts[1].trim();
+        this._runResolve();
+        return;
+      }
+      if (line.endsWith(endCode)) {
+        // run completed
+        this.fetchResults();
+      } else {
+        this._html5FileName =
+          line.match(/NOTE: .+ HTML5.* Body.+: (.+)\.htm/)?.[1] ??
+          this._html5FileName;
+        this._onLogFn?.([{ type: "normal", line }]);
+      }
+    });
   };
 
   /**
@@ -252,7 +251,11 @@ do {
       resolve(this._workDirectory, this._html5FileName + ".htm"),
       { encoding: "utf-8" },
     );
-    const runResult: RunResult = { html5: htmlResults, title: "Results" };
+    const runResult: RunResult = {};
+    if (htmlResults.search('<*id="IDX*.+">') !== -1) {
+      runResult.html5 = htmlResults;
+      runResult.title = "Result";
+    }
     this._runResolve(runResult);
   };
 }
