@@ -16,7 +16,7 @@ import type { BaseLanguageClient } from "vscode-languageclient";
 import { LogFn as LogChannelFn } from "../components/LogChannel";
 import { getSession } from "../connection";
 import { profileConfig, switchProfile } from "./profile";
-import { wrapCode } from "../util";
+import { wrapCode } from "../components/utils_sasCode";
 
 interface FoldingBlock {
   startLine: number;
