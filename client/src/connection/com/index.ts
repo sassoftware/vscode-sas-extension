@@ -8,7 +8,8 @@ import { BaseConfig, RunResult } from "..";
 import { scriptContent } from "./script";
 import { Session } from "../session";
 
-const endCode = "--vscode-sas-extension-submit-end--";
+const beginningCode = `\`'--vscode-sas-extension-submit-begining--\`'`;
+const endCode = `\`'--vscode-sas-extension-submit-end--\`'`;
 let sessionInstance: COMSession;
 
 /**
@@ -118,8 +119,8 @@ export class COMSession extends Session {
       );
 
       //write an end mnemonic so that the handler knows when execution has finished
-      const codeWithEnd = `${codeWithODSPath}\n%put ${endCode};`;
-      const codeToRun = `$code=@"\n${codeWithEnd}\n"@\n`;
+      const codeWithEnd = `%put ${beginningCode};\n${codeWithODSPath}\n%put ${endCode};`;
+      const codeToRun = `$code=@'\n${codeWithEnd}\n'@\n`;
 
       this._shellProcess.stdin.write(codeToRun);
       this._shellProcess.stdin.write(`$runner.Run($code)\n`, async (error) => {
