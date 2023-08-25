@@ -124,17 +124,13 @@ export class NotebookController {
 }
 
 const getCode = (doc: vscode.TextDocument) => {
-  const outputHtml = !!vscode.workspace
-    .getConfiguration("SAS")
-    .get("session.outputHtml");
-
   let code = doc.getText();
   if (doc.languageId === "sql") {
     code = wrapSQL(code);
   } else if (doc.languageId === "python") {
     code = wrapPython(code);
   }
-  return outputHtml ? wrapCode(code) : code;
+  return wrapCode(code);
 };
 
 const wrapSQL = (code: string) => `proc sql;

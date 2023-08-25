@@ -32,6 +32,10 @@ export function wrapCode(code: string): string {
             odsStyle = "Illuminate";
             break;
           }
+          default: {
+            odsStyle = "";
+            break;
+          }
         }
         break;
       case "(server default)":
