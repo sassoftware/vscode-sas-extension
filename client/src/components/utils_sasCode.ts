@@ -12,30 +12,25 @@ export function wrapCode(code: string): string {
     .get("results.html.style");
 
   if (outputHtml) {
-    let odsStyle = "";
+    let odsStyle;
     switch (htmlStyle) {
       case "(auto)":
         switch (window.activeColorTheme.kind) {
-          case ColorThemeKind.Light: {
+          case ColorThemeKind.Light:
             odsStyle = "Illuminate";
             break;
-          }
-          case ColorThemeKind.Dark: {
+          case ColorThemeKind.Dark:
             odsStyle = "Ignite";
             break;
-          }
-          case ColorThemeKind.HighContrast: {
+          case ColorThemeKind.HighContrast:
             odsStyle = "HighContrast";
             break;
-          }
-          case ColorThemeKind.HighContrastLight: {
+          case ColorThemeKind.HighContrastLight:
             odsStyle = "Illuminate";
             break;
-          }
-          default: {
+          default:
             odsStyle = "";
             break;
-          }
         }
         break;
       case "(server default)":
