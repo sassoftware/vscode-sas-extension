@@ -127,9 +127,24 @@
             "enum": [
               "(auto)",
               "(server default)",
+              "Aqua",
+              "Daisy",
+              "Dove",
               "HighContrast",
+              "HighContrastLarge",
+              "HTMLBlue",
+              "HTMLEncore",
               "Ignite",
-              "Illuminate"
+              "Illuminate",
+              "Journal",
+              "Journal2",
+              "Journal3",
+              "Marine",
+              "Midnight",
+              "Moonflower",
+              "Opal",
+              "Pearl",
+              "Sapphire"
             ],
             "enumDescriptions": [
               "%configuration.SAS.results.html.style.(auto)%",
