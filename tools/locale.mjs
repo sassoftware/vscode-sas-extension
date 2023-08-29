@@ -50,22 +50,14 @@ if (localeToUpdate) {
     `bundle.l10n.${localeToUpdate}.json`,
   );
 
-  const currentPackageNlsJSON = JSON.parse(readFileSync(packageNlsPath));
-  const currentL10nBundleJSON = JSON.parse(readFileSync(l10BundlePath));
-
-  const packageNlsJSON = JSON.parse(packageNls);
-  Object.keys(packageNlsJSON).forEach((key) => {
-    if (!currentPackageNlsJSON[key]) {
-      currentPackageNlsJSON[key] = packageNlsJSON[key];
-    }
-  });
-
-  const l10nBundleJSON = JSON.parse(l10nBundle);
-  Object.keys(l10nBundleJSON).forEach((key) => {
-    if (!currentL10nBundleJSON[key]) {
-      currentL10nBundleJSON[key] = l10nBundleJSON[key];
-    }
-  });
+  const currentPackageNlsJSON = {
+    ...JSON.parse(packageNls),
+    ...JSON.parse(readFileSync(packageNlsPath)),
+  };
+  const currentL10nBundleJSON = {
+    ...JSON.parse(l10nBundle),
+    ...JSON.parse(readFileSync(l10BundlePath)),
+  };
 
   writeFileSync(packageNlsPath, sortKeys(currentPackageNlsJSON));
   writeFileSync(l10BundlePath, sortKeys(currentL10nBundleJSON));
