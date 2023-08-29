@@ -121,7 +121,6 @@
             "description": "%configuration.SAS.session.outputHtml%"
           },
           "SAS.flowConversionMode": {
-            "order": 0,
             "type": "string",
             "default": "Swimlane",
             "enum": [
