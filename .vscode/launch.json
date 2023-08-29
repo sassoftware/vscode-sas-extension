@@ -48,6 +48,7 @@
         "${workspaceRoot}/client/testFixture",
         "--disable-extensions"
       ],
+      "env": { "testFile": "${relativeFile}" },
       "outFiles": ["${workspaceRoot}/client/out/test/**/*.js"],
       "preLaunchTask": {
         "type": "npm",

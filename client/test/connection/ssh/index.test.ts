@@ -217,8 +217,8 @@ describe("ssh connection", () => {
           }
 
           if (onDataListener) {
-            //need to pass a "?" to the callback to resolve the promise here
-            onDataListener("?");
+            // send back end code to finish running
+            onDataListener("--vscode-sas-extension-submit-end--\n");
           }
         }
         return true;
@@ -260,8 +260,8 @@ describe("ssh connection", () => {
           if (onDataListener) {
             //here we define long running as a value that exceeds the timeout values set in the provider
             sandbox.clock.tick(50 * seconds);
-            //need to pass a "?" to the callback to resolve the promise here
-            onDataListener("?");
+            // send back end code to finish running
+            onDataListener("--vscode-sas-extension-submit-end--\n");
           }
         }
         return true;
