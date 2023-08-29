@@ -3532,9 +3532,8 @@ export const RootApi = function (configuration?: Configuration) {
     async headersForRoot(
       options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<void>> {
-      const localVarAxiosArgs = await localVarAxiosParamCreator.headersForRoot(
-        options,
-      );
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.headersForRoot(options);
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
 
@@ -3768,9 +3767,8 @@ export const SettingsApi = function (configuration?: Configuration) {
     async getSettings(
       options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<Settings>> {
-      const localVarAxiosArgs = await localVarAxiosParamCreator.getSettings(
-        options,
-      );
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getSettings(options);
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
   };
