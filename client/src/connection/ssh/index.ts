@@ -37,7 +37,6 @@ export class SSHSession extends Session {
   private _config: Config;
   private resolve: ((value?) => void) | undefined;
   private reject: ((reason?) => void) | undefined;
-  private logs: string[] = [];
   private html5FileName = "";
   private timer: NodeJS.Timeout;
 
@@ -86,10 +85,6 @@ export class SSHSession extends Session {
 
   public run = (code: string): Promise<RunResult> => {
     this.html5FileName = "";
-    if (this.logs.length) {
-      this._onLogFn(this.logs.map((line) => ({ type: "normal", line })));
-      this.logs = [];
-    }
 
     return new Promise((_resolve, _reject) => {
       this.resolve = _resolve;
@@ -169,7 +164,6 @@ export class SSHSession extends Session {
     this.stream = undefined;
     this.resolve = undefined;
     this.reject = undefined;
-    this.logs = [];
     this.html5FileName = "";
     this.timer = undefined;
     this.conn.end();
@@ -178,7 +172,6 @@ export class SSHSession extends Session {
   private onStreamData = (data: Buffer): void => {
     const output = data.toString().trimEnd();
 
-    this.logs.push(output);
     if (this.timer && output.endsWith("?")) {
       this.clearTimer();
       this.resolve?.();
@@ -186,23 +179,21 @@ export class SSHSession extends Session {
     }
 
     const outputLines = output.split(/\n|\r\n/);
-    if (this._onLogFn) {
-      outputLines.forEach((line) => {
-        if (!line) {
-          return;
-        }
-        if (line.endsWith(endCode)) {
-          // run completed
-          this.getResult();
-        }
-        if (!(line.endsWith("?") || line.endsWith(">"))) {
-          this.html5FileName =
-            line.match(/NOTE: .+ HTML5.* Body .+: (.+)\.htm/)?.[1] ??
-            this.html5FileName;
-          this._onLogFn([{ type: "normal", line }]);
-        }
-      });
-    }
+    outputLines.forEach((line) => {
+      if (!line) {
+        return;
+      }
+      if (line.endsWith(endCode)) {
+        // run completed
+        this.getResult();
+      }
+      if (!(line.endsWith("?") || line.endsWith(">"))) {
+        this.html5FileName =
+          line.match(/NOTE: .+ HTML5.* Body .+: (.+)\.htm/)?.[1] ??
+          this.html5FileName;
+        this._onLogFn?.([{ type: "normal", line }]);
+      }
+    });
   };
 
   private onShell = (err: Error, s: ClientChannel): void => {
