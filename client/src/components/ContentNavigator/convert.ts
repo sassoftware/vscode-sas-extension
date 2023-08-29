@@ -167,7 +167,7 @@ const baseNode = {
   },
 };
 
-export function generateFlowDataNode(inputList: Entry[], outputFile: string) {
+function generateFlowDataNode(inputList: Entry[], outputFile: string) {
   const now = new Date();
   const nowString = now.toISOString();
   const nowTimestamp = String(now.getTime());
@@ -241,10 +241,7 @@ export function generateFlowDataNode(inputList: Entry[], outputFile: string) {
   return flowData;
 }
 
-export function generateFlowDataSwimlane(
-  inputList: Entry[],
-  outputFile: string,
-) {
+function generateFlowDataSwimlane(inputList: Entry[], outputFile: string) {
   const now = new Date();
   const nowString = now.toISOString();
 
@@ -288,7 +285,7 @@ function generateFlowData(inputList: Entry[], outputFile: string) {
   return generateFlowDataSwimlane(inputList, outputFile);
 }
 
-export function generateCodeListFromSASNotebook(content: string): Entry[] {
+function generateCodeListFromSASNotebook(content: string): Entry[] {
   const codeList = [];
   try {
     const notebookContent = JSON.parse(content);
@@ -313,7 +310,7 @@ QUIT;`;
   return codeList;
 }
 
-export function generateCodeListFromPythonNotebook(content: string): Entry[] {
+function generateCodeListFromPythonNotebook(content: string): Entry[] {
   const codeList = [];
   try {
     const notebookContent = JSON.parse(content);
@@ -336,7 +333,7 @@ export function convertNotebookToFlow(
   content: string,
   inputName: string,
   outputName: string,
-): Uint8Array {
+): string {
   let codeList = [];
   if (inputName.endsWith(".sasnb")) {
     codeList = generateCodeListFromSASNotebook(content);
@@ -348,6 +345,5 @@ export function convertNotebookToFlow(
   const flowData = generateFlowData(codeList, outputName);
   // encode json to utf8 bytes without new lines and spaces
   const flowDataString = JSON.stringify(flowData, null, 0);
-  const flowDataUint8Array = new TextEncoder().encode(flowDataString);
-  return flowDataUint8Array;
+  return flowDataString;
 }

@@ -368,11 +368,12 @@ class ContentDataProvider
         resourceUri,
       );
       // convert the notebook file to a .flw file
-      const flowDataUint8Array = convertNotebookToFlow(
+      const flowDataString = convertNotebookToFlow(
         contentString,
         item.name,
         name,
       );
+      const flowDataUint8Array = new TextEncoder().encode(flowDataString);
       if (flowDataUint8Array.length === 0) {
         window.showErrorMessage(Messages.NoCodeToConvert);
         return;
