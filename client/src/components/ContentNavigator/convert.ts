@@ -167,7 +167,7 @@ const baseNode = {
   },
 };
 
-function generateFlowDataNode(inputList: Entry[], outputFile: string) {
+export function generateFlowDataNode(inputList: Entry[], outputFile: string) {
   const now = new Date();
   const nowString = now.toISOString();
   const nowTimestamp = String(now.getTime());
@@ -241,7 +241,10 @@ function generateFlowDataNode(inputList: Entry[], outputFile: string) {
   return flowData;
 }
 
-function generateFlowDataSwimlane(inputList: Entry[], outputFile: string) {
+export function generateFlowDataSwimlane(
+  inputList: Entry[],
+  outputFile: string,
+) {
   const now = new Date();
   const nowString = now.toISOString();
 
@@ -285,12 +288,8 @@ function generateFlowData(inputList: Entry[], outputFile: string) {
   return generateFlowDataSwimlane(inputList, outputFile);
 }
 
-export function convertSASNotebookToFlow(
-  content: string,
-  outputName: string,
-): Uint8Array {
+export function generateCodeListFromNotebook(content: string): Entry[] {
   const codeList = [];
-
   try {
     const notebookContent = JSON.parse(content);
 
@@ -311,11 +310,18 @@ QUIT;`;
   } catch (error) {
     console.error("Error reading or parsing the .sasnb file:", error);
   }
+  return codeList;
+}
 
+export function convertSASNotebookToFlow(
+  content: string,
+  outputName: string,
+): Uint8Array {
+  const codeList = generateCodeListFromNotebook(content);
   const flowData = generateFlowData(codeList, outputName);
   // encode json to utf8 bytes without new lines and spaces
   const flowDataString = JSON.stringify(flowData, null, 0);
+  console.log(flowDataString);
   const flowDataUint8Array = new TextEncoder().encode(flowDataString);
-
   return flowDataUint8Array;
 }
