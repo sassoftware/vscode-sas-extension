@@ -9,6 +9,7 @@
   "commands.SAS.deleteProfile": "删除连接配置文件",
   "commands.SAS.deleteResource": "删除",
   "commands.SAS.deleteTable": "删除",
+  "commands.SAS.download": "Download",
   "commands.SAS.emptyRecycleBin": "清空回收站",
   "commands.SAS.notebook.new": "新 SAS 笔记本",
   "commands.SAS.notebook.new.short": "SAS 笔记本",
