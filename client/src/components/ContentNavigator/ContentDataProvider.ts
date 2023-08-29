@@ -54,7 +54,7 @@ import {
   isReference,
   resourceType,
 } from "./utils";
-import { convertSASNotebookToFlow } from "./convert";
+import { convertNotebookToFlow } from "./convert";
 
 const contentItemMimeType = "application/vnd.code.tree.contentdataprovider";
 class ContentDataProvider
@@ -363,12 +363,16 @@ class ContentDataProvider
     const parent = await this.getParent(item);
     const resourceUri = getUri(item);
     try {
-      // get the content of the .sasnb file
+      // get the content of the notebook file
       const contentString: string = await this.provideTextDocumentContent(
         resourceUri,
       );
-      // convert the .sasnb file to a .flw file
-      const flowDataUint8Array = convertSASNotebookToFlow(contentString, name);
+      // convert the notebook file to a .flw file
+      const flowDataUint8Array = convertNotebookToFlow(
+        contentString,
+        item.name,
+        name,
+      );
       if (flowDataUint8Array.length === 0) {
         window.showErrorMessage(Messages.NoCodeToConvert);
         return;

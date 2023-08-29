@@ -288,7 +288,7 @@ function generateFlowData(inputList: Entry[], outputFile: string) {
   return generateFlowDataSwimlane(inputList, outputFile);
 }
 
-export function generateCodeListFromNotebook(content: string): Entry[] {
+export function generateCodeListFromSASNotebook(content: string): Entry[] {
   const codeList = [];
   try {
     const notebookContent = JSON.parse(content);
@@ -313,11 +313,38 @@ QUIT;`;
   return codeList;
 }
 
-export function convertSASNotebookToFlow(
+export function generateCodeListFromPythonNotebook(content: string): Entry[] {
+  const codeList = [];
+  try {
+    const notebookContent = JSON.parse(content);
+
+    for (const cell of notebookContent.cells) {
+      const code = cell.source.join("");
+      const cellType = cell.cell_type;
+      if (code !== "" && cellType === "code") {
+        const language = "python";
+        codeList.push({ code, language });
+      }
+    }
+  } catch (error) {
+    console.error("Error reading or parsing the .ipynb file:", error);
+  }
+  return codeList;
+}
+
+export function convertNotebookToFlow(
   content: string,
+  inputName: string,
   outputName: string,
 ): Uint8Array {
-  const codeList = generateCodeListFromNotebook(content);
+  let codeList = [];
+  if (inputName.endsWith(".sasnb")) {
+    codeList = generateCodeListFromSASNotebook(content);
+  } else if (inputName.endsWith(".ipynb")) {
+    codeList = generateCodeListFromPythonNotebook(content);
+  } else {
+    console.error("Unsupported file type");
+  }
   const flowData = generateFlowData(codeList, outputName);
   // encode json to utf8 bytes without new lines and spaces
   const flowDataString = JSON.stringify(flowData, null, 0);

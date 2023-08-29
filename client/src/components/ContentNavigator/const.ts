@@ -89,10 +89,10 @@ export const Messages = {
     "The notebook has been successfully converted to a flow. You can now open it in SAS Studio.",
   ),
   NotebookToFlowConversionError: l10n.t(
-    "Error converting the .sasnb file to .flw format.",
+    "Error converting the notebook file to .flw format.",
   ),
   NoCodeToConvert: l10n.t(
-    "The .sasnb file does not contain any code to convert.",
+    "The notebook file does not contain any code to convert.",
   ),
   InvalidFlowFileNameError: l10n.t(
     "The output file name must end with the .flw extension.",

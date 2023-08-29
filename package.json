@@ -799,7 +799,7 @@
         "displayName": "%notebooks.SAS.sasNotebook%",
         "selector": [
           {
-            "filenamePattern": "*.sasnb"
+            "filenamePattern": "*.{sasnb,ipynb}"
           }
         ]
       }
