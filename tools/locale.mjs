@@ -45,19 +45,19 @@ const updateLocale = (locale) => {
     ...JSON.parse(readFileSync(l10BundlePath)),
   };
 
-  writeFileSync(packageNlsPath, sortKeys(currentPackageNlsJSON));
-  writeFileSync(l10BundlePath, sortKeys(currentL10nBundleJSON));
+  writeFileSync(packageNlsPath, sortKeys(currentPackageNlsJSON) + "\n");
+  writeFileSync(l10BundlePath, sortKeys(currentL10nBundleJSON) + "\n");
 };
 
 if (newLocale) {
   writeFileSync(
     join(__dirname, "..", `package.nls.${newLocale}.json`),
-    sortKeys(packageNls),
+    sortKeys(packageNls) + "\n",
   );
 
   writeFileSync(
     join(__dirname, "..", "l10n", `bundle.l10n.${newLocale}.json`),
-    sortKeys(l10nBundle),
+    sortKeys(l10nBundle) + "\n",
   );
 }
 
