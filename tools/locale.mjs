@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const newLocale = process.env.npm_config_new;
-const localeToUpdate = process.env.npm_config_update;
+const localeToUpdate = process.env.npm_config_update_locale;
 
 const sortKeys = (content) => {
   const contentJSON =
