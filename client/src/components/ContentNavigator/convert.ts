@@ -321,7 +321,6 @@ export function convertSASNotebookToFlow(
   const flowData = generateFlowData(codeList, outputName);
   // encode json to utf8 bytes without new lines and spaces
   const flowDataString = JSON.stringify(flowData, null, 0);
-  console.log(flowDataString);
   const flowDataUint8Array = new TextEncoder().encode(flowDataString);
   return flowDataUint8Array;
 }
