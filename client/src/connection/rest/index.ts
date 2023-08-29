@@ -155,7 +155,7 @@ class RestSession extends Session {
     await retLog;
 
     //Now get the results
-    const results = state === ComputeState.Error ? [] : await job.results();
+    const results = await job.results();
 
     const res: RunResult = {
       html5: "",

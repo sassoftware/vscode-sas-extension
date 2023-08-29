@@ -3892,9 +3892,8 @@ export const MetainfoApi = function (configuration?: Configuration) {
     async getDelegateInfo(
       options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<DelegateCollection>> {
-      const localVarAxiosArgs = await localVarAxiosParamCreator.getDelegateInfo(
-        options,
-      );
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getDelegateInfo(options);
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
 
@@ -3907,9 +3906,8 @@ export const MetainfoApi = function (configuration?: Configuration) {
     async getFolderTypes(
       options?: AxiosRequestConfig,
     ): Promise<AxiosResponse<FolderTypeCollection>> {
-      const localVarAxiosArgs = await localVarAxiosParamCreator.getFolderTypes(
-        options,
-      );
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getFolderTypes(options);
       return createRequestFunction(localVarAxiosArgs, configuration);
     },
   };
