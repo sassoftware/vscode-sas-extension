@@ -364,9 +364,8 @@ class ContentDataProvider
     const resourceUri = getUri(item);
     try {
       // get the content of the notebook file
-      const contentString: string = await this.provideTextDocumentContent(
-        resourceUri,
-      );
+      const contentString: string =
+        await this.provideTextDocumentContent(resourceUri);
       // convert the notebook file to a .flw file
       const flowDataString = convertNotebookToFlow(
         contentString,
