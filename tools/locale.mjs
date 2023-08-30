@@ -4,6 +4,8 @@ import { fileURLToPath } from "url";
 import glob from "glob";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const packagePath = join(__dirname, "..");
+const l10nPath = join(__dirname, "..", "l10n");
 
 const newLocale = process.env.npm_config_new;
 const localeToUpdate = process.env.npm_config_update_locale;
@@ -22,19 +24,12 @@ const sortKeys = (content) => {
   return JSON.stringify(orderedResults, null, "  ");
 };
 
-const packageNls = readFileSync(join(__dirname, "..", "package.nls.json"));
-const l10nBundle = readFileSync(
-  join(__dirname, "..", "l10n", "bundle.l10n.json"),
-);
+const packageNls = readFileSync(join(packagePath, "package.nls.json"));
+const l10nBundle = readFileSync(join(l10nPath, "bundle.l10n.json"));
 
 const updateLocale = (locale) => {
-  const packageNlsPath = join(__dirname, "..", `package.nls.${locale}.json`);
-  const l10BundlePath = join(
-    __dirname,
-    "..",
-    "l10n",
-    `bundle.l10n.${locale}.json`,
-  );
+  const packageNlsPath = join(packagePath, `package.nls.${locale}.json`);
+  const l10BundlePath = join(l10nPath, `bundle.l10n.${locale}.json`);
 
   const currentPackageNlsJSON = {
     ...JSON.parse(packageNls),
@@ -51,12 +46,12 @@ const updateLocale = (locale) => {
 
 if (newLocale) {
   writeFileSync(
-    join(__dirname, "..", `package.nls.${newLocale}.json`),
+    join(packagePath, `package.nls.${newLocale}.json`),
     sortKeys(packageNls) + "\n",
   );
 
   writeFileSync(
-    join(__dirname, "..", "l10n", `bundle.l10n.${newLocale}.json`),
+    join(l10nPath, `bundle.l10n.${newLocale}.json`),
     sortKeys(l10nBundle) + "\n",
   );
 }
@@ -66,9 +61,7 @@ if (localeToUpdate) {
 }
 
 if (updateAllLocales) {
-  const packageNlsFiles = glob.sync(
-    join(__dirname, "..", "package.nls.*.json"),
-  );
+  const packageNlsFiles = glob.sync(join(packagePath, "package.nls.*.json"));
 
   const locales = packageNlsFiles.map(
     (filePath) => filePath.match(/package\.nls\.(.*)\.json/)[1],

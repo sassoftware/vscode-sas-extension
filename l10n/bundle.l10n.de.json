@@ -66,7 +66,7 @@
   "SAS Viya Server": "SAS Viya Server",
   "SAS code running...": "SAS Code wird ausgeführt...",
   "SSH_AUTH_SOCK not set. Check Environment Variables.": "SSH_AUTH_SOCK wurde nicht gesetzt. Bitte die Umgebungsvariablen überprüfen.",
-  "Saving {itemName}.": "Saving {itemName}.",
+  "Saving {itemName}.": "SavSpeichere {itemName}.",
   "Select a Connection Type": "Wählen Sie einen Verbindungstyp",
   "Select a Connection Type.": "Wählen Sie einen Verbindungstyp.",
   "Select a SAS connection profile": "Wählen Sie ein SAS Verbindungsprofil",
