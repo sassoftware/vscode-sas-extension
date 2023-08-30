@@ -24,8 +24,10 @@ const sortKeys = (content) => {
   return JSON.stringify(orderedResults, null, "  ");
 };
 
-const packageNls = readFileSync(join(packagePath, "package.nls.json"));
-const l10nBundle = readFileSync(join(l10nPath, "bundle.l10n.json"));
+const packageNls = readFileSync(
+  join(packagePath, "package.nls.json"),
+).toString();
+const l10nBundle = readFileSync(join(l10nPath, "bundle.l10n.json")).toString();
 
 const updateLocale = (locale) => {
   const packageNlsPath = join(packagePath, `package.nls.${locale}.json`);
