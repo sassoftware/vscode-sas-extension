@@ -45,8 +45,13 @@ const nodeBuildOptions = {
 
 const browserBuildOptions = {
   ...commonBuildOptions,
+  format: "esm",
   entryPoints: {
     "./client/dist/webview/DataViewer": "./client/src/webview/DataViewer.tsx",
+    "./client/dist/notebook/LogRenderer":
+      "./client/src/components/notebook/renderers/LogRenderer.ts",
+    "./client/dist/notebook/HTMLRenderer":
+      "./client/src/components/notebook/renderers/HTMLRenderer.ts",
   },
 };
 
