@@ -831,11 +831,11 @@ export class CodeZoneManager {
         }
       }
       if (token.text[0] === "%") {
-        if (token.text.toUpperCase() === "%MACRO") {
-          return CodeZoneManager.ZONE_TYPE.MACRO_DEF;
-        } else {
-          return CodeZoneManager.ZONE_TYPE.MACRO_STMT; //TODO: need to differ among ARM macro, autocall macro, macro function, macro statement
-        }
+        // if (token.text.toUpperCase() === "%MACRO") {
+        //   return CodeZoneManager.ZONE_TYPE.MACRO_DEF;
+        // } else {
+        return CodeZoneManager.ZONE_TYPE.MACRO_STMT; //TODO: need to differ among ARM macro, autocall macro, macro function, macro statement
+        // }
       } else {
         return CodeZoneManager.ZONE_TYPE.GBL_STMT;
       }
@@ -2290,11 +2290,12 @@ export class CodeZoneManager {
       opts = [],
       stack: any[] = [];
 
-    if (name.text === ";") {
-      return CodeZoneManager.ZONE_TYPE.MACRO_DEF;
-    }
+    // if (name.text === ";") {
+    //   return CodeZoneManager.ZONE_TYPE.MACRO_DEF;
+    // }
 
-    this._emit(name, CodeZoneManager.ZONE_TYPE.MACRO_DEF); // macro name
+    // this._emit(name, CodeZoneManager.ZONE_TYPE.MACRO_DEF); // macro name
+    this._emit(name, CodeZoneManager.ZONE_TYPE.RESTRICTED); // macro name
 
     const tmpContext = this._cloneContext(context);
     token = this._getNextEx(tmpContext);
