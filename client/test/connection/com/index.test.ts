@@ -128,7 +128,7 @@ describe("COM connection", () => {
       expect(runResult.title).to.equal("Result");
 
       expect(stdinStub.args[7][0]).to.deep.equal(
-        `$code=@"\nods html5 path="/work/dir";\nproc print data=sashelp.cars;\nrun;\n%put --vscode-sas-extension-submit-end--;\n"@\n`,
+        `$code=\n@'\nods html5 path="/work/dir";\nproc print data=sashelp.cars;\nrun;\n%put --vscode-sas-extension-submit-end--;\n'@\n`,
       );
 
       expect(stdinStub.args[8][0]).to.deep.equal(`$runner.Run($code)\n`);
