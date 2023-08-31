@@ -142,7 +142,7 @@ export class SSHSession extends Session {
         }
 
         s.on("data", (data) => {
-          fileContents += data.toString().trimEnd();
+          fileContents += data.toString();
         }).on("close", (code) => {
           const rc: number = code;
 
