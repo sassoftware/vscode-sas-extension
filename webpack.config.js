@@ -101,43 +101,4 @@ const browserServerConfig = {
   devtool: "source-map",
 };
 
-/** @type WebpackConfig */
-const notebookRendererConfig = {
-  context: path.join(__dirname, "client"),
-  mode: "none",
-  entry: {
-    LogRenderer: "./src/components/notebook/renderers/LogRenderer.ts",
-    HTMLRenderer: "./src/components/notebook/renderers/HTMLRenderer.ts",
-  },
-  output: {
-    filename: "[name].js",
-    path: path.join(__dirname, "client", "dist", "notebook"),
-    libraryTarget: "module",
-  },
-  module: {
-    rules: [
-      {
-        test: /\.ts$/,
-        exclude: /node_modules/,
-        use: [
-          {
-            loader: "ts-loader",
-          },
-        ],
-      },
-    ],
-  },
-  experiments: {
-    outputModule: true,
-  },
-  performance: {
-    hints: false,
-  },
-  devtool: "source-map",
-};
-
-module.exports = [
-  browserClientConfig,
-  browserServerConfig,
-  notebookRendererConfig,
-];
+module.exports = [browserClientConfig, browserServerConfig];
