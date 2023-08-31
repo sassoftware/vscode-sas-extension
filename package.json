@@ -818,7 +818,8 @@
     "test": "node ./client/out/test/runTest.js",
     "pseudoLocalize": "npx @vscode/l10n-dev export -o ./l10n ./client/src && npx @vscode/l10n-dev generate-pseudo -o ./l10n/ ./l10n/bundle.l10n.json ./package.nls.json",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
-    "copyright:check": "node ./tools/check-copyright.mjs"
+    "copyright:check": "node ./tools/check-copyright.mjs",
+    "locale": "npx @vscode/l10n-dev export -o ./l10n ./client/src && node ./tools/locale.mjs"
   },
   "devDependencies": {
     "@types/chai": "^4.3.5",
