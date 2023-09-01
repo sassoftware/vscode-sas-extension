@@ -46,7 +46,7 @@
   "configuration.SAS.session.outputHtml": "Enable/disable ODS HTML5 output",
   "configuration.SAS.results.html.style": "Specifies the style for ODS HTML5 results.",
   "configuration.SAS.results.html.style.(auto)": "Let the extension pick a style that most closely matches the color theme.",
-  "configuration.SAS.results.html.style.(server default)": "Default to the style configured on the SAS server.",  
+  "configuration.SAS.results.html.style.(server default)": "Default to the style configured on the SAS server.",
   "configuration.SAS.userProvidedCertificates": "Provide trusted CA certificate files",
   "notebooks.SAS.htmlRenderer": "SAS HTML Renderer",
   "notebooks.SAS.logRenderer": "SAS Log Renderer",
