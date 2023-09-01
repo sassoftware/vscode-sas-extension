@@ -289,7 +289,6 @@ function generateCodeListFromSASNotebook(content: string): Entry[] {
   const codeList = [];
   try {
     const notebookContent = JSON.parse(content);
-
     for (const cell of notebookContent) {
       let code = cell.value;
       if (code !== "") {
@@ -314,13 +313,14 @@ function generateCodeListFromPythonNotebook(content: string): Entry[] {
   const codeList = [];
   try {
     const notebookContent = JSON.parse(content);
-
-    for (const cell of notebookContent.cells) {
-      const code = cell.source.join("");
-      const cellType = cell.cell_type;
-      if (code !== "" && cellType === "code") {
-        const language = "python";
-        codeList.push({ code, language });
+    const language = notebookContent.metadata.kernelspec.language;
+    if (["python", "sas"].includes(language)) {
+      for (const cell of notebookContent.cells) {
+        const code = cell.source.join("");
+        const cellType = cell.cell_type;
+        if (code !== "" && cellType === "code") {
+          codeList.push({ code, language });
+        }
       }
     }
   } catch (error) {
