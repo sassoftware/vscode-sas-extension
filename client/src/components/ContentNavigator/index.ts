@@ -274,6 +274,13 @@ class ContentNavigator implements SubscriptionProvider {
           }
 
           if (
+            (await this.contentDataProvider.testStudioConnection()) === false
+          ) {
+            window.showErrorMessage(Messages.StudioConnectionError);
+            return;
+          }
+
+          if (
             await this.contentDataProvider.convertNotebookToFlow(resource, name)
           ) {
             window.showInformationMessage(

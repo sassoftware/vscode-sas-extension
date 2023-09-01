@@ -360,6 +360,15 @@ export class ContentModel {
     }
   }
 
+  public async testStudioConnection(): Promise<boolean> {
+    try {
+      const result = await createStudioSession(this.connection);
+      return !!result;
+    } catch (error) {
+      return false;
+    }
+  }
+
   public async associateFlowFile(
     name: string,
     uri: Uri,

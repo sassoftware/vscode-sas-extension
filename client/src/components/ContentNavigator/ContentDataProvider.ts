@@ -356,6 +356,10 @@ class ContentDataProvider
     this.reveal(resource);
   }
 
+  public async testStudioConnection(): Promise<boolean> {
+    return await this.model.testStudioConnection();
+  }
+
   public async convertNotebookToFlow(
     item: ContentItem,
     name: string,

@@ -97,4 +97,5 @@ export const Messages = {
   InvalidFlowFileNameError: l10n.t(
     "The output file name must end with the .flw extension.",
   ),
+  StudioConnectionError: l10n.t("Cannot connect to SAS Studio service"),
 };
