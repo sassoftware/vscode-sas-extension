@@ -119,7 +119,7 @@ export class COMSession extends Session {
 
       //write an end mnemonic so that the handler knows when execution has finished
       const codeWithEnd = `${codeWithODSPath}\n%put ${endCode};`;
-      const codeToRun = `$code=@"\n${codeWithEnd}\n"@\n`;
+      const codeToRun = `$code=\n@'\n${codeWithEnd}\n'@\n`;
 
       this._shellProcess.stdin.write(codeToRun);
       this._shellProcess.stdin.write(`$runner.Run($code)\n`, async (error) => {
