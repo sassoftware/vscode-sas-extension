@@ -111,7 +111,8 @@ describe("COM connection", () => {
       await setupPromise;
     });
     it("calls run function from script", async () => {
-      fsStub.returns("content");
+      const html5 = '<div id="IDX">';
+      fsStub.returns(html5);
 
       const runPromise = session.run(
         "ods html5;\nproc print data=sashelp.cars;\nrun;",
@@ -123,11 +124,11 @@ describe("COM connection", () => {
       onDataCallback(Buffer.from("--vscode-sas-extension-submit-end--"));
 
       const runResult = await runPromise;
-      expect(runResult.html5).to.equal("content");
-      expect(runResult.title).to.equal("Results");
+      expect(runResult.html5).to.equal(html5);
+      expect(runResult.title).to.equal("Result");
 
       expect(stdinStub.args[7][0]).to.deep.equal(
-        `$code=@"\nods html5 path="/work/dir";\nproc print data=sashelp.cars;\nrun;\n%put --vscode-sas-extension-submit-end--;\n"@\n`,
+        `$code=\n@'\nods html5 path="/work/dir";\nproc print data=sashelp.cars;\nrun;\n%put --vscode-sas-extension-submit-end--;\n'@\n`,
       );
 
       expect(stdinStub.args[8][0]).to.deep.equal(`$runner.Run($code)\n`);
