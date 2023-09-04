@@ -360,12 +360,12 @@ export class ContentModel {
     }
   }
 
-  public async testStudioConnection(): Promise<boolean> {
+  public async testStudioConnection(): Promise<string> {
     try {
       const result = await createStudioSession(this.connection);
-      return !!result;
+      return result;
     } catch (error) {
-      return false;
+      return "";
     }
   }
 
@@ -373,14 +373,14 @@ export class ContentModel {
     name: string,
     uri: Uri,
     parent: ContentItem,
+    studioSessionId: string,
   ): Promise<string | undefined> {
     try {
-      const sessionId = await createStudioSession(this.connection);
       return await associateFlowObject(
         name,
         getResourceId(uri),
         getResourceIdFromItem(parent),
-        sessionId,
+        studioSessionId,
         this.connection,
       );
     } catch (error) {

@@ -272,16 +272,19 @@ class ContentNavigator implements SubscriptionProvider {
             // User canceled the input box
             return;
           }
-
-          if (
-            (await this.contentDataProvider.testStudioConnection()) === false
-          ) {
+          const studioSessionId =
+            await this.contentDataProvider.testStudioConnection();
+          if (!studioSessionId) {
             window.showErrorMessage(Messages.StudioConnectionError);
             return;
           }
 
           if (
-            await this.contentDataProvider.convertNotebookToFlow(resource, name)
+            await this.contentDataProvider.convertNotebookToFlow(
+              resource,
+              name,
+              studioSessionId,
+            )
           ) {
             window.showInformationMessage(
               Messages.NotebookToFlowConversionSuccess,

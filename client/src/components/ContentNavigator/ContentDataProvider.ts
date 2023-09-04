@@ -262,8 +262,9 @@ class ContentDataProvider
     name: string,
     uri: Uri,
     parent: ContentItem,
+    studioSessionId: string,
   ): Promise<string> {
-    return this.model.associateFlowFile(name, uri, parent);
+    return this.model.associateFlowFile(name, uri, parent, studioSessionId);
   }
 
   public async deleteResource(item: ContentItem): Promise<boolean> {
@@ -356,13 +357,14 @@ class ContentDataProvider
     this.reveal(resource);
   }
 
-  public async testStudioConnection(): Promise<boolean> {
+  public async testStudioConnection(): Promise<string> {
     return await this.model.testStudioConnection();
   }
 
   public async convertNotebookToFlow(
     item: ContentItem,
     name: string,
+    studioSessionId: string,
   ): Promise<string | undefined> {
     const parent = await this.getParent(item);
     const resourceUri = getUri(item);
@@ -388,7 +390,7 @@ class ContentDataProvider
         l10n.t(Messages.NewFileCreationError, { name: name }),
       );
       // associate the new .flw file with SAS Studio
-      return await this.associateFlow(name, newUri, parent);
+      return await this.associateFlow(name, newUri, parent, studioSessionId);
     } catch (error) {
       window.showErrorMessage(error);
     }
