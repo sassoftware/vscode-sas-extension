@@ -16,6 +16,7 @@ import type { BaseLanguageClient } from "vscode-languageclient";
 import { LogFn as LogChannelFn } from "../components/LogChannel";
 import { getSession } from "../connection";
 import { profileConfig, switchProfile } from "./profile";
+import { wrapCode } from "../components/utils";
 
 interface FoldingBlock {
   startLine: number;
@@ -26,7 +27,7 @@ interface FoldingBlock {
 
 let running = false;
 
-function getCode(outputHtml: boolean, selected = false, uri?: Uri): string {
+function getCode(selected = false, uri?: Uri): string {
   const editor = uri
     ? window.visibleTextEditors.find(
         (editor) => editor.document.uri.toString() === uri.toString(),
@@ -51,9 +52,9 @@ function getCode(outputHtml: boolean, selected = false, uri?: Uri): string {
     code = doc?.getText();
   }
 
-  return outputHtml
-    ? "ods html5;\n" + code + "\n;run;quit;ods html5 close;"
-    : code;
+  code = wrapCode(code);
+
+  return code;
 }
 
 async function getSelectedRegions(
@@ -116,7 +117,8 @@ async function runCode(selected?: boolean, uri?: Uri) {
   const outputHtml = !!workspace
     .getConfiguration("SAS")
     .get("session.outputHtml");
-  const code = getCode(outputHtml, selected, uri);
+
+  const code = getCode(selected, uri);
 
   const session = getSession();
   session.onLogFn = LogChannelFn;
