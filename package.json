@@ -114,53 +114,8 @@
     "configuration": [
       {
         "properties": {
-          "SAS.session.outputHtml": {
-            "order": 0,
-            "type": "boolean",
-            "default": true,
-            "description": "%configuration.SAS.session.outputHtml%"
-          },
-          "SAS.results.html.style": {
-            "order": 1,
-            "type": "string",
-            "default": "(auto)",
-            "enum": [
-              "(auto)",
-              "(server default)",
-              "Aqua",
-              "Daisy",
-              "Dove",
-              "HighContrast",
-              "HighContrastLarge",
-              "HTMLBlue",
-              "HTMLEncore",
-              "Ignite",
-              "Illuminate",
-              "Journal",
-              "Journal2",
-              "Journal3",
-              "Marine",
-              "Midnight",
-              "Moonflower",
-              "Opal",
-              "Pearl",
-              "Sapphire"
-            ],
-            "enumDescriptions": [
-              "%configuration.SAS.results.html.style.(auto)%",
-              "%configuration.SAS.results.html.style.(server default)%"
-            ],
-            "description": "%configuration.SAS.results.html.style%"
-          },
-          "SAS.userProvidedCertificates": {
-            "type": "array",
-            "description": "%configuration.SAS.userProvidedCertificates%",
-            "items": {
-              "type": "string"
-            }
-          },
           "SAS.connectionProfiles": {
-            "order": 2,
+            "order": 0,
             "type": "object",
             "description": "%configuration.SAS.connectionProfiles%",
             "properties": {
@@ -366,6 +321,52 @@
                 }
               }
             }
+          },
+          "SAS.userProvidedCertificates": {
+            "order": 1,
+            "type": "array",
+            "description": "%configuration.SAS.userProvidedCertificates%",
+            "items": {
+              "type": "string"
+            }
+          },
+          "SAS.results.html.enabled": {
+            "order": 2,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.results.html.enabled%"
+          },
+          "SAS.results.html.style": {
+            "order": 3,
+            "type": "string",
+            "default": "(auto)",
+            "enum": [
+              "(auto)",
+              "(server default)",
+              "Aqua",
+              "Daisy",
+              "Dove",
+              "HighContrast",
+              "HighContrastLarge",
+              "HTMLBlue",
+              "HTMLEncore",
+              "Ignite",
+              "Illuminate",
+              "Journal",
+              "Journal2",
+              "Journal3",
+              "Marine",
+              "Midnight",
+              "Moonflower",
+              "Opal",
+              "Pearl",
+              "Sapphire"
+            ],
+            "enumDescriptions": [
+              "%configuration.SAS.results.html.style.(auto)%",
+              "%configuration.SAS.results.html.style.(server default)%"
+            ],
+            "description": "%configuration.SAS.results.html.style%"
           }
         }
       }

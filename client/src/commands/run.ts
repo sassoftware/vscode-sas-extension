@@ -116,7 +116,7 @@ async function runCode(selected?: boolean, uri?: Uri) {
 
   const outputHtml = !!workspace
     .getConfiguration("SAS")
-    .get("session.outputHtml");
+    .get("results.html.enabled");
 
   const code = getCode(selected, uri);
 
