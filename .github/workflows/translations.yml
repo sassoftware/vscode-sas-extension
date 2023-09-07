@@ -20,7 +20,7 @@ jobs:
       - run: npm run locale --update-locales
       - run: |
           CHANGES=$(git diff --name-only)
-          if [ -z "$var" ]
+          if [ -z "$CHANGES" ]
           then
             echo "No translations needed"
           else
