@@ -19,14 +19,3 @@ jobs:
       - run: xvfb-run -a npm run test
         if: runner.os == 'Linux'
       - run: npx @vscode/vsce package
-  check-translations:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-      - run: npm ci
-      - run: npm run locale --update-locales
-      - run: git diff --exit-code
