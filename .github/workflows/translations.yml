@@ -1,6 +1,7 @@
 name: Translation Check
 
 on:
+  workflow_dispatch
   push:
     branches:
       - "main"
@@ -16,4 +17,13 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run locale --update-locales
-      - run: git diff --exit-code
+      - run: |
+          CHANGES=$(git diff --name-only)
+          if [ -z "$var" ]
+          then
+            echo "No translations needed"
+          else
+            echo "The following files need translations:"
+            echo $CHANGES
+            exit 1
+          fi
