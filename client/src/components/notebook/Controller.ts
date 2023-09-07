@@ -4,6 +4,7 @@
 import * as vscode from "vscode";
 import { getSession } from "../../connection";
 import { Deferred, deferred } from "../utils";
+import { wrapCode } from "../utils";
 
 export class NotebookController {
   readonly controllerId = "sas-notebook-controller-id";
@@ -123,22 +124,14 @@ export class NotebookController {
 }
 
 const getCode = (doc: vscode.TextDocument) => {
-  const outputHtml = !!vscode.workspace
-    .getConfiguration("SAS")
-    .get("session.outputHtml");
-
   let code = doc.getText();
   if (doc.languageId === "sql") {
     code = wrapSQL(code);
   } else if (doc.languageId === "python") {
     code = wrapPython(code);
   }
-  return outputHtml ? wrapHTML5(code) : code;
+  return wrapCode(code);
 };
-
-const wrapHTML5 = (code: string) => `ods html5;
-${code}
-;run;quit;ods html5 close;`;
 
 const wrapSQL = (code: string) => `proc sql;
 ${code}

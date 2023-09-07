@@ -120,6 +120,38 @@
             "default": true,
             "description": "%configuration.SAS.session.outputHtml%"
           },
+          "SAS.results.html.style": {
+            "order": 1,
+            "type": "string",
+            "default": "(auto)",
+            "enum": [
+              "(auto)",
+              "(server default)",
+              "Aqua",
+              "Daisy",
+              "Dove",
+              "HighContrast",
+              "HighContrastLarge",
+              "HTMLBlue",
+              "HTMLEncore",
+              "Ignite",
+              "Illuminate",
+              "Journal",
+              "Journal2",
+              "Journal3",
+              "Marine",
+              "Midnight",
+              "Moonflower",
+              "Opal",
+              "Pearl",
+              "Sapphire"
+            ],
+            "enumDescriptions": [
+              "%configuration.SAS.results.html.style.(auto)%",
+              "%configuration.SAS.results.html.style.(server default)%"
+            ],
+            "description": "%configuration.SAS.results.html.style%"
+          },
           "SAS.flowConversionMode": {
             "type": "string",
             "default": "Swimlane",
@@ -141,7 +173,7 @@
             }
           },
           "SAS.connectionProfiles": {
-            "order": 1,
+            "order": 2,
             "type": "object",
             "description": "%configuration.SAS.connectionProfiles%",
             "properties": {
@@ -851,10 +883,10 @@
   "devDependencies": {
     "@types/chai": "^4.3.5",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^20.5.7",
+    "@types/node": "^20.5.9",
     "@types/sinon": "^10.0.16",
-    "@typescript-eslint/eslint-plugin": "^6.4.0",
-    "@typescript-eslint/parser": "^6.4.0",
+    "@typescript-eslint/eslint-plugin": "^6.6.0",
+    "@typescript-eslint/parser": "^6.5.0",
     "@vscode/l10n-dev": "^0.0.29",
     "chai": "^4.3.8",
     "esbuild": "^0.19.2",
@@ -865,7 +897,7 @@
     "mocha": "^10.2.0",
     "nock": "^13.3.3",
     "path-browserify": "^1.0.1",
-    "prettier": "^3.0.2",
+    "prettier": "^3.0.3",
     "sinon": "^15.2.0",
     "ts-loader": "^9.4.4",
     "ts-sinon": "^2.0.2",
