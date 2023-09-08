@@ -97,7 +97,7 @@ export class FormatOnTypeProvider {
     const foldingBlock: FoldingBlock | null =
       this.syntaxProvider.getFoldingBlock(line, semicolonCol);
     let blockStartLine;
-    if (foldingBlock === null) {
+    if (!foldingBlock) {
       const lastNotEmptyLine = this._getLastNotEmptyLine(line - 1);
       if (lastNotEmptyLine === undefined) {
         return [];
@@ -230,7 +230,7 @@ export class FormatOnTypeProvider {
         cleanedTokens,
         curIndex - 1,
       );
-      if (curIndex === -1) {
+      if (curIndex <= 0) {
         return 0;
       }
       const tokenBeforeSemicolon = cleanedTokens[curIndex - 1]; // curIndex must be > 0
