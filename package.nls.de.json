@@ -43,7 +43,7 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "SAS SSH Verbindungsbenutzername",
   "configuration.SAS.connectionProfiles.profiles.tokenFile": "SAS Viya Token Datei",
   "configuration.SAS.connectionProfiles.profiles.username": "SAS Viya Benutzer ID",
-  "configuration.SAS.session.outputHtml": "Aktiveren/deaktiveren der ODS HTML5 Ausgabe",
+  "configuration.SAS.results.html.enabled": "Aktiveren/deaktiveren der ODS HTML5 Ausgabe",
   "configuration.SAS.results.html.style": "Lege den Style für ODS HTML5 Ergebnisse fest.",
   "configuration.SAS.results.html.style.(auto)": "Lassen Sie die Erweiterung einen Stil auswählen, der dem Farbschema am ehesten entspricht.",
   "configuration.SAS.results.html.style.(server default)": "Nutze den auf dem SAS Server konfigurierten Standardstyle.",

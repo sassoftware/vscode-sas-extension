@@ -6,7 +6,7 @@ import { window, workspace, ColorThemeKind } from "vscode";
 export function wrapCode(code: string): string {
   const outputHtml = !!workspace
     .getConfiguration("SAS")
-    .get("session.outputHtml");
+    .get("results.html.enabled");
   const htmlStyle: string = workspace
     .getConfiguration("SAS")
     .get("results.html.style");

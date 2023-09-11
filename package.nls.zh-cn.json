@@ -43,7 +43,7 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "SAS SSH 连接用户名",
   "configuration.SAS.connectionProfiles.profiles.tokenFile": "SAS Viya 令牌文件",
   "configuration.SAS.connectionProfiles.profiles.username": "SAS Viya 用户 ID",
-  "configuration.SAS.session.outputHtml": "启用/禁用 ODS HTML5 输出",
+  "configuration.SAS.results.html.enabled": "启用/禁用 ODS HTML5 输出",
   "configuration.SAS.results.html.style": "指定 ODS HTML5 结果的样式。",
   "configuration.SAS.results.html.style.(auto)": "让扩展程序选择与颜色主题最匹配的样式。",
   "configuration.SAS.results.html.style.(server default)": "默认为 SAS 服务器上配置的样式。",
