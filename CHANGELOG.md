@@ -4,12 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
-## [Unreleased]
+## [v1.3.0] - 2023-09-12
 
 ### Added
 
 - Option to specify ODS style (match VS Code color theme by default) ([#473](https://github.com/sassoftware/vscode-sas-extension/pull/473))
-- Locale script to ease translating extension into different languages. See `CONTRIBUTING.md` for more information. ([#464](https://github.com/sassoftware/vscode-sas-extension/pull/464))
+- German translation ([#466](https://github.com/sassoftware/vscode-sas-extension/pull/466))
+- (Engineering) Locale script to ease translating extension into different languages. See `CONTRIBUTING.md` for more information. ([#464](https://github.com/sassoftware/vscode-sas-extension/pull/464))
+
+### Changed
+
+- Setting ID `SAS.session.outputHtml` changed to `SAS.results.html.enabled` ([#496](https://github.com/sassoftware/vscode-sas-extension/pull/496))
+
+### Fixed
+
+- Always show running man icon ([#433](https://github.com/sassoftware/vscode-sas-extension/issues/433))
+- SSH connection error ([#458](https://github.com/sassoftware/vscode-sas-extension/issues/458))
+- Show results even job is in error state ([#468](https://github.com/sassoftware/vscode-sas-extension/pull/468))
+- Escape $ symbol for local connection ([#356](https://github.com/sassoftware/vscode-sas-extension/issues/356))
+- Notebook hangs with local connection ([#472](https://github.com/sassoftware/vscode-sas-extension/issues/472))
+- Previous log shown for SSH connection ([#470](https://github.com/sassoftware/vscode-sas-extension/issues/470))
+- Result displaying issue for SSH connection ([#483](https://github.com/sassoftware/vscode-sas-extension/issues/483))
 
 ## [v1.2.0] - 2023-08-11
 
