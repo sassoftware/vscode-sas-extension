@@ -6,7 +6,6 @@ import {
   ProgressLocation,
   Selection,
   Uri,
-  ViewColumn,
   commands,
   l10n,
   window,
@@ -16,6 +15,7 @@ import type { BaseLanguageClient } from "vscode-languageclient";
 import { wrapCodeWithOutputHtml } from "../components/Helper/SasCodeHelper";
 import { isOutputHtmlEnabled } from "../components/Helper/SettingHelper";
 import { LogFn as LogChannelFn } from "../components/LogChannel";
+import { showResult } from "../components/ResultPanel";
 import { OnLogFn, RunResult, getSession } from "../connection";
 import { profileConfig, switchProfile } from "./profile";
 
@@ -139,13 +139,7 @@ async function runCode(selected?: boolean, uri?: Uri) {
       });
       return session.run(code).then((results) => {
         if (outputHtml && results.html5) {
-          const odsResult = window.createWebviewPanel(
-            "SASSession", // Identifies the type of the webview. Used internally
-            l10n.t("Result"), // Title of the panel displayed to the user
-            { preserveFocus: true, viewColumn: ViewColumn.Beside }, // Editor column to show the new webview panel in.
-            {}, // Webview options. More on these later.
-          );
-          odsResult.webview.html = results.html5;
+          showResult(results.html5, uri);
         }
       });
     },
