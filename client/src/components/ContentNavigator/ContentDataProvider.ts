@@ -1,19 +1,23 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import {
+  CancellationToken,
   DataTransfer,
   DataTransferItem,
   Disposable,
+  DocumentDropEdit,
   Event,
   EventEmitter,
   FileChangeEvent,
   FileStat,
   FileSystemProvider,
   FileType,
+  Position,
   ProviderResult,
   Tab,
   TabInputNotebook,
   TabInputText,
+  TextDocument,
   TextDocumentContentProvider,
   ThemeIcon,
   TreeDataProvider,
@@ -24,6 +28,7 @@ import {
   Uri,
   commands,
   l10n,
+  languages,
   window,
 } from "vscode";
 
@@ -71,6 +76,7 @@ class ContentDataProvider
   private _onDidChangeTreeData: EventEmitter<ContentItem | undefined>;
   private _onDidChange: EventEmitter<Uri>;
   private _treeView: TreeView<ContentItem>;
+  private _dropEditProvider: Disposable;
   private readonly model: ContentModel;
   private extensionUri: Uri;
 
@@ -93,6 +99,10 @@ class ContentDataProvider
       dragAndDropController: this,
       canSelectMany: true,
     });
+    this._dropEditProvider = languages.registerDocumentDropEditProvider(
+      { language: "sas" },
+      this,
+    );
 
     this._treeView.onDidChangeVisibility(async () => {
       if (this._treeView.visible) {
@@ -140,8 +150,31 @@ class ContentDataProvider
     dataTransfer.set(this.dragMimeTypes[0], dataTransferItem);
   }
 
+  public async provideDocumentDropEdits(
+    _document: TextDocument,
+    position: Position,
+    dataTransfer: DataTransfer,
+    token: CancellationToken,
+  ): Promise<DocumentDropEdit | undefined> {
+    const dataTransferItem = dataTransfer.get(this.dragMimeTypes[0]);
+    const contentItem =
+      dataTransferItem && JSON.parse(dataTransferItem.value)[0];
+    if (token.isCancellationRequested || !contentItem) {
+      return undefined;
+    }
+
+    const fileFolderPath = await this.model.getFileFolderPath(contentItem);
+    if (!fileFolderPath) {
+      return undefined;
+    }
+
+    return {
+      insertText: `filename myfile filesrvc folderpath='${fileFolderPath}' filename='${contentItem.name}';\n`,
+    };
+  }
+
   public getSubscriptions(): Disposable[] {
-    return [this._treeView];
+    return [this._treeView, this._dropEditProvider];
   }
 
   get onDidChangeFile(): Event<FileChangeEvent[]> {

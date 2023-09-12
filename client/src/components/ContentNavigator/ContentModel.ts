@@ -41,19 +41,21 @@ interface AddMemberProperties {
 }
 
 export class ContentModel {
-  private connection: AxiosInstance;
+  public connection: AxiosInstance;
   private fileTokenMaps: {
     [id: string]: { etag: string; lastModified: string };
   };
   private authorized: boolean;
   private viyaCadence: string;
   private delegateFolders: { [name: string]: ContentItem };
+  private cachedFilePaths: Record<string, string>;
 
   constructor() {
     this.fileTokenMaps = {};
     this.authorized = false;
     this.delegateFolders = {};
     this.viyaCadence = "";
+    this.cachedFilePaths = {};
   }
 
   public async connect(baseURL: string): Promise<void> {
@@ -149,20 +151,24 @@ export class ContentModel {
       ? []
       : await this.getChildren(myFavoritesFolder);
 
-    return result.items.map((childItem: ContentItem, index) => ({
-      ...childItem,
-      uid: `${item.uid}/${index}`,
-      permission: getPermission(childItem),
-      flags: {
-        isInRecycleBin,
-        isInMyFavorites,
-        hasFavoriteId: all_favorites.find(
-          (favorite) =>
-            getResourceIdFromItem(favorite) ===
-            getResourceIdFromItem(childItem),
-        )?.id,
-      },
-    }));
+    const items = await Promise.all(
+      result.items.map(async (childItem: ContentItem, index) => ({
+        ...childItem,
+        uid: `${item.uid}/${index}`,
+        permission: getPermission(childItem),
+        flags: {
+          isInRecycleBin,
+          isInMyFavorites,
+          hasFavoriteId: all_favorites.find(
+            (favorite) =>
+              getResourceIdFromItem(favorite) ===
+              getResourceIdFromItem(childItem),
+          )?.id,
+        },
+      })),
+    );
+
+    return items;
   }
 
   public async getParent(item: ContentItem): Promise<ContentItem | undefined> {
@@ -275,6 +281,7 @@ export class ContentModel {
     item: ContentItem,
     name: string,
   ): Promise<ContentItem | undefined> {
+    this.cachedFilePaths = {};
     const itemIsReference = item.type === "reference";
     const uri = itemIsReference
       ? getLink(item.links, "GET", "self").uri
@@ -408,6 +415,7 @@ export class ContentModel {
   }
 
   public async delete(item: ContentItem): Promise<boolean> {
+    this.cachedFilePaths = {};
     // folder service will return 409 error if the deleting folder has non-folder item even if add recursive parameter
     // delete the resource or move item to recycle bin will automatically delete the favorites as well.
     return await (isContainer(item)
@@ -639,6 +647,37 @@ export class ContentModel {
       console.error("fail to retrieve the viya cadence");
     }
     return "unknown";
+  }
+
+  public async getFileFolderPath(contentItem: ContentItem): Promise<string> {
+    if (isContainer(contentItem)) {
+      return "";
+    }
+
+    const initialParentFolderUri = contentItem.parentFolderUri;
+    if (this.cachedFilePaths[initialParentFolderUri]) {
+      return this.cachedFilePaths[initialParentFolderUri];
+    }
+
+    const filePathParts = [];
+    let currentContentItem: ContentItem = contentItem;
+    do {
+      try {
+        const { data: parentData } = await this.connection.get(
+          currentContentItem.parentFolderUri,
+        );
+        currentContentItem = parentData;
+      } catch (e) {
+        return "";
+      }
+
+      filePathParts.push(currentContentItem.name);
+    } while (currentContentItem.parentFolderUri);
+
+    this.cachedFilePaths[initialParentFolderUri] =
+      "/" + filePathParts.reverse().join("/");
+
+    return this.cachedFilePaths[initialParentFolderUri];
   }
 }
 

@@ -722,8 +722,6 @@ describe("ContentDataProvider", async function () {
     const dataTransferItem = new DataTransferItem(uri);
     dataTransfer.set("text/uri-list", dataTransferItem);
 
-    console.log("this bithc");
-
     stub.returns(new Promise((resolve) => resolve(item)));
 
     await dataProvider.handleDrop(parentItem, dataTransfer);
