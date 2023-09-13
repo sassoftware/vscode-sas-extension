@@ -2143,11 +2143,15 @@ export class CodeZoneManager {
     //special for call statement, and ignore others currently
     token = this._getPrev(newContext); // current
     text = token!.text.toUpperCase();
-    if (
-      (this._stmtName === "IF" || this._stmtName === "CALL") &&
-      /^CALL\b/.test(text)
-    ) {
-      return this._callStmt(newContext);
+    if (this._stmtName === "IF" || this._stmtName === "CALL") {
+      const prevToken = this._getPrev(newContext);
+      const prevText = prevToken?.text.toUpperCase();
+      if (
+        /^CALL\b/.test(text) ||
+        (/^\w+$/.test(text) && prevText && /^CALL$/.test(prevText))
+      ) {
+        return this._callStmt(newContext);
+      }
     }
     const zone = this._stmtEx(context, stmt);
     if (this._isCall(zone)) {
