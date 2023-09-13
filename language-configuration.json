@@ -24,8 +24,14 @@
     ["\"", "\""]
   ],
   "indentationRules": {
-    "increaseIndentPattern": "^\\s*(data|proc|%macro)\\b.*;$",
-    "decreaseIndentPattern": "^\\s*(run;|quit;|%mend;)$"
+    "increaseIndentPattern": {
+      "pattern": "(data|proc|%macro)\\b[^;]*;(\\s|/\\*.*\\*/|\\*[^;]*;)*$",
+      "flags": "i"
+    },
+    "decreaseIndentPattern": {
+      "pattern": "(run|quit|%mend)(\\s|/\\*.*\\*/|\\*[^;]*;)*;$",
+      "flags": "i"
+    }
   },
   "wordPattern": "(-?\\d*\\.\\d\\w*)|(\\%?[^\\`\\~\\!\\@\\#\\%\\^\\&\\*\\(\\)\\-\\=\\+\\[\\{\\]\\}\\\\\\|\\;\\:\\'\\\"\\,\\.\\<\\>\\/\\?\\s]+)"
 }
