@@ -41,7 +41,7 @@ interface AddMemberProperties {
 }
 
 export class ContentModel {
-  public connection: AxiosInstance;
+  private connection: AxiosInstance;
   private fileTokenMaps: {
     [id: string]: { etag: string; lastModified: string };
   };
