@@ -24,7 +24,8 @@ export class NotebookSerializer implements vscode.NotebookSerializer {
 
     let raw: RawNotebookCell[];
     try {
-      raw = JSON.parse(contents);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      raw = <RawNotebookCell[]>JSON.parse(contents);
     } catch {
       raw = [];
     }

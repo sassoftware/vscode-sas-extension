@@ -11,4 +11,13 @@ module.exports = {
   ],
   importOrderSeparation: true,
   importOrderSortSpecifiers: true,
+  // See https://github.com/trivago/prettier-plugin-sort-imports/issues/113
+  overrides: [
+    {
+      files: "*.ts",
+      options: {
+        importOrderParserPlugins: ["typescript"],
+      },
+    },
+  ],
 };
