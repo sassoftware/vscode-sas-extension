@@ -946,7 +946,9 @@ describe("ContentDataProvider", async function () {
 
     // We expect both files to have the same folder path
     expect(await model.getFileFolderPath(item)).to.equal("/grandparent/parent");
-    expect(await model.getFileFolderPath(item2)).to.equal("/grandparent/parent");
+    expect(await model.getFileFolderPath(item2)).to.equal(
+      "/grandparent/parent",
+    );
 
     // Since our second call is cached, we only expect two axios calls
     // (one for parent, one for grandparent)
