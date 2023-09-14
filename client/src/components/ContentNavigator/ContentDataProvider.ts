@@ -28,6 +28,7 @@ import {
   Uri,
   l10n,
   window,
+  commands,
 } from "vscode";
 import { profileConfig } from "../../commands/profile";
 import { SubscriptionProvider } from "../SubscriptionProvider";
@@ -244,12 +245,18 @@ class ContentDataProvider
     item: ContentItem,
     name: string,
   ): Promise<Uri | undefined> {
-    if (!(await closeFileIfOpen(item))) {
+    const closing = closeFileIfOpen(item);
+    if (!(await closing)) {
       return;
     }
     const newItem = await this.model.renameResource(item, name);
     if (newItem) {
-      return getUri(newItem);
+      const newUri = getUri(newItem);
+      if (closing !== true) {
+        // File was open before rename, so re-open it
+        commands.executeCommand("vscode.open", newUri);
+      }
+      return newUri;
     }
   }
 
@@ -533,7 +540,7 @@ class ContentDataProvider
 
 export default ContentDataProvider;
 
-const closeFileIfOpen = (item: ContentItem): boolean | Thenable<boolean> => {
+const closeFileIfOpen = (item: ContentItem) => {
   const fileUri = getUri(item, isItemInRecycleBin(item));
   const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
   const tab = tabs.find(
