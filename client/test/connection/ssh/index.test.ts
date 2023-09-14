@@ -1,9 +1,10 @@
+import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import { Client, ClientChannel } from "ssh2";
-import { getSession, SSHSession } from "../../../src/connection/ssh";
-import { assertThrowsAsync } from "../../utils";
-import { assert, expect } from "chai";
 import { StubbedInstance, stubInterface } from "ts-sinon";
+
+import { SSHSession, getSession } from "../../../src/connection/ssh";
+import { assertThrowsAsync } from "../../utils";
 
 describe("ssh connection", () => {
   const seconds = 1000;

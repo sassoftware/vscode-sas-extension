@@ -1,7 +1,7 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import * as vscode from "vscode";
+
 import { getSession } from "../../connection";
 import { wrapCodeWithOutputHtml } from "../Helper/SasCodeHelper";
 import { Deferred, deferred } from "../utils";

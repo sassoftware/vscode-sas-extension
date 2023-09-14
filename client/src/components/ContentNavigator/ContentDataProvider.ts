@@ -1,6 +1,5 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import { lstat, readFile, readdir } from "fs";
 import { basename, join } from "path";
 import { promisify } from "util";
@@ -16,8 +15,8 @@ import {
   FileType,
   ProviderResult,
   Tab,
-  TabInputText,
   TabInputNotebook,
+  TabInputText,
   TextDocumentContentProvider,
   ThemeIcon,
   TreeDataProvider,
@@ -26,10 +25,11 @@ import {
   TreeItemCollapsibleState,
   TreeView,
   Uri,
+  commands,
   l10n,
   window,
-  commands,
 } from "vscode";
+
 import { profileConfig } from "../../commands/profile";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ViyaProfile } from "../profile";

@@ -3,12 +3,12 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion,
 @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any, @typescript-eslint/dot-notation, @typescript-eslint/consistent-type-assertions */
-import { arrayToMap } from "./utils";
-import { LexerEx } from "./LexerEx";
 import { Lexer, Token } from "./Lexer";
+import { LexerEx } from "./LexerEx";
 import { Model } from "./Model";
-import { SyntaxProvider } from "./SyntaxProvider";
 import { SyntaxDataProvider } from "./SyntaxDataProvider";
+import { SyntaxProvider } from "./SyntaxProvider";
+import { arrayToMap } from "./utils";
 
 interface TokenEx extends Pick<Token, "type" | "text"> {
   line: number;

@@ -1,15 +1,14 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 import {
-  parse as parseMediaType,
   format as formatMediaType,
+  parse as parseMediaType,
 } from "media-typer";
+
+import { RequestArgs, createRequestFunction } from "./api/common";
 import { Link } from "./api/compute";
 import { Configuration } from "./api/configuration";
-
-import { AxiosRequestConfig, AxiosResponse } from "axios";
-import { createRequestFunction, RequestArgs } from "./api/common";
 
 /**
  * States that can be on a Job or Session

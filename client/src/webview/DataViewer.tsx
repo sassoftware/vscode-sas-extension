@@ -1,16 +1,15 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-import ".";
-
-import { AgGridReact } from "ag-grid-react";
 import { createElement, useState } from "react";
 import { createRoot } from "react-dom/client";
-import useDataViewer from "./useDataViewer";
 
+import "./DataViewer.css";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
-import "./DataViewer.css";
+import { AgGridReact } from "ag-grid-react";
+
+import ".";
+import useDataViewer from "./useDataViewer";
 
 const gridStyles = {
   "--ag-borders": "none",

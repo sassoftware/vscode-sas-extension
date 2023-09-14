@@ -13,11 +13,12 @@
  */
 
 /* tslint:disable */
+
 /* eslint-disable */
+import globalAxios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import { URL, URLSearchParams } from "url";
 
 import { Configuration } from "./configuration";
-import globalAxios, { AxiosResponse, AxiosRequestConfig } from "axios";
-import { URL, URLSearchParams } from "url";
 
 /**
  *

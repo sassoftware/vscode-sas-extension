@@ -1,13 +1,7 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { l10n } from "vscode";
 
-import {
-  LogLine as ComputeLogLine,
-  LogLineTypeEnum as ComputeLogLineTypeEnum,
-} from "./rest/api/compute";
-import { getSession as getRestSession, Config as RestConfig } from "./rest";
-import { getSession as getSSHSession } from "./ssh";
-import { getSession as getCOMSession } from "./com";
 import {
   AuthType,
   ConnectionType,
@@ -15,8 +9,14 @@ import {
   ViyaProfile,
   toAutoExecLines,
 } from "../components/profile";
+import { getSession as getCOMSession } from "./com";
+import { Config as RestConfig, getSession as getRestSession } from "./rest";
+import {
+  LogLine as ComputeLogLine,
+  LogLineTypeEnum as ComputeLogLineTypeEnum,
+} from "./rest/api/compute";
 import { Session } from "./session";
-import { l10n } from "vscode";
+import { getSession as getSSHSession } from "./ssh";
 
 let profileConfig: ProfileConfig;
 

@@ -3,7 +3,6 @@
 
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types,
 @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any */
-
 import { Token } from "./Lexer";
 import { FoldingBlock, LexerEx } from "./LexerEx";
 import { Model } from "./Model";

@@ -1,6 +1,5 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import { TextDecoder, TextEncoder } from "util";
 import * as vscode from "vscode";
 
@@ -25,8 +24,7 @@ export class NotebookSerializer implements vscode.NotebookSerializer {
 
     let raw: RawNotebookCell[];
     try {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      raw = <RawNotebookCell[]>JSON.parse(contents);
+      raw = JSON.parse(contents);
     } catch {
       raw = [];
     }

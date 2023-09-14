@@ -12,6 +12,7 @@ import {
   Uri,
   authentication,
 } from "vscode";
+
 import ContentDataProvider from "../../../src/components/ContentNavigator/ContentDataProvider";
 import { ContentModel } from "../../../src/components/ContentNavigator/ContentModel";
 import {

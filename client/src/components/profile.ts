@@ -1,16 +1,14 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
+import { readFileSync } from "fs";
 import {
-  commands,
-  window,
-  workspace,
   ConfigurationTarget,
   QuickPickOptions,
+  commands,
   l10n,
+  window,
+  workspace,
 } from "vscode";
-
-import { readFileSync } from "fs";
 
 export const EXTENSION_CONFIG_KEY = "SAS";
 export const EXTENSION_DEFINE_PROFILES_CONFIG_KEY = "connectionProfiles";

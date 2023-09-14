@@ -1,9 +1,7 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-import { commands, ExtensionContext, Uri } from "vscode";
+import { ExtensionContext, Uri, commands } from "vscode";
 import { LanguageClientOptions } from "vscode-languageclient";
-
 import { LanguageClient } from "vscode-languageclient/browser";
 
 let client: LanguageClient;
