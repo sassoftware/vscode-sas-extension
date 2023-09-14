@@ -151,24 +151,20 @@ export class ContentModel {
       ? []
       : await this.getChildren(myFavoritesFolder);
 
-    const items = await Promise.all(
-      result.items.map(async (childItem: ContentItem, index) => ({
-        ...childItem,
-        uid: `${item.uid}/${index}`,
-        permission: getPermission(childItem),
-        flags: {
-          isInRecycleBin,
-          isInMyFavorites,
-          hasFavoriteId: all_favorites.find(
-            (favorite) =>
-              getResourceIdFromItem(favorite) ===
-              getResourceIdFromItem(childItem),
-          )?.id,
-        },
-      })),
-    );
-
-    return items;
+    return result.items.map((childItem: ContentItem, index) => ({
+      ...childItem,
+      uid: `${item.uid}/${index}`,
+      permission: getPermission(childItem),
+      flags: {
+        isInRecycleBin,
+        isInMyFavorites,
+        hasFavoriteId: all_favorites.find(
+          (favorite) =>
+            getResourceIdFromItem(favorite) ===
+            getResourceIdFromItem(childItem),
+        )?.id,
+      },
+    }));
   }
 
   public async getParent(item: ContentItem): Promise<ContentItem | undefined> {
