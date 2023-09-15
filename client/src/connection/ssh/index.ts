@@ -1,7 +1,8 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Client, ClientChannel, ConnectConfig } from "ssh2";
 import { l10n } from "vscode";
+
+import { Client, ClientChannel, ConnectConfig } from "ssh2";
 
 import { BaseConfig, RunResult } from "..";
 import { Session } from "../session";

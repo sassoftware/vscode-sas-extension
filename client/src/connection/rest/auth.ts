@@ -1,9 +1,10 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { CancellationTokenSource, Uri, env, l10n, window } from "vscode";
+
 import axios from "axios";
 import { createHash } from "crypto";
 import { URLSearchParams } from "url";
-import { CancellationTokenSource, Uri, env, l10n, window } from "vscode";
 
 import { Config } from ".";
 import { RootApi } from "./api/compute";

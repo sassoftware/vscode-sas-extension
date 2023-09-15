@@ -3,13 +3,14 @@
 import { createElement, useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import "./DataViewer.css";
-import "ag-grid-community/styles/ag-grid.css";
-import "ag-grid-community/styles/ag-theme-alpine.css";
 import { AgGridReact } from "ag-grid-react";
 
 import ".";
 import useDataViewer from "./useDataViewer";
+
+import "./DataViewer.css";
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-alpine.css";
 
 const gridStyles = {
   "--ag-borders": "none",

@@ -1,7 +1,8 @@
+import * as vscode from "vscode";
+
 import { assert } from "chai";
 import { readFileSync } from "fs";
 import * as path from "path";
-import * as vscode from "vscode";
 
 export function getUri(name: string): vscode.Uri {
   return vscode.Uri.file(path.resolve(__dirname, "../../testFixture", name));

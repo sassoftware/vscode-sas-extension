@@ -1,7 +1,3 @@
-import axios, { AxiosInstance } from "axios";
-import { expect } from "chai";
-import * as sinon from "sinon";
-import { StubbedInstance, stubInterface } from "ts-sinon";
 import {
   DataTransfer,
   DataTransferItem,
@@ -12,6 +8,11 @@ import {
   Uri,
   authentication,
 } from "vscode";
+
+import axios, { AxiosInstance } from "axios";
+import { expect } from "chai";
+import * as sinon from "sinon";
+import { StubbedInstance, stubInterface } from "ts-sinon";
 
 import ContentDataProvider from "../../../src/components/ContentNavigator/ContentDataProvider";
 import { ContentModel } from "../../../src/components/ContentNavigator/ContentModel";

@@ -1,8 +1,5 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { lstat, readFile, readdir } from "fs";
-import { basename, join } from "path";
-import { promisify } from "util";
 import {
   DataTransfer,
   DataTransferItem,
@@ -29,6 +26,10 @@ import {
   l10n,
   window,
 } from "vscode";
+
+import { lstat, readFile, readdir } from "fs";
+import { basename, join } from "path";
+import { promisify } from "util";
 
 import { profileConfig } from "../../commands/profile";
 import { SubscriptionProvider } from "../SubscriptionProvider";

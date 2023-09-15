@@ -1,6 +1,5 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import * as path from "path";
 import {
   ConfigurationChangeEvent,
   ExtensionContext,
@@ -24,6 +23,8 @@ import {
   ServerOptions,
   TransportKind,
 } from "vscode-languageclient/node";
+
+import * as path from "path";
 
 import { checkProfileAndAuthorize } from "../commands/authorize";
 import { closeSession } from "../commands/closeSession";

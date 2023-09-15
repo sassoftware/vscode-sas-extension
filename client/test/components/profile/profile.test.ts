@@ -1,5 +1,6 @@
-import { assert, expect } from "chai";
 import { ConfigurationTarget, workspace } from "vscode";
+
+import { assert, expect } from "chai";
 
 import {
   AuthType,

@@ -1,12 +1,13 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { Uri, authentication } from "vscode";
+
 import axios, {
   AxiosError,
   AxiosInstance,
   AxiosRequestConfig,
   AxiosResponse,
 } from "axios";
-import { Uri, authentication } from "vscode";
 
 import { SASAuthProvider } from "../AuthProvider";
 import {

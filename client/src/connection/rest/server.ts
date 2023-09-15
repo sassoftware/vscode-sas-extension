@@ -1,7 +1,8 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import axios, { AxiosResponse } from "axios";
 import { l10n } from "vscode";
+
+import axios, { AxiosResponse } from "axios";
 
 import { Link, Server, ServersApi } from "./api/compute";
 import { BaseCompute, Compute, getApiConfig, stateOptions } from "./common";
