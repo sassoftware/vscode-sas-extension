@@ -33,7 +33,7 @@ import {
 } from "vscode";
 
 import { lstat, readFile, readdir } from "fs";
-import { basename, join } from "path";
+import { basename, join, parse } from "path";
 import { promisify } from "util";
 
 import { profileConfig } from "../../commands/profile";
@@ -168,8 +168,13 @@ class ContentDataProvider
       return undefined;
     }
 
+    const filename = (parse(contentItem.name).name || contentItem.name).replace(
+      /[^a-zA-Z0-9]/g,
+      "",
+    );
+
     return {
-      insertText: `filename myfile filesrvc folderpath='${fileFolderPath}' filename='${contentItem.name}';\n`,
+      insertText: `filename ${filename} filesrvc folderpath='${fileFolderPath}' filename='${contentItem.name}';\n`,
     };
   }
 
