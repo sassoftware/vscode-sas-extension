@@ -180,8 +180,7 @@ class ContentNavigator implements SubscriptionProvider {
             value: resource.name,
             validateInput: isContainer ? folderValidator : fileValidator,
           });
-
-          if (name === resource.name) {
+          if (!name || name === resource.name) {
             return;
           }
 
