@@ -8,6 +8,7 @@ import {
   getContextValue,
   setContextValue,
 } from "../../components/ExtensionContext";
+import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 import { ContextsApi, SessionsApi } from "./api/compute";
 import { ComputeState, getApiConfig } from "./common";
@@ -85,6 +86,7 @@ class RestSession extends Session {
     if (this._computeSession) {
       //reconnected to a running session, so just return
       await this.printSessionLog(this._computeSession);
+      updateStatusBarItem(true);
       return;
     }
 
@@ -133,6 +135,7 @@ class RestSession extends Session {
 
     //Save the current sessionId
     setContextValue("SAS.sessionId", this._computeSession.sessionId);
+    updateStatusBarItem(true);
   };
 
   public run = async (code: string) => {
@@ -193,6 +196,7 @@ class RestSession extends Session {
 
       //Since the session is being closed, remove the cached session id
       setContextValue("SAS.sessionId", undefined);
+      updateStatusBarItem(false);
     }
   };
 
