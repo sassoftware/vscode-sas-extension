@@ -33,7 +33,7 @@ import {
 } from "vscode";
 
 import { lstat, readFile, readdir } from "fs";
-import { basename, join, parse } from "path";
+import { basename, join } from "path";
 import { promisify } from "util";
 
 import { profileConfig } from "../../commands/profile";
@@ -50,6 +50,7 @@ import { convertNotebookToFlow } from "./convert";
 import { ContentItem } from "./types";
 import {
   getCreationDate,
+  getFileStatement,
   getId,
   isContainer as getIsContainer,
   getLabel,
@@ -151,7 +152,7 @@ class ContentDataProvider
   }
 
   public async provideDocumentDropEdits(
-    _document: TextDocument,
+    document: TextDocument,
     position: Position,
     dataTransfer: DataTransfer,
     token: CancellationToken,
@@ -168,13 +169,12 @@ class ContentDataProvider
       return undefined;
     }
 
-    const filename = (parse(contentItem.name).name || contentItem.name).replace(
-      /[^a-zA-Z0-9]/g,
-      "",
-    );
-
     return {
-      insertText: `filename ${filename} filesrvc folderpath='${fileFolderPath}' filename='${contentItem.name}';\n`,
+      insertText: getFileStatement(
+        contentItem.name,
+        document.getText(),
+        fileFolderPath,
+      ),
     };
   }
 
