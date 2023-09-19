@@ -9,7 +9,7 @@ export const LogFn = (logs) => {
   if (!outputChannel) {
     outputChannel = window.createOutputChannel(l10n.t("SAS Log"), "sas-log");
   }
-  outputChannel.show();
+  outputChannel.show(true);
   for (const line of logs) {
     appendLog(line.type);
     outputChannel.appendLine(line.line);
