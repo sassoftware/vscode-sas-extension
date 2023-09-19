@@ -29,6 +29,9 @@ interface FoldingBlock {
 let running = false;
 
 function getCode(selected = false, uri?: Uri): string {
+  if(uri){
+    console.log('run.ts::getCode() - uri.fsPath:', uri.fsPath && uri.fsPath );
+  }
   const editor = uri
     ? window.visibleTextEditors.find(
         (editor) => editor.document.uri.toString() === uri.toString(),
@@ -36,6 +39,17 @@ function getCode(selected = false, uri?: Uri): string {
     : window.activeTextEditor;
   const doc = editor?.document;
   let code = "";
+  let setCodeFile = "";
+  if (uri && uri.fsPath) {
+    setCodeFile = 'option set=SAS_EXECFILEPATH=%sysfunc(quote(' + uri.fsPath + '));\n';
+  } else if (doc) {
+    if (doc.fileName) {
+      setCodeFile = 'option set=SAS_EXECFILEPATH=%sysfunc(quote(' + doc.fileName + '));\n';
+    }
+    else if (doc.uri && doc.uri.fsPath) {
+      setCodeFile = 'option set=SAS_EXECFILEPATH=%sysfunc(quote(' + doc.uri.fsPath + '));\n';
+    }
+  }
   if (selected) {
     // run selected code if there is one or more non-empty selections, otherwise run all code
 
@@ -52,7 +66,8 @@ function getCode(selected = false, uri?: Uri): string {
   } else {
     code = doc?.getText();
   }
-
+  code = setCodeFile + code;
+  // console.log('code:', code);
   return wrapCodeWithOutputHtml(code);
 }
 
