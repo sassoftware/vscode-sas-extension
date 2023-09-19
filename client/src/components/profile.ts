@@ -1,13 +1,12 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import {
-  commands,
-  window,
-  workspace,
   ConfigurationTarget,
   QuickPickOptions,
+  commands,
   l10n,
+  window,
+  workspace,
 } from "vscode";
 
 import { readFileSync } from "fs";

@@ -1,6 +1,5 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import {
   EventEmitter,
   Position,
@@ -13,6 +12,7 @@ import {
   window,
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
+
 import { wrapCodeWithOutputHtml } from "../components/Helper/SasCodeHelper";
 import { isOutputHtmlEnabled } from "../components/Helper/SettingHelper";
 import { LogFn as LogChannelFn } from "../components/LogChannel";

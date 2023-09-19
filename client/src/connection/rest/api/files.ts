@@ -13,24 +13,25 @@
  */
 
 /* tslint:disable */
-/* eslint-disable */
 
-import { Configuration } from "./configuration";
-import { AxiosResponse, AxiosRequestConfig } from "axios";
+/* eslint-disable */
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 // URLSearchParams not necessarily used
 // @ts-ignore
 import { URL, URLSearchParams } from "url";
+
 // Some imports not used depending on template conditions
 // @ts-ignore
 import {
   DUMMY_BASE_URL,
   RequestArgs,
   assertParamExists,
-  setSearchParams,
-  serializeDataIfNeeded,
-  toPathString,
   createRequestFunction,
+  serializeDataIfNeeded,
+  setSearchParams,
+  toPathString,
 } from "./common";
+import { Configuration } from "./configuration";
 
 /**
  * The list of links to top-level resources and operations available from the root of the API.

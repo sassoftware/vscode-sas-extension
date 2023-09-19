@@ -1,18 +1,17 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import {
-  TextDocuments,
-  TextDocumentSyncKind,
-  InitializeResult,
-  SemanticTokensRequest,
   Connection,
   DidChangeConfigurationNotification,
+  InitializeResult,
+  SemanticTokensRequest,
+  TextDocumentSyncKind,
+  TextDocuments,
 } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
-import { LanguageServiceProvider, legend } from "./sas/LanguageServiceProvider";
 import { CompletionProvider } from "./sas/CompletionProvider";
+import { LanguageServiceProvider, legend } from "./sas/LanguageServiceProvider";
 import type { LibCompleteItem } from "./sas/SyntaxDataProvider";
 
 const servicePool: Record<string, LanguageServiceProvider> = {};

@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "fs";
+import glob from "glob";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import glob from "glob";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packagePath = join(__dirname, "..");

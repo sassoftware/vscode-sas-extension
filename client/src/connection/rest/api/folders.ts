@@ -13,24 +13,25 @@
  */
 
 /* tslint:disable */
-/* eslint-disable */
 
-import { Configuration } from "./configuration";
-import { AxiosResponse, AxiosRequestConfig } from "axios";
+/* eslint-disable */
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 // URLSearchParams not necessarily used
 // @ts-ignore
 import { URL, URLSearchParams } from "url";
+
 // Some imports not used depending on template conditions
 // @ts-ignore
 import {
   DUMMY_BASE_URL,
   RequestArgs,
   assertParamExists,
-  setSearchParams,
-  serializeDataIfNeeded,
-  toPathString,
   createRequestFunction,
+  serializeDataIfNeeded,
+  setSearchParams,
+  toPathString,
 } from "./common";
+import { Configuration } from "./configuration";
 
 /**
  * An ancestor entry that is returned from an ancestor\'s request.

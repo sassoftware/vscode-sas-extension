@@ -10,6 +10,7 @@ import {
   MarkupKind,
 } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
+
 import { CodeZoneManager } from "./CodeZoneManager";
 import { Model } from "./Model";
 import { HelpData, LibCompleteItem, OptionValues } from "./SyntaxDataProvider";

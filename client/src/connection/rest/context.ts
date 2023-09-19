@@ -1,11 +1,12 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-import { BaseCompute, Compute, getApiConfig } from "./common";
-import { ContextsApi, Context, Link, ContextSummary } from "./api/compute";
-import { ComputeSession } from "./session";
-import axios, { AxiosResponse } from "axios";
 import { l10n } from "vscode";
+
+import axios, { AxiosResponse } from "axios";
+
+import { Context, ContextSummary, ContextsApi, Link } from "./api/compute";
+import { BaseCompute, Compute, getApiConfig } from "./common";
+import { ComputeSession } from "./session";
 
 export class ComputeContext extends Compute {
   api;

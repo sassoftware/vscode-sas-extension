@@ -1,17 +1,19 @@
+import { ConfigurationTarget, workspace } from "vscode";
+
+import { assert, expect } from "chai";
+
 import {
-  ProfileConfig,
-  getProfilePrompt,
-  ProfilePromptType,
   AuthType,
+  COMProfile,
+  ConnectionType,
   EXTENSION_CONFIG_KEY,
   EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
-  ViyaProfile,
-  ConnectionType,
+  ProfileConfig,
+  ProfilePromptType,
   SSHProfile,
-  COMProfile,
+  ViyaProfile,
+  getProfilePrompt,
 } from "../../../src/components/profile";
-import { assert, expect } from "chai";
-import { ConfigurationTarget, workspace } from "vscode";
 
 let testProfileName: string;
 let testProfileNewName: string;
