@@ -29,8 +29,8 @@ interface FoldingBlock {
 let running = false;
 
 function getCode(selected = false, uri?: Uri): string {
-  if(uri){
-    console.log('run.ts::getCode() - uri.fsPath:', uri.fsPath && uri.fsPath );
+  if (uri) {
+    console.log("run.ts::getCode() - uri.fsPath:", uri.fsPath && uri.fsPath);
   }
   const editor = uri
     ? window.visibleTextEditors.find(
@@ -41,13 +41,17 @@ function getCode(selected = false, uri?: Uri): string {
   let code = "";
   let setCodeFile = "";
   if (uri && uri.fsPath) {
-    setCodeFile = 'option set=SAS_EXECFILEPATH=%sysfunc(quote(' + uri.fsPath + '));\n';
+    setCodeFile =
+      "option set=SAS_EXECFILEPATH=%sysfunc(quote(" + uri.fsPath + "));\n";
   } else if (doc) {
     if (doc.fileName) {
-      setCodeFile = 'option set=SAS_EXECFILEPATH=%sysfunc(quote(' + doc.fileName + '));\n';
-    }
-    else if (doc.uri && doc.uri.fsPath) {
-      setCodeFile = 'option set=SAS_EXECFILEPATH=%sysfunc(quote(' + doc.uri.fsPath + '));\n';
+      setCodeFile =
+        "option set=SAS_EXECFILEPATH=%sysfunc(quote(" + doc.fileName + "));\n";
+    } else if (doc.uri && doc.uri.fsPath) {
+      setCodeFile =
+        "option set=SAS_EXECFILEPATH=%sysfunc(quote(" +
+        doc.uri.fsPath +
+        "));\n";
     }
   }
   if (selected) {
