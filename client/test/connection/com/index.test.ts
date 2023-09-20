@@ -1,10 +1,10 @@
 import { expect } from "chai";
 import proc from "child_process";
 import fs from "fs";
+import { SinonSandbox, SinonStub, createSandbox } from "sinon";
+
 import { getSession } from "../../../src/connection/com";
 import { scriptContent } from "../../../src/connection/com/script";
-
-import { SinonSandbox, SinonStub, createSandbox } from "sinon";
 import { Session } from "../../../src/connection/session";
 
 describe("COM connection", () => {

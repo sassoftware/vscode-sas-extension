@@ -1,7 +1,7 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import { EventEmitter, TaskDefinition, ViewColumn, l10n, window } from "vscode";
+
 import { runTask } from "../../commands/run";
 import { RunResult } from "../../connection";
 import {

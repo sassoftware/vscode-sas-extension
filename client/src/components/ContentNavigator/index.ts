@@ -1,22 +1,22 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import {
-  commands,
   ConfigurationChangeEvent,
   Disposable,
   ExtensionContext,
-  l10n,
   Uri,
+  commands,
+  l10n,
   window,
   workspace,
 } from "vscode";
+
 import { profileConfig } from "../../commands/profile";
-import { ConnectionType } from "../profile";
 import { SubscriptionProvider } from "../SubscriptionProvider";
-import { Messages } from "./const";
+import { ConnectionType } from "../profile";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
+import { Messages } from "./const";
 import { ContentItem } from "./types";
 import { isContainer as getIsContainer, isItemInRecycleBin } from "./utils";
 

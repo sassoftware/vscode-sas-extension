@@ -1,10 +1,11 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { l10n } from "vscode";
 
 import { Client, ClientChannel, ConnectConfig } from "ssh2";
-import { RunResult, BaseConfig } from "..";
+
+import { BaseConfig, RunResult } from "..";
 import { Session } from "../session";
-import { l10n } from "vscode";
 
 const endCode = "--vscode-sas-extension-submit-end--";
 const sasLaunchTimeout = 10000;

@@ -13,13 +13,13 @@
  */
 
 /* tslint:disable */
-/* eslint-disable */
 
+/* eslint-disable */
 import { AxiosRequestConfig, AxiosResponse } from "axios";
-import { Configuration } from "./configuration";
 // URLSearchParams not necessarily used
 // @ts-ignore
 import { URL } from "url";
+
 // Some imports not used depending on template conditions
 // @ts-ignore
 import {
@@ -31,6 +31,7 @@ import {
   setSearchParams,
   toPathString,
 } from "./common";
+import { Configuration } from "./configuration";
 
 /**
  * The list of links to top-level resources and operations available from the root of the API.

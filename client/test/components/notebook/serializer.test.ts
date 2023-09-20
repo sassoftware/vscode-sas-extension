@@ -1,6 +1,8 @@
-import { NotebookSerializer } from "../../../src/components/notebook/Serializer";
 import * as vscode from "vscode";
+
 import * as assert from "assert";
+
+import { NotebookSerializer } from "../../../src/components/notebook/Serializer";
 
 const testCell = new vscode.NotebookCellData(
   vscode.NotebookCellKind.Code,

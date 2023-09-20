@@ -1,6 +1,8 @@
+import { TreeItemCollapsibleState, Uri, l10n } from "vscode";
+
 import { expect } from "chai";
 import nock from "nock";
-import { TreeItemCollapsibleState, Uri, l10n } from "vscode";
+
 import LibraryDataProvider from "../../../src/components/LibraryNavigator/LibraryDataProvider";
 import LibraryModel from "../../../src/components/LibraryNavigator/LibraryModel";
 import {
