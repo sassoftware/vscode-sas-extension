@@ -94,10 +94,18 @@ export async function getSASCodeFromActiveEditor() {
 
   checkCodeIsNotEmpty(sasCode);
   if (activeEditor.document.fileName) {
+    // Environment Variable SAS_EXECFILEPATH is set by SAS Enhanced Editor
+    // sasCode =
+    //   "option set=SAS_EXECFILEPATH=%sysfunc(quote(" +
+    //   activeEditor.document.fileName +
+    //   "));\n" +
+    //   sasCode;
+
+    // Macro-variable &_SASPROGRAMFILE is set in SAS Studio and SAS Enterprise Guide
     sasCode =
-      "option set=SAS_EXECFILEPATH=%sysfunc(quote(" +
+      "%let _SASPROGRAMFILE = %bquote(" +
       activeEditor.document.fileName +
-      "));\n" +
+      ");\n" +
       sasCode;
   }
 
@@ -126,8 +134,12 @@ export async function getSASCodeFromFile(file: string) {
 
   checkCodeIsNotEmpty(sasCode);
 
-  sasCode =
-    "option set=SAS_EXECFILEPATH=%sysfunc(quote(" + fileUri + "));\n" + sasCode;
+  // Environment Variable SAS_EXECFILEPATH is set by SAS Enhanced Editor
+  // sasCode =
+  //   "option set=SAS_EXECFILEPATH=%sysfunc(quote(" + fileUri + "));\n" + sasCode;
+
+  // Macro-variable &_SASPROGRAMFILE is set in SAS Studio and SAS Enterprise Guide
+  sasCode = "%let _SASPROGRAMFILE = %bquote(" + fileUri + ");\n" + sasCode;
 
   return sasCode;
 }

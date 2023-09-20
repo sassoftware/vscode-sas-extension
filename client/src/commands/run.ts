@@ -29,31 +29,23 @@ interface FoldingBlock {
 let running = false;
 
 function getCode(selected = false, uri?: Uri): string {
-  if (uri) {
-    console.log("run.ts::getCode() - uri.fsPath:", uri.fsPath && uri.fsPath);
-  }
   const editor = uri
     ? window.visibleTextEditors.find(
         (editor) => editor.document.uri.toString() === uri.toString(),
       )
     : window.activeTextEditor;
   const doc = editor?.document;
-  let code = "";
-  let setCodeFile = "";
+  let codeFile = "";
   if (uri && uri.fsPath) {
-    setCodeFile =
-      "option set=SAS_EXECFILEPATH=%sysfunc(quote(" + uri.fsPath + "));\n";
+    codeFile = uri.fsPath;
   } else if (doc) {
     if (doc.fileName) {
-      setCodeFile =
-        "option set=SAS_EXECFILEPATH=%sysfunc(quote(" + doc.fileName + "));\n";
+      codeFile = doc.fileName;
     } else if (doc.uri && doc.uri.fsPath) {
-      setCodeFile =
-        "option set=SAS_EXECFILEPATH=%sysfunc(quote(" +
-        doc.uri.fsPath +
-        "));\n";
+      codeFile = doc.uri.fsPath;
     }
   }
+  let code = "";
   if (selected) {
     // run selected code if there is one or more non-empty selections, otherwise run all code
 
@@ -70,8 +62,13 @@ function getCode(selected = false, uri?: Uri): string {
   } else {
     code = doc?.getText();
   }
-  code = setCodeFile + code;
-  // console.log('code:', code);
+  if (codeFile) {
+    // Environment Variable SAS_EXECFILEPATH is set by SAS Enhanced Editor
+    // code = "option set=SAS_EXECFILEPATH=%sysfunc(quote(" + codeFile + "));\n" + code;
+
+    // Macro-variable &_SASPROGRAMFILE is set in SAS Studio and SAS Enterprise Guide
+    code = "%let _SASPROGRAMFILE = %bquote(" + codeFile + ");\n" + code;
+  }
   return wrapCodeWithOutputHtml(code);
 }
 
