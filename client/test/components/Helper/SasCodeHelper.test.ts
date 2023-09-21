@@ -12,9 +12,7 @@ describe("assign_SASProgramFile", () => {
       "assign_SASProgramFile returned unexpected string",
     );
   });
-});
 
-describe("assign_SASProgramFile", () => {
   it("correctly assigns unix style file path to &_SASPROGRAMFILE", () => {
     const code = "%put &=_SASPROGRAMFILE;";
     const fileName = `/tmp/My Test/R&D/mean(95%CI)/Parkinson's Disease example.sas`;
