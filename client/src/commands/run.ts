@@ -13,7 +13,10 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
-import { wrapCodeWithOutputHtml } from "../components/Helper/SasCodeHelper";
+import {
+  assign_SASProgramFile,
+  wrapCodeWithOutputHtml,
+} from "../components/Helper/SasCodeHelper";
 import { isOutputHtmlEnabled } from "../components/Helper/SettingHelper";
 import { LogFn as LogChannelFn } from "../components/LogChannel";
 import { OnLogFn, RunResult, getSession } from "../connection";
@@ -63,11 +66,7 @@ function getCode(selected = false, uri?: Uri): string {
     code = doc?.getText();
   }
   if (codeFile) {
-    // Environment Variable SAS_EXECFILEPATH is set by SAS Enhanced Editor
-    // code = "option set=SAS_EXECFILEPATH=%sysfunc(quote(" + codeFile + "));\n" + code;
-
-    // Macro-variable &_SASPROGRAMFILE is set in SAS Studio and SAS Enterprise Guide
-    code = "%let _SASPROGRAMFILE = %bquote(" + codeFile + ");\n" + code;
+    code = assign_SASProgramFile(code, codeFile);
   }
   return wrapCodeWithOutputHtml(code);
 }
