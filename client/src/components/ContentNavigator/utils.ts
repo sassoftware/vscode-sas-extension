@@ -119,55 +119,41 @@ export const isContentItem = (item): item is ContentItem => isValidItem(item);
  * - First, we attempt to use only the alphanumeric characters from contentItem.name as
  *   as our variable name (without the file extension).
  * - If that's empty, we instead use `<extension>file`
- * - Next, we add a numeric suffix to the variable name, and check documentContent to make
- *   sure what we're creating isn't already in use.
- * - If the current variable is in use, we continue to increment our numeric suffix until
- *   we find one that doesn't exist in our document.
+ * - Next, we add a unique suffix to the variable name to avoid collisions with other
+ *   variables.
  *
  * @param contentItemName ContentItem.name used for creating variable name.
- * @param documentContent The contents of the editor we're dropping into.
  *
  * @returns string our new variable name.
  */
-const extractVariableName = (
-  contentItemName: string,
-  documentContent: string,
-): string => {
+const extractVariableName = (contentItemName: string): string => {
   const filePieces = parse(contentItemName);
   const partialFileName = (
-    filePieces.name.replace(/[^a-zA-Z0-9]/g, "") ||
+    filePieces.name.replace(/[^a-zA-Z0-9_]/g, "") ||
     `${filePieces.ext.replace(".", "")}file`
   ).toLocaleLowerCase();
 
-  let idx = 0;
-  const lowercaseDocumentContent = documentContent.toLocaleLowerCase();
-  while (
-    // The trailing space is intentional here so we don't confuse things like
-    // `csvfile11` for `csvfile1`
-    lowercaseDocumentContent.indexOf(`${partialFileName}${++idx} `) !== -1
-  ) {
-    /* empty */
-  }
+  const date = new Date();
+  const uniqueSuffix = `${date.getHours()}${date.getMinutes()}${date.getSeconds()}`;
 
-  return `${partialFileName}${idx}`;
+  return `${partialFileName}${uniqueSuffix}`;
 };
 
-// A document uses uppercase letters _if_ there is more than one
-// word (where word means gte 3 characters) that is all uppercase
+// A document uses uppercase letters _if_ are no words
+// (where word means gte 3 characters) that are lowercase.
 const documentUsesUppercase = (documentContent: string) =>
-  (
-    documentContent
-      // Exclude anything in quotes from our calculations
-      .replace(/('|")([^('|")]*)('|")/g, "")
-      .match(/([A-Z]{3,})\S/g) || []
-  ).length > 1;
+  documentContent &&
+  !documentContent
+    // Exclude anything in quotes from our calculations
+    .replace(/('|")([^('|")]*)('|")/g, "")
+    .match(/([a-z]{3,})\S/g);
 
 export const getFileStatement = (
   contentItemName: string,
   documentContent: string,
   fileFolderPath: string,
 ): string => {
-  const filename = extractVariableName(contentItemName, documentContent);
+  const filename = extractVariableName(contentItemName);
   const usesUppercase = documentUsesUppercase(documentContent);
   const cmd = `filename ${filename} filesrvc folderpath='$1' filename='$2';\n`;
   return (usesUppercase ? cmd.toUpperCase() : cmd)
