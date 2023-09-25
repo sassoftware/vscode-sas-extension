@@ -898,7 +898,7 @@
     "chai": "^4.3.8",
     "concurrently": "^8.2.1",
     "esbuild": "^0.19.3",
-    "eslint": "^8.49.0",
+    "eslint": "^8.50.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "mocha": "^10.2.0",
