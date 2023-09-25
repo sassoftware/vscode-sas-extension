@@ -93,7 +93,17 @@ export async function getSASCodeFromActiveEditor() {
   }
 
   checkCodeIsNotEmpty(sasCode);
+  if (activeEditor.document.fileName) {
+    sasCode = assign_SASProgramFile(sasCode, activeEditor.document.fileName);
+  }
 
+  return sasCode;
+}
+
+export function assign_SASProgramFile(code: string, codeFile: string) {
+  codeFile = codeFile.replace(/[('")]/g, "%$&");
+  const sasCode =
+    "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + codeFile + "));\n" + code;
   return sasCode;
 }
 
@@ -104,6 +114,7 @@ export async function getSASCodeFromFile(file: string) {
   if (isAbsolute(file)) {
     const textDocument = await workspace.openTextDocument(file);
     if (textDocument.languageId === "sas") {
+      fileUri = file;
       sasCode = textDocument.getText();
     } else {
       throw new Error(l10n.t("Not a valid sas file: {file}", { file }));
@@ -117,6 +128,8 @@ export async function getSASCodeFromFile(file: string) {
   }
 
   checkCodeIsNotEmpty(sasCode);
+
+  sasCode = assign_SASProgramFile(sasCode, fileUri);
 
   return sasCode;
 }

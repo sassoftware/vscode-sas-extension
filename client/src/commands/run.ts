@@ -13,7 +13,10 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
-import { wrapCodeWithOutputHtml } from "../components/Helper/SasCodeHelper";
+import {
+  assign_SASProgramFile,
+  wrapCodeWithOutputHtml,
+} from "../components/Helper/SasCodeHelper";
 import { isOutputHtmlEnabled } from "../components/Helper/SettingHelper";
 import { LogFn as LogChannelFn } from "../components/LogChannel";
 import { OnLogFn, RunResult, getSession } from "../connection";
@@ -35,6 +38,16 @@ function getCode(selected = false, uri?: Uri): string {
       )
     : window.activeTextEditor;
   const doc = editor?.document;
+  let codeFile = "";
+  if (uri && uri.fsPath) {
+    codeFile = uri.fsPath;
+  } else if (doc) {
+    if (doc.fileName) {
+      codeFile = doc.fileName;
+    } else if (doc.uri && doc.uri.fsPath) {
+      codeFile = doc.uri.fsPath;
+    }
+  }
   let code = "";
   if (selected) {
     // run selected code if there is one or more non-empty selections, otherwise run all code
@@ -52,7 +65,9 @@ function getCode(selected = false, uri?: Uri): string {
   } else {
     code = doc?.getText();
   }
-
+  if (codeFile) {
+    code = assign_SASProgramFile(code, codeFile);
+  }
   return wrapCodeWithOutputHtml(code);
 }
 
