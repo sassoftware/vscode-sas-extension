@@ -34,7 +34,7 @@ export const showResult = (html: string, uri?: Uri, title?: string) => {
       resultPanel.title = title;
     }
     resultPanel.reveal(
-      sideResult ? ViewColumn.Beside : editor.viewColumn,
+      sideResult ? ViewColumn.Beside : editor?.viewColumn,
       true,
     );
   }
