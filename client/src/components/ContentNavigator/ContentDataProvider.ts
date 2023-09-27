@@ -41,6 +41,7 @@ import {
   ROOT_FOLDER_TYPE,
   TRASH_FOLDER_TYPE,
 } from "./const";
+import { convertNotebookToFlow } from "./convert";
 import { ContentItem } from "./types";
 import {
   getCreationDate,
@@ -56,7 +57,6 @@ import {
   isReference,
   resourceType,
 } from "./utils";
-import { convertNotebookToFlow } from "./convert";
 
 const contentItemMimeType = "application/vnd.code.tree.contentdataprovider";
 class ContentDataProvider

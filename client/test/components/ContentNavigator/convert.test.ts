@@ -1,9 +1,10 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { workspace } from "vscode";
+
+import { deepEqual } from "assert";
 
 import { convertNotebookToFlow } from "../../../src/components/ContentNavigator/convert";
-import { deepEqual } from "assert";
-import { workspace } from "vscode";
 import { getTestFixtureContent } from "../../utils";
 
 function parseFlowData(flowDataString) {

@@ -9,6 +9,10 @@ import axios, {
   AxiosResponse,
 } from "axios";
 
+import {
+  associateFlowObject,
+  createStudioSession,
+} from "../../connection/studio";
 import { SASAuthProvider } from "../AuthProvider";
 import {
   FAVORITES_FOLDER_TYPE,
@@ -29,10 +33,6 @@ import {
   getUri,
   isContainer,
 } from "./utils";
-import {
-  associateFlowObject,
-  createStudioSession,
-} from "../../connection/studio";
 
 interface AddMemberProperties {
   name?: string;
