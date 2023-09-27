@@ -3,12 +3,12 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion,
 @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any, @typescript-eslint/dot-notation, @typescript-eslint/consistent-type-assertions */
-import { arrayToMap } from "./utils";
-import { LexerEx } from "./LexerEx";
 import { Lexer, Token } from "./Lexer";
+import { LexerEx } from "./LexerEx";
 import { Model } from "./Model";
-import { SyntaxProvider } from "./SyntaxProvider";
 import { SyntaxDataProvider } from "./SyntaxDataProvider";
+import { SyntaxProvider } from "./SyntaxProvider";
+import { arrayToMap } from "./utils";
 
 interface TokenEx extends Pick<Token, "type" | "text"> {
   line: number;
@@ -831,7 +831,11 @@ export class CodeZoneManager {
         }
       }
       if (token.text[0] === "%") {
+        // if (token.text.toUpperCase() === "%MACRO") {
+        //   return CodeZoneManager.ZONE_TYPE.MACRO_DEF;
+        // } else {
         return CodeZoneManager.ZONE_TYPE.MACRO_STMT; //TODO: need to differ among ARM macro, autocall macro, macro function, macro statement
+        // }
       } else {
         return CodeZoneManager.ZONE_TYPE.GBL_STMT;
       }
@@ -2139,11 +2143,15 @@ export class CodeZoneManager {
     //special for call statement, and ignore others currently
     token = this._getPrev(newContext); // current
     text = token!.text.toUpperCase();
-    if (
-      (this._stmtName === "IF" || this._stmtName === "CALL") &&
-      /^CALL\b/.test(text)
-    ) {
-      return this._callStmt(newContext);
+    if (this._stmtName === "IF" || this._stmtName === "CALL") {
+      const prevToken = this._getPrev(newContext);
+      const prevText = prevToken?.text.toUpperCase();
+      if (
+        /^CALL\b/.test(text) ||
+        (/^\w+$/.test(text) && prevText && /^CALL$/.test(prevText))
+      ) {
+        return this._callStmt(newContext);
+      }
     }
     const zone = this._stmtEx(context, stmt);
     if (this._isCall(zone)) {
@@ -2280,12 +2288,17 @@ export class CodeZoneManager {
       return this._macroStmt(context, token);
     }
   }
-  private _macroDef(context: Context) {
+  private _macroDef(context: Context): number {
     let token;
     const name = this._getNextEx(context),
       opts = [],
       stack: any[] = [];
 
+    // if (name.text === ";") {
+    //   return CodeZoneManager.ZONE_TYPE.MACRO_DEF;
+    // }
+
+    // this._emit(name, CodeZoneManager.ZONE_TYPE.MACRO_DEF); // macro name
     this._emit(name, CodeZoneManager.ZONE_TYPE.RESTRICTED); // macro name
 
     const tmpContext = this._cloneContext(context);

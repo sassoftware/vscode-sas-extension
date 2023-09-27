@@ -1,9 +1,5 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-import { lstat, readFile, readdir } from "fs";
-import { basename, join } from "path";
-import { promisify } from "util";
 import {
   DataTransfer,
   DataTransferItem,
@@ -16,8 +12,8 @@ import {
   FileType,
   ProviderResult,
   Tab,
-  TabInputText,
   TabInputNotebook,
+  TabInputText,
   TextDocumentContentProvider,
   ThemeIcon,
   TreeDataProvider,
@@ -26,9 +22,15 @@ import {
   TreeItemCollapsibleState,
   TreeView,
   Uri,
+  commands,
   l10n,
   window,
 } from "vscode";
+
+import { lstat, readFile, readdir } from "fs";
+import { basename, join } from "path";
+import { promisify } from "util";
+
 import { profileConfig } from "../../commands/profile";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ViyaProfile } from "../profile";
@@ -245,12 +247,18 @@ class ContentDataProvider
     item: ContentItem,
     name: string,
   ): Promise<Uri | undefined> {
-    if (!(await closeFileIfOpen(item))) {
+    const closing = closeFileIfOpen(item);
+    if (!(await closing)) {
       return;
     }
     const newItem = await this.model.renameResource(item, name);
     if (newItem) {
-      return getUri(newItem);
+      const newUri = getUri(newItem);
+      if (closing !== true) {
+        // File was open before rename, so re-open it
+        commands.executeCommand("vscode.open", newUri);
+      }
+      return newUri;
     }
   }
 
@@ -595,7 +603,7 @@ class ContentDataProvider
 
 export default ContentDataProvider;
 
-const closeFileIfOpen = (item: ContentItem): boolean | Thenable<boolean> => {
+const closeFileIfOpen = (item: ContentItem) => {
   const fileUri = getUri(item, isItemInRecycleBin(item));
   const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
   const tab = tabs.find(

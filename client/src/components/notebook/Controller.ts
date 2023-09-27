@@ -1,10 +1,10 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import * as vscode from "vscode";
+
 import { getSession } from "../../connection";
+import { wrapCodeWithOutputHtml } from "../Helper/SasCodeHelper";
 import { Deferred, deferred } from "../utils";
-import { wrapCode } from "../utils";
 
 export class NotebookController {
   readonly controllerId = "sas-notebook-controller-id";
@@ -130,7 +130,7 @@ const getCode = (doc: vscode.TextDocument) => {
   } else if (doc.languageId === "python") {
     code = wrapPython(code);
   }
-  return wrapCode(code);
+  return wrapCodeWithOutputHtml(code);
 };
 
 const wrapSQL = (code: string) => `proc sql;

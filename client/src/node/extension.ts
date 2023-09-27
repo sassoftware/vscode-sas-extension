@@ -1,7 +1,5 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-import * as path from "path";
 import {
   ConfigurationChangeEvent,
   ExtensionContext,
@@ -15,6 +13,7 @@ import {
   commands,
   l10n,
   languages,
+  tasks,
   window,
   workspace,
 } from "vscode";
@@ -24,6 +23,9 @@ import {
   ServerOptions,
   TransportKind,
 } from "vscode-languageclient/node";
+
+import * as path from "path";
+
 import { checkProfileAndAuthorize } from "../commands/authorize";
 import { closeSession } from "../commands/closeSession";
 import {
@@ -43,6 +45,8 @@ import { LogTokensProvider, legend } from "../components/LogViewer";
 import { NotebookController } from "../components/notebook/Controller";
 import { NotebookSerializer } from "../components/notebook/Serializer";
 import { ConnectionType } from "../components/profile";
+import { SasTaskProvider } from "../components/tasks/SasTaskProvider";
+import { SAS_TASK_TYPE } from "../components/tasks/SasTasks";
 
 let client: LanguageClient;
 // Create Profile status bar item
@@ -154,6 +158,7 @@ export function activate(context: ExtensionContext): void {
         ),
       );
     }),
+    tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
   );
 
   // Reset first to set "No Active Profiles"

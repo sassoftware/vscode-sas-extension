@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /* eslint-disable */
-import { arrayToMap, TextPosition } from "./utils";
 import { Lexer, Token } from "./Lexer";
-import { SyntaxDataProvider } from "./SyntaxDataProvider";
 import { Model } from "./Model";
+import { SyntaxDataProvider } from "./SyntaxDataProvider";
 import { Change } from "./SyntaxProvider";
+import { TextPosition, arrayToMap } from "./utils";
 
 /**
  * LexerEx to handle basic semantic related problems.

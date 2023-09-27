@@ -47,7 +47,7 @@
   "configuration.SAS.flowConversionMode": "选择笔记本的转换模式",
   "configuration.SAS.flowConversionModeNode": "将每个笔记本单元转换为一个节点",
   "configuration.SAS.flowConversionModeSwimlane": "将每个笔记本单元转换为泳道",
-  "configuration.SAS.session.outputHtml": "启用/禁用 ODS HTML5 输出",
+  "configuration.SAS.results.html.enabled": "启用/禁用 ODS HTML5 输出",
   "configuration.SAS.results.html.style": "指定 ODS HTML5 结果的样式。",
   "configuration.SAS.results.html.style.(auto)": "让扩展程序选择与颜色主题最匹配的样式。",
   "configuration.SAS.results.html.style.(server default)": "默认为 SAS 服务器上配置的样式。",

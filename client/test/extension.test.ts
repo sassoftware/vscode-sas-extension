@@ -1,5 +1,7 @@
-import * as assert from "assert";
 import * as vscode from "vscode";
+
+import * as assert from "assert";
+
 import { getUri, openDoc } from "./utils";
 
 let docUri;

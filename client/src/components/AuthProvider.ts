@@ -1,22 +1,22 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import {
   AuthenticationProvider,
   AuthenticationProviderAuthenticationSessionsChangeEvent,
   AuthenticationSession,
-  commands,
   ConfigurationChangeEvent,
   Disposable,
   Event,
   EventEmitter,
   SecretStorage,
+  commands,
   workspace,
 } from "vscode";
+
 import { profileConfig } from "../commands/profile";
+import { ConnectionType } from "../components/profile";
 import { getTokens, refreshToken } from "../connection/rest/auth";
 import { getCurrentUser } from "../connection/rest/identities";
-import { ConnectionType } from "../components/profile";
 
 const SECRET_KEY = "SASAuth";
 

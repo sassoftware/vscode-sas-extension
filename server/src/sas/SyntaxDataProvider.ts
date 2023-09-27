@@ -3,9 +3,8 @@
 
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types,
 @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any,@typescript-eslint/dot-notation */
-
-import { arrayToMap } from "./utils";
 import { ResLoader } from "../node/ResLoader";
+import { arrayToMap } from "./utils";
 
 const getBaseUrl = () => "../..";
 

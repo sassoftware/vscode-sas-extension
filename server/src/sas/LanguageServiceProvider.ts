@@ -1,12 +1,13 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { SyntaxProvider } from "./SyntaxProvider";
-import { Model } from "./Model";
-import { CompletionProvider } from "./CompletionProvider";
 import { DocumentSymbol, SymbolKind } from "vscode-languageserver-types";
+
+import { CompletionProvider } from "./CompletionProvider";
+import { FormatOnTypeProvider } from "./FormatOnTypeProvider";
+import { Model } from "./Model";
 import type { LibService } from "./SyntaxDataProvider";
+import { SyntaxProvider } from "./SyntaxProvider";
 
 export const legend = {
   tokenTypes: [
@@ -44,11 +45,16 @@ export class LanguageServiceProvider {
   private model;
   private syntaxProvider;
   public completionProvider;
+  public formatOnTypeProvider;
 
   constructor(doc: TextDocument) {
     this.model = new Model(doc);
     this.syntaxProvider = new SyntaxProvider(this.model);
     this.completionProvider = new CompletionProvider(
+      this.model,
+      this.syntaxProvider,
+    );
+    this.formatOnTypeProvider = new FormatOnTypeProvider(
       this.model,
       this.syntaxProvider,
     );

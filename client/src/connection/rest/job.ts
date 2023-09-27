@@ -1,20 +1,21 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { l10n } from "vscode";
 
-import { Compute, getApiConfig, stateOptions } from "./common";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
+
+import { throttle } from "../../components/utils";
 import {
-  LogsApi,
+  Job,
   JobsApi,
   JobsApiGetJobStateRequest,
-  Job,
+  Link,
+  LogLine,
+  LogsApi,
   Result,
   ResultCollection,
-  LogLine,
-  Link,
 } from "./api/compute";
-import { AxiosRequestConfig, AxiosResponse } from "axios";
-import { throttle } from "../../components/utils";
-import { l10n } from "vscode";
+import { Compute, getApiConfig, stateOptions } from "./common";
 
 export class ComputeJob extends Compute {
   api: ReturnType<typeof JobsApi>;

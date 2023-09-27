@@ -1,17 +1,17 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import {
-  TextDocuments,
-  TextDocumentSyncKind,
+  Connection,
+  DidChangeConfigurationNotification,
   InitializeResult,
   SemanticTokensRequest,
-  Connection,
+  TextDocumentSyncKind,
+  TextDocuments,
 } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
-import { LanguageServiceProvider, legend } from "./sas/LanguageServiceProvider";
 import { CompletionProvider } from "./sas/CompletionProvider";
+import { LanguageServiceProvider, legend } from "./sas/LanguageServiceProvider";
 import type { LibCompleteItem } from "./sas/SyntaxDataProvider";
 
 const servicePool: Record<string, LanguageServiceProvider> = {};
@@ -23,6 +23,19 @@ let supportSASGetLibList = false;
 
 // Create a simple text document manager.
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+
+// Add settings wanted to listen here, onInitialized(), and onDidChangeConfiguration()
+interface ListenedSettings {
+  editor?: {
+    tabSize?: number;
+    insertSpaces?: boolean;
+  };
+}
+const cachedConfigurations: ListenedSettings = {};
+
+// Default setting values
+const DEFAULT_TAB_SIZE = 4;
+const DEFAULT_INSERT_SPACES = true;
 
 export const init = (conn: Connection): void => {
   connection = conn;
@@ -47,9 +60,33 @@ export const init = (conn: Connection): void => {
           triggerCharacters: [" "],
           resolveProvider: true,
         },
+        documentOnTypeFormattingProvider: {
+          firstTriggerCharacter: "\n",
+          moreTriggerCharacter: [";"],
+        },
       },
     };
     return result;
+  });
+
+  connection.onInitialized(() => {
+    // Initialize listened settings
+    connection.client.register(DidChangeConfigurationNotification.type, {
+      section: ["editor"],
+    });
+    connection.workspace
+      .getConfiguration([
+        {
+          section: "editor",
+        },
+      ])
+      .then((data) => {
+        cachedConfigurations.editor = data[0];
+      });
+  });
+
+  connection.onDidChangeConfiguration((params) => {
+    cachedConfigurations.editor = params.settings.editor;
   });
 
   connection.onRequest(SemanticTokensRequest.type, (params) => {
@@ -93,6 +130,21 @@ export const init = (conn: Connection): void => {
   connection.onRequest("sas/getFoldingBlock", (params) => {
     const languageService = getLanguageService(params.textDocument.uri);
     return languageService.getFoldingBlock(params.line, params.col);
+  });
+
+  connection.onDocumentOnTypeFormatting((params) => {
+    const tabSize: number =
+      cachedConfigurations.editor?.tabSize ?? DEFAULT_TAB_SIZE;
+    const useSpace: boolean =
+      cachedConfigurations.editor?.insertSpaces ?? DEFAULT_INSERT_SPACES;
+    const languageService = getLanguageService(params.textDocument.uri);
+    return languageService.formatOnTypeProvider.getIndentEdit(
+      params.position.line,
+      params.position.character,
+      params.ch,
+      tabSize,
+      useSpace,
+    );
   });
 
   documents.onDidChangeContent((event) => {

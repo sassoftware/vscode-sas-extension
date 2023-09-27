@@ -1,0 +1,29 @@
+name: Translation Check
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  check-translations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run locale --update-locales
+      - run: |
+          CHANGES=$(git diff --name-only)
+          if [ -z "$CHANGES" ]
+          then
+            echo "No translations needed"
+          else
+            echo "The following files need translations:"
+            echo $CHANGES
+            exit 1
+          fi

@@ -1,12 +1,12 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { l10n, window } from "vscode";
 
 import {
-  createInputTextBox,
-  ProfilePromptType,
   ProfileConfig,
+  ProfilePromptType,
+  createInputTextBox,
 } from "../components/profile";
-import { l10n, window } from "vscode";
 
 export const profileConfig = new ProfileConfig();
 /**

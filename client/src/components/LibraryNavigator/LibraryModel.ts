@@ -1,9 +1,10 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { ProgressLocation, l10n, window } from "vscode";
 
 import { AxiosResponse } from "axios";
 import { Writable } from "stream";
-import { ProgressLocation, l10n, window } from "vscode";
+
 import { getSession } from "../../connection";
 import { DataAccessApi } from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
