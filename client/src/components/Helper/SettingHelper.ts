@@ -9,3 +9,11 @@ export function isOutputHtmlEnabled(): boolean {
 export function getHtmlStyle(): string {
   return workspace.getConfiguration("SAS").get("results.html.style");
 }
+
+export function isSideResultEnabled(): string {
+  return workspace.getConfiguration("SAS").get("results.sideBySide");
+}
+
+export function isSinglePanelEnabled(): string {
+  return workspace.getConfiguration("SAS").get("results.singlePanel");
+}

@@ -357,14 +357,26 @@
               "type": "string"
             }
           },
-          "SAS.results.html.enabled": {
+          "SAS.results.sideBySide": {
             "order": 2,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.results.sideBySide%"
+          },
+          "SAS.results.singlePanel": {
+            "order": 3,
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.SAS.results.singlePanel%"
+          },
+          "SAS.results.html.enabled": {
+            "order": 4,
             "type": "boolean",
             "default": true,
             "description": "%configuration.SAS.results.html.enabled%"
           },
           "SAS.results.html.style": {
-            "order": 3,
+            "order": 5,
             "type": "string",
             "default": "(auto)",
             "enum": [
