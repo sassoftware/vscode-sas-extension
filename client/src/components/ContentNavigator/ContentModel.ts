@@ -304,7 +304,10 @@ export class ContentModel {
           headers: {
             "If-Unmodified-Since": fileTokenMap.lastModified,
             "If-Match": fileTokenMap.etag,
-            "Content-Type": "application/vnd.sas.file+json",
+            "Content-Type":
+              !isContainer(item) && !itemIsReference
+                ? "application/vnd.sas.file+json"
+                : undefined,
           },
         },
       );
