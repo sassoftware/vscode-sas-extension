@@ -16,4 +16,12 @@ describe("utils", async function () {
       `FILENAME \${1:FILEREF} FILESRVC FOLDERPATH='/path' FILENAME='testcsv.csv';\n`,
     );
   });
+
+  it("getFileStatement - returns encoded filename when filename contains quotes", () => {
+    expect(
+      getFileStatement("testcsv-'withquotes'.csv", "", "/path").value,
+    ).to.equal(
+      `filename \${1:fileref} filesrvc folderpath='/path' filename='testcsv-''withquotes''.csv';\n`,
+    );
+  });
 });

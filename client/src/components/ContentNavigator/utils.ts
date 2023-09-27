@@ -131,7 +131,7 @@ export const getFileStatement = (
 
   return new SnippetString(
     (usesUppercase ? cmd.toUpperCase() : cmd)
-      .replace("$1", fileFolderPath)
-      .replace("$2", contentItemName),
+      .replace("$1", fileFolderPath.replace(/'/g, "''"))
+      .replace("$2", contentItemName.replace(/'/g, "''")),
   );
 };
