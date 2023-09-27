@@ -76,6 +76,11 @@ export const resourceType = (item: ContentItem): string | undefined => {
     actions.push("addToFavorites");
   }
 
+  // if item is a notebook file add action
+  if (item?.name?.endsWith(".sasnb") || item?.name?.endsWith(".ipynb")) {
+    actions.push("convertNotebookToFlow");
+  }
+
   if (actions.length === 0) {
     return;
   }

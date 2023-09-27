@@ -9,6 +9,10 @@ import axios, {
   AxiosResponse,
 } from "axios";
 
+import {
+  associateFlowObject,
+  createStudioSession,
+} from "../../connection/studio";
 import { SASAuthProvider } from "../AuthProvider";
 import {
   FAVORITES_FOLDER_TYPE,
@@ -166,10 +170,9 @@ export class ContentModel {
     if (!ancestorsLink) {
       return;
     }
-
     const resp = await this.connection.get(ancestorsLink.uri);
-    if (resp.data.ancestors && resp.data.ancestors.length > 0) {
-      return resp.data.ancestors[0];
+    if (resp.data && resp.data.length > 0) {
+      return resp.data[0];
     }
   }
 
@@ -324,19 +327,67 @@ export class ContentModel {
     }
   }
 
+  private getFileInfo(resourceId: string): {
+    etag: string;
+    lastModified: string;
+  } {
+    if (resourceId in this.fileTokenMaps) {
+      return this.fileTokenMaps[resourceId];
+    }
+    const now = new Date();
+    const timestamp = now.toUTCString();
+    return { etag: "", lastModified: timestamp };
+  }
+
   public async saveContentToUri(uri: Uri, content: string): Promise<void> {
     const resourceId = getResourceId(uri);
-    const res = await this.connection.put(resourceId + "/content", content, {
-      headers: {
-        "Content-Type": "text/plain",
-        "If-Match": this.fileTokenMaps[resourceId].etag,
-        "If-Unmodified-Since": this.fileTokenMaps[resourceId].lastModified,
-      },
-    });
-    this.fileTokenMaps[resourceId] = {
-      etag: res.headers.etag,
-      lastModified: res.headers["last-modified"],
+    const { etag, lastModified } = this.getFileInfo(resourceId);
+    const headers = {
+      "Content-Type": "text/plain",
+      "If-Unmodified-Since": lastModified,
     };
+    if (etag !== "") {
+      headers["If-Match"] = etag;
+    }
+    try {
+      const res = await this.connection.put(resourceId + "/content", content, {
+        headers,
+      });
+      this.fileTokenMaps[resourceId] = {
+        etag: res.headers.etag,
+        lastModified: res.headers["last-modified"],
+      };
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  public async testStudioConnection(): Promise<string> {
+    try {
+      const result = await createStudioSession(this.connection);
+      return result;
+    } catch (error) {
+      return "";
+    }
+  }
+
+  public async associateFlowFile(
+    name: string,
+    uri: Uri,
+    parent: ContentItem,
+    studioSessionId: string,
+  ): Promise<string | undefined> {
+    try {
+      return await associateFlowObject(
+        name,
+        getResourceId(uri),
+        getResourceIdFromItem(parent),
+        studioSessionId,
+        this.connection,
+      );
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   public async getUri(item: ContentItem, readOnly: boolean): Promise<Uri> {

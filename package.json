@@ -406,6 +406,19 @@
               "%configuration.SAS.results.html.style.(server default)%"
             ],
             "description": "%configuration.SAS.results.html.style%"
+          },
+          "SAS.flowConversionMode": {
+            "type": "string",
+            "default": "Swimlane",
+            "enum": [
+              "Swimlane",
+              "Node"
+            ],
+            "description": "%configuration.SAS.flowConversionMode%",
+            "enumDescriptions": [
+              "%configuration.SAS.flowConversionModeSwimlane%",
+              "%configuration.SAS.flowConversionModeNode%"
+            ]
           }
         }
       }
@@ -513,6 +526,11 @@
       {
         "command": "SAS.addToFavorites",
         "title": "%commands.SAS.addToFavorites%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.convertNotebookToFlow",
+        "title": "%commands.SAS.convertNotebookToFlow%",
         "category": "SAS"
       },
       {
@@ -638,6 +656,11 @@
           "group": "delrenamegroup@1"
         },
         {
+          "command": "SAS.convertNotebookToFlow",
+          "when": "viewItem =~ /convertNotebookToFlow/ && view == contentdataprovider",
+          "group": "actionsgroup@0"
+        },
+        {
           "command": "SAS.restoreResource",
           "when": "viewItem =~ /restore/ && view == contentdataprovider",
           "group": "restoregroup@0"
@@ -698,6 +721,10 @@
         {
           "when": "false",
           "command": "SAS.deleteResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.convertNotebookToFlow"
         },
         {
           "when": "false",
@@ -849,7 +876,7 @@
         "displayName": "%notebooks.SAS.sasNotebook%",
         "selector": [
           {
-            "filenamePattern": "*.sasnb"
+            "filenamePattern": "*.{sasnb,ipynb}"
           }
         ]
       }

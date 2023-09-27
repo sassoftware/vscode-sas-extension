@@ -27,6 +27,15 @@ const fileValidator = (value: string): string | null =>
   )
     ? null
     : Messages.FileValidationError;
+
+const flowFileValidator = (value: string): string | null => {
+  let res = fileValidator(value);
+  if (!value.endsWith(".flw")) {
+    res = Messages.InvalidFlowFileNameError;
+  }
+  return res;
+};
+
 const folderValidator = (value: string): string | null =>
   value.length <= 100 ? null : Messages.FolderValidationError;
 
@@ -133,7 +142,7 @@ class ContentNavigator implements SubscriptionProvider {
             resource,
             fileName,
           );
-          this.handleCreationResponse(
+          this.contentDataProvider.handleCreationResponse(
             resource,
             newUri,
             l10n.t(Messages.NewFileCreationError, { name: fileName }),
@@ -160,7 +169,7 @@ class ContentNavigator implements SubscriptionProvider {
             resource,
             folderName,
           );
-          this.handleCreationResponse(
+          this.contentDataProvider.handleCreationResponse(
             resource,
             newUri,
             l10n.t(Messages.NewFolderCreationError, { name: folderName }),
@@ -225,6 +234,44 @@ class ContentNavigator implements SubscriptionProvider {
           "workbench.actions.treeView.contentdataprovider.collapseAll",
         );
       }),
+      commands.registerCommand(
+        "SAS.convertNotebookToFlow",
+        async (resource: ContentItem) => {
+          // Open window to chose the name and location of the new .flw file
+          const name = await window.showInputBox({
+            prompt: Messages.ConvertNotebookToFlowPrompt,
+            value: resource.name
+              .replace(".sasnb", ".flw")
+              .replace(".ipynb", ".flw"),
+            validateInput: flowFileValidator,
+          });
+
+          if (!name) {
+            // User canceled the input box
+            return;
+          }
+          const studioSessionId =
+            await this.contentDataProvider.testStudioConnection();
+          if (!studioSessionId) {
+            window.showErrorMessage(Messages.StudioConnectionError);
+            return;
+          }
+
+          if (
+            await this.contentDataProvider.convertNotebookToFlow(
+              resource,
+              name,
+              studioSessionId,
+            )
+          ) {
+            window.showInformationMessage(
+              Messages.NotebookToFlowConversionSuccess,
+            );
+          } else {
+            window.showErrorMessage(Messages.NotebookToFlowConversionError);
+          }
+        },
+      ),
       workspace.onDidChangeConfiguration(
         async (event: ConfigurationChangeEvent) => {
           if (event.affectsConfiguration("SAS.connectionProfiles")) {

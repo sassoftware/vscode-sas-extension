@@ -83,4 +83,18 @@ export const Messages = {
   RenameUnsavedFileError: l10n.t(
     "You must save your file before you can rename it.",
   ),
+  ConvertNotebookToFlowPrompt: l10n.t("Enter a name for the new .flw file"),
+  NotebookToFlowConversionSuccess: l10n.t(
+    "The notebook has been successfully converted to a flow. You can now open it in SAS Studio.",
+  ),
+  NotebookToFlowConversionError: l10n.t(
+    "Error converting the notebook file to .flw format.",
+  ),
+  NoCodeToConvert: l10n.t(
+    "The notebook file does not contain any code to convert.",
+  ),
+  InvalidFlowFileNameError: l10n.t(
+    "The output file name must end with the .flw extension.",
+  ),
+  StudioConnectionError: l10n.t("Cannot connect to SAS Studio service"),
 };
