@@ -12,11 +12,14 @@ let resultPanel: WebviewPanel | undefined;
 export const showResult = (html: string, uri?: Uri, title?: string) => {
   const sideResult = isSideResultEnabled();
   const singlePanel = isSinglePanelEnabled();
+  if (!title) {
+    title = l10n.t("Result");
+  }
 
   if (!singlePanel || !resultPanel) {
     resultPanel = window.createWebviewPanel(
       "SASSession", // Identifies the type of the webview. Used internally
-      title ?? l10n.t("Result"), // Title of the panel displayed to the user
+      title, // Title of the panel displayed to the user
       {
         preserveFocus: true,
         viewColumn: sideResult ? ViewColumn.Beside : ViewColumn.Active,
@@ -30,7 +33,7 @@ export const showResult = (html: string, uri?: Uri, title?: string) => {
           (editor) => editor.document.uri.toString() === uri.toString(),
         )
       : window.activeTextEditor;
-    if (title) {
+    if (resultPanel.title !== title) {
       resultPanel.title = title;
     }
     resultPanel.reveal(
