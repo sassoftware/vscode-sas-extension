@@ -77,7 +77,7 @@ export const resourceType = (item: ContentItem): string | undefined => {
   }
 
   // if item is a notebook file add action
-  if (item?.name?.endsWith(".sasnb") || item?.name?.endsWith(".ipynb")) {
+  if (item?.name?.endsWith(".sasnb")) {
     actions.push("convertNotebookToFlow");
   }
 
