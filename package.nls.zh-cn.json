@@ -6,7 +6,7 @@
   "commands.SAS.authorize": "登录",
   "commands.SAS.close": "关闭当前会话",
   "commands.SAS.collapseAll": "全部折叠",
-  "commands.SAS.convertNotebookToFlow": "转换为流量...",
+  "commands.SAS.convertNotebookToFlow": "转换为流...",
   "commands.SAS.deleteProfile": "删除连接配置文件",
   "commands.SAS.deleteResource": "删除",
   "commands.SAS.deleteTable": "删除",
