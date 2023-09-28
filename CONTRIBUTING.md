@@ -85,3 +85,9 @@ Follow these steps to update a locale for the SAS Extension for VSCode:
 - Update any untranslated strings.
 - Verify your changes using `Launch Client`.
 - After you've verified changes, you can create a [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) for review.
+
+### Locale contributors
+
+- German: David Weik
+- Chinese: Wei Wu
+- Portuguese: Mark Jordan
