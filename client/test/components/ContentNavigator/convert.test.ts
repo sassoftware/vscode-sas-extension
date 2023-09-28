@@ -185,19 +185,4 @@ describe("Notebook Conversion", async () => {
     );
     deepEqual(flowDataActual, flowDataExpected, "The flow data is not correct");
   });
-
-  it("convert the python notebook to node flow", async () => {
-    await updateWorkspaceSettings("Node");
-    const contentPythonNotebook =
-      getTestFixtureContent("test.ipynb").toString();
-    const flowDataPythonNotebook =
-      getTestFixtureContent("test_ipynb.flw").toString();
-    const [flowDataActual, flowDataExpected] = convertAndRemoveIds(
-      contentPythonNotebook,
-      "test.ipynb",
-      flowDataPythonNotebook,
-      workspace.getConfiguration().get("SAS.flowConversionMode"),
-    );
-    deepEqual(flowDataActual, flowDataExpected, "The flow data is not correct");
-  });
 });

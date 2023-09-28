@@ -309,26 +309,6 @@ QUIT;`;
   return codeList;
 }
 
-function generateCodeListFromPythonNotebook(content: string): Entry[] {
-  const codeList = [];
-  try {
-    const notebookContent = JSON.parse(content);
-    const language = notebookContent.metadata.kernelspec.language;
-    if (["python", "sas"].includes(language)) {
-      for (const cell of notebookContent.cells) {
-        const code = cell.source.join("");
-        const cellType = cell.cell_type;
-        if (code !== "" && cellType === "code") {
-          codeList.push({ code, language });
-        }
-      }
-    }
-  } catch (error) {
-    console.error("Error reading or parsing the .ipynb file:", error);
-  }
-  return codeList;
-}
-
 export function convertNotebookToFlow(
   content: string,
   inputName: string,
@@ -337,8 +317,6 @@ export function convertNotebookToFlow(
   let codeList = [];
   if (inputName.endsWith(".sasnb")) {
     codeList = generateCodeListFromSASNotebook(content);
-  } else if (inputName.endsWith(".ipynb")) {
-    codeList = generateCodeListFromPythonNotebook(content);
   } else {
     console.error("Unsupported file type");
   }
