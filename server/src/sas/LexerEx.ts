@@ -13,6 +13,8 @@ import { TextPosition, arrayToMap } from "./utils";
  */
 
 export class FoldingBlock {
+  outerBlock?: FoldingBlock;
+  innerBlocks: FoldingBlock[];
   startLine: number;
   startCol: number;
   endLine: number;
@@ -38,6 +40,8 @@ export class FoldingBlock {
       this.name = arguments[0].name;
       this.endFoldingLine = arguments[0].endFoldingLine;
       this.endFoldingCol = arguments[0].endFoldingCol;
+      this.outerBlock = arguments[0].outerBlock;
+      this.innerBlocks = [...arguments[0].innerBlocks];
     } else if (arguments.length >= 4) {
       this.startLine = arguments[0];
       this.startCol = arguments[1];
@@ -45,6 +49,7 @@ export class FoldingBlock {
       this.endCol = arguments[3];
       this.type = arguments[4];
       this.name = arguments[5] ? arguments[5] : "";
+      this.innerBlocks = [];
       this.endFoldingLine = -1;
       this.endFoldingCol = -1;
     } else {
@@ -56,6 +61,7 @@ export class FoldingBlock {
       this.name = "";
       this.endFoldingLine = -1;
       this.endFoldingCol = -1;
+      this.innerBlocks = [];
     }
   }
 }
@@ -106,7 +112,7 @@ export class LexerEx {
   lexer: Lexer;
   expr: Expression;
   syntaxDb: SyntaxDataProvider;
-  SEC_TYPE: any;
+  SEC_TYPE: typeof LexerEx.SEC_TYPE;
   PARSING_STATE: {
     IN_GBL: number;
     IN_MACRO: number;
@@ -127,11 +133,9 @@ export class LexerEx {
   lookAheadTokens: any[];
   sectionCache: (FoldingBlock | null)[];
   lastToken: any;
-
-  blockDepth = 0;
   sections: FoldingBlock[] = [];
   tailSections: FoldingBlock[] = [];
-  currSection: FoldingBlock;
+  currSection?: FoldingBlock;
   //stmts: any[] = [],
   //currStmt,
   //isStmtStart = true,
@@ -146,7 +150,9 @@ export class LexerEx {
     PROC: 1,
     MACRO: 2,
     GBL: 3,
+    CUSTOM: 4,
   };
+
   constructor(private model: Model) {
     this.lexer = new Lexer(model);
     this.expr = new Expression(this);
@@ -589,20 +595,34 @@ export class LexerEx {
       prevBlock.endFoldingCol = prevBlock.endCol;
     }
   }
-  private push_(block: FoldingBlock) {
-    this.trimBlock_(block);
-    // folding end
-    this.sectionCache[block.startLine] = null; // clear cached block, it must try to get the last
-    block.endFoldingLine = block.endLine;
-    block.endFoldingCol = block.endCol;
+  private _pushRootBlock(block: FoldingBlock) {
     // adjujst previous block
-    if (this.sections.length) {
-      this.adjustFoldingEnd_(this.sections[this.sections.length - 1], block);
+    const stack: FoldingBlock[] = [block];
+    while (stack.length > 0) {
+      const curBlock: FoldingBlock = stack.pop()!;
+      for (let i = curBlock.innerBlocks.length - 1; i >= 0; i--) {
+        const innerBlock = curBlock.innerBlocks[i];
+        stack.push(innerBlock);
+      }
     }
+    this._adjustBlockTreeFoldingEnd(block);
     // add
     this.sections.push(block);
     this.tokens = [];
   }
+
+  private _adjustBlockTreeFoldingEnd(rootBlock: FoldingBlock): void {
+    for (let i = 1; i < rootBlock.innerBlocks.length; i++) {
+      this.adjustFoldingEnd_(
+        rootBlock.innerBlocks[i - 1],
+        rootBlock.innerBlocks[i],
+      );
+    }
+    for (let i = 0; i < rootBlock.innerBlocks.length; i++) {
+      this._adjustBlockTreeFoldingEnd(rootBlock.innerBlocks[i]);
+    }
+  }
+
   //TODO: IMPROVE
   private _changeCardsDataToken(token: {
     type: string;
@@ -617,15 +637,21 @@ export class LexerEx {
     return { line: pos.line, column: pos.column };
   }
   private startFoldingBlock_(type: any, pos: TextPosition, name: string) {
-    this.blockDepth++;
-    if (this.blockDepth === 1) {
-      this.currSection.startLine = pos.line;
-      this.currSection.startCol = pos.column;
-      this.currSection.type = type;
-      this.currSection.name = name;
-      this.currSection.specialBlks = null;
+    const newBlock = new FoldingBlock();
+    newBlock.startLine = pos.line;
+    newBlock.startCol = pos.column;
+    newBlock.type = type;
+    newBlock.name = name;
+    newBlock.specialBlks = null;
+    if (!this.currSection) {
+      this.currSection = newBlock;
+    } else {
+      this.currSection.innerBlocks.push(newBlock);
+      newBlock.outerBlock = this.currSection;
+      this.currSection = newBlock;
     }
   }
+
   private endFoldingBlock_(
     type: any,
     pos: TextPosition,
@@ -633,42 +659,44 @@ export class LexerEx {
     start?: { start: any },
     name?: string,
   ) {
-    // positively end
-    let add = false;
-    this.blockDepth--;
-    if (this.blockDepth === 0) {
-      add = true;
+    if (!this.currSection) {
+      return;
     }
-    if (add) {
-      if (pos.line >= this.currSection.startLine) {
-        this.currSection.endLine = pos.line;
-        this.currSection.endCol = pos.column;
-        //currSection.type = type;
-        const block = new FoldingBlock(this.currSection);
-        //var block = {};
-        //jQuery.extend(true, block, currSection);
-        block.explicitEnd = explicitEnd;
+    if (pos.line >= this.currSection.startLine) {
+      this.currSection.endLine = pos.line;
+      this.currSection.endCol = pos.column;
+      this.trimBlock_(this.currSection);
+      // folding end
+      this.sectionCache[this.currSection.startLine] = null; // clear cached block, it must try to get the last
+      this.currSection.endFoldingLine = this.currSection.endLine;
+      this.currSection.endFoldingCol = this.currSection.endCol;
+      //currSection.type = type;
+      if (!this.currSection.outerBlock) {
+        this.currSection.explicitEnd = explicitEnd;
         if (explicitEnd) {
-          block.explicitEndStmt = {};
-          block.explicitEndStmt.start = start?.start;
-          block.explicitEndStmt.name = name;
+          this.currSection.explicitEndStmt = {};
+          this.currSection.explicitEndStmt.start = start?.start;
+          this.currSection.explicitEndStmt.name = name;
         }
         if (this.currSection.specialBlks) {
-          block.specialBlks = this.currSection.specialBlks;
+          this.currSection.specialBlks = this.currSection.specialBlks;
           this.currSection.specialBlks = null;
         }
-        this.push_(block);
+        this._pushRootBlock(this.currSection);
       }
-
-      this.currSection.startLine = -1;
     }
+    this.currSection = this.currSection.outerBlock;
   }
-  private hasFoldingBlock_() {
-    return this.currSection.startLine >= 0;
+  private hasFoldingBlock_(): boolean {
+    return !!this.currSection;
   }
-  private getLastNormalFoldingBlockInLine_(currentIdx: number, line: number) {
+  private getLastNormalFoldingBlockInLine_(
+    currentIdx: number,
+    line: number,
+    blocks: FoldingBlock[],
+  ): FoldingBlock | null {
     let i = currentIdx,
-      block = this.sections[i],
+      block = blocks[i],
       idx = currentIdx;
     // find forward
     while (block && (block.startLine === line || block.endLine === line)) {
@@ -676,54 +704,70 @@ export class LexerEx {
         idx = i;
       } else idx = -1;
       i++;
-      block = this.sections[i];
+      block = blocks[i];
     }
     // find backward
     if (idx < 0) {
       i = currentIdx - 1;
-      block = this.sections[i];
+      block = blocks[i];
       while (block && (block.startLine === line || block.endLine === line)) {
         if (block.type !== this.SEC_TYPE.GBL) {
           idx = i;
           break;
         } else idx = -1;
         i--;
-        block = this.sections[i];
+        block = blocks[i];
       }
     }
     // ignore global
-    if (this.sections[idx] && this.sections[idx].type === this.SEC_TYPE.GBL) {
+    if (blocks[idx] && blocks[idx].type === this.SEC_TYPE.GBL) {
       idx = -1;
     }
-    return this.sections[idx];
+    return blocks[idx] ?? null;
     //return sections[idx]?sections[idx]:null; //we return null if no
   }
-  private getFoldingBlock_(line: number, col?: number, strict?: boolean) {
-    const idx = this.getBlockPos_(this.sections, line, col);
-    let block = this.sections[idx];
+  private getFoldingBlock_(
+    blocks: FoldingBlock[],
+    line: number,
+    col?: number,
+    strict?: boolean,
+  ): FoldingBlock | null {
+    const idx = this.getBlockPos_(blocks, line, col);
+    let block: FoldingBlock | null = blocks[idx];
+    let found: boolean = false;
     if (strict) {
-      return block;
-    }
-    if (block && block.startLine <= line && block.endLine >= line) {
-      return this.getLastNormalFoldingBlockInLine_(idx, line);
+      found = !!block;
+    } else if (block && block.startLine <= line && block.endLine >= line) {
+      block = this.getLastNormalFoldingBlockInLine_(idx, line, blocks);
+      found = !!block;
     } else if (col) {
       // for last block, the input position is the last
-      block = this.sections[this.sections.length - 1];
+      block = blocks[blocks.length - 1];
       if (
         block &&
         !this._isBefore({ line: line, column: col }, this._endPos(block)) &&
         !block.explicitEnd
       ) {
         // must use !
-        return block;
+        found = true;
       }
     }
-    return null;
+    if (found) {
+      if (block!.innerBlocks.length > 0) {
+        return (
+          this.getFoldingBlock_(block!.innerBlocks, line, col, strict) ?? block
+        );
+      } else {
+        return block;
+      }
+    } else {
+      return null;
+    }
   }
   getFoldingBlock(line: number, col?: number, strict?: boolean) {
     if (col === undefined) {
       if (!this.sectionCache[line]) {
-        const section = this.getFoldingBlock_(line);
+        const section = this.getFoldingBlock_(this.sections, line);
         if (section && line <= section.endFoldingLine!) {
           this.sectionCache[line] = section;
         } else {
@@ -732,16 +776,16 @@ export class LexerEx {
       }
       return this.sectionCache[line];
     }
-    return this.getFoldingBlock_(line, col, strict);
+    return this.getFoldingBlock_(this.sections, line, col, strict);
   }
   private getBlockPos_(blocks: FoldingBlock[], line: number, col?: number) {
     let idx = this.getBlockPos1_(blocks, line);
     if (col || col === 0) {
       idx = this.getBlockPos2_(blocks, idx, line, col); // multiple blocks are in one same lines
     }
-
     return idx;
   }
+
   //SUPPORT CODE FOLDING
   //we define global statments as a kind of block, so the return will always be the first form.
   //
@@ -778,9 +822,8 @@ export class LexerEx {
   }
   private resetFoldingBlockCache_() {
     this.sections = [];
-    this.blockDepth = 0;
   }
-  private tryEndFoldingBlock_(pos: TextPosition) {
+  private tryEndFoldingBlock_(pos: TextPosition, untilType?: number) {
     if (this.hasFoldingBlock_()) {
       // handle text end
       let secType = this.SEC_TYPE.PROC;
@@ -791,11 +834,12 @@ export class LexerEx {
       } else if (this.curr.state === this.PARSING_STATE.IN_GBL) {
         secType = this.SEC_TYPE.GBL;
       }
-      this.endFoldingBlock_(secType, pos);
-
-      while (this.blockDepth > 0) {
+      let stop = false;
+      while (this.currSection && !stop) {
+        if (untilType && this.currSection.type === untilType) {
+          stop = true;
+        }
         this.endFoldingBlock_(secType, pos);
-        this.blockDepth--;
       }
     }
   }
@@ -810,7 +854,7 @@ export class LexerEx {
       !this._isBefore(token.start, this._startPos(this.tailSections[0]))
     ) {
       if (this.hasFoldingBlock_()) {
-        if (this.currSection.type === this.SEC_TYPE.MACRO) {
+        if (this.currSection?.type === this.SEC_TYPE.MACRO) {
           this.tailSections.splice(0, 1);
           return;
         }
@@ -1163,6 +1207,7 @@ export class LexerEx {
       }
     }
   }
+
   private start_(change: Change) {
     const parseRange = this.getParseRangeBySections_(change);
 
@@ -1173,7 +1218,7 @@ export class LexerEx {
 
     this.stack = [{ parse: this.readProg_, state: this.PARSING_STATE.IN_GBL }];
     this.curr = null;
-    this.blockDepth = 0;
+    this.currSection = undefined;
     this.sectionCache.splice(
       parseRange.startLine,
       this.sectionCache.length - parseRange.startLine,
@@ -1181,6 +1226,7 @@ export class LexerEx {
     this.lexer.startFrom(parseRange.startLine, parseRange.startCol);
     return parseRange;
   }
+
   private _handleSections(change: Change, parseRange: any) {
     // keep the blocks not changed
     this.tailSections = this.sections;
@@ -1418,6 +1464,10 @@ export class LexerEx {
     return token;
   }
   private addTknBlock_(block: FoldingBlock) {
+    if (!this.currSection) {
+      // unexpected
+      return;
+    }
     if (!this.currSection.specialBlks) {
       //const with quotes, comment, cards data
       this.currSection.specialBlks = [];
@@ -1610,6 +1660,21 @@ export class LexerEx {
     }
     return false;
   }
+
+  private isCustomBlockStart_(token: Token): boolean {
+    if (token && /^\s*[%/]?\*\s*region\b/i.test(token.text)) {
+      return true;
+    }
+    return false;
+  }
+
+  private isCustomBlockEnd_(token: Token): boolean {
+    if (token && /^\s*[%/]?\*\s*endregion\b/i.test(token.text)) {
+      return true;
+    }
+    return false;
+  }
+
   private readProg_() {
     let word = "",
       gbl = true,
@@ -1673,7 +1738,19 @@ export class LexerEx {
     }
 
     if (gbl) {
-      this.startFoldingBlock_(this.SEC_TYPE.GBL, token.start, word);
+      if (Lexer.isComment[token.type]) {
+        if (this.isCustomBlockStart_(token)) {
+          this.startFoldingBlock_(
+            this.SEC_TYPE.CUSTOM,
+            token.start,
+            token.text,
+          );
+        } else if (this.isCustomBlockEnd_(token)) {
+          this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
+        }
+      } else {
+        this.startFoldingBlock_(this.SEC_TYPE.GBL, token.start, word);
+      }
       this.stack.push({
         parse: this.readGbl_,
         state: this.PARSING_STATE.IN_GBL,
@@ -2463,7 +2540,9 @@ export class LexerEx {
             break;
           case "PROC":
           case "PROCEDURE": {
-            this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
+            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+              this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
+            }
             this.startFoldingBlock_(this.SEC_TYPE.PROC, token.start, word);
             token.type = Lexer.TOKEN_TYPES.SKEYWORD;
             this.popSMTo_(1);
@@ -2481,7 +2560,9 @@ export class LexerEx {
             break;
           }
           case "DATA":
-            this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
+            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+              this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
+            }
             this.startFoldingBlock_(this.SEC_TYPE.DATA, token.start, word);
             token.type = Lexer.TOKEN_TYPES.SKEYWORD;
             this.popSMTo_(1);
@@ -2495,7 +2576,9 @@ export class LexerEx {
             });
             break;
           case "%MACRO":
-            this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
+            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+              this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
+            }
             this.startFoldingBlock_(this.SEC_TYPE.MACRO, token.start, word);
             token.type = Lexer.TOKEN_TYPES.MSKEYWORD;
             this.popSMTo_(1);
@@ -2826,7 +2909,9 @@ export class LexerEx {
           case "PROCEDURE": {
             //no normal end, and another proc meet, there are syntax errors
             // ignore
-            this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
+            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+              this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
+            }
             this.startFoldingBlock_(this.SEC_TYPE.PROC, token.start, word);
 
             token.type = Lexer.TOKEN_TYPES.SKEYWORD;
@@ -2845,7 +2930,9 @@ export class LexerEx {
             break;
           }
           case "%MACRO":
-            this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
+            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+              this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
+            }
             this.startFoldingBlock_(this.SEC_TYPE.MACRO, token.start, word);
 
             token.type = Lexer.TOKEN_TYPES.MSKEYWORD;
@@ -2861,7 +2948,9 @@ export class LexerEx {
             break;
           case "DATA":
             if (!this.DS2_[procName]) {
-              this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
+              if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+                this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
+              }
               this.startFoldingBlock_(this.SEC_TYPE.DATA, token.start, word);
 
               token.type = Lexer.TOKEN_TYPES.SKEYWORD;
@@ -2945,6 +3034,12 @@ export class LexerEx {
           }
         }
       }
+    } else if (Lexer.isComment[token.type]) {
+      if (this.isCustomBlockStart_(token)) {
+        this.startFoldingBlock_(this.SEC_TYPE.CUSTOM, token.start, token.text);
+      } else if (this.isCustomBlockEnd_(token)) {
+        this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
+      }
     }
     return token;
   }
@@ -3022,7 +3117,9 @@ export class LexerEx {
           case "DATA":
             //no normal end, and another data meet, there are syntax errors
             // ignore
-            this.endFoldingBlock_(this.SEC_TYPE.DATA, this.lastToken.end);
+            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+              this.endFoldingBlock_(this.SEC_TYPE.DATA, this.lastToken.end);
+            }
             this.startFoldingBlock_(this.SEC_TYPE.DATA, token.start, word);
 
             token.type = Lexer.TOKEN_TYPES.SKEYWORD;
@@ -3033,7 +3130,9 @@ export class LexerEx {
             break;
           case "PROC":
           case "PROCEDURE": {
-            this.endFoldingBlock_(this.SEC_TYPE.DATA, this.lastToken.end);
+            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+              this.endFoldingBlock_(this.SEC_TYPE.DATA, this.lastToken.end);
+            }
             this.startFoldingBlock_(this.SEC_TYPE.PROC, token.start, word);
 
             token.type = Lexer.TOKEN_TYPES.SKEYWORD;
@@ -3052,7 +3151,9 @@ export class LexerEx {
             break;
           }
           case "%MACRO":
-            this.endFoldingBlock_(this.SEC_TYPE.DATA, this.lastToken.end);
+            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+              this.endFoldingBlock_(this.SEC_TYPE.DATA, this.lastToken.end);
+            }
             this.startFoldingBlock_(this.SEC_TYPE.MACRO, token.start, word);
 
             token.type = Lexer.TOKEN_TYPES.MSKEYWORD;
@@ -3115,6 +3216,12 @@ export class LexerEx {
               }
             }
         }
+      }
+    } else if (Lexer.isComment[token.type]) {
+      if (this.isCustomBlockStart_(token)) {
+        this.startFoldingBlock_(this.SEC_TYPE.CUSTOM, token.start, token.text);
+      } else if (this.isCustomBlockEnd_(token)) {
+        this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
       }
     }
     return token;
@@ -3220,6 +3327,12 @@ export class LexerEx {
             }
         }
       }
+    } else if (Lexer.isComment[token.type]) {
+      if (this.isCustomBlockStart_(token)) {
+        this.startFoldingBlock_(this.SEC_TYPE.CUSTOM, token.start, token.text);
+      } else if (this.isCustomBlockEnd_(token)) {
+        this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
+      }
     }
     return token;
   }
@@ -3245,7 +3358,9 @@ export class LexerEx {
       } else {
         word = token.text;
         if (word === "PROC" || word === "PROCEDURE") {
-          this.endFoldingBlock_(this.SEC_TYPE.GBL, this.lastToken.end);
+          if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+            this.endFoldingBlock_(this.SEC_TYPE.GBL, this.lastToken.end);
+          }
           this.startFoldingBlock_(this.SEC_TYPE.PROC, token.start, word);
           token.type = Lexer.TOKEN_TYPES.SKEYWORD;
           this.stack.pop();
@@ -3261,7 +3376,9 @@ export class LexerEx {
             name: procName,
           });
         } else if (word === "%MACRO") {
-          this.endFoldingBlock_(this.SEC_TYPE.GBL, this.lastToken.end);
+          if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+            this.endFoldingBlock_(this.SEC_TYPE.GBL, this.lastToken.end);
+          }
           this.startFoldingBlock_(this.SEC_TYPE.MACRO, token.start, word);
           token.type = Lexer.TOKEN_TYPES.MSKEYWORD;
           this.stack.pop();
@@ -3274,7 +3391,9 @@ export class LexerEx {
             state: this.PARSING_STATE.IN_MACRO,
           });
         } else if (word === "DATA") {
-          this.endFoldingBlock_(this.SEC_TYPE.GBL, this.lastToken.end);
+          if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+            this.endFoldingBlock_(this.SEC_TYPE.GBL, this.lastToken.end);
+          }
           this.startFoldingBlock_(this.SEC_TYPE.DATA, token.start, word);
           token.type = Lexer.TOKEN_TYPES.SKEYWORD;
           this.stack.pop();
@@ -3307,6 +3426,12 @@ export class LexerEx {
             );
           }
         }
+      }
+    } else if (Lexer.isComment[token.type]) {
+      if (this.isCustomBlockStart_(token)) {
+        this.startFoldingBlock_(this.SEC_TYPE.CUSTOM, token.start, token.text);
+      } else if (this.isCustomBlockEnd_(token)) {
+        this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
       }
     }
     return token;

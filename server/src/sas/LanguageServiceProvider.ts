@@ -1,10 +1,11 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { TextDocument } from "vscode-languageserver-textdocument";
+import { Range, TextDocument } from "vscode-languageserver-textdocument";
 import { DocumentSymbol, SymbolKind } from "vscode-languageserver-types";
 
 import { CompletionProvider } from "./CompletionProvider";
 import { FormatOnTypeProvider } from "./FormatOnTypeProvider";
+import { FoldingBlock } from "./LexerEx";
 import { Model } from "./Model";
 import type { LibService } from "./SyntaxDataProvider";
 import { SyntaxProvider } from "./SyntaxProvider";
@@ -120,59 +121,47 @@ export class LanguageServiceProvider {
 
   getFoldingBlocks(): DocumentSymbol[] {
     const lineCount = this.model.getLineCount();
-    const result = [];
-    let customBlock;
+    const result: DocumentSymbol[] = [];
 
     for (let i = 0; i < lineCount; i++) {
-      const block = this.syntaxProvider.getFoldingBlock(i);
-
-      if (block && block.startLine === i) {
-        const range = {
-          start: { line: block.startLine, character: block.startCol },
-          end: { line: block.endFoldingLine, character: block.endFoldingCol },
-        };
-        result.push({
-          name:
-            block.type === 1 ? this._getProcName(block.startLine) : block.name,
-          kind: SymbolKinds[block.type],
-          range,
-          selectionRange: range,
-        });
-        i = block.endFoldingLine;
-        continue;
-      }
-      let token = this.syntaxProvider.getSyntax(i)[0];
-      if (token && token.style === "text") {
-        token = this.syntaxProvider.getSyntax(i)[1];
-      }
-      if (token && /comment/.test(token.style)) {
-        if (/^\s*[%/]?\*\s*region\b/i.test(this.model.getLine(i))) {
-          customBlock = {
-            start: { line: i, character: 0 },
-            end: {
-              line: this.model.getLineCount(),
-              character: 0,
-            },
-          };
-        } else if (
-          customBlock &&
-          /^\s*[%/]?\*\s*endregion\b/i.test(this.model.getLine(i))
-        ) {
-          customBlock.end = {
-            line: i,
-            character: this.model.getColumnCount(i),
+      const rootBlock = this.syntaxProvider.getFoldingBlock(i);
+      if (rootBlock && rootBlock.startLine === i) {
+        const flattenBlocks = this._flattenFoldingBlockTree(rootBlock);
+        for (const block of flattenBlocks) {
+          const range: Range = {
+            start: { line: block.startLine, character: block.startCol },
+            end: { line: block.endFoldingLine, character: block.endFoldingCol },
           };
           result.push({
-            name: "custom",
-            kind: SymbolKind.Module,
-            range: customBlock,
-            selectionRange: customBlock,
+            name:
+              block.type === 1
+                ? this._getProcName(block.startLine)
+                : block.name,
+            kind: SymbolKinds[block.type],
+            range,
+            selectionRange: range,
           });
-          customBlock = undefined;
         }
+        i = rootBlock.endFoldingLine;
+        continue;
       }
     }
     return result;
+  }
+
+  // DFS
+  private _flattenFoldingBlockTree(rootBlock: FoldingBlock): FoldingBlock[] {
+    const stack: FoldingBlock[] = [rootBlock];
+    const resultList: FoldingBlock[] = [];
+    while (stack.length > 0) {
+      const curBlock: FoldingBlock = stack.pop()!;
+      resultList.push(curBlock);
+      for (let i = curBlock.innerBlocks.length - 1; i >= 0; i--) {
+        const innerBlock = curBlock.innerBlocks[i];
+        stack.push(innerBlock);
+      }
+    }
+    return resultList;
   }
 
   getFoldingBlock(line: number, col: number) {
