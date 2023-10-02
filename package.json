@@ -930,7 +930,7 @@
     "@types/chai": "^4.3.6",
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.8.0",
-    "@types/sinon": "^10.0.16",
+    "@types/sinon": "^10.0.17",
     "@typescript-eslint/eslint-plugin": "^6.7.2",
     "@typescript-eslint/parser": "^6.7.2",
     "@vscode/l10n-dev": "^0.0.29",
