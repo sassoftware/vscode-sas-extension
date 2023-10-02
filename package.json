@@ -934,7 +934,7 @@
     "@typescript-eslint/eslint-plugin": "^6.7.2",
     "@typescript-eslint/parser": "^6.7.2",
     "@vscode/l10n-dev": "^0.0.29",
-    "chai": "^4.3.8",
+    "chai": "^4.3.10",
     "concurrently": "^8.2.1",
     "esbuild": "^0.19.4",
     "eslint": "^8.50.0",
