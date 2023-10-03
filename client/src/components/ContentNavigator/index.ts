@@ -305,6 +305,58 @@ class ContentNavigator implements SubscriptionProvider {
           );
         },
       ),
+      commands.registerCommand(
+        "SAS.downloadResource",
+        async (item: ContentItem) => {
+          const uri = await window.showSaveDialog({});
+          if (!uri) {
+            return;
+          }
+
+          this.treeViewSelections(item).forEach(
+            async (resource: ContentItem) => {
+              console.log("resource", resource);
+              console.log("uri", uri);
+            },
+          );
+          // const uri = await window.showSaveDialog({
+          //   defaultUri: Uri.file(
+          //     `${item.library}.${item.name}.csv`.toLocaleLowerCase(),
+          //   ),
+          // });
+          // if (!uri) {
+          //   return;
+          // }
+          // const stream = createWriteStream(uri.fsPath);
+          // await this.libraryDataProvider.writeTableContentsToStream(
+          //   stream,
+          //   item,
+          // );
+        },
+      ),
+      commands.registerCommand(
+        "SAS.uploadResource",
+        async (resource: ContentItem) => {
+          const uris: Uri[] = await window.showOpenDialog({
+            canSelectFolders: true,
+            canSelectMany: true,
+            canSelectFiles: true,
+          });
+          if (!uris) {
+            return;
+          }
+
+          await window.withProgress(
+            {
+              location: ProgressLocation.Notification,
+              title: l10n.t("Uploading files..."),
+            },
+            async () => {
+              this.contentDataProvider.uploadUrisToTarget(uris, resource);
+            },
+          );
+        },
+      ),
       workspace.onDidChangeConfiguration(
         async (event: ConfigurationChangeEvent) => {
           if (event.affectsConfiguration("SAS.connectionProfiles")) {

@@ -32,7 +32,7 @@ import {
   window,
 } from "vscode";
 
-import { lstat, readFile, readdir } from "fs";
+import { lstat, lstatSync, readFile, readdir } from "fs";
 import { basename, join } from "path";
 import { promisify } from "util";
 
@@ -492,6 +492,37 @@ class ContentDataProvider
     });
   }
 
+  public async uploadUrisToTarget(
+    uris: Uri[],
+    target: ContentItem,
+  ): Promise<void> {
+    const failedUploads = [];
+    for (let i = 0; i < uris.length; ++i) {
+      const uri = uris[i];
+      const fileName = basename(uri.fsPath);
+      if (lstatSync(uri.fsPath).isDirectory()) {
+        const success = await this.handleFolderDrop(
+          target,
+          uri.fsPath,
+          Messages.FileUploadError,
+        );
+        !success && failedUploads.push(fileName);
+      } else {
+        const file = await promisify(readFile)(uri.fsPath);
+        const newUri = await this.createFile(target, fileName, file);
+        !newUri && failedUploads.push(fileName);
+      }
+    }
+
+    if (failedUploads.length > 0) {
+      this.handleCreationResponse(
+        target,
+        undefined,
+        l10n.t(Messages.FileUploadError),
+      );
+    }
+  }
+
   private async handleContentItemDrop(
     target: ContentItem,
     item: ContentItem,
@@ -529,12 +560,13 @@ class ContentDataProvider
   private async handleFolderDrop(
     target: ContentItem,
     path: string,
+    errorMessage = Messages.FileDropError,
   ): Promise<boolean> {
     const folder = await this.model.createFolder(target, basename(path));
     let success = true;
     if (!folder) {
       await window.showErrorMessage(
-        l10n.t(Messages.FileDropError, {
+        l10n.t(errorMessage, {
           name: basename(path),
         }),
       );
@@ -562,7 +594,7 @@ class ContentDataProvider
           if (!fileCreated) {
             success = false;
             await window.showErrorMessage(
-              l10n.t(Messages.FileDropError, {
+              l10n.t(errorMessage, {
                 name,
               }),
             );

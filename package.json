@@ -689,12 +689,12 @@
         },
         {
           "command": "SAS.downloadResource",
-          "when": "viewItem =~ /update/ && view == contentdataprovider",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider",
           "group": "uploaddownloadgroup@0"
         },
         {
           "command": "SAS.uploadResource",
-          "when": "viewItem =~ /update/ && view == contentdataprovider",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection",
           "group": "uploaddownloadgroup@1"
         }
       ],
