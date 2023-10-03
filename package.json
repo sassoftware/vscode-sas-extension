@@ -577,6 +577,16 @@
         "shortTitle": "%commands.SAS.notebook.new.short%",
         "title": "%commands.SAS.notebook.new%",
         "category": "SAS Notebook"
+      },
+      {
+        "command": "SAS.downloadResource",
+        "title": "%commands.SAS.download%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.uploadResource",
+        "title": "%commands.SAS.upload%",
+        "category": "SAS"
       }
     ],
     "keybindings": [
@@ -676,6 +686,16 @@
           "command": "SAS.emptyRecycleBin",
           "when": "viewItem =~ /empty/ && view == contentdataprovider",
           "group": "emptygroup@0"
+        },
+        {
+          "command": "SAS.downloadResource",
+          "when": "viewItem =~ /update/ && view == contentdataprovider",
+          "group": "uploaddownloadgroup@0"
+        },
+        {
+          "command": "SAS.uploadResource",
+          "when": "viewItem =~ /update/ && view == contentdataprovider",
+          "group": "uploaddownloadgroup@1"
         }
       ],
       "editor/title/run": [
@@ -776,6 +796,14 @@
         {
           "when": "false",
           "command": "SAS.downloadTable"
+        },
+        {
+          "when": "false",
+          "command": "SAS.downloadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.uploadResource"
         }
       ],
       "file/newFile": [
