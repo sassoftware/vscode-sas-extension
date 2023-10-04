@@ -4,7 +4,7 @@ import { EventEmitter, TaskDefinition, l10n } from "vscode";
 
 import { runTask } from "../../commands/run";
 import { RunResult } from "../../connection";
-import { showResult } from "../ResultPanel";
+import { showResult } from "../ResultPanel/ResultPanel";
 import {
   getSASCodeFromActiveEditor,
   getSASCodeFromFile,
