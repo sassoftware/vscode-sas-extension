@@ -587,6 +587,11 @@
         "command": "SAS.uploadResource",
         "title": "%commands.SAS.upload%",
         "category": "SAS"
+      },
+      {
+        "command": "SAS.saveHTML",
+        "title": "%commands.SAS.download%",
+        "category": "SAS"
       }
     ],
     "keybindings": [
@@ -602,6 +607,12 @@
       }
     ],
     "menus": {
+      "webview/context": [
+        {
+          "command": "SAS.saveHTML",
+          "when": "webviewSection == 'resultsView'"
+        }
+      ],
       "view/title": [
         {
           "command": "SAS.refreshContent",

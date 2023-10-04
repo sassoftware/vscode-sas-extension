@@ -2,11 +2,38 @@
 // SPDX-License-Identifier: Apache-2.0
 import { Uri, ViewColumn, WebviewPanel, l10n, window } from "vscode";
 
+import { v4 } from "uuid";
+
 import { isSideResultEnabled, isSinglePanelEnabled } from "./utils/settings";
 
 let resultPanel: WebviewPanel | undefined;
+export const resultsHtml: Record<string, string> = {};
+
+export interface ResultsContext {
+  webviewSection: "resultsView";
+  preventDefaultContextMenuItems: boolean;
+  uuid: string;
+}
 
 export const showResult = (html: string, uri?: Uri, title?: string) => {
+  const vscodeContext: ResultsContext = {
+    webviewSection: "resultsView",
+    preventDefaultContextMenuItems: true,
+    uuid: v4(),
+  };
+  resultsHtml[vscodeContext.uuid] = html;
+  html = html
+    // Inject vscode context into our results html body
+    .replace(
+      "<body ",
+      `<body data-vscode-context='${JSON.stringify(vscodeContext)}' `,
+    )
+    // Make sure the html and body take up the full height of the parent
+    // iframe so that the context menu is clickable anywhere on the page
+    .replace(
+      "</head>",
+      "<style>html,body { height: 100% !important; }</style></head>",
+    );
   const sideResult = isSideResultEnabled();
   const singlePanel = isSinglePanelEnabled();
   if (!title) {

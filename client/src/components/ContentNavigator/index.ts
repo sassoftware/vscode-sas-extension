@@ -12,9 +12,11 @@ import {
   workspace,
 } from "vscode";
 
+import { createWriteStream } from "fs";
 import { basename } from "path";
 
 import { profileConfig } from "../../commands/profile";
+import { ResultsContext, resultsHtml } from "../ResultPanel";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ConnectionType } from "../profile";
 import ContentDataProvider from "./ContentDataProvider";
@@ -358,6 +360,26 @@ class ContentNavigator implements SubscriptionProvider {
               await this.contentDataProvider.uploadUrisToTarget(uris, resource);
             },
           );
+        },
+      ),
+      commands.registerCommand(
+        "SAS.saveHTML",
+        async (context: ResultsContext) => {
+          const html = resultsHtml[context.uuid] || "";
+          if (!html) {
+            return;
+          }
+          const uri = await window.showSaveDialog({
+            defaultUri: Uri.file(`results.html`),
+          });
+
+          if (!uri) {
+            return;
+          }
+
+          const stream = createWriteStream(uri.fsPath);
+          stream.write(html);
+          stream.end();
         },
       ),
       workspace.onDidChangeConfiguration(
