@@ -689,7 +689,7 @@
         },
         {
           "command": "SAS.downloadResource",
-          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider",
+          "when": "viewItem =~ /update/ && viewItem =~ /allowDownload/ && view == contentdataprovider",
           "group": "uploaddownloadgroup@0"
         },
         {

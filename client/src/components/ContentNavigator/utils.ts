@@ -81,6 +81,10 @@ export const resourceType = (item: ContentItem): string | undefined => {
     actions.push("convertNotebookToFlow");
   }
 
+  if (!isContainer(item)) {
+    actions.push("allowDownload");
+  }
+
   if (actions.length === 0) {
     return;
   }

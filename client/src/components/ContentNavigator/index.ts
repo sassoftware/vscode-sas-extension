@@ -12,6 +12,7 @@ import {
   workspace,
 } from "vscode";
 
+import { createWriteStream } from "fs";
 import { basename } from "path";
 
 import { profileConfig } from "../../commands/profile";
@@ -307,31 +308,27 @@ class ContentNavigator implements SubscriptionProvider {
       ),
       commands.registerCommand(
         "SAS.downloadResource",
-        async (item: ContentItem) => {
-          const uri = await window.showSaveDialog({});
+        async (resource: ContentItem) => {
+          const uri = await window.showSaveDialog({
+            defaultUri: Uri.file(resource.name),
+          });
           if (!uri) {
             return;
           }
 
-          this.treeViewSelections(item).forEach(
-            async (resource: ContentItem) => {
-              console.log("resource", resource);
-              console.log("uri", uri);
+          await window.withProgress(
+            {
+              location: ProgressLocation.Notification,
+              title: l10n.t("Downloading file..."),
+            },
+            async () => {
+              const stream = createWriteStream(uri.fsPath);
+              stream.write(
+                await this.contentDataProvider.readFile(getUri(resource)),
+              );
+              stream.end();
             },
           );
-          // const uri = await window.showSaveDialog({
-          //   defaultUri: Uri.file(
-          //     `${item.library}.${item.name}.csv`.toLocaleLowerCase(),
-          //   ),
-          // });
-          // if (!uri) {
-          //   return;
-          // }
-          // const stream = createWriteStream(uri.fsPath);
-          // await this.libraryDataProvider.writeTableContentsToStream(
-          //   stream,
-          //   item,
-          // );
         },
       ),
       commands.registerCommand(
@@ -352,7 +349,7 @@ class ContentNavigator implements SubscriptionProvider {
               title: l10n.t("Uploading files..."),
             },
             async () => {
-              this.contentDataProvider.uploadUrisToTarget(uris, resource);
+              await this.contentDataProvider.uploadUrisToTarget(uris, resource);
             },
           );
         },

@@ -388,7 +388,7 @@ class ContentDataProvider
     errorMessage: string,
   ): Promise<void> {
     if (!newUri) {
-      window.showErrorMessage(errorMessage);
+      await window.showErrorMessage(errorMessage);
       return;
     }
 
