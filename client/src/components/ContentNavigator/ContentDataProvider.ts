@@ -14,9 +14,6 @@ import {
   FileType,
   Position,
   ProviderResult,
-  Tab,
-  TabInputNotebook,
-  TabInputText,
   TextDocument,
   TextDocumentContentProvider,
   ThemeIcon,
@@ -32,7 +29,14 @@ import {
   window,
 } from "vscode";
 
-import { lstat, lstatSync, readFile, readdir } from "fs";
+import {
+  createWriteStream,
+  lstat,
+  lstatSync,
+  mkdirSync,
+  readFile,
+  readdir,
+} from "fs";
 import { basename, join } from "path";
 import { promisify } from "util";
 
@@ -60,7 +64,7 @@ import {
   getResourceIdFromItem,
   getTypeName,
   getUri,
-  isItemInRecycleBin,
+  isContainer,
   isReference,
   resourceType,
 } from "./utils";
@@ -523,6 +527,49 @@ class ContentDataProvider
     }
   }
 
+  public async downloadContentItems(
+    folderpath: string,
+    selections: ContentItem[],
+    allSelections: readonly ContentItem[],
+  ): Promise<void> {
+    for (let i = 0; i < selections.length; ++i) {
+      const selection = selections[i];
+      if (isContainer(selection)) {
+        const newFolderPath = join(folderpath, selection.name);
+        const selectionsWithinFolder = await this.childrenSelections(
+          selection,
+          allSelections,
+        );
+        mkdirSync(newFolderPath);
+        await this.downloadContentItems(
+          newFolderPath,
+          selectionsWithinFolder,
+          allSelections,
+        );
+      } else {
+        const stream = createWriteStream(join(folderpath, selection.name));
+        stream.write(await this.readFile(getUri(selection)));
+        stream.end();
+      }
+    }
+  }
+
+  private async childrenSelections(
+    selection: ContentItem,
+    allSelections: readonly ContentItem[],
+  ): Promise<ContentItem[]> {
+    const foundSelections = allSelections.filter(
+      (foundSelection) => foundSelection.parentFolderUri === selection.uri,
+    );
+    if (foundSelections.length > 0) {
+      return foundSelections;
+    }
+
+    // If we don't have any child selections, then the folder must have been
+    // closed and therefore, we expect to select _all_ children
+    return this.getChildren(selection);
+  }
+
   private async handleContentItemDrop(
     target: ContentItem,
     item: ContentItem,
@@ -687,17 +734,4 @@ class ContentDataProvider
 
 export default ContentDataProvider;
 
-const closeFileIfOpen = (item: ContentItem) => {
-  const fileUri = getUri(item, isItemInRecycleBin(item));
-  const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
-  const tab = tabs.find(
-    (tab) =>
-      (tab.input instanceof TabInputText ||
-        tab.input instanceof TabInputNotebook) &&
-      tab.input.uri.query === fileUri.query, // compare the file id
-  );
-  if (tab) {
-    return window.tabGroups.close(tab);
-  }
-  return true;
-};
+const closeFileIfOpen = (item: ContentItem) => {};

@@ -12,7 +12,6 @@ import {
   workspace,
 } from "vscode";
 
-import { createWriteStream } from "fs";
 import { basename } from "path";
 
 import { profileConfig } from "../../commands/profile";
@@ -309,9 +308,16 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.downloadResource",
         async (resource: ContentItem) => {
-          const uri = await window.showSaveDialog({
-            defaultUri: Uri.file(resource.name),
+          const selections = this.treeViewSelections(resource);
+          const uris = await window.showOpenDialog({
+            title: l10n.t("Choose where to save your files."),
+            openLabel: l10n.t("Save"),
+            canSelectFolders: true,
+            canSelectFiles: false,
+            canSelectMany: false,
           });
+          const uri = uris && uris.length > 0 ? uris[0] : undefined;
+
           if (!uri) {
             return;
           }
@@ -322,11 +328,11 @@ class ContentNavigator implements SubscriptionProvider {
               title: l10n.t("Downloading file..."),
             },
             async () => {
-              const stream = createWriteStream(uri.fsPath);
-              stream.write(
-                await this.contentDataProvider.readFile(getUri(resource)),
+              await this.contentDataProvider.downloadContentItems(
+                uri.fsPath,
+                selections,
+                this.contentDataProvider.treeView.selection,
               );
-              stream.end();
             },
           );
         },
@@ -376,19 +382,6 @@ class ContentNavigator implements SubscriptionProvider {
       !activeProfile.serverId
       ? activeProfile.endpoint
       : "";
-  }
-
-  private async handleCreationResponse(
-    resource: ContentItem,
-    newUri: Uri | undefined,
-    errorMessage: string,
-  ): Promise<void> {
-    if (!newUri) {
-      window.showErrorMessage(errorMessage);
-      return;
-    }
-
-    this.contentDataProvider.reveal(resource);
   }
 
   private treeViewSelections(item: ContentItem): ContentItem[] {
