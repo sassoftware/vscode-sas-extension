@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [v1.4.1] - 2023-09-29
+
+### Fixed
+
+- Use sas-notebook renderer only for .sasnb files ([#538](https://github.com/sassoftware/vscode-sas-extension/pull/538))
+
+## [v1.4.0] - 2023-09-28
+
+### Added
+
+- Run SAS code via VS Code tasks ([#444](https://github.com/sassoftware/vscode-sas-extension/pull/444))
+- Convert `.sasnb` to `.flw` ([#447](https://github.com/sassoftware/vscode-sas-extension/pull/447))
+- Refined SAS code auto-indentation ([#451](https://github.com/sassoftware/vscode-sas-extension/pull/451))
+- Option to control the default placement of Result panel ([#513](https://github.com/sassoftware/vscode-sas-extension/pull/513))
+- Assign `_SASPROGRAMFILE` macro-variable to full path and filename of submitted SAS program ([#524](https://github.com/sassoftware/vscode-sas-extension/pull/524))
+
+### Fixed
+
+- Content rename issues ([#445](https://github.com/sassoftware/vscode-sas-extension/issues/445))([#504](https://github.com/sassoftware/vscode-sas-extension/issues/504))([#507](https://github.com/sassoftware/vscode-sas-extension/issues/507))([#533](https://github.com/sassoftware/vscode-sas-extension/issues/533))
+- Call routine autocomplete ([#497](https://github.com/sassoftware/vscode-sas-extension/issues/497))
+- Update high contrast data viewer theming ([#448](https://github.com/sassoftware/vscode-sas-extension/issues/448))
+
 ## [v1.3.0] - 2023-09-12
 
 ### Added

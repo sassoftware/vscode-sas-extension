@@ -41,6 +41,7 @@ import {
   ROOT_FOLDER_TYPE,
   TRASH_FOLDER_TYPE,
 } from "./const";
+import { convertNotebookToFlow } from "./convert";
 import { ContentItem } from "./types";
 import {
   getCreationDate,
@@ -265,6 +266,15 @@ class ContentDataProvider
     return this.model.saveContentToUri(uri, new TextDecoder().decode(content));
   }
 
+  public associateFlow(
+    name: string,
+    uri: Uri,
+    parent: ContentItem,
+    studioSessionId: string,
+  ): Promise<string> {
+    return this.model.associateFlowFile(name, uri, parent, studioSessionId);
+  }
+
   public async deleteResource(item: ContentItem): Promise<boolean> {
     if (!(await closeFileIfOpen(item))) {
       return false;
@@ -340,6 +350,58 @@ class ContentDataProvider
       this.refresh();
     }
     return success;
+  }
+
+  public async handleCreationResponse(
+    resource: ContentItem,
+    newUri: Uri | undefined,
+    errorMessage: string,
+  ): Promise<void> {
+    if (!newUri) {
+      window.showErrorMessage(errorMessage);
+      return;
+    }
+
+    this.reveal(resource);
+  }
+
+  public async testStudioConnection(): Promise<string> {
+    return await this.model.testStudioConnection();
+  }
+
+  public async convertNotebookToFlow(
+    item: ContentItem,
+    name: string,
+    studioSessionId: string,
+  ): Promise<string | undefined> {
+    const parent = await this.getParent(item);
+    const resourceUri = getUri(item);
+    try {
+      // get the content of the notebook file
+      const contentString: string =
+        await this.provideTextDocumentContent(resourceUri);
+      // convert the notebook file to a .flw file
+      const flowDataString = convertNotebookToFlow(
+        contentString,
+        item.name,
+        name,
+      );
+      const flowDataUint8Array = new TextEncoder().encode(flowDataString);
+      if (flowDataUint8Array.length === 0) {
+        window.showErrorMessage(Messages.NoCodeToConvert);
+        return;
+      }
+      const newUri = await this.createFile(parent, name, flowDataUint8Array);
+      this.handleCreationResponse(
+        parent,
+        newUri,
+        l10n.t(Messages.NewFileCreationError, { name: name }),
+      );
+      // associate the new .flw file with SAS Studio
+      return await this.associateFlow(name, newUri, parent, studioSessionId);
+    } catch (error) {
+      window.showErrorMessage(error);
+    }
   }
 
   public refresh(): void {

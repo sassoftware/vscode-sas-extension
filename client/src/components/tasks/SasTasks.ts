@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { EventEmitter, TaskDefinition, ViewColumn, l10n, window } from "vscode";
+import { EventEmitter, TaskDefinition, l10n } from "vscode";
 
 import { runTask } from "../../commands/run";
 import { RunResult } from "../../connection";
@@ -10,6 +10,7 @@ import {
   wrapCode,
 } from "../Helper/SasCodeHelper";
 import { isOutputHtmlEnabled } from "../Helper/SettingHelper";
+import { showResult } from "../ResultPanel";
 
 export const SAS_TASK_TYPE = "sas";
 
@@ -71,12 +72,10 @@ function showRunResult(
 
   if (outputHtml && results.html5) {
     messageEmitter.fire(l10n.t("Show results...") + "\r\n");
-    const odsResult = window.createWebviewPanel(
-      "SASSession", // Identifies the type of the webview. Used internally
-      l10n.t("Result: {result}", { result: taskName }), // Title of the panel displayed to the user
-      { preserveFocus: true, viewColumn: ViewColumn.Beside }, // Editor column to show the new webview panel in.
-      {}, // Webview options. More on these later.
+    showResult(
+      results.html5,
+      undefined,
+      l10n.t("Result: {result}", { result: taskName }),
     );
-    odsResult.webview.html = results.html5;
   }
 }

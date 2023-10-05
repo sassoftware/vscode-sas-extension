@@ -50,23 +50,27 @@ body,
 
 /* DARK MODE ICONS */
 
-.vscode-dark .header-icon.float {
+.vscode-dark .header-icon.float,
+.vscode-high-contrast .header-icon.float {
   background: url(../../../icons/dark/tableHeaderNumericTypeDark.svg) center
     no-repeat;
 }
 
 .header-icon.time,
 .header-icon.date-time,
-.vscode-dark .header-icon.date {
+.vscode-dark .header-icon.date,
+.vscode-high-contrast .header-icon.date {
   background: url(../../../icons/dark/tableHeaderDateDark.svg) center no-repeat;
 }
 
-.vscode-dark .header-icon.currency {
+.vscode-dark .header-icon.currency,
+.vscode-high-contrast .header-icon.currency {
   background: url(../../../icons/dark/tableHeaderCurrencyDark.svg) center
     no-repeat;
 }
 
-.vscode-dark .header-icon.char {
+.vscode-dark .header-icon.char,
+.vscode-high-contrast .header-icon.char {
   background: url(../../../icons/dark/tableHeaderCharacterTypeDark.svg) center
     no-repeat;
 }
