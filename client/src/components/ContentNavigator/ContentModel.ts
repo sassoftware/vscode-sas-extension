@@ -56,6 +56,10 @@ export class ContentModel {
     this.viyaCadence = "";
   }
 
+  public connected(): boolean {
+    return this.authorized;
+  }
+
   public async connect(baseURL: string): Promise<void> {
     this.connection = axios.create({ baseURL });
     this.connection.interceptors.response.use(
@@ -189,9 +193,15 @@ export class ContentModel {
 
   public async getContentByUri(uri: Uri): Promise<string> {
     const resourceId = getResourceId(uri);
-    const res = await this.connection.get(resourceId + "/content", {
-      transformResponse: (response) => response,
-    });
+    let res;
+    try {
+      res = await this.connection.get(resourceId + "/content", {
+        transformResponse: (response) => response,
+      });
+    } catch (e) {
+      throw new Error(Messages.FileOpenError);
+    }
+
     this.fileTokenMaps[resourceId] = {
       etag: res.headers.etag,
       lastModified: res.headers["last-modified"],
@@ -365,7 +375,7 @@ export class ContentModel {
     }
   }
 
-  public async testStudioConnection(): Promise<string> {
+  public async acquireStudioSessionId(): Promise<string> {
     try {
       const result = await createStudioSession(this.connection);
       return result;

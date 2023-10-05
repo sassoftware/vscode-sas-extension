@@ -28,7 +28,7 @@ export const ROOT_FOLDER = {
 };
 
 export const FILE_TYPE = "file";
-export const FILE_TYPES = [FILE_TYPE];
+export const FILE_TYPES = [FILE_TYPE, "dataFlow"];
 export const FOLDER_TYPE = "folder";
 export const MYFOLDER_TYPE = "myFolder";
 export const TRASH_FOLDER_TYPE = "trashFolder";
@@ -85,7 +85,7 @@ export const Messages = {
   ),
   ConvertNotebookToFlowPrompt: l10n.t("Enter a name for the new .flw file"),
   NotebookToFlowConversionSuccess: l10n.t(
-    "The notebook has been successfully converted to a flow. You can now open it in SAS Studio.",
+    "The notebook has been successfully converted to a flow and saved into the following folder: {folderName}. You can now open it in SAS Studio.",
   ),
   NotebookToFlowConversionError: l10n.t(
     "Error converting the notebook file to .flw format.",
