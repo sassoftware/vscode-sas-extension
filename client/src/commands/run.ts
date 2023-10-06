@@ -12,13 +12,13 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
-import { isOutputHtmlEnabled } from "../components/Helper/SettingHelper";
 import { LogFn as LogChannelFn } from "../components/LogChannel";
 import { showResult } from "../components/ResultPanel";
 import {
   assign_SASProgramFile,
   wrapCodeWithOutputHtml,
 } from "../components/utils/sasCodeHelper";
+import { isOutputHtmlEnabled } from "../components/utils/settingHelper";
 import { OnLogFn, RunResult, getSession } from "../connection";
 import { profileConfig, switchProfile } from "./profile";
 

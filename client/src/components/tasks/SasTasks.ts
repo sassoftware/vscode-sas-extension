@@ -4,13 +4,13 @@ import { EventEmitter, TaskDefinition, l10n } from "vscode";
 
 import { runTask } from "../../commands/run";
 import { RunResult } from "../../connection";
-import { isOutputHtmlEnabled } from "../Helper/SettingHelper";
 import { showResult } from "../ResultPanel";
 import {
   getSASCodeFromActiveEditor,
   getSASCodeFromFile,
   wrapCode,
 } from "../utils/sasCodeHelper";
+import { isOutputHtmlEnabled } from "../utils/settingHelper";
 
 export const SAS_TASK_TYPE = "sas";
 

@@ -5,7 +5,7 @@ import { Uri, ViewColumn, WebviewPanel, l10n, window } from "vscode";
 import {
   isSideResultEnabled,
   isSinglePanelEnabled,
-} from "./Helper/SettingHelper";
+} from "./utils/settingHelper";
 
 let resultPanel: WebviewPanel | undefined;
 
