@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [Unreleased]
+
+### Added
+
+- Added the ability to upload and download sas content using the context menu ([#547](https://github.com/sassoftware/vscode-sas-extension/issues/547))
+- Added the ability to download results as an html file ([#546](https://github.com/sassoftware/vscode-sas-extension/issues/546))
+
 ## [v1.5.0] - 2023-10-27
 
 ### Added
