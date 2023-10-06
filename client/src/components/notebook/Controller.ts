@@ -7,7 +7,7 @@ import {
   assign_SASProgramFile,
   wrapCodeWithOutputHtml,
 } from "../Helper/SasCodeHelper";
-import { Deferred, deferred } from "../utils";
+import { Deferred, deferred } from "../utils/throttle";
 
 export class NotebookController {
   readonly controllerId = "sas-notebook-controller-id";
