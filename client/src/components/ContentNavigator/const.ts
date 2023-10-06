@@ -62,7 +62,7 @@ export const Messages = {
   FileDropError: l10n.t('Unable to drop item "{name}".'),
   FileOpenError: l10n.t("The file type is unsupported."),
   FileRestoreError: l10n.t("Unable to restore file."),
-  FileUploadError: l10n.t("Unable to upload file(s)."),
+  FileUploadError: l10n.t("Unable to upload files."),
   FileValidationError: l10n.t("Invalid file name."),
   FolderDeletionError: l10n.t("Unable to delete folder."),
   FolderRestoreError: l10n.t("Unable to restore folder."),

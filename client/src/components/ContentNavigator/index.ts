@@ -325,7 +325,7 @@ class ContentNavigator implements SubscriptionProvider {
           await window.withProgress(
             {
               location: ProgressLocation.Notification,
-              title: l10n.t("Downloading file..."),
+              title: l10n.t("Downloading files..."),
             },
             async () => {
               await this.contentDataProvider.downloadContentItems(
