@@ -6,7 +6,7 @@ import { getSession } from "../../connection";
 import {
   assign_SASProgramFile,
   wrapCodeWithOutputHtml,
-} from "../Helper/SasCodeHelper";
+} from "../utils/sasCodeHelper";
 import { Deferred, deferred } from "../utils/throttle";
 
 export class NotebookController {
