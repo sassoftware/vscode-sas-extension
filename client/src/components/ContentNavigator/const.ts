@@ -28,7 +28,8 @@ export const ROOT_FOLDER = {
 };
 
 export const FILE_TYPE = "file";
-export const FILE_TYPES = [FILE_TYPE, "dataFlow"];
+export const DATAFLOW_TYPE = "dataFlow";
+export const FILE_TYPES = [FILE_TYPE, DATAFLOW_TYPE];
 export const FOLDER_TYPE = "folder";
 export const MYFOLDER_TYPE = "myFolder";
 export const TRASH_FOLDER_TYPE = "trashFolder";

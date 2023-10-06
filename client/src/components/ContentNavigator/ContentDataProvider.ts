@@ -267,15 +267,6 @@ class ContentDataProvider
     return this.model.saveContentToUri(uri, new TextDecoder().decode(content));
   }
 
-  public associateFlow(
-    name: string,
-    uri: Uri,
-    parent: ContentItem,
-    studioSessionId: string,
-  ): Promise<string> {
-    return this.model.associateFlowFile(name, uri, parent, studioSessionId);
-  }
-
   public async deleteResource(item: ContentItem): Promise<boolean> {
     if (!(await closeFileIfOpen(item))) {
       return false;
@@ -414,7 +405,12 @@ class ContentDataProvider
         l10n.t(Messages.NewFileCreationError, { name: inputName }),
       );
       // associate the new .flw file with SAS Studio
-      await this.associateFlow(outputName, newUri, parentItem, studioSessionId);
+      await this.model.associateFlowFile(
+        outputName,
+        newUri,
+        parentItem,
+        studioSessionId,
+      );
     } catch (error) {
       window.showErrorMessage(error);
     }
