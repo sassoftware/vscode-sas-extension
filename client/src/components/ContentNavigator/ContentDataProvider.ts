@@ -14,6 +14,9 @@ import {
   FileType,
   Position,
   ProviderResult,
+  Tab,
+  TabInputNotebook,
+  TabInputText,
   TextDocument,
   TextDocumentContentProvider,
   ThemeIcon,
@@ -65,6 +68,7 @@ import {
   getTypeName,
   getUri,
   isContainer,
+  isItemInRecycleBin,
   isReference,
   resourceType,
 } from "./utils";
@@ -734,4 +738,17 @@ class ContentDataProvider
 
 export default ContentDataProvider;
 
-const closeFileIfOpen = (item: ContentItem) => {};
+const closeFileIfOpen = (item: ContentItem) => {
+  const fileUri = getUri(item, isItemInRecycleBin(item));
+  const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
+  const tab = tabs.find(
+    (tab) =>
+      (tab.input instanceof TabInputText ||
+        tab.input instanceof TabInputNotebook) &&
+      tab.input.uri.query === fileUri.query, // compare the file id
+  );
+  if (tab) {
+    return window.tabGroups.close(tab);
+  }
+  return true;
+};

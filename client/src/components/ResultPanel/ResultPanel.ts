@@ -4,7 +4,7 @@ import { Uri, ViewColumn, WebviewPanel, l10n, window } from "vscode";
 
 import { v4 } from "uuid";
 
-import { isSideResultEnabled, isSinglePanelEnabled } from "./utils/settings";
+import { isSideResultEnabled, isSinglePanelEnabled } from "../utils/settings";
 
 let resultPanel: WebviewPanel | undefined;
 export const resultsHtml: Record<string, string> = {};
