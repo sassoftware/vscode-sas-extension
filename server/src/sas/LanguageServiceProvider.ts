@@ -1,4 +1,4 @@
-// Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import { FoldingRange } from "vscode-languageserver";
 import { Range, TextDocument } from "vscode-languageserver-textdocument";
@@ -10,6 +10,7 @@ import { FoldingBlock } from "./LexerEx";
 import { Model } from "./Model";
 import type { LibService } from "./SyntaxDataProvider";
 import { SyntaxProvider } from "./SyntaxProvider";
+import { Formatter } from "./formatter";
 
 export const legend = {
   tokenTypes: [
@@ -54,6 +55,7 @@ export class LanguageServiceProvider {
   private syntaxProvider;
   public completionProvider;
   public formatOnTypeProvider;
+  public formatter;
 
   constructor(doc: TextDocument) {
     this.model = new Model(doc);
@@ -66,6 +68,7 @@ export class LanguageServiceProvider {
       this.model,
       this.syntaxProvider,
     );
+    this.formatter = new Formatter(this.model, this.syntaxProvider);
 
     const lineCount = this.model.getLineCount();
 

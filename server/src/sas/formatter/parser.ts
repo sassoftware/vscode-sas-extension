@@ -1,0 +1,303 @@
+// Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+import type { Token as RealToken } from "../Lexer";
+import type { FoldingBlock } from "../LexerEx";
+import type { Model } from "../Model";
+import type { SyntaxProvider } from "../SyntaxProvider";
+
+interface FakeToken extends Omit<RealToken, "type"> {
+  type: "raw-data";
+}
+type Token = FakeToken | RealToken;
+
+export interface Statement {
+  type: "statement";
+  name: string;
+  children: Token[];
+  leadingComment?: Token;
+}
+
+export interface Region {
+  type: "region";
+  block?: FoldingBlock;
+  children: (Region | Statement)[];
+}
+
+interface Program {
+  type: "program";
+  children: (Region | Statement)[];
+}
+
+export type SASAST = Program | Region | Statement | Token;
+
+const isComment = (token: Token) =>
+  token.type === "comment" || token.type === "macro-comment";
+
+const removePrevStatement = (parent: Program | Region) => {
+  if (parent.children.length <= 1) {
+    return;
+  }
+  let prevStatement = parent.children[parent.children.length - 2];
+  if (prevStatement.type === "statement") {
+    parent.children.splice(-2, 1);
+    return;
+  }
+  while (prevStatement.type === "region") {
+    parent = prevStatement;
+    prevStatement = prevStatement.children[prevStatement.children.length - 1];
+  }
+  parent.children.pop();
+};
+
+const hasParent = (parents: Region[], block: FoldingBlock) => {
+  let index = parents.length - 1;
+  while (index >= 0 && !parents[index].block) {
+    index--;
+  }
+  const parent = parents[index]?.block;
+  if (!parent) {
+    return false;
+  }
+  while (block.outerBlock) {
+    if (block.outerBlock === parent) {
+      return true;
+    }
+    block = block.outerBlock;
+  }
+  return false;
+};
+
+const isStartingRegion = (parents: Region[], currentStatement: Statement) => {
+  if (/^%?do$/i.test(currentStatement.children[0].text)) {
+    return true;
+  }
+  if (
+    /^(%?if|%?else|when)$/i.test(currentStatement.children[0].text) &&
+    currentStatement.children.length > 1
+  ) {
+    for (let i = 1; i < currentStatement.children.length - 1; i++) {
+      if (/^%?do$/i.test(currentStatement.children[i].text)) {
+        return true;
+      }
+    }
+  }
+
+  let index = parents.length - 1;
+  while (index >= 0 && !parents[index].block) {
+    index--;
+  }
+  const parent = parents[index];
+  if (!parent || !parent.block) {
+    return false;
+  }
+
+  const map: Record<string, RegExp> = {
+    data: /^select$/i,
+    ds2: /^(select|method|data|package|thread)$/i,
+    template: /^(define|begingraph|layout)$/i,
+  };
+
+  const block = parent.block;
+  let procName = "";
+  if (block.name === "PROC") {
+    const firstToken = parent.children[0].children[1];
+    if (firstToken && "text" in firstToken) {
+      procName = firstToken.text;
+    }
+  }
+  const regexp = map[(procName || block.name).toLowerCase()];
+  if (regexp && regexp.test(currentStatement.children[0].text)) {
+    return true;
+  }
+  return false;
+};
+
+export const getParser =
+  (model: Model, tokens: Token[], syntaxProvider: SyntaxProvider) => () => {
+    const root: Program = {
+      type: "program",
+      children: [],
+    };
+    const parents: Region[] = [];
+    let region: Region | undefined = undefined;
+    let currentStatement: Statement | undefined = undefined;
+    let prevStatement: Statement | undefined = undefined;
+    for (let i = 0; i < tokens.length; i++) {
+      const node = tokens[i];
+      let parent = parents.length ? parents[parents.length - 1] : root;
+      if (node.type === "sec-keyword" || node.type === "macro-sec-keyword") {
+        const block = syntaxProvider.getFoldingBlock(
+          node.start.line,
+          node.start.column,
+          true,
+          true,
+          true,
+        );
+        if (
+          block &&
+          block.startLine === node.start.line &&
+          block.startCol === node.start.column
+        ) {
+          if (region && hasParent([...parents, region], block)) {
+            parents.push(region);
+            parent = region;
+          }
+          region = {
+            type: "region",
+            block: block,
+            children: [],
+          };
+          parent.children.push(region);
+        }
+      }
+      if (!currentStatement) {
+        currentStatement = {
+          type: "statement",
+          name: node.text,
+          children: [],
+        };
+        if (region) {
+          if (region.children.length === 0) {
+            // section start
+            if (prevStatement) {
+              const prevToken =
+                prevStatement.children[prevStatement.children.length - 1];
+              if (prevStatement.children.length === 1 && isComment(prevToken)) {
+                // leading comment will be printed together with current statement
+                currentStatement.leadingComment = prevToken;
+                // remove it from previous AST location
+                removePrevStatement(parent);
+              }
+            }
+          }
+          region.children.push(currentStatement);
+        } else {
+          parent.children.push(currentStatement);
+        }
+      }
+      currentStatement.children.push(node);
+      if (node.type === "sep" && node.text === ";") {
+        if (
+          currentStatement.children[0].type === "cards-data" &&
+          /(cards|lines|datalines|parmcards)4/i.test(
+            (region && prevStatement?.name) ?? "",
+          ) &&
+          currentStatement.children.length < 5
+        ) {
+          // datalines4 requires ;;;; to end
+          continue;
+        }
+        if (
+          isStartingRegion(
+            region ? [...parents, region] : parents,
+            currentStatement,
+          )
+        ) {
+          if (region) {
+            region.children.pop();
+            parents.push(region);
+            parent = region;
+          } else {
+            parent.children.pop();
+          }
+          region = {
+            type: "region",
+            children: [currentStatement],
+          };
+          parent.children.push(region);
+        } else if (
+          region &&
+          !region.block &&
+          currentStatement.children.length > 1 &&
+          /^(%?end|enddata|endpackage|endthread|endgraph|endlayout)$/i.test(
+            currentStatement.children[currentStatement.children.length - 2]
+              .text,
+          )
+        ) {
+          // put `end` out of region children to outdent
+          parent.children.push(region.children.pop()!);
+          region = parents.pop();
+        } else if (region && region.block) {
+          const block = region.block;
+          if (
+            block.endLine === node.end.line &&
+            block.endCol === node.end.column
+          ) {
+            if (
+              /^(run|quit|%mend)\b/i.test(currentStatement.children[0].text)
+            ) {
+              // put `run` out of section children to outdent
+              parent.children.push(region.children.pop()!);
+            }
+            if (
+              region.block?.name === "PROC" &&
+              "text" in region.children[0].children[1] &&
+              /^(python|lua)$/i.test(region.children[0].children[1].text) &&
+              region.children.length > 1
+            ) {
+              // should not format python/lua, treat it as cards data
+              const start =
+                "start" in region.children[1].children[0] &&
+                region.children[1].children[0].start;
+              const endStatement = region.children[region.children.length - 1];
+              const endToken =
+                endStatement.children[endStatement.children.length - 1];
+              const end = "end" in endToken && endToken.end;
+              if (start && end) {
+                region.children = [
+                  region.children[0],
+                  {
+                    type: "statement",
+                    name: "",
+                    children: [
+                      {
+                        type: "raw-data",
+                        text: model.getText({ start, end }),
+                        start,
+                        end,
+                      },
+                    ],
+                  },
+                ];
+              }
+            }
+            region = parents.pop();
+          }
+        }
+        if (i < tokens.length - 1) {
+          const nextToken = tokens[i + 1];
+          if (isComment(nextToken) && nextToken.end.line === node.end.line) {
+            // trailing comment
+            currentStatement.children.push(nextToken);
+            ++i;
+          }
+          if (nextToken.start.line - node.end.line > 1) {
+            // preserve user explicit empty line
+            currentStatement.children.push({
+              type: "raw-data",
+              text: "\n",
+              start: node.end,
+              end: nextToken.start,
+            });
+          }
+        }
+        prevStatement = currentStatement;
+        currentStatement = undefined;
+      } else if (currentStatement.children.length === 1 && isComment(node)) {
+        // standalone comment, treat as a whole statement
+        prevStatement = currentStatement;
+        currentStatement = undefined;
+        if (region && region.block) {
+          const block = region.block;
+          if (
+            block.endLine === node.end.line &&
+            block.endCol === node.end.column
+          ) {
+            region = parents.pop();
+          }
+        }
+      }
+    }
+
+    return root;
+  };
