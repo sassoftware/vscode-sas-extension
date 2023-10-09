@@ -944,7 +944,7 @@
     "nock": "^13.3.3",
     "path-browserify": "^1.0.1",
     "prettier": "^3.0.3",
-    "sinon": "^16.0.0",
+    "sinon": "^16.1.0",
     "ts-loader": "^9.5.0",
     "ts-sinon": "^2.0.2",
     "typescript": "^5.2.2",
