@@ -3,7 +3,10 @@
 import * as vscode from "vscode";
 
 import { getSession } from "../../connection";
-import { wrapCodeWithOutputHtml } from "../Helper/SasCodeHelper";
+import {
+  assign_SASProgramFile,
+  wrapCodeWithOutputHtml,
+} from "../Helper/SasCodeHelper";
 import { Deferred, deferred } from "../utils";
 
 export class NotebookController {
@@ -124,11 +127,22 @@ export class NotebookController {
 }
 
 const getCode = (doc: vscode.TextDocument) => {
+  let codeFile = "";
+  if (doc) {
+    if (doc.fileName) {
+      codeFile = doc.fileName;
+    } else if (doc.uri && doc.uri.fsPath) {
+      codeFile = doc.uri.fsPath;
+    }
+  }
   let code = doc.getText();
   if (doc.languageId === "sql") {
     code = wrapSQL(code);
   } else if (doc.languageId === "python") {
     code = wrapPython(code);
+  }
+  if (codeFile) {
+    code = assign_SASProgramFile(code, codeFile);
   }
   return wrapCodeWithOutputHtml(code);
 };
