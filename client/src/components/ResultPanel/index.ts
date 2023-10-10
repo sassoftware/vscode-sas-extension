@@ -1,8 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Disposable, Uri, commands, window } from "vscode";
-
-import { createWriteStream } from "fs";
+import { Disposable, Uri, commands, window, workspace } from "vscode";
 
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ResultsContext, resultsHtml } from "./ResultPanel";
@@ -25,9 +23,7 @@ export class ResultPanelSubscriptionProvider implements SubscriptionProvider {
             return;
           }
 
-          const stream = createWriteStream(uri.fsPath);
-          stream.write(html);
-          stream.end();
+          await workspace.fs.writeFile(uri, new TextEncoder().encode(html));
         },
       ),
     ];

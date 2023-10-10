@@ -610,7 +610,7 @@
       "webview/context": [
         {
           "command": "SAS.saveHTML",
-          "when": "webviewSection == 'resultsView'"
+          "when": "webviewId == 'SASResultPanel'"
         }
       ],
       "view/title": [

@@ -10,14 +10,12 @@ let resultPanel: WebviewPanel | undefined;
 export const resultsHtml: Record<string, string> = {};
 
 export interface ResultsContext {
-  webviewSection: "resultsView";
   preventDefaultContextMenuItems: boolean;
   uuid: string;
 }
 
 export const showResult = (html: string, uri?: Uri, title?: string) => {
   const vscodeContext: ResultsContext = {
-    webviewSection: "resultsView",
     preventDefaultContextMenuItems: true,
     uuid: v4(),
   };
@@ -42,7 +40,7 @@ export const showResult = (html: string, uri?: Uri, title?: string) => {
 
   if (!singlePanel || !resultPanel) {
     resultPanel = window.createWebviewPanel(
-      "SASSession", // Identifies the type of the webview. Used internally
+      "SASResultPanel", // Identifies the type of the webview. Used internally
       title, // Title of the panel displayed to the user
       {
         preserveFocus: true,

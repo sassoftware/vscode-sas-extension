@@ -30,16 +30,10 @@ import {
   l10n,
   languages,
   window,
+  workspace,
 } from "vscode";
 
-import {
-  createWriteStream,
-  lstat,
-  lstatSync,
-  mkdirSync,
-  readFile,
-  readdir,
-} from "fs";
+import { lstat, lstatSync, readFile, readdir } from "fs";
 import { basename, join } from "path";
 import { promisify } from "util";
 
@@ -516,7 +510,7 @@ class ContentDataProvider
         );
         !success && failedUploads.push(fileName);
       } else {
-        const file = await promisify(readFile)(uri.fsPath);
+        const file = await workspace.fs.readFile(uri);
         const newUri = await this.createFile(target, fileName, file);
         !newUri && failedUploads.push(fileName);
       }
@@ -544,16 +538,17 @@ class ContentDataProvider
           selection,
           allSelections,
         );
-        mkdirSync(newFolderPath);
+        await workspace.fs.createDirectory(Uri.parse(newFolderPath));
         await this.downloadContentItems(
           newFolderPath,
           selectionsWithinFolder,
           allSelections,
         );
       } else {
-        const stream = createWriteStream(join(folderpath, selection.name));
-        stream.write(await this.readFile(getUri(selection)));
-        stream.end();
+        await workspace.fs.writeFile(
+          Uri.parse(join(folderpath, selection.name)),
+          await this.readFile(getUri(selection)),
+        );
       }
     }
   }
