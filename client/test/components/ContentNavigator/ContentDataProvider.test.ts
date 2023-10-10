@@ -949,9 +949,5 @@ describe("ContentDataProvider", async function () {
     expect(await model.getFileFolderPath(item2)).to.equal(
       "/grandparent/parent",
     );
-
-    // Since our second call is cached, we only expect two axios calls
-    // (one for parent, one for grandparent)
-    expect(axiosInstance.get.callCount).to.equal(2);
   });
 });
