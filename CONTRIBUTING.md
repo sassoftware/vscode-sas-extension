@@ -88,6 +88,8 @@ Follow these steps to update a locale for the SAS Extension for VSCode:
 
 ### Locale contributors
 
-- German: David Weik
-- Chinese: Wei Wu
-- Portuguese: Mark Jordan
+| Language                 | VSCode Language ID | Contributor |
+| ------------------------ | ------------------ | ----------- |
+| **German**               | de                 | David Weik  |
+| **Chinese (Simplified)** | zh-cn              | Wei Wu      |
+| **Portuguese (Brazil)**  | pt-br              | Mark Jordan |
