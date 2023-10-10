@@ -12,7 +12,6 @@ import {
   workspace,
 } from "vscode";
 
-import { readFileSync } from "fs";
 import { basename } from "path";
 
 import { profileConfig } from "../../commands/profile";
@@ -280,7 +279,7 @@ class ContentNavigator implements SubscriptionProvider {
                 ? await this.contentDataProvider.provideTextDocumentContent(
                     getUri(resource),
                   )
-                : readFileSync(resource.fsPath).toString();
+                : (await workspace.fs.readFile(resource)).toString();
 
               const folderName =
                 await this.contentDataProvider.convertNotebookToFlow(
