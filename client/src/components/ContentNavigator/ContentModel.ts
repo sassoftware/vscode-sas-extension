@@ -48,14 +48,12 @@ export class ContentModel {
   private authorized: boolean;
   private viyaCadence: string;
   private delegateFolders: { [name: string]: ContentItem };
-  private cachedFilePaths: Record<string, string>;
 
   constructor() {
     this.fileTokenMaps = {};
     this.authorized = false;
     this.delegateFolders = {};
     this.viyaCadence = "";
-    this.cachedFilePaths = {};
   }
 
   public async connect(baseURL: string): Promise<void> {
@@ -277,7 +275,6 @@ export class ContentModel {
     item: ContentItem,
     name: string,
   ): Promise<ContentItem | undefined> {
-    this.cachedFilePaths = {};
     const itemIsReference = item.type === "reference";
     const uri = itemIsReference
       ? getLink(item.links, "GET", "self").uri
@@ -411,7 +408,6 @@ export class ContentModel {
   }
 
   public async delete(item: ContentItem): Promise<boolean> {
-    this.cachedFilePaths = {};
     // folder service will return 409 error if the deleting folder has non-folder item even if add recursive parameter
     // delete the resource or move item to recycle bin will automatically delete the favorites as well.
     return await (isContainer(item)
@@ -650,13 +646,9 @@ export class ContentModel {
       return "";
     }
 
-    const initialParentFolderUri = contentItem.parentFolderUri;
-    if (this.cachedFilePaths[initialParentFolderUri]) {
-      return this.cachedFilePaths[initialParentFolderUri];
-    }
-
     const filePathParts = [];
-    let currentContentItem: ContentItem = contentItem;
+    let currentContentItem: Pick<ContentItem, "parentFolderUri" | "name"> =
+      contentItem;
     do {
       try {
         const { data: parentData } = await this.connection.get(
@@ -670,10 +662,7 @@ export class ContentModel {
       filePathParts.push(currentContentItem.name);
     } while (currentContentItem.parentFolderUri);
 
-    this.cachedFilePaths[initialParentFolderUri] =
-      "/" + filePathParts.reverse().join("/");
-
-    return this.cachedFilePaths[initialParentFolderUri];
+    return "/" + filePathParts.reverse().join("/");
   }
 }
 
