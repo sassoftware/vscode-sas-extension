@@ -587,6 +587,7 @@ export class ProfileConfig {
     const activeProfile = this.getProfileByName(profileName);
     switch (activeProfile.connectionType) {
       case ConnectionType.SSH:
+      case ConnectionType.COM:
         return activeProfile.host;
       case ConnectionType.Rest:
         return activeProfile.endpoint;
