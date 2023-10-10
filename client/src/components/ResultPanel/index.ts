@@ -3,7 +3,7 @@
 import { Disposable, Uri, commands, window, workspace } from "vscode";
 
 import { SubscriptionProvider } from "../SubscriptionProvider";
-import { ResultsContext, resultsHtml } from "./ResultPanel";
+import { ResultsContext, resultPanels } from "./ResultPanel";
 
 export class ResultPanelSubscriptionProvider implements SubscriptionProvider {
   getSubscriptions(): Disposable[] {
@@ -11,8 +11,8 @@ export class ResultPanelSubscriptionProvider implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.saveHTML",
         async (context: ResultsContext) => {
-          const html = resultsHtml[context.uuid] || "";
-          if (!html) {
+          const panel = resultPanels[context.uuid] || undefined;
+          if (!panel) {
             return;
           }
           const uri = await window.showSaveDialog({
@@ -23,7 +23,10 @@ export class ResultPanelSubscriptionProvider implements SubscriptionProvider {
             return;
           }
 
-          await workspace.fs.writeFile(uri, new TextEncoder().encode(html));
+          await workspace.fs.writeFile(
+            uri,
+            new TextEncoder().encode(panel.webview.html),
+          );
         },
       ),
     ];

@@ -7,7 +7,7 @@ import { v4 } from "uuid";
 import { isSideResultEnabled, isSinglePanelEnabled } from "../utils/settings";
 
 let resultPanel: WebviewPanel | undefined;
-export const resultsHtml: Record<string, string> = {};
+export const resultPanels: Record<string, WebviewPanel> = {};
 
 export interface ResultsContext {
   preventDefaultContextMenuItems: boolean;
@@ -19,7 +19,6 @@ export const showResult = (html: string, uri?: Uri, title?: string) => {
     preventDefaultContextMenuItems: true,
     uuid: v4(),
   };
-  resultsHtml[vscodeContext.uuid] = html;
   html = html
     // Inject vscode context into our results html body
     .replace(
@@ -48,7 +47,10 @@ export const showResult = (html: string, uri?: Uri, title?: string) => {
       }, // Editor column to show the new webview panel in.
       {}, // Webview options. More on these later.
     );
-    resultPanel.onDidDispose(() => (resultPanel = undefined));
+    resultPanel.onDidDispose(() => {
+      resultPanel = undefined;
+      delete resultPanels[vscodeContext.uuid];
+    });
   } else {
     const editor = uri
       ? window.visibleTextEditors.find(
@@ -64,4 +66,5 @@ export const showResult = (html: string, uri?: Uri, title?: string) => {
     );
   }
   resultPanel.webview.html = html;
+  resultPanels[vscodeContext.uuid] = resultPanel;
 };
