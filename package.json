@@ -815,6 +815,10 @@
         {
           "when": "false",
           "command": "SAS.uploadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.saveHTML"
         }
       ],
       "file/newFile": [
