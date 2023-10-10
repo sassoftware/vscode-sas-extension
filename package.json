@@ -617,7 +617,7 @@
       "explorer/context": [
         {
           "command": "SAS.convertNotebookToFlow",
-          "when": "resourceExtname == .sasnb && SAS.connectionType == rest",
+          "when": "resourceExtname == .sasnb && SAS.connectionType == rest && !SAS.connection.direct",
           "group": "actionsgroup@0"
         }
       ],
