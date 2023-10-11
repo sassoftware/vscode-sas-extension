@@ -164,8 +164,18 @@ export class LanguageServiceProvider {
     return resultList;
   }
 
-  getFoldingBlock(line: number, col: number) {
-    return this.syntaxProvider.getFoldingBlock(line, col, true);
+  getFoldingBlock(
+    line: number,
+    col: number,
+    strict?: boolean,
+    ignoreCustomBlock?: boolean,
+  ) {
+    return this.syntaxProvider.getFoldingBlock(
+      line,
+      col,
+      strict,
+      ignoreCustomBlock,
+    );
   }
 
   setLibService(fn: LibService): void {

@@ -764,7 +764,13 @@ export class LexerEx {
       return null;
     }
   }
-  getFoldingBlock(line: number, col?: number, strict?: boolean) {
+  getFoldingBlock(
+    line: number,
+    col?: number,
+    strict?: boolean,
+    ignoreCustomBlock?: boolean,
+  ): FoldingBlock | null {
+    let block: FoldingBlock | null = null;
     if (col === undefined) {
       if (!this.sectionCache[line]) {
         const section = this.getFoldingBlock_(this.sections, line);
@@ -774,9 +780,16 @@ export class LexerEx {
           this.sectionCache[line] = null;
         }
       }
-      return this.sectionCache[line];
+      block = this.sectionCache[line];
+    } else {
+      block = this.getFoldingBlock_(this.sections, line, col, strict);
     }
-    return this.getFoldingBlock_(this.sections, line, col, strict);
+    if (block && ignoreCustomBlock) {
+      while (block?.type === this.SEC_TYPE.CUSTOM) {
+        block = block.outerBlock ?? null;
+      }
+    }
+    return block;
   }
   private getBlockPos_(blocks: FoldingBlock[], line: number, col?: number) {
     let idx = this.getBlockPos1_(blocks, line);

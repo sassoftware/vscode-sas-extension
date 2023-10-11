@@ -808,6 +808,8 @@ export class CodeZoneManager {
       block = this._syntaxProvider.getFoldingBlock(
         tmpContext.line,
         tmpContext.col,
+        false,
+        true,
       );
       if (block) {
         if (this._inBlock(block, token)! < 0 && !this._endedReally(block)) {
@@ -2428,7 +2430,12 @@ export class CodeZoneManager {
     const tmpLine = pos.line,
       tmpCol = pos.col;
     let token = this._token(tmpLine, tmpCol)!;
-    const block = this._syntaxProvider.getFoldingBlock(tmpLine, tmpCol);
+    const block = this._syntaxProvider.getFoldingBlock(
+      tmpLine,
+      tmpCol,
+      false,
+      true,
+    );
     /* first check type to determine zone, some special conditions
      * 1) for bringing up auto completion popup by shortcut,
      * 2) input at the end of a line in comment or literal

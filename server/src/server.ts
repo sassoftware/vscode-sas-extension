@@ -129,7 +129,12 @@ export const init = (conn: Connection): void => {
 
   connection.onRequest("sas/getFoldingBlock", (params) => {
     const languageService = getLanguageService(params.textDocument.uri);
-    return languageService.getFoldingBlock(params.line, params.col);
+    return languageService.getFoldingBlock(
+      params.line,
+      params.col,
+      true,
+      false,
+    );
   });
 
   connection.onDocumentOnTypeFormatting((params) => {

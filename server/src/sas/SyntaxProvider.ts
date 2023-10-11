@@ -361,8 +361,9 @@ export class SyntaxProvider {
     line: number,
     col?: number,
     strict?: boolean,
+    ignoreCustomBlock?: boolean,
   ): FoldingBlock | null {
-    return this.lexer.getFoldingBlock(line, col, strict);
+    return this.lexer.getFoldingBlock(line, col, strict, ignoreCustomBlock);
   }
   add(change: Change): void {
     this._push(change);
