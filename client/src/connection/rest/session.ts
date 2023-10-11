@@ -204,6 +204,7 @@ export class ComputeSession extends Compute {
       "warning",
       "completed",
       "idle",
+      "failed",
     ];
 
     while (states.indexOf(state) === -1) {
