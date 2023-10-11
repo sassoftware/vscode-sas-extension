@@ -14,12 +14,14 @@ import { Config as RestConfig, getSession as getRestSession } from "./rest";
 import {
   LogLine as ComputeLogLine,
   LogLineTypeEnum as ComputeLogLineTypeEnum,
+  Error2,
 } from "./rest/api/compute";
 import { Session } from "./session";
 import { getSession as getSSHSession } from "./ssh";
 
 let profileConfig: ProfileConfig;
 
+export type SessionError = Error2;
 export type LogLine = ComputeLogLine;
 export type LogLineTypeEnum = ComputeLogLineTypeEnum;
 export type OnLogFn = (logs: LogLine[]) => void;

@@ -19,7 +19,7 @@ import {
 import { isOutputHtmlEnabled } from "../components/Helper/SettingHelper";
 import { LogFn as LogChannelFn } from "../components/LogChannel";
 import { showResult } from "../components/ResultPanel";
-import { OnLogFn, RunResult, getSession } from "../connection";
+import { OnLogFn, RunResult, SessionError, getSession } from "../connection";
 import { profileConfig, switchProfile } from "./profile";
 
 interface FoldingBlock {
@@ -161,6 +161,19 @@ async function runCode(selected?: boolean, uri?: Uri) {
   );
 }
 
+const isSessionError = (err: unknown): err is SessionError => {
+  if (
+    err &&
+    typeof err === "object" &&
+    "message" in err &&
+    "details" in err &&
+    "errorCode" in err
+  ) {
+    return true;
+  }
+  return false;
+};
+
 const _run = async (selected = false, uri?: Uri) => {
   if (running) {
     return;
@@ -171,9 +184,23 @@ const _run = async (selected = false, uri?: Uri) => {
   await runCode(selected, uri)
     .catch((err) => {
       console.dir(err);
-      window.showErrorMessage(
-        err.response?.data ? JSON.stringify(err.response.data) : err.message,
-      );
+
+      let message = "";
+      let details: Array<string> = [];
+      const errorData = err.response?.data;
+
+      if (errorData) {
+        if (isSessionError(errorData)) {
+          message = errorData.message;
+          details = errorData.details;
+        } else {
+          message = err.message;
+        }
+      }
+      window.showErrorMessage(message, {
+        modal: details.length > 0,
+        detail: details.join("\n"),
+      });
     })
     .finally(() => {
       running = false;
