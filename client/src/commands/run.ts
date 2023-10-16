@@ -185,22 +185,26 @@ const _run = async (selected = false, uri?: Uri) => {
     .catch((err) => {
       console.dir(err);
 
-      let message = "";
-      let details: Array<string> = [];
-      const errorData = err.response?.data;
+      if (err.response) {
+        // The request was made and we got a status code that falls out side of the 2xx range
+        const errorData = err.response.data;
 
-      if (errorData) {
         if (isSessionError(errorData)) {
-          message = errorData.message;
-          details = errorData.details;
+          //errorData is a viya api error representation, extract out the details to show a better message
+          const details = errorData.details;
+          const options = {
+            modal: true,
+            detail: details.join("\n"),
+          };
+          window.showErrorMessage(errorData.message, options);
         } else {
-          message = err.message;
+          window.showErrorMessage(err.message);
         }
+      } else {
+        // Either the request was made but no response was received, or
+        // there was an issue in the request setup itself, just show the message
+        window.showErrorMessage(err.message);
       }
-      window.showErrorMessage(message, {
-        modal: details.length > 0,
-        detail: details.join("\n"),
-      });
     })
     .finally(() => {
       running = false;
