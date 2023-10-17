@@ -244,6 +244,7 @@ const isErrorRep = (err: unknown): err is ErrorRepresentation => {
     typeof err === "object" &&
     "message" in err &&
     "details" in err &&
+    Array.isArray(err.details) &&
     "errorCode" in err
   ) {
     return true;
