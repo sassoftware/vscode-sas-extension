@@ -119,12 +119,17 @@ export class LanguageServiceProvider {
     return data;
   }
 
-  getFoldingBlocks(): DocumentSymbol[] {
+  getDocumentSymbols(): DocumentSymbol[] {
     const lineCount = this.model.getLineCount();
     const result: DocumentSymbol[] = [];
 
     for (let i = 0; i < lineCount; i++) {
-      const rootBlock = this.syntaxProvider.getFoldingBlock(i);
+      const rootBlock = this.syntaxProvider.getFoldingBlock(
+        i,
+        undefined,
+        false,
+        true,
+      );
       if (rootBlock && rootBlock.startLine === i) {
         const flattenBlocks = this._flattenFoldingBlockTree(rootBlock);
         for (const block of flattenBlocks) {

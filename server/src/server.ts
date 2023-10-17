@@ -114,14 +114,12 @@ export const init = (conn: Connection): void => {
 
   connection.onDocumentSymbol((params) => {
     const languageService = getLanguageService(params.textDocument.uri);
-    return languageService
-      .getFoldingBlocks()
-      .filter((symbol) => symbol.name !== "custom");
+    return languageService.getDocumentSymbols();
   });
 
   connection.onFoldingRanges((params) => {
     const languageService = getLanguageService(params.textDocument.uri);
-    return languageService.getFoldingBlocks().map((block) => ({
+    return languageService.getDocumentSymbols().map((block) => ({
       startLine: block.range.start.line,
       endLine: block.range.end.line,
     }));
