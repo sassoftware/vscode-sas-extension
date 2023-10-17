@@ -19,7 +19,12 @@ import {
   wrapCodeWithOutputHtml,
 } from "../components/utils/sasCode";
 import { isOutputHtmlEnabled } from "../components/utils/settings";
-import { OnLogFn, RunResult, getSession } from "../connection";
+import {
+  ErrorRepresentation,
+  OnLogFn,
+  RunResult,
+  getSession,
+} from "../connection";
 import { profileConfig, switchProfile } from "./profile";
 
 interface FoldingBlock {
@@ -233,7 +238,7 @@ export async function runTask(
   return cancelled ? undefined : session.run(code);
 }
 
-const isErrorRep = (err: unknown): err is SessionError => {
+const isErrorRep = (err: unknown): err is ErrorRepresentation => {
   if (
     err &&
     typeof err === "object" &&
