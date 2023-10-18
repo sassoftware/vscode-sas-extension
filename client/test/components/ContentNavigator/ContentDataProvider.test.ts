@@ -722,8 +722,6 @@ describe("ContentDataProvider", async function () {
     const dataTransferItem = new DataTransferItem(uri);
     dataTransfer.set("text/uri-list", dataTransferItem);
 
-    console.log("this bithc");
-
     stub.returns(new Promise((resolve) => resolve(item)));
 
     await dataProvider.handleDrop(parentItem, dataTransfer);
@@ -888,5 +886,68 @@ describe("ContentDataProvider", async function () {
 
     expect(stub.calledWith(item, getLink(parentItem.links, "GET", "self")?.uri))
       .to.be.true;
+  });
+
+  it("getFileFolderPath - returns empty path for folder", async function () {
+    const item = mockContentItem({
+      type: "folder",
+      name: "folder",
+    });
+
+    const model = new ContentModel();
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" }),
+    );
+
+    await dataProvider.connect("http://test.io");
+    const path = await model.getFileFolderPath(item);
+
+    expect(path).to.equal("");
+  });
+
+  it("getFileFolderPath - traverses parentFolderUri to find path", async function () {
+    const grandparent = mockContentItem({
+      type: "folder",
+      name: "grandparent",
+      id: "/id/grandparent",
+    });
+    const parent = mockContentItem({
+      type: "folder",
+      name: "parent",
+      id: "/id/parent",
+      parentFolderUri: "/id/grandparent",
+    });
+    const item = mockContentItem({
+      type: "file",
+      name: "file.sas",
+      parentFolderUri: "/id/parent",
+    });
+    const item2 = mockContentItem({
+      type: "file",
+      name: "file2.sas",
+      parentFolderUri: "/id/parent",
+    });
+
+    const model = new ContentModel();
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" }),
+    );
+
+    axiosInstance.get.withArgs("/id/parent").resolves({
+      data: parent,
+    });
+    axiosInstance.get.withArgs("/id/grandparent").resolves({
+      data: grandparent,
+    });
+
+    await dataProvider.connect("http://test.io");
+
+    // We expect both files to have the same folder path
+    expect(await model.getFileFolderPath(item)).to.equal("/grandparent/parent");
+    expect(await model.getFileFolderPath(item2)).to.equal(
+      "/grandparent/parent",
+    );
   });
 });

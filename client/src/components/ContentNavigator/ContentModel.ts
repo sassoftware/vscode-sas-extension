@@ -640,6 +640,30 @@ export class ContentModel {
     }
     return "unknown";
   }
+
+  public async getFileFolderPath(contentItem: ContentItem): Promise<string> {
+    if (isContainer(contentItem)) {
+      return "";
+    }
+
+    const filePathParts = [];
+    let currentContentItem: Pick<ContentItem, "parentFolderUri" | "name"> =
+      contentItem;
+    do {
+      try {
+        const { data: parentData } = await this.connection.get(
+          currentContentItem.parentFolderUri,
+        );
+        currentContentItem = parentData;
+      } catch (e) {
+        return "";
+      }
+
+      filePathParts.push(currentContentItem.name);
+    } while (currentContentItem.parentFolderUri);
+
+    return "/" + filePathParts.reverse().join("/");
+  }
 }
 
 const getPermission = (item: ContentItem): Permission => {
