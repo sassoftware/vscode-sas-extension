@@ -119,10 +119,7 @@ export const init = (conn: Connection): void => {
 
   connection.onFoldingRanges((params) => {
     const languageService = getLanguageService(params.textDocument.uri);
-    return languageService.getDocumentSymbols().map((block) => ({
-      startLine: block.range.start.line,
-      endLine: block.range.end.line,
-    }));
+    return languageService.getFoldingRanges();
   });
 
   connection.onRequest("sas/getFoldingBlock", (params) => {

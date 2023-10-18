@@ -1,5 +1,6 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { FoldingRange } from "vscode-languageserver";
 import { Range, TextDocument } from "vscode-languageserver-textdocument";
 import { DocumentSymbol, SymbolKind } from "vscode-languageserver-types";
 
@@ -39,8 +40,14 @@ function getType(type: string) {
   return legend.tokenTypes.indexOf(type);
 }
 
-// DATA, PROC, MACRO
-const SymbolKinds = [SymbolKind.Struct, SymbolKind.Function, SymbolKind.Module];
+// DATA, PROC, MACRO, GBL, CUSTOM
+const SymbolKinds = [
+  SymbolKind.Struct,
+  SymbolKind.Function,
+  SymbolKind.Module,
+  SymbolKind.Module,
+  SymbolKind.Module,
+];
 
 export class LanguageServiceProvider {
   private model;
@@ -124,27 +131,53 @@ export class LanguageServiceProvider {
     const result: DocumentSymbol[] = [];
 
     for (let i = 0; i < lineCount; i++) {
-      const rootBlock = this.syntaxProvider.getFoldingBlock(
-        i,
-        undefined,
-        false,
-        true,
-      );
+      const rootBlock = this.syntaxProvider.getFoldingBlock(i);
       if (rootBlock && rootBlock.startLine === i) {
-        const flattenBlocks = this._flattenFoldingBlockTree(rootBlock);
-        for (const block of flattenBlocks) {
-          const range: Range = {
-            start: { line: block.startLine, character: block.startCol },
-            end: { line: block.endFoldingLine, character: block.endFoldingCol },
-          };
+        const docSymbol: DocumentSymbol = this._buildDocumentSymbol(rootBlock);
+        result.push(docSymbol);
+        i = rootBlock.endFoldingLine;
+        continue;
+      }
+    }
+    return result;
+  }
+
+  private _buildDocumentSymbol(
+    block: FoldingBlock,
+    parent?: DocumentSymbol,
+  ): DocumentSymbol {
+    const range: Range = {
+      start: { line: block.startLine, character: block.startCol },
+      end: { line: block.endFoldingLine, character: block.endFoldingCol },
+    };
+    const docSymbol: DocumentSymbol = {
+      name: block.type === 1 ? this._getProcName(block.startLine) : block.name,
+      kind: SymbolKinds[block.type],
+      range,
+      selectionRange: range,
+      children: [],
+    };
+    if (parent) {
+      parent.children!.push(docSymbol);
+    }
+    for (const innerBlock of block.innerBlocks) {
+      this._buildDocumentSymbol(innerBlock, docSymbol);
+    }
+    return docSymbol;
+  }
+
+  getFoldingRanges(): FoldingRange[] {
+    const lineCount = this.model.getLineCount();
+    const result: FoldingRange[] = [];
+
+    for (let i = 0; i < lineCount; i++) {
+      const rootBlock = this.syntaxProvider.getFoldingBlock(i);
+      if (rootBlock && rootBlock.startLine === i) {
+        const blocks: FoldingBlock[] = this._flattenFoldingBlockTree(rootBlock);
+        for (const block of blocks) {
           result.push({
-            name:
-              block.type === 1
-                ? this._getProcName(block.startLine)
-                : block.name,
-            kind: SymbolKinds[block.type],
-            range,
-            selectionRange: range,
+            startLine: block.startLine,
+            endLine: block.endFoldingLine,
           });
         }
         i = rootBlock.endFoldingLine;
