@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { Uri, ViewColumn, WebviewPanel, l10n, window } from "vscode";
 
-import {
-  isSideResultEnabled,
-  isSinglePanelEnabled,
-} from "./utils/settingHelper";
+import { isSideResultEnabled, isSinglePanelEnabled } from "./utils/settings";
 
 let resultPanel: WebviewPanel | undefined;
 

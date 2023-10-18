@@ -3,11 +3,11 @@
 import * as vscode from "vscode";
 
 import { getSession } from "../../connection";
+import { Deferred, deferred } from "../utils/deferred";
 import {
   assign_SASProgramFile,
   wrapCodeWithOutputHtml,
-} from "../utils/sasCodeHelper";
-import { Deferred, deferred } from "../utils/throttle";
+} from "../utils/sasCode";
 
 export class NotebookController {
   readonly controllerId = "sas-notebook-controller-id";

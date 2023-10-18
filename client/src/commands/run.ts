@@ -17,8 +17,8 @@ import { showResult } from "../components/ResultPanel";
 import {
   assign_SASProgramFile,
   wrapCodeWithOutputHtml,
-} from "../components/utils/sasCodeHelper";
-import { isOutputHtmlEnabled } from "../components/utils/settingHelper";
+} from "../components/utils/sasCode";
+import { isOutputHtmlEnabled } from "../components/utils/settings";
 import { OnLogFn, RunResult, getSession } from "../connection";
 import { profileConfig, switchProfile } from "./profile";
 

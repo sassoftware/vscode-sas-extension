@@ -1,6 +1,6 @@
 import * as assert from "assert";
 
-import { assign_SASProgramFile } from "../../../src/components/utils/sasCodeHelper";
+import { assign_SASProgramFile } from "../../../src/components/utils/sasCode";
 
 describe("assign_SASProgramFile", () => {
   it("correctly assigns windows style file path to &_SASPROGRAMFILE", () => {

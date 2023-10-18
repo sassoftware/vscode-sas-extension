@@ -9,8 +9,8 @@ import {
   getSASCodeFromActiveEditor,
   getSASCodeFromFile,
   wrapCode,
-} from "../utils/sasCodeHelper";
-import { isOutputHtmlEnabled } from "../utils/settingHelper";
+} from "../utils/sasCode";
+import { isOutputHtmlEnabled } from "../utils/settings";
 
 export const SAS_TASK_TYPE = "sas";
 
