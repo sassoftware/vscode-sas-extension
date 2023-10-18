@@ -9,21 +9,14 @@ import { isSideResultEnabled, isSinglePanelEnabled } from "../utils/settings";
 let resultPanel: WebviewPanel | undefined;
 export const resultPanels: Record<string, WebviewPanel> = {};
 
-export interface ResultsContext {
-  preventDefaultContextMenuItems: boolean;
-  uuid: string;
-}
-
 export const showResult = (html: string, uri?: Uri, title?: string) => {
-  const vscodeContext: ResultsContext = {
-    preventDefaultContextMenuItems: true,
-    uuid: v4(),
-  };
   html = html
     // Inject vscode context into our results html body
     .replace(
       "<body ",
-      `<body data-vscode-context='${JSON.stringify(vscodeContext)}' `,
+      `<body data-vscode-context='${JSON.stringify({
+        preventDefaultContextMenuItems: true,
+      })}' `,
     )
     // Make sure the html and body take up the full height of the parent
     // iframe so that the context menu is clickable anywhere on the page
@@ -38,8 +31,9 @@ export const showResult = (html: string, uri?: Uri, title?: string) => {
   }
 
   if (!singlePanel || !resultPanel) {
+    const resultPanelId = `SASResultPanel-${v4()}`;
     resultPanel = window.createWebviewPanel(
-      "SASResultPanel", // Identifies the type of the webview. Used internally
+      resultPanelId, // Identifies the type of the webview. Used internally
       title, // Title of the panel displayed to the user
       {
         preserveFocus: true,
@@ -47,10 +41,13 @@ export const showResult = (html: string, uri?: Uri, title?: string) => {
       }, // Editor column to show the new webview panel in.
       {}, // Webview options. More on these later.
     );
-    resultPanel.onDidDispose(() => {
-      resultPanel = undefined;
-      delete resultPanels[vscodeContext.uuid];
-    });
+    resultPanel.onDidDispose(
+      ((id) => () => {
+        delete resultPanels[id];
+        resultPanel = undefined;
+      })(resultPanelId),
+    );
+    resultPanels[resultPanelId] = resultPanel;
   } else {
     const editor = uri
       ? window.visibleTextEditors.find(
@@ -66,5 +63,4 @@ export const showResult = (html: string, uri?: Uri, title?: string) => {
     );
   }
   resultPanel.webview.html = html;
-  resultPanels[vscodeContext.uuid] = resultPanel;
 };

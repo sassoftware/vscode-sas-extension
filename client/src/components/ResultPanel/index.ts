@@ -3,15 +3,15 @@
 import { Disposable, Uri, commands, window, workspace } from "vscode";
 
 import { SubscriptionProvider } from "../SubscriptionProvider";
-import { ResultsContext, resultPanels } from "./ResultPanel";
+import { resultPanels } from "./ResultPanel";
 
 export class ResultPanelSubscriptionProvider implements SubscriptionProvider {
   getSubscriptions(): Disposable[] {
     return [
       commands.registerCommand(
         "SAS.saveHTML",
-        async (context: ResultsContext) => {
-          const panel = resultPanels[context.uuid] || undefined;
+        async (context: { webview: string }) => {
+          const panel = resultPanels[context.webview] || undefined;
           if (!panel) {
             return;
           }
