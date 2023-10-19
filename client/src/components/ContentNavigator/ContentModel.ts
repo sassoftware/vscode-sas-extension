@@ -15,8 +15,8 @@ import {
 } from "../../connection/studio";
 import { SASAuthProvider } from "../AuthProvider";
 import {
+  DATAFLOW_TYPE,
   FAVORITES_FOLDER_TYPE,
-  FILE_TYPE,
   FILE_TYPES,
   FOLDER_TYPE,
   FOLDER_TYPES,
@@ -54,6 +54,10 @@ export class ContentModel {
     this.authorized = false;
     this.delegateFolders = {};
     this.viyaCadence = "";
+  }
+
+  public connected(): boolean {
+    return this.authorized;
   }
 
   public async connect(baseURL: string): Promise<void> {
@@ -189,9 +193,15 @@ export class ContentModel {
 
   public async getContentByUri(uri: Uri): Promise<string> {
     const resourceId = getResourceId(uri);
-    const res = await this.connection.get(resourceId + "/content", {
-      transformResponse: (response) => response,
-    });
+    let res;
+    try {
+      res = await this.connection.get(resourceId + "/content", {
+        transformResponse: (response) => response,
+      });
+    } catch (e) {
+      throw new Error(Messages.FileOpenError);
+    }
+
     this.fileTokenMaps[resourceId] = {
       etag: res.headers.etag,
       lastModified: res.headers["last-modified"],
@@ -297,17 +307,14 @@ export class ContentModel {
         );
       }
 
-      const patchResponse = await this.connection.patch(
+      const patchResponse = await this.connection.put(
         uri,
-        { name },
+        { ...res.data, name },
         {
           headers: {
             "If-Unmodified-Since": fileTokenMap.lastModified,
             "If-Match": fileTokenMap.etag,
-            "Content-Type":
-              !isContainer(item) && !itemIsReference
-                ? "application/vnd.sas.file+json"
-                : undefined,
+            "Content-Type": fetchItemContentType(item),
           },
         },
       );
@@ -365,7 +372,7 @@ export class ContentModel {
     }
   }
 
-  public async testStudioConnection(): Promise<string> {
+  public async acquireStudioSessionId(): Promise<string> {
     try {
       const result = await createStudioSession(this.connection);
       return result;
@@ -668,7 +675,7 @@ export class ContentModel {
 
 const getPermission = (item: ContentItem): Permission => {
   const itemType = getTypeName(item);
-  return [FOLDER_TYPE, FILE_TYPE].includes(itemType) // normal folders and files
+  return [FOLDER_TYPE, ...FILE_TYPES].includes(itemType) // normal folders and files
     ? {
         write: !!getLink(item.links, "PUT", "update"),
         delete: !!getLink(item.links, "DELETE", "deleteResource"),
@@ -683,4 +690,17 @@ const getPermission = (item: ContentItem): Permission => {
           itemType !== FAVORITES_FOLDER_TYPE &&
           !!getLink(item.links, "POST", "createChild"),
       };
+};
+
+const fetchItemContentType = (item: ContentItem): string | undefined => {
+  const itemIsReference = item.type === "reference";
+  if (itemIsReference || isContainer(item)) {
+    return undefined;
+  }
+
+  if (item.contentType === DATAFLOW_TYPE) {
+    return "application/json";
+  }
+
+  return "application/vnd.sas.file+json";
 };

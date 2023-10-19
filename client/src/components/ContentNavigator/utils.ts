@@ -3,7 +3,7 @@
 import { SnippetString, Uri } from "vscode";
 
 import {
-  FILE_TYPE,
+  FILE_TYPES,
   FOLDER_TYPE,
   FOLDER_TYPES,
   TRASH_FOLDER_TYPE,
@@ -70,7 +70,7 @@ export const resourceType = (item: ContentItem): string | undefined => {
     actions.push("removeFromFavorites");
   } else if (
     item.type !== "reference" &&
-    [FOLDER_TYPE, FILE_TYPE].includes(type) &&
+    [FOLDER_TYPE, ...FILE_TYPES].includes(type) &&
     !isRecycled
   ) {
     actions.push("addToFavorites");

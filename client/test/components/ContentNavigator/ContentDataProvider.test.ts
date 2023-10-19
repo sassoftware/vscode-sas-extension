@@ -233,7 +233,7 @@ describe("ContentDataProvider", async function () {
 
     axiosInstance.get
       .withArgs(
-        "uri://myFavorites?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
+        "uri://myFavorites?limit=1000000&filter=in(contentType,'file','dataFlow','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
       )
       .resolves({
         data: {
@@ -452,10 +452,10 @@ describe("ContentDataProvider", async function () {
       data: origItem,
       headers: { etag: "1234", "last-modified": "5678" },
     });
-    axiosInstance.patch
-      .withArgs("uri://rename", { name: "new-file.sas" })
+    axiosInstance.put
+      .withArgs("uri://rename", { ...origItem, name: "new-file.sas" })
       .resolves({
-        data: newItem,
+        data: { ...origItem, name: "new-file.sas" },
         headers: { etag: "1234", "last-modified": "5678" },
       });
 
@@ -487,10 +487,10 @@ describe("ContentDataProvider", async function () {
       data: item,
       headers: { etag: "1234", "last-modified": "5678" },
     });
-    axiosInstance.patch
-      .withArgs("uri://self", { name: "favorite-link.sas" })
+    axiosInstance.put
+      .withArgs("uri://self", { ...item, name: "favorite-link.sas" })
       .resolves({
-        data: item,
+        data: { ...item, name: "favorite-link.sas" },
         headers: { etag: "1234", "last-modified": "5678" },
       });
     axiosInstance.get.withArgs("uri://rename").resolves({

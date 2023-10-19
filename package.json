@@ -614,6 +614,13 @@
           "group": "navigation@1"
         }
       ],
+      "explorer/context": [
+        {
+          "command": "SAS.convertNotebookToFlow",
+          "when": "resourceExtname == .sasnb && SAS.connectionType == rest && !SAS.connection.direct",
+          "group": "actionsgroup@0"
+        }
+      ],
       "view/item/context": [
         {
           "command": "SAS.deleteTable",

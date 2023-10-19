@@ -42,6 +42,7 @@ import { ViyaProfile } from "../profile";
 import { ContentModel } from "./ContentModel";
 import {
   FAVORITES_FOLDER_TYPE,
+  MYFOLDER_TYPE,
   Messages,
   ROOT_FOLDER_TYPE,
   TRASH_FOLDER_TYPE,
@@ -304,15 +305,6 @@ class ContentDataProvider
     return this.model.saveContentToUri(uri, new TextDecoder().decode(content));
   }
 
-  public associateFlow(
-    name: string,
-    uri: Uri,
-    parent: ContentItem,
-    studioSessionId: string,
-  ): Promise<string> {
-    return this.model.associateFlowFile(name, uri, parent, studioSessionId);
-  }
-
   public async deleteResource(item: ContentItem): Promise<boolean> {
     if (!(await closeFileIfOpen(item))) {
       return false;
@@ -403,43 +395,65 @@ class ContentDataProvider
     this.reveal(resource);
   }
 
-  public async testStudioConnection(): Promise<string> {
-    return await this.model.testStudioConnection();
+  public async acquireStudioSessionId(endpoint: string): Promise<string> {
+    if (endpoint && !this.model.connected()) {
+      await this.connect(endpoint);
+    }
+    return await this.model.acquireStudioSessionId();
   }
 
   public async convertNotebookToFlow(
-    item: ContentItem,
-    name: string,
+    inputName: string,
+    outputName: string,
+    content: string,
     studioSessionId: string,
-  ): Promise<string | undefined> {
-    const parent = await this.getParent(item);
-    const resourceUri = getUri(item);
+    parentItem?: ContentItem,
+  ): Promise<string> {
+    if (!parentItem) {
+      const rootFolders = await this.model.getChildren();
+      const myFolder = rootFolders.find(
+        (rootFolder) => rootFolder.type === MYFOLDER_TYPE,
+      );
+      if (!myFolder) {
+        return "";
+      }
+      parentItem = myFolder;
+    }
+
     try {
-      // get the content of the notebook file
-      const contentString: string =
-        await this.provideTextDocumentContent(resourceUri);
       // convert the notebook file to a .flw file
       const flowDataString = convertNotebookToFlow(
-        contentString,
-        item.name,
-        name,
+        content,
+        inputName,
+        outputName,
       );
       const flowDataUint8Array = new TextEncoder().encode(flowDataString);
       if (flowDataUint8Array.length === 0) {
         window.showErrorMessage(Messages.NoCodeToConvert);
         return;
       }
-      const newUri = await this.createFile(parent, name, flowDataUint8Array);
+      const newUri = await this.createFile(
+        parentItem,
+        outputName,
+        flowDataUint8Array,
+      );
       this.handleCreationResponse(
-        parent,
+        parentItem,
         newUri,
-        l10n.t(Messages.NewFileCreationError, { name: name }),
+        l10n.t(Messages.NewFileCreationError, { name: inputName }),
       );
       // associate the new .flw file with SAS Studio
-      return await this.associateFlow(name, newUri, parent, studioSessionId);
+      await this.model.associateFlowFile(
+        outputName,
+        newUri,
+        parentItem,
+        studioSessionId,
+      );
     } catch (error) {
       window.showErrorMessage(error);
     }
+
+    return parentItem.name;
   }
 
   public refresh(): void {
