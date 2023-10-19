@@ -4,7 +4,7 @@ import { l10n } from "vscode";
 
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 
-import { throttle } from "../../components/utils";
+import { throttle } from "../../components/utils/throttle";
 import {
   Job,
   JobsApi,
@@ -160,7 +160,7 @@ export class ComputeJob extends Compute {
   /*
   Check to see if the job is done.
   Done is defined as the job having run to some sort of completed state
-  ie. the job stopped because it finished executing or is was stopped 
+  ie. the job stopped because it finished executing or is was stopped
   due to an error or other signal.
   */
   async isDone(state?: string): Promise<boolean> {

@@ -4,7 +4,7 @@ import { ColorThemeKind, l10n, window, workspace } from "vscode";
 
 import { isAbsolute } from "path";
 
-import { getHtmlStyle, isOutputHtmlEnabled } from "./SettingHelper";
+import { getHtmlStyle, isOutputHtmlEnabled } from "./settings";
 
 function generateHtmlStyleOption(): string {
   const htmlStyle = getHtmlStyle();
