@@ -13,8 +13,6 @@ import { TextPosition, arrayToMap } from "./utils";
  */
 
 export class FoldingBlock {
-  outerBlock?: FoldingBlock;
-  innerBlocks: FoldingBlock[];
   startLine: number;
   startCol: number;
   endLine: number;
@@ -29,6 +27,8 @@ export class FoldingBlock {
   specialBlks: any;
   sectionIdx: number | undefined;
   blockComment: boolean | undefined;
+  outerBlock?: FoldingBlock;
+  innerBlocks: FoldingBlock[];
   constructor(...arg: any[]) {
     if (arguments.length === 1) {
       //copy constructor
