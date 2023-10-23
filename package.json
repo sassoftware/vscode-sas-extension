@@ -948,7 +948,7 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "mocha": "^10.2.0",
-    "nock": "^13.3.3",
+    "nock": "^13.3.6",
     "path-browserify": "^1.0.1",
     "prettier": "^3.0.3",
     "sinon": "^16.1.0",
