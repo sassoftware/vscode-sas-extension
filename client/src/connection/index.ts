@@ -12,6 +12,7 @@ import {
 import { getSession as getCOMSession } from "./com";
 import { Config as RestConfig, getSession as getRestSession } from "./rest";
 import {
+  Error2 as ComputeError,
   LogLine as ComputeLogLine,
   LogLineTypeEnum as ComputeLogLineTypeEnum,
 } from "./rest/api/compute";
@@ -20,6 +21,7 @@ import { getSession as getSSHSession } from "./ssh";
 
 let profileConfig: ProfileConfig;
 
+export type ErrorRepresentation = ComputeError;
 export type LogLine = ComputeLogLine;
 export type LogLineTypeEnum = ComputeLogLineTypeEnum;
 export type OnLogFn = (logs: LogLine[]) => void;
