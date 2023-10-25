@@ -1,11 +1,13 @@
-# This workflow perform basic checks for a pull request
+name: Package VSIX
 
-name: Pull Request Check
-
-on: pull_request
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
-  build:
+  package:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -14,10 +16,6 @@ jobs:
           node-version-file: ".nvmrc"
           cache: "npm"
       - run: npm ci
-      - run: npm run format:check
-      - run: npm run copyright:check
-      - run: xvfb-run -a npm run test
-        if: runner.os == 'Linux'
       - run: npx @vscode/vsce package
       - uses: actions/upload-artifact@v3
         with:
