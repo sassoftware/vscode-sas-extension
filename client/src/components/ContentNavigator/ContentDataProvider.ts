@@ -390,7 +390,7 @@ class ContentDataProvider
     errorMessage: string,
   ): Promise<void> {
     if (!newUri) {
-      await window.showErrorMessage(errorMessage);
+      window.showErrorMessage(errorMessage);
       return;
     }
 
@@ -503,11 +503,7 @@ class ContentDataProvider
       const uri = uris[i];
       const fileName = basename(uri.fsPath);
       if (lstatSync(uri.fsPath).isDirectory()) {
-        const success = await this.handleFolderDrop(
-          target,
-          uri.fsPath,
-          Messages.FileUploadError,
-        );
+        const success = await this.handleFolderDrop(target, uri.fsPath, false);
         !success && failedUploads.push(fileName);
       } else {
         const file = await workspace.fs.readFile(uri);
@@ -595,7 +591,7 @@ class ContentDataProvider
     }
 
     if (!success) {
-      await window.showErrorMessage(
+      window.showErrorMessage(
         l10n.t(message, {
           name: item.name,
         }),
@@ -606,16 +602,17 @@ class ContentDataProvider
   private async handleFolderDrop(
     target: ContentItem,
     path: string,
-    errorMessage = Messages.FileDropError,
+    displayErrorMessages: boolean = true,
   ): Promise<boolean> {
     const folder = await this.model.createFolder(target, basename(path));
     let success = true;
     if (!folder) {
-      await window.showErrorMessage(
-        l10n.t(errorMessage, {
-          name: basename(path),
-        }),
-      );
+      displayErrorMessages &&
+        window.showErrorMessage(
+          l10n.t(Messages.FileDropError, {
+            name: basename(path),
+          }),
+        );
 
       return false;
     }
@@ -639,11 +636,12 @@ class ContentDataProvider
           );
           if (!fileCreated) {
             success = false;
-            await window.showErrorMessage(
-              l10n.t(errorMessage, {
-                name,
-              }),
-            );
+            displayErrorMessages &&
+              window.showErrorMessage(
+                l10n.t(Messages.FileDropError, {
+                  name,
+                }),
+              );
           }
         }
       }),
@@ -682,7 +680,7 @@ class ContentDataProvider
         );
 
         if (!fileCreated) {
-          await window.showErrorMessage(
+          window.showErrorMessage(
             l10n.t(Messages.FileDropError, {
               name,
             }),
