@@ -4,6 +4,7 @@ import {
   ConfigurationChangeEvent,
   Disposable,
   ExtensionContext,
+  OpenDialogOptions,
   ProgressLocation,
   Uri,
   commands,
@@ -337,28 +338,23 @@ class ContentNavigator implements SubscriptionProvider {
           );
         },
       ),
+      // Below, we have three commands to upload files. Mac is currently the only
+      // platform that supports uploading both files and folders. So, for any platform
+      // that isn't Mac, we list a distinct upload file(s) or upload folder(s) command.
+      // See the `OpenDialogOptions` interface for more information.
       commands.registerCommand(
         "SAS.uploadResource",
-        async (resource: ContentItem) => {
-          const uris: Uri[] = await window.showOpenDialog({
-            canSelectFolders: true,
-            canSelectMany: true,
-            canSelectFiles: true,
-          });
-          if (!uris) {
-            return;
-          }
-
-          await window.withProgress(
-            {
-              location: ProgressLocation.Notification,
-              title: l10n.t("Uploading files..."),
-            },
-            async () => {
-              await this.contentDataProvider.uploadUrisToTarget(uris, resource);
-            },
-          );
-        },
+        async (resource: ContentItem) => this.uploadResource(resource),
+      ),
+      commands.registerCommand(
+        "SAS.uploadFileResource",
+        async (resource: ContentItem) =>
+          this.uploadResource(resource, { canSelectFolders: false }),
+      ),
+      commands.registerCommand(
+        "SAS.uploadFolderResource",
+        async (resource: ContentItem) =>
+          this.uploadResource(resource, { canSelectFiles: false }),
       ),
       workspace.onDidChangeConfiguration(
         async (event: ConfigurationChangeEvent) => {
@@ -371,6 +367,31 @@ class ContentNavigator implements SubscriptionProvider {
         },
       ),
     ];
+  }
+
+  private async uploadResource(
+    resource: ContentItem,
+    openDialogOptions: Partial<OpenDialogOptions> = {},
+  ) {
+    const uris: Uri[] = await window.showOpenDialog({
+      canSelectFolders: true,
+      canSelectMany: true,
+      canSelectFiles: true,
+      ...openDialogOptions,
+    });
+    if (!uris) {
+      return;
+    }
+
+    await window.withProgress(
+      {
+        location: ProgressLocation.Notification,
+        title: l10n.t("Uploading files..."),
+      },
+      async () => {
+        await this.contentDataProvider.uploadUrisToTarget(uris, resource);
+      },
+    );
   }
 
   private viyaEndpoint(): string {

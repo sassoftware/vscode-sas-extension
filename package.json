@@ -589,6 +589,16 @@
         "category": "SAS"
       },
       {
+        "command": "SAS.uploadFileResource",
+        "title": "%commands.SAS.uploadFiles%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.uploadFolderResource",
+        "title": "%commands.SAS.uploadFolders%",
+        "category": "SAS"
+      },
+      {
         "command": "SAS.saveHTML",
         "title": "%commands.SAS.download%",
         "category": "SAS"
@@ -705,7 +715,17 @@
         },
         {
           "command": "SAS.uploadResource",
-          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform == mac",
+          "group": "uploaddownloadgroup@1"
+        },
+        {
+          "command": "SAS.uploadFileResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform != mac",
+          "group": "uploaddownloadgroup@1"
+        },
+        {
+          "command": "SAS.uploadFolderResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform != mac",
           "group": "uploaddownloadgroup@1"
         }
       ],
@@ -815,6 +835,14 @@
         {
           "when": "false",
           "command": "SAS.uploadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.uploadFileResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.uploadFolderResource"
         },
         {
           "when": "false",
