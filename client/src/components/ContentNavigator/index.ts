@@ -329,7 +329,7 @@ class ContentNavigator implements SubscriptionProvider {
             },
             async () => {
               await this.contentDataProvider.downloadContentItems(
-                uri.fsPath,
+                uri,
                 selections,
                 this.contentDataProvider.treeView.selection,
               );

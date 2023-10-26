@@ -522,27 +522,27 @@ class ContentDataProvider
   }
 
   public async downloadContentItems(
-    folderpath: string,
+    folderUri: Uri,
     selections: ContentItem[],
     allSelections: readonly ContentItem[],
   ): Promise<void> {
     for (let i = 0; i < selections.length; ++i) {
       const selection = selections[i];
       if (isContainer(selection)) {
-        const newFolderPath = join(folderpath, selection.name);
+        const newFolderUri = Uri.joinPath(folderUri, selection.name);
         const selectionsWithinFolder = await this.childrenSelections(
           selection,
           allSelections,
         );
-        await workspace.fs.createDirectory(Uri.parse(newFolderPath));
+        await workspace.fs.createDirectory(newFolderUri);
         await this.downloadContentItems(
-          newFolderPath,
+          newFolderUri,
           selectionsWithinFolder,
           allSelections,
         );
       } else {
         await workspace.fs.writeFile(
-          Uri.parse(join(folderpath, selection.name)),
+          Uri.joinPath(folderUri, selection.name),
           await this.readFile(getUri(selection)),
         );
       }
