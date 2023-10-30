@@ -9,6 +9,12 @@ import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 import { scriptContent } from "./script";
 
+import * as vscode from 'vscode';
+import { extensionContext } from '../../node/extension';
+
+
+import { v4 } from "uuid";
+
 const endCode = "--vscode-sas-extension-submit-end--";
 let sessionInstance: COMSession;
 
@@ -71,10 +77,17 @@ export class COMSession extends Session {
     */
       if (!this._workDirectory) {
         this._shellProcess.stdin.write(
-          `$profileHost = "${this._config.host}"\n`,
+          // `$profileHost = "${this._config.host}"\n`,
+          `$profileHost = ""\n`,
         );
         this._shellProcess.stdin.write(
-          "$runner.Setup($profileHost)\n",
+          `$port = 8591\n`,
+        );
+        this._shellProcess.stdin.write(
+          `$protocol = 2\n`,
+        );
+        this._shellProcess.stdin.write(
+          "$runner.Setup($profileHost,$port,$protocol)\n",
           this.onWriteComplete,
         );
         this._shellProcess.stdin.write(
@@ -111,7 +124,7 @@ export class COMSession extends Session {
     return new Promise((resolve, reject) => {
       this._runResolve = resolve;
       this._runReject = reject;
-
+      
       //write ODS output to work so that the session cleans up after itself
       const codeWithODSPath = code.replace(
         "ods html5;",
@@ -249,11 +262,41 @@ do {
   /**
    * Fetches the ODS output results for the latest html results file.
    */
-  private fetchResults = () => {
-    const htmlResults = readFileSync(
-      resolve(this._workDirectory, this._html5FileName + ".htm"),
-      { encoding: "utf-8" },
+  private fetchResults = async () => {
+      await vscode.workspace.fs.createDirectory(extensionContext.globalStorageUri);
+    const outputFileUri = vscode.Uri.joinPath(extensionContext.globalStorageUri, `${v4()}.htm`);
+    this._shellProcess.stdin.write(
+      `
+  $filePath = "${resolve(this._workDirectory, this._html5FileName + ".htm")}"\n
+  $outputFile = "${outputFileUri.fsPath}"\n
+  $runner.FetchResultsFile($filePath, $outputFile)\n
+  `,
+      this.onWriteComplete,
     );
+
+    // console.log(vscode.Uri.joinPath(extensionContext.storageUri, 'sashtml.htm').fsPath);
+    const file = await new Promise(resolve => {
+      const start = Date.now();
+      const maxTime = 10 * 1000;
+      const interval = setInterval(async () => {
+        try {
+          const file = await vscode.workspace.fs.readFile(outputFileUri);
+          clearInterval(interval);
+          resolve(file);
+        } catch (e) {
+          // Intentionally blank
+          if (Date.now() - maxTime > start) {
+            clearInterval(interval);
+            resolve(null);
+          }
+        }
+      }, 1000);
+    });
+
+    // Error checking
+    
+    const htmlResults = file.toString();
+    vscode.workspace.fs.delete(outputFileUri);
     const runResult: RunResult = {};
     if (htmlResults.search('<*id="IDX*.+">') !== -1) {
       runResult.html5 = htmlResults;

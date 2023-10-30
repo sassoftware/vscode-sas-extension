@@ -17,21 +17,21 @@ class SASRunner{
     $varLogs = $this.FlushLog(4096)
     Write-Host $varLogs
   }
-  [void]Setup([string]$profileHost) {
+  [void]Setup([string]$profileHost, [int]$port, [int]$protocol) {
     try {
         # create the Integration Technologies objects
         $objFactory = New-Object -ComObject SASObjectManager.ObjectFactoryMulti2
         $objServerDef = New-Object -ComObject SASObjectManager.ServerDef
         $objServerDef.MachineDNSName = $profileHost # SAS Workspace node
-        $objServerDef.Port = 0  # workspace server port
-        $objServerDef.Protocol = 0     # 0 = COM protocol
+        $objServerDef.Port = $port  # workspace server port
+        $objServerDef.Protocol = $protocol     # 0 = COM protocol
 
         # Class Identifier for SAS Workspace
         $objServerDef.ClassIdentifier = "440196d4-90f0-11d0-9f41-00a024bb830c"
 
         # create and connect to the SAS session
         $this.objSAS = $objFactory.CreateObjectByServer(
-            "Local", # server name
+            "itcconnect", # server name
             $true,
             $objServerDef, # built server definition
             "", # user ID
@@ -106,6 +106,27 @@ class SASRunner{
       Write-Host $log
     } while ($log.Length -gt 0)
   }
-}
 
+  [void]FetchResultsFile([string]$filePath, [string]$outputFile) {
+    $fileRef = ""
+    $objFile = $this.objSAS.FileService.AssignFileref("outfile", "DISK", $filePath, "", [ref] $fileRef)
+    $objStream = $objFile.OpenBinaryStream(1);
+    [Byte[]] $bytes = 0x0
+
+    $endOfFile = $false
+    $byteCount = 0
+    $outStream = [System.IO.StreamWriter] $outputFile
+    do
+    {
+      $objStream.Read(1024, [ref] $bytes)
+      $outStream.Write([System.Text.Encoding]::UTF8.GetString($bytes))
+      $endOfFile = $bytes.Length -lt 1024
+      $byteCount = $byteCount + $bytes.Length
+    } while (-not $endOfFile)
+
+    $objStream.Close()
+    $outStream.Close()
+    $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
+  }
+}
 `;
