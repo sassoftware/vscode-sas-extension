@@ -170,7 +170,8 @@
                       "enum": [
                         "rest",
                         "ssh",
-                        "com"
+                        "com",
+                        "iom"
                       ]
                     },
                     "sasOptions": {
@@ -307,6 +308,41 @@
                             "type": "string",
                             "default": "",
                             "description": "%configuration.SAS.connectionProfiles.profiles.ssh.saspath%"
+                          },
+                          "username": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.username%"
+                          },
+                          "port": {
+                            "type": "number",
+                            "default": 22,
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.port%",
+                            "exclusiveMinimum": 1,
+                            "exclusiveMaximum": 65535
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "connectionType": {
+                            "const": "iom"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "host",
+                          "username",
+                          "port"
+                        ],
+                        "properties": {
+                          "host": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.host%"
                           },
                           "username": {
                             "type": "string",

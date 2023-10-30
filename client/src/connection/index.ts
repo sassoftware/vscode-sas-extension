@@ -9,7 +9,7 @@ import {
   ViyaProfile,
   toAutoExecLines,
 } from "../components/profile";
-import { getSession as getCOMSession } from "./com";
+import { ITCProtocol, getSession as getITCSession } from "./com";
 import { Config as RestConfig, getSession as getRestSession } from "./rest";
 import {
   Error2 as ComputeError,
@@ -54,7 +54,9 @@ export function getSession(): Session {
     case ConnectionType.SSH:
       return getSSHSession(validProfile.profile);
     case ConnectionType.COM:
-      return getCOMSession(validProfile.profile);
+      return getITCSession(validProfile.profile, ITCProtocol.COM);
+    case ConnectionType.IOM:
+      return getITCSession(validProfile.profile, ITCProtocol.IOMBridge);
     default:
       throw new Error(
         l10n.t("Invalid connectionType. Check Profile settings."),

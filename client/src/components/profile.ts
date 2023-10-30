@@ -18,13 +18,15 @@ export const EXTENSION_ACTIVE_PROFILE_CONFIG_KEY = "activeProfile";
 
 enum ConnectionOptions {
   SASViya = "SAS Viya",
-  SAS94Remote = "SAS 9.4 (remote)",
-  SAS9COM = "SAS 9.4 (local - COM)",
+  SAS94Remote = "SAS 9.4 (remote - SSH)",
+  SAS9IOM = "SAS 9.4 (remote - IOM)",
+  SAS9COM = "SAS 9.4 (local)",
 }
 
 const CONNECTION_PICK_OPTS: string[] = [
   ConnectionOptions.SASViya,
   ConnectionOptions.SAS94Remote,
+  ConnectionOptions.SAS9IOM,
   ConnectionOptions.SAS9COM,
 ];
 
@@ -33,6 +35,7 @@ const CONNECTION_PICK_OPTS: string[] = [
  */
 export const DEFAULT_COMPUTE_CONTEXT = "SAS Job Execution compute context";
 export const DEFAULT_SSH_PORT = "22";
+export const DEFAULT_IOM_PORT = "8591";
 
 /**
  * Dictionary is a type that maps a generic object with a string key.
@@ -53,9 +56,10 @@ export enum AuthType {
  * Enum that represents the connection type for a profile.
  */
 export enum ConnectionType {
+  COM = "com",
+  IOM = "iom",
   Rest = "rest",
   SSH = "ssh",
-  COM = "com",
 }
 
 /**
@@ -91,7 +95,14 @@ export interface COMProfile extends BaseProfile {
   host: string;
 }
 
-export type Profile = ViyaProfile | SSHProfile | COMProfile;
+export interface IOMProfile extends BaseProfile {
+  connectionType: ConnectionType.IOM;
+  host: string;
+  username: string;
+  port: number;
+}
+
+export type Profile = ViyaProfile | SSHProfile | COMProfile | IOMProfile;
 
 export enum AutoExecType {
   File = "file",
@@ -574,6 +585,32 @@ export class ProfileConfig {
       profileClone.sasOptions = [];
       profileClone.host = "localhost"; //once remote support rolls out this should be set via prompting
       await this.upsertProfile(name, profileClone);
+    } else if (profileClone.connectionType === ConnectionType.IOM) {
+      profileClone.sasOptions = [];
+      profileClone.host = await createInputTextBox(
+        ProfilePromptType.Host,
+        profileClone.host,
+      );
+      if (!profileClone.host) {
+        return;
+      }
+
+      profileClone.port = parseInt(
+        await createInputTextBox(ProfilePromptType.Port, DEFAULT_IOM_PORT),
+      );
+      if (isNaN(profileClone.port)) {
+        return;
+      }
+
+      profileClone.username = await createInputTextBox(
+        ProfilePromptType.Username,
+        profileClone.username,
+      );
+      if (profileClone.username === undefined) {
+        return;
+      }
+
+      await this.upsertProfile(name, profileClone);
     }
   }
 
@@ -588,6 +625,7 @@ export class ProfileConfig {
     switch (activeProfile.connectionType) {
       case ConnectionType.SSH:
       case ConnectionType.COM:
+      case ConnectionType.IOM:
         return activeProfile.host;
       case ConnectionType.Rest:
         return activeProfile.endpoint;
@@ -775,7 +813,8 @@ function mapQuickPickToEnum(connectionTypePickInput: string): ConnectionType {
     case ConnectionOptions.SAS94Remote:
       return ConnectionType.SSH;
     case ConnectionOptions.SAS9COM:
-      return ConnectionType.COM;
+    case ConnectionOptions.SAS9IOM:
+      return ConnectionType.IOM;
     default:
       return undefined;
   }

@@ -17,25 +17,25 @@ class SASRunner{
     $varLogs = $this.FlushLog(4096)
     Write-Host $varLogs
   }
-  [void]Setup([string]$profileHost, [int]$port, [int]$protocol) {
+  [void]Setup([string]$profileHost, [string]$username, [string]$password, [int]$port, [int]$protocol, [string]$serverName) {
     try {
         # create the Integration Technologies objects
         $objFactory = New-Object -ComObject SASObjectManager.ObjectFactoryMulti2
         $objServerDef = New-Object -ComObject SASObjectManager.ServerDef
         $objServerDef.MachineDNSName = $profileHost # SAS Workspace node
-        $objServerDef.Port = $port  # workspace server port
-        $objServerDef.Protocol = $protocol     # 0 = COM protocol
+        $objServerDef.Port = $port # workspace server port
+        $objServerDef.Protocol = $protocol # 0 = COM protocol
 
         # Class Identifier for SAS Workspace
         $objServerDef.ClassIdentifier = "440196d4-90f0-11d0-9f41-00a024bb830c"
 
         # create and connect to the SAS session
         $this.objSAS = $objFactory.CreateObjectByServer(
-            "itcconnect", # server name
+            $serverName, # server name
             $true,
             $objServerDef, # built server definition
-            "", # user ID
-            ""    # password
+            $username,
+            $password
         )
 
     } catch {

@@ -1,28 +1,33 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import * as vscode from "vscode";
+
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
-import { readFileSync } from "fs";
 import { resolve } from "path";
+import { v4 } from "uuid";
 
 import { BaseConfig, RunResult } from "..";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
+import { extensionContext } from "../../node/extension";
 import { Session } from "../session";
 import { scriptContent } from "./script";
 
-import * as vscode from 'vscode';
-import { extensionContext } from '../../node/extension';
-
-
-import { v4 } from "uuid";
-
 const endCode = "--vscode-sas-extension-submit-end--";
 let sessionInstance: COMSession;
+
+export enum ITCProtocol {
+  COM = 0,
+  IOMBridge = 2,
+}
 
 /**
  * Configuration parameters for this connection provider
  */
 export interface Config extends BaseConfig {
   host: string;
+  port: number;
+  username: string;
+  protocol: ITCProtocol;
 }
 
 export class COMSession extends Session {
@@ -46,7 +51,7 @@ export class COMSession extends Session {
    * @returns void promise.
    */
   public setup = async (): Promise<void> => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       this._runResolve = resolve;
       this._runReject = reject;
 
@@ -70,24 +75,29 @@ export class COMSession extends Session {
         this.onWriteComplete,
       );
 
+      const password = await this.fetchPassword();
+
       /*
-    There are cases where the higher level run command will invoke setup multiple times.
-    Avoid re-initializing the session when this happens. In a first run scenario a work dir
-    will not exist. The work dir should only be deleted when close is invoked.
-    */
+       * There are cases where the higher level run command will invoke setup multiple times.
+       * Avoid re-initializing the session when this happens. In a first run scenario a work dir
+       * will not exist. The work dir should only be deleted when close is invoked.
+       */
       if (!this._workDirectory) {
+        const { host, port, protocol, username } = this._config;
+        const serverName =
+          protocol === ITCProtocol.COM ? "ITC Local" : "ITC IOM Bridge";
+        this._shellProcess.stdin.write(`$profileHost = "${host}"\n`);
+        this._shellProcess.stdin.write(`$port = ${port}\n`);
+        this._shellProcess.stdin.write(`$protocol = ${protocol}\n`);
+        this._shellProcess.stdin.write(`$username = "${username}"\n`);
+        this._shellProcess.stdin.write(`$password = "${password}"\n`);
         this._shellProcess.stdin.write(
-          // `$profileHost = "${this._config.host}"\n`,
-          `$profileHost = ""\n`,
+          `$serverName = "${
+            protocol === ITCProtocol.COM ? "ITC Local" : "ITC IOM Bridge"
+          }"\n`,
         );
         this._shellProcess.stdin.write(
-          `$port = 8591\n`,
-        );
-        this._shellProcess.stdin.write(
-          `$protocol = 2\n`,
-        );
-        this._shellProcess.stdin.write(
-          "$runner.Setup($profileHost,$port,$protocol)\n",
+          `$runner.Setup($profileHost,$username,$password,$port,$protocol,$serverName)\n`,
           this.onWriteComplete,
         );
         this._shellProcess.stdin.write(
@@ -114,6 +124,21 @@ export class COMSession extends Session {
     });
   };
 
+  private fetchPassword = async (): Promise<string> => {
+    if (this._config.protocol === ITCProtocol.COM) {
+      return "";
+    }
+
+    const password = await vscode.window.showInputBox({
+      title: "Enter a password",
+      placeHolder: "Thing",
+      prompt: "Do something",
+      ignoreFocusOut: true,
+    });
+
+    return password;
+  };
+
   /**
    * Executes the given input code.
    * @param code A string of SAS code to execute.
@@ -124,7 +149,7 @@ export class COMSession extends Session {
     return new Promise((resolve, reject) => {
       this._runResolve = resolve;
       this._runReject = reject;
-      
+
       //write ODS output to work so that the session cleans up after itself
       const codeWithODSPath = code.replace(
         "ods html5;",
@@ -263,8 +288,13 @@ do {
    * Fetches the ODS output results for the latest html results file.
    */
   private fetchResults = async () => {
-      await vscode.workspace.fs.createDirectory(extensionContext.globalStorageUri);
-    const outputFileUri = vscode.Uri.joinPath(extensionContext.globalStorageUri, `${v4()}.htm`);
+    await vscode.workspace.fs.createDirectory(
+      extensionContext.globalStorageUri,
+    );
+    const outputFileUri = vscode.Uri.joinPath(
+      extensionContext.globalStorageUri,
+      `${v4()}.htm`,
+    );
     this._shellProcess.stdin.write(
       `
   $filePath = "${resolve(this._workDirectory, this._html5FileName + ".htm")}"\n
@@ -275,7 +305,7 @@ do {
     );
 
     // console.log(vscode.Uri.joinPath(extensionContext.storageUri, 'sashtml.htm').fsPath);
-    const file = await new Promise(resolve => {
+    const file = await new Promise((resolve) => {
       const start = Date.now();
       const maxTime = 10 * 1000;
       const interval = setInterval(async () => {
@@ -294,7 +324,7 @@ do {
     });
 
     // Error checking
-    
+
     const htmlResults = file.toString();
     vscode.workspace.fs.delete(outputFileUri);
     const runResult: RunResult = {};
@@ -311,10 +341,20 @@ do {
  * @param c Instance denoting configuration parameters for this connection profile.
  * @returns  created COM session.
  */
-export const getSession = (c: Config): Session => {
+export const getSession = (
+  c: Partial<Config>,
+  protocol: ITCProtocol,
+): Session => {
+  const defaults = {
+    host: "localhost",
+    port: 0,
+    username: "",
+    protocol,
+  };
+
   if (!sessionInstance) {
     sessionInstance = new COMSession();
   }
-  sessionInstance.config = c;
+  sessionInstance.config = { ...defaults, ...c };
   return sessionInstance;
 };
