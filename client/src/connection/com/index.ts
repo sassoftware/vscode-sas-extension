@@ -1,14 +1,12 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri, l10n, window, workspace } from "vscode";
+import { ExtensionContext, Uri, l10n, window, workspace } from "vscode";
 
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { resolve } from "path";
-import { v4 } from "uuid";
 
 import { BaseConfig, RunResult } from "..";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
-import { extensionContext } from "../../node/extension";
 import { Session } from "../session";
 import { scriptContent } from "./script";
 
@@ -39,11 +37,13 @@ export class COMSession extends Session {
   private _runResolve: ((value?) => void) | undefined;
   private _runReject: ((reason?) => void) | undefined;
   private _workDirectory: string;
-  private password: string;
+  private _password: string;
+  private _context: ExtensionContext;
 
-  constructor() {
+  constructor(extensionContext: ExtensionContext) {
     super();
-    this.password = "";
+    this._password = "";
+    this._context = extensionContext;
   }
 
   public set config(value: Config) {
@@ -55,83 +55,82 @@ export class COMSession extends Session {
    * @returns void promise.
    */
   public setup = async (): Promise<void> => {
-    const password = await this.fetchPassword();
-    return new Promise((resolve, reject) => {
+    const setupPromise = new Promise<void>((resolve, reject) => {
       this._runResolve = resolve;
       this._runReject = reject;
-
-      if (this._shellProcess && !this._shellProcess.killed) {
-        resolve();
-        return; // manually terminate to avoid executing the code below
-      }
-
-      this._shellProcess = spawn("powershell.exe /nologo -Command -", {
-        shell: true,
-        env: process.env,
-      });
-      this._shellProcess.stdout.on("data", this.onShellStdOut);
-      this._shellProcess.stderr.on("data", this.onShellStdErr);
-      this._shellProcess.stdin.write(
-        scriptContent + "\n",
-        this.onWriteComplete,
-      );
-      this._shellProcess.stdin.write(
-        "$runner = New-Object -TypeName SASRunner\n",
-        this.onWriteComplete,
-      );
-
-      /*
-       * There are cases where the higher level run command will invoke setup multiple times.
-       * Avoid re-initializing the session when this happens. In a first run scenario a work dir
-       * will not exist. The work dir should only be deleted when close is invoked.
-       */
-      if (!this._workDirectory) {
-        const { host, port, protocol, username } = this._config;
-        this._shellProcess.stdin.write(`$profileHost = "${host}"\n`);
-        this._shellProcess.stdin.write(`$port = ${port}\n`);
-        this._shellProcess.stdin.write(`$protocol = ${protocol}\n`);
-        this._shellProcess.stdin.write(`$username = "${username}"\n`);
-        this._shellProcess.stdin.write(`$password = "${password}"\n`);
-        this._shellProcess.stdin.write(
-          `$serverName = "${
-            protocol === ITCProtocol.COM ? "ITC Local" : "ITC IOM Bridge"
-          }"\n`,
-        );
-        this._shellProcess.stdin.write(
-          `$runner.Setup($profileHost,$username,$password,$port,$protocol,$serverName)\n`,
-          this.onWriteComplete,
-        );
-        this._shellProcess.stdin.write(
-          "$runner.ResolveSystemVars()\n",
-          this.onWriteComplete,
-        );
-
-        if (this._config.sasOptions?.length > 0) {
-          const sasOptsInput = `$sasOpts=${this.formatSASOptions(
-            this._config.sasOptions,
-          )}\n`;
-          this._shellProcess.stdin.write(sasOptsInput, this.onWriteComplete);
-          this._shellProcess.stdin.write(
-            `$runner.SetOptions($sasOpts)\n`,
-            this.onWriteComplete,
-          );
-        }
-      }
-
-      // free objects in the scripting env
-      process.on("exit", async () => {
-        close();
-      });
     });
+
+    if (this._shellProcess && !this._shellProcess.killed) {
+      this._runResolve();
+      return; // manually terminate to avoid executing the code below
+    }
+
+    this._shellProcess = spawn("powershell.exe /nologo -Command -", {
+      shell: true,
+      env: process.env,
+    });
+    this._shellProcess.stdout.on("data", this.onShellStdOut);
+    this._shellProcess.stderr.on("data", this.onShellStdErr);
+    this._shellProcess.stdin.write(scriptContent + "\n", this.onWriteComplete);
+    this._shellProcess.stdin.write(
+      "$runner = New-Object -TypeName SASRunner\n",
+      this.onWriteComplete,
+    );
+
+    /*
+     * There are cases where the higher level run command will invoke setup multiple times.
+     * Avoid re-initializing the session when this happens. In a first run scenario a work dir
+     * will not exist. The work dir should only be deleted when close is invoked.
+     */
+    if (!this._workDirectory) {
+      const { host, port, protocol, username } = this._config;
+      this._shellProcess.stdin.write(`$profileHost = "${host}"\n`);
+      this._shellProcess.stdin.write(`$port = ${port}\n`);
+      this._shellProcess.stdin.write(`$protocol = ${protocol}\n`);
+      this._shellProcess.stdin.write(`$username = "${username}"\n`);
+      const password = await this.fetchPassword();
+      this._shellProcess.stdin.write(`$password = "${password}"\n`);
+      this._shellProcess.stdin.write(
+        `$serverName = "${
+          protocol === ITCProtocol.COM ? "ITC Local" : "ITC IOM Bridge"
+        }"\n`,
+      );
+      this._shellProcess.stdin.write(
+        `$runner.Setup($profileHost,$username,$password,$port,$protocol,$serverName)\n`,
+        this.onWriteComplete,
+      );
+      this._shellProcess.stdin.write(
+        "$runner.ResolveSystemVars()\n",
+        this.onWriteComplete,
+      );
+
+      if (this._config.sasOptions?.length > 0) {
+        const sasOptsInput = `$sasOpts=${this.formatSASOptions(
+          this._config.sasOptions,
+        )}\n`;
+        this._shellProcess.stdin.write(sasOptsInput, this.onWriteComplete);
+        this._shellProcess.stdin.write(
+          `$runner.SetOptions($sasOpts)\n`,
+          this.onWriteComplete,
+        );
+      }
+    }
+
+    // free objects in the scripting env
+    process.on("exit", async () => {
+      close();
+    });
+
+    return setupPromise;
   };
 
   private storePassword = async () => {
-    await extensionContext.secrets.store(PASSWORD_KEY, this.password);
+    await this._context.secrets.store(PASSWORD_KEY, this._password);
   };
 
   private clearPassword = async () => {
-    await extensionContext.secrets.delete(PASSWORD_KEY);
-    this.password = "";
+    await this._context.secrets.delete(PASSWORD_KEY);
+    this._password = "";
   };
 
   private fetchPassword = async (): Promise<string> => {
@@ -139,12 +138,12 @@ export class COMSession extends Session {
       return "";
     }
 
-    const storedPassword = await extensionContext.secrets.get(PASSWORD_KEY);
+    const storedPassword = await this._context.secrets.get(PASSWORD_KEY);
     if (storedPassword) {
       return storedPassword;
     }
 
-    this.password =
+    this._password =
       (await window.showInputBox({
         ignoreFocusOut: true,
         password: true,
@@ -152,7 +151,7 @@ export class COMSession extends Session {
         title: l10n.t("Enter your password"),
       })) || "";
 
-    return this.password;
+    return this._password;
   };
 
   /**
@@ -162,29 +161,31 @@ export class COMSession extends Session {
    * @returns A promise that eventually resolves to contain the given {@link RunResult} for the input code execution.
    */
   public run = async (code: string): Promise<RunResult> => {
-    return new Promise((resolve, reject) => {
+    const runPromise = new Promise<RunResult>((resolve, reject) => {
       this._runResolve = resolve;
       this._runReject = reject;
-
-      //write ODS output to work so that the session cleans up after itself
-      const codeWithODSPath = code.replace(
-        "ods html5;",
-        `ods html5 path="${this._workDirectory}";`,
-      );
-
-      //write an end mnemonic so that the handler knows when execution has finished
-      const codeWithEnd = `${codeWithODSPath}\n%put ${endCode};`;
-      const codeToRun = `$code=\n@'\n${codeWithEnd}\n'@\n`;
-
-      this._shellProcess.stdin.write(codeToRun);
-      this._shellProcess.stdin.write(`$runner.Run($code)\n`, async (error) => {
-        if (error) {
-          this._runReject(error);
-        }
-
-        await this.fetchLog();
-      });
     });
+
+    //write ODS output to work so that the session cleans up after itself
+    const codeWithODSPath = code.replace(
+      "ods html5;",
+      `ods html5 path="${this._workDirectory}";`,
+    );
+
+    //write an end mnemonic so that the handler knows when execution has finished
+    const codeWithEnd = `${codeWithODSPath}\n%put ${endCode};`;
+    const codeToRun = `$code=\n@'\n${codeWithEnd}\n'@\n`;
+
+    this._shellProcess.stdin.write(codeToRun);
+    this._shellProcess.stdin.write(`$runner.Run($code)\n`, async (error) => {
+      if (error) {
+        this._runReject(error);
+      }
+
+      await this.fetchLog();
+    });
+
+    return runPromise;
   };
 
   /**
@@ -251,6 +252,11 @@ do {
         "There was an error executing the SAS Program.\nSee console log for more details.",
       ),
     );
+    // If we encountered an error in setup, we need to go through everything again
+    if (/Setup error/.test(msg)) {
+      this._shellProcess.kill();
+      this._workDirectory = undefined;
+    }
   };
 
   /**
@@ -305,10 +311,15 @@ do {
    * Fetches the ODS output results for the latest html results file.
    */
   private fetchResults = async () => {
-    await workspace.fs.createDirectory(extensionContext.globalStorageUri);
+    try {
+      await workspace.fs.readDirectory(this._context.globalStorageUri);
+    } catch (e) {
+      await workspace.fs.createDirectory(this._context.globalStorageUri);
+    }
+
     const outputFileUri = Uri.joinPath(
-      extensionContext.globalStorageUri,
-      `${v4()}.htm`,
+      this._context.globalStorageUri,
+      `${this._html5FileName}.htm`,
     );
     this._shellProcess.stdin.write(
       `
@@ -328,7 +339,6 @@ do {
           clearInterval(interval);
           resolve(file);
         } catch (e) {
-          // Intentionally blank
           if (Date.now() - maxTime > start) {
             clearInterval(interval);
             resolve(null);
@@ -360,6 +370,7 @@ do {
 export const getSession = (
   c: Partial<Config>,
   protocol: ITCProtocol,
+  extensionContext: ExtensionContext,
 ): Session => {
   const defaults = {
     host: "localhost",
@@ -369,7 +380,7 @@ export const getSession = (
   };
 
   if (!sessionInstance) {
-    sessionInstance = new COMSession();
+    sessionInstance = new COMSession(extensionContext);
   }
   sessionInstance.config = { ...defaults, ...c };
   return sessionInstance;
