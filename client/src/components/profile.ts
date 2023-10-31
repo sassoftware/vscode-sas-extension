@@ -813,6 +813,7 @@ function mapQuickPickToEnum(connectionTypePickInput: string): ConnectionType {
     case ConnectionOptions.SAS94Remote:
       return ConnectionType.SSH;
     case ConnectionOptions.SAS9COM:
+      return ConnectionType.COM;
     case ConnectionOptions.SAS9IOM:
       return ConnectionType.IOM;
     default:
