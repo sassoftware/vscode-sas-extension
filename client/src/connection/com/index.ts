@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import * as vscode from "vscode";
+import { Uri, l10n, window, workspace } from "vscode";
 
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { resolve } from "path";
@@ -144,11 +144,11 @@ export class COMSession extends Session {
       return storedPassword;
     }
 
-    this.password = await vscode.window.showInputBox({
-      title: "Enter a password",
-      placeHolder: "Thing",
-      prompt: "Do something",
+    this.password = await window.showInputBox({
       ignoreFocusOut: true,
+      password: true,
+      prompt: l10n.t("Enter your password for this connection."),
+      title: l10n.t("Enter your password"),
     });
 
     return this.password;
@@ -304,10 +304,8 @@ do {
    * Fetches the ODS output results for the latest html results file.
    */
   private fetchResults = async () => {
-    await vscode.workspace.fs.createDirectory(
-      extensionContext.globalStorageUri,
-    );
-    const outputFileUri = vscode.Uri.joinPath(
+    await workspace.fs.createDirectory(extensionContext.globalStorageUri);
+    const outputFileUri = Uri.joinPath(
       extensionContext.globalStorageUri,
       `${v4()}.htm`,
     );
@@ -320,13 +318,12 @@ do {
       this.onWriteComplete,
     );
 
-    // console.log(vscode.Uri.joinPath(extensionContext.storageUri, 'sashtml.htm').fsPath);
     const file = await new Promise((resolve) => {
       const start = Date.now();
       const maxTime = 10 * 1000;
       const interval = setInterval(async () => {
         try {
-          const file = await vscode.workspace.fs.readFile(outputFileUri);
+          const file = await workspace.fs.readFile(outputFileUri);
           clearInterval(interval);
           resolve(file);
         } catch (e) {
@@ -342,7 +339,7 @@ do {
     // Error checking
 
     const htmlResults = file.toString();
-    vscode.workspace.fs.delete(outputFileUri);
+    workspace.fs.delete(outputFileUri);
     const runResult: RunResult = {};
     if (htmlResults.search('<*id="IDX*.+">') !== -1) {
       runResult.html5 = htmlResults;
