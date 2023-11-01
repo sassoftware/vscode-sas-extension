@@ -13,7 +13,7 @@ import {
 import type { BaseLanguageClient } from "vscode-languageclient";
 
 import { LogFn as LogChannelFn } from "../components/LogChannel";
-import { showResult } from "../components/ResultPanel";
+import { showResult } from "../components/ResultPanel/ResultPanel";
 import {
   assign_SASProgramFile,
   wrapCodeWithOutputHtml,

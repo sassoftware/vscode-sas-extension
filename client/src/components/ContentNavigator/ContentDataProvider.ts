@@ -30,9 +30,10 @@ import {
   l10n,
   languages,
   window,
+  workspace,
 } from "vscode";
 
-import { lstat, readFile, readdir } from "fs";
+import { lstat, lstatSync, readFile, readdir } from "fs";
 import { basename, join } from "path";
 import { promisify } from "util";
 
@@ -60,6 +61,7 @@ import {
   getResourceIdFromItem,
   getTypeName,
   getUri,
+  isContainer,
   isItemInRecycleBin,
   isReference,
   resourceType,
@@ -492,6 +494,77 @@ class ContentDataProvider
     });
   }
 
+  public async uploadUrisToTarget(
+    uris: Uri[],
+    target: ContentItem,
+  ): Promise<void> {
+    const failedUploads = [];
+    for (let i = 0; i < uris.length; ++i) {
+      const uri = uris[i];
+      const fileName = basename(uri.fsPath);
+      if (lstatSync(uri.fsPath).isDirectory()) {
+        const success = await this.handleFolderDrop(target, uri.fsPath, false);
+        !success && failedUploads.push(fileName);
+      } else {
+        const file = await workspace.fs.readFile(uri);
+        const newUri = await this.createFile(target, fileName, file);
+        !newUri && failedUploads.push(fileName);
+      }
+    }
+
+    if (failedUploads.length > 0) {
+      this.handleCreationResponse(
+        target,
+        undefined,
+        l10n.t(Messages.FileUploadError),
+      );
+    }
+  }
+
+  public async downloadContentItems(
+    folderUri: Uri,
+    selections: ContentItem[],
+    allSelections: readonly ContentItem[],
+  ): Promise<void> {
+    for (let i = 0; i < selections.length; ++i) {
+      const selection = selections[i];
+      if (isContainer(selection)) {
+        const newFolderUri = Uri.joinPath(folderUri, selection.name);
+        const selectionsWithinFolder = await this.childrenSelections(
+          selection,
+          allSelections,
+        );
+        await workspace.fs.createDirectory(newFolderUri);
+        await this.downloadContentItems(
+          newFolderUri,
+          selectionsWithinFolder,
+          allSelections,
+        );
+      } else {
+        await workspace.fs.writeFile(
+          Uri.joinPath(folderUri, selection.name),
+          await this.readFile(getUri(selection)),
+        );
+      }
+    }
+  }
+
+  private async childrenSelections(
+    selection: ContentItem,
+    allSelections: readonly ContentItem[],
+  ): Promise<ContentItem[]> {
+    const foundSelections = allSelections.filter(
+      (foundSelection) => foundSelection.parentFolderUri === selection.uri,
+    );
+    if (foundSelections.length > 0) {
+      return foundSelections;
+    }
+
+    // If we don't have any child selections, then the folder must have been
+    // closed and therefore, we expect to select _all_ children
+    return this.getChildren(selection);
+  }
+
   private async handleContentItemDrop(
     target: ContentItem,
     item: ContentItem,
@@ -518,7 +591,7 @@ class ContentDataProvider
     }
 
     if (!success) {
-      await window.showErrorMessage(
+      window.showErrorMessage(
         l10n.t(message, {
           name: item.name,
         }),
@@ -529,15 +602,17 @@ class ContentDataProvider
   private async handleFolderDrop(
     target: ContentItem,
     path: string,
+    displayErrorMessages: boolean = true,
   ): Promise<boolean> {
     const folder = await this.model.createFolder(target, basename(path));
     let success = true;
     if (!folder) {
-      await window.showErrorMessage(
-        l10n.t(Messages.FileDropError, {
-          name: basename(path),
-        }),
-      );
+      displayErrorMessages &&
+        window.showErrorMessage(
+          l10n.t(Messages.FileDropError, {
+            name: basename(path),
+          }),
+        );
 
       return false;
     }
@@ -561,11 +636,12 @@ class ContentDataProvider
           );
           if (!fileCreated) {
             success = false;
-            await window.showErrorMessage(
-              l10n.t(Messages.FileDropError, {
-                name,
-              }),
-            );
+            displayErrorMessages &&
+              window.showErrorMessage(
+                l10n.t(Messages.FileDropError, {
+                  name,
+                }),
+              );
           }
         }
       }),
@@ -604,7 +680,7 @@ class ContentDataProvider
         );
 
         if (!fileCreated) {
-          await window.showErrorMessage(
+          window.showErrorMessage(
             l10n.t(Messages.FileDropError, {
               name,
             }),

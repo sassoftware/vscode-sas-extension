@@ -577,6 +577,31 @@
         "shortTitle": "%commands.SAS.notebook.new.short%",
         "title": "%commands.SAS.notebook.new%",
         "category": "SAS Notebook"
+      },
+      {
+        "command": "SAS.downloadResource",
+        "title": "%commands.SAS.download%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.uploadResource",
+        "title": "%commands.SAS.upload%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.uploadFileResource",
+        "title": "%commands.SAS.uploadFiles%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.uploadFolderResource",
+        "title": "%commands.SAS.uploadFolders%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.saveHTML",
+        "title": "%commands.SAS.download%",
+        "category": "SAS"
       }
     ],
     "keybindings": [
@@ -592,6 +617,12 @@
       }
     ],
     "menus": {
+      "webview/context": [
+        {
+          "command": "SAS.saveHTML",
+          "when": "webviewId =~ /SASResultPanel-/"
+        }
+      ],
       "view/title": [
         {
           "command": "SAS.refreshContent",
@@ -676,6 +707,26 @@
           "command": "SAS.emptyRecycleBin",
           "when": "viewItem =~ /empty/ && view == contentdataprovider",
           "group": "emptygroup@0"
+        },
+        {
+          "command": "SAS.downloadResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider",
+          "group": "uploaddownloadgroup@0"
+        },
+        {
+          "command": "SAS.uploadResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform == mac",
+          "group": "uploaddownloadgroup@1"
+        },
+        {
+          "command": "SAS.uploadFileResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform != mac",
+          "group": "uploaddownloadgroup@1"
+        },
+        {
+          "command": "SAS.uploadFolderResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform != mac",
+          "group": "uploaddownloadgroup@1"
         }
       ],
       "editor/title/run": [
@@ -776,6 +827,26 @@
         {
           "when": "false",
           "command": "SAS.downloadTable"
+        },
+        {
+          "when": "false",
+          "command": "SAS.downloadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.uploadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.uploadFileResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.uploadFolderResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.saveHTML"
         }
       ],
       "file/newFile": [

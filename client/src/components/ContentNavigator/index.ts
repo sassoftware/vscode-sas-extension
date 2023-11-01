@@ -4,6 +4,7 @@ import {
   ConfigurationChangeEvent,
   Disposable,
   ExtensionContext,
+  OpenDialogOptions,
   ProgressLocation,
   Uri,
   commands,
@@ -305,6 +306,56 @@ class ContentNavigator implements SubscriptionProvider {
           );
         },
       ),
+      commands.registerCommand(
+        "SAS.downloadResource",
+        async (resource: ContentItem) => {
+          const selections = this.treeViewSelections(resource);
+          const uris = await window.showOpenDialog({
+            title: l10n.t("Choose where to save your files."),
+            openLabel: l10n.t("Save"),
+            canSelectFolders: true,
+            canSelectFiles: false,
+            canSelectMany: false,
+          });
+          const uri = uris && uris.length > 0 ? uris[0] : undefined;
+
+          if (!uri) {
+            return;
+          }
+
+          await window.withProgress(
+            {
+              location: ProgressLocation.Notification,
+              title: l10n.t("Downloading files..."),
+            },
+            async () => {
+              await this.contentDataProvider.downloadContentItems(
+                uri,
+                selections,
+                this.contentDataProvider.treeView.selection,
+              );
+            },
+          );
+        },
+      ),
+      // Below, we have three commands to upload files. Mac is currently the only
+      // platform that supports uploading both files and folders. So, for any platform
+      // that isn't Mac, we list a distinct upload file(s) or upload folder(s) command.
+      // See the `OpenDialogOptions` interface for more information.
+      commands.registerCommand(
+        "SAS.uploadResource",
+        async (resource: ContentItem) => this.uploadResource(resource),
+      ),
+      commands.registerCommand(
+        "SAS.uploadFileResource",
+        async (resource: ContentItem) =>
+          this.uploadResource(resource, { canSelectFolders: false }),
+      ),
+      commands.registerCommand(
+        "SAS.uploadFolderResource",
+        async (resource: ContentItem) =>
+          this.uploadResource(resource, { canSelectFiles: false }),
+      ),
       workspace.onDidChangeConfiguration(
         async (event: ConfigurationChangeEvent) => {
           if (event.affectsConfiguration("SAS.connectionProfiles")) {
@@ -318,6 +369,31 @@ class ContentNavigator implements SubscriptionProvider {
     ];
   }
 
+  private async uploadResource(
+    resource: ContentItem,
+    openDialogOptions: Partial<OpenDialogOptions> = {},
+  ) {
+    const uris: Uri[] = await window.showOpenDialog({
+      canSelectFolders: true,
+      canSelectMany: true,
+      canSelectFiles: true,
+      ...openDialogOptions,
+    });
+    if (!uris) {
+      return;
+    }
+
+    await window.withProgress(
+      {
+        location: ProgressLocation.Notification,
+        title: l10n.t("Uploading files..."),
+      },
+      async () => {
+        await this.contentDataProvider.uploadUrisToTarget(uris, resource);
+      },
+    );
+  }
+
   private viyaEndpoint(): string {
     const activeProfile = profileConfig.getProfileByName(
       profileConfig.getActiveProfile(),
@@ -327,19 +403,6 @@ class ContentNavigator implements SubscriptionProvider {
       !activeProfile.serverId
       ? activeProfile.endpoint
       : "";
-  }
-
-  private async handleCreationResponse(
-    resource: ContentItem,
-    newUri: Uri | undefined,
-    errorMessage: string,
-  ): Promise<void> {
-    if (!newUri) {
-      window.showErrorMessage(errorMessage);
-      return;
-    }
-
-    this.contentDataProvider.reveal(resource);
   }
 
   private treeViewSelections(item: ContentItem): ContentItem[] {

@@ -241,7 +241,6 @@ export class ContentModel {
     }
 
     const fileLink: Link | null = getLink(createdResource.links, "GET", "self");
-
     const memberAdded = await this.addMember(
       fileLink?.uri,
       getLink(item.links, "POST", "addMember")?.uri,
@@ -250,7 +249,6 @@ export class ContentModel {
         contentType,
       },
     );
-
     if (!memberAdded) {
       return;
     }
