@@ -322,11 +322,12 @@ do {
       `${this._html5FileName}.htm`,
     );
     this._shellProcess.stdin.write(
-      `
-  $filePath = "${resolve(this._workDirectory, this._html5FileName + ".htm")}"\n
-  $outputFile = "${outputFileUri.fsPath}"\n
-  $runner.FetchResultsFile($filePath, $outputFile)\n
-  `,
+      `$filePath = "${resolve(
+        this._workDirectory,
+        this._html5FileName + ".htm",
+      )}"
+$outputFile = "${outputFileUri.fsPath}"
+$runner.FetchResultsFile($filePath, $outputFile)\n`,
       this.onWriteComplete,
     );
 

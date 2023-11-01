@@ -118,15 +118,16 @@ describe("ITC connection", () => {
 
   describe("run", () => {
     const html5 = '<div id="IDX">';
+    const tempHtmlPath = join(__dirname, "sashtml.htm");
     beforeEach(async () => {
-      writeFileSync(join(__dirname, "sashtml.htm"), html5);
+      writeFileSync(tempHtmlPath, html5);
       const setupPromise = session.setup();
       onDataCallback(Buffer.from(`WORKDIR=/work/dir`));
       await setupPromise;
     });
     afterEach(() => {
       try {
-        unlinkSync(join(__dirname, "sashtml.htm"));
+        unlinkSync(tempHtmlPath);
       } catch (e) {
         // Intentionally blank
       }
@@ -150,6 +151,11 @@ describe("ITC connection", () => {
       );
 
       expect(stdinStub.args[13][0]).to.deep.equal(`$runner.Run($code)\n`);
+      expect(stdinStub.args[14][0]).to
+        .equal(`$filePath = "/work/dir/sashtml.htm"
+$outputFile = "${tempHtmlPath}"
+$runner.FetchResultsFile($filePath, $outputFile)
+`);
     });
   });
 
