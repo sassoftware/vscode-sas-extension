@@ -10,7 +10,7 @@ import {
   toAutoExecLines,
 } from "../components/profile";
 import { extensionContext } from "../node/extension";
-import { ITCProtocol, getSession as getITCSession } from "./com";
+import { ITCProtocol, getSession as getITCSession } from "./itc";
 import { Config as RestConfig, getSession as getRestSession } from "./rest";
 import {
   Error2 as ComputeError,

@@ -7,12 +7,12 @@ import { join } from "path";
 import { SinonSandbox, SinonStub, createSandbox } from "sinon";
 import { stubInterface } from "ts-sinon";
 
-import { ITCProtocol, getSession } from "../../../src/connection/com";
-import { scriptContent } from "../../../src/connection/com/script";
+import { ITCProtocol, getSession } from "../../../src/connection/itc";
+import { scriptContent } from "../../../src/connection/itc/script";
 import { Session } from "../../../src/connection/session";
 import { extensionContext } from "../../../src/node/extension";
 
-describe("COM connection", () => {
+describe("ITC connection", () => {
   let sandbox: SinonSandbox;
   let spawnStub: SinonStub;
   let stdoutStub: SinonStub;
