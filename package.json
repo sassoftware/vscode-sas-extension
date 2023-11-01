@@ -1005,7 +1005,7 @@
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.2.1",
-    "@types/chai": "^4.3.6",
+    "@types/chai": "^4.3.9",
     "@types/mocha": "^10.0.3",
     "@types/node": "^20.8.6",
     "@types/sinon": "^10.0.19",
