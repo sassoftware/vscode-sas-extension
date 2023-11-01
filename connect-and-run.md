@@ -15,7 +15,9 @@ The following commands are supported for profiles:
 | `SAS.updateProfile` | SAS: Update Connection profile         |
 | `SAS.deleteProfile` | SAS: Delete Connection profile         |
 
-## Profile Anatomy (SAS Viya)
+## Profile: SAS Viya
+
+### Profile Anatomy
 
 The parameters listed below make up the profile settings for configuring a connection to SAS Viya.
 
@@ -36,9 +38,25 @@ Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift
 
 For more information about Client IDs and the authentication process, please see the blog post [Authentication to SAS Viya: a couple of approaches](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/). A SAS administrator can follow the Steps 1 and 2 in the post to register a new client.
 
-## Profile Anatomy (SAS 9.4 Remote)
+## Profile: SAS 9.4 (remote - SSH)
 
 For a secure connection to SAS 9.4 remote server, a public / private ssh key pair is required. The socket defined in the environment variable `SSH_AUTH_SOCK` is used to communicate with ssh-agent to authenticate the ssh session. The private key must be registered with the ssh-agent. The steps for configuring ssh follow.
+
+### Profile Anatomy
+
+The parameters listed below make up the profile settings for configuring a connection to a remote SAS 9.4 instance.
+
+| Name         | Description                          | Additional Notes                                                     |
+| ------------ | ------------------------------------ | -------------------------------------------------------------------- |
+| **Name**     | Name of the profile                  | This will display on the status bar                                  |
+| **Host**     | SSH Server Host                      | This will appear when hovering over the status bar                   |
+| **Username** | SSH Server Username                  | A username to use when establishing the SSH connection to the server |
+| **Port**     | SSH Server Port                      | The ssh port of the SSH server. Default value is 22                  |
+| **SAS Path** | Path to SAS Executable on the server | Must be a fully qualified path on the SSH server to a SAS executable |
+
+### Add New SAS 9.4 (remote - SSH) Profile
+
+Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, select the SAS 9.4 (remote - SSH) connection type and complete the prompts (using values from the preceeding table) to create a new profile.
 
 ### Required setup for connection to SAS 9.4
 
@@ -48,7 +66,7 @@ In order to configure the connection between VS Code and SAS 9, you must configu
 
 1. Enable openssh client optional feature; [instructions found here](https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse?tabs=gui).
 
-2. [Create an environment variable](https://phoenixnap.com/kb/windows-set-environment-variable) SSH_AUTH_SOCK with value //./pipe/openssh-ssh-agent (windows uses a named pipe for the auth sock).  
+2. [Create an environment variable](https://phoenixnap.com/kb/windows-set-environment-variable) SSH_AUTH_SOCK with value //./pipe/openssh-ssh-agent (windows uses a named pipe for the auth sock).
    **Note**: An attempt to create the varible using Powershell command line did not register; suggest using these GUI instructions.
 
 3. Ensure ssh-agent service is running and set startup type to automatic; commands found in [this link](https://dev.to/aka_anoop/how-to-enable-openssh-agent-to-access-your-github-repositories-on-windows-powershell-1ab8)
@@ -114,7 +132,7 @@ Note: the default path to the SAS executable (saspath) is /opt/sasinside/SASHome
 
 4. Add the private key to ssh-agent: ssh-add /path/to/private/key/with/passphrase
 
-5. Define a connection profile in settings.json for a remote server (see detailed instructions below in the [Add New SAS 9.4 Remote Profile](#add-new-sas-94-remote-profile) section):
+5. Define a connection profile in settings.json for a remote server (see detailed instructions below in the [Add New SAS 9.4 Remote (Via SSH) Profile](#add-new-sas-94-remote-via-ssh-profile) section):
 
 ```
     "ssh_test": {
@@ -128,25 +146,11 @@ Note: the default path to the SAS executable (saspath) is /opt/sasinside/SASHome
 
 6. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
 
-### Profile Anatomy (SAS 9.4 Remote)
-
-The parameters listed below make up the profile settings for configuring a connection to a remote SAS 9.4 instance.
-
-| Name         | Description                          | Additional Notes                                                     |
-| ------------ | ------------------------------------ | -------------------------------------------------------------------- |
-| **Name**     | Name of the profile                  | This will display on the status bar                                  |
-| **Host**     | SSH Server Host                      | This will appear when hovering over the status bar                   |
-| **Username** | SSH Server Username                  | A username to use when establishing the SSH connection to the server |
-| **Port**     | SSH Server Port                      | The ssh port of the SSH server. Default value is 22                  |
-| **SAS Path** | Path to SAS Executable on the server | Must be a fully qualified path on the SSH server to a SAS executable |
-
-## Add New SAS 9.4 Remote Profile
-
-Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, select the SAS 9.4 (remote) connection type and complete the prompts (using values from the preceeding table) to create a new profile.
-
-## Profile Anatomy (SAS 9.4 local)
+## Profile: SAS 9.4 (local)
 
 On Windows, during the install of SAS 9.4, make sure that "Integration Technologies Client" checkbox is checked. If using an order that doesn't provide this option, make sure the ITC is installed by visiting the following [link](https://support.sas.com/downloads/browse.htm?fil=&cat=56). Make sure to download the 9.4m8 option.
+
+### Profile Anatomy
 
 The parameters listed below make up the profile settings for configuring a connection to a local SAS 9.4 instance.
 
@@ -155,9 +159,28 @@ The parameters listed below make up the profile settings for configuring a conne
 | **Name** | Name of the profile              | This will display on the status bar |
 | **Host** | Indicates SAS 9.4 local instance | Defaults to localhost for com       |
 
-## Add New SAS 9.4 Local Profile
+### Add New SAS 9.4 (local) Profile
 
-Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows). After executing the `SAS.addProfile` command, select the SAS 9.4 (local - COM) connection type to create a new profile.
+Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows). After executing the `SAS.addProfile` command, select the SAS 9.4 (local) connection type to create a new profile.
+
+## Profile: SAS 9.4 (remote - IOM)
+
+On Windows, during the install of SAS 9.4, make sure that "Integration Technologies Client" checkbox is checked. If using an order that doesn't provide this option, make sure the ITC is installed by visiting the following [link](https://support.sas.com/downloads/browse.htm?fil=&cat=56). Make sure to download the 9.4m8 option.
+
+### Profile Anatomy
+
+The parameters listed below make up the profile settings for configuring a connection to a remote SAS 9.4 instance.
+
+| Name         | Description         | Additional Notes                                                     |
+| ------------ | ------------------- | -------------------------------------------------------------------- |
+| **Name**     | Name of the profile | This will display on the status bar                                  |
+| **Host**     | IOM Server Host     | This will appear when hovering over the status bar                   |
+| **Username** | IOM Server Username | A username to use when establishing the IOM connection to the server |
+| **Port**     | IOM Server Port     | The port of the IOM server. Default value is 8591                    |
+
+### Add New SAS 9.4 (remote - IOM) Profile
+
+Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows). After executing the `SAS.addProfile` command, select the SAS 9.4 (remote - IOM) connection type to create a new profile.
 
 ## Additional settings in a profile
 

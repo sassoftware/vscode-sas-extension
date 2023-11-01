@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Added the ability to upload and download sas content using the context menu ([#547](https://github.com/sassoftware/vscode-sas-extension/issues/547))
 - Added the ability to download results as an html file ([#546](https://github.com/sassoftware/vscode-sas-extension/issues/546))
+- Added sas 9.4 remote connection support via ITC and the IOM Bridge protocol. This is currently supported for Windows only ([#592](https://github.com/sassoftware/vscode-sas-extension/pull/592))
 
 ## [v1.5.0] - 2023-10-27
 
