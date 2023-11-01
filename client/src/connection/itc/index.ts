@@ -13,7 +13,7 @@ import { scriptContent } from "./script";
 const PASSWORD_KEY = "ITC_PASSWORD_KEY";
 
 const endCode = "--vscode-sas-extension-submit-end--";
-let sessionInstance: COMSession;
+let sessionInstance: ITCSession;
 
 export enum ITCProtocol {
   COM = 0,
@@ -30,7 +30,7 @@ export interface Config extends BaseConfig {
   protocol: ITCProtocol;
 }
 
-export class COMSession extends Session {
+export class ITCSession extends Session {
   private _config: Config;
   private _shellProcess: ChildProcessWithoutNullStreams;
   private _html5FileName: string;
@@ -381,7 +381,7 @@ export const getSession = (
   };
 
   if (!sessionInstance) {
-    sessionInstance = new COMSession(extensionContext);
+    sessionInstance = new ITCSession(extensionContext);
   }
   sessionInstance.config = { ...defaults, ...c };
   return sessionInstance;
