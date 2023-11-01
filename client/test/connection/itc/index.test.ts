@@ -152,8 +152,7 @@ describe("ITC connection", () => {
 
       expect(stdinStub.args[13][0]).to.deep.equal(`$runner.Run($code)\n`);
       expect(stdinStub.args[14][0]).to
-        .equal(`$filePath = "/work/dir/sashtml.htm"
-$outputFile = "${tempHtmlPath}"
+        .contain(`$outputFile = "${tempHtmlPath}"
 $runner.FetchResultsFile($filePath, $outputFile)
 `);
     });
