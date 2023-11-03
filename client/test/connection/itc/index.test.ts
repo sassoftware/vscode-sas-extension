@@ -7,6 +7,7 @@ import { join } from "path";
 import { SinonSandbox, SinonStub, createSandbox } from "sinon";
 import { stubInterface } from "ts-sinon";
 
+import { setContext } from "../../../src/components/ExtensionContext";
 import { ITCProtocol, getSession } from "../../../src/connection/itc";
 import { scriptContent } from "../../../src/connection/itc/script";
 import { Session } from "../../../src/connection/session";
@@ -62,7 +63,9 @@ describe("ITC connection", () => {
       secrets: secretStore,
     };
 
-    session = getSession(config, ITCProtocol.COM, stubbedExtensionContext);
+    setContext(stubbedExtensionContext);
+
+    session = getSession(config, ITCProtocol.COM);
     session.onLogFn = () => {
       return;
     };

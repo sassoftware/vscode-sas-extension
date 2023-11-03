@@ -1,11 +1,16 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { ExtensionContext, Uri, l10n, window, workspace } from "vscode";
+import { Uri, l10n, window, workspace } from "vscode";
 
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { resolve } from "path";
 
 import { BaseConfig, RunResult } from "..";
+import {
+  getGlobalStorageUri,
+  getSecret,
+  setSecret,
+} from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 import { scriptContent } from "./script";
@@ -38,12 +43,10 @@ export class ITCSession extends Session {
   private _runReject: ((reason?) => void) | undefined;
   private _workDirectory: string;
   private _password: string;
-  private _context: ExtensionContext;
 
-  constructor(extensionContext: ExtensionContext) {
+  constructor() {
     super();
     this._password = "";
-    this._context = extensionContext;
   }
 
   public set config(value: Config) {
@@ -124,12 +127,11 @@ export class ITCSession extends Session {
     return setupPromise;
   };
 
-  private storePassword = async () => {
-    await this._context.secrets.store(PASSWORD_KEY, this._password);
-  };
+  private storePassword = async () =>
+    await setSecret(PASSWORD_KEY, this._password);
 
   private clearPassword = async () => {
-    await this._context.secrets.delete(PASSWORD_KEY);
+    await setSecret(PASSWORD_KEY, "");
     this._password = "";
   };
 
@@ -138,7 +140,7 @@ export class ITCSession extends Session {
       return "";
     }
 
-    const storedPassword = await this._context.secrets.get(PASSWORD_KEY);
+    const storedPassword = await getSecret(PASSWORD_KEY);
     if (storedPassword) {
       return storedPassword;
     }
@@ -311,14 +313,15 @@ do {
    * Fetches the ODS output results for the latest html results file.
    */
   private fetchResults = async () => {
+    const globalStorageUri = getGlobalStorageUri();
     try {
-      await workspace.fs.readDirectory(this._context.globalStorageUri);
+      await workspace.fs.readDirectory(globalStorageUri);
     } catch (e) {
-      await workspace.fs.createDirectory(this._context.globalStorageUri);
+      await workspace.fs.createDirectory(globalStorageUri);
     }
 
     const outputFileUri = Uri.joinPath(
-      this._context.globalStorageUri,
+      globalStorageUri,
       `${this._html5FileName}.htm`,
     );
     this._shellProcess.stdin.write(
@@ -371,7 +374,6 @@ $runner.FetchResultsFile($filePath, $outputFile)\n`,
 export const getSession = (
   c: Partial<Config>,
   protocol: ITCProtocol,
-  extensionContext: ExtensionContext,
 ): Session => {
   const defaults = {
     host: "localhost",
@@ -381,7 +383,7 @@ export const getSession = (
   };
 
   if (!sessionInstance) {
-    sessionInstance = new ITCSession(extensionContext);
+    sessionInstance = new ITCSession();
   }
   sessionInstance.config = { ...defaults, ...c };
   return sessionInstance;
