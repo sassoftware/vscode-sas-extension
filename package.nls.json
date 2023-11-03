@@ -61,6 +61,7 @@
   "configuration.SAS.results.html.style.(server default)": "Default to the style configured on the SAS server.",
   "configuration.SAS.results.sideBySide": "Display results to the side of the code",
   "configuration.SAS.results.singlePanel": "Reuse single panel to display results",
+  "configuration.SAS.problems.log.enabled": "Show problems from SAS log",
   "configuration.SAS.userProvidedCertificates": "Provide trusted CA certificate files",
   "notebooks.SAS.htmlRenderer": "SAS HTML Renderer",
   "notebooks.SAS.logRenderer": "SAS Log Renderer",
