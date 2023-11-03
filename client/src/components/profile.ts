@@ -17,15 +17,15 @@ export const EXTENSION_PROFILES_CONFIG_KEY = "profiles";
 export const EXTENSION_ACTIVE_PROFILE_CONFIG_KEY = "activeProfile";
 
 enum ConnectionOptions {
-  SASViya = "SAS Viya",
-  SAS94Remote = "SAS 9.4 (remote - SSH)",
-  SAS9IOM = "SAS 9.4 (remote - IOM)",
   SAS9COM = "SAS 9.4 (local)",
+  SAS9IOM = "SAS 9.4 (remote - IOM)",
+  SAS9SSH = "SAS 9.4 (remote - SSH)",
+  SASViya = "SAS Viya",
 }
 
 const CONNECTION_PICK_OPTS: string[] = [
   ConnectionOptions.SASViya,
-  ConnectionOptions.SAS94Remote,
+  ConnectionOptions.SAS9SSH,
   ConnectionOptions.SAS9IOM,
   ConnectionOptions.SAS9COM,
 ];
@@ -810,7 +810,7 @@ function mapQuickPickToEnum(connectionTypePickInput: string): ConnectionType {
   switch (connectionTypePickInput) {
     case ConnectionOptions.SASViya:
       return ConnectionType.Rest;
-    case ConnectionOptions.SAS94Remote:
+    case ConnectionOptions.SAS9SSH:
       return ConnectionType.SSH;
     case ConnectionOptions.SAS9COM:
       return ConnectionType.COM;

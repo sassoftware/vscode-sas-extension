@@ -189,7 +189,7 @@ export class ITCSession extends Session {
   };
 
   /**
-   * Cleans up resources for the given local SAS session.
+   * Cleans up resources for the given SAS session.
    * @returns void promise.
    */
   public close = async (): Promise<void> => {
@@ -364,7 +364,7 @@ $runner.FetchResultsFile($filePath, $outputFile)\n`,
 }
 
 /**
- * Creates a new SAS 9 Local Session.
+ * Creates a new SAS 9 Session.
  * @param c Instance denoting configuration parameters for this connection profile.
  * @returns  created COM session.
  */
