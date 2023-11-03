@@ -443,6 +443,11 @@
             ],
             "description": "%configuration.SAS.results.html.style%"
           },
+          "SAS.problems.log.enabled": {
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.SAS.problems.log.enabled%"
+          },
           "SAS.flowConversionMode": {
             "order": 6,
             "type": "string",

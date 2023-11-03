@@ -1,15 +1,15 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { EventEmitter, TaskDefinition, l10n } from "vscode";
+import { EventEmitter, TaskDefinition, l10n, window, workspace } from "vscode";
+
+import { isAbsolute } from "path";
 
 import { runTask } from "../../commands/run";
 import { RunResult } from "../../connection";
 import { showResult } from "../ResultPanel/ResultPanel";
-import {
-  getSASCodeFromActiveEditor,
-  getSASCodeFromFile,
-  wrapCode,
-} from "../utils/sasCode";
+import { SASDiagnostic } from "../logViewer/sasDiagnostics";
+import { SASCodeDocument } from "../utils/SASCodeDocument";
+import { getCodeDocumentConstructionParameters } from "../utils/SASCodeDocumentHelper";
 import { isOutputHtmlEnabled } from "../utils/settings";
 
 export const SAS_TASK_TYPE = "sas";
@@ -44,23 +44,31 @@ export async function runSasFileTask(
   taskInfo: TaskInfo,
   closeEmitter: EventEmitter<number>,
 ) {
-  const { definition: taskDefinition, label: taskLabel } = taskInfo;
+  const {
+    definition: { file, preamble, postamble },
+    label,
+  } = taskInfo;
 
-  const isFileSpecified =
-    taskDefinition.file !== undefined && taskDefinition.file.trim() !== "";
+  const textDocument = await getTextDocumentFromFile(file);
+  const { metadata, options } = getCodeDocumentConstructionParameters(
+    textDocument,
+    {
+      preamble,
+      postamble,
+    },
+  );
 
-  const getCode = isFileSpecified
-    ? getSASCodeFromFile(taskDefinition.file)
-    : getSASCodeFromActiveEditor();
+  const codeDoc = new SASCodeDocument(metadata, options);
 
-  return getCode
-    .then((code) =>
-      wrapCode(code, taskDefinition.preamble, taskDefinition.postamble),
-    )
-    .then((code) => runTask(code, messageEmitter, closeEmitter))
-    .then((results) => {
-      showRunResult(results, messageEmitter, `${taskLabel}`);
-    });
+  const logFn = SASDiagnostic.generateLogFn(codeDoc);
+  return runTask(
+    codeDoc.getWrappedCode(),
+    messageEmitter,
+    closeEmitter,
+    logFn,
+  ).then((results) => {
+    showRunResult(results, messageEmitter, `${label}`);
+  });
 }
 
 function showRunResult(
@@ -77,5 +85,20 @@ function showRunResult(
       undefined,
       l10n.t("Result: {result}", { result: taskName }),
     );
+  }
+}
+
+async function getTextDocumentFromFile(file: string | undefined) {
+  if (file === undefined || file.trim() === "") {
+    return window.activeTextEditor.document;
+  } else if (isAbsolute(file)) {
+    return await workspace.openTextDocument(file);
+  } else {
+    const uri = (await workspace.findFiles(file))[0];
+    if (uri === undefined) {
+      throw new Error(l10n.t("Cannot find file: {file}", { file }));
+    } else {
+      return await workspace.openTextDocument(uri);
+    }
   }
 }

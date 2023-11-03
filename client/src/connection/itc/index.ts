@@ -11,8 +11,8 @@ import {
   getSecretStorage,
 } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
-import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
 import { Session } from "../session";
+import { extractOutputHtmlFileName } from "../util";
 import { scriptContent } from "./script";
 import { LineCodes } from "./types";
 

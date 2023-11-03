@@ -46,6 +46,8 @@ import {
   updateStatusBarItem,
 } from "../components/StatusBarItem";
 import { LogTokensProvider, legend } from "../components/logViewer";
+import { DiagnosticCodeActionProvider } from "../components/logViewer/DiagnosticCodeActionProvider";
+import { SASDiagnostic } from "../components/logViewer/sasDiagnostics";
 import { NotebookController } from "../components/notebook/Controller";
 import { NotebookSerializer } from "../components/notebook/Serializer";
 import { ConnectionType } from "../components/profile";
@@ -161,6 +163,28 @@ export function activate(context: ExtensionContext): void {
       );
     }),
     tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
+    SASDiagnostic.getSasDiagnosticCollection(),
+    commands.registerCommand(
+      SASDiagnostic.DiagnosticCommands.IgnoreCommand,
+      SASDiagnostic.ignore,
+    ),
+
+    commands.registerCommand(
+      SASDiagnostic.DiagnosticCommands.IgnoreAllWarningCommand,
+      SASDiagnostic.ignoreAll,
+    ),
+    commands.registerCommand(
+      SASDiagnostic.DiagnosticCommands.IgnoreAllErrorCommand,
+      SASDiagnostic.ignoreAll,
+    ),
+    commands.registerCommand(
+      SASDiagnostic.DiagnosticCommands.IgnoreAllCommand,
+      SASDiagnostic.ignoreAll,
+    ),
+    languages.registerCodeActionsProvider(
+      "sas",
+      new DiagnosticCodeActionProvider(),
+    ),
   );
 
   // Reset first to set "No Active Profiles"
