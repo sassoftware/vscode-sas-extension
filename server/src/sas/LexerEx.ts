@@ -222,7 +222,7 @@ export class LexerEx {
         block = blocks[i];
       } while (block && !this._isBefore(this._endPos(block), pos)); // []|
 
-      return ++i;
+      return block ? ++i : -1;
     } else {
       /*
         []| ->
@@ -231,7 +231,7 @@ export class LexerEx {
         i++;
         block = blocks[i];
       } while (block && !this._isBefore(pos, this._startPos(block))); // |[]
-      return --i;
+      return block ? --i : -1;
     }
   }
 
@@ -719,10 +719,6 @@ export class LexerEx {
         block = blocks[i];
       }
     }
-    // ignore global
-    if (blocks[idx] && blocks[idx].type === this.SEC_TYPE.GBL) {
-      idx = -1;
-    }
     return blocks[idx] ?? null;
     //return sections[idx]?sections[idx]:null; //we return null if no
   }
@@ -758,7 +754,12 @@ export class LexerEx {
           this.getFoldingBlock_(block!.innerBlocks, line, col, strict) ?? block
         );
       } else {
-        return block;
+        // ignore global
+        if (block?.type === this.SEC_TYPE.GBL) {
+          return null;
+        } else {
+          return block;
+        }
       }
     } else {
       return null;
