@@ -67,5 +67,5 @@
   "views.SAS.libraries": "ライブラリ",
   "views.SAS.signIn": "サインイン",
   "views.SAS.unsupportedConnection": "この接続では、SAS Extension for Visual Studio Code 内の SAS コンテンツナビゲーションがサポートされていません。ファイルにアクセスできるのは、エクスプローラービューのみです。",
-  "views.SAS.welcome": "SAS Extension for Visual Studio Code を使用するには、SAS にサインインする必要があります。\n [Sign In](コマンド: SAS.authorize)"
+  "views.SAS.welcome": "SAS Extension for Visual Studio Code を使用するには、SAS にサインインする必要があります。\n [Sign In](command:SAS.authorize)"
 }
