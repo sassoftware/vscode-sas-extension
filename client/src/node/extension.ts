@@ -128,7 +128,7 @@ export function activate(context: ExtensionContext): void {
     authentication.registerAuthenticationProvider(
       SASAuthProvider.id,
       "SAS",
-      new SASAuthProvider(context.secrets),
+      new SASAuthProvider(),
     ),
     languages.registerDocumentSemanticTokensProvider(
       { language: "sas-log" },

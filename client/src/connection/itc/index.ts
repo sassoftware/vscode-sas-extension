@@ -8,14 +8,13 @@ import { resolve } from "path";
 import { BaseConfig, RunResult } from "..";
 import {
   getGlobalStorageUri,
-  getSecret,
-  setSecret,
+  getSecretStorage,
 } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 import { scriptContent } from "./script";
 
-const PASSWORD_KEY = "ITC_PASSWORD_KEY";
+const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE";
 
 const endCode = "--vscode-sas-extension-submit-end--";
 let sessionInstance: ITCSession;
@@ -43,14 +42,18 @@ export class ITCSession extends Session {
   private _runReject: ((reason?) => void) | undefined;
   private _workDirectory: string;
   private _password: string;
+  private _secretStorage;
+  private _passwordKey: string;
 
   constructor() {
     super();
     this._password = "";
+    this._secretStorage = getSecretStorage(SECRET_STORAGE_NAMESPACE);
   }
 
   public set config(value: Config) {
     this._config = value;
+    this._passwordKey = `${value.host}${value.protocol}${value.username}`;
   }
 
   /**
@@ -128,10 +131,10 @@ export class ITCSession extends Session {
   };
 
   private storePassword = async () =>
-    await setSecret(PASSWORD_KEY, this._password);
+    await this._secretStorage.store(this._passwordKey, this._password);
 
   private clearPassword = async () => {
-    await setSecret(PASSWORD_KEY, "");
+    await this._secretStorage.store(this._passwordKey, "");
     this._password = "";
   };
 
@@ -140,7 +143,7 @@ export class ITCSession extends Session {
       return "";
     }
 
-    const storedPassword = await getSecret(PASSWORD_KEY);
+    const storedPassword = await this._secretStorage.get(this._passwordKey);
     if (storedPassword) {
       this._password = storedPassword;
       return storedPassword;
