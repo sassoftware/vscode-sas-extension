@@ -142,6 +142,7 @@ export class ITCSession extends Session {
 
     const storedPassword = await getSecret(PASSWORD_KEY);
     if (storedPassword) {
+      this._password = storedPassword;
       return storedPassword;
     }
 
