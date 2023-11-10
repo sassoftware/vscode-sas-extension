@@ -222,16 +222,13 @@ export class ITCSession extends Session {
    * Cancels a running SAS program
    */
   public cancel = async () => {
-    this._shellProcess.stdin.write(
-      "$runner.Cancel()\n",
-      async (error) => {
-        if (error) {
-          this._runReject(error);
-        }
-  
-        await this.fetchLog();
+    this._shellProcess.stdin.write("$runner.Cancel()\n", async (error) => {
+      if (error) {
+        this._runReject(error);
       }
-    );
+
+      await this.fetchLog();
+    });
   };
 
   /**
@@ -311,7 +308,7 @@ do {
   };
 
   private processLineCodes(line: string): boolean {
-    if (line.endsWith(LineCodes.RunEndCode)) {
+    if (line.includes(LineCodes.RunEndCode)) {
       // run completed
       this.fetchResults();
       return true;
