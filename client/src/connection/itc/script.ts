@@ -1,5 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { LineCodes } from "./types";
 
 export const scriptContent = `
 class SASRunner{
@@ -38,6 +39,7 @@ class SASRunner{
             $password
         )
 
+        Write-Host "${LineCodes.SessionCreatedCode}"
     } catch {
       throw "Setup error"
     }
@@ -127,6 +129,8 @@ class SASRunner{
     $objStream.Close()
     $outStream.Close()
     $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
+
+    Write-Host "${LineCodes.ResultsFetchedCode}"
   }
 }
 `;

@@ -13,10 +13,10 @@ import {
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 import { scriptContent } from "./script";
+import { LineCodes } from "./types";
 
 const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE";
 
-const endCode = "--vscode-sas-extension-submit-end--";
 let sessionInstance: ITCSession;
 
 export enum ITCProtocol {
@@ -179,7 +179,7 @@ export class ITCSession extends Session {
     );
 
     //write an end mnemonic so that the handler knows when execution has finished
-    const codeWithEnd = `${codeWithODSPath}\n%put ${endCode};`;
+    const codeWithEnd = `${codeWithODSPath}\n%put ${LineCodes.RunEndCode};`;
     const codeToRun = `$code=\n@'\n${codeWithEnd}\n'@\n`;
 
     this._shellProcess.stdin.write(codeToRun);
@@ -284,10 +284,7 @@ do {
         updateStatusBarItem(true);
         return;
       }
-      if (line.endsWith(endCode)) {
-        // run completed
-        this.fetchResults();
-      } else {
+      if (!this.processLineCodes(line)) {
         this._html5FileName =
           line.match(/NOTE: .+ HTML5.* Body.+: (.+)\.htm/)?.[1] ??
           this._html5FileName;
@@ -295,6 +292,26 @@ do {
       }
     });
   };
+
+  private processLineCodes(line: string): boolean {
+    if (line.endsWith(LineCodes.RunEndCode)) {
+      // run completed
+      this.fetchResults();
+      return true;
+    }
+
+    if (line.includes(LineCodes.SessionCreatedCode)) {
+      this.storePassword();
+      return true;
+    }
+
+    if (line.includes(LineCodes.ResultsFetchedCode)) {
+      this.displayResults();
+      return true;
+    }
+
+    return false;
+  }
 
   /**
    * Generic call for use on stdin write completion.
@@ -337,23 +354,15 @@ $outputFile = "${outputFileUri.fsPath}"
 $runner.FetchResultsFile($filePath, $outputFile)\n`,
       this.onWriteComplete,
     );
+  };
 
-    const file = await new Promise((resolve) => {
-      const start = Date.now();
-      const maxTime = 10 * 1000;
-      const interval = setInterval(async () => {
-        try {
-          const file = await workspace.fs.readFile(outputFileUri);
-          clearInterval(interval);
-          resolve(file);
-        } catch (e) {
-          if (Date.now() - maxTime > start) {
-            clearInterval(interval);
-            resolve(null);
-          }
-        }
-      }, 1000);
-    });
+  private displayResults = async () => {
+    const globalStorageUri = getGlobalStorageUri();
+    const outputFileUri = Uri.joinPath(
+      globalStorageUri,
+      `${this._html5FileName}.htm`,
+    );
+    const file = await workspace.fs.readFile(outputFileUri);
 
     const htmlResults = (file || "").toString();
     if (file) {
@@ -365,7 +374,6 @@ $runner.FetchResultsFile($filePath, $outputFile)\n`,
       runResult.html5 = htmlResults;
       runResult.title = "Result";
     }
-    this.storePassword();
     this._runResolve(runResult);
   };
 }

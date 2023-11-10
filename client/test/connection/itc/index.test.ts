@@ -10,6 +10,7 @@ import { stubInterface } from "ts-sinon";
 import { setContext } from "../../../src/components/ExtensionContext";
 import { ITCProtocol, getSession } from "../../../src/connection/itc";
 import { scriptContent } from "../../../src/connection/itc/script";
+import { LineCodes } from "../../../src/connection/itc/types";
 import { Session } from "../../../src/connection/session";
 import { extensionContext } from "../../../src/node/extension";
 
@@ -143,7 +144,8 @@ describe("ITC connection", () => {
       //simulate log message for body file
       onDataCallback(Buffer.from("NOTE: Writing HTML5 Body file: sashtml.htm"));
       //simulate end of submission
-      onDataCallback(Buffer.from("--vscode-sas-extension-submit-end--"));
+      onDataCallback(Buffer.from(LineCodes.RunEndCode));
+      onDataCallback(Buffer.from(LineCodes.ResultsFetchedCode));
 
       const runResult = await runPromise;
       expect(runResult.html5).to.equal(html5);
