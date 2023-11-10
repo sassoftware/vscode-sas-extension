@@ -77,11 +77,17 @@ class SASRunner{
 
   [void]Run([string]$code) {
     try{
+        $this.objSAS.LanguageService.Reset()
+        $this.objSAS.LanguageService.Async = $true
         $this.objSAS.LanguageService.Submit($code)
     }catch{
       Write-Error $_.ScriptStackTrace
       throw "Run error"
     }
+  }
+
+  [void]SubmitComplete() {
+    Write-Host "Yayyyyyy"
   }
 
   [void]Close(){
@@ -91,6 +97,14 @@ class SASRunner{
       throw "Close error"
     }
   }
+
+  [void]Cancel(){
+  try{
+        $this.objSAS.LanguageService.Cancel()
+      }catch{
+        throw "Cancel error"
+      }
+    }
 
   [String]FlushLog([int]$chunkSize) {
       try{

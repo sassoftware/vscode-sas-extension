@@ -218,6 +218,22 @@ export class ITCSession extends Session {
   };
 
   /**
+   * Cancels a running SAS program
+   */
+  public cancel = async () => {
+    this._shellProcess.stdin.write(
+      "$runner.Cancel()\n",
+      async (error) => {
+        if (error) {
+          this._runReject(error);
+        }
+  
+        await this.fetchLog();
+      }
+    );
+  };
+
+  /**
    * Formats the SAS Options provided in the profile into a format
    * that the shell process can understand.
    * @param sasOptions SAS Options array from the connection profile.
@@ -294,7 +310,7 @@ do {
   };
 
   private processLineCodes(line: string): boolean {
-    if (line.endsWith(LineCodes.RunEndCode)) {
+    if (line.includes(LineCodes.RunEndCode)) {
       // run completed
       this.fetchResults();
       return true;
