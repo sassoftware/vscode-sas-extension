@@ -208,7 +208,7 @@ export class LexerEx {
 
     if (
       !block ||
-      this._isBetween(pos, this._startPos(block), this._endPos(block))
+      this._isBetween(pos, this._startPos(block), this._endPos(block), true)
     ) {
       return currentIdx;
     }
@@ -389,18 +389,30 @@ export class LexerEx {
     pos: TextPosition,
     start: TextPosition,
     end: TextPosition,
+    inclusive?: boolean,
   ) {
-    return this._isBefore(start, pos) && this._isBefore(pos, end);
+    return (
+      this._isBefore(start, pos, inclusive) &&
+      this._isBefore(pos, end, inclusive)
+    );
   }
-  private _isBefore(pos1: TextPosition, pos2: TextPosition) {
+
+  private _isBefore(
+    pos1: TextPosition,
+    pos2: TextPosition,
+    inclusive?: boolean,
+  ) {
     if (pos1.line < pos2.line) {
       return true;
     } else if (pos1.line === pos2.line) {
-      if (pos1.column < pos2.column) {
-        return true;
+      if (inclusive) {
+        return pos1.column <= pos2.column;
+      } else {
+        return pos1.column < pos2.column;
       }
+    } else {
+      return false;
     }
-    return false;
   }
 
   private _getBlkIndex(
@@ -1763,6 +1775,7 @@ export class LexerEx {
           this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
         }
       } else {
+        this.tryEndFoldingBlock_(token.end);
         this.startFoldingBlock_(this.SEC_TYPE.GBL, token.start, word);
       }
       this.stack.push({
