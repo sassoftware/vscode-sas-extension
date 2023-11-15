@@ -9,7 +9,7 @@ import {
   authentication,
 } from "vscode";
 
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance, HeadersDefaults } from "axios";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import { StubbedInstance, stubInterface } from "ts-sinon";
@@ -114,19 +114,22 @@ describe("ContentDataProvider", async function () {
     axiosInstance.interceptors.response = {
       use: () => null,
       eject: () => null,
+      clear: () => null,
+    };
+    const defaultHeader: HeadersDefaults = {
+      common: {
+        Authorization: "",
+      },
+      put: {},
+      post: {},
+      patch: {},
+      delete: {},
+      head: {},
+      get: {},
     };
     axiosInstance.defaults = {
-      headers: {
-        common: {
-          Authorization: "",
-        },
-        put: {},
-        post: {},
-        patch: {},
-        delete: {},
-        head: {},
-        get: {},
-      },
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      headers: defaultHeader as AxiosInstance["defaults"]["headers"],
     };
 
     stub = sinon.stub(axios, "create").returns(axiosInstance);
