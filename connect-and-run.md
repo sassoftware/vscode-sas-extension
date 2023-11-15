@@ -165,7 +165,7 @@ Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows). After executing t
 
 ## Profile: SAS 9.4 (remote - IOM)
 
-In order to use this option, you'll need to have "Integration Technologies Client" (ITC) installed. You can do this by making sure the "Integration Technologies Client" checkbox is checked when installing SAS 9.4, or by visiting the following [link](https://support.sas.com/downloads/browse.htm?fil=&cat=56) (Make sure to download the 9.4m8 option).
+In order to use this option, you'll need to have "Integration Technologies Client" (ITC) installed on the machine this extension runs on. You can do this by making sure the "Integration Technologies Client" checkbox is checked when installing SAS 9.4, or by visiting the following [link](https://support.sas.com/downloads/browse.htm?fil=&cat=56) (Make sure to download the 9.4m8 option).
 
 ### Profile Anatomy
 
