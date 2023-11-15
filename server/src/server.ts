@@ -130,7 +130,11 @@ export const init = (conn: Connection): void => {
       true,
       false,
     );
-    return { ...block, outerBlock: undefined, innerBlocks: undefined };
+    if (!block) {
+      return undefined;
+    } else {
+      return { ...block, outerBlock: undefined, innerBlocks: undefined };
+    }
   });
 
   connection.onDocumentOnTypeFormatting((params) => {

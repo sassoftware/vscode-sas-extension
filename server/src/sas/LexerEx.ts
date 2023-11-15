@@ -220,9 +220,12 @@ export class LexerEx {
       do {
         i--;
         block = blocks[i];
-      } while (block && !this._isBefore(this._endPos(block), pos)); // []|
+      } while (
+        block &&
+        !this._isBetween(pos, this._startPos(block), this._endPos(block), true)
+      ); // []|
 
-      return block ? ++i : -1;
+      return block ? i : -1;
     } else {
       /*
         []| ->
@@ -230,8 +233,11 @@ export class LexerEx {
       do {
         i++;
         block = blocks[i];
-      } while (block && !this._isBefore(pos, this._startPos(block))); // |[]
-      return block ? --i : -1;
+      } while (
+        block &&
+        !this._isBetween(pos, this._startPos(block), this._endPos(block), true)
+      ); // |[]
+      return block ? i : -1;
     }
   }
 
@@ -1774,8 +1780,7 @@ export class LexerEx {
         } else if (this.isCustomBlockEnd_(token)) {
           this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
         }
-      } else {
-        this.tryEndFoldingBlock_(token.end);
+      } else if (!this.hasFoldingBlock_()) {
         this.startFoldingBlock_(this.SEC_TYPE.GBL, token.start, word);
       }
       this.stack.push({
@@ -3065,6 +3070,9 @@ export class LexerEx {
       if (this.isCustomBlockStart_(token)) {
         this.startFoldingBlock_(this.SEC_TYPE.CUSTOM, token.start, token.text);
       } else if (this.isCustomBlockEnd_(token)) {
+        if (this.currSection?.type === this.SEC_TYPE.PROC) {
+          this.endFoldingBlock_(this.SEC_TYPE.PROC, token.start);
+        }
         this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
       }
     }
@@ -3248,6 +3256,9 @@ export class LexerEx {
       if (this.isCustomBlockStart_(token)) {
         this.startFoldingBlock_(this.SEC_TYPE.CUSTOM, token.start, token.text);
       } else if (this.isCustomBlockEnd_(token)) {
+        if (this.currSection?.type === this.SEC_TYPE.DATA) {
+          this.endFoldingBlock_(this.SEC_TYPE.DATA, token.start);
+        }
         this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
       }
     }
@@ -3358,6 +3369,9 @@ export class LexerEx {
       if (this.isCustomBlockStart_(token)) {
         this.startFoldingBlock_(this.SEC_TYPE.CUSTOM, token.start, token.text);
       } else if (this.isCustomBlockEnd_(token)) {
+        if (this.currSection?.type === this.SEC_TYPE.MACRO) {
+          this.endFoldingBlock_(this.SEC_TYPE.MACRO, token.start);
+        }
         this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
       }
     }
