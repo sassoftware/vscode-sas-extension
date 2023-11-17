@@ -86,10 +86,6 @@ class SASRunner{
     }
   }
 
-  [void]SubmitComplete() {
-    Write-Host "Yayyyyyy"
-  }
-
   [void]Close(){
   try{
         $this.objSAS.Close()
