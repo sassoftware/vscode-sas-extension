@@ -2572,7 +2572,9 @@ export class LexerEx {
             break;
           case "PROC":
           case "PROCEDURE": {
-            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+            if (this.currSection?.type === this.SEC_TYPE.CUSTOM) {
+              this.tryPromoteCustomBlock_();
+            } else {
               this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
             }
             this.startFoldingBlock_(this.SEC_TYPE.PROC, token.start, word);
@@ -2592,7 +2594,9 @@ export class LexerEx {
             break;
           }
           case "DATA":
-            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+            if (this.currSection?.type === this.SEC_TYPE.CUSTOM) {
+              this.tryPromoteCustomBlock_();
+            } else {
               this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
             }
             this.startFoldingBlock_(this.SEC_TYPE.DATA, token.start, word);
@@ -2608,7 +2612,9 @@ export class LexerEx {
             });
             break;
           case "%MACRO":
-            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+            if (this.currSection?.type === this.SEC_TYPE.CUSTOM) {
+              this.tryPromoteCustomBlock_();
+            } else {
               this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
             }
             this.startFoldingBlock_(this.SEC_TYPE.MACRO, token.start, word);
@@ -2941,7 +2947,9 @@ export class LexerEx {
           case "PROCEDURE": {
             //no normal end, and another proc meet, there are syntax errors
             // ignore
-            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+            if (this.currSection?.type === this.SEC_TYPE.CUSTOM) {
+              this.tryPromoteCustomBlock_();
+            } else {
               this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
             }
             this.startFoldingBlock_(this.SEC_TYPE.PROC, token.start, word);
@@ -2962,7 +2970,9 @@ export class LexerEx {
             break;
           }
           case "%MACRO":
-            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+            if (this.currSection?.type === this.SEC_TYPE.CUSTOM) {
+              this.tryPromoteCustomBlock_();
+            } else {
               this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
             }
             this.startFoldingBlock_(this.SEC_TYPE.MACRO, token.start, word);
@@ -2980,7 +2990,9 @@ export class LexerEx {
             break;
           case "DATA":
             if (!this.DS2_[procName]) {
-              if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+              if (this.currSection?.type === this.SEC_TYPE.CUSTOM) {
+                this.tryPromoteCustomBlock_();
+              } else {
                 this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end);
               }
               this.startFoldingBlock_(this.SEC_TYPE.DATA, token.start, word);
@@ -3070,10 +3082,15 @@ export class LexerEx {
       if (this.isCustomBlockStart_(token)) {
         this.startFoldingBlock_(this.SEC_TYPE.CUSTOM, token.start, token.text);
       } else if (this.isCustomBlockEnd_(token)) {
-        if (this.currSection?.type === this.SEC_TYPE.PROC) {
-          this.endFoldingBlock_(this.SEC_TYPE.PROC, token.start);
+        // only when there's an outer custom block, treat *endregion; as an end of custom region
+        if (
+          this.searchBlockUpwardOfType_(this.currSection, this.SEC_TYPE.CUSTOM)
+        ) {
+          if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+            this.endFoldingBlock_(this.SEC_TYPE.DATA, token.start);
+          }
+          this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
         }
-        this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
       }
     }
     return token;
@@ -3152,7 +3169,9 @@ export class LexerEx {
           case "DATA":
             //no normal end, and another data meet, there are syntax errors
             // ignore
-            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+            if (this.currSection?.type === this.SEC_TYPE.CUSTOM) {
+              this.tryPromoteCustomBlock_();
+            } else {
               this.endFoldingBlock_(this.SEC_TYPE.DATA, this.lastToken.end);
             }
             this.startFoldingBlock_(this.SEC_TYPE.DATA, token.start, word);
@@ -3165,7 +3184,9 @@ export class LexerEx {
             break;
           case "PROC":
           case "PROCEDURE": {
-            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+            if (this.currSection?.type === this.SEC_TYPE.CUSTOM) {
+              this.tryPromoteCustomBlock_();
+            } else {
               this.endFoldingBlock_(this.SEC_TYPE.DATA, this.lastToken.end);
             }
             this.startFoldingBlock_(this.SEC_TYPE.PROC, token.start, word);
@@ -3186,7 +3207,9 @@ export class LexerEx {
             break;
           }
           case "%MACRO":
-            if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+            if (this.currSection?.type === this.SEC_TYPE.CUSTOM) {
+              this.tryPromoteCustomBlock_();
+            } else {
               this.endFoldingBlock_(this.SEC_TYPE.DATA, this.lastToken.end);
             }
             this.startFoldingBlock_(this.SEC_TYPE.MACRO, token.start, word);
@@ -3256,14 +3279,78 @@ export class LexerEx {
       if (this.isCustomBlockStart_(token)) {
         this.startFoldingBlock_(this.SEC_TYPE.CUSTOM, token.start, token.text);
       } else if (this.isCustomBlockEnd_(token)) {
-        if (this.currSection?.type === this.SEC_TYPE.DATA) {
-          this.endFoldingBlock_(this.SEC_TYPE.DATA, token.start);
+        // only when there's an outer custom block, treat *endregion; as an end of custom region
+        if (
+          this.searchBlockUpwardOfType_(this.currSection, this.SEC_TYPE.CUSTOM)
+        ) {
+          if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+            this.endFoldingBlock_(this.SEC_TYPE.DATA, token.start);
+          }
+          this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
         }
-        this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
       }
     }
     return token;
   }
+
+  private searchBlockUpwardOfType_(
+    startBlock: FoldingBlock | undefined,
+    type: number,
+  ): FoldingBlock | null {
+    let cur: FoldingBlock | undefined = startBlock;
+    while (cur) {
+      if (cur.type === type) {
+        return cur;
+      } else {
+        cur = cur.outerBlock;
+      }
+    }
+    return null;
+  }
+
+  private searchLastConsecutiveBlockUpwardOfType_(
+    startBlock: FoldingBlock | undefined,
+  ): FoldingBlock | null {
+    if (!startBlock) {
+      return null;
+    }
+    let cur: FoldingBlock = startBlock;
+    while (cur.outerBlock && cur.outerBlock.type === cur.type) {
+      cur = cur.outerBlock;
+    }
+    return cur;
+  }
+
+  private tryPromoteCustomBlock_() {
+    const curSec = this.currSection;
+    const outermostCustomBlock: FoldingBlock =
+      this.searchLastConsecutiveBlockUpwardOfType_(this.currSection)!;
+    // custom block promotion
+    if (
+      [this.SEC_TYPE.DATA, this.SEC_TYPE.PROC].includes(
+        outermostCustomBlock?.outerBlock?.type,
+      )
+    ) {
+      const nearestNonCustomBlock: FoldingBlock | undefined =
+        outermostCustomBlock.outerBlock;
+      if (nearestNonCustomBlock) {
+        const pos =
+          nearestNonCustomBlock?.innerBlocks.indexOf(outermostCustomBlock);
+        nearestNonCustomBlock?.innerBlocks.splice(pos, 1);
+        this.currSection = nearestNonCustomBlock;
+        this.endFoldingBlock_(nearestNonCustomBlock.type, {
+          line: outermostCustomBlock.startLine,
+          column: outermostCustomBlock.startCol,
+        });
+        nearestNonCustomBlock.outerBlock?.innerBlocks.push(
+          outermostCustomBlock,
+        );
+        outermostCustomBlock.outerBlock = nearestNonCustomBlock.outerBlock;
+        this.currSection = curSec;
+      }
+    }
+  }
+
   /*
    *            readMacro_
    *  PROC, DATA %MACRO -----> ignore
@@ -3369,10 +3456,15 @@ export class LexerEx {
       if (this.isCustomBlockStart_(token)) {
         this.startFoldingBlock_(this.SEC_TYPE.CUSTOM, token.start, token.text);
       } else if (this.isCustomBlockEnd_(token)) {
-        if (this.currSection?.type === this.SEC_TYPE.MACRO) {
-          this.endFoldingBlock_(this.SEC_TYPE.MACRO, token.start);
+        // only when there's an outer custom block, treat *endregion; as an end of custom region
+        if (
+          this.searchBlockUpwardOfType_(this.currSection, this.SEC_TYPE.CUSTOM)
+        ) {
+          if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+            this.endFoldingBlock_(this.SEC_TYPE.DATA, token.start);
+          }
+          this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
         }
-        this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
       }
     }
     return token;
