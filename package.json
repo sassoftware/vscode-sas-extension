@@ -342,17 +342,17 @@
                           "host": {
                             "type": "string",
                             "default": "",
-                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.host%"
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.host%"
                           },
                           "username": {
                             "type": "string",
                             "default": "",
-                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.username%"
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.username%"
                           },
                           "port": {
                             "type": "number",
                             "default": 8591,
-                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.port%",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.port%",
                             "exclusiveMinimum": 1,
                             "exclusiveMaximum": 65535
                           }
