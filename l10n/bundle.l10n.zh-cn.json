@@ -13,7 +13,7 @@
   "Compute Context not found: {name}": "未找到计算上下文：{name}",
   "Connecting to SAS session...": "正在连接到SAS会话...",
   "Connection Type": "连接类型",
-  "Converting SAS notebook to flow...": "Converting SAS notebook to flow...",
+  "Converting SAS notebook to flow...": "将 SAS 笔记本转换为流...",
   "Delete": "删除",
   "Downloading files...": "Downloading files...",
   "Enter a client ID": "输入客户端ID",
