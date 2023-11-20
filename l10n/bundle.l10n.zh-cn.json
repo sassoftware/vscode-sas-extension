@@ -115,7 +115,7 @@
   "Unable to rename \"{oldName}\" to \"{newName}\".": "无法将\"{oldName}\"重命名为\"{newName}\"。",
   "Unable to restore file.": "无法恢复文件。",
   "Unable to restore folder.": "无法恢复文件夹。",
-  "Unable to upload files.": "Unable to upload files.",
+  "Unable to upload files.": "无法上传文件。",
   "Uploading files...": "Uploading files...",
   "View SAS Table": "查看 SAS 表",
   "You can also specify connection profile using the settings.json file.": "您还可以使用settings.json文件指定连接配置文件。",
