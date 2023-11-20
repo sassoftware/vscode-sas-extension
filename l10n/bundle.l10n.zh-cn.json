@@ -7,7 +7,7 @@
   "Cannot call self on object with no id": "无法在没有id的对象上调用self",
   "Cannot connect to SAS Studio service": "无法连接到 SAS Studio 服务",
   "Cannot find file: {file}": "无法找到文件: {file}",
-  "Choose where to save your files.": "Choose where to save your files.",
+  "Choose where to save your files.": "选择保存文件的位置。",
   "Client ID": "客户端ID",
   "Client Secret": "客户端密钥",
   "Compute Context not found: {name}": "未找到计算上下文：{name}",
