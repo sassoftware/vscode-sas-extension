@@ -98,7 +98,6 @@
   "The item could not be removed from My Favorites.": "Não foi possível excluir o iten do My Favorites.",
   "The notebook file does not contain any code to convert.": "O arquivo notebook não contém nenhum código para converter.",
   "The notebook has been successfully converted to a flow and saved into the following folder: {folderName}. You can now open it in SAS Studio.": "The notebook has been successfully converted to a flow and saved into the following folder: {folderName}. You can now open it in SAS Studio.",
-  "The notebook has been successfully converted to a flow. You can now open it in SAS Studio.": "O notebook foi convertido com sucesso em um flow. Podes agora abri-lo no SAS Studio.",
   "The output file name must end with the .flw extension.": "Precisas terminar o nome do arquivo de saída com a extensão .flw.",
   "The {selected} SAS connection profile has been deleted from the settings.json file.": "O perfil de conexão a SAS {selected} foi excluído do arquivo settings.json.",
   "Unable to add file to my folder.": "Não foi possível adicionar o arquivo a my folder.",
