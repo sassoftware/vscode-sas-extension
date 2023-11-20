@@ -55,7 +55,7 @@
   "configuration.SAS.results.html.style.(auto)": "让扩展程序选择与颜色主题最匹配的样式。",
   "configuration.SAS.results.html.style.(server default)": "默认为 SAS 服务器上配置的样式。",
   "configuration.SAS.results.sideBySide": "将结果显示在代码旁边",
-  "configuration.SAS.results.singlePanel": "Reuse single panel to display results",
+  "configuration.SAS.results.singlePanel": "重复使用单个面板来显示结果",
   "configuration.SAS.userProvidedCertificates": "提供受信任的 CA 证书文件",
   "notebooks.SAS.htmlRenderer": "SAS HTML 渲染器",
   "notebooks.SAS.logRenderer": "SAS 日志渲染器",
