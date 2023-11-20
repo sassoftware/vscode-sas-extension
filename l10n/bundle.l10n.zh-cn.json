@@ -78,7 +78,7 @@
   "SAS Viya Server": "SAS Viya服务器",
   "SAS code running...": "SAS代码正在运行...",
   "SSH_AUTH_SOCK not set. Check Environment Variables.": "SSH_AUTH_SOCK未设置。请检查环境变量。",
-  "Save": "Save",
+  "Save": "保存",
   "Saving {itemName}.": "保存 {itemName}.",
   "Select a Connection Type": "选择连接类型",
   "Select a Connection Type.": "选择连接类型。",
