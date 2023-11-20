@@ -98,7 +98,7 @@
   "The item could not be added to My Favorites.": "该项目无法添加到我的收藏夹。",
   "The item could not be removed from My Favorites.": "无法从我的收藏夹中删除该项目。",
   "The notebook file does not contain any code to convert.": "笔记本文件不包含任何要转换的代码。",
-  "The notebook has been successfully converted to a flow and saved into the following folder: {folderName}. You can now open it in SAS Studio.": "The notebook has been successfully converted to a flow and saved into the following folder: {folderName}. You can now open it in SAS Studio.",
+  "The notebook has been successfully converted to a flow and saved into the following folder: {folderName}. You can now open it in SAS Studio.": "笔记本已成功转换为流并保存到以下文件夹中：{folderName}。 您现在可以在 SAS Studio 中打开它。",
   "The notebook has been successfully converted to a flow. You can now open it in SAS Studio.": "笔记本已成功转换为流程。您现在可以在 SAS Studio 中打开它。",
   "The output file name must end with the .flw extension.": "输出文件名必须以 .flw 扩展名结尾。",
   "The {selected} SAS connection profile has been deleted from the settings.json file.": "已从settings.json文件中删除{selected} SAS连接配置文件。",
