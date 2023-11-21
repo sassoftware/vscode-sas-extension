@@ -4,7 +4,7 @@ import { ColorThemeKind, l10n, window, workspace } from "vscode";
 
 import { isAbsolute } from "path";
 
-import { getHtmlStyle, isOutputHtmlEnabled } from "./SettingHelper";
+import { getHtmlStyle, isOutputHtmlEnabled } from "./settings";
 
 function generateHtmlStyleOption(): string {
   const htmlStyle = getHtmlStyle();
@@ -46,7 +46,10 @@ export function wrapCodeWithOutputHtml(code: string): string {
 
   if (outputHtml) {
     const htmlStyleOption = generateHtmlStyleOption();
-    return `ods html5${htmlStyleOption};\n${code}\n;run;quit;ods html5 close;`;
+    return `title;footnote;ods _all_ close;
+ods html5${htmlStyleOption} options(bitmap_mode='inline' svg_mode='inline');
+${code}
+;*';*";*/;run;quit;ods html5 close;`;
   } else {
     return code;
   }

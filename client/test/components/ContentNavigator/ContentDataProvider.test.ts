@@ -9,7 +9,7 @@ import {
   authentication,
 } from "vscode";
 
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance, HeadersDefaults } from "axios";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import { StubbedInstance, stubInterface } from "ts-sinon";
@@ -114,19 +114,22 @@ describe("ContentDataProvider", async function () {
     axiosInstance.interceptors.response = {
       use: () => null,
       eject: () => null,
+      clear: () => null,
+    };
+    const defaultHeader: HeadersDefaults = {
+      common: {
+        Authorization: "",
+      },
+      put: {},
+      post: {},
+      patch: {},
+      delete: {},
+      head: {},
+      get: {},
     };
     axiosInstance.defaults = {
-      headers: {
-        common: {
-          Authorization: "",
-        },
-        put: {},
-        post: {},
-        patch: {},
-        delete: {},
-        head: {},
-        get: {},
-      },
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      headers: defaultHeader as AxiosInstance["defaults"]["headers"],
     };
 
     stub = sinon.stub(axios, "create").returns(axiosInstance);
@@ -233,7 +236,7 @@ describe("ContentDataProvider", async function () {
 
     axiosInstance.get
       .withArgs(
-        "uri://myFavorites?limit=1000000&filter=in(contentType,'file','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
+        "uri://myFavorites?limit=1000000&filter=in(contentType,'file','dataFlow','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
       )
       .resolves({
         data: {
@@ -452,10 +455,10 @@ describe("ContentDataProvider", async function () {
       data: origItem,
       headers: { etag: "1234", "last-modified": "5678" },
     });
-    axiosInstance.patch
-      .withArgs("uri://rename", { name: "new-file.sas" })
+    axiosInstance.put
+      .withArgs("uri://rename", { ...origItem, name: "new-file.sas" })
       .resolves({
-        data: newItem,
+        data: { ...origItem, name: "new-file.sas" },
         headers: { etag: "1234", "last-modified": "5678" },
       });
 
@@ -487,10 +490,10 @@ describe("ContentDataProvider", async function () {
       data: item,
       headers: { etag: "1234", "last-modified": "5678" },
     });
-    axiosInstance.patch
-      .withArgs("uri://self", { name: "favorite-link.sas" })
+    axiosInstance.put
+      .withArgs("uri://self", { ...item, name: "favorite-link.sas" })
       .resolves({
-        data: item,
+        data: { ...item, name: "favorite-link.sas" },
         headers: { etag: "1234", "last-modified": "5678" },
       });
     axiosInstance.get.withArgs("uri://rename").resolves({
@@ -722,8 +725,6 @@ describe("ContentDataProvider", async function () {
     const dataTransferItem = new DataTransferItem(uri);
     dataTransfer.set("text/uri-list", dataTransferItem);
 
-    console.log("this bithc");
-
     stub.returns(new Promise((resolve) => resolve(item)));
 
     await dataProvider.handleDrop(parentItem, dataTransfer);
@@ -888,5 +889,68 @@ describe("ContentDataProvider", async function () {
 
     expect(stub.calledWith(item, getLink(parentItem.links, "GET", "self")?.uri))
       .to.be.true;
+  });
+
+  it("getFileFolderPath - returns empty path for folder", async function () {
+    const item = mockContentItem({
+      type: "folder",
+      name: "folder",
+    });
+
+    const model = new ContentModel();
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" }),
+    );
+
+    await dataProvider.connect("http://test.io");
+    const path = await model.getFileFolderPath(item);
+
+    expect(path).to.equal("");
+  });
+
+  it("getFileFolderPath - traverses parentFolderUri to find path", async function () {
+    const grandparent = mockContentItem({
+      type: "folder",
+      name: "grandparent",
+      id: "/id/grandparent",
+    });
+    const parent = mockContentItem({
+      type: "folder",
+      name: "parent",
+      id: "/id/parent",
+      parentFolderUri: "/id/grandparent",
+    });
+    const item = mockContentItem({
+      type: "file",
+      name: "file.sas",
+      parentFolderUri: "/id/parent",
+    });
+    const item2 = mockContentItem({
+      type: "file",
+      name: "file2.sas",
+      parentFolderUri: "/id/parent",
+    });
+
+    const model = new ContentModel();
+    const dataProvider = new ContentDataProvider(
+      model,
+      Uri.from({ scheme: "http" }),
+    );
+
+    axiosInstance.get.withArgs("/id/parent").resolves({
+      data: parent,
+    });
+    axiosInstance.get.withArgs("/id/grandparent").resolves({
+      data: grandparent,
+    });
+
+    await dataProvider.connect("http://test.io");
+
+    // We expect both files to have the same folder path
+    expect(await model.getFileFolderPath(item)).to.equal("/grandparent/parent");
+    expect(await model.getFileFolderPath(item2)).to.equal(
+      "/grandparent/parent",
+    );
   });
 });

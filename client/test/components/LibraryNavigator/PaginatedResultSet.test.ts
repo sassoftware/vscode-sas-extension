@@ -1,4 +1,4 @@
-import { AxiosResponse } from "axios";
+import { AxiosHeaders, AxiosResponse } from "axios";
 import { expect } from "chai";
 
 import PaginatedResultSet from "../../../src/components/LibraryNavigator/PaginatedResultSet";
@@ -7,7 +7,9 @@ const axiosResponseDefaults = {
   status: 200,
   statusText: "OK",
   headers: {},
-  config: {},
+  config: {
+    headers: new AxiosHeaders(),
+  },
 };
 
 describe("PaginatedResultSet", async function () {

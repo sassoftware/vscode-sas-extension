@@ -1,19 +1,23 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import {
+  CancellationToken,
   DataTransfer,
   DataTransferItem,
   Disposable,
+  DocumentDropEdit,
   Event,
   EventEmitter,
   FileChangeEvent,
   FileStat,
   FileSystemProvider,
   FileType,
+  Position,
   ProviderResult,
   Tab,
   TabInputNotebook,
   TabInputText,
+  TextDocument,
   TextDocumentContentProvider,
   ThemeIcon,
   TreeDataProvider,
@@ -24,10 +28,12 @@ import {
   Uri,
   commands,
   l10n,
+  languages,
   window,
+  workspace,
 } from "vscode";
 
-import { lstat, readFile, readdir } from "fs";
+import { lstat, lstatSync, readFile, readdir } from "fs";
 import { basename, join } from "path";
 import { promisify } from "util";
 
@@ -37,6 +43,7 @@ import { ViyaProfile } from "../profile";
 import { ContentModel } from "./ContentModel";
 import {
   FAVORITES_FOLDER_TYPE,
+  MYFOLDER_TYPE,
   Messages,
   ROOT_FOLDER_TYPE,
   TRASH_FOLDER_TYPE,
@@ -45,6 +52,7 @@ import { convertNotebookToFlow } from "./convert";
 import { ContentItem } from "./types";
 import {
   getCreationDate,
+  getFileStatement,
   getId,
   isContainer as getIsContainer,
   getLabel,
@@ -53,6 +61,7 @@ import {
   getResourceIdFromItem,
   getTypeName,
   getUri,
+  isContainer,
   isItemInRecycleBin,
   isReference,
   resourceType,
@@ -71,6 +80,7 @@ class ContentDataProvider
   private _onDidChangeTreeData: EventEmitter<ContentItem | undefined>;
   private _onDidChange: EventEmitter<Uri>;
   private _treeView: TreeView<ContentItem>;
+  private _dropEditProvider: Disposable;
   private readonly model: ContentModel;
   private extensionUri: Uri;
 
@@ -93,6 +103,10 @@ class ContentDataProvider
       dragAndDropController: this,
       canSelectMany: true,
     });
+    this._dropEditProvider = languages.registerDocumentDropEditProvider(
+      { language: "sas" },
+      this,
+    );
 
     this._treeView.onDidChangeVisibility(async () => {
       if (this._treeView.visible) {
@@ -140,8 +154,35 @@ class ContentDataProvider
     dataTransfer.set(this.dragMimeTypes[0], dataTransferItem);
   }
 
+  public async provideDocumentDropEdits(
+    document: TextDocument,
+    position: Position,
+    dataTransfer: DataTransfer,
+    token: CancellationToken,
+  ): Promise<DocumentDropEdit | undefined> {
+    const dataTransferItem = dataTransfer.get(this.dragMimeTypes[0]);
+    const contentItem =
+      dataTransferItem && JSON.parse(dataTransferItem.value)[0];
+    if (token.isCancellationRequested || !contentItem) {
+      return undefined;
+    }
+
+    const fileFolderPath = await this.model.getFileFolderPath(contentItem);
+    if (!fileFolderPath) {
+      return undefined;
+    }
+
+    return {
+      insertText: getFileStatement(
+        contentItem.name,
+        document.getText(),
+        fileFolderPath,
+      ),
+    };
+  }
+
   public getSubscriptions(): Disposable[] {
-    return [this._treeView];
+    return [this._treeView, this._dropEditProvider];
   }
 
   get onDidChangeFile(): Event<FileChangeEvent[]> {
@@ -266,15 +307,6 @@ class ContentDataProvider
     return this.model.saveContentToUri(uri, new TextDecoder().decode(content));
   }
 
-  public associateFlow(
-    name: string,
-    uri: Uri,
-    parent: ContentItem,
-    studioSessionId: string,
-  ): Promise<string> {
-    return this.model.associateFlowFile(name, uri, parent, studioSessionId);
-  }
-
   public async deleteResource(item: ContentItem): Promise<boolean> {
     if (!(await closeFileIfOpen(item))) {
       return false;
@@ -365,43 +397,65 @@ class ContentDataProvider
     this.reveal(resource);
   }
 
-  public async testStudioConnection(): Promise<string> {
-    return await this.model.testStudioConnection();
+  public async acquireStudioSessionId(endpoint: string): Promise<string> {
+    if (endpoint && !this.model.connected()) {
+      await this.connect(endpoint);
+    }
+    return await this.model.acquireStudioSessionId();
   }
 
   public async convertNotebookToFlow(
-    item: ContentItem,
-    name: string,
+    inputName: string,
+    outputName: string,
+    content: string,
     studioSessionId: string,
-  ): Promise<string | undefined> {
-    const parent = await this.getParent(item);
-    const resourceUri = getUri(item);
+    parentItem?: ContentItem,
+  ): Promise<string> {
+    if (!parentItem) {
+      const rootFolders = await this.model.getChildren();
+      const myFolder = rootFolders.find(
+        (rootFolder) => rootFolder.type === MYFOLDER_TYPE,
+      );
+      if (!myFolder) {
+        return "";
+      }
+      parentItem = myFolder;
+    }
+
     try {
-      // get the content of the notebook file
-      const contentString: string =
-        await this.provideTextDocumentContent(resourceUri);
       // convert the notebook file to a .flw file
       const flowDataString = convertNotebookToFlow(
-        contentString,
-        item.name,
-        name,
+        content,
+        inputName,
+        outputName,
       );
       const flowDataUint8Array = new TextEncoder().encode(flowDataString);
       if (flowDataUint8Array.length === 0) {
         window.showErrorMessage(Messages.NoCodeToConvert);
         return;
       }
-      const newUri = await this.createFile(parent, name, flowDataUint8Array);
+      const newUri = await this.createFile(
+        parentItem,
+        outputName,
+        flowDataUint8Array,
+      );
       this.handleCreationResponse(
-        parent,
+        parentItem,
         newUri,
-        l10n.t(Messages.NewFileCreationError, { name: name }),
+        l10n.t(Messages.NewFileCreationError, { name: inputName }),
       );
       // associate the new .flw file with SAS Studio
-      return await this.associateFlow(name, newUri, parent, studioSessionId);
+      await this.model.associateFlowFile(
+        outputName,
+        newUri,
+        parentItem,
+        studioSessionId,
+      );
     } catch (error) {
       window.showErrorMessage(error);
     }
+
+    return parentItem.name;
   }
 
   public refresh(): void {
@@ -440,6 +494,77 @@ class ContentDataProvider
     });
   }
 
+  public async uploadUrisToTarget(
+    uris: Uri[],
+    target: ContentItem,
+  ): Promise<void> {
+    const failedUploads = [];
+    for (let i = 0; i < uris.length; ++i) {
+      const uri = uris[i];
+      const fileName = basename(uri.fsPath);
+      if (lstatSync(uri.fsPath).isDirectory()) {
+        const success = await this.handleFolderDrop(target, uri.fsPath, false);
+        !success && failedUploads.push(fileName);
+      } else {
+        const file = await workspace.fs.readFile(uri);
+        const newUri = await this.createFile(target, fileName, file);
+        !newUri && failedUploads.push(fileName);
+      }
+    }
+
+    if (failedUploads.length > 0) {
+      this.handleCreationResponse(
+        target,
+        undefined,
+        l10n.t(Messages.FileUploadError),
+      );
+    }
+  }
+
+  public async downloadContentItems(
+    folderUri: Uri,
+    selections: ContentItem[],
+    allSelections: readonly ContentItem[],
+  ): Promise<void> {
+    for (let i = 0; i < selections.length; ++i) {
+      const selection = selections[i];
+      if (isContainer(selection)) {
+        const newFolderUri = Uri.joinPath(folderUri, selection.name);
+        const selectionsWithinFolder = await this.childrenSelections(
+          selection,
+          allSelections,
+        );
+        await workspace.fs.createDirectory(newFolderUri);
+        await this.downloadContentItems(
+          newFolderUri,
+          selectionsWithinFolder,
+          allSelections,
+        );
+      } else {
+        await workspace.fs.writeFile(
+          Uri.joinPath(folderUri, selection.name),
+          await this.readFile(getUri(selection)),
+        );
+      }
+    }
+  }
+
+  private async childrenSelections(
+    selection: ContentItem,
+    allSelections: readonly ContentItem[],
+  ): Promise<ContentItem[]> {
+    const foundSelections = allSelections.filter(
+      (foundSelection) => foundSelection.parentFolderUri === selection.uri,
+    );
+    if (foundSelections.length > 0) {
+      return foundSelections;
+    }
+
+    // If we don't have any child selections, then the folder must have been
+    // closed and therefore, we expect to select _all_ children
+    return this.getChildren(selection);
+  }
+
   private async handleContentItemDrop(
     target: ContentItem,
     item: ContentItem,
@@ -466,7 +591,7 @@ class ContentDataProvider
     }
 
     if (!success) {
-      await window.showErrorMessage(
+      window.showErrorMessage(
         l10n.t(message, {
           name: item.name,
         }),
@@ -477,15 +602,17 @@ class ContentDataProvider
   private async handleFolderDrop(
     target: ContentItem,
     path: string,
+    displayErrorMessages: boolean = true,
   ): Promise<boolean> {
     const folder = await this.model.createFolder(target, basename(path));
     let success = true;
     if (!folder) {
-      await window.showErrorMessage(
-        l10n.t(Messages.FileDropError, {
-          name: basename(path),
-        }),
-      );
+      displayErrorMessages &&
+        window.showErrorMessage(
+          l10n.t(Messages.FileDropError, {
+            name: basename(path),
+          }),
+        );
 
       return false;
     }
@@ -509,11 +636,12 @@ class ContentDataProvider
           );
           if (!fileCreated) {
             success = false;
-            await window.showErrorMessage(
-              l10n.t(Messages.FileDropError, {
-                name,
-              }),
-            );
+            displayErrorMessages &&
+              window.showErrorMessage(
+                l10n.t(Messages.FileDropError, {
+                  name,
+                }),
+              );
           }
         }
       }),
@@ -552,7 +680,7 @@ class ContentDataProvider
         );
 
         if (!fileCreated) {
-          await window.showErrorMessage(
+          window.showErrorMessage(
             l10n.t(Messages.FileDropError, {
               name,
             }),

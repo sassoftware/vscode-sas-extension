@@ -4,12 +4,16 @@ import {
   ConfigurationChangeEvent,
   Disposable,
   ExtensionContext,
+  OpenDialogOptions,
+  ProgressLocation,
   Uri,
   commands,
   l10n,
   window,
   workspace,
 } from "vscode";
+
+import { basename } from "path";
 
 import { profileConfig } from "../../commands/profile";
 import { SubscriptionProvider } from "../SubscriptionProvider";
@@ -18,7 +22,12 @@ import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
 import { Messages } from "./const";
 import { ContentItem } from "./types";
-import { isContainer as getIsContainer, isItemInRecycleBin } from "./utils";
+import {
+  isContainer as getIsContainer,
+  getUri,
+  isContentItem,
+  isItemInRecycleBin,
+} from "./utils";
 
 const fileValidator = (value: string): string | null =>
   /^([^/<>;\\{}?#]+)\.\w+$/.test(
@@ -236,53 +245,123 @@ class ContentNavigator implements SubscriptionProvider {
       }),
       commands.registerCommand(
         "SAS.convertNotebookToFlow",
-        async (resource: ContentItem) => {
+        async (resource: ContentItem | Uri) => {
+          const inputName = isContentItem(resource)
+            ? resource.name
+            : basename(resource.fsPath);
           // Open window to chose the name and location of the new .flw file
-          const name = await window.showInputBox({
+          const outputName = await window.showInputBox({
             prompt: Messages.ConvertNotebookToFlowPrompt,
-            value: resource.name.replace(".sasnb", ".flw"),
+            value: inputName.replace(".sasnb", ".flw"),
             validateInput: flowFileValidator,
           });
 
-          if (!name) {
+          if (!outputName) {
             // User canceled the input box
             return;
           }
-          const studioSessionId =
-            await this.contentDataProvider.testStudioConnection();
-          if (!studioSessionId) {
-            window.showErrorMessage(Messages.StudioConnectionError);
+
+          await window.withProgress(
+            {
+              location: ProgressLocation.Notification,
+              title: l10n.t("Converting SAS notebook to flow..."),
+            },
+            async () => {
+              // Make sure we're connected
+              const endpoint = this.viyaEndpoint();
+              const studioSessionId =
+                await this.contentDataProvider.acquireStudioSessionId(endpoint);
+              if (!studioSessionId) {
+                window.showErrorMessage(Messages.StudioConnectionError);
+                return;
+              }
+
+              const content = isContentItem(resource)
+                ? await this.contentDataProvider.provideTextDocumentContent(
+                    getUri(resource),
+                  )
+                : (await workspace.fs.readFile(resource)).toString();
+
+              const folderName =
+                await this.contentDataProvider.convertNotebookToFlow(
+                  inputName,
+                  outputName,
+                  content,
+                  studioSessionId,
+                  isContentItem(resource)
+                    ? await this.contentDataProvider.getParent(resource)
+                    : undefined,
+                );
+
+              if (folderName) {
+                window.showInformationMessage(
+                  l10n.t(Messages.NotebookToFlowConversionSuccess, {
+                    folderName,
+                  }),
+                );
+              } else {
+                window.showErrorMessage(Messages.NotebookToFlowConversionError);
+              }
+            },
+          );
+        },
+      ),
+      commands.registerCommand(
+        "SAS.downloadResource",
+        async (resource: ContentItem) => {
+          const selections = this.treeViewSelections(resource);
+          const uris = await window.showOpenDialog({
+            title: l10n.t("Choose where to save your files."),
+            openLabel: l10n.t("Save"),
+            canSelectFolders: true,
+            canSelectFiles: false,
+            canSelectMany: false,
+          });
+          const uri = uris && uris.length > 0 ? uris[0] : undefined;
+
+          if (!uri) {
             return;
           }
 
-          if (
-            await this.contentDataProvider.convertNotebookToFlow(
-              resource,
-              name,
-              studioSessionId,
-            )
-          ) {
-            window.showInformationMessage(
-              Messages.NotebookToFlowConversionSuccess,
-            );
-          } else {
-            window.showErrorMessage(Messages.NotebookToFlowConversionError);
-          }
+          await window.withProgress(
+            {
+              location: ProgressLocation.Notification,
+              title: l10n.t("Downloading files..."),
+            },
+            async () => {
+              await this.contentDataProvider.downloadContentItems(
+                uri,
+                selections,
+                this.contentDataProvider.treeView.selection,
+              );
+            },
+          );
         },
+      ),
+      // Below, we have three commands to upload files. Mac is currently the only
+      // platform that supports uploading both files and folders. So, for any platform
+      // that isn't Mac, we list a distinct upload file(s) or upload folder(s) command.
+      // See the `OpenDialogOptions` interface for more information.
+      commands.registerCommand(
+        "SAS.uploadResource",
+        async (resource: ContentItem) => this.uploadResource(resource),
+      ),
+      commands.registerCommand(
+        "SAS.uploadFileResource",
+        async (resource: ContentItem) =>
+          this.uploadResource(resource, { canSelectFolders: false }),
+      ),
+      commands.registerCommand(
+        "SAS.uploadFolderResource",
+        async (resource: ContentItem) =>
+          this.uploadResource(resource, { canSelectFiles: false }),
       ),
       workspace.onDidChangeConfiguration(
         async (event: ConfigurationChangeEvent) => {
           if (event.affectsConfiguration("SAS.connectionProfiles")) {
-            const activeProfile = profileConfig.getProfileByName(
-              profileConfig.getActiveProfile(),
-            );
-            if (activeProfile) {
-              if (
-                activeProfile.connectionType === ConnectionType.Rest &&
-                !activeProfile.serverId
-              ) {
-                await this.contentDataProvider.connect(activeProfile.endpoint);
-              }
+            const endpoint = this.viyaEndpoint();
+            if (endpoint) {
+              await this.contentDataProvider.connect(endpoint);
             }
           }
         },
@@ -290,17 +369,40 @@ class ContentNavigator implements SubscriptionProvider {
     ];
   }
 
-  private async handleCreationResponse(
+  private async uploadResource(
     resource: ContentItem,
-    newUri: Uri | undefined,
-    errorMessage: string,
-  ): Promise<void> {
-    if (!newUri) {
-      window.showErrorMessage(errorMessage);
+    openDialogOptions: Partial<OpenDialogOptions> = {},
+  ) {
+    const uris: Uri[] = await window.showOpenDialog({
+      canSelectFolders: true,
+      canSelectMany: true,
+      canSelectFiles: true,
+      ...openDialogOptions,
+    });
+    if (!uris) {
       return;
     }
 
-    this.contentDataProvider.reveal(resource);
+    await window.withProgress(
+      {
+        location: ProgressLocation.Notification,
+        title: l10n.t("Uploading files..."),
+      },
+      async () => {
+        await this.contentDataProvider.uploadUrisToTarget(uris, resource);
+      },
+    );
+  }
+
+  private viyaEndpoint(): string {
+    const activeProfile = profileConfig.getProfileByName(
+      profileConfig.getActiveProfile(),
+    );
+    return activeProfile &&
+      activeProfile.connectionType === ConnectionType.Rest &&
+      !activeProfile.serverId
+      ? activeProfile.endpoint
+      : "";
   }
 
   private treeViewSelections(item: ContentItem): ContentItem[] {

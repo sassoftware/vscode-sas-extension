@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [Unreleased]
+
+### Added
+
+- Added the ability to upload and download sas content using the context menu ([#547](https://github.com/sassoftware/vscode-sas-extension/issues/547))
+- Added the ability to download results as an html file ([#546](https://github.com/sassoftware/vscode-sas-extension/issues/546))
+
+## [v1.5.0] - 2023-10-27
+
+### Added
+
+- Allow dragging sas content into editor ([#510](https://github.com/sassoftware/vscode-sas-extension/pull/510))
+- Added the ability to use `Convert to flow...` for sas notebooks in the local filesystem ([#552](https://github.com/sassoftware/vscode-sas-extension/pull/552))
+- Add Portuguese (Brazil) translation ([#529](https://github.com/sassoftware/vscode-sas-extension/pull/529))
+- Add Korean translation ([#566](https://github.com/sassoftware/vscode-sas-extension/pull/566))
+- Assign `_SASPROGRAMFILE` macro-variable to path of submitted SAS notebook code ([#551](https://github.com/sassoftware/vscode-sas-extension/pull/551))
+
+### Fixed
+
+- Target display issue for local profile ([#514](https://github.com/sassoftware/vscode-sas-extension/issues/514))
+- Check for failed state during session log stream to prevent unbounded loop ([#562](https://github.com/sassoftware/vscode-sas-extension/issues/562))
+
 ## [v1.4.1] - 2023-09-29
 
 ### Fixed

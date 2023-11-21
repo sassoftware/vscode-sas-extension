@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "categories": [
     "Programming Languages",
     "Data Science",
@@ -577,6 +577,31 @@
         "shortTitle": "%commands.SAS.notebook.new.short%",
         "title": "%commands.SAS.notebook.new%",
         "category": "SAS Notebook"
+      },
+      {
+        "command": "SAS.downloadResource",
+        "title": "%commands.SAS.download%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.uploadResource",
+        "title": "%commands.SAS.upload%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.uploadFileResource",
+        "title": "%commands.SAS.uploadFiles%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.uploadFolderResource",
+        "title": "%commands.SAS.uploadFolders%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.saveHTML",
+        "title": "%commands.SAS.download%",
+        "category": "SAS"
       }
     ],
     "keybindings": [
@@ -592,6 +617,12 @@
       }
     ],
     "menus": {
+      "webview/context": [
+        {
+          "command": "SAS.saveHTML",
+          "when": "webviewId =~ /SASResultPanel-/"
+        }
+      ],
       "view/title": [
         {
           "command": "SAS.refreshContent",
@@ -612,6 +643,13 @@
           "command": "SAS.collapseAllLibraries",
           "when": "view == librarydataprovider",
           "group": "navigation@1"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "SAS.convertNotebookToFlow",
+          "when": "resourceExtname == .sasnb && SAS.connectionType == rest && !SAS.connection.direct",
+          "group": "actionsgroup@0"
         }
       ],
       "view/item/context": [
@@ -669,6 +707,26 @@
           "command": "SAS.emptyRecycleBin",
           "when": "viewItem =~ /empty/ && view == contentdataprovider",
           "group": "emptygroup@0"
+        },
+        {
+          "command": "SAS.downloadResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider",
+          "group": "uploaddownloadgroup@0"
+        },
+        {
+          "command": "SAS.uploadResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform == mac",
+          "group": "uploaddownloadgroup@1"
+        },
+        {
+          "command": "SAS.uploadFileResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform != mac",
+          "group": "uploaddownloadgroup@1"
+        },
+        {
+          "command": "SAS.uploadFolderResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform != mac",
+          "group": "uploaddownloadgroup@1"
         }
       ],
       "editor/title/run": [
@@ -769,6 +827,26 @@
         {
           "when": "false",
           "command": "SAS.downloadTable"
+        },
+        {
+          "when": "false",
+          "command": "SAS.downloadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.uploadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.uploadFileResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.uploadFolderResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.saveHTML"
         }
       ],
       "file/newFile": [
@@ -876,7 +954,7 @@
         "displayName": "%notebooks.SAS.sasNotebook%",
         "selector": [
           {
-            "filenamePattern": "*.{sasnb}"
+            "filenamePattern": "*.sasnb"
           }
         ]
       }
@@ -926,29 +1004,29 @@
     "locale": "npx @vscode/l10n-dev export -o ./l10n ./client/src && node ./tools/locale.mjs"
   },
   "devDependencies": {
-    "@trivago/prettier-plugin-sort-imports": "^4.2.0",
-    "@types/chai": "^4.3.6",
-    "@types/mocha": "^10.0.1",
-    "@types/node": "^20.6.5",
-    "@types/sinon": "^10.0.16",
-    "@typescript-eslint/eslint-plugin": "^6.7.2",
-    "@typescript-eslint/parser": "^6.7.2",
-    "@vscode/l10n-dev": "^0.0.29",
-    "chai": "^4.3.8",
-    "concurrently": "^8.2.1",
-    "esbuild": "^0.19.3",
-    "eslint": "^8.50.0",
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
+    "@types/chai": "^4.3.9",
+    "@types/mocha": "^10.0.4",
+    "@types/node": "^20.9.2",
+    "@types/sinon": "^17.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.9.1",
+    "@typescript-eslint/parser": "^6.10.0",
+    "@vscode/l10n-dev": "^0.0.30",
+    "chai": "^4.3.10",
+    "concurrently": "^8.2.2",
+    "esbuild": "^0.19.5",
+    "eslint": "^8.54.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "mocha": "^10.2.0",
-    "nock": "^13.3.3",
+    "nock": "^13.3.8",
     "path-browserify": "^1.0.1",
     "prettier": "^3.0.3",
-    "sinon": "^16.0.0",
-    "ts-loader": "^9.4.4",
+    "sinon": "^17.0.1",
+    "ts-loader": "^9.5.0",
     "ts-sinon": "^2.0.2",
     "typescript": "^5.2.2",
-    "webpack": "^5.88.2",
+    "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4"
   }
 }

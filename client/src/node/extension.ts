@@ -8,7 +8,6 @@ import {
   NotebookData,
   StatusBarAlignment,
   StatusBarItem,
-  TextEditorSelectionChangeEvent,
   Uri,
   authentication,
   commands,
@@ -43,6 +42,7 @@ import ContentNavigator from "../components/ContentNavigator";
 import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
 import { LogTokensProvider, legend } from "../components/LogViewer";
+import ResultPanelSubscriptionProvider from "../components/ResultPanel";
 import { NotebookController } from "../components/notebook/Controller";
 import { NotebookSerializer } from "../components/notebook/Serializer";
 import { ConnectionType } from "../components/profile";
@@ -56,13 +56,6 @@ const activeProfileStatusBarIcon = window.createStatusBarItem(
   StatusBarAlignment.Left,
   0,
 );
-
-interface FoldingBlock {
-  startLine: number;
-  startCol: number;
-  endLine: number;
-  endCol: number;
-}
 
 export function activate(context: ExtensionContext): void {
   // The server is implemented in node
@@ -109,6 +102,7 @@ export function activate(context: ExtensionContext): void {
 
   const libraryNavigator = new LibraryNavigator(context);
   const contentNavigator = new ContentNavigator(context);
+  const resultPanelSubscriptionProvider = new ResultPanelSubscriptionProvider();
 
   context.subscriptions.push(
     commands.registerCommand("SAS.run", async () => {
@@ -147,6 +141,7 @@ export function activate(context: ExtensionContext): void {
     activeProfileStatusBarIcon,
     ...libraryNavigator.getSubscriptions(),
     ...contentNavigator.getSubscriptions(),
+    ...resultPanelSubscriptionProvider.getSubscriptions(),
     // If configFile setting is changed, update watcher to watch new configuration file
     workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
       if (event.affectsConfiguration("SAS.connectionProfiles")) {

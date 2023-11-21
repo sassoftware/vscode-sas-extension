@@ -10,3 +10,20 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/client"
+    schedule:
+      interval: "weekly"
+    ignore:
+      # @types/vscode should match the engine version we're using
+      # should not be upgraded on its own
+      - dependency-name: "@types/vscode"
+  - package-ecosystem: "npm"
+    directory: "/server"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "github-actions"
+    # Don't need to specify `/.github/workflows` for `directory`. Github knows it.
+    directory: "/"
+    schedule:
+      interval: "weekly"

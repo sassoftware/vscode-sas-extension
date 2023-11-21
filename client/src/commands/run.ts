@@ -3,6 +3,7 @@
 import {
   EventEmitter,
   ProgressLocation,
+  Selection,
   Uri,
   commands,
   l10n,
@@ -10,14 +11,19 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
+import { LogFn as LogChannelFn } from "../components/LogChannel";
+import { showResult } from "../components/ResultPanel/ResultPanel";
 import {
   assign_SASProgramFile,
   wrapCodeWithOutputHtml,
-} from "../components/Helper/SasCodeHelper";
-import { isOutputHtmlEnabled } from "../components/Helper/SettingHelper";
-import { LogFn as LogChannelFn } from "../components/LogChannel";
-import { showResult } from "../components/ResultPanel";
-import { OnLogFn, RunResult, getSession } from "../connection";
+} from "../components/utils/sasCode";
+import { isOutputHtmlEnabled } from "../components/utils/settings";
+import {
+  ErrorRepresentation,
+  OnLogFn,
+  RunResult,
+  getSession,
+} from "../connection";
 import { getSelectedRegions } from "../utils/utils";
 import { profileConfig, switchProfile } from "./profile";
 
@@ -111,10 +117,7 @@ const _run = async (selected = false, uri?: Uri) => {
 
   await runCode(selected, uri)
     .catch((err) => {
-      console.dir(err);
-      window.showErrorMessage(
-        err.response?.data ? JSON.stringify(err.response.data) : err.message,
-      );
+      onRunError(err);
     })
     .finally(() => {
       running = false;
@@ -184,3 +187,42 @@ export async function runTask(
   messageEmitter.fire(`${l10n.t("SAS code running...")}\r\n`);
   return cancelled ? undefined : session.run(code);
 }
+
+const isErrorRep = (err: unknown): err is ErrorRepresentation => {
+  if (
+    err &&
+    typeof err === "object" &&
+    "message" in err &&
+    "details" in err &&
+    Array.isArray(err.details) &&
+    "errorCode" in err
+  ) {
+    return true;
+  }
+  return false;
+};
+
+const onRunError = (err) => {
+  console.dir(err);
+
+  if (err.response) {
+    // The request was made and we got a status code that falls out side of the 2xx range
+    const errorData = err.response.data;
+
+    if (isErrorRep(errorData)) {
+      //errorData is an error representation, extract out the details to show a better message
+      const details = errorData.details;
+      const options = {
+        modal: true,
+        detail: details.join("\n"),
+      };
+      window.showErrorMessage(errorData.message, options);
+    } else {
+      window.showErrorMessage(err.message);
+    }
+  } else {
+    // Either the request was made but no response was received, or
+    // there was an issue in the request setup itself, just show the message
+    window.showErrorMessage(err.message);
+  }
+};
