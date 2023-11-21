@@ -3562,6 +3562,9 @@ export class LexerEx {
       }
     } else if (Lexer.isComment[token.type]) {
       if (this.isCustomBlockStart_(token)) {
+        if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
+          this.endFoldingBlock_(this.SEC_TYPE.GBL, this.lastToken.end);
+        }
         this.startFoldingBlock_(this.SEC_TYPE.CUSTOM, token.start, token.text);
       } else if (this.isCustomBlockEnd_(token)) {
         this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);

@@ -8,6 +8,7 @@ import {
   NotebookData,
   StatusBarAlignment,
   StatusBarItem,
+  TextEditorSelectionChangeEvent,
   Uri,
   authentication,
   commands,
@@ -47,6 +48,7 @@ import { NotebookSerializer } from "../components/notebook/Serializer";
 import { ConnectionType } from "../components/profile";
 import { SasTaskProvider } from "../components/tasks/SasTaskProvider";
 import { SAS_TASK_TYPE } from "../components/tasks/SasTasks";
+import { getSelectedRegions } from "../utils/utils";
 
 let client: LanguageClient;
 // Create Profile status bar item
@@ -54,6 +56,13 @@ const activeProfileStatusBarIcon = window.createStatusBarItem(
   StatusBarAlignment.Left,
   0,
 );
+
+interface FoldingBlock {
+  startLine: number;
+  startCol: number;
+  endLine: number;
+  endCol: number;
+}
 
 export function activate(context: ExtensionContext): void {
   // The server is implemented in node
@@ -129,6 +138,7 @@ export function activate(context: ExtensionContext): void {
       "SAS",
       new SASAuthProvider(context.secrets),
     ),
+
     languages.registerDocumentSemanticTokensProvider(
       { language: "sas-log" },
       LogTokensProvider,
@@ -147,6 +157,14 @@ export function activate(context: ExtensionContext): void {
       "sas-notebook",
       new NotebookSerializer(),
     ),
+    window.onDidChangeTextEditorSelection(async () => {
+      const selections = await getSelectedRegions(client);
+      if (selections.length === 0) {
+        commands.executeCommand("setContext", "SAS.running", true);
+      } else {
+        commands.executeCommand("setContext", "SAS.running", false);
+      }
+    }),
     new NotebookController(),
     commands.registerCommand("SAS.notebook.new", async () => {
       await window.showNotebookDocument(
