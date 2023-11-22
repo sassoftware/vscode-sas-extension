@@ -359,11 +359,15 @@ do {
       globalStorageUri,
       `${this._html5FileName}.htm`,
     );
-    this._shellProcess.stdin.write(
-      `$filePath = "${resolve(
+    const directorySeparator = this._workDirectory.lastIndexOf('/') !== -1 ? '/' : '\\';
+    const filePath = this._config.protocol === ITCProtocol.COM
+      ? resolve(
         this._workDirectory,
         this._html5FileName + ".htm",
-      )}"
+      )
+      : `${this._workDirectory}${directorySeparator}${this._html5FileName}.htm`;
+    this._shellProcess.stdin.write(
+      `$filePath = "${filePath}"
 $outputFile = "${outputFileUri.fsPath}"
 $runner.FetchResultsFile($filePath, $outputFile)\n`,
       this.onWriteComplete,
