@@ -10,6 +10,7 @@ const l10nPath = join(__dirname, "..", "l10n");
 const newLocale = process.env.npm_config_new;
 const localeToUpdate = process.env.npm_config_update_locale;
 const updateAllLocales = process.env.npm_config_update_locales;
+const generateCSV = process.env.npm_config_generate_csv;
 
 const sortKeys = (content) => {
   const contentJSON =
@@ -29,21 +30,57 @@ const packageNls = readFileSync(
 ).toString();
 const l10nBundle = readFileSync(join(l10nPath, "bundle.l10n.json")).toString();
 
+const stringArrayToCsvString = (strings) =>
+  `"${strings
+    .map((item) => (item ?? "").toString().replace(/"/g, '""'))
+    .join('","')}"`;
+const convertToCSV = (items) => {
+  const headers = Object.keys(items[0]);
+  return [stringArrayToCsvString(headers)]
+    .concat(
+      items.map((item) =>
+        stringArrayToCsvString(headers.map((header) => item[header])),
+      ),
+    )
+    .join("\n");
+};
+
 const updateLocale = (locale) => {
   const packageNlsPath = join(packagePath, `package.nls.${locale}.json`);
   const l10BundlePath = join(l10nPath, `bundle.l10n.${locale}.json`);
 
+  const newPackageNlsMap = JSON.parse(packageNls);
+  const currentPackageNlsMap = JSON.parse(readFileSync(packageNlsPath));
   const currentPackageNlsJSON = {
-    ...JSON.parse(packageNls),
-    ...JSON.parse(readFileSync(packageNlsPath)),
+    ...newPackageNlsMap,
+    ...currentPackageNlsMap,
   };
+
+  const newL10NBundleMap = JSON.parse(l10nBundle);
+  const currentL10NBundleMap = JSON.parse(readFileSync(l10BundlePath));
   const currentL10nBundleJSON = {
-    ...JSON.parse(l10nBundle),
-    ...JSON.parse(readFileSync(l10BundlePath)),
+    ...newL10NBundleMap,
+    ...currentL10NBundleMap,
   };
 
   writeFileSync(packageNlsPath, sortKeys(currentPackageNlsJSON) + "\n");
   writeFileSync(l10BundlePath, sortKeys(currentL10nBundleJSON) + "\n");
+  if (generateCSV) {
+    const csvEntries = [];
+    Object.entries(newPackageNlsMap)
+      .concat(Object.entries(newL10NBundleMap))
+      .forEach(([key, value]) => {
+        if (!currentL10NBundleMap[key] && !currentPackageNlsMap[key]) {
+          csvEntries.push({
+            Term: key,
+            "English text": value,
+            Translation: "<add translation here>",
+          });
+        }
+      });
+
+    writeFileSync(join(__dirname, generateCSV), convertToCSV(csvEntries));
+  }
 };
 
 if (newLocale) {
