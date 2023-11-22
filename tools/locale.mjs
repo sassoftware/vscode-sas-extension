@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packagePath = join(__dirname, "..");
 const l10nPath = join(__dirname, "..", "l10n");
+const csvPath = join(__dirname, "..");
 
 const newLocale = process.env.npm_config_new;
 const localeToUpdate = process.env.npm_config_update_locale;
@@ -35,22 +36,6 @@ const packageNls = readFileSync(
 ).toString();
 const l10nBundle = readFileSync(join(l10nPath, "bundle.l10n.json")).toString();
 
-const stringArrayToCsvString = (strings) =>
-  `"${strings
-    .map((item) => (item ?? "").toString().replace(/"/g, '""'))
-    .join('","')}"`;
-const convertToCSV = (items) => {
-  console.log(csv.unparse(items));
-  const headers = Object.keys(items[0]);
-  return [stringArrayToCsvString(headers)]
-    .concat(
-      items.map((item) =>
-        stringArrayToCsvString(headers.map((header) => item[header])),
-      ),
-    )
-    .join("\n");
-};
-
 const getMissingTranslations = (
   newTranslationMap,
   currentTranslationMap,
@@ -75,6 +60,31 @@ const csvTranslationMap = (source) => {
   if (!importCSV) {
     return {};
   }
+
+  const csvData = readFileSync(join(csvPath, importCSV)).toString();
+  const { data } = csv.parse(csvData);
+  const headers = data.shift();
+  const items = data
+    .map((itemArray) =>
+      itemArray.reduce(
+        (carry, value, idx) => ({
+          ...carry,
+          [headers[idx]]: value,
+        }),
+        {},
+      ),
+    )
+    .filter((item) => item.Source === source);
+
+  const translationMap = items.reduce(
+    (carry, value) => ({
+      ...carry,
+      [value.Term]: value.Translation,
+    }),
+    {},
+  );
+
+  return translationMap;
 };
 
 const updateLocale = (locale) => {
@@ -114,7 +124,7 @@ const updateLocale = (locale) => {
     );
 
     if (csvEntries.length > 0) {
-      writeFileSync(join(__dirname, generateCSV), convertToCSV(csvEntries));
+      writeFileSync(join(csvPath, generateCSV), csv.unparse(csvEntries));
     }
   }
 };
