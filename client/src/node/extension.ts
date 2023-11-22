@@ -152,14 +152,6 @@ export function activate(context: ExtensionContext): void {
       "sas-notebook",
       new NotebookSerializer(),
     ),
-    window.onDidChangeTextEditorSelection(async () => {
-      const selections = await getSelectedRegions(client);
-      if (selections.length === 0) {
-        commands.executeCommand("setContext", "SAS.running", true);
-      } else {
-        commands.executeCommand("setContext", "SAS.running", false);
-      }
-    }),
     new NotebookController(),
     commands.registerCommand("SAS.notebook.new", async () => {
       await window.showNotebookDocument(

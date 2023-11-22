@@ -131,7 +131,13 @@ export class LanguageServiceProvider {
     const result: DocumentSymbol[] = [];
 
     for (let i = 0; i < lineCount; i++) {
-      const rootBlock = this.syntaxProvider.getFoldingBlock(i);
+      const rootBlock = this.syntaxProvider.getFoldingBlock(
+        i,
+        undefined,
+        false,
+        false,
+        true,
+      );
       if (rootBlock && rootBlock.startLine === i) {
         const docSymbol: DocumentSymbol = this._buildDocumentSymbol(rootBlock);
         result.push(docSymbol);
@@ -171,7 +177,13 @@ export class LanguageServiceProvider {
     const result: FoldingRange[] = [];
 
     for (let i = 0; i < lineCount; i++) {
-      const rootBlock = this.syntaxProvider.getFoldingBlock(i);
+      const rootBlock = this.syntaxProvider.getFoldingBlock(
+        i,
+        undefined,
+        false,
+        false,
+        true,
+      );
       if (rootBlock && rootBlock.startLine === i) {
         const blocks: FoldingBlock[] = this._flattenFoldingBlockTree(rootBlock);
         for (const block of blocks) {
@@ -207,12 +219,14 @@ export class LanguageServiceProvider {
     col: number,
     strict?: boolean,
     ignoreCustomBlock?: boolean,
+    ignoreGlobalBlock?: boolean,
   ) {
     return this.syntaxProvider.getFoldingBlock(
       line,
       col,
       strict,
       ignoreCustomBlock,
+      ignoreGlobalBlock,
     );
   }
 

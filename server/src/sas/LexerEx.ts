@@ -772,12 +772,7 @@ export class LexerEx {
           this.getFoldingBlock_(block!.innerBlocks, line, col, strict) ?? block
         );
       } else {
-        // ignore global
-        if (block?.type === this.SEC_TYPE.GBL) {
-          return null;
-        } else {
-          return block;
-        }
+        return block;
       }
     } else {
       return null;
@@ -788,6 +783,7 @@ export class LexerEx {
     col?: number,
     strict?: boolean,
     ignoreCustomBlock?: boolean,
+    ignoreGlobalBlock?: boolean,
   ): FoldingBlock | null {
     let block: FoldingBlock | null = null;
     if (col === undefined) {
@@ -803,10 +799,11 @@ export class LexerEx {
     } else {
       block = this.getFoldingBlock_(this.sections, line, col, strict);
     }
-    if (block && ignoreCustomBlock) {
-      while (block?.type === this.SEC_TYPE.CUSTOM) {
-        block = block.outerBlock ?? null;
-      }
+    while (
+      (ignoreCustomBlock && block?.type === this.SEC_TYPE.CUSTOM) ||
+      (ignoreGlobalBlock && block?.type === this.SEC_TYPE.GBL)
+    ) {
+      block = block.outerBlock ?? null;
     }
     return block;
   }

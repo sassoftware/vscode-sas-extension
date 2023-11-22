@@ -810,6 +810,7 @@ export class CodeZoneManager {
         tmpContext.col,
         false,
         true,
+        true,
       );
       if (block) {
         if (this._inBlock(block, token)! < 0 && !this._endedReally(block)) {
@@ -2434,6 +2435,7 @@ export class CodeZoneManager {
       tmpLine,
       tmpCol,
       false,
+      true,
       true,
     );
     /* first check type to determine zone, some special conditions

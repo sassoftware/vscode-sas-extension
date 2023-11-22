@@ -129,6 +129,7 @@ export const init = (conn: Connection): void => {
       params.col,
       true,
       false,
+      false,
     );
     if (!block) {
       return undefined;
