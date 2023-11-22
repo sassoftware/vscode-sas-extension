@@ -308,7 +308,7 @@ do {
   };
 
   private processLineCodes(line: string): boolean {
-    if (line.includes(LineCodes.RunEndCode)) {
+    if (line.endsWith(LineCodes.RunEndCode)) {
       // run completed
       this.fetchResults();
       return true;
