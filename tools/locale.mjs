@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from "fs";
 import glob from "glob";
+import csv from "papaparse";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
@@ -11,6 +12,10 @@ const newLocale = process.env.npm_config_new;
 const localeToUpdate = process.env.npm_config_update_locale;
 const updateAllLocales = process.env.npm_config_update_locales;
 const generateCSV = process.env.npm_config_generate_csv;
+const importCSV = process.env.npm_config_import_csv;
+
+const SOURCE_L10N = "l10n";
+const SOURCE_NLS = "nls";
 
 const sortKeys = (content) => {
   const contentJSON =
@@ -35,6 +40,7 @@ const stringArrayToCsvString = (strings) =>
     .map((item) => (item ?? "").toString().replace(/"/g, '""'))
     .join('","')}"`;
 const convertToCSV = (items) => {
+  console.log(csv.unparse(items));
   const headers = Object.keys(items[0]);
   return [stringArrayToCsvString(headers)]
     .concat(
@@ -43,6 +49,32 @@ const convertToCSV = (items) => {
       ),
     )
     .join("\n");
+};
+
+const getMissingTranslations = (
+  newTranslationMap,
+  currentTranslationMap,
+  source,
+) =>
+  Object.entries(newTranslationMap)
+    .map(([key, value]) => {
+      if (currentTranslationMap[key]) {
+        return null;
+      }
+
+      return {
+        Term: key,
+        "English text": value,
+        Translation: "<add translation here>",
+        Source: source,
+      };
+    })
+    .filter((missingTranslation) => !!missingTranslation);
+
+const csvTranslationMap = (source) => {
+  if (!importCSV) {
+    return {};
+  }
 };
 
 const updateLocale = (locale) => {
@@ -54,6 +86,7 @@ const updateLocale = (locale) => {
   const currentPackageNlsJSON = {
     ...newPackageNlsMap,
     ...currentPackageNlsMap,
+    ...csvTranslationMap(SOURCE_NLS),
   };
 
   const newL10NBundleMap = JSON.parse(l10nBundle);
@@ -61,25 +94,28 @@ const updateLocale = (locale) => {
   const currentL10nBundleJSON = {
     ...newL10NBundleMap,
     ...currentL10NBundleMap,
+    ...csvTranslationMap(SOURCE_L10N),
   };
 
   writeFileSync(packageNlsPath, sortKeys(currentPackageNlsJSON) + "\n");
   writeFileSync(l10BundlePath, sortKeys(currentL10nBundleJSON) + "\n");
-  if (generateCSV) {
-    const csvEntries = [];
-    Object.entries(newPackageNlsMap)
-      .concat(Object.entries(newL10NBundleMap))
-      .forEach(([key, value]) => {
-        if (!currentL10NBundleMap[key] && !currentPackageNlsMap[key]) {
-          csvEntries.push({
-            Term: key,
-            "English text": value,
-            Translation: "<add translation here>",
-          });
-        }
-      });
 
-    writeFileSync(join(__dirname, generateCSV), convertToCSV(csvEntries));
+  if (generateCSV) {
+    const csvEntries = getMissingTranslations(
+      newPackageNlsMap,
+      currentPackageNlsMap,
+      SOURCE_NLS,
+    ).concat(
+      getMissingTranslations(
+        newL10NBundleMap,
+        currentL10NBundleMap,
+        SOURCE_L10N,
+      ),
+    );
+
+    if (csvEntries.length > 0) {
+      writeFileSync(join(__dirname, generateCSV), convertToCSV(csvEntries));
+    }
   }
 };
 
