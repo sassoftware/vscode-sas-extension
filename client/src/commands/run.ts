@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import {
   EventEmitter,
+  Position,
   ProgressLocation,
   Selection,
   Uri,
@@ -192,14 +193,7 @@ export async function runSelected(uri: Uri): Promise<void> {
 export async function runRegion(client: BaseLanguageClient): Promise<void> {
   const selections = await getSelectedRegions(client);
   const editor = window.activeTextEditor;
-  const doc = editor.document;
-  if (selections.length === 0) {
-    editor.selections = [
-      new Selection(doc.positionAt(0), doc.positionAt(doc.getText().length)),
-    ];
-  } else {
-    editor.selections = selections;
-  }
+  editor.selections = selections;
   await _run(true);
 }
 
