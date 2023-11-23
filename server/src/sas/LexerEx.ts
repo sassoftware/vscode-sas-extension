@@ -852,7 +852,14 @@ export class LexerEx {
   private resetFoldingBlockCache_() {
     this.sections = [];
   }
-  private tryEndFoldingBlock_(pos: TextPosition, untilType?: number) {
+  private tryEndFoldingBlock_(
+    pos: TextPosition,
+    untilType?: number,
+    lastPos?: TextPosition,
+  ) {
+    if (!lastPos) {
+      lastPos = pos;
+    }
     if (this.hasFoldingBlock_()) {
       // handle text end
       let secType = this.SEC_TYPE.PROC;
@@ -868,7 +875,7 @@ export class LexerEx {
         if (untilType && this.currSection.type === untilType) {
           stop = true;
         }
-        this.endFoldingBlock_(secType, pos);
+        this.endFoldingBlock_(secType, stop ? lastPos : pos);
       }
     }
   }
@@ -2929,7 +2936,6 @@ export class LexerEx {
               this.stack[this.stack.length - 2].state ===
                 this.PARSING_STATE.IN_MACRO
             ) {
-              this.endFoldingBlock_(this.SEC_TYPE.PROC, this.lastToken.end); // end this proc
               this.stack.pop();
               this.stack.push({
                 parse: this.readMend_,
@@ -3083,10 +3089,11 @@ export class LexerEx {
         if (
           this.searchBlockUpwardOfType_(this.currSection, this.SEC_TYPE.CUSTOM)
         ) {
-          if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
-            this.endFoldingBlock_(this.SEC_TYPE.DATA, token.start);
-          }
-          this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
+          this.tryEndFoldingBlock_(
+            token.start,
+            this.SEC_TYPE.CUSTOM,
+            token.end,
+          );
         }
       }
     }
@@ -3152,7 +3159,6 @@ export class LexerEx {
               this.stack[this.stack.length - 2].state ===
                 this.PARSING_STATE.IN_MACRO
             ) {
-              this.endFoldingBlock_(this.SEC_TYPE.DATA, this.lastToken.end); // end this data section
               this.stack.pop();
               this.stack.push({
                 parse: this.readMend_,
@@ -3280,10 +3286,11 @@ export class LexerEx {
         if (
           this.searchBlockUpwardOfType_(this.currSection, this.SEC_TYPE.CUSTOM)
         ) {
-          if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
-            this.endFoldingBlock_(this.SEC_TYPE.DATA, token.start);
-          }
-          this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
+          this.tryEndFoldingBlock_(
+            token.start,
+            this.SEC_TYPE.CUSTOM,
+            token.end,
+          );
         }
       }
     }
@@ -3457,10 +3464,11 @@ export class LexerEx {
         if (
           this.searchBlockUpwardOfType_(this.currSection, this.SEC_TYPE.CUSTOM)
         ) {
-          if (this.currSection?.type !== this.SEC_TYPE.CUSTOM) {
-            this.endFoldingBlock_(this.SEC_TYPE.DATA, token.start);
-          }
-          this.tryEndFoldingBlock_(token.end, this.SEC_TYPE.CUSTOM);
+          this.tryEndFoldingBlock_(
+            token.start,
+            this.SEC_TYPE.CUSTOM,
+            token.end,
+          );
         }
       }
     }
@@ -3661,16 +3669,15 @@ export class LexerEx {
   }
   private readMend_() {
     const token = this.getNext_();
+    const mendToken = this.lastToken;
     if (token && token.text === ";") {
       if (this.curr.state === this.PARSING_STATE.IN_MACRO) {
         this.stack.pop();
         this.stack.pop();
-        this.endFoldingBlock_(
+        this.tryEndFoldingBlock_(
+          mendToken.start,
           this.SEC_TYPE.MACRO,
           token.end,
-          true,
-          this.curr.start,
-          this.curr.name,
         );
       }
     }
