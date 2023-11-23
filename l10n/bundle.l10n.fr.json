@@ -89,7 +89,7 @@
     "Unable to delete file.": "Impossible de supprimer le fichier.",
     "Unable to drag files from my favorites.": "Impossible de faire glisser les fichiers depuis Mes favoris.",
     "Unable to drag files from trash.": "Impossible de faire glisser les fichiers depuis la corbeille.",
-    "Unable to drop item \"{name}\".":: "Impossible de déposer l'élément \"{name}\".",
+    "Unable to drop item \"{name}\".": "Impossible de déposer l'élément \"{name}\".",
     "The file type is unsupported.": "Le type de fichier n'est pas pris en charge.",
     "Unable to restore file.": "Impossible de restaurer le fichier.",
     "Unable to upload files.": "Impossible d'importer les fichiers.",
