@@ -1022,7 +1022,7 @@
     "nock": "^13.3.8",
     "papaparse": "^5.4.1",
     "path-browserify": "^1.0.1",
-    "prettier": "^3.0.3",
+    "prettier": "^3.1.0",
     "sinon": "^17.0.1",
     "ts-loader": "^9.5.0",
     "ts-sinon": "^2.0.2",
