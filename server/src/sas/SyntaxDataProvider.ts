@@ -362,8 +362,8 @@ function _getSubOptKeywords(obj: any, data: string) {
       typeof item === "string"
         ? item.trim()
         : item !== null
-        ? String(item).trim()
-        : "";
+          ? String(item).trim()
+          : "";
     if (item === "") {
       return;
     }

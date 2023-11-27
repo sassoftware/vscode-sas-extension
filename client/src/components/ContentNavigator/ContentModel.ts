@@ -525,10 +525,10 @@ export class ContentModel {
     const deleteMemberUri = item.flags?.isInMyFavorites
       ? getLink(item.links, "DELETE", "delete")?.uri
       : item.flags?.hasFavoriteId
-      ? `${getResourceIdFromItem(
-          this.getDelegateFolder("@myFavorites"),
-        )}/members/${item.flags?.hasFavoriteId}`
-      : undefined;
+        ? `${getResourceIdFromItem(
+            this.getDelegateFolder("@myFavorites"),
+          )}/members/${item.flags?.hasFavoriteId}`
+        : undefined;
     if (!deleteMemberUri) {
       return false;
     }
