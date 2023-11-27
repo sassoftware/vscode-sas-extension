@@ -1332,8 +1332,8 @@ export class CodeZoneManager {
     return token.text[0] === "%"
       ? CodeZoneManager.ZONE_TYPE.MACRO_FUNC
       : this._syntaxDb.isSasFunction(token.text)
-      ? CodeZoneManager.ZONE_TYPE.SAS_FUNC
-      : CodeZoneManager.ZONE_TYPE.OBJECT;
+        ? CodeZoneManager.ZONE_TYPE.SAS_FUNC
+        : CodeZoneManager.ZONE_TYPE.OBJECT;
   }
   private _stmt(context: Context, stmt: { text: string }) {
     const ret = this._tryGetOpr(context);
