@@ -27,7 +27,6 @@ import {
 } from "../connection";
 import { profileConfig, switchProfile } from "./profile";
 
-let running = false;
 interface FoldingBlock {
   startLine: number;
   startCol: number;
@@ -35,7 +34,49 @@ interface FoldingBlock {
   endCol: number;
 }
 
-export async function getSelectedRegions(
+let running = false;
+
+function getCode(selected = false, uri?: Uri): string {
+  const editor = uri
+    ? window.visibleTextEditors.find(
+        (editor) => editor.document.uri.toString() === uri.toString(),
+      )
+    : window.activeTextEditor;
+  const doc = editor?.document;
+  let codeFile = "";
+  if (uri && uri.fsPath) {
+    codeFile = uri.fsPath;
+  } else if (doc) {
+    if (doc.fileName) {
+      codeFile = doc.fileName;
+    } else if (doc.uri && doc.uri.fsPath) {
+      codeFile = doc.uri.fsPath;
+    }
+  }
+  let code = "";
+  if (selected) {
+    // run selected code if there is one or more non-empty selections, otherwise run all code
+
+    // since you can have multiple selections, append the text for each selection in order of selection
+    // note: selection ranges can be empty (ex. just a carat)
+    for (const selection of editor.selections) {
+      const selectedText: string = doc.getText(selection);
+      code += selectedText;
+    }
+    // if no non-whitespace characters are selected, treat as no selection and run all code
+    if (code.trim().length === 0) {
+      code = doc?.getText();
+    }
+  } else {
+    code = doc?.getText();
+  }
+  if (codeFile) {
+    code = assign_SASProgramFile(code, codeFile);
+  }
+  return wrapCodeWithOutputHtml(code);
+}
+
+async function getSelectedRegions(
   client: BaseLanguageClient,
 ): Promise<Selection[]> {
   const result: string[] = [];
@@ -84,46 +125,6 @@ export async function getSelectedRegions(
       doc.positionAt(parseInt(end)),
     );
   });
-}
-
-function getCode(selected = false, uri?: Uri): string {
-  const editor = uri
-    ? window.visibleTextEditors.find(
-        (editor) => editor.document.uri.toString() === uri.toString(),
-      )
-    : window.activeTextEditor;
-  const doc = editor?.document;
-  let codeFile = "";
-  if (uri && uri.fsPath) {
-    codeFile = uri.fsPath;
-  } else if (doc) {
-    if (doc.fileName) {
-      codeFile = doc.fileName;
-    } else if (doc.uri && doc.uri.fsPath) {
-      codeFile = doc.uri.fsPath;
-    }
-  }
-  let code = "";
-  if (selected) {
-    // run selected code if there is one or more non-empty selections, otherwise run all code
-
-    // since you can have multiple selections, append the text for each selection in order of selection
-    // note: selection ranges can be empty (ex. just a carat)
-    for (const selection of editor.selections) {
-      const selectedText: string = doc.getText(selection);
-      code += selectedText;
-    }
-    // if no non-whitespace characters are selected, treat as no selection and run all code
-    if (code.trim().length === 0) {
-      code = doc?.getText();
-    }
-  } else {
-    code = doc?.getText();
-  }
-  if (codeFile) {
-    code = assign_SASProgramFile(code, codeFile);
-  }
-  return wrapCodeWithOutputHtml(code);
 }
 
 async function runCode(selected?: boolean, uri?: Uri) {
@@ -192,8 +193,7 @@ export async function runSelected(uri: Uri): Promise<void> {
 
 export async function runRegion(client: BaseLanguageClient): Promise<void> {
   const selections = await getSelectedRegions(client);
-  const editor = window.activeTextEditor;
-  editor.selections = selections;
+  window.activeTextEditor.selections = selections;
   await _run(true);
 }
 
