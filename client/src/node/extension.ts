@@ -48,7 +48,6 @@ import { NotebookSerializer } from "../components/notebook/Serializer";
 import { ConnectionType } from "../components/profile";
 import { SasTaskProvider } from "../components/tasks/SasTaskProvider";
 import { SAS_TASK_TYPE } from "../components/tasks/SasTasks";
-import { getSelectedRegions } from "../utils/utils";
 
 let client: LanguageClient;
 // Create Profile status bar item
