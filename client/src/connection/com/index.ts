@@ -5,6 +5,7 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 
 import { BaseConfig, RunResult } from "..";
+import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 import { scriptContent } from "./script";
 
@@ -151,6 +152,7 @@ export class COMSession extends Session {
         this._runResolve = undefined;
       }
       resolve();
+      updateStatusBarItem(false);
     });
   };
 
@@ -212,6 +214,7 @@ do {
         const parts = line.split("WORKDIR=");
         this._workDirectory = parts[1].trim();
         this._runResolve();
+        updateStatusBarItem(true);
         return;
       }
       if (line.endsWith(endCode)) {

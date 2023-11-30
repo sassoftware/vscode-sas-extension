@@ -6,8 +6,6 @@ import {
   NotebookCellData,
   NotebookCellKind,
   NotebookData,
-  StatusBarAlignment,
-  StatusBarItem,
   Uri,
   authentication,
   commands,
@@ -43,6 +41,11 @@ import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
 import { LogTokensProvider, legend } from "../components/LogViewer";
 import ResultPanelSubscriptionProvider from "../components/ResultPanel";
+import {
+  getStatusBarItem,
+  resetStatusBarItem,
+  updateStatusBarItem,
+} from "../components/StatusBarItem";
 import { NotebookController } from "../components/notebook/Controller";
 import { NotebookSerializer } from "../components/notebook/Serializer";
 import { ConnectionType } from "../components/profile";
@@ -50,11 +53,6 @@ import { SasTaskProvider } from "../components/tasks/SasTaskProvider";
 import { SAS_TASK_TYPE } from "../components/tasks/SasTasks";
 
 let client: LanguageClient;
-// Create Profile status bar item
-const activeProfileStatusBarIcon = window.createStatusBarItem(
-  StatusBarAlignment.Left,
-  0,
-);
 
 export function activate(context: ExtensionContext): void {
   // The server is implemented in node
@@ -89,8 +87,6 @@ export function activate(context: ExtensionContext): void {
     serverOptions,
     clientOptions,
   );
-
-  activeProfileStatusBarIcon.command = "SAS.switchProfile";
 
   // Start the client. This will also launch the server
   client.start();
@@ -136,7 +132,7 @@ export function activate(context: ExtensionContext): void {
       LogTokensProvider,
       legend,
     ),
-    activeProfileStatusBarIcon,
+    getStatusBarItem(),
     ...libraryNavigator.getSubscriptions(),
     ...contentNavigator.getSubscriptions(),
     ...resultPanelSubscriptionProvider.getSubscriptions(),
@@ -165,9 +161,9 @@ export function activate(context: ExtensionContext): void {
   );
 
   // Reset first to set "No Active Profiles"
-  resetStatusBarItem(activeProfileStatusBarIcon);
+  resetStatusBarItem();
   // Update status bar if profile is found
-  updateStatusBarProfile(activeProfileStatusBarIcon);
+  updateStatusBarItem();
 
   profileConfig.migrateLegacyProfiles();
   triggerProfileUpdate();
@@ -177,7 +173,7 @@ function triggerProfileUpdate(): void {
   const profileList = profileConfig.getAllProfiles();
   const activeProfileName = profileConfig.getActiveProfile();
   if (profileList[activeProfileName]) {
-    updateStatusBarProfile(activeProfileStatusBarIcon);
+    updateStatusBarItem();
 
     const connectionType =
       profileList[activeProfileName].connectionType || ConnectionType.Rest;
@@ -200,38 +196,6 @@ function triggerProfileUpdate(): void {
       ConnectionType.Rest,
     );
   }
-}
-
-async function updateStatusBarProfile(profileStatusBarIcon: StatusBarItem) {
-  const activeProfileName = profileConfig.getActiveProfile();
-  const activeProfile = profileConfig.getProfileByName(activeProfileName);
-  if (!activeProfile) {
-    resetStatusBarItem(profileStatusBarIcon);
-  } else {
-    const statusBarTooltip = profileConfig.remoteTarget(activeProfileName);
-
-    updateStatusBarItem(
-      profileStatusBarIcon,
-      `${activeProfileName}`,
-      `${activeProfileName}\n${statusBarTooltip}`,
-    );
-  }
-}
-
-function updateStatusBarItem(
-  statusBarItem: StatusBarItem,
-  text: string,
-  tooltip: string,
-): void {
-  statusBarItem.text = `$(account) ${text}`;
-  statusBarItem.tooltip = tooltip;
-  statusBarItem.show();
-}
-
-function resetStatusBarItem(statusBarItem: StatusBarItem): void {
-  statusBarItem.text = `$(debug-disconnect) ${l10n.t("No Profile")}`;
-  statusBarItem.tooltip = l10n.t("No SAS Connection Profile");
-  statusBarItem.show();
 }
 
 export function deactivate(): Thenable<void> | undefined {

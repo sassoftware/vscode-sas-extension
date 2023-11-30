@@ -752,13 +752,6 @@
           "group": "navigation@3"
         }
       ],
-      "editor/title": [
-        {
-          "when": "editorLangId == sas",
-          "command": "SAS.close",
-          "group": "navigation"
-        }
-      ],
       "commandPalette": [
         {
           "when": "editorLangId == sas && !SAS.hideRunMenuItem",
