@@ -5,6 +5,7 @@ import { l10n } from "vscode";
 import { Client, ClientChannel, ConnectConfig } from "ssh2";
 
 import { BaseConfig, RunResult } from "..";
+import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 
 const endCode = "--vscode-sas-extension-submit-end--";
@@ -168,6 +169,7 @@ export class SSHSession extends Session {
     this.html5FileName = "";
     this.timer = undefined;
     this.conn.end();
+    updateStatusBarItem(false);
   };
 
   private onStreamData = (data: Buffer): void => {
@@ -176,6 +178,7 @@ export class SSHSession extends Session {
     if (this.timer && output.endsWith("?")) {
       this.clearTimer();
       this.resolve?.();
+      updateStatusBarItem(true);
       return;
     }
 

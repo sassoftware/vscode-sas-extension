@@ -254,7 +254,7 @@ To run a piece of SAS code:
 - A new session must be created the first time you run SAS code. Connection time will vary depending on the server connection.
 - Currently, only HTML output is supported. By default, the ODS HTML5 statement is added to the submitted code. Clear the `Enable/disable ODS HTML5 output` option in the Settings editor for the SAS extension to disable this output.
 - When you click `Run`, the code in the active tab in the editor is submitted. Make sure that the correct tab is active when you run your program.
-- To reset your connection to SAS, run the `Close Current Session` command in VS Code or click the `Close Current Session` button next to the `Run` button.
+- To reset your connection to SAS, run the `Close Current Session` command in VS Code or click the `Close Session` button from the tooltip of the active profile status bar item.
 
 ## Run SAS Code by Task
 
