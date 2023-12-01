@@ -64,6 +64,9 @@ export const init = (conn: Connection): void => {
           firstTriggerCharacter: "\n",
           moreTriggerCharacter: [";"],
         },
+        signatureHelpProvider: {
+          triggerCharacters: ["(", ","],
+        },
       },
     };
     return result;
@@ -144,6 +147,15 @@ export const init = (conn: Connection): void => {
       params.ch,
       tabSize,
       useSpace,
+    );
+  });
+
+  connection.onSignatureHelp((params) => {
+    const languageService = getLanguageService(params.textDocument.uri);
+    completionProvider = languageService.completionProvider;
+    return completionProvider.getSignatureHelp(
+      params.position,
+      params.context?.activeSignatureHelp?.activeSignature,
     );
   });
 
