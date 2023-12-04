@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useCallback, useEffect, useState } from "react";
 
-import { ColDef, GridReadyEvent, IGetRowsParams } from "ag-grid-community";
+import { ColDef, IGetRowsParams } from "ag-grid-community";
 import { v4 } from "uuid";
 
 import { TableData } from "../components/LibraryNavigator/types";
@@ -88,10 +88,10 @@ const fetchColumns = (): Promise<Column[]> => {
 };
 
 const useDataViewer = () => {
-  const [columns, setColumns] = useState<ColDef[]>([]);
+  const [columns, setColumns] = useState([]);
 
   const onGridReady = useCallback(
-    (event: GridReadyEvent) => {
+    (event) => {
       const dataSource = {
         rowCount: undefined,
         getRows: (params: IGetRowsParams) => {
