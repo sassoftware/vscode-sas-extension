@@ -3546,6 +3546,9 @@ export class LexerEx {
         } else if (token.type === Lexer.TOKEN_TYPES.MREF) {
           this.handleMref_(this.PARSING_STATE.IN_GBL);
         } else {
+          if (!this.hasFoldingBlock_()) {
+            this.startFoldingBlock_(this.SEC_TYPE.GBL, token.start, word);
+          }
           const validName = this._cleanKeyword(word);
           const state: any = {
             parse: this.readGblStmt_,
