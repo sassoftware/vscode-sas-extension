@@ -10,7 +10,7 @@
   "Choose where to save your files.": "选择保存文件的位置。",
   "Client ID": "客户端ID",
   "Client Secret": "客户端密钥",
-  "Close Session": "Close Session",
+  "Close Session": "关闭会话",
   "Compute Context not found: {name}": "未找到计算上下文：{name}",
   "Connecting to SAS session...": "正在连接到SAS会话...",
   "Connection Type": "连接类型",
