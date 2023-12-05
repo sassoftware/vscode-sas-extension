@@ -95,7 +95,13 @@ export class FormatOnTypeProvider {
     }
     // Otherwise, need to decrease indent of current line
     const foldingBlock: FoldingBlock | null =
-      this.syntaxProvider.getFoldingBlock(line, semicolonCol);
+      this.syntaxProvider.getFoldingBlock(
+        line,
+        semicolonCol,
+        false,
+        true,
+        true,
+      );
     let blockStartLine;
     if (!foldingBlock) {
       const lastNotEmptyLine = this._getLastNotEmptyLine(line - 1);
