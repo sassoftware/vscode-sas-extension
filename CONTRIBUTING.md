@@ -93,3 +93,7 @@ Follow these steps to update a locale for the SAS Extension for VSCode:
 | **German**               | de                 | David Weik  |
 | **Chinese (Simplified)** | zh-cn              | Wei Wu      |
 | **Portuguese (Brazil)**  | pt-br              | Mark Jordan |
+
+### Download packaged VSIX files
+To install the latest Visual Studio Code extension files, locate the artifact.zip associated with each commit on the page provided below. Once downloaded, unzip the file and manually install it in your local Visual Studio Code.
+https://github.com/sassoftware/vscode-sas-extension/actions/workflows/package.yml
