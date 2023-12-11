@@ -9,7 +9,7 @@
     "vscode": "^1.73.0"
   },
   "dependencies": {
-    "ag-grid-community": "^30.0.3",
+    "ag-grid-community": "^31.0.0",
     "ag-grid-react": "^31.0.0",
     "axios": "^1.6.2",
     "media-typer": "^1.1.0",
