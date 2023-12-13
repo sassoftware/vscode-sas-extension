@@ -104,17 +104,18 @@ describe("ITC connection", () => {
       expect(stdinStub.args[5][0]).to.deep.equal(`$username = ""\n`);
       expect(stdinStub.args[6][0]).to.deep.equal(`$password = ""\n`);
       expect(stdinStub.args[7][0]).to.deep.equal(`$serverName = "ITC Local"\n`);
-      expect(stdinStub.args[8][0]).to.deep.equal(
-        "$runner.Setup($profileHost,$username,$password,$port,$protocol,$serverName)\n",
-      );
+      expect(stdinStub.args[8][0]).to.deep.equal(`$displayLang = "en"\n`);
       expect(stdinStub.args[9][0]).to.deep.equal(
+        "$runner.Setup($profileHost,$username,$password,$port,$protocol,$serverName,$displayLang)\n",
+      );
+      expect(stdinStub.args[10][0]).to.deep.equal(
         "$runner.ResolveSystemVars()\n",
       );
 
-      expect(stdinStub.args[10][0]).to.deep.equal(
+      expect(stdinStub.args[11][0]).to.deep.equal(
         `$sasOpts=@("-PAGESIZE=MAX")\n`,
       );
-      expect(stdinStub.args[11][0]).to.deep.equal(
+      expect(stdinStub.args[12][0]).to.deep.equal(
         `$runner.SetOptions($sasOpts)\n`,
       );
     });
@@ -151,12 +152,12 @@ describe("ITC connection", () => {
       expect(runResult.html5).to.equal(html5);
       expect(runResult.title).to.equal("Result");
 
-      expect(stdinStub.args[12][0]).to.deep.equal(
+      expect(stdinStub.args[13][0]).to.deep.equal(
         `$code=\n@'\nods html5 path="/work/dir";\nproc print data=sashelp.cars;\nrun;\n%put --vscode-sas-extension-submit-end--;\n'@\n`,
       );
 
-      expect(stdinStub.args[13][0]).to.deep.equal(`$runner.Run($code)\n`);
-      expect(stdinStub.args[14][0]).to.contain(`$outputFile = "${tempHtmlPath}"
+      expect(stdinStub.args[14][0]).to.deep.equal(`$runner.Run($code)\n`);
+      expect(stdinStub.args[15][0]).to.contain(`$outputFile = "${tempHtmlPath}"
 $runner.FetchResultsFile($filePath, $outputFile)
 `);
     });
