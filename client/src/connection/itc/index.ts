@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri, l10n, window, workspace } from "vscode";
+import { Uri, env, l10n, window, workspace } from "vscode";
 
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { resolve } from "path";
@@ -101,8 +101,9 @@ export class ITCSession extends Session {
           protocol === ITCProtocol.COM ? "ITC Local" : "ITC IOM Bridge"
         }"\n`,
       );
+      this._shellProcess.stdin.write(`$displayLang = "${env.language}"\n`);
       this._shellProcess.stdin.write(
-        `$runner.Setup($profileHost,$username,$password,$port,$protocol,$serverName)\n`,
+        `$runner.Setup($profileHost,$username,$password,$port,$protocol,$serverName,$displayLang)\n`,
         this.onWriteComplete,
       );
       this._shellProcess.stdin.write(

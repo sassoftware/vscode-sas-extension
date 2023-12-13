@@ -18,14 +18,19 @@ class SASRunner{
     $varLogs = $this.FlushLog(4096)
     Write-Host $varLogs
   }
-  [void]Setup([string]$profileHost, [string]$username, [string]$password, [int]$port, [int]$protocol, [string]$serverName) {
+  [void]Setup([string]$profileHost, [string]$username, [string]$password, [int]$port, [int]$protocol, [string]$serverName, [string]$displayLang) {
     try {
+        # Set Encoding for input and output
+        $OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding
+
         # create the Integration Technologies objects
         $objFactory = New-Object -ComObject SASObjectManager.ObjectFactoryMulti2
         $objServerDef = New-Object -ComObject SASObjectManager.ServerDef
         $objServerDef.MachineDNSName = $profileHost # SAS Workspace node
         $objServerDef.Port = $port # workspace server port
         $objServerDef.Protocol = $protocol # 0 = COM protocol
+        $sasLocale = $displayLang -replace '-', '_'
+        $objServerDef.ExtraNameValuePairs="LOCALE=$sasLocale" # set the correct locale
 
         # Class Identifier for SAS Workspace
         $objServerDef.ClassIdentifier = "440196d4-90f0-11d0-9f41-00a024bb830c"
