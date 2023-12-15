@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "fs";
 import glob from "glob";
 import csv from "papaparse";
-import { dirname, join } from "path";
+import { dirname, isAbsolute, join } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -61,7 +61,10 @@ const csvTranslationMap = (source) => {
     return {};
   }
 
-  const csvData = readFileSync(join(csvPath, importCSV)).toString();
+  const csvData = readFileSync(
+    // User can choose to read from an absolute path, or a relative path
+    isAbsolute(importCSV) ? importCSV : join(csvPath, importCSV),
+  ).toString();
   const { data } = csv.parse(csvData);
   const headers = data.shift();
   const items = data
@@ -124,7 +127,11 @@ const updateLocale = (locale) => {
     );
 
     if (csvEntries.length > 0) {
-      writeFileSync(join(csvPath, generateCSV), csv.unparse(csvEntries));
+      writeFileSync(
+        // User can choose to write to an absolute path, or use a relative path
+        isAbsolute(generateCSV) ? generateCSV : join(csvPath, generateCSV),
+        csv.unparse(csvEntries),
+      );
     }
   }
 };
