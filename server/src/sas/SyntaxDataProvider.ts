@@ -13,6 +13,7 @@ export interface HelpData {
   alias?: string[];
   data?: string;
   syntax?: string;
+  arguments?: ArgumentData[];
   isGlobal?: boolean;
   supportSite?: {
     docsetId: string;
@@ -48,8 +49,17 @@ interface SupportSiteInformation {
 interface FunctionData {
   name: string;
   description?: string;
-  syntax?: { help: string };
+  syntax?: { help: string; arguments?: ArgumentData[] };
   supportSiteInformation?: SupportSiteInformation;
+}
+
+interface ArgumentData {
+  name: string;
+  description: string;
+  placeholder?: boolean;
+  optional?: boolean;
+  dataTypes?: string[];
+  supportSiteTargetFragment?: string;
 }
 
 interface StatementOption {
@@ -102,6 +112,7 @@ const db: any = {
   ID_ALIAS = "_$alias",
   ID_ATTR = "_$attr",
   ID_SYNTAX = "_$syntax",
+  ID_ARGUMENTS = "_$arguments",
   ID_SUPPORT_SITE = "_$supportSite",
   stmtTable = arrayToMap([
     "ABORT",
@@ -490,6 +501,7 @@ function _getFunctionHelp(funcName: string, context: string, userCb?: any) {
         key: funcName,
         data: data[ID_HELP],
         syntax: data[ID_SYNTAX],
+        arguments: data[ID_ARGUMENTS],
         supportSite: data[ID_SUPPORT_SITE],
       };
     }
@@ -506,6 +518,8 @@ function _setFunctionsFromPubs(data: FunctionData[], context: string) {
     db.functions[context][fun.name] = {};
     db.functions[context][fun.name][ID_HELP] = fun.description;
     db.functions[context][fun.name][ID_SYNTAX] = fun.syntax && fun.syntax.help;
+    db.functions[context][fun.name][ID_ARGUMENTS] =
+      fun.syntax && fun.syntax.arguments;
     db.functions[context][fun.name][ID_SUPPORT_SITE] =
       fun.supportSiteInformation;
   });

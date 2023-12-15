@@ -8,6 +8,9 @@ import {
   CompletionList,
   Hover,
   MarkupKind,
+  SignatureHelp,
+  SignatureInformation,
+  uinteger,
 } from "vscode-languageserver";
 import { Position } from "vscode-languageserver-textdocument";
 
@@ -196,6 +199,20 @@ function _getContextMain(zone: number, keyword: string) {
   return context;
 }
 
+function _cleanArg(arg = "", trimEndNum = false) {
+  return trimEndNum
+    ? arg
+        ?.replace(/[-_\s]?\d$/, "")
+        .replace(/[-_]n$/, "")
+        .replace(/(?<=.)\s?n$/, "")
+        .trim()
+    : arg
+        ?.replace(/\([snk\d]\)/g, "")
+        .replace(/['"‘’,<>()|.…]/g, "")
+        .trim()
+        .toLowerCase();
+}
+
 function getItemKind(zone: number | LibCompleteItem["type"]) {
   if (zone === ZONE_TYPE.COLOR) {
     return CompletionItemKind.Color;
@@ -279,6 +296,287 @@ export class CompletionProvider {
         });
       }
     }
+  }
+
+  getSignatureHelp(
+    position: Position,
+    activeSignature?: uinteger,
+  ): Promise<SignatureHelp | undefined> {
+    const line = this.model.getLine(position.line);
+    const tokens = this.syntaxProvider.getSyntax(position.line);
+    let keyword: string;
+    let zone: number | undefined;
+    let activeParameter = 0;
+    let bracketLevel = 0;
+    for (let j = tokens.length - 1; j >= 0; j--) {
+      const start = tokens[j].start;
+      const end = j === tokens.length - 1 ? line.length : tokens[j + 1].start;
+      if (end <= position.character) {
+        if (
+          tokens[j].style !== "sep" &&
+          tokens[j].style !== "keyword" &&
+          tokens[j].style !== "macro-keyword"
+        ) {
+          continue;
+        }
+        const _keyword = this.model.getText({
+          start: { line: position.line, column: start },
+          end: { line: position.line, column: end },
+        });
+        if (bracketLevel === -1) {
+          if (_keyword === ")") {
+            bracketLevel = 1;
+            activeParameter = 0;
+            continue;
+          }
+          if (_keyword === "(") {
+            continue;
+          }
+          if (_keyword === ",") {
+            bracketLevel = 0;
+            activeParameter = 1;
+            continue;
+          }
+
+          zone = this.czMgr.getCurrentZone(position.line, start + 1);
+          if (zone === ZONE_TYPE.SAS_FUNC || zone === ZONE_TYPE.MACRO_FUNC) {
+            keyword = _keyword;
+            break;
+          }
+        } else if (_keyword === ")") {
+          bracketLevel++;
+        } else if (_keyword === "(") {
+          bracketLevel--;
+        } else if (_keyword === "," && bracketLevel === 0) {
+          activeParameter++;
+        }
+      }
+    }
+
+    return new Promise((resolve) => {
+      if (!keyword || !zone) {
+        resolve(undefined);
+      } else {
+        this._loadHelp({
+          keyword,
+          type: "hint",
+          zone,
+          procName: this.czMgr.getProcName(),
+          stmtName: this.czMgr.getStmtName(),
+          optName: this.czMgr.getOptionName(),
+          cb: (data) => {
+            if (data && data.key && data.syntax && data.data) {
+              // splice function document link address
+              const docLink = this._genKeywordLink(data, zone!);
+
+              // solve function overloading
+              const regexp = new RegExp(
+                `.*?${data.key}.*?\\(((?!${data.key}).)*\\)`,
+                "g",
+              );
+              const syntaxArr: string[] = (
+                data.syntax.replace(/\s+/g, " ").match(regexp) ?? [
+                  data.syntax.replace(/\s+/g, " "),
+                ]
+              ).map((syntax) =>
+                syntax
+                  .replace(/&lt;/g, "<")
+                  .replace(/&gt;/g, ">")
+                  .replace(/;|\*|<\/?sub>/g, "")
+                  .replace(/\s*Form \d:\s*/gi, ""),
+              );
+              // match arguments in syntax
+              const allArgs: string[] = []; // allArgs include all arguments from all functions (function overloading)
+              const syntaxArgArr = syntaxArr.map(
+                (syntax) =>
+                  syntax
+                    .match(/\((.*)\)/)?.[1]
+                    ?.split(",")
+                    .map<[string, string, boolean]>((initSyntaxArg) => {
+                      let cleanedSyntaxArgs = [_cleanArg(initSyntaxArg)];
+                      // match like time|datetime, interval <multiple><.shift-index> etc.
+                      if (
+                        initSyntaxArg.includes("|") ||
+                        (initSyntaxArg.includes(">") &&
+                          initSyntaxArg.includes("<") &&
+                          (initSyntaxArg.indexOf(">") > 0 ||
+                            initSyntaxArg.indexOf("<") > 0))
+                      ) {
+                        cleanedSyntaxArgs = initSyntaxArg
+                          .split(/[<>\\|]/g)
+                          .map((arg) => _cleanArg(arg))
+                          .filter((item) => item);
+                      }
+                      cleanedSyntaxArgs = [...new Set(cleanedSyntaxArgs)];
+
+                      const argsInData = data.arguments?.map((item) =>
+                        _cleanArg(item.name),
+                      );
+                      let descriptions = cleanedSyntaxArgs
+                        .map((cleanedSyntaxArg) => {
+                          let argInData = data.arguments?.find(
+                            (item, index) => {
+                              if (cleanedSyntaxArg === argsInData?.[index]) {
+                                // args in allArgs are not cleaned
+                                allArgs.push(item.name);
+                                return true;
+                              }
+                            },
+                          );
+                          if (!argInData) {
+                            argInData = data.arguments?.find((item, index) => {
+                              if (
+                                _cleanArg(cleanedSyntaxArg, true) ===
+                                  _cleanArg(argsInData?.[index], true) ||
+                                cleanedSyntaxArg.split(" ")?.[0] ===
+                                  argsInData?.[index].split(" ")?.[0] ||
+                                cleanedSyntaxArg.split("_")?.[0] ===
+                                  argsInData?.[index].split("_")?.[0] ||
+                                cleanedSyntaxArg.split("-")?.[0] ===
+                                  argsInData?.[index].split("-")?.[0] ||
+                                cleanedSyntaxArg.split("–")?.[0] ===
+                                  argsInData?.[index].split("–")?.[0]
+                              ) {
+                                // args in allArgs are not cleaned
+                                allArgs.push(item.name);
+                                return true;
+                              }
+                            });
+                          }
+                          if (argInData) {
+                            // use not cleaned name in data.arguments
+                            return `**${argInData.name}:** ${argInData.description}`;
+                          }
+                          return "";
+                        })
+                        .filter((item) => item);
+                      descriptions = [...new Set(descriptions)];
+
+                      if (cleanedSyntaxArgs.length === 1) {
+                        return [
+                          initSyntaxArg.match(/\(.*?\)/)
+                            ? initSyntaxArg
+                                .trim()
+                                .replace(/^[<>]/g, "")
+                                .replace(/[<>]$/g, "")
+                                .trim()
+                            : initSyntaxArg.replace(/[<>()]/g, "").trim(),
+                          descriptions[0],
+                          true,
+                        ];
+                      }
+                      return [
+                        initSyntaxArg.trim(),
+                        descriptions.join("\n\n"),
+                        descriptions.length === cleanedSyntaxArgs.length, // no exact match
+                      ];
+                    }),
+              );
+
+              // switch to the function with enough arguments
+              if (activeParameter > 0 && syntaxArgArr.length > 1) {
+                const curArgLength =
+                  syntaxArgArr[activeSignature || 0]?.length || 0;
+                if (activeParameter > curArgLength - 1) {
+                  syntaxArgArr.some((item, index) => {
+                    if (item && item.length - 1 >= activeParameter) {
+                      activeSignature = index;
+                      return true;
+                    }
+                  });
+                }
+              }
+
+              const signatures: SignatureInformation[] = [];
+              syntaxArr.forEach((syntax, index) => {
+                const argsInSyntax = syntaxArgArr[index];
+                // match like the N in DIM <N> (array-name)
+                const outerArgs = syntax
+                  .match(new RegExp(`${keyword}\\s+([^(]*?)\\s+\\(`, "i"))?.[1]
+                  ?.replace(/[<>]/g, "")
+                  .split(",")
+                  .map((argument) => argument.trim());
+                const outerArgsDocumentation = data.arguments
+                  ?.filter((item) => outerArgs?.includes(item.name))
+                  .map((item) => `**${item.name}:** ${item.description}`)
+                  .join("\n\n");
+                // the unmatched arguments in data.arguments but not in syntax
+                let unmatchedArgsDocumentation = "";
+                if (
+                  argsInSyntax &&
+                  !argsInSyntax.every((item) => item[1] && item[2])
+                ) {
+                  const unmatchedArgs = data.arguments
+                    ?.filter(
+                      (item) =>
+                        ![...allArgs, ...(outerArgs || [])].some(
+                          (_argument) =>
+                            _argument === item.name ||
+                            _cleanArg(_argument) === _cleanArg(item.name) ||
+                            _cleanArg(_argument, true) ===
+                              _cleanArg(item.name, true),
+                        ) && item.description,
+                    )
+                    .map((item) => `**${item.name}:** ${item.description}`);
+                  if (unmatchedArgs) {
+                    unmatchedArgsDocumentation = [
+                      ...new Set(unmatchedArgs),
+                    ].join("\n\n");
+                  }
+                }
+
+                signatures.push({
+                  label: syntax,
+                  documentation: data.data,
+                  parameters: argsInSyntax?.map(
+                    ([label, syntaxArgDocumentation, allMatched]) => {
+                      const argsDocument = (
+                        syntaxArgDocumentation
+                          ? allMatched
+                            ? outerArgsDocumentation
+                              ? `${syntaxArgDocumentation}\n\n${outerArgsDocumentation}`
+                              : syntaxArgDocumentation
+                            : unmatchedArgsDocumentation
+                              ? outerArgsDocumentation
+                                ? `${syntaxArgDocumentation}\n\n${unmatchedArgsDocumentation}\n\n${outerArgsDocumentation}`
+                                : `${syntaxArgDocumentation}\n\n${unmatchedArgsDocumentation}`
+                              : syntaxArgDocumentation
+                          : unmatchedArgsDocumentation
+                            ? outerArgsDocumentation
+                              ? `${unmatchedArgsDocumentation}\n\n${outerArgsDocumentation}`
+                              : unmatchedArgsDocumentation
+                            : outerArgsDocumentation
+                              ? outerArgsDocumentation
+                              : ""
+                      ).replace(/<script .*?>/gi, "");
+                      const documentLink = `${getText(
+                        "ce_ac_sas_function_doc_txt",
+                      )} ${docLink}`;
+                      return {
+                        label,
+                        documentation: {
+                          kind: MarkupKind.Markdown,
+                          value: ["...", "…"].includes(
+                            label.replace(/['"‘’<>()|]/g, ""),
+                          )
+                            ? documentLink
+                            : argsDocument
+                              ? `${argsDocument}\n\n${documentLink}`
+                              : documentLink,
+                        },
+                      };
+                    },
+                  ),
+                });
+              });
+              resolve({ signatures, activeSignature, activeParameter });
+            } else {
+              resolve(undefined);
+            }
+          },
+        });
+      }
+    });
   }
 
   getCompleteItems(
@@ -978,8 +1276,7 @@ export class CompletionProvider {
   }
 
   private _addLinkContext(zone: number, content: HelpData) {
-    const context: any = {},
-      sasReleaseParam = "fq=releasesystem%3AViya&";
+    const context: any = {};
     let contextText,
       linkTail,
       keyword,
@@ -1225,40 +1522,10 @@ export class CompletionProvider {
         contextText = "";
         linkTail = keyword.replace("%", "");
     }
-    let addr =
-      "https://support.sas.com/en/search.html?" +
-      sasReleaseParam +
-      "q=" +
-      linkTail;
-    if (content.supportSite) {
-      addr =
-        "https://documentation.sas.com/?docsetId=" +
-        content.supportSite.docsetId +
-        "&docsetVersion=" +
-        content.supportSite.docsetVersion +
-        "&docsetTarget=";
-      if (
-        zone === ZONE_TYPE.PROC_DEF ||
-        zone === ZONE_TYPE.SAS_FUNC ||
-        !content.supportSite.supportSiteTargetFile
-      ) {
-        addr += content.supportSite.docsetTargetFile;
-      } else {
-        addr += content.supportSite.supportSiteTargetFile;
-        if (content.supportSite.supportSiteTargetFragment) {
-          addr += "#" + content.supportSite.supportSiteTargetFragment;
-        }
-      }
-    } else {
-      addr = addr.replace(/\s/g, "%20");
-    }
-    keyword =
-      // "<a href = '" +
-      // addr +
-      // "' target = '_blank'>" +
-      // _cleanUpKeyword(content.key.toUpperCase()) +
-      // "</a>";
-      "[" + _cleanUpKeyword(content.key.toUpperCase()) + "](" + addr + ")";
+
+    keyword = this._genKeywordLink(content, zone, linkTail);
+
+    // const sasReleaseParam = "fq=releasesystem%3AViya&";
     // productDocumentation =
     //   "<a href = 'https://support.sas.com/en/search.html?" +
     //   sasReleaseParam +
@@ -1283,6 +1550,7 @@ export class CompletionProvider {
     //   "' target = '_blank'>" +
     //   getText("ce_ac_papers_txt") +
     //   "</a>";
+
     contextText = contextText.toUpperCase();
     if (contextText === "") {
       contextText = "\n\n";
@@ -1565,5 +1833,45 @@ export class CompletionProvider {
               macroVarList.push(item.match(/call\s+symput\s*\(\s*['"](\w+)['"]/mi)[1]);
           });
       }*/
+  }
+
+  private _genKeywordLink(
+    content: HelpData,
+    zone: number,
+    linkTail: string = "",
+  ) {
+    let addr =
+      "https://support.sas.com/en/search.html?" +
+      "fq=releasesystem%3AViya&" +
+      "q=" +
+      linkTail;
+    if (content.supportSite) {
+      addr =
+        "https://documentation.sas.com/?docsetId=" +
+        content.supportSite.docsetId +
+        "&docsetVersion=" +
+        content.supportSite.docsetVersion +
+        "&docsetTarget=";
+      if (
+        zone === ZONE_TYPE.PROC_DEF ||
+        zone === ZONE_TYPE.SAS_FUNC ||
+        !content.supportSite.supportSiteTargetFile
+      ) {
+        addr += content.supportSite.docsetTargetFile;
+      } else {
+        addr += content.supportSite.supportSiteTargetFile;
+        if (content.supportSite.supportSiteTargetFragment) {
+          addr += "#" + content.supportSite.supportSiteTargetFragment;
+        }
+      }
+    } else {
+      addr = addr.replace(/\s/g, "%20");
+    }
+    // "<a href = '" +
+    // addr +
+    // "' target = '_blank'>" +
+    // _cleanUpKeyword(content.key.toUpperCase()) +
+    // "</a>";
+    return "[" + _cleanUpKeyword(content.key.toUpperCase()) + "](" + addr + ")";
   }
 }

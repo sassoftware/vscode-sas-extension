@@ -64,6 +64,9 @@ export const init = (conn: Connection): void => {
           firstTriggerCharacter: "\n",
           moreTriggerCharacter: [";"],
         },
+        signatureHelpProvider: {
+          triggerCharacters: ["(", ","],
+        },
       },
     };
     return result;
@@ -114,22 +117,28 @@ export const init = (conn: Connection): void => {
 
   connection.onDocumentSymbol((params) => {
     const languageService = getLanguageService(params.textDocument.uri);
-    return languageService
-      .getFoldingBlocks()
-      .filter((symbol) => symbol.name !== "custom");
+    return languageService.getDocumentSymbols();
   });
 
   connection.onFoldingRanges((params) => {
     const languageService = getLanguageService(params.textDocument.uri);
-    return languageService.getFoldingBlocks().map((block) => ({
-      startLine: block.range.start.line,
-      endLine: block.range.end.line,
-    }));
+    return languageService.getFoldingRanges();
   });
 
   connection.onRequest("sas/getFoldingBlock", (params) => {
     const languageService = getLanguageService(params.textDocument.uri);
-    return languageService.getFoldingBlock(params.line, params.col);
+    const block = languageService.getFoldingBlock(
+      params.line,
+      params.col,
+      true,
+      false,
+      false,
+    );
+    if (!block) {
+      return undefined;
+    } else {
+      return { ...block, outerBlock: undefined, innerBlocks: undefined };
+    }
   });
 
   connection.onDocumentOnTypeFormatting((params) => {
@@ -144,6 +153,15 @@ export const init = (conn: Connection): void => {
       params.ch,
       tabSize,
       useSpace,
+    );
+  });
+
+  connection.onSignatureHelp((params) => {
+    const languageService = getLanguageService(params.textDocument.uri);
+    completionProvider = languageService.completionProvider;
+    return completionProvider.getSignatureHelp(
+      params.position,
+      params.context?.activeSignatureHelp?.activeSignature,
     );
   });
 
