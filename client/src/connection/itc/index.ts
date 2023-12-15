@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri, env, l10n, window, workspace } from "vscode";
+import { Uri, commands, env, l10n, window, workspace } from "vscode";
 
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { resolve } from "path";
@@ -44,11 +44,13 @@ export class ITCSession extends Session {
   private _password: string;
   private _secretStorage;
   private _passwordKey: string;
+  private _pollingForLogResults: boolean;
 
   constructor() {
     super();
     this._password = "";
     this._secretStorage = getSecretStorage(SECRET_STORAGE_NAMESPACE);
+    this._pollingForLogResults = false;
   }
 
   public set config(value: Config) {
@@ -184,6 +186,7 @@ export class ITCSession extends Session {
     const codeToRun = `$code=\n@'\n${codeWithEnd}\n'@\n`;
 
     this._shellProcess.stdin.write(codeToRun);
+    this._pollingForLogResults = true;
     this._shellProcess.stdin.write(`$runner.Run($code)\n`, async (error) => {
       if (error) {
         this._runReject(error);
@@ -223,11 +226,12 @@ export class ITCSession extends Session {
    * Cancels a running SAS program
    */
   public cancel = async () => {
+    this._pollingForLogResults = false;
     this._shellProcess.stdin.write("$runner.Cancel()\n", async (error) => {
       if (error) {
         this._runReject(error);
       }
-
+      
       await this.fetchLog();
     });
   };
@@ -248,16 +252,21 @@ export class ITCSession extends Session {
    * writing each chunk to stdout.
    */
   private fetchLog = async (): Promise<void> => {
-    this._shellProcess.stdin.write(
-      `
-do {
-  $chunkSize = 32768
-  $log = $runner.FlushLog($chunkSize)
-  Write-Host $log
-} while ($log.Length -gt 0)\n
-  `,
-      this.onWriteComplete,
-    );
+    const pollingInterval = setInterval(() => {
+      if (!this._pollingForLogResults) {
+        clearInterval(pollingInterval);
+      }
+      this._shellProcess.stdin.write(
+        `
+  do {
+    $chunkSize = 32768
+    $log = $runner.FlushLog($chunkSize)
+    Write-Host $log
+  } while ($log.Length -gt 0)\n
+    `,
+        this.onWriteComplete,
+      );
+    }, 2 * 1000);
   };
 
   /**
@@ -356,6 +365,7 @@ do {
       await workspace.fs.createDirectory(globalStorageUri);
     }
 
+    this._pollingForLogResults = false;
     const outputFileUri = Uri.joinPath(
       globalStorageUri,
       `${this._html5FileName}.htm`,
