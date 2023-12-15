@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri, commands, env, l10n, window, workspace } from "vscode";
+import { Uri, env, l10n, window, workspace } from "vscode";
 
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { resolve } from "path";
@@ -231,7 +231,7 @@ export class ITCSession extends Session {
       if (error) {
         this._runReject(error);
       }
-      
+
       await this.fetchLog();
     });
   };
