@@ -1017,7 +1017,7 @@
     "path-browserify": "^1.0.1",
     "prettier": "^3.1.1",
     "sinon": "^17.0.1",
-    "ts-loader": "^9.5.0",
+    "ts-loader": "^9.5.1",
     "ts-sinon": "^2.0.2",
     "typescript": "^5.3.2",
     "webpack": "^5.89.0",
