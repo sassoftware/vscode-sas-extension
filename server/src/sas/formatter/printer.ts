@@ -88,12 +88,8 @@ const printStatement = (node: Statement) => {
 };
 
 const removeRedundantLineBreaks = (docs: Doc[]) =>
-  docs.map((doc, index) => {
-    if (index < docs.length - 1) {
-      const nextDoc = docs[index + 1];
-      if (startsWithLineBreak(nextDoc)) {
-        return utils.stripTrailingHardline(doc);
-      }
-    }
-    return doc;
-  });
+  docs.map((doc, index) =>
+    index < docs.length - 1 && startsWithLineBreak(docs[index + 1])
+      ? utils.stripTrailingHardline(doc)
+      : doc,
+  );

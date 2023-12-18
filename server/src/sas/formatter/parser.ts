@@ -49,17 +49,21 @@ const removePrevStatement = (parent: Program | Region) => {
   parent.children.pop();
 };
 
-const hasParent = (parents: Region[], block: FoldingBlock) => {
+const getBlockParent = (parents: Region[]) => {
   let index = parents.length - 1;
   while (index >= 0 && !parents[index].block) {
     index--;
   }
-  const parent = parents[index]?.block;
-  if (!parent) {
+  return parents[index];
+};
+
+const hasParent = (parents: Region[], block: FoldingBlock) => {
+  const parentBlock = getBlockParent(parents)?.block;
+  if (!parentBlock) {
     return false;
   }
   while (block.outerBlock) {
-    if (block.outerBlock === parent) {
+    if (block.outerBlock === parentBlock) {
       return true;
     }
     block = block.outerBlock;
@@ -82,11 +86,7 @@ const isStartingRegion = (parents: Region[], currentStatement: Statement) => {
     }
   }
 
-  let index = parents.length - 1;
-  while (index >= 0 && !parents[index].block) {
-    index--;
-  }
-  const parent = parents[index];
+  const parent = getBlockParent(parents);
   if (!parent || !parent.block) {
     return false;
   }
@@ -112,6 +112,40 @@ const isStartingRegion = (parents: Region[], currentStatement: Statement) => {
   return false;
 };
 
+const preserveProcs = (region: Region, model: Model) => {
+  if (
+    region.block?.name === "PROC" &&
+    "text" in region.children[0].children[1] &&
+    /^(python|lua)$/i.test(region.children[0].children[1].text) &&
+    region.children.length > 1
+  ) {
+    // should not format python/lua, treat it as raw data
+    const start =
+      "start" in region.children[1].children[0] &&
+      region.children[1].children[0].start;
+    const endStatement = region.children[region.children.length - 1];
+    const endToken = endStatement.children[endStatement.children.length - 1];
+    const end = "end" in endToken && endToken.end;
+    if (start && end) {
+      region.children = [
+        region.children[0],
+        {
+          type: "statement",
+          name: "",
+          children: [
+            {
+              type: "raw-data",
+              text: model.getText({ start, end }),
+              start,
+              end,
+            },
+          ],
+        },
+      ];
+    }
+  }
+};
+
 export const getParser =
   (model: Model, tokens: Token[], syntaxProvider: SyntaxProvider) => () => {
     const root: Program = {
@@ -122,9 +156,12 @@ export const getParser =
     let region: Region | undefined = undefined;
     let currentStatement: Statement | undefined = undefined;
     let prevStatement: Statement | undefined = undefined;
+
     for (let i = 0; i < tokens.length; i++) {
       const node = tokens[i];
       let parent = parents.length ? parents[parents.length - 1] : root;
+
+      // --- Check for block start: DATA, PROC, %MACRO ---
       if (node.type === "sec-keyword" || node.type === "macro-sec-keyword") {
         const block = syntaxProvider.getFoldingBlock(
           node.start.line,
@@ -150,6 +187,9 @@ export const getParser =
           parent.children.push(region);
         }
       }
+      // --- ---
+
+      // --- Check for statement start ---
       if (!currentStatement) {
         currentStatement = {
           type: "statement",
@@ -157,17 +197,14 @@ export const getParser =
           children: [],
         };
         if (region) {
-          if (region.children.length === 0) {
-            // section start
-            if (prevStatement) {
-              const prevToken =
-                prevStatement.children[prevStatement.children.length - 1];
-              if (prevStatement.children.length === 1 && isComment(prevToken)) {
-                // leading comment will be printed together with current statement
-                currentStatement.leadingComment = prevToken;
-                // remove it from previous AST location
-                removePrevStatement(parent);
-              }
+          if (region.children.length === 0 && prevStatement) {
+            const prevToken =
+              prevStatement.children[prevStatement.children.length - 1];
+            if (prevStatement.children.length === 1 && isComment(prevToken)) {
+              // leading comment will be printed together with current statement
+              currentStatement.leadingComment = prevToken;
+              // remove it from previous AST location
+              removePrevStatement(parent);
             }
           }
           region.children.push(currentStatement);
@@ -175,7 +212,11 @@ export const getParser =
           parent.children.push(currentStatement);
         }
       }
+      // --- ---
+
       currentStatement.children.push(node);
+
+      // --- Check for statement end ---
       if (node.type === "sep" && node.text === ";") {
         if (
           currentStatement.children[0].type === "cards-data" &&
@@ -214,55 +255,23 @@ export const getParser =
               .text,
           )
         ) {
+          // region end
           // put `end` out of region children to outdent
           parent.children.push(region.children.pop()!);
           region = parents.pop();
-        } else if (region && region.block) {
-          const block = region.block;
-          if (
-            block.endLine === node.end.line &&
-            block.endCol === node.end.column
-          ) {
-            if (
-              /^(run|quit|%mend)\b/i.test(currentStatement.children[0].text)
-            ) {
-              // put `run` out of section children to outdent
-              parent.children.push(region.children.pop()!);
-            }
-            if (
-              region.block?.name === "PROC" &&
-              "text" in region.children[0].children[1] &&
-              /^(python|lua)$/i.test(region.children[0].children[1].text) &&
-              region.children.length > 1
-            ) {
-              // should not format python/lua, treat it as cards data
-              const start =
-                "start" in region.children[1].children[0] &&
-                region.children[1].children[0].start;
-              const endStatement = region.children[region.children.length - 1];
-              const endToken =
-                endStatement.children[endStatement.children.length - 1];
-              const end = "end" in endToken && endToken.end;
-              if (start && end) {
-                region.children = [
-                  region.children[0],
-                  {
-                    type: "statement",
-                    name: "",
-                    children: [
-                      {
-                        type: "raw-data",
-                        text: model.getText({ start, end }),
-                        start,
-                        end,
-                      },
-                    ],
-                  },
-                ];
-              }
-            }
-            region = parents.pop();
+        } else if (
+          region &&
+          region.block &&
+          region.block.endLine === node.end.line &&
+          region.block.endCol === node.end.column
+        ) {
+          // block end
+          if (/^(run|quit|%mend)\b/i.test(currentStatement.children[0].text)) {
+            // put `run` out of section children to outdent
+            parent.children.push(region.children.pop()!);
           }
+          preserveProcs(region, model);
+          region = parents.pop();
         }
         if (i < tokens.length - 1) {
           const nextToken = tokens[i + 1];
@@ -287,16 +296,16 @@ export const getParser =
         // standalone comment, treat as a whole statement
         prevStatement = currentStatement;
         currentStatement = undefined;
-        if (region && region.block) {
-          const block = region.block;
-          if (
-            block.endLine === node.end.line &&
-            block.endCol === node.end.column
-          ) {
-            region = parents.pop();
-          }
+        if (
+          region &&
+          region.block &&
+          region.block.endLine === node.end.line &&
+          region.block.endCol === node.end.column
+        ) {
+          region = parents.pop();
         }
       }
+      // --- ---
     }
 
     return root;
