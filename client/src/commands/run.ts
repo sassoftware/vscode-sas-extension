@@ -12,7 +12,7 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
-import { LogFn as LogChannelFn, log } from "../components/LogChannel";
+import { LogFn as LogChannelFn, outputChannel } from "../components/LogChannel";
 import { showResult } from "../components/ResultPanel/ResultPanel";
 import {
   assign_SASProgramFile,
@@ -47,11 +47,11 @@ onRunStatusChange(
   (newValue, oldValue) => {
     if (newValue && !oldValue) {
       if (isFocusLogOnExecutionStart()) {
-        log.show(true);
+        outputChannel.show(true);
       }
     } else if (!newValue && oldValue) {
       if (isFocusLogOnExecutionFinish()) {
-        log.show(true);
+        outputChannel.show(true);
       }
     }
   },
