@@ -15,4 +15,5 @@ const runStore = createStore(
   })),
 );
 
+export const { getState, setState, subscribe } = runStore;
 export default runStore;

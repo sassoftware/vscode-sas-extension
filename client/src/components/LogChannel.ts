@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { OutputChannel, l10n, window } from "vscode";
 
-import runStore from "../stores/run";
+import { subscribe } from "../stores/run";
 import { appendLog } from "./LogViewer";
 import {
   showLogOnExecutionFinish,
@@ -10,8 +10,6 @@ import {
 } from "./utils/settings";
 
 let outputChannel: OutputChannel;
-
-const { subscribe } = runStore;
 
 export const LogFn = (logs) => {
   if (!outputChannel) {
@@ -25,12 +23,12 @@ export const LogFn = (logs) => {
 
 subscribe(
   (state) => state.isRunning,
-  (newValue, oldValue) => {
-    if (newValue && !oldValue) {
+  (running, prevRunning) => {
+    if (running && !prevRunning) {
       if (showLogOnExecutionStart()) {
         outputChannel.show(true);
       }
-    } else if (!newValue && oldValue) {
+    } else if (!running && prevRunning) {
       if (showLogOnExecutionFinish()) {
         outputChannel.show(true);
       }
