@@ -457,17 +457,17 @@
               "%configuration.SAS.flowConversionModeNode%"
             ]
           },
-          "SAS.logFocus.onExecutionStart": {
+          "SAS.log.showOnExecutionStart": {
             "order": 7,
             "type": "boolean",
             "default": true,
-            "description": "%configuration.SAS.logFocus.onExecutionStart"
+            "description": "%configuration.SAS.log.showOnExecutionStart%"
           },
-          "SAS.logFocus.onExecutionFinish": {
+          "SAS.log.showOnExecutionFinish": {
             "order": 8,
             "type": "boolean",
             "default": true,
-            "description": "%configuration.SAS.logFocus.onExecutionFinish"
+            "description": "%configuration.SAS.log.showOnExecutionFinish%"
           }
         }
       }

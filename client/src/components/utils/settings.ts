@@ -18,10 +18,10 @@ export function isSinglePanelEnabled(): string {
   return workspace.getConfiguration("SAS").get("results.singlePanel");
 }
 
-export function isFocusLogOnExecutionStart(): boolean {
-  return workspace.getConfiguration("SAS").get("logFocus.onExecutionStart");
+export function showLogOnExecutionStart(): boolean {
+  return workspace.getConfiguration("SAS").get("log.showOnExecutionStart");
 }
 
-export function isFocusLogOnExecutionFinish(): boolean {
-  return workspace.getConfiguration("SAS").get("logFocus.onExecutionFinish");
+export function showLogOnExecutionFinish(): boolean {
+  return workspace.getConfiguration("SAS").get("log.showOnExecutionFinish");
 }

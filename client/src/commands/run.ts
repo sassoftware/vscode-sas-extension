@@ -12,17 +12,13 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
-import { LogFn as LogChannelFn, outputChannel } from "../components/LogChannel";
+import { LogFn as LogChannelFn } from "../components/LogChannel";
 import { showResult } from "../components/ResultPanel/ResultPanel";
 import {
   assign_SASProgramFile,
   wrapCodeWithOutputHtml,
 } from "../components/utils/sasCode";
-import {
-  isFocusLogOnExecutionFinish,
-  isFocusLogOnExecutionStart,
-  isOutputHtmlEnabled,
-} from "../components/utils/settings";
+import { isOutputHtmlEnabled } from "../components/utils/settings";
 import {
   ErrorRepresentation,
   OnLogFn,
@@ -39,23 +35,7 @@ interface FoldingBlock {
   endCol: number;
 }
 
-const { getState, subscribe: onRunStatusChange } = runStore;
-const { isRunning, setIsRunning } = getState();
-
-onRunStatusChange(
-  (state) => state.isRunning,
-  (newValue, oldValue) => {
-    if (newValue && !oldValue) {
-      if (isFocusLogOnExecutionStart()) {
-        outputChannel.show(true);
-      }
-    } else if (!newValue && oldValue) {
-      if (isFocusLogOnExecutionFinish()) {
-        outputChannel.show(true);
-      }
-    }
-  },
-);
+const { isRunning, setIsRunning } = runStore.getState();
 
 function getCode(selected = false, uri?: Uri): string {
   const editor = uri
