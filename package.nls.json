@@ -53,6 +53,8 @@
   "configuration.SAS.flowConversionMode": "Choose the conversion mode for notebooks",
   "configuration.SAS.flowConversionModeNode": "Convert each notebook cell to a node",
   "configuration.SAS.flowConversionModeSwimlane": "Convert each notebook cell to a swimlane",
+  "configuration.SAS.logFocus.onExecutionFinish": "Focus SAS Log when Code Execution is finished",
+  "configuration.SAS.logFocus.onExecutionStart": "Focus SAS Log when Code Execution starts",
   "configuration.SAS.results.html.enabled": "Enable/disable ODS HTML5 output",
   "configuration.SAS.results.html.style": "Specifies the style for ODS HTML5 results.",
   "configuration.SAS.results.html.style.(auto)": "Let the extension pick a style that most closely matches the color theme.",

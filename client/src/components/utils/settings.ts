@@ -17,3 +17,11 @@ export function isSideResultEnabled(): string {
 export function isSinglePanelEnabled(): string {
   return workspace.getConfiguration("SAS").get("results.singlePanel");
 }
+
+export function isFocusLogOnExecutionStart(): boolean {
+  return workspace.getConfiguration("SAS").get("logFocus.onExecutionStart");
+}
+
+export function isFocusLogOnExecutionFinish(): boolean {
+  return workspace.getConfiguration("SAS").get("logFocus.onExecutionFinish");
+}

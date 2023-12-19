@@ -4,14 +4,14 @@ import { OutputChannel, l10n, window } from "vscode";
 
 import { appendLog } from "./LogViewer";
 
-let outputChannel: OutputChannel;
+let log: OutputChannel;
+if (!log) {
+  log = window.createOutputChannel(l10n.t("SAS Log"), "sas-log");
+}
+export { log };
 export const LogFn = (logs) => {
-  if (!outputChannel) {
-    outputChannel = window.createOutputChannel(l10n.t("SAS Log"), "sas-log");
-  }
-  outputChannel.show(true);
   for (const line of logs) {
     appendLog(line.type);
-    outputChannel.appendLine(line.line);
+    log.appendLine(line.line);
   }
 };

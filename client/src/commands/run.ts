@@ -12,19 +12,24 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
-import { LogFn as LogChannelFn } from "../components/LogChannel";
+import { LogFn as LogChannelFn, log } from "../components/LogChannel";
 import { showResult } from "../components/ResultPanel/ResultPanel";
 import {
   assign_SASProgramFile,
   wrapCodeWithOutputHtml,
 } from "../components/utils/sasCode";
-import { isOutputHtmlEnabled } from "../components/utils/settings";
+import {
+  isFocusLogOnExecutionFinish,
+  isFocusLogOnExecutionStart,
+  isOutputHtmlEnabled,
+} from "../components/utils/settings";
 import {
   ErrorRepresentation,
   OnLogFn,
   RunResult,
   getSession,
 } from "../connection";
+import runStore from "../stores/run";
 import { profileConfig, switchProfile } from "./profile";
 
 interface FoldingBlock {
@@ -34,7 +39,23 @@ interface FoldingBlock {
   endCol: number;
 }
 
-let running = false;
+const { getState, subscribe: onRunStatusChange } = runStore;
+const { isRunning, setIsRunning } = getState();
+
+onRunStatusChange(
+  (state) => state.isRunning,
+  (newValue, oldValue) => {
+    if (newValue && !oldValue) {
+      if (isFocusLogOnExecutionStart()) {
+        log.show(true);
+      }
+    } else if (!newValue && oldValue) {
+      if (isFocusLogOnExecutionFinish()) {
+        log.show(true);
+      }
+    }
+  },
+);
 
 function getCode(selected = false, uri?: Uri): string {
   const editor = uri
@@ -167,10 +188,10 @@ async function runCode(selected?: boolean, uri?: Uri) {
 }
 
 const _run = async (selected = false, uri?: Uri) => {
-  if (running) {
+  if (isRunning) {
     return;
   }
-  running = true;
+  setIsRunning(true);
   commands.executeCommand("setContext", "SAS.running", true);
 
   await runCode(selected, uri)
@@ -178,7 +199,7 @@ const _run = async (selected = false, uri?: Uri) => {
       onRunError(err);
     })
     .finally(() => {
-      running = false;
+      setIsRunning(false);
       commands.executeCommand("setContext", "SAS.running", false);
     });
 };
@@ -198,7 +219,7 @@ export async function runRegion(client: BaseLanguageClient): Promise<void> {
 }
 
 export function hasRunningTask() {
-  return running;
+  return isRunning;
 }
 export async function runTask(
   code: string,
@@ -206,7 +227,7 @@ export async function runTask(
   closeEmitter?: EventEmitter<number>,
   onLog?: OnLogFn,
 ): Promise<RunResult> {
-  if (running) {
+  if (isRunning) {
     return;
   }
 
@@ -215,7 +236,7 @@ export async function runTask(
     return;
   }
 
-  running = true;
+  setIsRunning(true);
   commands.executeCommand("setContext", "SAS.running", true);
 
   let cancelled = false;
@@ -226,7 +247,7 @@ export async function runTask(
       await session.cancel();
     }
 
-    running = false;
+    setIsRunning(false);
     commands.executeCommand("setContext", "SAS.running", false);
   });
   session.onLogFn = onLog ?? LogChannelFn;
