@@ -26,11 +26,11 @@ subscribe(
   (running, prevRunning) => {
     if (running && !prevRunning) {
       if (showLogOnExecutionStart()) {
-        outputChannel.show(true);
+        outputChannel?.show(true);
       }
     } else if (!running && prevRunning) {
       if (showLogOnExecutionFinish()) {
-        outputChannel.show(true);
+        outputChannel?.show(true);
       }
     }
   },
