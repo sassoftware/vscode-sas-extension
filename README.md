@@ -186,6 +186,16 @@ Notebook is an interactive experience with Markdown, executable code snippets an
 - To toggle log or ODS output display, click `...` at the side of the output and select `Change Presentation`.
 - SAS Notebook can be saved to a `.sasnb` file, shared to others, and open in another VS Code window.
 
+### SAS Log
+
+Its possible to customize when the SAS log gets shown in the bottom panel by using the following extension settings. These settings will apply to all connection profiles:
+| Name | Description | Additional Notes |
+| ---------------------------------| --------------------------------------- | ----------------------------- |
+| **SAS.log.showOnExecutionStart** | Show SAS log on start of execution | default: true |
+| **SAS.log.showOnExecutionFinish**| Show SAS log on end of execution | default: true |
+
+To see an example, please refer to the [Viya4](doc/profileExamples/viya4.json) example profile.
+
 ## Support
 
 ### SAS Communities

@@ -1,10 +1,10 @@
 {
-  "SAS.logFocus.onExecutionFinish": true,
-  "SAS.logFocus.onExecutionStart": false,
+  "SAS.log.showOnExecutionFinish": true,
+  "SAS.log.showOnExecutionStart": false,
   "SAS.connectionProfiles": {
     "activeProfile": "viyaServer",
     "profiles": {
-      "viyaServer": {
+      "viya4": {
         "endpoint": "https://example-endpoint.com",
         "connectionType": "rest",
         "sasOptions": ["NONEWS", "ECHOAUTO"],
