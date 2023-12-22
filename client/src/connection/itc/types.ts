@@ -3,6 +3,7 @@
 
 export enum LineCodes {
   ResultsFetchedCode = "--vscode-sas-extension-results-fetched--",
+  RunCancelledCode = "--vscode-sas-extension-run-cancelled--",
   RunEndCode = "--vscode-sas-extension-submit-end--",
   SessionCreatedCode = "--vscode-sas-extension-session-created--",
 }

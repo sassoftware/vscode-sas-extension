@@ -156,8 +156,6 @@ async function runCode(selected?: boolean, uri?: Uri) {
     (_progress, cancellationToken) => {
       cancellationToken.onCancellationRequested(() => {
         session.cancel?.();
-        running = false;
-        commands.executeCommand("setContext", "SAS.running", false);
       });
       return session.run(code).then((results) => {
         if (outputHtml && results.html5) {

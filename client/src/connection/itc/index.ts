@@ -334,6 +334,11 @@ export class ITCSession extends Session {
       return true;
     }
 
+    if (line.includes(LineCodes.RunCancelledCode)) {
+      this._runResolve({});
+      return true;
+    }
+
     return false;
   }
 
