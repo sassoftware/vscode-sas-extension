@@ -68,7 +68,7 @@ export class ComputeServer extends Compute {
       return res.data;
     } else {
       throw new Error(
-        l10n.t("Error getting server with ID  {id} - {message}", {
+        l10n.t("Error getting server with ID {id} - {message}", {
           id: this.id,
           message: res.message,
         }),

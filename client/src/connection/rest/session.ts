@@ -62,7 +62,7 @@ export class ComputeSession extends Compute {
       return res.data;
     } else {
       throw new Error(
-        l10n.t("Error getting session with ID  {id} - {message}", {
+        l10n.t("Error getting session with ID {id} - {message}", {
           id,
           message: res.message,
         }),
@@ -82,7 +82,7 @@ export class ComputeSession extends Compute {
       return res.data;
     } else {
       throw new Error(
-        l10n.t("Error getting server with ID  {id} - {message}", {
+        l10n.t("Error getting server with ID {id} - {message}", {
           id: this._self.id,
           message: res.message,
         }),
