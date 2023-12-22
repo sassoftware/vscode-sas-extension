@@ -102,6 +102,7 @@ class SASRunner{
   [void]Cancel(){
   try{
         $this.objSAS.LanguageService.Cancel()
+        Write-Host "${LineCodes.RunCancelledCode}"
       }catch{
         throw "Cancel error"
       }

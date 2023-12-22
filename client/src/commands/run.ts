@@ -154,10 +154,8 @@ async function runCode(selected?: boolean, uri?: Uri) {
       cancellable: typeof session.cancel === "function",
     },
     (_progress, cancellationToken) => {
-      cancellationToken.onCancellationRequested(() => {
+      cancellationToken.onCancellationRequested((...args) => {
         session.cancel?.();
-        running = false;
-        commands.executeCommand("setContext", "SAS.running", false);
       });
       return session.run(code).then((results) => {
         if (outputHtml && results.html5) {
