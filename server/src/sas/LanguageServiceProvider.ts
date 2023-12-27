@@ -140,7 +140,9 @@ export class LanguageServiceProvider {
       );
       if (rootBlock && rootBlock.startLine === i) {
         const docSymbol: DocumentSymbol = this._buildDocumentSymbol(rootBlock);
-        result.push(docSymbol);
+        if (docSymbol.name) {
+          result.push(docSymbol);
+        }
         i = rootBlock.endFoldingLine;
         continue;
       }
@@ -163,7 +165,7 @@ export class LanguageServiceProvider {
       selectionRange: range,
       children: [],
     };
-    if (parent) {
+    if (parent && docSymbol.name) {
       parent.children!.push(docSymbol);
     }
     for (const innerBlock of block.innerBlocks) {
