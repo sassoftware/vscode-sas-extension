@@ -103,7 +103,7 @@ title;
 data _null_;
 *region;
 do i=2 to 20 by 2 until((x/3)>y);
-do x=1, 2, 3 while (x=2);
+mylabel: do x=1, 2, 3 while (x=2);
 a=0;
 end;
 end;

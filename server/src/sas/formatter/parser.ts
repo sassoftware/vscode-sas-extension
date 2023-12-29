@@ -304,6 +304,19 @@ export const getParser =
         ) {
           region = parents.pop();
         }
+      } else if (
+        currentStatement.children.length === 2 &&
+        node.type === "sep" &&
+        node.text === ":" &&
+        currentStatement.children[0].type === "text"
+      ) {
+        // label: treat as raw data
+        currentStatement.children[0] = {
+          ...currentStatement.children[0],
+          type: "raw-data",
+        };
+        prevStatement = currentStatement;
+        currentStatement = undefined;
       }
       // --- ---
     }
