@@ -3,8 +3,9 @@
 import type { Doc, Printer } from "prettier";
 import { builders, utils } from "prettier/doc";
 
+import type { Token } from "../Lexer";
 import { isSamePosition } from "../utils";
-import type { SASAST, Statement } from "./parser";
+import { SASAST, Statement, isComment } from "./parser";
 
 const {
   fill,
@@ -69,22 +70,35 @@ const printStatement = (node: Statement) => {
       ? markAsRoot(tokens.map((token) => token.text))
       : fill(
           tokens.map((token, index) =>
-            index > 0 && !isSamePosition(token.start, tokens[index - 1].end)
-              ? indent([
-                  token.text === "=" ||
-                  (tokens[index - 1].text === "=" &&
-                    index + 1 < tokens.length &&
-                    tokens[index + 1].text !== "=")
-                    ? softline
-                    : line,
-                  token.text,
-                ])
-              : token.text,
+            index === 0 && isComment(token)
+              ? printComment(token)
+              : index > 0 && !isSamePosition(token.start, tokens[index - 1].end)
+                ? indent([
+                    token.text === "=" ||
+                    (tokens[index - 1].text === "=" &&
+                      index + 1 < tokens.length &&
+                      tokens[index + 1].text !== "=")
+                      ? softline
+                      : line,
+                    token.text,
+                  ])
+                : token.text,
           ),
         );
   return node.leadingComment
-    ? [node.leadingComment.text, hardline, statement]
+    ? [printComment(node.leadingComment), hardline, statement]
     : statement;
+};
+
+const printComment = (token: Token) => {
+  const text = token.text.split("\n");
+  if (text.length === 0 || !token.text.startsWith("/*")) {
+    return token.text;
+  }
+  return join(
+    hardline,
+    text.map((line) => line.trim().replace(/^\*/, " *")),
+  );
 };
 
 const removeRedundantLineBreaks = (docs: Doc[]) =>

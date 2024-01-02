@@ -14,7 +14,7 @@ export interface Statement {
   type: "statement";
   name: string;
   children: Token[];
-  leadingComment?: Token;
+  leadingComment?: RealToken;
 }
 
 export interface Region {
@@ -30,7 +30,7 @@ interface Program {
 
 export type SASAST = Program | Region | Statement | Token;
 
-const isComment = (token: Token) =>
+export const isComment = (token: Token): token is RealToken =>
   token.type === "comment" || token.type === "macro-comment";
 
 const removePrevStatement = (parent: Program | Region) => {

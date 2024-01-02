@@ -102,6 +102,9 @@ title;
 *region;
 data _null_;
 *region;
+/** a block comment
+* additional comment line
+*/
 do i=2 to 20 by 2 until((x/3)>y);
 mylabel: do x=1, 2, 3 while (x=2);
 a=0;
