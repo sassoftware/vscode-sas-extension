@@ -11,16 +11,16 @@
   "dependencies": {
     "ag-grid-community": "^31.0.0",
     "ag-grid-react": "^31.0.1",
-    "axios": "^1.6.2",
+    "axios": "^1.6.3",
     "media-typer": "^1.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "ssh2": "^1.14.0",
+    "ssh2": "^1.15.0",
     "uuid": "^9.0.1",
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
-    "@types/react": "^18.2.45",
+    "@types/react": "^18.2.46",
     "@types/react-dom": "^18.2.18",
     "@types/ssh2": "^1.11.18",
     "@types/vscode": "^1.73.0",
