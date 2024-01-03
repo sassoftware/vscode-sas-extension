@@ -8,7 +8,7 @@ import { Writable } from "stream";
 import { getSession } from "../../connection";
 import { DataAccessApi } from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
-import { LogFn as LogChannelFn } from "../LogChannel";
+import { LogFn as LogChannelFn } from "../logViewer";
 import PaginatedResultSet from "./PaginatedResultSet";
 import { DefaultRecordLimit, Messages } from "./const";
 import { LibraryItem, LibraryItemType, TableData, TableRow } from "./types";

@@ -4,14 +4,22 @@ import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 
 interface RunState {
+  hasProducedLogOutput: boolean;
   isRunning: boolean;
-  setIsRunning: (status: RunState["isRunning"]) => void;
+  setRunning: () => void;
+  setDoneRunning: () => void;
+  setProducedLogOutput: () => void;
+  unsetProducedLogOutput: () => void;
 }
 
 const runStore = createStore(
   subscribeWithSelector<RunState>((set) => ({
+    hasProducedLogOutput: false,
     isRunning: false,
-    setIsRunning: (status) => set({ isRunning: status }),
+    setRunning: () => set({ isRunning: true }),
+    setDoneRunning: () => set({ isRunning: false }),
+    setProducedLogOutput: () => set({ hasProducedLogOutput: true }),
+    unsetProducedLogOutput: () => set({ hasProducedLogOutput: false }),
   })),
 );
 

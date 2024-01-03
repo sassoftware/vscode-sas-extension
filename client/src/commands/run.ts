@@ -12,8 +12,8 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
-import { LogFn as LogChannelFn } from "../components/LogChannel";
 import { showResult } from "../components/ResultPanel/ResultPanel";
+import { LogFn as LogChannelFn } from "../components/logViewer";
 import {
   assign_SASProgramFile,
   wrapCodeWithOutputHtml,
@@ -35,7 +35,7 @@ interface FoldingBlock {
   endCol: number;
 }
 
-const { setIsRunning } = runStore.getState();
+const { setRunning, setDoneRunning } = runStore.getState();
 
 function getCode(selected = false, uri?: Uri): string {
   const editor = uri
@@ -171,7 +171,7 @@ const _run = async (selected = false, uri?: Uri) => {
   if (runStore.getState().isRunning) {
     return;
   }
-  setIsRunning(true);
+  setRunning();
   commands.executeCommand("setContext", "SAS.running", true);
 
   await runCode(selected, uri)
@@ -179,7 +179,7 @@ const _run = async (selected = false, uri?: Uri) => {
       onRunError(err);
     })
     .finally(() => {
-      setIsRunning(false);
+      setDoneRunning();
       commands.executeCommand("setContext", "SAS.running", false);
     });
 };
@@ -216,7 +216,7 @@ export async function runTask(
     return;
   }
 
-  setIsRunning(true);
+  setRunning();
   commands.executeCommand("setContext", "SAS.running", true);
 
   let cancelled = false;
@@ -227,7 +227,7 @@ export async function runTask(
       await session.cancel();
     }
 
-    setIsRunning(false);
+    setDoneRunning();
     commands.executeCommand("setContext", "SAS.running", false);
   });
   session.onLogFn = onLog ?? LogChannelFn;

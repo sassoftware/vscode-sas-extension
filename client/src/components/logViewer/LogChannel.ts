@@ -2,34 +2,47 @@
 // SPDX-License-Identifier: Apache-2.0
 import { OutputChannel, l10n, window } from "vscode";
 
-import { subscribe } from "../stores/run";
-import { appendLog } from "./LogViewer";
+import runStore, { subscribe } from "../../stores/run";
 import {
   showLogOnExecutionFinish,
   showLogOnExecutionStart,
-} from "./utils/settings";
+} from "../utils/settings";
+import { appendLog } from "./LogViewer";
 
 let outputChannel: OutputChannel;
+
+const { unsetProducedLogOutput, setProducedLogOutput } = runStore.getState();
 
 export const LogFn = (logs) => {
   if (!outputChannel) {
     outputChannel = window.createOutputChannel(l10n.t("SAS Log"), "sas-log");
   }
+
   for (const line of logs) {
     appendLog(line.type);
     outputChannel.appendLine(line.line);
   }
+
+  setProducedLogOutput();
 };
 
 subscribe(
   (state) => state.isRunning,
   (running, prevRunning) => {
-    if (running && !prevRunning) {
-      if (showLogOnExecutionStart()) {
-        outputChannel?.show(true);
-      }
-    } else if (!running && prevRunning) {
+    if (!running && prevRunning) {
       if (showLogOnExecutionFinish()) {
+        outputChannel?.show(true);
+        unsetProducedLogOutput();
+      }
+    }
+  },
+);
+
+subscribe(
+  (state) => state.hasProducedLogOutput,
+  (loggedOutput, prevLoggedOutput) => {
+    if (loggedOutput && !prevLoggedOutput) {
+      if (showLogOnExecutionStart()) {
         outputChannel?.show(true);
       }
     }

@@ -39,13 +39,13 @@ import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
 import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
-import { LogTokensProvider, legend } from "../components/LogViewer";
 import ResultPanelSubscriptionProvider from "../components/ResultPanel";
 import {
   getStatusBarItem,
   resetStatusBarItem,
   updateStatusBarItem,
 } from "../components/StatusBarItem";
+import { LogTokensProvider, legend } from "../components/logViewer";
 import { NotebookController } from "../components/notebook/Controller";
 import { NotebookSerializer } from "../components/notebook/Serializer";
 import { ConnectionType } from "../components/profile";
