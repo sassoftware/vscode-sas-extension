@@ -107,7 +107,7 @@ Follow these steps to update a locale for the SAS Extension for VSCode:
 
 # Testing unpublished versions
 
-You can still try out any commit or pull request if you don't want to manually build from source code.
+You can still try out any commit or pull request (PR) if you don't want to manually build from source code.
 
 ## Download VSIX file
 
@@ -126,5 +126,5 @@ You can still try out any commit or pull request if you don't want to manually b
 
 **Note**:
 
-- When testing VSIX files, it's usually a good idea to turn off "Extensions: Auto Update" in your VS Code settings to prevent it auto-updated to published version.
-- When switching between multiple VSIX files, it's usually a good idea to clean up the [installation directory](https://code.visualstudio.com/docs/editor/extension-marketplace#_where-are-extensions-installed) after uninstall previous one. Otherwise VS Code may cache it as un-published versions may look same.
+- When testing VSIX files, it's usually a good idea to turn off "Extensions: Auto Update" in your VS Code settings to prevent auto-updating to a published version.
+- When switching between multiple VSIX files, it's usually a good idea to clean up the [installation directory](https://code.visualstudio.com/docs/editor/extension-marketplace#_where-are-extensions-installed) after uninstalling a previous version. Otherwise VS Code may cache it as un-published versions may look same.
