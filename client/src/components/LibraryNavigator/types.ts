@@ -1,5 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { ColumnCollection, TableInfo } from "../../connection/rest/api/compute";
 
 export const LibraryType = "library";
 export const TableType = "table";
@@ -14,10 +15,38 @@ export interface LibraryItem {
 }
 
 export interface TableRow {
-  cells: string[];
+  cells?: string[];
+  columns?: string[];
 }
 
 export interface TableData {
   rows: TableRow[];
   count: number;
+}
+
+export interface LibraryAdapter {
+  connect(): Promise<void>;
+  deleteTable(item: LibraryItem): Promise<void>;
+  getColumns(
+    item: LibraryItem,
+    start: number,
+    limit: number,
+  ): Promise<ColumnCollection>;
+  getLibraries(
+    start: number,
+    limit: number,
+  ): Promise<{ items: LibraryItem[]; count: number }>;
+  getRows(item: LibraryItem, start: number, limit: number): Promise<TableData>;
+  getRowsAsCSV(
+    item: LibraryItem,
+    start: number,
+    limit: number,
+  ): Promise<TableData>;
+  getTable(item: LibraryItem): Promise<TableInfo>;
+  getTables(
+    item: LibraryItem,
+    start: number,
+    limit: number,
+  ): Promise<{ items: LibraryItem[]; count: number }>;
+  setup(): Promise<void>;
 }
