@@ -10,6 +10,7 @@ import {
   Messages,
 } from "../../../src/components/LibraryNavigator/const";
 import { LibraryItem } from "../../../src/components/LibraryNavigator/types";
+import { ConnectionType } from "../../../src/components/profile";
 import RestLibraryAdapter from "../../../src/connection/rest/RestLibraryAdapter";
 import { DataAccessApi } from "../../../src/connection/rest/api/compute";
 import { getApiConfig } from "../../../src/connection/rest/common";
@@ -26,7 +27,7 @@ class MockRestLibraryAdapter extends RestLibraryAdapter {
 
 class MockLibraryModel extends LibraryModel {
   constructor() {
-    super();
+    super(ConnectionType.Rest);
     this.libraryAdapter = new MockRestLibraryAdapter();
   }
 }

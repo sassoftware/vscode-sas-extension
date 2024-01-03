@@ -12,10 +12,12 @@ import {
 
 import { createWriteStream } from "fs";
 
+import { profileConfig } from "../../commands/profile";
 import { Column } from "../../connection/rest/api/compute";
 import DataViewer from "../../panels/DataViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
+import { ConnectionType } from "../profile";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
 import PaginatedResultSet from "./PaginatedResultSet";
@@ -29,7 +31,7 @@ class LibraryNavigator implements SubscriptionProvider {
   constructor(context: ExtensionContext) {
     this.extensionUri = context.extensionUri;
     this.libraryDataProvider = new LibraryDataProvider(
-      new LibraryModel(),
+      new LibraryModel(this.activeProfileConnectionType()),
       context.extensionUri,
     );
     this.webviewManager = new WebViewManager();
@@ -98,7 +100,15 @@ class LibraryNavigator implements SubscriptionProvider {
   }
 
   public async refresh(): Promise<void> {
-    this.libraryDataProvider.refresh();
+    this.libraryDataProvider.refresh(this.activeProfileConnectionType());
+  }
+
+  private activeProfileConnectionType(): ConnectionType {
+    const activeProfile = profileConfig.getProfileByName(
+      profileConfig.getActiveProfile(),
+    );
+
+    return activeProfile && activeProfile.connectionType;
   }
 }
 

@@ -25,6 +25,7 @@ import {
 import { Writable } from "stream";
 
 import { SubscriptionProvider } from "../SubscriptionProvider";
+import { ConnectionType } from "../profile";
 import LibraryModel from "./LibraryModel";
 import { Icons, Messages, WorkLibraryId } from "./const";
 import { LibraryItem, LibraryType, TableType } from "./types";
@@ -162,7 +163,7 @@ class LibraryDataProvider
 
   public async deleteTable(item: LibraryItem): Promise<void> {
     await this.model.deleteTable(item);
-    this.refresh();
+    this._onDidChangeTreeData.fire(undefined);
   }
 
   public watch(): Disposable {
@@ -171,8 +172,8 @@ class LibraryDataProvider
     return new Disposable(() => {});
   }
 
-  public refresh(): void {
-    this.model.reset();
+  public refresh(connectionType: ConnectionType): void {
+    this.model.reset(connectionType);
     this._onDidChangeTreeData.fire(undefined);
   }
 }
