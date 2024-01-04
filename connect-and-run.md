@@ -97,7 +97,7 @@ Note: if ~/.ssh/config does not exist, run the following Powershell command to c
 
 8. In VS Code, define a connection profile (see detailed instructions below in the [Add New SAS 9.4 Remote Profile](#add-new-sas-94-remote-profile) section). The connection for the remote server is stored in the settings.json file.
 
-```
+```json
     "ssh_test": {
         "connectionType": "ssh",
         "host": "host.machine.name",
@@ -134,7 +134,7 @@ Note: the default path to the SAS executable (saspath) is /opt/sasinside/SASHome
 
 5. Define a connection profile in settings.json for a remote server (see detailed instructions below in the [Add New SAS 9.4 Remote (Via SSH) Profile](#add-new-sas-94-remote-via-ssh-profile) section):
 
-```
+```json
     "ssh_test": {
         "connectionType": "ssh",
         "host": "host.machine.name",
@@ -148,16 +148,36 @@ Note: the default path to the SAS executable (saspath) is /opt/sasinside/SASHome
 
 ## Profile: SAS 9.4 (local)
 
-On Windows, during the install of SAS 9.4, make sure that "Integration Technologies Client" checkbox is checked. If using an order that doesn't provide this option, make sure the ITC is installed by visiting the following [link](https://support.sas.com/downloads/browse.htm?fil=&cat=56). Make sure to download the 9.4m8 option.
+### Profile Anatomy (SAS 9.4 Remote)
+
+The parameters listed below make up the profile settings for configuring a connection to a remote SAS 9.4 instance.
+
+| Name         | Description                          | Additional Notes                                                     |
+| ------------ | ------------------------------------ | -------------------------------------------------------------------- |
+| **Name**     | Name of the profile                  | This will display on the status bar                                  |
+| **Host**     | SSH Server Host                      | This will appear when hovering over the status bar                   |
+| **Username** | SSH Server Username                  | A username to use when establishing the SSH connection to the server |
+| **Port**     | SSH Server Port                      | The ssh port of the SSH server. Default value is 22                  |
+| **SAS Path** | Path to SAS Executable on the server | Must be a fully qualified path on the SSH server to a SAS executable |
+
+## Add New SAS 9.4 Remote Profile
+
+Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, select the SAS 9.4 (remote) connection type and complete the prompts (using values from the preceeding table) to create a new profile.
+
+## Additional settings in a profile
+
+| Name            | Supported Connection Types                          | Description                             | Additional Notes                                      |
+| --------------- | --------------------------------------------------- | --------------------------------------- | ----------------------------------------------------- |
+| **SAS Options** | SAS Viya, SAS 9.4 (local)\*, SAS 9.4 (remote - SSH) | SAS options to apply to the SAS session | SAS 9.4 local startup options currently not supported |
+| **AutoExec**    | SAS Viya                                            | SAS code to execute at session startup  | Currently only works for Viya                         |
 
 ### Profile Anatomy
 
 The parameters listed below make up the profile settings for configuring a connection to a local SAS 9.4 instance.
 
-| Name     | Description                      | Additional Notes                    |
-| -------- | -------------------------------- | ----------------------------------- |
-| **Name** | Name of the profile              | This will display on the status bar |
-| **Host** | Indicates SAS 9.4 local instance | Defaults to localhost for com       |
+### SAS Options
+
+SAS System Options can be set per connection profile. Changes made to SAS Options require closing and reopening the session to take effect.
 
 ### Add New SAS 9.4 (local) Profile
 
@@ -182,12 +202,73 @@ The parameters listed below make up the profile settings for configuring a conne
 
 Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows). After executing the `SAS.addProfile` command, select the SAS 9.4 (remote - IOM) connection type to create a new profile.
 
-## Additional settings in a profile
+### AutoExec
 
-| Name            | Description                             | Additional Notes              |
-| --------------- | --------------------------------------- | ----------------------------- |
-| **SAS Options** | SAS options to apply to the SAS session |                               |
-| **AutoExec**    | SAS code to execute at session startup  | Currently only works for Viya |
+For Viya connection profiles, it's possible to setup AutoExec lines that will execute once per session startup. Changes made to the autoexec require closing and reopening the session to take effect. The AutoExec option supports different modes for how to define the SAS lines that should run:
+
+- Line Mode: embed lines directly into the connection profile JSON. This mode is useful if only a few lines are needed to run on session startup. Note that standard JSON escaping rules apply.
+
+  ```json
+  "SAS.connectionProfiles": {
+    "activeProfile": "viyaServer",
+    "profiles": {
+      "viya4": {
+        "endpoint": "https://example-endpoint.com",
+        "connectionType": "rest",
+        "autoExec": [
+          {
+            "type": "line",
+            "line": "ods graphics / imagemap;"
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+- File Mode: specify a path to a file containing autoexec lines to execute. The file must be in a location that is readable by the extension. This mode is useful for complex autoexec scenarios:
+
+  ```json
+    "SAS.connectionProfiles": {
+    "activeProfile": "viyaServer",
+    "profiles": {
+      "viya4": {
+        "endpoint": "https://example-endpoint.com",
+        "connectionType": "rest",
+        "autoExec": [
+          {
+            "type": "file",
+            "filePath": "/my/local/autoexec.sas"
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+- Mixed Mode: The autoexec option supports an array of entries, so it is possible to use a combination of both embedded lines and files. The lines will be read in sequential order as they occur in the array itself.
+
+  ```json
+  "SAS.connectionProfiles": {
+    "activeProfile": "viyaServer",
+    "profiles": {
+      "viya4": {
+        "endpoint": "https://example-endpoint.com",
+        "connectionType": "rest",
+        "autoExec": [
+          {
+            "type": "line",
+            "line": "ods graphics / imagemap;"
+          },
+          {
+            "type": "file",
+            "filePath": "/my/local/autoexec.sas"
+          }
+        ]
+      }
+    }
+  }
+  ```
 
 ## Delete Connection Profile
 
@@ -294,35 +375,35 @@ To run a piece of SAS code:
 2. Select **sas: Run sas file** task from the following picker.
 3. This opens the tasks.json file with a task skeleton like below.
 
-```
+```json
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "sas",
-			"task": "Run sas file",
-			"problemMatcher": [],
-			"label": "sas: Run sas file"
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "sas",
+      "task": "Run sas file",
+      "problemMatcher": [],
+      "label": "sas: Run sas file"
+    }
+  ]
 }
 ```
 
 3. Add **file** field and specify a sas file name to it.
 4. Specify a special name in **label** field. The final task definition likes below
 
-```
+```json
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "sas",
-			"task": "Run sas file",
-			"file": "my.sas",
-			"problemMatcher": [],
-			"label": "run my.sas code"
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "sas",
+      "task": "Run sas file",
+      "file": "my.sas",
+      "problemMatcher": [],
+      "label": "run my.sas code"
+    }
+  ]
 }
 ```
 
@@ -341,20 +422,20 @@ To run a piece of SAS code:
 4. if a file is specified, the **preamble** and **postamble** will be added in the code from this file when this task is executed.
 5. If **file** is absent, then **preamble** and **postamble** will be added in the selected code (if have) or all code in active editor when this task is executed.
 
-```
+```json
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "sas",
-			"task": "Run sas file",
-			"file": "code.sas",
-			"preamble": "some code*",
-			"postamble": "some code*",
-			"problemMatcher": [],
-			"label": "Run additional code"
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "sas",
+      "task": "Run sas file",
+      "file": "code.sas",
+      "preamble": "some code*",
+      "postamble": "some code*",
+      "problemMatcher": [],
+      "label": "Run additional code"
+    }
+  ]
 }
 ```
 
@@ -364,7 +445,7 @@ If you need to run a task frequently, you can define a keyboard shortcut for the
 
 For example, to bind `Ctrl+H` to the **run additional code** task from above, add the following to your keybindings.json file:
 
-```
+```json
 {
   "key": "ctrl+h",
   "command": "workbench.action.tasks.runTask",
