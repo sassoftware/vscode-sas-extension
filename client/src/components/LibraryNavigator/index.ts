@@ -17,11 +17,11 @@ import { Column } from "../../connection/rest/api/compute";
 import DataViewer from "../../panels/DataViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
-import { ConnectionType } from "../profile";
+import LibraryAdapterFactory from "./LibraryAdapterFactory";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
 import PaginatedResultSet from "./PaginatedResultSet";
-import { LibraryItem, TableData } from "./types";
+import { LibraryAdapter, LibraryItem, TableData } from "./types";
 
 class LibraryNavigator implements SubscriptionProvider {
   private libraryDataProvider: LibraryDataProvider;
@@ -31,7 +31,7 @@ class LibraryNavigator implements SubscriptionProvider {
   constructor(context: ExtensionContext) {
     this.extensionUri = context.extensionUri;
     this.libraryDataProvider = new LibraryDataProvider(
-      new LibraryModel(this.activeProfileConnectionType()),
+      new LibraryModel(this.libraryAdapterForConnectionType()),
       context.extensionUri,
     );
     this.webviewManager = new WebViewManager();
@@ -100,15 +100,15 @@ class LibraryNavigator implements SubscriptionProvider {
   }
 
   public async refresh(): Promise<void> {
-    this.libraryDataProvider.refresh(this.activeProfileConnectionType());
+    this.libraryDataProvider.useAdapter(this.libraryAdapterForConnectionType());
   }
 
-  private activeProfileConnectionType(): ConnectionType {
+  private libraryAdapterForConnectionType(): LibraryAdapter {
     const activeProfile = profileConfig.getProfileByName(
       profileConfig.getActiveProfile(),
     );
 
-    return activeProfile && activeProfile.connectionType;
+    return new LibraryAdapterFactory().create(activeProfile.connectionType);
   }
 }
 

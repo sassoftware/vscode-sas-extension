@@ -25,10 +25,9 @@ import {
 import { Writable } from "stream";
 
 import { SubscriptionProvider } from "../SubscriptionProvider";
-import { ConnectionType } from "../profile";
 import LibraryModel from "./LibraryModel";
 import { Icons, Messages, WorkLibraryId } from "./const";
-import { LibraryItem, LibraryType, TableType } from "./types";
+import { LibraryAdapter, LibraryItem, LibraryType, TableType } from "./types";
 
 export const libraryItemMimeType =
   "application/vnd.code.tree.librarydataprovider";
@@ -172,8 +171,8 @@ class LibraryDataProvider
     return new Disposable(() => {});
   }
 
-  public refresh(connectionType: ConnectionType): void {
-    this.model.reset(connectionType);
+  public useAdapter(libraryAdapter: LibraryAdapter): void {
+    this.model.useAdapter(libraryAdapter);
     this._onDidChangeTreeData.fire(undefined);
   }
 }

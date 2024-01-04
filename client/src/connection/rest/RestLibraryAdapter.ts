@@ -26,7 +26,7 @@ class RestLibraryAdapter implements LibraryAdapter {
   protected sessionId: string;
 
   public constructor(
-    private readonly emitConnectionNotification: (
+    protected readonly emitConnectionNotification: (
       callback: () => Promise<void>,
     ) => Promise<void>,
   ) {}
