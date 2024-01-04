@@ -17,7 +17,7 @@ import { getApiConfig } from "../../../src/connection/rest/common";
 
 class MockRestLibraryAdapter extends RestLibraryAdapter {
   constructor() {
-    super();
+    super(async (callback) => await callback());
     const apiConfig = getApiConfig();
     apiConfig.baseOptions.baseURL = "http://test.local";
     this.dataAccessApi = DataAccessApi(apiConfig);

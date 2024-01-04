@@ -1,7 +1,5 @@
-// Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { ProgressLocation, l10n, window } from "vscode";
-
 import { AxiosResponse } from "axios";
 
 import { getSession } from "..";
@@ -27,19 +25,17 @@ class RestLibraryAdapter implements LibraryAdapter {
   protected dataAccessApi: ReturnType<typeof DataAccessApi>;
   protected sessionId: string;
 
+  public constructor(
+    private readonly emitConnectionNotification: (
+      callback: () => Promise<void>,
+    ) => Promise<void>,
+  ) {}
+
   public async connect(): Promise<void> {
     const session = getSession();
     session.onLogFn = LogChannelFn;
 
-    await window.withProgress(
-      {
-        location: ProgressLocation.Notification,
-        title: l10n.t("Connecting to SAS session..."),
-      },
-      async () => {
-        await session.setup();
-      },
-    );
+    await this.emitConnectionNotification(async () => await session.setup());
 
     this.sessionId = session?.sessionId();
     this.dataAccessApi = DataAccessApi(getApiConfig());
