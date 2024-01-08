@@ -58,12 +58,11 @@ For each pull request, you are expected to test the defaults to make sure no reg
 - Download and install the current NodeJS LTS version.
 - Run `npm install` in this folder. This installs all necessary npm modules in both the client and server folder.
 - Open VS Code on this folder.
-- Press Ctrl+Shift+B to compile the client and server.
-- Switch to the Debug viewlet.
-- Select `Launch Client` from the drop down.
-- Run the launch config.
-- If you want to debug the server as well use the launch configuration `Attach to Server`.
-- In the [Extension Development Host] instance of VSCode, open a SAS file.
+- Switch to the `Run and Debug` view in the VS Code Activity Bar (Ctrl+Shift+D).
+- Select `Launch Client` from the drop down (if it is not already).
+- Press ▷ to run the launch config (F5).
+- In the [Extension Development Host] instance of VS Code, open a SAS file.
+- _Optional_: If you want to debug the language server as well, also run the launch configuration `Attach to Server`.
 
 ## Adding a new locale
 
@@ -88,8 +87,44 @@ Follow these steps to update a locale for the SAS Extension for VSCode:
 
 ### Locale contributors
 
-| Language                 | VSCode Language ID | Contributor |
-| ------------------------ | ------------------ | ----------- |
-| **German**               | de                 | David Weik  |
-| **Chinese (Simplified)** | zh-cn              | Wei Wu      |
-| **Portuguese (Brazil)**  | pt-br              | Mark Jordan |
+| Language                 | VSCode Language ID | Contributor     |
+| ------------------------ | ------------------ | --------------- |
+| **French**               | fr                 | Vincent Rejany  |
+| **Italian**              | it                 | Lorenzo Roccato |
+| **German**               | de                 | David Weik      |
+| **Chinese (Simplified)** | zh-cn              | Wei Wu          |
+| **Japanese**             | ja                 | Masayuki Iizuka |
+| **Korean**               | ko                 | Meilan Ji       |
+| **Portuguese (Brazil)**  | pt-br              | Mark Jordan     |
+
+## Run single test file
+
+- Open the `.test.ts` file you want to run
+- Switch to the `Run and Debug` view in the VS Code Activity Bar (Ctrl+Shift+D).
+- Select `Language Server E2E Test` from the drop down.
+- Press ▷ to run the launch config (F5).
+- See test result in the `Debug Console` panel.
+
+# Testing unpublished versions
+
+You can still try out any commit or pull request (PR) if you don't want to manually build from source code.
+
+## Download VSIX file
+
+- Open below page with your browser
+  - For main branch https://github.com/sassoftware/vscode-sas-extension/actions/workflows/package.yml
+  - For Pull Request https://github.com/sassoftware/vscode-sas-extension/actions/workflows/pr.yml
+- Select the commit/PR you want.
+- Download the `artifact.zip` file from the Artifacts section.
+- Unzip it to get the VSIX file.
+
+## Install VSIX file
+
+- Open the `Extensions` view on the VS Code Activity Bar.
+- Click the `...` from the top right of the Extensions pane, and select `Install from VSIX...`, select the downloaded VSIX file.
+- Restart VS Code
+
+**Note**:
+
+- When testing VSIX files, it's usually a good idea to turn off "Extensions: Auto Update" in your VS Code settings to prevent auto-updating to a published version.
+- When switching between multiple VSIX files, it's usually a good idea to clean up the [installation directory](https://code.visualstudio.com/docs/editor/extension-marketplace#_where-are-extensions-installed) after uninstalling a previous version. Otherwise VS Code may cache it as un-published versions may look same.
