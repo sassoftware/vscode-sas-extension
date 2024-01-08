@@ -775,9 +775,9 @@ const input: ProfilePromptInput = {
     description: l10n.t("Select a Connection Type."),
   },
   [ProfilePromptType.Host]: {
-    title: l10n.t("SAS 9 SSH Server"),
+    title: l10n.t("SAS 9 Server"),
     placeholder: l10n.t("Enter the server name"),
-    description: l10n.t("Enter the name of the SAS 9 SSH server."),
+    description: l10n.t("Enter the name of the SAS 9 server."),
   },
   [ProfilePromptType.SASPath]: {
     title: l10n.t("Server Path"),
