@@ -73,10 +73,13 @@ export class ITCSession extends Session {
       return; // manually terminate to avoid executing the code below
     }
 
-    this._shellProcess = spawn("chcp 65001 >NUL & powershell.exe -NonInteractive -NoProfile -Command -", {
-      shell: true,
-      env: process.env,
-    });
+    this._shellProcess = spawn(
+      "chcp 65001 >NUL & powershell.exe -NonInteractive -NoProfile -Command -",
+      {
+        shell: true,
+        env: process.env,
+      },
+    );
     this._shellProcess.stdout.on("data", this.onShellStdOut);
     this._shellProcess.stderr.on("data", this.onShellStdErr);
     this._shellProcess.stdin.write(scriptContent + "\n", this.onWriteComplete);

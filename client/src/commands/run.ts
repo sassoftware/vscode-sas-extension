@@ -154,7 +154,7 @@ async function runCode(selected?: boolean, uri?: Uri) {
       cancellable: typeof session.cancel === "function",
     },
     (_progress, cancellationToken) => {
-      cancellationToken.onCancellationRequested((...args) => {
+      cancellationToken.onCancellationRequested(() => {
         session.cancel?.();
       });
       return session.run(code).then((results) => {

@@ -87,8 +87,11 @@ describe("ITC connection", () => {
 
       await setupPromise;
 
-      expect(spawnStub.calledWith("powershell.exe /nologo -Command -")).to.be
-        .true;
+      expect(
+        spawnStub.calledWith(
+          "chcp 65001 >NUL & powershell.exe -NonInteractive -NoProfile -Command -",
+        ),
+      ).to.be.true;
 
       //using args here allows use of deep equal, that generates a concise diff in the test output on failures
       expect(stdinStub.args[0][0]).to.deep.equal(scriptContent + "\n");
