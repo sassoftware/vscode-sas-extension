@@ -3,9 +3,8 @@
 import type { Doc, Printer } from "prettier";
 import { builders, utils } from "prettier/doc";
 
-import type { Token } from "../Lexer";
 import { isSamePosition } from "../utils";
-import { SASAST, Statement, isComment } from "./parser";
+import { SASAST, Statement, Token, isComment } from "./parser";
 
 const {
   fill,
@@ -64,25 +63,39 @@ const printRegion = (children: Doc[]) => {
 };
 
 const printStatement = (node: Statement) => {
-  const tokens = node.children;
+  const [first, ...others] = node.children;
   const statement =
-    tokens[0].type === "cards-data" || tokens[0].type === "raw-data"
-      ? markAsRoot(tokens.map((token) => token.text))
+    first.type === "cards-data" || first.type === "raw-data"
+      ? markAsRoot(node.children.map((token) => token.text))
       : fill(
-          tokens.map((token, index) =>
-            index === 0 && isComment(token)
-              ? printComment(token)
-              : index > 0 && !isSamePosition(token.start, tokens[index - 1].end)
-                ? indent([
-                    token.text === "=" ||
-                    (tokens[index - 1].text === "=" &&
-                      index + 1 < tokens.length &&
-                      tokens[index + 1].text !== "=")
-                      ? softline
-                      : line,
-                    token.text,
-                  ])
-                : token.text,
+          // Note: `fill` requires elements with odd indices must be line breaks
+          // Refers to https://github.com/prettier/prettier/blob/main/commands.md#fill
+          others.reduce<Doc[]>(
+            (pre, token, index) => {
+              const preToken = index === 0 ? first : others[index - 1];
+              if (
+                typeof pre[pre.length - 1] === "string" &&
+                isSamePosition(token.start, preToken.end)
+              ) {
+                // do not break if no whitespace
+                pre[pre.length - 1] += token.text;
+                return pre;
+              }
+              return [
+                ...pre,
+                indent(
+                  token.text === "=" ||
+                    (preToken.text === "=" &&
+                      index + 1 < others.length &&
+                      others[index + 1].text !== "=")
+                    ? // trim whitespace around equals sign
+                      softline
+                    : line,
+                ),
+                token.text,
+              ];
+            },
+            [isComment(first) ? printComment(first) : first.text],
           ),
         );
   return node.leadingComment

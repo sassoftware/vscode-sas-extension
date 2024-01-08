@@ -64,8 +64,9 @@ proc template;
       entrytitle "Overlay of REFERENCELINE, BARCHARTPARM and SERIESPLOT";
       layout overlay;
         referenceline y=25000000 / curvelabel="Target";
-        barchartparm category=year response=retail / dataskin=matte fillattrs=(transparency=0.5)
-          fillpatternattrs=(pattern=R1 color=lightgray);
+        barchartparm category=year response=retail / dataskin=matte
+          fillattrs=(transparency=0.5) fillpatternattrs=(pattern=R1
+          color=lightgray);
         seriesplot x=year y=profit / name="series";
         discretelegend "series";
       endlayout;

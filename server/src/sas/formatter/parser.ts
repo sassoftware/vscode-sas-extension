@@ -8,13 +8,13 @@ import type { SyntaxProvider } from "../SyntaxProvider";
 interface FakeToken extends Omit<RealToken, "type"> {
   type: "raw-data";
 }
-type Token = FakeToken | RealToken;
+export type Token = FakeToken | RealToken;
 
 export interface Statement {
   type: "statement";
   name: string;
   children: Token[];
-  leadingComment?: RealToken;
+  leadingComment?: Token;
 }
 
 export interface Region {
@@ -30,7 +30,7 @@ interface Program {
 
 export type SASAST = Program | Region | Statement | Token;
 
-export const isComment = (token: Token): token is RealToken =>
+export const isComment = (token: Token) =>
   token.type === "comment" || token.type === "macro-comment";
 
 const removePrevStatement = (parent: Program | Region) => {
