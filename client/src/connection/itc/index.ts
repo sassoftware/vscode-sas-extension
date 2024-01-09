@@ -188,6 +188,7 @@ export class ITCSession extends Session {
     const codeWithEnd = `${codeWithODSPath}\n%put ${LineCodes.RunEndCode};`;
     const codeToRun = `$code=\n@'\n${codeWithEnd}\n'@\n`;
 
+    this._html5FileName = "";
     this._shellProcess.stdin.write(codeToRun);
     this._pollingForLogResults = true;
     this._shellProcess.stdin.write(`$runner.Run($code)\n`, async (error) => {
@@ -366,6 +367,10 @@ export class ITCSession extends Session {
    * Fetches the ODS output results for the latest html results file.
    */
   private fetchResults = async () => {
+    if (!this._html5FileName) {
+      return this._runResolve({});
+    }
+
     const globalStorageUri = getGlobalStorageUri();
     try {
       await workspace.fs.readDirectory(globalStorageUri);
