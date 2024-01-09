@@ -1,4 +1,4 @@
-// Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import { authentication, l10n } from "vscode";
 
@@ -9,6 +9,7 @@ import {
   setContextValue,
 } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
+import { useStore } from "../../store";
 import { Session } from "../session";
 import { ContextsApi, SessionsApi } from "./api/compute";
 import { ComputeState, getApiConfig } from "./common";
@@ -17,6 +18,8 @@ import { ComputeServer } from "./server";
 import { ComputeSession } from "./session";
 
 let sessionInstance: RestSession;
+const { onOutputSessionLog: onSessionLogOutput, onOutputLog: onLogOutput } =
+  useStore.getState();
 
 export interface Config extends BaseConfig {
   endpoint: string;
@@ -290,7 +293,7 @@ class RestSession extends Session {
   private printJobLog = async (job: ComputeJob) => {
     const logs = await job.getLogStream();
     for await (const log of logs) {
-      this._onLogFn(log);
+      onLogOutput(log);
     }
   };
 
@@ -299,11 +302,9 @@ class RestSession extends Session {
    * @param session a session id to print logs for.
    */
   private printSessionLog = async (session: ComputeSession) => {
-    if (this._onLogFn) {
-      const logs = await session.getLogStream();
-      for await (const log of logs) {
-        this._onLogFn(log);
-      }
+    const logs = await session.getLogStream();
+    for await (const log of logs) {
+      onSessionLogOutput(log);
     }
   };
 }
