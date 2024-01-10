@@ -5,13 +5,13 @@ import { StateCreator } from "zustand/vanilla";
 import { type Store } from "./store";
 
 export interface RunActions {
-  toggleIsExecutingCode: (isExecuting: boolean) => void;
+  setIsExecutingCode: (isExecuting: boolean) => void;
 }
 
 export const createRunActions: StateCreator<Store, [], [], RunActions> = (
   set,
 ) => ({
-  toggleIsExecutingCode: (isExecutingCode) => {
+  setIsExecutingCode: (isExecutingCode) => {
     set({
       isExecutingCode,
     });

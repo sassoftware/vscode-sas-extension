@@ -1,7 +1,6 @@
 import { subscribeWithSelector } from "zustand/middleware";
 import { StateCreator, createStore } from "zustand/vanilla";
 
-import { logger } from "../middleware";
 import { LogActions, createLogActions } from "./actions";
 import { LogState, initialState } from "./initialState";
 
@@ -13,5 +12,5 @@ const createdStore: StateCreator<Store, []> = (...parameters) => ({
 });
 
 export const useStore = createStore<Store>()(
-  subscribeWithSelector(logger(createdStore)),
+  subscribeWithSelector(createdStore),
 );

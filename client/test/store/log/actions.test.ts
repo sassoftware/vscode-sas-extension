@@ -1,28 +1,108 @@
 import { expect } from "chai";
 
 import { useLogStore } from "../../../src/store";
-import { initialState } from "../../../src/store/log/initialState";
+import { LogState, initialState } from "../../../src/store/log/initialState";
 
 describe("log actions", () => {
   beforeEach(() => {
     useLogStore.setState(initialState);
   });
 
-  it("onOutputLog updates lines and tokens", () => {
+  it("onOutputLog", () => {
     const { onOutputLog } = useLogStore.getState();
 
     onOutputLog([
-      { line: "line1", type: "line" },
-      { line: "line2", type: " line" },
+      { line: "line1", type: "normal" },
+      { line: "line2", type: "hilighted" },
     ]);
 
-    const { logLines } = useLogStore.getState();
-    expect(logLines.length).to.equal(2);
+    onOutputLog([
+      { line: "line3", type: "source" },
+      { line: "line4", type: "title" },
+    ]);
+
+    const expectedState: LogState = {
+      logLines: [
+        {
+          line: "line1",
+          type: "normal",
+        },
+        {
+          line: "line2",
+          type: "hilighted",
+        },
+        {
+          line: "line3",
+          type: "source",
+        },
+        {
+          line: "line4",
+          type: "title",
+        },
+      ],
+      logTokens: ["normal", "hilighted", "source", "title"],
+      producedExecutionOutput: true,
+    };
+
+    expect(useLogStore.getState()).to.deep.include(expectedState);
   });
 
-  it("onOutputSessionLog updates lines and tokens", () => {});
+  it("onOutputSessionLog", () => {
+    const { onOutputSessionLog } = useLogStore.getState();
 
-  it("clearDataLogTokens resets line and token state", () => {});
+    onOutputSessionLog([
+      { line: "line1", type: "normal" },
+      { line: "line2", type: "hilighted" },
+    ]);
 
-  it("toggleOutputLogVisible", () => {});
+    onOutputSessionLog([
+      { line: "line3", type: "source" },
+      { line: "line4", type: "title" },
+    ]);
+
+    const expectedState: LogState = {
+      logLines: [
+        {
+          line: "line1",
+          type: "normal",
+        },
+        {
+          line: "line2",
+          type: "hilighted",
+        },
+        {
+          line: "line3",
+          type: "source",
+        },
+        {
+          line: "line4",
+          type: "title",
+        },
+      ],
+      logTokens: ["normal", "hilighted", "source", "title"],
+      producedExecutionOutput: false,
+    };
+
+    expect(useLogStore.getState()).to.deep.include(expectedState);
+  });
+
+  it("clearLog", () => {
+    const { onOutputSessionLog, clearLog } = useLogStore.getState();
+    onOutputSessionLog([{ line: "line1", type: "normal" }]);
+    clearLog();
+
+    const expectedState: LogState = {
+      logLines: [],
+      logTokens: [],
+      producedExecutionOutput: false,
+    };
+
+    expect(useLogStore.getState()).to.deep.include(expectedState);
+  });
+
+  it("unsetProducedExecutionOutput", () => {
+    useLogStore.getState().unsetProducedExecutionOutput();
+
+    expect(useLogStore.getState().producedExecutionOutput).to.be.false;
+  });
 });

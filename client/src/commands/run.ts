@@ -34,7 +34,7 @@ interface FoldingBlock {
   endCol: number;
 }
 
-const { toggleIsExecutingCode } = useRunStore.getState();
+const { setIsExecutingCode } = useRunStore.getState();
 const { onOutputLog: writeToOutputChannel } = useLogStore.getState();
 
 function getCode(selected = false, uri?: Uri): string {
@@ -172,7 +172,7 @@ const _run = async (selected = false, uri?: Uri) => {
     return;
   }
 
-  toggleIsExecutingCode(true);
+  setIsExecutingCode(true);
   commands.executeCommand("setContext", "SAS.running", true);
 
   await runCode(selected, uri)
@@ -180,7 +180,7 @@ const _run = async (selected = false, uri?: Uri) => {
       onRunError(err);
     })
     .finally(() => {
-      toggleIsExecutingCode(false);
+      setIsExecutingCode(false);
       commands.executeCommand("setContext", "SAS.running", false);
     });
 };
@@ -217,7 +217,7 @@ export async function runTask(
     return;
   }
 
-  toggleIsExecutingCode(true);
+  setIsExecutingCode(true);
   commands.executeCommand("setContext", "SAS.running", true);
 
   let cancelled = false;
@@ -228,7 +228,7 @@ export async function runTask(
       await session.cancel();
     }
 
-    toggleIsExecutingCode(false);
+    setIsExecutingCode(false);
     commands.executeCommand("setContext", "SAS.running", false);
   });
   session.onLogFn = onLog ?? writeToOutputChannel;

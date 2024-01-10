@@ -55,5 +55,6 @@ export const createLogActions: StateCreator<Store, [], [], LogActions> = (
   },
 
   clearLog: () => set({ logTokens: [], logLines: [] }),
+
   unsetProducedExecutionOutput: () => set({ producedExecutionOutput: false }),
 });

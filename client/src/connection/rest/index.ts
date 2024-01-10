@@ -293,11 +293,9 @@ class RestSession extends Session {
   private printJobLog = async (job: ComputeJob) => {
     const logs = await job.getLogStream();
     for await (const log of logs) {
-      console.log(
-        "calling log action, log size: " +
-          useLogStore.getState().logLines.length,
-      );
-      onLogOutput(log);
+      if (log?.length > 0) {
+        onLogOutput(log);
+      }
     }
   };
 
@@ -308,7 +306,9 @@ class RestSession extends Session {
   private printSessionLog = async (session: ComputeSession) => {
     const logs = await session.getLogStream();
     for await (const log of logs) {
-      onSessionLogOutput(log);
+      if (log?.length > 0) {
+        onSessionLogOutput(log);
+      }
     }
   };
 }
