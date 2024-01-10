@@ -6,14 +6,13 @@ import type { Store } from "./store";
 
 export interface LogActions {
   /**
-   * Handles log lines generated for the SAS session execution by appending to the output channel,
-   * in addition to conditionally showing the panel based on user settings.
+   * Handles log lines generated for the SAS session execution.
    * @param logs array of log lines to write.
    */
   onOutputLog: (logs) => void;
 
   /**
-   * Handles log lines generated for the SAS session startup by appending to the output channel.
+   * Handles log lines generated for the SAS session startup.
    * @param logs array of log lines to write.
    */
   onOutputSessionLog: (logs) => void;
