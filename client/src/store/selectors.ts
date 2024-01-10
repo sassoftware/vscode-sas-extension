@@ -2,4 +2,4 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export { logSelectors } from "./log/selectors";
-// export { runSelectors } from "./run/selectors";
+export { runSelectors } from "./run/selectors";

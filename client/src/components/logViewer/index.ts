@@ -8,10 +8,14 @@ import {
   window,
 } from "vscode";
 
-import { useStore } from "../../store";
-import { logSelectors } from "../../store/selectors";
+import { useLogStore, useRunStore } from "../../store";
+import { logSelectors, runSelectors } from "../../store/selectors";
+import {
+  showLogOnExecutionFinish,
+  showLogOnExecutionStart,
+} from "../utils/settings";
 
-const { clearDataLogTokens } = useStore.getState();
+const { clearLog, unsetProducedExecutionOutput } = useLogStore.getState();
 
 let outputChannel: OutputChannel;
 
@@ -23,10 +27,10 @@ export const legend = {
 export const LogTokensProvider: DocumentSemanticTokensProvider = {
   provideDocumentSemanticTokens: (document) => {
     if (document.getText() === "") {
-      clearDataLogTokens();
+      clearLog();
     }
     const tokensBuilder = new SemanticTokensBuilder(legend);
-    const dataTokens = useStore.getState().logTokens;
+    const dataTokens = useLogStore.getState().logTokens;
 
     for (let i = 0; i < dataTokens.length; i++) {
       if (legend.tokenTypes.includes(dataTokens[i])) {
@@ -37,13 +41,7 @@ export const LogTokensProvider: DocumentSemanticTokensProvider = {
   },
 };
 
-useStore.subscribe(logSelectors.selectIsOutputChannelOpen, (open) => {
-  if (open) {
-    outputChannel.show(true);
-  }
-});
-
-useStore.subscribe(logSelectors.selectLogLines, (lines, prevLines) => {
+useLogStore.subscribe(logSelectors.selectLogLines, (lines, prevLines) => {
   if (!outputChannel) {
     outputChannel = window.createOutputChannel(l10n.t("SAS Log"), "sas-log");
   }
@@ -54,3 +52,27 @@ useStore.subscribe(logSelectors.selectLogLines, (lines, prevLines) => {
     outputChannel.appendLine(line.line);
   }
 });
+
+useLogStore.subscribe(
+  logSelectors.selectProducedExecutionOutput,
+  (producedOutput, prevProducedOutput) => {
+    if (producedOutput && !prevProducedOutput) {
+      if (showLogOnExecutionStart()) {
+        outputChannel.show(true);
+      }
+    }
+  },
+);
+
+useRunStore.subscribe(
+  runSelectors.selectIsExecutingCode,
+  (isExecuting, prevIsExecuting) => {
+    if (!isExecuting && prevIsExecuting) {
+      if (showLogOnExecutionFinish()) {
+        outputChannel.show(true);
+      }
+    } else if (isExecuting && !prevIsExecuting) {
+      unsetProducedExecutionOutput();
+    }
+  },
+);

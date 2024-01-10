@@ -2,39 +2,34 @@
 // SPDX-License-Identifier: Apache-2.0
 import { StateCreator } from "zustand/vanilla";
 
-import { showLogOnExecutionStart } from "../../components/utils/settings";
-import { AppStore } from "../store";
+import type { Store } from "./store";
 
 export interface LogActions {
   /**
    * Handles log lines generated for the SAS session execution by appending to the output channel,
    * in addition to conditionally showing the panel based on user settings.
    * @param logs array of log lines to write.
-   * @returns
    */
   onOutputLog: (logs) => void;
 
   /**
    * Handles log lines generated for the SAS session startup by appending to the output channel.
    * @param logs array of log lines to write.
-   * @returns
    */
   onOutputSessionLog: (logs) => void;
 
   /**
-   * Removes all entries from data log tokens.
-   * @returns
+   * Removes all entries from data log tokens and logs.
    */
-  clearDataLogTokens: () => void;
+  clearLog: () => void;
 
   /**
-   *
-   * @param boolean true if the SAS Log should be made visible to the UI, false otherwise.
+   * Resets producedExecutionOutput to its default value.
    */
-  toggleOutputLogVisible: (shouldOpenOutputChannel: boolean) => void;
+  unsetProducedExecutionOutput: () => void;
 }
 
-export const createLogActions: StateCreator<AppStore, [], [], LogActions> = (
+export const createLogActions: StateCreator<Store, [], [], LogActions> = (
   set,
   get,
 ) => ({
@@ -46,13 +41,8 @@ export const createLogActions: StateCreator<AppStore, [], [], LogActions> = (
 
     set((existing) => ({ logLines: [...existing.logLines, ...logs] }));
 
-    //The session is executing code and log has been produced for the first time
-    if (get().isExecutingCode && !get().producedExecutionOutput) {
+    if (!get().producedExecutionOutput) {
       set({ producedExecutionOutput: true });
-
-      if (showLogOnExecutionStart()) {
-        get().toggleOutputLogVisible(true);
-      }
     }
   },
 
@@ -64,14 +54,6 @@ export const createLogActions: StateCreator<AppStore, [], [], LogActions> = (
     set((existing) => ({ logLines: [...existing.logLines, ...logs] }));
   },
 
-  clearDataLogTokens: () => set({ logTokens: [], logLines: [] }),
-
-  toggleOutputLogVisible: (shouldOpenOutputChannel) => {
-    set({ shouldOpenOutputChannel });
-    if (shouldOpenOutputChannel) {
-      set({
-        shouldOpenOutputChannel: false,
-      });
-    }
-  },
+  clearLog: () => set({ logTokens: [], logLines: [] }),
+  unsetProducedExecutionOutput: () => set({ producedExecutionOutput: false }),
 });

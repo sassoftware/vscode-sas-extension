@@ -4,14 +4,12 @@
 import { LogLine } from "../../connection";
 
 export interface LogState {
-  shouldOpenOutputChannel: boolean;
   producedExecutionOutput: boolean;
   logTokens: string[];
   logLines: LogLine[];
 }
 
 export const initialState: LogState = {
-  shouldOpenOutputChannel: false,
   producedExecutionOutput: false,
   logTokens: [],
   logLines: [],

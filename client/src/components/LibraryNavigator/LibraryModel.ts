@@ -8,13 +8,13 @@ import { Writable } from "stream";
 import { getSession } from "../../connection";
 import { DataAccessApi } from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
-import { useStore } from "../../store";
+import { useLogStore } from "../../store";
 import PaginatedResultSet from "./PaginatedResultSet";
 import { DefaultRecordLimit, Messages } from "./const";
 import { LibraryItem, LibraryItemType, TableData, TableRow } from "./types";
 
 const sortById = (a: LibraryItem, b: LibraryItem) => a.id.localeCompare(b.id);
-const { onOutputLog: writeToOutputChannel } = useStore.getState();
+const { onOutputLog: writeToOutputChannel } = useLogStore.getState();
 
 const requestOptions = {
   headers: { Accept: "application/vnd.sas.collection+json" },

@@ -1,16 +1,16 @@
 // Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import type { AppStoreState } from "../initialState";
+import type { LogState } from "./initialState";
 
-const selectIsOutputChannelOpen = (store: AppStoreState) => {
-  return store.shouldOpenOutputChannel;
-};
-
-const selectLogLines = (store: AppStoreState) => {
+const selectLogLines = (store: LogState) => {
   return store.logLines;
 };
 
+const selectProducedExecutionOutput = (store: LogState) => {
+  return store.producedExecutionOutput;
+};
+
 export const logSelectors = {
-  selectIsOutputChannelOpen,
   selectLogLines,
+  selectProducedExecutionOutput,
 };

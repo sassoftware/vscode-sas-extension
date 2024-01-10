@@ -24,7 +24,7 @@ import {
   RunResult,
   getSession,
 } from "../connection";
-import { useStore } from "../store/store";
+import { useLogStore, useRunStore } from "../store";
 import { profileConfig, switchProfile } from "./profile";
 
 interface FoldingBlock {
@@ -34,8 +34,8 @@ interface FoldingBlock {
   endCol: number;
 }
 
-const { toggleIsExecutingCode, onOutputLog: writeToOutputChannel } =
-  useStore.getState();
+const { toggleIsExecutingCode } = useRunStore.getState();
+const { onOutputLog: writeToOutputChannel } = useLogStore.getState();
 
 function getCode(selected = false, uri?: Uri): string {
   const editor = uri
@@ -168,7 +168,7 @@ async function runCode(selected?: boolean, uri?: Uri) {
 }
 
 const _run = async (selected = false, uri?: Uri) => {
-  if (useStore.getState().isExecutingCode) {
+  if (useRunStore.getState().isExecutingCode) {
     return;
   }
 
@@ -200,7 +200,7 @@ export async function runRegion(client: BaseLanguageClient): Promise<void> {
 }
 
 export function hasRunningTask() {
-  return useStore.getState().isExecutingCode;
+  return useRunStore.getState().isExecutingCode;
 }
 export async function runTask(
   code: string,
@@ -208,7 +208,7 @@ export async function runTask(
   closeEmitter?: EventEmitter<number>,
   onLog?: OnLogFn,
 ): Promise<RunResult> {
-  if (useStore.getState().isExecutingCode) {
+  if (useRunStore.getState().isExecutingCode) {
     return;
   }
 

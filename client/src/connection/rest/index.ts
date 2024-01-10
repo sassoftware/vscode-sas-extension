@@ -9,7 +9,7 @@ import {
   setContextValue,
 } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
-import { useStore } from "../../store";
+import { useLogStore } from "../../store";
 import { Session } from "../session";
 import { ContextsApi, SessionsApi } from "./api/compute";
 import { ComputeState, getApiConfig } from "./common";
@@ -19,7 +19,7 @@ import { ComputeSession } from "./session";
 
 let sessionInstance: RestSession;
 const { onOutputSessionLog: onSessionLogOutput, onOutputLog: onLogOutput } =
-  useStore.getState();
+  useLogStore.getState();
 
 export interface Config extends BaseConfig {
   endpoint: string;
@@ -293,6 +293,10 @@ class RestSession extends Session {
   private printJobLog = async (job: ComputeJob) => {
     const logs = await job.getLogStream();
     for await (const log of logs) {
+      console.log(
+        "calling log action, log size: " +
+          useLogStore.getState().logLines.length,
+      );
       onLogOutput(log);
     }
   };

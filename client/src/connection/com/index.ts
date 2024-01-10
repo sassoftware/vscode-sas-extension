@@ -6,14 +6,14 @@ import { resolve } from "path";
 
 import { BaseConfig, RunResult } from "..";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
-import { useStore } from "../../store";
+import { useLogStore } from "../../store";
 import { Session } from "../session";
 import { scriptContent } from "./script";
 
 const endCode = "--vscode-sas-extension-submit-end--";
 let sessionInstance: COMSession;
 
-const { onOutputLog: onLogFn } = useStore.getState();
+const { onOutputLog: onLogFn } = useLogStore.getState();
 
 /**
  * Configuration parameters for this connection provider
