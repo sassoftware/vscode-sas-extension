@@ -3,6 +3,7 @@
 import { ColorThemeKind, l10n, window, workspace } from "vscode";
 
 import { isAbsolute } from "path";
+import { v4 } from "uuid";
 
 import { getHtmlStyle, isOutputHtmlEnabled } from "./settings";
 
@@ -48,12 +49,21 @@ export function wrapCodeWithOutputHtml(code: string): string {
     const htmlStyleOption = generateHtmlStyleOption();
     return `title;footnote;ods _all_ close;
 ods graphics on;
-ods html5${htmlStyleOption} options(bitmap_mode='inline' svg_mode='inline');
+ods html5${htmlStyleOption} options(bitmap_mode='inline' svg_mode='inline') body="${v4()}.htm";
 ${code}
 ;*';*";*/;run;quit;ods html5 close;`;
   } else {
     return code;
   }
+}
+
+export function extractOutputHtmlFileName(
+  line: string,
+  defaultValue: string,
+): string {
+  return (
+    line.match(/body="(.{8}-.{4}-.{4}-.{4}-.{12}).htm"/)?.[1] ?? defaultValue
+  );
 }
 
 export async function wrapCodeWithPreambleAndPostamble(

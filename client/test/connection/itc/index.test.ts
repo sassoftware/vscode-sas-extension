@@ -6,6 +6,7 @@ import { unlinkSync, writeFileSync } from "fs";
 import { join } from "path";
 import { SinonSandbox, SinonStub, createSandbox } from "sinon";
 import { stubInterface } from "ts-sinon";
+import { v4 } from "uuid";
 
 import { setContext } from "../../../src/components/ExtensionContext";
 import { ITCProtocol, getSession } from "../../../src/connection/itc";
@@ -126,7 +127,8 @@ describe("ITC connection", () => {
 
   describe("run", () => {
     const html5 = '<div id="IDX">';
-    const tempHtmlPath = join(__dirname, "sashtml.htm");
+    const htmlLocation = v4();
+    const tempHtmlPath = join(__dirname, `${htmlLocation}.htm`);
     beforeEach(async () => {
       writeFileSync(tempHtmlPath, html5);
       const setupPromise = session.setup();
@@ -142,11 +144,11 @@ describe("ITC connection", () => {
     });
     it("calls run function from script", async () => {
       const runPromise = session.run(
-        "ods html5;\nproc print data=sashelp.cars;\nrun;",
+        `ods html5;\nproc print data=sashelp.cars;\nrun;`,
       );
 
       //simulate log message for body file
-      onDataCallback(Buffer.from("NOTE: Writing HTML5 Body file: sashtml.htm"));
+      onDataCallback(Buffer.from(`ods html5 body="${htmlLocation}.htm"`));
       //simulate end of submission
       onDataCallback(Buffer.from(LineCodes.RunEndCode));
       onDataCallback(Buffer.from(LineCodes.ResultsFetchedCode));

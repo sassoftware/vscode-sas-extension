@@ -11,6 +11,7 @@ import {
   getSecretStorage,
 } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
+import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
 import { Session } from "../session";
 import { scriptContent } from "./script";
 import { LineCodes } from "./types";
@@ -305,6 +306,7 @@ export class ITCSession extends Session {
       if (!line) {
         return;
       }
+
       if (!this._workDirectory && line.startsWith("WORKDIR=")) {
         const parts = line.split("WORKDIR=");
         this._workDirectory = parts[1].trim();
@@ -313,9 +315,10 @@ export class ITCSession extends Session {
         return;
       }
       if (!this.processLineCodes(line)) {
-        this._html5FileName =
-          line.match(/NOTE: .+ HTML5.* Body.+: (.+)\.htm/)?.[1] ??
-          this._html5FileName;
+        this._html5FileName = extractOutputHtmlFileName(
+          line,
+          this._html5FileName,
+        );
         this._onLogFn?.([{ type: "normal", line }]);
       }
     });
