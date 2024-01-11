@@ -195,9 +195,9 @@ do {
     console.warn("shellProcess stderr: " + msg);
     this._runReject(
       new Error(
-        `${l10n.t(
-          "There was an error executing the SAS Program. See [console log](command:workbench.action.toggleDevTools) for more details.",
-        )}`,
+        l10n.t(
+          `There was an error executing the SAS Program. See [console log](command:workbench.action.toggleDevTools) for more details.`,
+        ),
       ),
     );
   };
