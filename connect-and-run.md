@@ -166,10 +166,10 @@ Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift
 
 ## Additional settings in a profile
 
-| Name            | Supported Connection Types                          | Description                             | Additional Notes                                      |
-| --------------- | --------------------------------------------------- | --------------------------------------- | ----------------------------------------------------- |
-| **SAS Options** | SAS Viya, SAS 9.4 (local)\*, SAS 9.4 (remote - SSH) | SAS options to apply to the SAS session | SAS 9.4 local startup options currently not supported |
-| **AutoExec**    | SAS Viya                                            | SAS code to execute at session startup  | Currently only works for Viya                         |
+| Name            | Supported Connection Types                          | Description                                 | Additional Notes                                      |
+| --------------- | --------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------- |
+| **SAS Options** | SAS Viya, SAS 9.4 (local)\*, SAS 9.4 (remote - SSH) | SAS options to apply to the SAS session     | SAS 9.4 local startup options currently not supported |
+| **AutoExec**    | SAS Viya                                            | SAS code to execute once at session startup |                                                       |
 
 ### Profile Anatomy
 
@@ -177,7 +177,71 @@ The parameters listed below make up the profile settings for configuring a conne
 
 ### SAS Options
 
-SAS System Options can be set per connection profile. Changes made to SAS Options require closing and reopening the session to take effect.
+SAS System Options can be set per connection profile. Changes made to SAS Options require closing and reopening the session to take effect. See the following examples below for required formats for supported connection profile types.
+
+- SAS Viya Example:
+
+  ```json
+  {
+    "SAS.log.showOnExecutionFinish": true,
+    "SAS.log.showOnExecutionStart": false,
+    "SAS.connectionProfiles": {
+      "activeProfile": "viyaServer",
+      "profiles": {
+        "viya4": {
+          "endpoint": "https://example-endpoint.com",
+          "connectionType": "rest",
+          "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"]
+        }
+      }
+    }
+  }
+  ```
+
+- SAS 9.4 (remote - IOM):
+
+  ```json
+  {
+    "testProfile": {
+      "testProfile": {
+        "host": "host",
+        "username": "username",
+        "port": 8591,
+        "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"],
+        "ConnectionType": "iom"
+      }
+    }
+  }
+  ```
+
+- SAS 9.4 (local):
+
+  ```json
+  {
+    "testProfile": {
+      "testProfile": {
+        "host": "localhost",
+        "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"],
+        "ConnectionType": "com"
+      }
+    }
+  }
+  ```
+
+- SAS 9 SSH:
+
+  ```json
+  {
+    "testProfile": {
+      "host": "hostname",
+      "username": "username",
+      "port": 22,
+      "sasPath": "/remote/path/to/sas_u8",
+      "sasOptions": ["-NONEWS", "-ECHOAUTO", "-PAGESIZE MAX"],
+      "connectionType": "ssh"
+    }
+  }
+  ```
 
 ### Add New SAS 9.4 (local) Profile
 
@@ -451,4 +515,8 @@ For example, to bind `Ctrl+H` to the **run additional code** task from above, ad
   "command": "workbench.action.tasks.runTask",
   "args": "Run additional code"
 }
+```
+
+```
+
 ```
