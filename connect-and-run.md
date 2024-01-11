@@ -513,7 +513,3 @@ For example, to bind `Ctrl+H` to the **run additional code** task from above, ad
   "args": "Run additional code"
 }
 ```
-
-```
-
-```
