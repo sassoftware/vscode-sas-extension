@@ -183,16 +183,11 @@ SAS System Options can be set per connection profile. Changes made to SAS Option
 
   ```json
   {
-    "SAS.log.showOnExecutionFinish": true,
-    "SAS.log.showOnExecutionStart": false,
-    "SAS.connectionProfiles": {
-      "activeProfile": "viyaServer",
-      "profiles": {
-        "viya4": {
-          "endpoint": "https://example-endpoint.com",
-          "connectionType": "rest",
-          "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"]
-        }
+    "profiles": {
+      "viya4": {
+        "endpoint": "https://example-endpoint.com",
+        "connectionType": "rest",
+        "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"]
       }
     }
   }
@@ -202,8 +197,8 @@ SAS System Options can be set per connection profile. Changes made to SAS Option
 
   ```json
   {
-    "testProfile": {
-      "testProfile": {
+    "profiles": {
+      "sas9IOM": {
         "host": "host",
         "username": "username",
         "port": 8591,
@@ -218,8 +213,8 @@ SAS System Options can be set per connection profile. Changes made to SAS Option
 
   ```json
   {
-    "testProfile": {
-      "testProfile": {
+    "profiles": {
+      "sas9COM": {
         "host": "localhost",
         "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"],
         "ConnectionType": "com"
@@ -228,17 +223,19 @@ SAS System Options can be set per connection profile. Changes made to SAS Option
   }
   ```
 
-- SAS 9 SSH:
+- SAS 9 (remote - SSH):
 
   ```json
   {
-    "testProfile": {
-      "host": "hostname",
-      "username": "username",
-      "port": 22,
-      "sasPath": "/remote/path/to/sas_u8",
-      "sasOptions": ["-NONEWS", "-ECHOAUTO", "-PAGESIZE MAX"],
-      "connectionType": "ssh"
+    "profiles": {
+      "SAS9SSH": {
+        "host": "hostname",
+        "username": "username",
+        "port": 22,
+        "sasPath": "/remote/path/to/sas_u8",
+        "sasOptions": ["-NONEWS", "-ECHOAUTO", "-PAGESIZE MAX"],
+        "connectionType": "ssh"
+      }
     }
   }
   ```
