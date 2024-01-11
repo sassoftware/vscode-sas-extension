@@ -1,5 +1,7 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { l10n } from "vscode";
+
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { readFileSync } from "fs";
 import { resolve } from "path";
@@ -193,7 +195,9 @@ do {
     console.warn("shellProcess stderr: " + msg);
     this._runReject(
       new Error(
-        "There was an error executing the SAS Program.\nSee console log for more details.",
+        `${l10n.t(
+          "There was an error executing the SAS Program. See [console log](command:workbench.action.toggleDevTools) for more details.",
+        )}`,
       ),
     );
   };
