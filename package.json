@@ -425,7 +425,8 @@
     ],
     "configurationDefaults": {
       "[sas]": {
-        "editor.formatOnType": true
+        "editor.formatOnType": true,
+        "editor.formatOnPaste": true
       }
     },
     "commands": [
