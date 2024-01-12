@@ -137,9 +137,9 @@ class SASRunner{
     try {
       do
       {
-        $objStream.Read(1024, [ref] $bytes)
+        $objStream.Read(8192, [ref] $bytes)
         $outStream.Write($bytes, 0, $bytes.length)
-        $endOfFile = $bytes.Length -lt 1024
+        $endOfFile = $bytes.Length -lt 8192
         $byteCount = $byteCount + $bytes.Length
       } while (-not $endOfFile)
     } finally {
