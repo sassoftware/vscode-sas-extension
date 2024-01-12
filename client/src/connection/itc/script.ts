@@ -133,18 +133,20 @@ class SASRunner{
 
     $endOfFile = $false
     $byteCount = 0
-    $outStream = [System.IO.StreamWriter] $outputFile
-    do
-    {
-      $objStream.Read(1024, [ref] $bytes)
-      $outStream.Write([System.Text.Encoding]::UTF8.GetString($bytes))
-      $endOfFile = $bytes.Length -lt 1024
-      $byteCount = $byteCount + $bytes.Length
-    } while (-not $endOfFile)
-
-    $objStream.Close()
-    $outStream.Close()
-    $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
+    $outStream = New-Object System.IO.FileStream($outputFile, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write)
+    try {
+      do
+      {
+        $objStream.Read(1024, [ref] $bytes)
+        $outStream.Write($bytes, 0, $bytes.length)
+        $endOfFile = $bytes.Length -lt 1024
+        $byteCount = $byteCount + $bytes.Length
+      } while (-not $endOfFile)
+    } finally {
+      $objStream.Close()
+      $outStream.Close()
+      $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
+    }
 
     Write-Host "${LineCodes.ResultsFetchedCode}"
   }
