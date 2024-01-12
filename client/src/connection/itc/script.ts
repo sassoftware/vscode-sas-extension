@@ -130,7 +130,6 @@ class SASRunner{
     $objFile = $this.objSAS.FileService.AssignFileref("outfile", "DISK", $filePath, "", [ref] $fileRef)
     $objStream = $objFile.OpenBinaryStream(1);
     [Byte[]] $bytes = 0x0
-    [Byte[]] $allBytes = 0x0
 
     $endOfFile = $false
     $byteCount = 0
@@ -138,12 +137,11 @@ class SASRunner{
     do
     {
       $objStream.Read(1024, [ref] $bytes)
-      $allBytes += $bytes
+      $outStream.Write([System.Text.Encoding]::UTF8.GetString($bytes))
       $endOfFile = $bytes.Length -lt 1024
       $byteCount = $byteCount + $bytes.Length
     } while (-not $endOfFile)
 
-    $outStream.Write([System.Text.Encoding]::UTF8.GetString($allBytes))
     $objStream.Close()
     $outStream.Close()
     $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
