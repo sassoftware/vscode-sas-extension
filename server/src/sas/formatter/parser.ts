@@ -185,6 +185,10 @@ export const getParser =
             children: [],
           };
           parent.children.push(region);
+          if (currentStatement) {
+            prevStatement = currentStatement;
+            currentStatement = undefined;
+          }
         }
       }
       // --- ---

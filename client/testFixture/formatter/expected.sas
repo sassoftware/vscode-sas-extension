@@ -44,6 +44,7 @@ def my_function():
     print("Inside the proc step")
 endsubmit;
 run;
+%test
 
 proc lua;
 submit;

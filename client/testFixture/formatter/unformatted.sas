@@ -39,6 +39,7 @@ def my_function():
     print("Inside the proc step")
 endsubmit;
 run;
+%test
 proc lua;
 submit;
 local dsid = sas.open("sashelp.company") -- open for input            
