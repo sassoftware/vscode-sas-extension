@@ -670,7 +670,8 @@ export class CodeZoneManager {
       if (token && token.text) {
         word = token.text.toUpperCase();
         if (_isBlockEnd[word]) {
-          return true;
+          token = this._getPrev(context);
+          return token?.text === ";";
         } else if (word === "CANCEL") {
           token = this._getPrev(context);
           if (token && token.text && _isBlockEnd[token.text.toUpperCase()]) {

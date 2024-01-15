@@ -59,7 +59,7 @@ export class FormatOnTypeProvider {
       semicolonCol + 1,
     );
     let curBlockZoneType: "proc" | "data" | "macro" | undefined;
-    let shouldDecIndent = false;
+    let referBlockStartLine = false;
     if (
       zoneAfterSemicolon === ZONE_TYPE.GBL_STMT ||
       zoneAfterSemicolon === ZONE_TYPE.COMMENT ||
@@ -84,14 +84,10 @@ export class FormatOnTypeProvider {
         case ZT.MACRO_STMT_OPT_VALUE:
         case ZT.MACRO_STMT_BODY: {
           !curBlockZoneType && (curBlockZoneType = "macro");
-          shouldDecIndent = true;
+          referBlockStartLine = true;
           break;
         }
       }
-    }
-    // If no need to decrease indent
-    if (!shouldDecIndent) {
-      return [];
     }
     // Otherwise, need to decrease indent of current line
     const foldingBlock: FoldingBlock | null =
@@ -102,17 +98,6 @@ export class FormatOnTypeProvider {
         true,
         true,
       );
-    let blockStartLine;
-    if (!foldingBlock) {
-      const lastNotEmptyLine = this._getLastNotEmptyLine(line - 1);
-      if (lastNotEmptyLine === undefined) {
-        return [];
-      } else {
-        blockStartLine = lastNotEmptyLine;
-      }
-    } else {
-      blockStartLine = foldingBlock.startLine;
-    }
     // Detect recursive block, which is not supported yet
     switch (curBlockZoneType) {
       case "data": {
@@ -134,16 +119,19 @@ export class FormatOnTypeProvider {
         break;
       }
     }
-    const blockStartLineText = this.model.getLine(blockStartLine);
-    const blockStartIndentLen = this._getIndentLength(
-      blockStartLineText,
+
+    const expectedCurLineIndent = this._getExpectedCurLineIndent(
+      referBlockStartLine,
+      foldingBlock,
+      line,
       tabSize,
     );
-    const expectedCurLineIndent = blockStartIndentLen;
+    if (expectedCurLineIndent === undefined) {
+      return [];
+    }
     const curLineText = this.model.getLine(line);
     const curLineIndentText = this._getIndentText(curLineText);
     const curLineIndentLen = this._getIndentLength(curLineText, tabSize);
-
     if (expectedCurLineIndent === curLineIndentLen) {
       return [];
     } else {
@@ -161,6 +149,69 @@ export class FormatOnTypeProvider {
           expectedCurLineIndentText,
         ),
       ];
+    }
+  }
+
+  private _getExpectedCurLineIndent(
+    referBlockStartLine: boolean,
+    foldingBlock: FoldingBlock | null,
+    line: number,
+    tabSize: number,
+  ) {
+    const lastNotEmptyLine = this._getLastNotEmptyLine(line - 1);
+    if (
+      referBlockStartLine &&
+      (foldingBlock || lastNotEmptyLine !== undefined)
+    ) {
+      const blockStartLine = foldingBlock?.startLine ?? lastNotEmptyLine!;
+      const blockStartLineText = this.model.getLine(blockStartLine);
+      return this._getIndentLength(blockStartLineText, tabSize);
+    }
+
+    const tokens = this.syntaxProvider.getSyntax(line);
+    const cleanedTokens = this._cleanTokens(line, tokens);
+    const index = this._findSemicolonTokenRightToLeft(
+      line,
+      cleanedTokens,
+      cleanedTokens.length - 1,
+    );
+    if (index > 0) {
+      const lineText = this.model.getLine(line);
+      const tokenBeforeSemicolon = cleanedTokens[index - 1];
+      const tokenBeforeSemicolonText = this._getTokenText(
+        cleanedTokens,
+        index - 1,
+        lineText,
+      ).trim();
+      // only referBlockStartLine for "%mend;" is false, for "RUN;" and "QUIT;" is true
+      if (
+        tokenBeforeSemicolon.style === Lexer.TOKEN_TYPES.MSKEYWORD &&
+        tokenBeforeSemicolonText.toLowerCase() === "%mend"
+      ) {
+        return 0;
+      }
+      // refer to the last line
+      if (
+        lastNotEmptyLine !== undefined &&
+        tokenBeforeSemicolon.style === Lexer.TOKEN_TYPES.WORD &&
+        (tokenBeforeSemicolonText.toLowerCase() === "run" ||
+          tokenBeforeSemicolonText.toLowerCase() === "quit")
+      ) {
+        const lastNotEmptyLineText = this.model.getLine(lastNotEmptyLine);
+        const lastNotEmptyLineIndentLen = this._getIndentLength(
+          lastNotEmptyLineText,
+          tabSize,
+        );
+        if (foldingBlock?.startLine === lastNotEmptyLine) {
+          // new block
+          return (
+            lastNotEmptyLineIndentLen +
+            tabSize -
+            (lastNotEmptyLineIndentLen % tabSize)
+          );
+        }
+        return lastNotEmptyLineIndentLen;
+      }
     }
   }
 
