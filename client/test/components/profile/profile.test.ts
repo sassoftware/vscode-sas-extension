@@ -944,8 +944,8 @@ describe("Profiles", async function () {
       {
         name: "Host",
         prompt: ProfilePromptType.Host,
-        wantTitle: "SAS 9 SSH Server",
-        wantDescription: "Enter the name of the SAS 9 SSH server.",
+        wantTitle: "SAS 9 Server",
+        wantDescription: "Enter the name of the SAS 9 server.",
         wantPlaceHolder: "Enter the server name",
       },
       {

@@ -8,7 +8,6 @@ import {
   Disposable,
   Event,
   EventEmitter,
-  SecretStorage,
   commands,
   workspace,
 } from "vscode";
@@ -17,6 +16,7 @@ import { profileConfig } from "../commands/profile";
 import { ConnectionType } from "../components/profile";
 import { getTokens, refreshToken } from "../connection/rest/auth";
 import { getCurrentUser } from "../connection/rest/identities";
+import { getSecretStorage } from "./ExtensionContext";
 
 const SECRET_KEY = "SASAuth";
 
@@ -27,6 +27,7 @@ interface SASAuthSession extends AuthenticationSession {
 export class SASAuthProvider implements AuthenticationProvider, Disposable {
   static id = "SAS";
 
+  private readonly secretStorage;
   private _disposables: Disposable[];
   private _lastSession: SASAuthSession | undefined;
   private _onDidChangeSessions =
@@ -35,7 +36,7 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
     return this._onDidChangeSessions.event;
   }
 
-  constructor(private readonly secretStorage: SecretStorage) {
+  constructor() {
     this._disposables = [
       this._onDidChangeSessions,
       workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
@@ -52,6 +53,7 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
         }
       }),
     ];
+    this.secretStorage = getSecretStorage<SASAuthSession>(SECRET_KEY);
   }
 
   dispose(): void {
@@ -80,7 +82,7 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
   }
 
   private async _getSessions(): Promise<readonly AuthenticationSession[]> {
-    const sessions = await this.getStoredSessions();
+    const sessions = await this.secretStorage.getNamespaceData();
     if (!sessions) {
       return [];
     }
@@ -152,18 +154,11 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
   }
 
   private async writeSession(session: SASAuthSession): Promise<void> {
-    const storedSessions = await this.getStoredSessions();
-
-    const sessions = {
-      ...(storedSessions || {}),
-      [session.id]: session,
-    };
-
-    await this.secretStorage.store(SECRET_KEY, JSON.stringify(sessions));
+    this.secretStorage.store(session.id, session);
   }
 
   async removeSession(sessionId: string, silent?: boolean): Promise<void> {
-    const sessions = await this.getStoredSessions();
+    const sessions = await this.secretStorage.getNamespaceData();
     if (!sessions) {
       return;
     }
@@ -178,14 +173,14 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
     if (!silent) {
       // Triggered by user sign out from the Accounts menu
       // VS Code will sign out all sessions by this account
-      Object.values(sessions).forEach((s) => {
+      Object.values(sessions).forEach((s: SASAuthSession) => {
         if (s.account.id === session.account.id) {
           delete sessions[s.id];
         }
       });
     }
 
-    await this.secretStorage.store(SECRET_KEY, JSON.stringify(sessions));
+    await this.secretStorage.setNamespaceData(sessions);
 
     this._lastSession = undefined;
     this._onDidChangeSessions.fire({
@@ -197,16 +192,5 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
     if (!silent) {
       commands.executeCommand("setContext", "SAS.authorized", false);
     }
-  }
-
-  private async getStoredSessions(): Promise<
-    Record<string, SASAuthSession> | undefined
-  > {
-    const storedSessionData = await this.secretStorage.get(SECRET_KEY);
-    if (!storedSessionData) {
-      return;
-    }
-
-    return JSON.parse(storedSessionData);
   }
 }

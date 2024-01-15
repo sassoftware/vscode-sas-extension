@@ -170,7 +170,8 @@
                       "enum": [
                         "rest",
                         "ssh",
-                        "com"
+                        "com",
+                        "iom"
                       ]
                     },
                     "sasOptions": {
@@ -317,6 +318,41 @@
                             "type": "number",
                             "default": 22,
                             "description": "%configuration.SAS.connectionProfiles.profiles.ssh.port%",
+                            "exclusiveMinimum": 1,
+                            "exclusiveMaximum": 65535
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "connectionType": {
+                            "const": "iom"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "host",
+                          "username",
+                          "port"
+                        ],
+                        "properties": {
+                          "host": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.host%"
+                          },
+                          "username": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.username%"
+                          },
+                          "port": {
+                            "type": "number",
+                            "default": 8591,
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.port%",
                             "exclusiveMinimum": 1,
                             "exclusiveMaximum": 65535
                           }
