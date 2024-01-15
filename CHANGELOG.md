@@ -4,13 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
-## [Unreleased]
+## [v1.6.0] - 2024-01-15
 
 ### Added
 
 - Added the ability to upload and download sas content using the context menu ([#547](https://github.com/sassoftware/vscode-sas-extension/issues/547))
 - Added the ability to download results as an html file ([#546](https://github.com/sassoftware/vscode-sas-extension/issues/546))
 - Added sas 9.4 remote connection support via ITC and the IOM Bridge protocol ([#592](https://github.com/sassoftware/vscode-sas-extension/pull/592))
+- Support recursive folding block ([#555](https://github.com/sassoftware/vscode-sas-extension/pull/555))
+- Added `Close Session` button on the tooltip of the active profile status bar item ([#573](https://github.com/sassoftware/vscode-sas-extension/pull/573))
+- Support function signature help ([#626](https://github.com/sassoftware/vscode-sas-extension/pull/626))
+- Added `ods graphics on;` to the wrapper code ([#648](https://github.com/sassoftware/vscode-sas-extension/pull/648))
+- Japanese translation ([#597](https://github.com/sassoftware/vscode-sas-extension/pull/597))
+- French translation ([#634](https://github.com/sassoftware/vscode-sas-extension/pull/634))
+- Italian translation ([#654](https://github.com/sassoftware/vscode-sas-extension/pull/654))
+
+### Changed
+
+- Removed the disconnect button from the editor toolbar (next to the run button), Please use the `Close Session` button on the tooltip of the active profile status bar item instead. ([#573](https://github.com/sassoftware/vscode-sas-extension/pull/573))
+
+### Fixed
+
+- ODS display image inline ([#471](https://github.com/sassoftware/vscode-sas-extension/issues/471))
+- sasnb extension name for save ([#607](https://github.com/sassoftware/vscode-sas-extension/issues/607))
+- document symbol error ([#715](https://github.com/sassoftware/vscode-sas-extension/issues/715))
 
 ## [v1.5.0] - 2023-10-27
 
