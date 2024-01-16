@@ -173,6 +173,7 @@ export function activate(context: ExtensionContext): void {
 }
 
 function triggerProfileUpdate(): void {
+  commands.executeCommand("SAS.close", true);
   const profileList = profileConfig.getAllProfiles();
   const activeProfileName = profileConfig.getActiveProfile();
   if (profileList[activeProfileName]) {
