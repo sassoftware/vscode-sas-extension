@@ -242,6 +242,9 @@ function getItemKind(zone: number | LibCompleteItem["type"]) {
   if (zone === "LIBRARY") {
     return CompletionItemKind.Folder;
   }
+  if (zone === ZONE_TYPE.SAS_FUNC || zone === ZONE_TYPE.MACRO_FUNC) {
+    return CompletionItemKind.Function;
+  }
   return CompletionItemKind.Keyword;
 }
 
