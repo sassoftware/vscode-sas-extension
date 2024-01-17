@@ -25,7 +25,7 @@ class LibraryModel {
 
   public async connect(): Promise<void> {
     const session = getSession();
-    session.onExecutionLogFn = appendSessionLogFn;
+    session.onSessionLogFn = appendSessionLogFn;
 
     await window.withProgress(
       {

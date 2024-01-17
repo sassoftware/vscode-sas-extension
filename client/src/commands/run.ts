@@ -211,6 +211,7 @@ export async function runTask(
   messageEmitter?: EventEmitter<string>,
   closeEmitter?: EventEmitter<number>,
   onLog?: OnLogFn,
+  onSessionLog?: OnLogFn,
 ): Promise<RunResult> {
   if (useRunStore.getState().isExecutingCode) {
     return;
@@ -236,6 +237,7 @@ export async function runTask(
     commands.executeCommand("setContext", "SAS.running", false);
   });
   session.onExecutionLogFn = onLog ?? appendExecutionLogFn;
+  session.onSessionLogFn = onSessionLog ?? appendSessionLogFn;
 
   messageEmitter.fire(`${l10n.t("Connecting to SAS session...")}\r\n`);
   !cancelled && (await session.setup());
