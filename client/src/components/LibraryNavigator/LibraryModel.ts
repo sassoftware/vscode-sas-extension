@@ -5,16 +5,15 @@ import { ProgressLocation, l10n, window } from "vscode";
 import { AxiosResponse } from "axios";
 import { Writable } from "stream";
 
+import { appendSessionLogFn } from "../../components/logViewer";
 import { getSession } from "../../connection";
 import { DataAccessApi } from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
-import { useLogStore } from "../../store";
 import PaginatedResultSet from "./PaginatedResultSet";
 import { DefaultRecordLimit, Messages } from "./const";
 import { LibraryItem, LibraryItemType, TableData, TableRow } from "./types";
 
 const sortById = (a: LibraryItem, b: LibraryItem) => a.id.localeCompare(b.id);
-const { onOutputLog: writeToOutputChannel } = useLogStore.getState();
 
 const requestOptions = {
   headers: { Accept: "application/vnd.sas.collection+json" },
@@ -26,7 +25,7 @@ class LibraryModel {
 
   public async connect(): Promise<void> {
     const session = getSession();
-    session.onLogFn = writeToOutputChannel;
+    session.onExecutionLogFn = appendSessionLogFn;
 
     await window.withProgress(
       {

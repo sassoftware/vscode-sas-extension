@@ -319,7 +319,7 @@ export class ITCSession extends Session {
           line,
           this._html5FileName,
         );
-        this._onLogFn?.([{ type: "normal", line }]);
+        this._onExecutionLogFn?.([{ type: "normal", line }]);
       }
     });
   };

@@ -9,7 +9,6 @@ import {
   setContextValue,
 } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
-import { useLogStore } from "../../store";
 import { Session } from "../session";
 import { ContextsApi, SessionsApi } from "./api/compute";
 import { ComputeState, getApiConfig } from "./common";
@@ -18,8 +17,6 @@ import { ComputeServer } from "./server";
 import { ComputeSession } from "./session";
 
 let sessionInstance: RestSession;
-const { onOutputSessionLog: onSessionLogOutput, onOutputLog: onLogOutput } =
-  useLogStore.getState();
 
 export interface Config extends BaseConfig {
   endpoint: string;
@@ -294,7 +291,7 @@ class RestSession extends Session {
     const logs = await job.getLogStream();
     for await (const log of logs) {
       if (log?.length > 0) {
-        onLogOutput(log);
+        this._onExecutionLogFn(log);
       }
     }
   };
@@ -306,8 +303,8 @@ class RestSession extends Session {
   private printSessionLog = async (session: ComputeSession) => {
     const logs = await session.getLogStream();
     for await (const log of logs) {
-      if (log?.length > 0) {
-        onSessionLogOutput(log);
+      if (log?.length > 0 && this._onSessionLogFn) {
+        this._onSessionLogFn(log);
       }
     }
   };

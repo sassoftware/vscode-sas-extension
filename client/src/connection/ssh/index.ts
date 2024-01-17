@@ -197,7 +197,7 @@ export class SSHSession extends Session {
           line,
           this.html5FileName,
         );
-        this._onLogFn?.([{ type: "normal", line }]);
+        this._onExecutionLogFn?.([{ type: "normal", line }]);
       }
     });
   };

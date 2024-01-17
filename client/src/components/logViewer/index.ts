@@ -15,9 +15,10 @@ import {
   showLogOnExecutionStart,
 } from "../utils/settings";
 
-const { clearLog, unsetProducedExecutionOutput } = useLogStore.getState();
+const { setProducedExecutionLogOutput } = useLogStore.getState();
 
 let outputChannel: OutputChannel;
+let data: string[] = [];
 
 export const legend = {
   tokenTypes: ["error", "warning", "note"],
@@ -27,38 +28,59 @@ export const legend = {
 export const LogTokensProvider: DocumentSemanticTokensProvider = {
   provideDocumentSemanticTokens: (document) => {
     if (document.getText() === "") {
-      clearLog();
+      data = [];
     }
     const tokensBuilder = new SemanticTokensBuilder(legend);
-    const dataTokens = useLogStore.getState().logTokens;
 
-    for (let i = 0; i < dataTokens.length; i++) {
-      if (legend.tokenTypes.includes(dataTokens[i])) {
-        tokensBuilder.push(document.lineAt(i).range, dataTokens[i]);
+    for (let i = 0; i < data.length; i++) {
+      if (legend.tokenTypes.includes(data[i])) {
+        tokensBuilder.push(document.lineAt(i).range, data[i]);
       }
     }
     return tokensBuilder.build();
   },
 };
 
-useLogStore.subscribe(logSelectors.selectLogLines, (lines, prevLines) => {
+/**
+ * Handles log lines generated for the SAS session startup.
+ * @param logs array of log lines to write.
+ */
+export const appendSessionLogFn = (logLines) => {
+  appendLogLines(logLines);
+};
+
+/**
+ * Handles log lines generated for the SAS session execution.
+ * @param logs array of log lines to write.
+ */
+export const appendExecutionLogFn = (logLines) => {
+  appendLogLines(logLines);
+
+  if (!useLogStore.getState().producedExecutionOutput) {
+    setProducedExecutionLogOutput(true);
+  }
+};
+
+export const appendLogToken = (type: string): void => {
+  data.push(type);
+};
+
+const appendLogLines = (logs) => {
   if (!outputChannel) {
     outputChannel = window.createOutputChannel(l10n.t("SAS Log"), "sas-log");
   }
-
-  const delta = lines.filter((x) => !prevLines.includes(x));
-
-  for (const line of delta) {
+  for (const line of logs) {
+    appendLogToken(line.type);
     outputChannel.appendLine(line.line);
   }
-});
+};
 
 useLogStore.subscribe(
   logSelectors.selectProducedExecutionOutput,
   (producedOutput, prevProducedOutput) => {
     if (producedOutput && !prevProducedOutput) {
       if (showLogOnExecutionStart()) {
-        outputChannel.show(true);
+        outputChannel?.show(true);
       }
     }
   },
@@ -69,10 +91,10 @@ useRunStore.subscribe(
   (isExecuting, prevIsExecuting) => {
     if (!isExecuting && prevIsExecuting) {
       if (showLogOnExecutionFinish()) {
-        outputChannel.show(true);
+        outputChannel?.show(true);
       }
     } else if (isExecuting && !prevIsExecuting) {
-      unsetProducedExecutionOutput();
+      setProducedExecutionLogOutput(false);
     }
   },
 );

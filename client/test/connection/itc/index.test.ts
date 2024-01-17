@@ -68,7 +68,7 @@ describe("ITC connection", () => {
     setContext(stubbedExtensionContext);
 
     session = getSession(config, ITCProtocol.COM);
-    session.onLogFn = () => {
+    session.onExecutionLogFn = () => {
       return;
     };
   });

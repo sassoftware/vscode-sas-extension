@@ -14,6 +14,10 @@ import type { BaseLanguageClient } from "vscode-languageclient";
 
 import { showResult } from "../components/ResultPanel/ResultPanel";
 import {
+  appendExecutionLogFn,
+  appendSessionLogFn,
+} from "../components/logViewer";
+import {
   assign_SASProgramFile,
   wrapCodeWithOutputHtml,
 } from "../components/utils/sasCode";
@@ -24,7 +28,7 @@ import {
   RunResult,
   getSession,
 } from "../connection";
-import { useLogStore, useRunStore } from "../store";
+import { useRunStore } from "../store";
 import { profileConfig, switchProfile } from "./profile";
 
 interface FoldingBlock {
@@ -35,7 +39,6 @@ interface FoldingBlock {
 }
 
 const { setIsExecutingCode } = useRunStore.getState();
-const { onOutputLog: writeToOutputChannel } = useLogStore.getState();
 
 function getCode(selected = false, uri?: Uri): string {
   const editor = uri
@@ -138,7 +141,8 @@ async function runCode(selected?: boolean, uri?: Uri) {
   const code = getCode(selected, uri);
 
   const session = getSession();
-  session.onLogFn = writeToOutputChannel;
+  session.onExecutionLogFn = appendExecutionLogFn;
+  session.onSessionLogFn = appendSessionLogFn;
 
   await window.withProgress(
     {
@@ -231,7 +235,7 @@ export async function runTask(
     setIsExecutingCode(false);
     commands.executeCommand("setContext", "SAS.running", false);
   });
-  session.onLogFn = onLog ?? writeToOutputChannel;
+  session.onExecutionLogFn = onLog ?? appendExecutionLogFn;
 
   messageEmitter.fire(`${l10n.t("Connecting to SAS session...")}\r\n`);
   !cancelled && (await session.setup());
