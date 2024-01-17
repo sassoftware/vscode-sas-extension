@@ -706,16 +706,21 @@ export class Lexer {
               end: this.curr,
             };
           } else {
-            const matches = Lexer.longBiOprs.exec(
-              text.substring(this.curr.column),
-            );
-            if (matches) {
-              this.curr.column += matches[0].length;
+            if (ch !== ";" || (this.quoting < 1 && this.bquoting < 1)) {
+              type = "sep";
+              const matches = Lexer.longBiOprs.exec(
+                text.substring(this.curr.column),
+              );
+              if (matches) {
+                this.curr.column += matches[0].length;
+              } else {
+                this.curr.column++;
+              }
             } else {
               this.curr.column++;
             }
             return {
-              type: "sep",
+              type,
               start: this.start,
               end: this.curr,
             };

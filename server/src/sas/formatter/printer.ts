@@ -24,6 +24,9 @@ const isRootAlign = (doc: Doc) =>
   typeof doc.n === "object" &&
   doc.n.type === "root";
 
+const isEqualsSign = (token: Token) =>
+  token.type === "sep" && token.text === "=";
+
 const startsWithLineBreak = (doc: Doc) => {
   while (Array.isArray(doc)) {
     doc = doc[0];
@@ -84,10 +87,10 @@ const printStatement = (node: Statement) => {
               return [
                 ...pre,
                 indent(
-                  token.text === "=" ||
-                    (preToken.text === "=" &&
+                  isEqualsSign(token) ||
+                    (isEqualsSign(preToken) &&
                       index + 1 < others.length &&
-                      others[index + 1].text !== "=")
+                      !isEqualsSign(others[index + 1]))
                     ? // trim whitespace around equals sign
                       softline
                     : line,

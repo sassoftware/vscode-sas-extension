@@ -1,4 +1,5 @@
 options    ls=72;
+%let a= %nrquote(%nrstr(test%'s     message;));
 data _null_;input name= $ / 1-8 $10. @ @15 @@ @(b*3) @weekday #2 +5 4. ? ?? name= $ / 1-8 $10. @ @15 @@ @(b*3) @weekday #2 +5 4. ? ??;
 cards;
 1  AA  2

@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import type { Token as RealToken } from "../Lexer";
+import { Lexer, Token as RealToken } from "../Lexer";
 import type { FoldingBlock } from "../LexerEx";
 import type { Model } from "../Model";
 import type { SyntaxProvider } from "../SyntaxProvider";
@@ -146,6 +146,49 @@ const preserveProcs = (region: Region, model: Model) => {
   }
 };
 
+const preserveQuoting = (
+  current: number,
+  statement: Statement,
+  model: Model,
+) => {
+  const token = statement.children[statement.children.length - 1];
+  if (isComment(token)) {
+    return current;
+  }
+
+  if (
+    current === -1 &&
+    (Lexer.isQuoting[token.text.toUpperCase()] ||
+      Lexer.isBQuoting[token.text.toUpperCase()])
+  ) {
+    return 0;
+  } else if (current === 0 && token.text !== "(") {
+    return -1;
+  } else if (current >= 0) {
+    statement.children.pop();
+    if (token.text === "(") {
+      if (++current === 1) {
+        statement.children.push(token);
+      }
+    } else if (token.text === ")") {
+      if (--current === 0) {
+        const preToken = statement.children[statement.children.length - 1];
+        const start = preToken.start;
+        const end = token.end;
+        statement.children.pop();
+        statement.children.push({
+          type: "text",
+          text: model.getText({ start, end }),
+          start,
+          end,
+        });
+        return -1;
+      }
+    }
+  }
+  return current;
+};
+
 export const getParser =
   (model: Model, tokens: Token[], syntaxProvider: SyntaxProvider) => () => {
     const root: Program = {
@@ -156,6 +199,7 @@ export const getParser =
     let region: Region | undefined = undefined;
     let currentStatement: Statement | undefined = undefined;
     let prevStatement: Statement | undefined = undefined;
+    let quoting = -1;
 
     for (let i = 0; i < tokens.length; i++) {
       const node = tokens[i];
@@ -219,6 +263,11 @@ export const getParser =
       // --- ---
 
       currentStatement.children.push(node);
+
+      quoting = preserveQuoting(quoting, currentStatement, model);
+      if (quoting >= 0) {
+        continue;
+      }
 
       // --- Check for statement end ---
       if (node.type === "sep" && node.text === ";") {
