@@ -393,7 +393,8 @@ export class Lexer {
             (text[i] === "'" ||
               text[i] === '"' ||
               text[i] === "(" ||
-              text[i] === ")")
+              text[i] === ")" ||
+              text[i] === "%")
           ) {
             this.curr.column++;
           }
