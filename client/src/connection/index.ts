@@ -19,6 +19,7 @@ import {
 } from "./rest/api/compute";
 import { Session } from "./session";
 import { getSession as getSSHSession } from "./ssh";
+import { getSession as getSASPYSession } from "./saspy";
 
 let profileConfig: ProfileConfig;
 
@@ -54,6 +55,8 @@ export function getSession(): Session {
       return getRestSession(toRestConfig(validProfile.profile));
     case ConnectionType.SSH:
       return getSSHSession(validProfile.profile);
+    case ConnectionType.SASPY:
+      return getSASPYSession(validProfile.profile);
     case ConnectionType.COM:
       return getITCSession(validProfile.profile, ITCProtocol.COM);
     case ConnectionType.IOM:
