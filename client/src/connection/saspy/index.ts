@@ -76,32 +76,30 @@ run;
       const saspyWorkDirWithODS = wrapCodeWithOutputHtml(saspyWorkDir);
       const saspyHtmlStyle = saspyWorkDirWithODS.match(/style=([^ ]+) /)?.[1] ?? "Illuminate";
 
-      // const { cfgname } = this._config;
       const cfgname = this._config.cfgname?.length > 0 ? this._config.cfgname : "";
       const scriptContent = `
 import saspy
 
 _cfgname = "${cfgname}"
 
-
 if(not _cfgname):
     try:
         sas
         if sas is None:
-            sas = saspy.SASsession(cfgname=_cfgname, results='HTML', HTML_Style='${saspyHtmlStyle}')
+            sas = saspy.SASsession(cfgname=_cfgname, results='HTML')
         elif not sas.SASpid:
-            sas = saspy.SASsession(cfgname=_cfgname, results='HTML', HTML_Style='${saspyHtmlStyle}')
+            sas = saspy.SASsession(cfgname=_cfgname, results='HTML')
     except NameError:
-        sas = saspy.SASsession(cfgname=_cfgname, results='HTML', HTML_Style='${saspyHtmlStyle}')
+        sas = saspy.SASsession(cfgname=_cfgname, results='HTML')
 else:
     try:
         sas
         if sas is None:
-            sas = saspy.SASsession(results='HTML', HTML_Style='${saspyHtmlStyle}')
+            sas = saspy.SASsession(results='HTML')
         elif not sas.SASpid:
-            sas = saspy.SASsession(results='HTML', HTML_Style='${saspyHtmlStyle}')
+            sas = saspy.SASsession(results='HTML')
     except NameError:
-        sas = saspy.SASsession(results='HTML', HTML_Style='${saspyHtmlStyle}')
+        sas = saspy.SASsession(results='HTML')
 
 
 try:
@@ -109,6 +107,7 @@ try:
 except NameError:
     raise Exception("Setup error")
 
+sas.HTML_Style = '${saspyHtmlStyle}'
 
 vscode_saspy_code = r"""
 ${saspyWorkDir}
