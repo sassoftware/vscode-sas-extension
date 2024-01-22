@@ -25,17 +25,13 @@ class RestLibraryAdapter implements LibraryAdapter {
   protected dataAccessApi: ReturnType<typeof DataAccessApi>;
   protected sessionId: string;
 
-  public constructor(
-    protected readonly emitConnectionNotification: (
-      callback: () => Promise<void>,
-    ) => Promise<void>,
-  ) {}
+  public constructor() {}
 
   public async connect(): Promise<void> {
     const session = getSession();
     session.onLogFn = LogChannelFn;
 
-    await this.emitConnectionNotification(async () => await session.setup());
+    await session.setup();
 
     this.sessionId = session?.sessionId();
     this.dataAccessApi = DataAccessApi(getApiConfig());

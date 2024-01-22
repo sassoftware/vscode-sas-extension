@@ -144,13 +144,7 @@ async function runCode(selected?: boolean, uri?: Uri) {
   session.onExecutionLogFn = appendExecutionLogFn;
   session.onSessionLogFn = appendSessionLogFn;
 
-  await window.withProgress(
-    {
-      location: ProgressLocation.Notification,
-      title: l10n.t("Connecting to SAS session..."),
-    },
-    session.setup,
-  );
+  await session.setup();
 
   await window.withProgress(
     {

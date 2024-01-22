@@ -39,7 +39,7 @@ class RestSession extends Session {
     this._config = value;
   }
 
-  public setup = async (): Promise<void> => {
+  public establishConnection = async (): Promise<void> => {
     const apiConfig = getApiConfig();
     let formattedOpts: string[] = [];
     const autoExecLines = this._config.autoExecLines || [];

@@ -1,5 +1,7 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { ProgressLocation, l10n, window } from "vscode";
+
 import { OnLogFn, RunResult } from ".";
 
 export abstract class Session {
@@ -13,7 +15,17 @@ export abstract class Session {
     this._onExecutionLogFn = value;
   }
 
-  abstract setup(): Promise<void>;
+  async setup(): Promise<void> {
+    await window.withProgress(
+      {
+        location: ProgressLocation.Notification,
+        title: l10n.t("Connecting to SAS session..."),
+      },
+      async () => await this.establishConnection(),
+    );
+  }
+
+  abstract establishConnection(): Promise<void>;
   abstract run(code: string): Promise<RunResult>;
   cancel?(): Promise<void>;
   abstract close(): Promise<void> | void;
