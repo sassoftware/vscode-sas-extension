@@ -387,90 +387,87 @@ export class CompletionProvider {
               );
               // match arguments in syntax
               const allArgs: string[] = []; // allArgs include all arguments from all functions (function overloading)
-              const syntaxArgArr = syntaxArr.map(
-                (syntax) =>
-                  syntax
-                    .match(/\((.*)\)/)?.[1]
-                    ?.split(",")
-                    .map<[string, string, boolean]>((initSyntaxArg) => {
-                      let cleanedSyntaxArgs = [_cleanArg(initSyntaxArg)];
-                      // match like time|datetime, interval <multiple><.shift-index> etc.
-                      if (
-                        initSyntaxArg.includes("|") ||
-                        (initSyntaxArg.includes(">") &&
-                          initSyntaxArg.includes("<") &&
-                          (initSyntaxArg.indexOf(">") > 0 ||
-                            initSyntaxArg.indexOf("<") > 0))
-                      ) {
-                        cleanedSyntaxArgs = initSyntaxArg
-                          .split(/[<>\\|]/g)
-                          .map((arg) => _cleanArg(arg))
-                          .filter((item) => item);
-                      }
-                      cleanedSyntaxArgs = [...new Set(cleanedSyntaxArgs)];
-
-                      const argsInData = data.arguments?.map((item) =>
-                        _cleanArg(item.name),
-                      );
-                      let descriptions = cleanedSyntaxArgs
-                        .map((cleanedSyntaxArg) => {
-                          let argInData = data.arguments?.find(
-                            (item, index) => {
-                              if (cleanedSyntaxArg === argsInData?.[index]) {
-                                // args in allArgs are not cleaned
-                                allArgs.push(item.name);
-                                return true;
-                              }
-                            },
-                          );
-                          if (!argInData) {
-                            argInData = data.arguments?.find((item, index) => {
-                              if (
-                                _cleanArg(cleanedSyntaxArg, true) ===
-                                  _cleanArg(argsInData?.[index], true) ||
-                                cleanedSyntaxArg.split(" ")?.[0] ===
-                                  argsInData?.[index].split(" ")?.[0] ||
-                                cleanedSyntaxArg.split("_")?.[0] ===
-                                  argsInData?.[index].split("_")?.[0] ||
-                                cleanedSyntaxArg.split("-")?.[0] ===
-                                  argsInData?.[index].split("-")?.[0] ||
-                                cleanedSyntaxArg.split("–")?.[0] ===
-                                  argsInData?.[index].split("–")?.[0]
-                              ) {
-                                // args in allArgs are not cleaned
-                                allArgs.push(item.name);
-                                return true;
-                              }
-                            });
-                          }
-                          if (argInData) {
-                            // use not cleaned name in data.arguments
-                            return `**${argInData.name}:** ${argInData.description}`;
-                          }
-                          return "";
-                        })
+              const syntaxArgArr = syntaxArr.map((syntax) =>
+                syntax
+                  .match(/\((.*)\)/)?.[1]
+                  ?.split(",")
+                  .map<[string, string, boolean]>((initSyntaxArg) => {
+                    let cleanedSyntaxArgs = [_cleanArg(initSyntaxArg)];
+                    // match like time|datetime, interval <multiple><.shift-index> etc.
+                    if (
+                      initSyntaxArg.includes("|") ||
+                      (initSyntaxArg.includes(">") &&
+                        initSyntaxArg.includes("<") &&
+                        (initSyntaxArg.indexOf(">") > 0 ||
+                          initSyntaxArg.indexOf("<") > 0))
+                    ) {
+                      cleanedSyntaxArgs = initSyntaxArg
+                        .split(/[<>\\|]/g)
+                        .map((arg) => _cleanArg(arg))
                         .filter((item) => item);
-                      descriptions = [...new Set(descriptions)];
+                    }
+                    cleanedSyntaxArgs = [...new Set(cleanedSyntaxArgs)];
 
-                      if (cleanedSyntaxArgs.length === 1) {
-                        return [
-                          initSyntaxArg.match(/\(.*?\)/)
-                            ? initSyntaxArg
-                                .trim()
-                                .replace(/^[<>]/g, "")
-                                .replace(/[<>]$/g, "")
-                                .trim()
-                            : initSyntaxArg.replace(/[<>()]/g, "").trim(),
-                          descriptions[0],
-                          true,
-                        ];
-                      }
+                    const argsInData = data.arguments?.map((item) =>
+                      _cleanArg(item.name),
+                    );
+                    let descriptions = cleanedSyntaxArgs
+                      .map((cleanedSyntaxArg) => {
+                        let argInData = data.arguments?.find((item, index) => {
+                          if (cleanedSyntaxArg === argsInData?.[index]) {
+                            // args in allArgs are not cleaned
+                            allArgs.push(item.name);
+                            return true;
+                          }
+                        });
+                        if (!argInData) {
+                          argInData = data.arguments?.find((item, index) => {
+                            if (
+                              _cleanArg(cleanedSyntaxArg, true) ===
+                                _cleanArg(argsInData?.[index], true) ||
+                              cleanedSyntaxArg.split(" ")?.[0] ===
+                                argsInData?.[index].split(" ")?.[0] ||
+                              cleanedSyntaxArg.split("_")?.[0] ===
+                                argsInData?.[index].split("_")?.[0] ||
+                              cleanedSyntaxArg.split("-")?.[0] ===
+                                argsInData?.[index].split("-")?.[0] ||
+                              cleanedSyntaxArg.split("–")?.[0] ===
+                                argsInData?.[index].split("–")?.[0]
+                            ) {
+                              // args in allArgs are not cleaned
+                              allArgs.push(item.name);
+                              return true;
+                            }
+                          });
+                        }
+                        if (argInData) {
+                          // use not cleaned name in data.arguments
+                          return `**${argInData.name}:** ${argInData.description}`;
+                        }
+                        return "";
+                      })
+                      .filter((item) => item);
+                    descriptions = [...new Set(descriptions)];
+
+                    if (cleanedSyntaxArgs.length === 1) {
                       return [
-                        initSyntaxArg.trim(),
-                        descriptions.join("\n\n"),
-                        descriptions.length === cleanedSyntaxArgs.length, // no exact match
+                        initSyntaxArg.match(/\(.*?\)/)
+                          ? initSyntaxArg
+                              .trim()
+                              .replace(/^[<>]/g, "")
+                              .replace(/[<>]$/g, "")
+                              .trim()
+                          : initSyntaxArg.replace(/[<>()]/g, "").trim(),
+                        descriptions[0],
+                        true,
                       ];
-                    }),
+                    }
+                    return [
+                      initSyntaxArg.trim(),
+                      descriptions.join("\n\n"),
+                      descriptions.length === cleanedSyntaxArgs.length, // no exact match
+                    ];
+                  }),
               );
 
               // switch to the function with enough arguments

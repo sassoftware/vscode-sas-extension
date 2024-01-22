@@ -429,8 +429,11 @@ export class ContentModel {
         "DELETE",
         "deleteRecursively",
       )?.uri;
-      const deleteResourceLink = getLink(item.links, "DELETE", "deleteResource")
-        ?.uri;
+      const deleteResourceLink = getLink(
+        item.links,
+        "DELETE",
+        "deleteResource",
+      )?.uri;
       if (!deleteRecursivelyLink && !deleteResourceLink) {
         return false;
       }
@@ -444,8 +447,11 @@ export class ContentModel {
   }
 
   private async deleteResource(item: ContentItem): Promise<boolean> {
-    const deleteResourceLink = getLink(item.links, "DELETE", "deleteResource")
-      ?.uri;
+    const deleteResourceLink = getLink(
+      item.links,
+      "DELETE",
+      "deleteResource",
+    )?.uri;
     if (!deleteResourceLink) {
       return false;
     }
