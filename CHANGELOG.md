@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- Required VS Code version 1.82 at minimum
 - Removed the disconnect button from the editor toolbar (next to the run button), Please use the `Close Session` button on the tooltip of the active profile status bar item instead. ([#573](https://github.com/sassoftware/vscode-sas-extension/pull/573))
 
 ### Fixed
