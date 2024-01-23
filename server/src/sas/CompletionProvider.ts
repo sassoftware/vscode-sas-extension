@@ -88,6 +88,29 @@ function _buildKwMap() {
 }
 const KW_MAP = _buildKwMap();
 
+const possibleFuncZones = [
+  ZONE_TYPE.DATA_STEP_STMT_OPT,
+  ZONE_TYPE.DATA_STEP_STMT_OPT_VALUE,
+  ZONE_TYPE.GBL_STMT_OPT,
+  ZONE_TYPE.GBL_STMT_OPT_VALUE,
+  ZONE_TYPE.GBL_STMT_SUB_OPT_NAME,
+  ZONE_TYPE.MACRO_STMT,
+  ZONE_TYPE.MACRO_STMT_OPT,
+  ZONE_TYPE.MACRO_STMT_OPT_VALUE,
+  ZONE_TYPE.MACRO_STMT_BODY,
+  ZONE_TYPE.ODS_STMT_OPT_VALUE,
+  ZONE_TYPE.PROC_STMT_OPT,
+  ZONE_TYPE.PROC_STMT_OPT_REQ,
+  ZONE_TYPE.PROC_STMT_OPT_VALUE,
+  ZONE_TYPE.PROC_STMT_SUB_OPT,
+  ZONE_TYPE.PROC_STMT_SUB_OPT_VALUE,
+  ZONE_TYPE.SAS_FUNC,
+  ZONE_TYPE.MACRO_FUNC,
+  ZONE_TYPE.OPT_VALUE,
+  ZONE_TYPE.SUB_OPT_NAME,
+  ZONE_TYPE.SUB_OPT_VALUE,
+];
+
 function _distinctList(list: string[]) {
   const newList = [],
     obj: Record<string, true> = {};
@@ -223,6 +246,9 @@ function getItemKind(zone: number | LibCompleteItem["type"]) {
   if (zone === "LIBRARY") {
     return CompletionItemKind.Folder;
   }
+  if (zone === ZONE_TYPE.SAS_FUNC || zone === ZONE_TYPE.MACRO_FUNC) {
+    return CompletionItemKind.Function;
+  }
   return CompletionItemKind.Keyword;
 }
 
@@ -339,7 +365,7 @@ export class CompletionProvider {
           }
 
           zone = this.czMgr.getCurrentZone(position.line, start + 1);
-          if (zone === ZONE_TYPE.SAS_FUNC || zone === ZONE_TYPE.MACRO_FUNC) {
+          if (possibleFuncZones.includes(zone)) {
             keyword = _keyword;
             break;
           }
@@ -357,6 +383,9 @@ export class CompletionProvider {
       if (!keyword || !zone) {
         resolve(undefined);
       } else {
+        zone = keyword.startsWith("%")
+          ? ZONE_TYPE.MACRO_FUNC
+          : ZONE_TYPE.SAS_FUNC;
         this._loadHelp({
           keyword,
           type: "hint",
@@ -602,6 +631,39 @@ export class CompletionProvider {
               ? undefined
               : `'${item.name.replace(/'/g, "''")}'n`,
         }));
+
+        if (
+          prefix.length > 1 &&
+          (items === undefined ||
+            items.length === 0 ||
+            !items.find((item) => item.label.startsWith(prefix))) &&
+          possibleFuncZones.includes(this.popupContext.zone)
+        ) {
+          const loader = prefix.startsWith("%")
+            ? this.loader.getMacroFunctions
+            : this.loader.getFunctions;
+          loader((data) => {
+            const match = data.filter((name) =>
+              name.startsWith(prefix.toUpperCase()),
+            );
+            if (match.length > 0) {
+              const matchedItems = match.map((name) => ({
+                label: processLabelCase(name, prefix),
+                kind: CompletionItemKind.Function,
+              }));
+              this.popupContext.zone = prefix.startsWith("%")
+                ? ZONE_TYPE.MACRO_FUNC
+                : ZONE_TYPE.SAS_FUNC;
+              resolve({
+                isIncomplete: true,
+                items: matchedItems,
+              });
+              return;
+            }
+            resolve(undefined);
+          });
+          return;
+        }
 
         resolve(
           items === undefined

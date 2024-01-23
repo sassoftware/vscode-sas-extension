@@ -1587,7 +1587,7 @@ export class CodeZoneManager {
         this._copyContext(tmpContext, context);
         tmpContext = this._cloneContext(context);
         next = this._getNextEx(tmpContext);
-        if (name.text === "(" || next.text === "(") {
+        if (next.text === "(") {
           this._emit(name, this._checkFuncType(name));
           name = { op: name, op1: this._argList(context, name) };
           tmpContext = this._cloneContext(context);
