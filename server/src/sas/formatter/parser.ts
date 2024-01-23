@@ -112,21 +112,38 @@ const isStartingRegion = (parents: Region[], currentStatement: Statement) => {
   return false;
 };
 
-const preserveProcs = (region: Region, model: Model) => {
+const preserveProcs = (
+  current: number,
+  region: Region,
+  token: Token,
+  model: Model,
+) => {
+  // should not format python/lua, treat it as raw data
   if (
+    current === -1 &&
     region.block?.name === "PROC" &&
+    region.children.length === 2 &&
+    region.children[0].children.length > 0 &&
+    region.children[1].children.length > 1 &&
     "text" in region.children[0].children[1] &&
     /^(python|lua)$/i.test(region.children[0].children[1].text) &&
-    region.children.length > 1
+    "text" in region.children[1].children[0] &&
+    /^(submit|interactive)$/i.test(region.children[1].children[0].text)
   ) {
-    // should not format python/lua, treat it as raw data
+    return 0;
+  } else if (
+    current === 0 &&
+    /^(endsubmit|endinteractive)$/i.test(token.text)
+  ) {
+    return 1;
+  } else if (current === 1 && token.type === "sep" && token.text === ";") {
+    current = 2;
+
     const start =
       "start" in region.children[1].children[0] &&
       region.children[1].children[0].start;
-    const endStatement = region.children[region.children.length - 1];
-    const endToken = endStatement.children[endStatement.children.length - 1];
-    const end = "end" in endToken && endToken.end;
-    if (start && end) {
+    const end = token.end;
+    if (start) {
       region.children = [
         region.children[0],
         {
@@ -143,7 +160,10 @@ const preserveProcs = (region: Region, model: Model) => {
         },
       ];
     }
+  } else if (current === 2) {
+    current = -1;
   }
+  return current;
 };
 
 const preserveQuoting = (
@@ -200,10 +220,18 @@ export const getParser =
     let currentStatement: Statement | undefined = undefined;
     let prevStatement: Statement | undefined = undefined;
     let quoting = -1;
+    let preserveProc = -1;
 
     for (let i = 0; i < tokens.length; i++) {
       const node = tokens[i];
       let parent = parents.length ? parents[parents.length - 1] : root;
+
+      if (region && region.block) {
+        preserveProc = preserveProcs(preserveProc, region, node, model);
+        if (preserveProc >= 0) {
+          continue;
+        }
+      }
 
       // --- Check for block start: DATA, PROC, %MACRO ---
       if (node.type === "sec-keyword" || node.type === "macro-sec-keyword") {
@@ -323,7 +351,6 @@ export const getParser =
             // put `run` out of section children to outdent
             parent.children.push(region.children.pop()!);
           }
-          preserveProcs(region, model);
           region = parents.pop();
         }
         if (i < tokens.length - 1) {

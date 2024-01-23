@@ -40,7 +40,6 @@ def my_function():
     print("Inside the proc step")
 endsubmit;
 run;
-%test
 proc lua;
 submit;
 local dsid = sas.open("sashelp.company") -- open for input            
@@ -116,3 +115,46 @@ end;
 *endregion;
 %mend;
 *endregion;
+%test
+proc python;
+interactive;
+fruits = ["apple", "banana", "cherry"]
+for x in fruits:
+   print(x)
+
+print('first statement after for loop')
+endinteractive;
+run;
+
+proc lua;
+submit;
+
+    local rc
+
+    local code = [[
+        data sample; set answer;
+        where CCUID = @ccuid@;
+        y = @subValue@;
+        run;
+    ]]
+
+    rc = sas.submit(code, {ccuid="67", subValue=72})
+
+endsubmit;
+run;
+proc lua;
+submit;
+   if (sas.exists("work.homes")) then
+      local t = sas.read_ds("work.homes")
+      i=1
+      while(t[i] ~= nil) do
+         print("Obs #" .. i)
+         for k,v in pairs(t[i]) do 
+             print(k,v) 
+         end
+         print("\n")
+         i = i+1
+      end
+   end
+endsubmit;
+run;

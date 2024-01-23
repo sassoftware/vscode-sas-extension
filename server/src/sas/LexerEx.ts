@@ -2883,6 +2883,27 @@ export class LexerEx {
   private readDefineEventEnd_() {
     return this.handleEnd_();
   }
+  private readSubmitBlock_() {
+    const token = this.getNext_();
+    const next = this.prefetch_({ pos: 1 });
+    const nextNext = this.prefetch_({ pos: 2 });
+    if (
+      token &&
+      next &&
+      nextNext &&
+      token.end.line < next.start.line &&
+      next.text === "ENDSUBMIT" &&
+      nextNext.type === "sep" &&
+      nextNext.text === ";"
+    ) {
+      this.stack.push({
+        parse: this.handleEnd_,
+        state: this.PARSING_STATE.IN_PROC,
+      });
+      this.setKeyword_(next, true);
+    }
+    return token;
+  }
   /*            readProc_
          *  DATA, %MACRO ----> pop + push
          PROC ----> ignore
@@ -3053,6 +3074,15 @@ export class LexerEx {
                   state: this.PARSING_STATE.IN_DATA,
                   name: word,
                   token: token,
+                });
+                this.setKeyword_(token, true);
+                generalProcStmt = false;
+              }
+            } else if (procName === "LUA") {
+              if (word === "SUBMIT") {
+                this.stack.push({
+                  parse: this.readSubmitBlock_,
+                  state: this.PARSING_STATE.IN_PROC,
                 });
                 this.setKeyword_(token, true);
                 generalProcStmt = false;
