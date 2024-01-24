@@ -21,7 +21,7 @@ export abstract class Session {
         location: ProgressLocation.Notification,
         title: l10n.t("Connecting to SAS session..."),
       },
-      async () => await this.establishConnection(),
+      this.establishConnection,
     );
   }
 
