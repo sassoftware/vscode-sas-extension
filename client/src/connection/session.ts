@@ -15,7 +15,11 @@ export abstract class Session {
     this._onExecutionLogFn = value;
   }
 
-  async setup(): Promise<void> {
+  async setup(silent?: boolean): Promise<void> {
+    if (silent) {
+      return await this.establishConnection();
+    }
+
     await window.withProgress(
       {
         location: ProgressLocation.Notification,

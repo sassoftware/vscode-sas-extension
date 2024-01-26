@@ -234,7 +234,7 @@ export async function runTask(
   session.onSessionLogFn = onSessionLog ?? appendSessionLogFn;
 
   messageEmitter.fire(`${l10n.t("Connecting to SAS session...")}\r\n`);
-  !cancelled && (await session.setup());
+  !cancelled && (await session.setup(true));
 
   messageEmitter.fire(`${l10n.t("SAS code running...")}\r\n`);
   return cancelled ? undefined : session.run(code);
