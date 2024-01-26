@@ -89,7 +89,11 @@ useLogStore.subscribe(
 useRunStore.subscribe(
   runSelectors.selectIsExecutingCode,
   (isExecuting, prevIsExecuting) => {
-    if (!isExecuting && prevIsExecuting) {
+    if (
+      !isExecuting &&
+      prevIsExecuting &&
+      useLogStore.getState().producedExecutionOutput
+    ) {
       if (showLogOnExecutionFinish()) {
         outputChannel?.show(true);
       }
