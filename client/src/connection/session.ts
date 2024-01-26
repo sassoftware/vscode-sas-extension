@@ -29,7 +29,7 @@ export abstract class Session {
     );
   }
 
-  abstract establishConnection(): Promise<void>;
+  protected abstract establishConnection(): Promise<void>;
   abstract run(code: string): Promise<RunResult>;
   cancel?(): Promise<void>;
   abstract close(): Promise<void> | void;
