@@ -462,7 +462,8 @@
     "configurationDefaults": {
       "[sas]": {
         "editor.formatOnType": true,
-        "editor.formatOnPaste": true
+        "editor.formatOnPaste": true,
+        "editor.defaultFormatter": "SAS.sas-lsp"
       }
     },
     "commands": [
