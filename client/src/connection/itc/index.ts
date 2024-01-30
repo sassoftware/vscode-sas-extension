@@ -284,7 +284,9 @@ export class ITCSession extends Session {
     this.clearPassword();
     this._runReject(
       new Error(
-        "There was an error executing the SAS Program.\nSee console log for more details.",
+        l10n.t(
+          "There was an error executing the SAS Program. See [console log](command:workbench.action.toggleDevTools) for more details.",
+        ),
       ),
     );
     // If we encountered an error in setup, we need to go through everything again
