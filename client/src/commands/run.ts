@@ -1,4 +1,4 @@
-// Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import {
   EventEmitter,
@@ -12,8 +12,11 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
-import { LogFn as LogChannelFn } from "../components/LogChannel";
 import { showResult } from "../components/ResultPanel/ResultPanel";
+import {
+  appendExecutionLogFn,
+  appendSessionLogFn,
+} from "../components/logViewer";
 import {
   assign_SASProgramFile,
   wrapCodeWithOutputHtml,
@@ -25,6 +28,7 @@ import {
   RunResult,
   getSession,
 } from "../connection";
+import { useRunStore } from "../store";
 import { profileConfig, switchProfile } from "./profile";
 
 interface FoldingBlock {
@@ -34,7 +38,7 @@ interface FoldingBlock {
   endCol: number;
 }
 
-let running = false;
+const { setIsExecutingCode } = useRunStore.getState();
 
 function getCode(selected = false, uri?: Uri): string {
   const editor = uri
@@ -137,7 +141,8 @@ async function runCode(selected?: boolean, uri?: Uri) {
   const code = getCode(selected, uri);
 
   const session = getSession();
-  session.onLogFn = LogChannelFn;
+  session.onExecutionLogFn = appendExecutionLogFn;
+  session.onSessionLogFn = appendSessionLogFn;
 
   await window.withProgress(
     {
@@ -167,10 +172,11 @@ async function runCode(selected?: boolean, uri?: Uri) {
 }
 
 const _run = async (selected = false, uri?: Uri) => {
-  if (running) {
+  if (useRunStore.getState().isExecutingCode) {
     return;
   }
-  running = true;
+
+  setIsExecutingCode(true);
   commands.executeCommand("setContext", "SAS.running", true);
 
   await runCode(selected, uri)
@@ -178,7 +184,7 @@ const _run = async (selected = false, uri?: Uri) => {
       onRunError(err);
     })
     .finally(() => {
-      running = false;
+      setIsExecutingCode(false);
       commands.executeCommand("setContext", "SAS.running", false);
     });
 };
@@ -198,15 +204,16 @@ export async function runRegion(client: BaseLanguageClient): Promise<void> {
 }
 
 export function hasRunningTask() {
-  return running;
+  return useRunStore.getState().isExecutingCode;
 }
 export async function runTask(
   code: string,
   messageEmitter?: EventEmitter<string>,
   closeEmitter?: EventEmitter<number>,
   onLog?: OnLogFn,
+  onSessionLog?: OnLogFn,
 ): Promise<RunResult> {
-  if (running) {
+  if (useRunStore.getState().isExecutingCode) {
     return;
   }
 
@@ -215,7 +222,7 @@ export async function runTask(
     return;
   }
 
-  running = true;
+  setIsExecutingCode(true);
   commands.executeCommand("setContext", "SAS.running", true);
 
   let cancelled = false;
@@ -226,10 +233,11 @@ export async function runTask(
       await session.cancel();
     }
 
-    running = false;
+    setIsExecutingCode(false);
     commands.executeCommand("setContext", "SAS.running", false);
   });
-  session.onLogFn = onLog ?? LogChannelFn;
+  session.onExecutionLogFn = onLog ?? appendExecutionLogFn;
+  session.onSessionLogFn = onSessionLog ?? appendSessionLogFn;
 
   messageEmitter.fire(`${l10n.t("Connecting to SAS session...")}\r\n`);
   !cancelled && (await session.setup());

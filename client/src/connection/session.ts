@@ -3,9 +3,14 @@
 import { OnLogFn, RunResult } from ".";
 
 export abstract class Session {
-  protected _onLogFn: OnLogFn | undefined;
-  public set onLogFn(value: OnLogFn) {
-    this._onLogFn = value;
+  protected _onSessionLogFn: OnLogFn | undefined;
+  public set onSessionLogFn(value: OnLogFn) {
+    this._onSessionLogFn = value;
+  }
+
+  protected _onExecutionLogFn: OnLogFn | undefined;
+  public set onExecutionLogFn(value: OnLogFn) {
+    this._onExecutionLogFn = value;
   }
 
   abstract setup(): Promise<void>;

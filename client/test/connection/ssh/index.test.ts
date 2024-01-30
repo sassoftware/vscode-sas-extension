@@ -28,7 +28,7 @@ describe("ssh connection", () => {
     };
 
     session = new SSHSession(config);
-    session.onLogFn = () => {
+    session.onExecutionLogFn = () => {
       return;
     };
   });
@@ -162,7 +162,7 @@ describe("ssh connection", () => {
     };
 
     const session = new SSHSession(config);
-    session.onLogFn = () => {
+    session.onExecutionLogFn = () => {
       return;
     };
 

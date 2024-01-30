@@ -70,7 +70,7 @@ export class NotebookController {
     execution.start(Date.now()); // Keep track of elapsed time to execute cell.
 
     const session = getSession();
-    session.onLogFn = (logLines) => {
+    session.onExecutionLogFn = (logLines) => {
       logs = logs.concat(logLines);
     };
 

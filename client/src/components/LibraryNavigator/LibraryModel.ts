@@ -1,14 +1,14 @@
-// Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import { ProgressLocation, l10n, window } from "vscode";
 
 import { AxiosResponse } from "axios";
 import { Writable } from "stream";
 
+import { appendSessionLogFn } from "../../components/logViewer";
 import { getSession } from "../../connection";
 import { DataAccessApi } from "../../connection/rest/api/compute";
 import { getApiConfig } from "../../connection/rest/common";
-import { LogFn as LogChannelFn } from "../LogChannel";
 import PaginatedResultSet from "./PaginatedResultSet";
 import { DefaultRecordLimit, Messages } from "./const";
 import { LibraryItem, LibraryItemType, TableData, TableRow } from "./types";
@@ -25,7 +25,7 @@ class LibraryModel {
 
   public async connect(): Promise<void> {
     const session = getSession();
-    session.onLogFn = LogChannelFn;
+    session.onSessionLogFn = appendSessionLogFn;
 
     await window.withProgress(
       {

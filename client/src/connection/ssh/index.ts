@@ -1,4 +1,4 @@
-// Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import { l10n } from "vscode";
 
@@ -197,7 +197,7 @@ export class SSHSession extends Session {
           line,
           this.html5FileName,
         );
-        this._onLogFn?.([{ type: "normal", line }]);
+        this._onExecutionLogFn?.([{ type: "normal", line }]);
       }
     });
   };

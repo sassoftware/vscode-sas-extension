@@ -444,6 +444,7 @@
             "description": "%configuration.SAS.results.html.style%"
           },
           "SAS.flowConversionMode": {
+            "order": 6,
             "type": "string",
             "default": "Swimlane",
             "enum": [
@@ -455,6 +456,18 @@
               "%configuration.SAS.flowConversionModeSwimlane%",
               "%configuration.SAS.flowConversionModeNode%"
             ]
+          },
+          "SAS.log.showOnExecutionStart": {
+            "order": 7,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.showOnExecutionStart%"
+          },
+          "SAS.log.showOnExecutionFinish": {
+            "order": 8,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.showOnExecutionFinish%"
           }
         }
       }

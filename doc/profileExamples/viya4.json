@@ -1,0 +1,24 @@
+{
+  "SAS.log.showOnExecutionFinish": true,
+  "SAS.log.showOnExecutionStart": false,
+  "SAS.connectionProfiles": {
+    "activeProfile": "viyaServer",
+    "profiles": {
+      "viya4": {
+        "endpoint": "https://example-endpoint.com",
+        "connectionType": "rest",
+        "sasOptions": ["NONEWS", "ECHOAUTO"],
+        "autoExec": [
+          {
+            "type": "line",
+            "line": "ods graphics / imagemap;"
+          },
+          {
+            "type": "file",
+            "filePath": "/my/local/autoexec.sas"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -17,3 +17,11 @@ export function isSideResultEnabled(): string {
 export function isSinglePanelEnabled(): string {
   return workspace.getConfiguration("SAS").get("results.singlePanel");
 }
+
+export function showLogOnExecutionStart(): boolean {
+  return workspace.getConfiguration("SAS").get("log.showOnExecutionStart");
+}
+
+export function showLogOnExecutionFinish(): boolean {
+  return workspace.getConfiguration("SAS").get("log.showOnExecutionFinish");
+}
