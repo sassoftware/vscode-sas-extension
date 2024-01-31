@@ -8,7 +8,7 @@ import {
   LibraryItem,
   TableData,
 } from "../../components/LibraryNavigator/types";
-import { LogFn as LogChannelFn } from "../../components/LogChannel";
+import { appendSessionLogFn } from "../../components/logViewer";
 import {
   ColumnCollection,
   DataAccessApi,
@@ -29,7 +29,7 @@ class RestLibraryAdapter implements LibraryAdapter {
 
   public async connect(): Promise<void> {
     const session = getSession();
-    session.onLogFn = LogChannelFn;
+    session.onSessionLogFn = appendSessionLogFn;
 
     await session.setup();
 
