@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { workspace } from "vscode";
+import { l10n, workspace } from "vscode";
 
 import { v4 } from "uuid";
 
@@ -11,9 +11,9 @@ const stepRef: Record<string, string> = {
 };
 
 const stepTitle: Record<string, string> = {
-  sas: "SAS Program",
-  sql: "SQL Program",
-  python: "Python Program",
+  sas: l10n.t("SAS Program"),
+  sql: l10n.t("SQL Program"),
+  python: l10n.t("Python Program"),
 };
 
 const NODE_SPACING = 150;
