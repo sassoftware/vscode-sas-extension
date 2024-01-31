@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [Unreleased]
+
+### Fixed
+
+- Added extra settings options to customize when SAS log is shown ([#647](https://github.com/sassoftware/vscode-sas-extension/issues/647))
+
 ## [v1.6.0] - 2024-01-15
 
 ### Added
@@ -29,7 +35,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - ODS display image inline ([#471](https://github.com/sassoftware/vscode-sas-extension/issues/471))
 - sasnb extension name for save ([#607](https://github.com/sassoftware/vscode-sas-extension/issues/607))
 - document symbol error ([#715](https://github.com/sassoftware/vscode-sas-extension/issues/715))
-- Added extra settings options to customize when SAS log is shown ([#647](https://github.com/sassoftware/vscode-sas-extension/issues/647))
 
 ## [v1.5.0] - 2023-10-27
 
