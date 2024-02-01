@@ -63,7 +63,7 @@ export class ITCSession extends Session {
    * Initialization logic that should be performed prior to execution.
    * @returns void promise.
    */
-  public setup = async (): Promise<void> => {
+  protected establishConnection = async (): Promise<void> => {
     const setupPromise = new Promise<void>((resolve, reject) => {
       this._runResolve = resolve;
       this._runReject = reject;

@@ -57,7 +57,7 @@ export class SSHSession extends Session {
     this._config = newValue;
   }
 
-  public setup = (): Promise<void> => {
+  protected establishConnection = (): Promise<void> => {
     return new Promise((pResolve, pReject) => {
       this.resolve = pResolve;
       this.reject = pReject;

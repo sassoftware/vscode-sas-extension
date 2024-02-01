@@ -23,17 +23,12 @@ describe("PaginatedResultSet", async function () {
       },
     };
 
-    const transformData = (response: AxiosResponse) => ({
-      test: response.data.test,
-    });
-
     const paginatedResultSet = new PaginatedResultSet(
       async () => mockAxiosResponse,
-      transformData,
     );
 
-    expect(await paginatedResultSet.getData(0, 100)).to.deep.equal({
-      test: "yes",
-    });
+    expect(await paginatedResultSet.getData(0, 100)).to.deep.equal(
+      mockAxiosResponse,
+    );
   });
 });
