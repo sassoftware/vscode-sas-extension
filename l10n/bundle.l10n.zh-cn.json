@@ -1,5 +1,4 @@
 {
-  "Active file": "当前文件",
   "Are you sure you want to permanently delete all the items? You cannot undo this action.": "您确定要永久删除所有项目吗？您无法撤消此操作。",
   "Are you sure you want to permanently delete the item \"{name}\"?": "您确定要永久删除项目\"{name}\"吗？",
   "Cancelling job...": "正在取消作业...",
@@ -31,7 +30,6 @@
   "Enter the SAS compute context.": "输入SAS计算上下文。",
   "Enter the URL": "输入网址",
   "Enter the URL for the SAS Viya server. An example is https://example.sas.com.": "输入SAS Viya服务器的URL。示例为 https://example.sas.com",
-  "Enter the name of the SAS 9 SSH server.": "输入SAS 9 SSH服务器的名称。",
   "Enter the name of the SAS 9 server.": "输入SAS 9 服务器的名称。",
   "Enter the registered client ID. An example is myapp.client.": "输入注册的客户端ID。示例是 myapp.client。",
   "Enter the server name": "输入服务器名称",
@@ -76,7 +74,6 @@
   "Rename Folder": "重命名文件夹",
   "Result": "结果",
   "Result: {result}": "结果: {result}",
-  "SAS 9 SSH Server": "SAS 9 SSH 服务器",
   "SAS 9 Server": "SAS 9 服务器",
   "SAS Compute Context": "SAS计算上下文",
   "SAS Log": "SAS 日志",
