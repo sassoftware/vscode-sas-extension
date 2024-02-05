@@ -48,8 +48,6 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.port": "Porta della connessione SAS SSH",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "Percorso dell'eseguibile della connessione SAS SSH",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "Nome utente della connessione SAS SSH",
-  "configuration.SAS.connectionProfiles.profiles.tokenFile": "File token SAS Viya",
-  "configuration.SAS.connectionProfiles.profiles.username": "ID utente SAS Viya",
   "configuration.SAS.flowConversionMode": "Scegli la modalità di conversione per i notebook",
   "configuration.SAS.flowConversionModeNode": "Converti ogni cella del notebook in un nodo",
   "configuration.SAS.flowConversionModeSwimlane": "Converti ogni cella del notebook in una swimlane",

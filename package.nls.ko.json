@@ -48,8 +48,6 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.port": "SAS SSH 연결 포트",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "SAS SSH 연결 실행 파일 경로",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "SAS SSH 연결 사용자 이름",
-  "configuration.SAS.connectionProfiles.profiles.tokenFile": "SAS Viya 토큰 파일",
-  "configuration.SAS.connectionProfiles.profiles.username": "SAS Viya 사용자 ID",
   "configuration.SAS.flowConversionMode": "노트북의 변환 모드 선택",
   "configuration.SAS.flowConversionModeNode": "각 노트북 셀을 노드로 변환",
   "configuration.SAS.flowConversionModeSwimlane": "각 노트북 셀을 스윔레인으로 변환",

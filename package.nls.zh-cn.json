@@ -48,8 +48,6 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.port": "SAS SSH 连接端口",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "SAS SSH 连接可执行路径",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "SAS SSH 连接用户名",
-  "configuration.SAS.connectionProfiles.profiles.tokenFile": "SAS Viya 令牌文件",
-  "configuration.SAS.connectionProfiles.profiles.username": "SAS Viya 用户 ID",
   "configuration.SAS.flowConversionMode": "选择笔记本的转换模式",
   "configuration.SAS.flowConversionModeNode": "将每个笔记本单元转换为一个节点",
   "configuration.SAS.flowConversionModeSwimlane": "将每个笔记本单元转换为泳道",

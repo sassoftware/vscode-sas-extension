@@ -48,8 +48,6 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.port": "SAS SSH 接続ポート",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "SAS SSH 接続の実行可能パス",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "SAS SSH 接続ユーザー名",
-  "configuration.SAS.connectionProfiles.profiles.tokenFile": "SAS Viya トークンファイル",
-  "configuration.SAS.connectionProfiles.profiles.username": "SAS Viya ユーザー ID",
   "configuration.SAS.flowConversionMode": "ノートブックの変換モードを選択する",
   "configuration.SAS.flowConversionModeNode": "各ノートブックのセルをノードに変換する",
   "configuration.SAS.flowConversionModeSwimlane": "各ノートブックのセルをスイムレーンに変換する",
