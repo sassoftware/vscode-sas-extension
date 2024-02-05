@@ -3702,13 +3702,12 @@ export class LexerEx {
   }
   private readMend_() {
     const token = this.getNext_();
-    const mendToken = this.lastToken;
     if (token && token.text === ";") {
       if (this.curr.state === this.PARSING_STATE.IN_MACRO) {
         this.stack.pop();
         this.stack.pop();
         this.tryEndFoldingBlock_(
-          mendToken.start,
+          this.curr.start.start,
           this.SEC_TYPE.MACRO,
           token.end,
         );
