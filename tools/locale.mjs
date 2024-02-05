@@ -8,6 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const packagePath = join(__dirname, "..");
 const l10nPath = join(__dirname, "..", "l10n");
 const csvPath = join(__dirname, "..");
+const defaultPackageNlsPath = join(packagePath, "package.nls.json");
 
 const newLocale = process.env.npm_config_new;
 const localeToUpdate = process.env.npm_config_update_locale;
@@ -31,9 +32,7 @@ const sortKeys = (content) => {
   return JSON.stringify(orderedResults, null, "  ");
 };
 
-const packageNls = readFileSync(
-  join(packagePath, "package.nls.json"),
-).toString();
+const packageNls = readFileSync(defaultPackageNlsPath).toString();
 const l10nBundle = readFileSync(join(l10nPath, "bundle.l10n.json")).toString();
 
 const getMissingTranslations = (
@@ -98,11 +97,36 @@ const omitMissingTerms = (newMap, translationSourceMap) =>
     return carry;
   }, {});
 
+const cleanupUnusedPackageKeys = (packageNlsJson) => {
+  const allFiles = glob.sync(`${packagePath}/**/*.{ts,json,tsx}`, {
+    ignore: [
+      "**/node_modules/**",
+      "**/package.nls.*",
+      "**/out/**",
+      "**/dist/**",
+      "**/l10n/**",
+      "**/*.test.{ts,tsx}",
+      "**/package-lock.json",
+    ],
+  });
+  const allFileContents = allFiles.map((filePath) =>
+    readFileSync(filePath).toString(),
+  );
+
+  return Object.keys(packageNlsJson).reduce((carry, term) => {
+    if (allFileContents.find((file) => file.includes(term))) {
+      return { ...carry, [term]: packageNlsJson[term] };
+    }
+
+    return carry;
+  }, {});
+};
+
 const updateLocale = (locale) => {
   const packageNlsPath = join(packagePath, `package.nls.${locale}.json`);
   const l10BundlePath = join(l10nPath, `bundle.l10n.${locale}.json`);
 
-  const newPackageNlsMap = JSON.parse(packageNls);
+  const newPackageNlsMap = cleanupUnusedPackageKeys(JSON.parse(packageNls));
   const currentPackageNlsMap = JSON.parse(readFileSync(packageNlsPath));
   const currentPackageNlsJSON = omitMissingTerms(
     {
@@ -126,6 +150,7 @@ const updateLocale = (locale) => {
 
   writeFileSync(packageNlsPath, sortKeys(currentPackageNlsJSON) + "\n");
   writeFileSync(l10BundlePath, sortKeys(currentL10nBundleJSON) + "\n");
+  writeFileSync(defaultPackageNlsPath, sortKeys(newPackageNlsMap) + "\n");
 
   if (generateCSV) {
     const csvEntries = getMissingTranslations(
