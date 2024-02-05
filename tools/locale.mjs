@@ -90,25 +90,39 @@ const csvTranslationMap = (source) => {
   return translationMap;
 };
 
+const omitMissingTerms = (newMap, translationSourceMap) =>
+  Object.keys(newMap).reduce((carry, translationKey) => {
+    if (translationSourceMap[translationKey]) {
+      return { ...carry, [translationKey]: newMap[translationKey] };
+    }
+    return carry;
+  }, {});
+
 const updateLocale = (locale) => {
   const packageNlsPath = join(packagePath, `package.nls.${locale}.json`);
   const l10BundlePath = join(l10nPath, `bundle.l10n.${locale}.json`);
 
   const newPackageNlsMap = JSON.parse(packageNls);
   const currentPackageNlsMap = JSON.parse(readFileSync(packageNlsPath));
-  const currentPackageNlsJSON = {
-    ...newPackageNlsMap,
-    ...currentPackageNlsMap,
-    ...csvTranslationMap(SOURCE_NLS),
-  };
+  const currentPackageNlsJSON = omitMissingTerms(
+    {
+      ...newPackageNlsMap,
+      ...currentPackageNlsMap,
+      ...csvTranslationMap(SOURCE_NLS),
+    },
+    newPackageNlsMap,
+  );
 
   const newL10NBundleMap = JSON.parse(l10nBundle);
   const currentL10NBundleMap = JSON.parse(readFileSync(l10BundlePath));
-  const currentL10nBundleJSON = {
-    ...newL10NBundleMap,
-    ...currentL10NBundleMap,
-    ...csvTranslationMap(SOURCE_L10N),
-  };
+  const currentL10nBundleJSON = omitMissingTerms(
+    {
+      ...newL10NBundleMap,
+      ...currentL10NBundleMap,
+      ...csvTranslationMap(SOURCE_L10N),
+    },
+    newL10NBundleMap,
+  );
 
   writeFileSync(packageNlsPath, sortKeys(currentPackageNlsJSON) + "\n");
   writeFileSync(l10BundlePath, sortKeys(currentL10nBundleJSON) + "\n");
