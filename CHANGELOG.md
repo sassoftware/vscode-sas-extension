@@ -4,11 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
-## [Unreleased]
+## [v1.7.0] - 2024-02-08
+
+### Added
+
+- Support formatting SAS code ([#681](https://github.com/sassoftware/vscode-sas-extension/pull/681))
+- Added extra settings options to customize when SAS log is shown ([#713](https://github.com/sassoftware/vscode-sas-extension/pull/713))
+- Improved function autocomplete ([#724](https://github.com/sassoftware/vscode-sas-extension/pull/724))
 
 ### Fixed
 
-- Added extra settings options to customize when SAS log is shown ([#647](https://github.com/sassoftware/vscode-sas-extension/issues/647))
+- Unexpected indentation when paste ([#735](https://github.com/sassoftware/vscode-sas-extension/issues/735))
+- The "Close Session" menu is no longer available after saving any changes to the `settings.json` file ([#745](https://github.com/sassoftware/vscode-sas-extension/issues/745))
+- Error message for connection error need to be externalized ([#734](https://github.com/sassoftware/vscode-sas-extension/issues/734))
+- I18n node names when converting SAS Notebook to SAS Flow ([#530](https://github.com/sassoftware/vscode-sas-extension/issues/530))
+- Ending inner block properly inside macro ([#772](https://github.com/sassoftware/vscode-sas-extension/issues/772))
 
 ## [v1.6.0] - 2024-01-15
 
