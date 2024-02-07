@@ -78,6 +78,12 @@ export interface Token {
   text: string;
 }
 
+enum EmbeddedLangState {
+  NONE,
+  PROC_SQL_DEF,
+  PROC_PYTHON_DEF,
+  PROC_PYTHON_SUBMIT_OR_INTERACTIVE,
+}
 export class Lexer {
   start = { line: 0, column: 0 };
   curr = { line: 0, column: 0 };
@@ -87,7 +93,8 @@ export class Lexer {
   private syntaxDb = new SyntaxDataProvider();
   private context: {
     lastNoncommentToken?: Token | null;
-  } = {};
+    embeddedLangState?: EmbeddedLangState;
+  } = { embeddedLangState: EmbeddedLangState.NONE };
 
   constructor(private model: Model) {
     if (!macroKwMap) {
@@ -235,36 +242,104 @@ export class Lexer {
 
   getNext(): Token | undefined {
     const token = this.getNext_() as Token | undefined;
-    if (token) {
-      if (Lexer.isComment[token.type] === undefined) {
-        this.context.lastNoncommentToken = {
-          ...token,
-          start: { ...token.start },
-          end: { ...token.end },
-        };
-      }
-      if (Lexer.isLiteral[token.type]) {
-        token.text = this.getText(token);
-      } else {
-        token.text = this.getWord(token).toUpperCase();
-      }
-      if (Lexer.isComment[token.type] === undefined) {
-        this.quoting = checkQuote(
-          this.quoting,
-          !!Lexer.isQuoting[token.text],
-          token.text,
-        );
-        this.bquoting = checkQuote(
-          this.bquoting,
-          !!Lexer.isBQuoting[token.text],
-          token.text,
-        );
-        if (this.quoting === -1 && this.bquoting === -1) {
-          if (!this.ignoreFormat && token.text === "%PUT") {
-            this.ignoreFormat = true;
-          } else if (this.ignoreFormat && token.text === ";") {
-            this.ignoreFormat = false;
+    if (!token) {
+      this.context.embeddedLangState = EmbeddedLangState.NONE;
+      return undefined;
+    }
+    if (Lexer.isLiteral[token.type]) {
+      token.text = this.getText(token);
+    } else {
+      token.text = this.getWord(token).toUpperCase();
+    }
+    // proc python/sql/lua...
+    switch (this.context.embeddedLangState) {
+      case EmbeddedLangState.NONE: {
+        if (
+          this.context.lastNoncommentToken?.type === "text" &&
+          this.context.lastNoncommentToken.text === "PROC"
+        ) {
+          if (
+            token.type === "text" &&
+            (token.text === "SQL" || token.text === "FEDSQL")
+          ) {
+            this.context.embeddedLangState = EmbeddedLangState.PROC_SQL_DEF;
+          } else if (token.type === "text" && token.text === "PYTHON") {
+            this.context.embeddedLangState = EmbeddedLangState.PROC_PYTHON_DEF;
           }
+        }
+        break;
+      }
+      case EmbeddedLangState.PROC_PYTHON_DEF: {
+        if (
+          token.type === "text" &&
+          ["SUBMIT", "INTERACTIVE"].includes(token.text)
+        ) {
+          this.context.embeddedLangState =
+            EmbeddedLangState.PROC_PYTHON_SUBMIT_OR_INTERACTIVE;
+        }
+        break;
+      }
+      case EmbeddedLangState.PROC_PYTHON_SUBMIT_OR_INTERACTIVE:
+      case EmbeddedLangState.PROC_SQL_DEF: {
+        if (token.type === "sep" && token.text === ";") {
+          let endReg;
+          if (
+            this.context.embeddedLangState ===
+            EmbeddedLangState.PROC_PYTHON_SUBMIT_OR_INTERACTIVE
+          ) {
+            endReg =
+              /\b(endsubmit|endinteractive|quit|run)(\s+|\/\*.*?\*\/)*;(\s+|\/\*.*?\*\/)*$/i;
+          } else {
+            endReg = /\b(run|quit)(\s+|\/\*.*?\*\/)*;(\s+|\/\*.*?\*\/)*$/i;
+          }
+          for (
+            let line = this.curr.line;
+            line < this.model.getLineCount();
+            line++
+          ) {
+            let lineContent = this.model.getLine(line);
+            if (line === this.curr.line) {
+              lineContent =
+                " ".repeat(this.curr.column) +
+                lineContent.slice(this.curr.column);
+            }
+            const match = endReg.exec(lineContent);
+            if (match) {
+              token.end = { ...token.end }; // token.end is this.curr
+              this.curr.line = line;
+              this.curr.column = match.index;
+              this.context.embeddedLangState = EmbeddedLangState.NONE;
+              break;
+            }
+          }
+        }
+        break;
+      }
+    }
+
+    if (Lexer.isComment[token.type] === undefined) {
+      this.context.lastNoncommentToken = {
+        ...token,
+        start: { ...token.start },
+        end: { ...token.end },
+      };
+    }
+    if (Lexer.isComment[token.type] === undefined) {
+      this.quoting = checkQuote(
+        this.quoting,
+        !!Lexer.isQuoting[token.text],
+        token.text,
+      );
+      this.bquoting = checkQuote(
+        this.bquoting,
+        !!Lexer.isBQuoting[token.text],
+        token.text,
+      );
+      if (this.quoting === -1 && this.bquoting === -1) {
+        if (!this.ignoreFormat && token.text === "%PUT") {
+          this.ignoreFormat = true;
+        } else if (this.ignoreFormat && token.text === ";") {
+          this.ignoreFormat = false;
         }
       }
     }
