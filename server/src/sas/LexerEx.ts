@@ -614,7 +614,7 @@ export class LexerEx {
     }
   }
   private _pushRootBlock(block: FoldingBlock) {
-    // adjujst previous block
+    // adjust previous block
     const stack: FoldingBlock[] = [block];
     while (stack.length > 0) {
       const curBlock: FoldingBlock = stack.pop()!;

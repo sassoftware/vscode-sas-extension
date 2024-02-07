@@ -691,10 +691,17 @@ export class CodeZoneManager {
     do {
       token = this._getPrev(context);
       tokens.push(token);
-    } while (token && token.text !== ";");
+    } while (
+      token &&
+      ![";", "ENDSUBMIT", "ENDINTERACTIVE"].includes(token.text?.toUpperCase())
+    );
     if (token) {
       context.line = token.line;
-      context.col = token.col + 1;
+      if (";" === token.text) {
+        context.col = token.col + 1;
+      } else {
+        context.col = token.col;
+      }
       context.syntaxIdx = -1;
       context.lastStmtEnd = { line: token.line, col: token.col };
     } else {
@@ -906,9 +913,14 @@ export class CodeZoneManager {
               this._procName = "STATGRAPH";
             }
             const zone = this._procStmt(context, token); //some procedure statments' name includes several words.
-            return zone === CodeZoneManager.ZONE_TYPE.ODS_STMT
-              ? zone
-              : CodeZoneManager.ZONE_TYPE.PROC_STMT;
+            // ??? Why only allow these zone types if it's not PROC_STMT?
+            if (
+              zone === CodeZoneManager.ZONE_TYPE.ODS_STMT ||
+              zone === CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG
+            ) {
+              return zone;
+            }
+            return CodeZoneManager.ZONE_TYPE.PROC_STMT;
           }
         } else {
           return CodeZoneManager.ZONE_TYPE.GBL_STMT;
@@ -1116,6 +1128,19 @@ export class CodeZoneManager {
     let type;
     this._topZone = CodeZoneManager.ZONE_TYPE.PROC_STMT;
     this._getFullStmtName(context, this._procName, stmt);
+    if (["PYTHON", "LUA"].includes(this._procName)) {
+      if (
+        ["SUBMIT", "ENDSUBMIT", "INTERACTIVE", "ENDINTERACTIVE"].includes(
+          stmt.text,
+        )
+      ) {
+        return CodeZoneManager.ZONE_TYPE.PROC_STMT;
+      } else {
+        return CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG;
+      }
+    } else if (["SQL", "FEDSQL"].includes(this._procName)) {
+      return CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG;
+    }
     const zone = this._stmtEx(context, stmt);
     type = zone.type;
     if (this._isCall(zone)) {
@@ -2586,6 +2611,7 @@ export class CodeZoneManager {
     MACRO_VAR: 612,
     DATALINES: 613,
     LIB: 614,
+    EMBEDDED_LANG: 615,
     // misc
     CALL_ROUTINE: 700,
     ARG_LIST: 701,

@@ -933,6 +933,18 @@
         "id": "sas-log"
       }
     ],
+    "grammars": [
+      {
+        "language": "sas",
+        "scopeName": "source.sas",
+        "path": "./syntaxes/sas.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.sql": "sql",
+          "source.python": "python",
+          "source.lua": "lua"
+        }
+      }
+    ],
     "themes": [
       {
         "label": "%themes.SAS.light%",

@@ -1,0 +1,173 @@
+{
+  "name": "SAS",
+  "scopeName": "source.sas",
+  "patterns": [
+    {
+      "include": "#comment-block"
+    },
+    {
+      "include": "#macro-quotes"
+    },
+    {
+      "include": "#cards"
+    },
+    {
+      "include": "#cards4"
+    },
+    {
+      "include": "#string"
+    },
+    {
+      "begin": "(?i)proc",
+      "end": "(?i)(run|quit)(\\s+|/\\*.*?\\*/)?;",
+      "name": "entity.name.function.proc",
+      "patterns": [
+        {
+          "include": "#comment-block"
+        },
+        {
+          "include": "#ws"
+        },
+        {
+          "begin": "(?i)(sql|fedsql)\\b",
+          "end": "(?i)(?=(run|quit)(\\s+|/\\*.*?\\*/)?;)",
+          "name": "entity.name.function.proc.sql",
+          "contentName": "entity.name.function.proc.sql.content",
+          "patterns": [
+            {
+              "include": "source.sql"
+            }
+          ]
+        },
+        {
+          "begin": "(?i)python\\b",
+          "end": "(?i)(?=(run|quit)(\\s+|/\\*.*?\\*/)?;)",
+          "name": "entity.name.function.proc.python",
+          "contentName": "entity.name.function.proc.python.content",
+          "patterns": [
+            {
+              "include": "source.python"
+            }
+          ]
+        },
+        {
+          "begin": "(?i)lua\\b",
+          "end": "(?i)(?=(run|quit)(\\s+|/\\*.*?\\*/)?;)",
+          "name": "entity.name.function.proc.lua",
+          "contentName": "entity.name.function.proc.lua.content",
+          "patterns": [
+            {
+              "include": "source.lua"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "repository": {
+    "comment-block": {
+      "name": "comment.block",
+      "begin": "(/\\*)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.comment"
+        }
+      },
+      "end": "\\*/",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment"
+        }
+      }
+    },
+    "string": {
+      "patterns": [
+        {
+          "include": "#qstring-single"
+        },
+        {
+          "include": "#qstring-double"
+        }
+      ]
+    },
+    "qstring-double": {
+      "name": "string.quoted.double",
+      "begin": "\"",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin"
+        }
+      },
+      "end": "\"",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end"
+        }
+      }
+    },
+    "qstring-single": {
+      "name": "string.quoted.single",
+      "begin": "'",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin"
+        }
+      },
+      "end": "'",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end"
+        }
+      }
+    },
+    "macro-quotes": {
+      "begin": "(?i)%(?:bquote|superq|nrbquote)",
+      "beginCaptures": {
+        "0": {
+          "name": "entity.name.function.macro"
+        }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": {
+          "name": "entity.name.function.macro"
+        }
+      },
+      "name": "string.quoted.macro"
+    },
+    "cards": {
+      "begin": "(?i)\\b(?:cards|lines|datalines)\\b",
+      "beginCaptures": {
+        "0": {
+          "name": "entity.name.function.cards"
+        }
+      },
+      "end": ";",
+      "endCaptures": {
+        "0": {
+          "name": "entity.name.function.cards"
+        }
+      },
+      "name": "string.quoted.cards"
+    },
+    "cards4": {
+      "begin": "(?i)\\b(?:cards4|lines4|datalines4)\\b",
+      "beginCaptures": {
+        "0": {
+          "name": "entity.name.function.cards4"
+        }
+      },
+      "end": ";;;;",
+      "endCaptures": {
+        "0": {
+          "name": "entity.name.function.cards4"
+        }
+      },
+      "name": "string.quoted.cards4"
+    },
+    "ws": {
+      "name": "ws",
+      "match": "\\s"
+    }
+  }
+}
