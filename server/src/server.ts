@@ -97,9 +97,9 @@ export const init = (conn: Connection): void => {
     const block = languageService.getFoldingBlock(
       params.line,
       params.col,
-      true,
-      false,
-      false,
+      params.strict ?? true,
+      params.ignoreCustomBlock,
+      params.ignoreGlobalBlock,
     );
     if (!block) {
       return undefined;
