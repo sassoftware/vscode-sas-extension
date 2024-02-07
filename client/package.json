@@ -18,10 +18,10 @@
     "ssh2": "^1.15.0",
     "uuid": "^9.0.1",
     "vscode-languageclient": "^9.0.1",
-    "zustand": "^4.4.7"
+    "zustand": "^4.5.0"
   },
   "devDependencies": {
-    "@types/react": "^18.2.48",
+    "@types/react": "^18.2.54",
     "@types/react-dom": "^18.2.18",
     "@types/ssh2": "^1.11.19",
     "@types/vscode": "1.82.0",
