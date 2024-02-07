@@ -3,16 +3,12 @@
 import {
   ConfigurationChangeEvent,
   ExtensionContext,
-  NotebookCellData,
-  NotebookCellKind,
-  NotebookData,
   Uri,
   authentication,
   commands,
   l10n,
   languages,
   tasks,
-  window,
   workspace,
 } from "vscode";
 import {
@@ -26,6 +22,7 @@ import * as path from "path";
 
 import { checkProfileAndAuthorize } from "../commands/authorize";
 import { closeSession } from "../commands/closeSession";
+import { newSASFile, newSASNotebook } from "../commands/new";
 import {
   addProfile,
   deleteProfile,
@@ -150,16 +147,8 @@ export function activate(context: ExtensionContext): void {
       new NotebookSerializer(),
     ),
     new NotebookController(),
-    commands.registerCommand("SAS.notebook.new", async () => {
-      await window.showNotebookDocument(
-        await workspace.openNotebookDocument(
-          "sas-notebook",
-          new NotebookData([
-            new NotebookCellData(NotebookCellKind.Code, "", "sas"),
-          ]),
-        ),
-      );
-    }),
+    commands.registerCommand("SAS.notebook.new", newSASNotebook),
+    commands.registerCommand("SAS.file.new", newSASFile),
     tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
   );
 
