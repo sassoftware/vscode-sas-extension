@@ -47,8 +47,8 @@ function generateHtmlStyleOption(): string {
 export function wrapCodeWithOutputHtml(code: string): string {
   const outputHtml = isOutputHtmlEnabled();
 
-  // TODO #810 This is temporary solution to disable specifying output
-  // location to prevent writing unnecessary files when using viya connections.
+  // TODO #810 This is a temporary solution to prevent creating an excessive
+  // number of result files for viya connections.
   // This todo will be cleaned up with remaining work in #810.
   const activeProfile = profileConfig.getActiveProfileDetail();
   const outputDestination =
