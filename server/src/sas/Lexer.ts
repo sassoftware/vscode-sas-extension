@@ -83,6 +83,8 @@ enum EmbeddedLangState {
   PROC_SQL_DEF,
   PROC_PYTHON_DEF,
   PROC_PYTHON_SUBMIT_OR_INTERACTIVE,
+  PROC_LUA_DEF,
+  PROC_LUA_SUBMIT_OR_INTERACTIVE,
 }
 export class Lexer {
   start = { line: 0, column: 0 };
@@ -265,6 +267,8 @@ export class Lexer {
             this.context.embeddedLangState = EmbeddedLangState.PROC_SQL_DEF;
           } else if (token.type === "text" && token.text === "PYTHON") {
             this.context.embeddedLangState = EmbeddedLangState.PROC_PYTHON_DEF;
+          } else if (token.type === "text" && token.text === "LUA") {
+            this.context.embeddedLangState = EmbeddedLangState.PROC_LUA_DEF;
           }
         }
         break;
@@ -279,13 +283,26 @@ export class Lexer {
         }
         break;
       }
+      case EmbeddedLangState.PROC_LUA_DEF: {
+        if (
+          token.type === "text" &&
+          ["SUBMIT", "INTERACTIVE"].includes(token.text)
+        ) {
+          this.context.embeddedLangState =
+            EmbeddedLangState.PROC_LUA_SUBMIT_OR_INTERACTIVE;
+        }
+        break;
+      }
       case EmbeddedLangState.PROC_PYTHON_SUBMIT_OR_INTERACTIVE:
+      case EmbeddedLangState.PROC_LUA_SUBMIT_OR_INTERACTIVE:
       case EmbeddedLangState.PROC_SQL_DEF: {
         if (token.type === "sep" && token.text === ";") {
           let endReg;
           if (
             this.context.embeddedLangState ===
-            EmbeddedLangState.PROC_PYTHON_SUBMIT_OR_INTERACTIVE
+              EmbeddedLangState.PROC_PYTHON_SUBMIT_OR_INTERACTIVE ||
+            this.context.embeddedLangState ===
+              EmbeddedLangState.PROC_LUA_SUBMIT_OR_INTERACTIVE
           ) {
             endReg =
               /\b(endsubmit|endinteractive|quit|run)(\s+|\/\*.*?\*\/)*;(\s+|\/\*.*?\*\/)*$/i;
