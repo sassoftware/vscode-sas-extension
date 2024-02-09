@@ -16,7 +16,7 @@ async function main() {
     await runTests({
       extensionDevelopmentPath,
       extensionTestsPath,
-      launchArgs: ["--disable-extensions"],
+      launchArgs: ["--disable-extensions", "--locale en-US"],
     });
   } catch (err) {
     console.error("Failed to run tests");

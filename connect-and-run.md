@@ -15,7 +15,9 @@ The following commands are supported for profiles:
 | `SAS.updateProfile` | SAS: Update Connection profile         |
 | `SAS.deleteProfile` | SAS: Delete Connection profile         |
 
-## Profile Anatomy (SAS Viya)
+## Profile: SAS Viya
+
+### Profile Anatomy
 
 The parameters listed below make up the profile settings for configuring a connection to SAS Viya.
 
@@ -36,11 +38,61 @@ Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift
 
 For more information about Client IDs and the authentication process, please see the blog post [Authentication to SAS Viya: a couple of approaches](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/). A SAS administrator can follow the Steps 1 and 2 in the post to register a new client.
 
-## Profile Anatomy (SAS 9.4 Remote)
+## Profile: SAS 9.4 (local)
+
+### Profile Anatomy
+
+The parameters listed below make up the profile settings for configuring a connection to a local SAS 9.4 instance.
+
+| Name     | Description                      | Additional Notes                    |
+| -------- | -------------------------------- | ----------------------------------- |
+| **Name** | Name of the profile              | This will display on the status bar |
+| **Host** | Indicates SAS 9.4 local instance | Defaults to localhost for com       |
+
+### Add New SAS 9.4 (local) Profile
+
+Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows). After executing the `SAS.addProfile` command, select the SAS 9.4 (local) connection type to create a new profile.
+
+## Profile: SAS 9.4 (remote - IOM)
+
+In order to use this option, you'll need to have "Integration Technologies Client" (ITC) installed on the machine this extension runs on. You can do this by making sure the "Integration Technologies Client" checkbox is checked when installing SAS 9.4, or by visiting the following [link](https://support.sas.com/downloads/browse.htm?fil=&cat=56) (Make sure to download the 9.4m8 option).
+
+### Profile Anatomy
+
+The parameters listed below make up the profile settings for configuring a connection to a remote SAS 9.4 instance.
+
+| Name         | Description         | Additional Notes                                                     |
+| ------------ | ------------------- | -------------------------------------------------------------------- |
+| **Name**     | Name of the profile | This will display on the status bar                                  |
+| **Host**     | IOM Server Host     | This will appear when hovering over the status bar                   |
+| **Username** | IOM Server Username | A username to use when establishing the IOM connection to the server |
+| **Port**     | IOM Server Port     | The port of the IOM server. Default value is 8591                    |
+
+### Add New SAS 9.4 (remote - IOM) Profile
+
+Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows). After executing the `SAS.addProfile` command, select the SAS 9.4 (remote - IOM) connection type to create a new profile.
+
+## Profile: SAS 9.4 (remote - SSH)
 
 For a secure connection to SAS 9.4 remote server, a public / private ssh key pair is required. The socket defined in the environment variable `SSH_AUTH_SOCK` is used to communicate with ssh-agent to authenticate the ssh session. The private key must be registered with the ssh-agent. The steps for configuring ssh follow.
 
-### Required setup for connection to SAS 9.4
+### Profile Anatomy
+
+The parameters listed below make up the profile settings for configuring a connection to a remote SAS 9.4 instance.
+
+| Name         | Description                          | Additional Notes                                                     |
+| ------------ | ------------------------------------ | -------------------------------------------------------------------- |
+| **Name**     | Name of the profile                  | This will display on the status bar                                  |
+| **Host**     | SSH Server Host                      | This will appear when hovering over the status bar                   |
+| **Username** | SSH Server Username                  | A username to use when establishing the SSH connection to the server |
+| **Port**     | SSH Server Port                      | The ssh port of the SSH server. Default value is 22                  |
+| **SAS Path** | Path to SAS Executable on the server | Must be a fully qualified path on the SSH server to a SAS executable |
+
+### Add New SAS 9.4 (remote - SSH) Profile
+
+Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, select the SAS 9.4 (remote - SSH) connection type and complete the prompts (using values from the preceeding table) to create a new profile.
+
+### Required setup for connection to SAS 9.4 (remote - SSH)
 
 In order to configure the connection between VS Code and SAS 9, you must configure OpenSSH. Follow the steps below to complete the setup.
 
@@ -48,7 +100,7 @@ In order to configure the connection between VS Code and SAS 9, you must configu
 
 1. Enable openssh client optional feature; [instructions found here](https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse?tabs=gui).
 
-2. [Create an environment variable](https://phoenixnap.com/kb/windows-set-environment-variable) SSH_AUTH_SOCK with value //./pipe/openssh-ssh-agent (windows uses a named pipe for the auth sock).  
+2. [Create an environment variable](https://phoenixnap.com/kb/windows-set-environment-variable) SSH_AUTH_SOCK with value //./pipe/openssh-ssh-agent (windows uses a named pipe for the auth sock).
    **Note**: An attempt to create the varible using Powershell command line did not register; suggest using these GUI instructions.
 
 3. Ensure ssh-agent service is running and set startup type to automatic; commands found in [this link](https://dev.to/aka_anoop/how-to-enable-openssh-agent-to-access-your-github-repositories-on-windows-powershell-1ab8)
@@ -77,9 +129,9 @@ Note: if ~/.ssh/config does not exist, run the following Powershell command to c
 
 7. Add the private key to ssh-agent: ssh-add /path/to/private/key/with/passphrase
 
-8. In VS Code, define a connection profile (see detailed instructions below in the [Add New SAS 9.4 Remote Profile](#add-new-sas-94-remote-profile) section). The connection for the remote server is stored in the settings.json file.
+8. In VS Code, define a connection profile (see detailed instructions below in the [Add New SAS 9.4 (remote - SSH) Profile](#add-new-sas-94-remote---ssh-profile) section). The connection for the remote server is stored in the settings.json file.
 
-```
+```json
     "ssh_test": {
         "connectionType": "ssh",
         "host": "host.machine.name",
@@ -114,9 +166,9 @@ Note: the default path to the SAS executable (saspath) is /opt/sasinside/SASHome
 
 4. Add the private key to ssh-agent: ssh-add /path/to/private/key/with/passphrase
 
-5. Define a connection profile in settings.json for a remote server (see detailed instructions below in the [Add New SAS 9.4 Remote Profile](#add-new-sas-94-remote-profile) section):
+5. Define a connection profile in settings.json for a remote server (see detailed instructions below in the [Add New SAS 9.4 (remote - SSH) Profile](#add-new-sas-94-remote---ssh-profile) section):
 
-```
+```json
     "ssh_test": {
         "connectionType": "ssh",
         "host": "host.machine.name",
@@ -128,43 +180,145 @@ Note: the default path to the SAS executable (saspath) is /opt/sasinside/SASHome
 
 6. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
 
-### Profile Anatomy (SAS 9.4 Remote)
-
-The parameters listed below make up the profile settings for configuring a connection to a remote SAS 9.4 instance.
-
-| Name         | Description                          | Additional Notes                                                     |
-| ------------ | ------------------------------------ | -------------------------------------------------------------------- |
-| **Name**     | Name of the profile                  | This will display on the status bar                                  |
-| **Host**     | SSH Server Host                      | This will appear when hovering over the status bar                   |
-| **Username** | SSH Server Username                  | A username to use when establishing the SSH connection to the server |
-| **Port**     | SSH Server Port                      | The ssh port of the SSH server. Default value is 22                  |
-| **SAS Path** | Path to SAS Executable on the server | Must be a fully qualified path on the SSH server to a SAS executable |
-
-## Add New SAS 9.4 Remote Profile
-
-Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows or Linux, or `Shift+CMD+P` on OSX). After executing the `SAS.addProfile` command, select the SAS 9.4 (remote) connection type and complete the prompts (using values from the preceeding table) to create a new profile.
-
-## Profile Anatomy (SAS 9.4 local)
-
-On Windows, during the install of SAS 9.4, make sure that "Integration Technologies Client" checkbox is checked. If using an order that doesn't provide this option, make sure the ITC is installed by visiting the following [link](https://support.sas.com/downloads/browse.htm?fil=&cat=56). Make sure to download the 9.4m8 option.
-
-The parameters listed below make up the profile settings for configuring a connection to a local SAS 9.4 instance.
-
-| Name     | Description                      | Additional Notes                    |
-| -------- | -------------------------------- | ----------------------------------- |
-| **Name** | Name of the profile              | This will display on the status bar |
-| **Host** | Indicates SAS 9.4 local instance | Defaults to localhost for com       |
-
-## Add New SAS 9.4 Local Profile
-
-Open the command palette (`F1`, or `Ctrl+Shift+P` on Windows). After executing the `SAS.addProfile` command, select the SAS 9.4 (local - COM) connection type to create a new profile.
-
 ## Additional settings in a profile
 
-| Name            | Description                             | Additional Notes              |
-| --------------- | --------------------------------------- | ----------------------------- |
-| **SAS Options** | SAS options to apply to the SAS session |                               |
-| **AutoExec**    | SAS code to execute at session startup  | Currently only works for Viya |
+| Name                     | Supported Connection Types                                                    | Description                                 | Additional Notes                                 |
+| ------------------------ | ----------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------ |
+| **SAS Options Settings** | SAS Viya, SAS 9.4 (local)\*, SAS 9.4 (remote - IOM)\*, SAS 9.4 (remote - SSH) | SAS options to apply to the SAS session     | \* local startup options currently not supported |
+| **AutoExec Settings**    | SAS Viya                                                                      | SAS code to execute once at session startup |                                                  |
+
+### SAS Options Settings
+
+SAS System Options can be set per connection profile. Changes made to SAS Options require closing and reopening the session to take effect. See the following examples below for required formats for supported connection profile types.
+
+- SAS Viya Example:
+
+  ```json
+  {
+    "profiles": {
+      "viya4": {
+        "endpoint": "https://example-endpoint.com",
+        "connectionType": "rest",
+        "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"]
+      }
+    }
+  }
+  ```
+
+- SAS 9.4 (remote - IOM):
+
+  ```json
+  {
+    "profiles": {
+      "sas9IOM": {
+        "host": "host",
+        "username": "username",
+        "port": 8591,
+        "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"],
+        "ConnectionType": "iom"
+      }
+    }
+  }
+  ```
+
+- SAS 9.4 (local):
+
+  ```json
+  {
+    "profiles": {
+      "sas9COM": {
+        "host": "localhost",
+        "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"],
+        "ConnectionType": "com"
+      }
+    }
+  }
+  ```
+
+- SAS 9 (remote - SSH):
+
+  ```json
+  {
+    "profiles": {
+      "SAS9SSH": {
+        "host": "hostname",
+        "username": "username",
+        "port": 22,
+        "sasPath": "/remote/path/to/sas_u8",
+        "sasOptions": ["-NONEWS", "-ECHOAUTO", "-PAGESIZE MAX"],
+        "connectionType": "ssh"
+      }
+    }
+  }
+  ```
+
+### AutoExec Settings
+
+For Viya connection profiles, it's possible to setup AutoExec lines that will execute once per session startup. Changes made to the autoexec require closing and reopening the session to take effect. The AutoExec option supports different modes for how to define the SAS lines that should run:
+
+- Line Mode: embed lines directly into the connection profile JSON. This mode is useful if only a few lines are needed to run on session startup. Note that standard JSON escaping rules apply.
+
+  ```json
+  "SAS.connectionProfiles": {
+    "activeProfile": "viyaServer",
+    "profiles": {
+      "viya4": {
+        "endpoint": "https://example-endpoint.com",
+        "connectionType": "rest",
+        "autoExec": [
+          {
+            "type": "line",
+            "line": "ods graphics / imagemap;"
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+- File Mode: specify a path to a file containing autoexec lines to execute. The file must be in a location that is readable by the extension. This mode is useful for complex autoexec scenarios:
+
+  ```json
+    "SAS.connectionProfiles": {
+    "activeProfile": "viyaServer",
+    "profiles": {
+      "viya4": {
+        "endpoint": "https://example-endpoint.com",
+        "connectionType": "rest",
+        "autoExec": [
+          {
+            "type": "file",
+            "filePath": "/my/local/autoexec.sas"
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+- Mixed Mode: The autoexec option supports an array of entries, so it is possible to use a combination of both embedded lines and files. The lines will be read in sequential order as they occur in the array itself.
+
+  ```json
+  "SAS.connectionProfiles": {
+    "activeProfile": "viyaServer",
+    "profiles": {
+      "viya4": {
+        "endpoint": "https://example-endpoint.com",
+        "connectionType": "rest",
+        "autoExec": [
+          {
+            "type": "line",
+            "line": "ods graphics / imagemap;"
+          },
+          {
+            "type": "file",
+            "filePath": "/my/local/autoexec.sas"
+          }
+        ]
+      }
+    }
+  }
+  ```
 
 ## Delete Connection Profile
 
@@ -271,35 +425,35 @@ To run a piece of SAS code:
 2. Select **sas: Run sas file** task from the following picker.
 3. This opens the tasks.json file with a task skeleton like below.
 
-```
+```json
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "sas",
-			"task": "Run sas file",
-			"problemMatcher": [],
-			"label": "sas: Run sas file"
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "sas",
+      "task": "Run sas file",
+      "problemMatcher": [],
+      "label": "sas: Run sas file"
+    }
+  ]
 }
 ```
 
 3. Add **file** field and specify a sas file name to it.
 4. Specify a special name in **label** field. The final task definition likes below
 
-```
+```json
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "sas",
-			"task": "Run sas file",
-			"file": "my.sas",
-			"problemMatcher": [],
-			"label": "run my.sas code"
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "sas",
+      "task": "Run sas file",
+      "file": "my.sas",
+      "problemMatcher": [],
+      "label": "run my.sas code"
+    }
+  ]
 }
 ```
 
@@ -318,20 +472,20 @@ To run a piece of SAS code:
 4. if a file is specified, the **preamble** and **postamble** will be added in the code from this file when this task is executed.
 5. If **file** is absent, then **preamble** and **postamble** will be added in the selected code (if have) or all code in active editor when this task is executed.
 
-```
+```json
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "sas",
-			"task": "Run sas file",
-			"file": "code.sas",
-			"preamble": "some code*",
-			"postamble": "some code*",
-			"problemMatcher": [],
-			"label": "Run additional code"
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "sas",
+      "task": "Run sas file",
+      "file": "code.sas",
+      "preamble": "some code*",
+      "postamble": "some code*",
+      "problemMatcher": [],
+      "label": "Run additional code"
+    }
+  ]
 }
 ```
 
@@ -341,7 +495,7 @@ If you need to run a task frequently, you can define a keyboard shortcut for the
 
 For example, to bind `Ctrl+H` to the **run additional code** task from above, add the following to your keybindings.json file:
 
-```
+```json
 {
   "key": "ctrl+h",
   "command": "workbench.action.tasks.runTask",

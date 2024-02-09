@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
-  "version": "1.5.0",
+  "version": "1.7.0",
   "categories": [
     "Programming Languages",
     "Data Science",
@@ -13,7 +13,7 @@
   "license": "Apache-2.0",
   "icon": "icons/sas.png",
   "engines": {
-    "vscode": "^1.73.0"
+    "vscode": "^1.82.0"
   },
   "activationEvents": [
     "onLanguage:sas",
@@ -170,7 +170,8 @@
                       "enum": [
                         "rest",
                         "ssh",
-                        "com"
+                        "com",
+                        "iom"
                       ]
                     },
                     "sasOptions": {
@@ -327,6 +328,41 @@
                       "if": {
                         "properties": {
                           "connectionType": {
+                            "const": "iom"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "host",
+                          "username",
+                          "port"
+                        ],
+                        "properties": {
+                          "host": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.host%"
+                          },
+                          "username": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.username%"
+                          },
+                          "port": {
+                            "type": "number",
+                            "default": 8591,
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.port%",
+                            "exclusiveMinimum": 1,
+                            "exclusiveMaximum": 65535
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "connectionType": {
                             "const": "com"
                           }
                         }
@@ -408,6 +444,7 @@
             "description": "%configuration.SAS.results.html.style%"
           },
           "SAS.flowConversionMode": {
+            "order": 6,
             "type": "string",
             "default": "Swimlane",
             "enum": [
@@ -419,13 +456,27 @@
               "%configuration.SAS.flowConversionModeSwimlane%",
               "%configuration.SAS.flowConversionModeNode%"
             ]
+          },
+          "SAS.log.showOnExecutionStart": {
+            "order": 7,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.showOnExecutionStart%"
+          },
+          "SAS.log.showOnExecutionFinish": {
+            "order": 8,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.showOnExecutionFinish%"
           }
         }
       }
     ],
     "configurationDefaults": {
       "[sas]": {
-        "editor.formatOnType": true
+        "editor.formatOnType": true,
+        "editor.formatOnPaste": true,
+        "editor.defaultFormatter": "SAS.sas-lsp"
       }
     },
     "commands": [
@@ -889,10 +940,6 @@
       {
         "language": "sas",
         "path": "./snippets/proc-snippets.json"
-      },
-      {
-        "language": "sas",
-        "path": "./snippets/function-snippets.json"
       }
     ],
     "viewsContainers": {
@@ -1000,27 +1047,27 @@
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.6",
-    "@types/node": "^20.10.7",
-    "@types/sinon": "^17.0.2",
-    "@typescript-eslint/eslint-plugin": "^6.18.0",
-    "@typescript-eslint/parser": "^6.18.0",
+    "@types/node": "^20.11.16",
+    "@types/sinon": "^17.0.3",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
     "@vscode/l10n-dev": "^0.0.31",
-    "chai": "^4.4.0",
+    "chai": "^4.4.1",
     "concurrently": "^8.2.2",
-    "esbuild": "^0.19.11",
+    "esbuild": "^0.20.0",
     "eslint": "^8.56.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "mocha": "^10.2.0",
-    "nock": "^13.4.0",
+    "nock": "^13.5.1",
     "papaparse": "^5.4.1",
     "path-browserify": "^1.0.1",
-    "prettier": "^3.1.1",
+    "prettier": "^3.2.5",
     "sinon": "^17.0.1",
     "ts-loader": "^9.5.1",
     "ts-sinon": "^2.0.2",
     "typescript": "^5.3.3",
-    "webpack": "^5.89.0",
+    "webpack": "^5.90.1",
     "webpack-cli": "^5.1.4"
   }
 }

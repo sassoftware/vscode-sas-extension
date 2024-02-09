@@ -39,13 +39,13 @@ import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
 import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
-import { LogTokensProvider, legend } from "../components/LogViewer";
 import ResultPanelSubscriptionProvider from "../components/ResultPanel";
 import {
   getStatusBarItem,
   resetStatusBarItem,
   updateStatusBarItem,
 } from "../components/StatusBarItem";
+import { LogTokensProvider, legend } from "../components/logViewer";
 import { NotebookController } from "../components/notebook/Controller";
 import { NotebookSerializer } from "../components/notebook/Serializer";
 import { ConnectionType } from "../components/profile";
@@ -54,8 +54,11 @@ import { SAS_TASK_TYPE } from "../components/tasks/SasTasks";
 
 let client: LanguageClient;
 
+export let extensionContext: ExtensionContext | undefined;
+
 export function activate(context: ExtensionContext): void {
   // The server is implemented in node
+  extensionContext = context;
   const serverModule = context.asAbsolutePath(
     path.join("server", "dist", "node", "server.js"),
   );
@@ -125,7 +128,7 @@ export function activate(context: ExtensionContext): void {
     authentication.registerAuthenticationProvider(
       SASAuthProvider.id,
       "SAS",
-      new SASAuthProvider(context.secrets),
+      new SASAuthProvider(),
     ),
     languages.registerDocumentSemanticTokensProvider(
       { language: "sas-log" },
@@ -170,6 +173,7 @@ export function activate(context: ExtensionContext): void {
 }
 
 function triggerProfileUpdate(): void {
+  commands.executeCommand("SAS.close", true);
   const profileList = profileConfig.getAllProfiles();
   const activeProfileName = profileConfig.getActiveProfile();
   if (profileList[activeProfileName]) {

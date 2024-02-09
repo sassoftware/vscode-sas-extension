@@ -12,6 +12,10 @@ export interface TextRange {
   end: TextPosition;
 }
 
+export function isSamePosition(pos1: TextPosition, pos2: TextPosition) {
+  return pos1.line === pos2.line && pos1.column === pos2.column;
+}
+
 export function arrayToMap(arr: string[] | number[]): Record<string, 1> {
   const map: Record<string, 1> = {};
   for (const key of arr) {

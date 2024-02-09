@@ -27,7 +27,7 @@ import { Writable } from "stream";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import LibraryModel from "./LibraryModel";
 import { Icons, Messages, WorkLibraryId } from "./const";
-import { LibraryItem, LibraryType, TableType } from "./types";
+import { LibraryAdapter, LibraryItem, LibraryType, TableType } from "./types";
 
 export const libraryItemMimeType =
   "application/vnd.code.tree.librarydataprovider";
@@ -162,7 +162,7 @@ class LibraryDataProvider
 
   public async deleteTable(item: LibraryItem): Promise<void> {
     await this.model.deleteTable(item);
-    this.refresh();
+    this._onDidChangeTreeData.fire(undefined);
   }
 
   public watch(): Disposable {
@@ -171,8 +171,8 @@ class LibraryDataProvider
     return new Disposable(() => {});
   }
 
-  public refresh(): void {
-    this.model.reset();
+  public useAdapter(libraryAdapter: LibraryAdapter): void {
+    this.model.useAdapter(libraryAdapter);
     this._onDidChangeTreeData.fire(undefined);
   }
 }

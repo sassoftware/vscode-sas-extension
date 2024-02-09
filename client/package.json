@@ -6,25 +6,26 @@
   "version": "0.0.1",
   "publisher": "SAS",
   "engines": {
-    "vscode": "^1.73.0"
+    "vscode": "^1.82.0"
   },
   "dependencies": {
-    "ag-grid-community": "^31.0.0",
-    "ag-grid-react": "^31.0.1",
-    "axios": "^1.6.5",
+    "ag-grid-community": "^31.0.3",
+    "ag-grid-react": "^31.0.3",
+    "axios": "^1.6.7",
     "media-typer": "^1.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "ssh2": "^1.15.0",
     "uuid": "^9.0.1",
-    "vscode-languageclient": "^9.0.1"
+    "vscode-languageclient": "^9.0.1",
+    "zustand": "^4.5.0"
   },
   "devDependencies": {
-    "@types/react": "^18.2.47",
+    "@types/react": "^18.2.54",
     "@types/react-dom": "^18.2.18",
-    "@types/ssh2": "^1.11.18",
-    "@types/vscode": "^1.73.0",
+    "@types/ssh2": "^1.11.19",
+    "@types/vscode": "1.82.0",
     "@types/vscode-notebook-renderer": "^1.72.3",
-    "@vscode/test-electron": "^2.3.8"
+    "@vscode/test-electron": "^2.3.9"
   }
 }

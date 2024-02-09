@@ -10,16 +10,23 @@ import {
   Messages,
 } from "../../../src/components/LibraryNavigator/const";
 import { LibraryItem } from "../../../src/components/LibraryNavigator/types";
+import RestLibraryAdapter from "../../../src/connection/rest/RestLibraryAdapter";
 import { DataAccessApi } from "../../../src/connection/rest/api/compute";
 import { getApiConfig } from "../../../src/connection/rest/common";
 
-class MockLibraryModel extends LibraryModel {
+class MockRestLibraryAdapter extends RestLibraryAdapter {
   constructor() {
     super();
     const apiConfig = getApiConfig();
     apiConfig.baseOptions.baseURL = "http://test.local";
     this.dataAccessApi = DataAccessApi(apiConfig);
     this.sessionId = "1234";
+  }
+}
+
+class MockLibraryModel extends LibraryModel {
+  constructor() {
+    super(new MockRestLibraryAdapter());
   }
 }
 
