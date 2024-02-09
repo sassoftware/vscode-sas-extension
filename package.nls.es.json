@@ -48,8 +48,6 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.port": "Puerto de conexión SSH SAS",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "Ruta ejecutable de conexión SSH SAS",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "Nombre de usuario de conexión SSH SAS",
-  "configuration.SAS.connectionProfiles.profiles.tokenFile": "Archivo token de SAS Viya",
-  "configuration.SAS.connectionProfiles.profiles.username": "ID de usuario SAS Viya",
   "configuration.SAS.flowConversionMode": "Elegir el modo de conversión para blocs de notas",
   "configuration.SAS.flowConversionModeNode": "Convertir cada celda del bloc de notas en un nodo",
   "configuration.SAS.flowConversionModeSwimlane": "Convertir cada celda del bloc de notas en un canal",
