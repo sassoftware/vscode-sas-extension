@@ -82,7 +82,7 @@
   "SAS Server Username": "Nombre de usuario del servidor SAS",
   "SAS Viya Server": "Servidor SAS Viya",
   "SAS code running...": "Código SAS en ejecución...",
-  "SQL Program": "SQL Program",
+  "SQL Program": "Programa SQL",
   "SSH_AUTH_SOCK not set. Check Environment Variables.": "SSH_AUTH_SOCK no establecido. Compruebe las variables de entorno.",
   "Save": "Guardar",
   "Saving {itemName}.": "Guardando {itemName}.",
