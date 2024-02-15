@@ -123,7 +123,6 @@ class LibraryModel {
 
   public async getChildren(item?: LibraryItem): Promise<LibraryItem[]> {
     if (!this.libraryAdapter) {
-      console.log("returning empty things");
       return [];
     }
     if (!item) {
