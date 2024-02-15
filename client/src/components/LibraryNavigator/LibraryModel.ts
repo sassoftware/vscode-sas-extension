@@ -17,7 +17,7 @@ import {
 const sortById = (a: LibraryItem, b: LibraryItem) => a.id.localeCompare(b.id);
 
 class LibraryModel {
-  public constructor(protected libraryAdapter: LibraryAdapter) {}
+  public constructor(protected libraryAdapter: LibraryAdapter | undefined) {}
 
   public useAdapter(adapter: LibraryAdapter): void {
     this.libraryAdapter = adapter;
@@ -122,6 +122,10 @@ class LibraryModel {
   }
 
   public async getChildren(item?: LibraryItem): Promise<LibraryItem[]> {
+    if (!this.libraryAdapter) {
+      console.log("returning empty things");
+      return [];
+    }
     if (!item) {
       return await this.getLibraries();
     }
