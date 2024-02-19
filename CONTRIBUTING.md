@@ -89,13 +89,14 @@ Follow these steps to update a locale for the SAS Extension for VSCode:
 
 | Language                 | VSCode Language ID | Contributor                                       |
 | ------------------------ | ------------------ | ------------------------------------------------- |
-| **French**               | fr                 | Vincent Rejany                                    |
-| **Italian**              | it                 | Lorenzo Roccato, Simone Spagnoli, Patrizia Omodei |
-| **German**               | de                 | David Weik                                        |
 | **Chinese (Simplified)** | zh-cn              | Wei Wu                                            |
+| **French**               | fr                 | Vincent Rejany                                    |
+| **German**               | de                 | David Weik                                        |
+| **Italian**              | it                 | Lorenzo Roccato, Simone Spagnoli, Patrizia Omodei |
 | **Japanese**             | ja                 | Masayuki Iizuka                                   |
 | **Korean**               | ko                 | Meilan Ji                                         |
 | **Portuguese (Brazil)**  | pt-br              | Mark Jordan                                       |
+| **Spanish**              | es                 | Elyana Mastache, Raquel Nunez                     |
 
 ## Run single test file
 
