@@ -20,6 +20,7 @@ import {
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
 import { Session } from "../session";
+import { humanReadableMessages } from "./const";
 import { scriptContent } from "./script";
 import { LineCodes } from "./types";
 
@@ -36,13 +37,6 @@ const LogLineTypes: LogLineTypeEnum[] = [
   "warning",
   "note",
   "message",
-];
-
-const humanReadableMessages = [
-  {
-    pattern: /powershell\.exe: command not found/,
-    error: l10n.t("This platform does not support this connection type."),
-  },
 ];
 
 let sessionInstance: ITCSession;
@@ -330,11 +324,15 @@ export class ITCSession extends Session {
   };
 
   private fetchHumanReadableErrorMessage = (msg: string): string => {
-    const foundMessage = humanReadableMessages.find((message) =>
+    if (/powershell\.exe: command not found/.test(msg)) {
+      return l10n.t("This platform does not support this connection type.");
+    }
+
+    const foundError = humanReadableMessages.find((message) =>
       message.pattern.test(msg),
     );
-    if (foundMessage) {
-      return foundMessage.error;
+    if (foundError) {
+      return foundError.error;
     }
 
     return l10n.t(

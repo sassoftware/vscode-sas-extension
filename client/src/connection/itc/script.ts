@@ -45,7 +45,17 @@ class SASRunner{
 
         Write-Host "${LineCodes.SessionCreatedCode}"
     } catch {
-      throw "Setup error"
+      if ($_ -like "*The user name or password is incorrect.*") {
+        throw "Setup error: AuthError"
+      } elseif ($_ -like "*The referenced account is currently locked out and may not be logged on to.*") {
+        throw "Setup error: AuthLockout"
+      } elseif ($_ -like "*The machine name could not be resolved to an IP address.*") {
+        throw "Setup error: HostResolutionError"
+      } elseif ($_ -like "*Could not establish a connection to the server on the requested machine.*") {
+        throw "Setup error: ConnectionError"
+      } else {
+        throw "Setup error: $_"
+      }
     }
   }
 
