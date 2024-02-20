@@ -1,6 +1,13 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri, env, l10n, window, workspace } from "vscode";
+import {
+  CancellationTokenSource,
+  Uri,
+  env,
+  l10n,
+  window,
+  workspace,
+} from "vscode";
 
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { resolve } from "path";
@@ -29,6 +36,13 @@ const LogLineTypes: LogLineTypeEnum[] = [
   "warning",
   "note",
   "message",
+];
+
+const humanReadableMessages = [
+  {
+    pattern: /powershell\.exe: command not found/,
+    error: l10n.t("This platform does not support this connection type."),
+  },
 ];
 
 let sessionInstance: ITCSession;
@@ -60,6 +74,9 @@ export class ITCSession extends Session {
   private _passwordKey: string;
   private _pollingForLogResults: boolean;
   private _logLineType = 0;
+  private _passwordInputCancellationTokenSource:
+    | CancellationTokenSource
+    | undefined;
 
   constructor() {
     super();
@@ -170,13 +187,18 @@ export class ITCSession extends Session {
       return storedPassword;
     }
 
+    const source = new CancellationTokenSource();
+    this._passwordInputCancellationTokenSource = source;
     this._password =
-      (await window.showInputBox({
-        ignoreFocusOut: true,
-        password: true,
-        prompt: l10n.t("Enter your password for this connection."),
-        title: l10n.t("Enter your password"),
-      })) || "";
+      (await window.showInputBox(
+        {
+          ignoreFocusOut: true,
+          password: true,
+          prompt: l10n.t("Enter your password for this connection."),
+          title: l10n.t("Enter your password"),
+        },
+        this._passwordInputCancellationTokenSource.token,
+      )) || "";
 
     return this._password;
   };
@@ -294,19 +316,30 @@ export class ITCSession extends Session {
   private onShellStdErr = (chunk: Buffer): void => {
     const msg = chunk.toString();
     console.warn("shellProcess stderr: " + msg);
+    this._passwordInputCancellationTokenSource &&
+      this._passwordInputCancellationTokenSource.cancel();
     this.clearPassword();
-    this._runReject(
-      new Error(
-        l10n.t(
-          "There was an error executing the SAS Program. See [console log](command:workbench.action.toggleDevTools) for more details.",
-        ),
-      ),
-    );
+    this._runReject(new Error(this.fetchHumanReadableErrorMessage(msg)));
+
     // If we encountered an error in setup, we need to go through everything again
-    if (/Setup error/.test(msg)) {
+    const fatalErrors = [/Setup error/, /powershell\.exe: command not found/];
+    if (fatalErrors.find((regex) => regex.test(msg))) {
       this._shellProcess.kill();
       this._workDirectory = undefined;
     }
+  };
+
+  private fetchHumanReadableErrorMessage = (msg: string): string => {
+    const foundMessage = humanReadableMessages.find((message) =>
+      message.pattern.test(msg),
+    );
+    if (foundMessage) {
+      return foundMessage.error;
+    }
+
+    return l10n.t(
+      "There was an error executing the SAS Program. See [console log](command:workbench.action.toggleDevTools) for more details.",
+    );
   };
 
   /**
