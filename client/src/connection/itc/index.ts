@@ -310,14 +310,18 @@ export class ITCSession extends Session {
   private onShellStdErr = (chunk: Buffer): void => {
     const msg = chunk.toString();
     console.warn("shellProcess stderr: " + msg);
-    this._passwordInputCancellationTokenSource &&
-      this._passwordInputCancellationTokenSource.cancel();
-    this.clearPassword();
     this._runReject(new Error(this.fetchHumanReadableErrorMessage(msg)));
 
     // If we encountered an error in setup, we need to go through everything again
     const fatalErrors = [/Setup error/, /powershell\.exe: command not found/];
     if (fatalErrors.find((regex) => regex.test(msg))) {
+      // If we can't even run the shell script (i.e. powershell.exe not found),
+      // we'll also need to dismiss the password prompt
+      this._passwordInputCancellationTokenSource &&
+        this._passwordInputCancellationTokenSource.cancel();
+
+      this.clearPassword();
+
       this._shellProcess.kill();
       this._workDirectory = undefined;
     }
