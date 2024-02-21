@@ -21,4 +21,8 @@ export const humanReadableMessages = [
       "Could not establish a connection to the server on the requested machine.  Verify that the server has been started and that the host and port of the server match your profile information.",
     ),
   },
+  {
+    pattern: /Run error: TranscodingFailed/,
+    error: l10n.t("Run error: Some code points did not transcode."),
+  },
 ];

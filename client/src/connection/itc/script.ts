@@ -95,8 +95,11 @@ class SASRunner{
         $this.objSAS.LanguageService.Async = $true
         $this.objSAS.LanguageService.Submit($code)
     }catch{
-      Write-Error $_.ScriptStackTrace
-      throw "Run error"
+      if ($_ -like "*Some code points did not transcode.*") {
+        throw "Run error: TranscodingFailed"
+      } else {
+        throw "Run error: $_"
+      }
     }
   }
 
