@@ -5,6 +5,8 @@ import { ColorThemeKind, l10n, window, workspace } from "vscode";
 import { isAbsolute } from "path";
 import { v4 } from "uuid";
 
+import { profileConfig } from "../../commands/profile";
+import { ConnectionType } from "../profile";
 import { getHtmlStyle, isOutputHtmlEnabled } from "./settings";
 
 function generateHtmlStyleOption(): string {
@@ -45,11 +47,21 @@ function generateHtmlStyleOption(): string {
 export function wrapCodeWithOutputHtml(code: string): string {
   const outputHtml = isOutputHtmlEnabled();
 
+  // TODO #810 This is a temporary solution to prevent creating an excessive
+  // number of result files for viya connections.
+  // This todo will be cleaned up with remaining work in #810.
+  const activeProfile = profileConfig.getActiveProfileDetail();
+  const outputDestination =
+    activeProfile &&
+    activeProfile.profile.connectionType !== ConnectionType.Rest
+      ? ` body="${v4()}.htm"`
+      : "";
+
   if (outputHtml) {
     const htmlStyleOption = generateHtmlStyleOption();
     return `title;footnote;ods _all_ close;
 ods graphics on;
-ods html5${htmlStyleOption} options(bitmap_mode='inline' svg_mode='inline') body="${v4()}.htm";
+ods html5${htmlStyleOption} options(bitmap_mode='inline' svg_mode='inline')${outputDestination};
 ${code}
 ;*';*";*/;run;quit;ods html5 close;`;
   } else {
