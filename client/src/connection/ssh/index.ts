@@ -219,7 +219,11 @@ export class SSHSession extends Session {
     const resolvedEnv: string[] = ['_JAVA_OPTIONS="-Djava.awt.headless=true"'];
     const execArgs: string = resolvedEnv.join(" ");
 
-    const resolvedSasOpts: string[] = ["-nodms", "-terminal", "-nosyntaxcheck"];
+    const resolvedSasOpts: string[] = [
+      "-nodms",
+      "-noterminal",
+      "-nosyntaxcheck",
+    ];
 
     if (this._config.sasOptions?.length > 0) {
       resolvedSasOpts.push(...this._config.sasOptions);
