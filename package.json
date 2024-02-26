@@ -1052,7 +1052,7 @@
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "@vscode/l10n-dev": "^0.0.34",
-    "chai": "^4.4.1",
+    "chai": "^5.1.0",
     "concurrently": "^8.2.2",
     "esbuild": "^0.20.1",
     "eslint": "^8.56.0",
