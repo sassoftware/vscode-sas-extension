@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [Unreleased]
+
+### Changed
+
+- Removed `SAS: Sign in` from the command palette. Users will have the option of clicking "Sign in" on the library/content pane, or by clicking the running man icon to execute sas code ([#862](https://github.com/sassoftware/vscode-sas-extension/pull/862))
+
 ## [v1.7.1] - 2024-02-15
 
 ### Fixed
