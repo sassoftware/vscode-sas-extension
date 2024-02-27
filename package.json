@@ -817,6 +817,10 @@
           "command": "SAS.runRegion"
         },
         {
+          "command": "SAS.authorize",
+          "when": "false"
+        },
+        {
           "when": "false",
           "command": "SAS.restoreResource"
         },
