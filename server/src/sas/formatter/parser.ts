@@ -130,11 +130,9 @@ const preserveProcs = (
     "text" in region.children[1].children[0] &&
     /^(submit|interactive)$/i.test(region.children[1].children[0].text)
   ) {
-    return 0;
-  } else if (
-    current === 0 &&
-    /^(endsubmit|endinteractive)$/i.test(token.text)
-  ) {
+    current = 0;
+  }
+  if (current === 0 && /^(endsubmit|endinteractive)$/i.test(token.text)) {
     return 1;
   } else if (current === 1 && token.type === "sep" && token.text === ";") {
     current = 2;
