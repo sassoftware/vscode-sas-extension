@@ -18,48 +18,35 @@
       "include": "#string"
     },
     {
-      "begin": "(?i)proc",
-      "end": "(?i)(run|quit)(\\s+|/\\*.*?\\*/)?;",
-      "name": "entity.name.function.proc",
+      "begin": "(?i)proc(\\s|/\\*.*?\\*/)*(sql|fedsql)",
+      "end": "(?i)(quit(\\s|/\\*.*?\\*/)*;|(?=(data|proc|%macro)\\b[^;]*;))",
+      "name": "entity.name.function.proc.sql",
+      "contentName": "entity.name.function.proc.sql.content",
       "patterns": [
         {
-          "include": "#comment-block"
-        },
+          "include": "source.sassql"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)proc(\\s|/\\*.*?\\*/)*lua",
+      "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
+      "name": "entity.name.function.proc.lua",
+      "contentName": "entity.name.function.proc.lua.content",
+      "patterns": [
         {
-          "include": "#ws"
-        },
+          "include": "source.lua"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)proc(\\s|/\\*.*?\\*/)*python",
+      "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
+      "name": "entity.name.function.proc.python",
+      "contentName": "entity.name.function.proc.python.content",
+      "patterns": [
         {
-          "begin": "(?i)(sql|fedsql)\\b",
-          "end": "(?i)(?=(run|quit)(\\s+|/\\*.*?\\*/)?;|(data|proc|%macro)\\b[^;]*;)",
-          "name": "entity.name.function.proc.sql",
-          "contentName": "entity.name.function.proc.sql.content",
-          "patterns": [
-            {
-              "include": "source.sql"
-            }
-          ]
-        },
-        {
-          "begin": "(?i)python\\b",
-          "end": "(?i)(?=(run|quit)(\\s+|/\\*.*?\\*/)?;|(data|proc|%macro)\\b[^;]*;)",
-          "name": "entity.name.function.proc.python",
-          "contentName": "entity.name.function.proc.python.content",
-          "patterns": [
-            {
-              "include": "source.python"
-            }
-          ]
-        },
-        {
-          "begin": "(?i)lua\\b",
-          "end": "(?i)(?=(run|quit)(\\s+|/\\*.*?\\*/)?;|(data|proc|%macro)\\b[^;]*;)",
-          "name": "entity.name.function.proc.lua",
-          "contentName": "entity.name.function.proc.lua.content",
-          "patterns": [
-            {
-              "include": "source.lua"
-            }
-          ]
+          "include": "source.python"
         }
       ]
     }

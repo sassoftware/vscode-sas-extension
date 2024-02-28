@@ -25,5 +25,19 @@
     "error": { "foreground": "#ff0000" },
     "warning": { "foreground": "#8f5f00" },
     "note": { "foreground": "#0000ff" }
-  }
+  },
+  "tokenColors": [
+    {
+      "scope": ["string.quoted.single.date", "string.quoted.double.date"],
+      "settings": { "foreground": "#3c8275", "fontStyle": "bold" }
+    },
+    {
+      "scope": "constant.format.sas",
+      "settings": { "foreground": "#3c8275" }
+    },
+    {
+      "scope": "keyword.section.sas",
+      "settings": { "foreground": "#224c7c", "fontStyle": "bold" }
+    }
+  ]
 }

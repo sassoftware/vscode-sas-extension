@@ -309,7 +309,7 @@ export class Lexer {
           } else {
             // EmbeddedLangState.PROC_SQL_DEF
             endReg =
-              /\b((run|quit)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^;]*;)(\s+|\/\*.*?\*\/)*$/i;
+              /\b((quit)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^;]*;)(\s+|\/\*.*?\*\/)*$/i;
           }
           for (
             let line = this.curr.line;
