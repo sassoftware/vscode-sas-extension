@@ -818,7 +818,7 @@
         },
         {
           "command": "SAS.authorize",
-          "when": "false"
+          "when": "(!SAS.authorized && SAS.connectionType == rest) && !SAS.connection.direct"
         },
         {
           "when": "false",
