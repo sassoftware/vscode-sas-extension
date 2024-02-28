@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "ag-grid-community": "^31.0.3",
-    "ag-grid-react": "^31.0.3",
+    "ag-grid-react": "^31.1.1",
     "axios": "^1.6.7",
     "media-typer": "^1.1.0",
     "react": "^18.2.0",
@@ -18,11 +18,11 @@
     "ssh2": "^1.15.0",
     "uuid": "^9.0.1",
     "vscode-languageclient": "^9.0.1",
-    "zustand": "^4.5.0"
+    "zustand": "^4.5.1"
   },
   "devDependencies": {
-    "@types/react": "^18.2.54",
-    "@types/react-dom": "^18.2.18",
+    "@types/react": "^18.2.58",
+    "@types/react-dom": "^18.2.19",
     "@types/ssh2": "^1.11.19",
     "@types/vscode": "1.82.0",
     "@types/vscode-notebook-renderer": "^1.72.3",

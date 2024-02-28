@@ -103,10 +103,14 @@ class LibraryNavigator implements SubscriptionProvider {
     this.libraryDataProvider.useAdapter(this.libraryAdapterForConnectionType());
   }
 
-  private libraryAdapterForConnectionType(): LibraryAdapter {
+  private libraryAdapterForConnectionType(): LibraryAdapter | undefined {
     const activeProfile = profileConfig.getProfileByName(
       profileConfig.getActiveProfile(),
     );
+
+    if (!activeProfile) {
+      return;
+    }
 
     return new LibraryAdapterFactory().create(activeProfile.connectionType);
   }

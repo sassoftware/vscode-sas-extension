@@ -204,7 +204,7 @@ Ask, Find, and Share on the VS Code SAS Extension on the [SAS Programmers Commun
 
 ### SAS Programming Documentation
 
-[SAS Programming documentation](https://go.documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/lrcon/titlepage.htm)
+[SAS Programming documentation](https://go.documentation.sas.com/doc/en/pgmsascdc/v_048/lepg/titlepage.htm)
 
 ### FAQs
 
