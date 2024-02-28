@@ -26,6 +26,20 @@
     "warning": { "foreground": "#ffb829" },
     "note": { "foreground": "#2fa8fe" }
   },
+  "tokenColors": [
+    {
+      "scope": ["string.quoted.single.date", "string.quoted.double.date"],
+      "settings": { "foreground": "#54b6a4", "fontStyle": "bold" }
+    },
+    {
+      "scope": "constant.format.sas",
+      "settings": { "foreground": "#54b6a4" }
+    },
+    {
+      "scope": "keyword.section.sas",
+      "settings": { "foreground": "#92c3fc", "fontStyle": "bold" }
+    }
+  ],
   "colors": {
     "editor.background": "#021727",
     "editor.foreground": "#dddfe4",

@@ -917,9 +917,17 @@
       },
       {
         "id": "sas-log"
+      },
+      {
+        "id": "sassql"
       }
     ],
     "grammars": [
+      {
+        "language": "sassql",
+        "scopeName": "source.sassql",
+        "path": "./syntaxes/sassql.tmLanguage.json"
+      },
       {
         "language": "sas",
         "scopeName": "source.sas",
@@ -927,7 +935,8 @@
         "embeddedLanguages": {
           "source.sql": "sql",
           "source.python": "python",
-          "source.lua": "lua"
+          "source.lua": "lua",
+          "source.sassql": "sassql"
         }
       }
     ],
