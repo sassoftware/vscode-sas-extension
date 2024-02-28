@@ -30,7 +30,7 @@
         },
         {
           "begin": "(?i)(sql|fedsql)\\b",
-          "end": "(?i)(?=(run|quit)(\\s+|/\\*.*?\\*/)?;)",
+          "end": "(?i)(?=(run|quit)(\\s+|/\\*.*?\\*/)?;|(data|proc|%macro)\\b[^;]*;)",
           "name": "entity.name.function.proc.sql",
           "contentName": "entity.name.function.proc.sql.content",
           "patterns": [
@@ -41,7 +41,7 @@
         },
         {
           "begin": "(?i)python\\b",
-          "end": "(?i)(?=(run|quit)(\\s+|/\\*.*?\\*/)?;)",
+          "end": "(?i)(?=(run|quit)(\\s+|/\\*.*?\\*/)?;|(data|proc|%macro)\\b[^;]*;)",
           "name": "entity.name.function.proc.python",
           "contentName": "entity.name.function.proc.python.content",
           "patterns": [
@@ -52,7 +52,7 @@
         },
         {
           "begin": "(?i)lua\\b",
-          "end": "(?i)(?=(run|quit)(\\s+|/\\*.*?\\*/)?;)",
+          "end": "(?i)(?=(run|quit)(\\s+|/\\*.*?\\*/)?;|(data|proc|%macro)\\b[^;]*;)",
           "name": "entity.name.function.proc.lua",
           "contentName": "entity.name.function.proc.lua.content",
           "patterns": [
@@ -98,7 +98,7 @@
           "name": "punctuation.definition.string.begin"
         }
       },
-      "end": "\"",
+      "end": "\"|(?=\\n)",
       "endCaptures": {
         "0": {
           "name": "punctuation.definition.string.end"
@@ -113,7 +113,7 @@
           "name": "punctuation.definition.string.begin"
         }
       },
-      "end": "'",
+      "end": "'|(?=\\n)",
       "endCaptures": {
         "0": {
           "name": "punctuation.definition.string.end"
@@ -121,19 +121,19 @@
       }
     },
     "macro-quotes": {
-      "begin": "(?i)%(?:bquote|superq|nrbquote)",
+      "begin": "(?i)%(?:bquote|superq|nrbquote|nrquote|nrstr)",
       "beginCaptures": {
         "0": {
           "name": "entity.name.function.macro"
         }
       },
-      "end": "\\)",
-      "endCaptures": {
-        "0": {
-          "name": "entity.name.function.macro"
+      "end": "\\)|(?=\\n)",
+      "name": "string.quoted.macro",
+      "patterns": [
+        {
+          "include": "#macro-quotes"
         }
-      },
-      "name": "string.quoted.macro"
+      ]
     },
     "cards": {
       "begin": "(?i)\\b(?:cards|lines|datalines)\\b",

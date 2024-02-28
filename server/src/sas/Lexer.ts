@@ -305,9 +305,11 @@ export class Lexer {
               EmbeddedLangState.PROC_LUA_SUBMIT_OR_INTERACTIVE
           ) {
             endReg =
-              /\b(endsubmit|endinteractive|quit|run)(\s+|\/\*.*?\*\/)*;(\s+|\/\*.*?\*\/)*$/i;
+              /\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^;]*;)(\s+|\/\*.*?\*\/)*$/i;
           } else {
-            endReg = /\b(run|quit)(\s+|\/\*.*?\*\/)*;(\s+|\/\*.*?\*\/)*$/i;
+            // EmbeddedLangState.PROC_SQL_DEF
+            endReg =
+              /\b((run|quit)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^;]*;)(\s+|\/\*.*?\*\/)*$/i;
           }
           for (
             let line = this.curr.line;
