@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { ERROR_END_TAG, ERROR_START_TAG } from './const';
+import { ERROR_END_TAG, ERROR_START_TAG } from "./const";
 import { LineCodes } from "./types";
 
 export const scriptContent = `

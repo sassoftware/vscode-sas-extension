@@ -11,7 +11,6 @@ import {
 
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { resolve } from "path";
-import jsdom from 'jsdom';
 
 import { BaseConfig, LogLineTypeEnum, RunResult } from "..";
 import {
@@ -21,12 +20,11 @@ import {
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
 import { Session } from "../session";
-import { ERROR_END_TAG, ERROR_START_TAG, humanReadableMessages } from "./const";
+import { LineParser } from "./LineParser";
+import { ERROR_END_TAG, ERROR_START_TAG } from "./const";
 import { scriptContent } from "./script";
 import { LineCodes } from "./types";
-import { LineParser } from './LineParser';
-import { error } from 'console';
-import { decodeEntities } from './util';
+import { decodeEntities } from "./util";
 
 const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE-1";
 
@@ -320,7 +318,9 @@ export class ITCSession extends Session {
       return;
     }
 
-    this._runReject(new Error(this.fetchHumanReadableErrorMessage(errorMessage)));
+    this._runReject(
+      new Error(this.fetchHumanReadableErrorMessage(errorMessage)),
+    );
 
     // If we encountered an error in setup, we need to go through everything again
     const fatalErrors = [/Setup error/, /powershell\.exe: command not found/];
@@ -338,22 +338,42 @@ export class ITCSession extends Session {
   };
 
   private fetchHumanReadableErrorMessage = (msg: string): string => {
-    const atLineIndex = msg.indexOf('At line');
+    const atLineIndex = msg.indexOf("At line");
     const errorMessage = atLineIndex ? msg.slice(0, atLineIndex) : msg;
-    
+
     // Dump error to console
     console.warn("shellProcess stderr: " + errorMessage);
 
     // Do we have SAS messages?
-    const sasMessages = errorMessage.replace(/\n|\t/gm,'').match(/<SASMessage severity="[A-Za-z]*">([^<]*)<\/SASMessage>/g);
+    const sasMessages = errorMessage
+      .replace(/\n|\t/gm, "")
+      .match(/<SASMessage severity="[A-Za-z]*">([^<]*)<\/SASMessage>/g);
     if (sasMessages && sasMessages.length) {
-      return decodeEntities(sasMessages.map(sasMessage => sasMessage.replace(/<SASMessage severity="[A-Za-z]*">/,'').replace(/<\/SASMessage>/,'')).join("  "));
+      return decodeEntities(
+        sasMessages
+          .map((sasMessage) =>
+            sasMessage
+              .replace(/<SASMessage severity="[A-Za-z]*">/, "")
+              .replace(/<\/SASMessage>/, ""),
+          )
+          .join("  "),
+      );
     }
 
     // Do we have a description?
-    const descriptions = errorMessage.replace(/\n|\t/gm,'').match(/<description>([^<]*)<\/description>/g);
+    const descriptions = errorMessage
+      .replace(/\n|\t/gm, "")
+      .match(/<description>([^<]*)<\/description>/g);
     if (descriptions && descriptions.length) {
-      return decodeEntities(descriptions.map(sasMessage => sasMessage.replace(/<description>/,'').replace(/<\/description>/,'')).join("  "));
+      return decodeEntities(
+        descriptions
+          .map((sasMessage) =>
+            sasMessage
+              .replace(/<description>/, "")
+              .replace(/<\/description>/, ""),
+          )
+          .join("  "),
+      );
     }
 
     // If we have neither of those, lets just point the user to the console
