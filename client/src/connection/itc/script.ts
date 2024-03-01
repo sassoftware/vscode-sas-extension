@@ -1,5 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { ERROR_END_TAG, ERROR_START_TAG } from './const';
 import { LineCodes } from "./types";
 
 export const scriptContent = `
@@ -45,17 +46,7 @@ class SASRunner{
 
         Write-Host "${LineCodes.SessionCreatedCode}"
     } catch {
-      if ($_ -like "*The user name or password is incorrect.*") {
-        throw "Setup error: AuthError"
-      } elseif ($_ -like "*The referenced account is currently locked out and may not be logged on to.*") {
-        throw "Setup error: AuthLockout"
-      } elseif ($_ -like "*The machine name could not be resolved to an IP address.*") {
-        throw "Setup error: HostResolutionError"
-      } elseif ($_ -like "*Could not establish a connection to the server on the requested machine.*") {
-        throw "Setup error: ConnectionError"
-      } else {
-        throw "Setup error: $_"
-      }
+      Write-Error "${ERROR_START_TAG}Setup error: $_${ERROR_END_TAG}"
     }
   }
 
@@ -85,7 +76,7 @@ class SASRunner{
           throw $errVals
       }
     } catch{
-        Write-Error $Error[0].Exception.Message
+        Write-Error "${ERROR_START_TAG}$Error[0].Exception.Message${ERROR_END_TAG}"
     }
   }
 
@@ -95,11 +86,7 @@ class SASRunner{
         $this.objSAS.LanguageService.Async = $true
         $this.objSAS.LanguageService.Submit($code)
     }catch{
-      if ($_ -like "*Some code points did not transcode.*") {
-        throw "Run error: TranscodingFailed"
-      } else {
-        throw "Run error: $_"
-      }
+      Write-Error "${ERROR_START_TAG}Run error: $_${ERROR_END_TAG}"
     }
   }
 
@@ -107,7 +94,7 @@ class SASRunner{
   try{
         $this.objSAS.Close()
     }catch{
-      throw "Close error"
+      Write-Error "${ERROR_START_TAG}Close error: $_${ERROR_END_TAG}"
     }
   }
 
@@ -116,7 +103,7 @@ class SASRunner{
         $this.objSAS.LanguageService.Cancel()
         Write-Host "${LineCodes.RunCancelledCode}"
       }catch{
-        throw "Cancel error"
+        Write-Error "${ERROR_START_TAG}Cancel error: $_${ERROR_END_TAG}"
       }
     }
 
@@ -124,7 +111,7 @@ class SASRunner{
       try{
         return $this.objSAS.LanguageService.FlushLog($chunkSize)
       } catch{
-        throw "FlushLog error"
+        Write-Error "${ERROR_START_TAG}FlushLog error: $_${ERROR_END_TAG}"
       }
       return ""
   }

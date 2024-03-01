@@ -11,6 +11,7 @@ import {
 
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { resolve } from "path";
+import jsdom from 'jsdom';
 
 import { BaseConfig, LogLineTypeEnum, RunResult } from "..";
 import {
@@ -20,11 +21,14 @@ import {
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
 import { Session } from "../session";
-import { humanReadableMessages } from "./const";
+import { ERROR_END_TAG, ERROR_START_TAG, humanReadableMessages } from "./const";
 import { scriptContent } from "./script";
 import { LineCodes } from "./types";
+import { LineParser } from './LineParser';
+import { error } from 'console';
+import { decodeEntities } from './util';
 
-const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE";
+const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE-1";
 
 const LogLineTypes: LogLineTypeEnum[] = [
   "normal",
@@ -71,12 +75,14 @@ export class ITCSession extends Session {
   private _passwordInputCancellationTokenSource:
     | CancellationTokenSource
     | undefined;
+  private _errorParser: LineParser;
 
   constructor() {
     super();
     this._password = "";
     this._secretStorage = getSecretStorage(SECRET_STORAGE_NAMESPACE);
     this._pollingForLogResults = false;
+    this._errorParser = new LineParser(ERROR_START_TAG, ERROR_END_TAG);
   }
 
   public set config(value: Config) {
@@ -309,12 +315,16 @@ export class ITCSession extends Session {
    */
   private onShellStdErr = (chunk: Buffer): void => {
     const msg = chunk.toString();
-    console.warn("shellProcess stderr: " + msg);
-    this._runReject(new Error(this.fetchHumanReadableErrorMessage(msg)));
+    const errorMessage = this._errorParser.processLine(msg);
+    if (!errorMessage) {
+      return;
+    }
+
+    this._runReject(new Error(this.fetchHumanReadableErrorMessage(errorMessage)));
 
     // If we encountered an error in setup, we need to go through everything again
     const fatalErrors = [/Setup error/, /powershell\.exe: command not found/];
-    if (fatalErrors.find((regex) => regex.test(msg))) {
+    if (fatalErrors.find((regex) => regex.test(errorMessage))) {
       // If we can't even run the shell script (i.e. powershell.exe not found),
       // we'll also need to dismiss the password prompt
       this._passwordInputCancellationTokenSource &&
@@ -328,17 +338,25 @@ export class ITCSession extends Session {
   };
 
   private fetchHumanReadableErrorMessage = (msg: string): string => {
-    if (/powershell\.exe: command not found/.test(msg)) {
-      return l10n.t("This platform does not support this connection type.");
+    const atLineIndex = msg.indexOf('At line');
+    const errorMessage = atLineIndex ? msg.slice(0, atLineIndex) : msg;
+    
+    // Dump error to console
+    console.warn("shellProcess stderr: " + errorMessage);
+
+    // Do we have SAS messages?
+    const sasMessages = errorMessage.replace(/\n|\t/gm,'').match(/<SASMessage severity="[A-Za-z]*">([^<]*)<\/SASMessage>/g);
+    if (sasMessages && sasMessages.length) {
+      return decodeEntities(sasMessages.map(sasMessage => sasMessage.replace(/<SASMessage severity="[A-Za-z]*">/,'').replace(/<\/SASMessage>/,'')).join("  "));
     }
 
-    const foundError = humanReadableMessages.find((message) =>
-      message.pattern.test(msg),
-    );
-    if (foundError) {
-      return foundError.error;
+    // Do we have a description?
+    const descriptions = errorMessage.replace(/\n|\t/gm,'').match(/<description>([^<]*)<\/description>/g);
+    if (descriptions && descriptions.length) {
+      return decodeEntities(descriptions.map(sasMessage => sasMessage.replace(/<description>/,'').replace(/<\/description>/,'')).join("  "));
     }
 
+    // If we have neither of those, lets just point the user to the console
     return l10n.t(
       "There was an error executing the SAS Program. See [console log](command:workbench.action.toggleDevTools) for more details.",
     );
