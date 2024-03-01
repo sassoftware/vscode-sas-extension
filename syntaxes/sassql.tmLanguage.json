@@ -646,7 +646,7 @@
       ]
     },
     "sasformat": {
-      "match": "\\w+\\.\\d*",
+      "match": "\\$?\\w+\\.\\d*",
       "name": "constant.format.sas"
     },
     "saskeywords": {

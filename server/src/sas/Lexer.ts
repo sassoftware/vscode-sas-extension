@@ -293,24 +293,132 @@ export class Lexer {
         }
         break;
       }
-      case EmbeddedLangState.PROC_PYTHON_SUBMIT_OR_INTERACTIVE:
-      case EmbeddedLangState.PROC_LUA_SUBMIT_OR_INTERACTIVE:
+      case EmbeddedLangState.PROC_PYTHON_SUBMIT_OR_INTERACTIVE: {
+        if (token.type === "sep" && token.text === ";") {
+          let multiLineStrState: false | '"""' | "'''" = false;
+          FIND_PYTHON_END: for (
+            let line = this.curr.line;
+            line < this.model.getLineCount();
+            line++
+          ) {
+            let lineContent = this.model.getLine(line);
+            if (line === this.curr.line) {
+              lineContent =
+                " ".repeat(this.curr.column) +
+                lineContent.slice(this.curr.column);
+            }
+            let pos = 0;
+            let match;
+            do {
+              if (match) {
+                pos = match.index + match[0].length;
+              }
+              if (multiLineStrState) {
+                match = /'''|"""/.exec(lineContent.substring(pos));
+                if (match && match[0] === multiLineStrState) {
+                  multiLineStrState = false;
+                }
+              } else {
+                match =
+                  /'''|"""|("[^"]*?("|$))|('[^']*?('|$))|(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$)/m.exec(
+                    lineContent.substring(pos),
+                  );
+                if (match) {
+                  const matchedText = match[0];
+                  if (matchedText === "'''" || matchedText === '"""') {
+                    multiLineStrState = matchedText;
+                  } else if (
+                    matchedText.startsWith("'") ||
+                    matchedText.startsWith('"')
+                  ) {
+                    // do nothing to skip string
+                  } else {
+                    token.end = { ...token.end }; // token.end is this.curr
+                    this.curr.line = line;
+                    this.curr.column = match?.index;
+                    this.context.embeddedLangState = EmbeddedLangState.NONE;
+                    break FIND_PYTHON_END;
+                  }
+                }
+              }
+            } while (match);
+
+            if (line === this.model.getLineCount() - 1) {
+              token.end = { ...token.end }; // token.end is this.curr
+              this.curr.line = line;
+              this.curr.column = this.model.getColumnCount(line);
+              this.context.embeddedLangState = EmbeddedLangState.NONE;
+              break FIND_PYTHON_END;
+            }
+          }
+        }
+        break;
+      }
+      case EmbeddedLangState.PROC_LUA_SUBMIT_OR_INTERACTIVE: {
+        if (token.type === "sep" && token.text === ";") {
+          let isInMultiLineStr = false;
+          FIND_LUA_END: for (
+            let line = this.curr.line;
+            line < this.model.getLineCount();
+            line++
+          ) {
+            let lineContent = this.model.getLine(line);
+            if (line === this.curr.line) {
+              lineContent =
+                " ".repeat(this.curr.column) +
+                lineContent.slice(this.curr.column);
+            }
+            let pos = 0;
+            let match;
+            do {
+              if (match) {
+                pos = match.index + match[0].length;
+              }
+              if (isInMultiLineStr) {
+                match = /\]\]/.exec(lineContent.substring(pos));
+                if (match) {
+                  isInMultiLineStr = false;
+                }
+              } else {
+                match =
+                  /("[^"]*?("|$))|('[^']*?('|$))|\[\[|(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$)/m.exec(
+                    lineContent.substring(pos),
+                  );
+                if (match) {
+                  const matchedText = match[0];
+                  if (matchedText.startsWith("[[")) {
+                    isInMultiLineStr = true;
+                  } else if (
+                    matchedText.startsWith("'") ||
+                    matchedText.startsWith('"')
+                  ) {
+                    // do nothing to skip string
+                  } else {
+                    token.end = { ...token.end }; // token.end is this.curr
+                    this.curr.line = line;
+                    this.curr.column = match?.index;
+                    this.context.embeddedLangState = EmbeddedLangState.NONE;
+                    break FIND_LUA_END;
+                  }
+                }
+              }
+            } while (match);
+
+            if (line === this.model.getLineCount() - 1) {
+              token.end = { ...token.end }; // token.end is this.curr
+              this.curr.line = line;
+              this.curr.column = this.model.getColumnCount(line);
+              this.context.embeddedLangState = EmbeddedLangState.NONE;
+              break FIND_LUA_END;
+            }
+          }
+        }
+        break;
+      }
       case EmbeddedLangState.PROC_SQL_DEF: {
         if (token.type === "sep" && token.text === ";") {
-          let endReg;
-          if (
-            this.context.embeddedLangState ===
-              EmbeddedLangState.PROC_PYTHON_SUBMIT_OR_INTERACTIVE ||
-            this.context.embeddedLangState ===
-              EmbeddedLangState.PROC_LUA_SUBMIT_OR_INTERACTIVE
-          ) {
-            endReg =
-              /\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^;]*;)(\s+|\/\*.*?\*\/)*$/i;
-          } else {
-            // EmbeddedLangState.PROC_SQL_DEF
-            endReg =
-              /\b((quit)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^;]*;)(\s+|\/\*.*?\*\/)*$/i;
-          }
+          const endReg =
+            /\b((quit)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$/i;
           for (
             let line = this.curr.line;
             line < this.model.getLineCount();
@@ -323,10 +431,11 @@ export class Lexer {
                 lineContent.slice(this.curr.column);
             }
             const match = endReg.exec(lineContent);
-            if (match) {
+            if (match || line === this.model.getLineCount() - 1) {
               token.end = { ...token.end }; // token.end is this.curr
               this.curr.line = line;
-              this.curr.column = match.index;
+              this.curr.column =
+                match?.index ?? this.model.getColumnCount(line);
               this.context.embeddedLangState = EmbeddedLangState.NONE;
               break;
             }

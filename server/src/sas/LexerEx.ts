@@ -1490,12 +1490,18 @@ export class LexerEx {
       notCheckKeyword?: any;
     },
     isKeyword: boolean,
+    isSKeyword?: boolean,
   ) {
     //assert(token, "Token must be valid.");
     //assert(SasLexer.isWord[token.type], "Token must be word type.");
-    if (isKeyword && token.type === "text") {
-      token.type = Lexer.TOKEN_TYPES.KEYWORD;
-      token.notCheckKeyword = true;
+    if (token.type === "text") {
+      if (isKeyword) {
+        token.type = Lexer.TOKEN_TYPES.KEYWORD;
+        token.notCheckKeyword = true;
+      } else if (isSKeyword) {
+        token.type = Lexer.TOKEN_TYPES.SKEYWORD;
+        token.notCheckKeyword = true;
+      }
     }
     return token;
   }
@@ -2883,24 +2889,25 @@ export class LexerEx {
   private readDefineEventEnd_() {
     return this.handleEnd_();
   }
-  private readSubmitBlock_() {
+  private readSubmitOrInteractiveBlock_() {
     const token = this.getNext_();
     const next = this.prefetch_({ pos: 1 });
     const nextNext = this.prefetch_({ pos: 2 });
-    if (
-      token &&
-      next &&
-      nextNext &&
-      token.end.line < next.start.line &&
-      next.text === "ENDSUBMIT" &&
-      nextNext.type === "sep" &&
-      nextNext.text === ";"
-    ) {
-      this.stack.push({
-        parse: this.handleEnd_,
-        state: this.PARSING_STATE.IN_PROC,
-      });
-      this.setKeyword_(next, true);
+    if (token && next && nextNext && token.end.line < next.start.line) {
+      if (
+        ["ENDSUBMIT", "ENDINTERACTIVE"].includes(next.text) &&
+        nextNext.type === "sep" &&
+        nextNext.text === ";"
+      ) {
+        this.stack.push({
+          parse: this.handleEnd_,
+          state: this.PARSING_STATE.IN_PROC,
+        });
+        this.setKeyword_(next, true);
+      } else if (["DATA", "PROC", "%MACRO"].includes(next.text)) {
+        this.stack.pop();
+        this.setKeyword_(next, false, true);
+      }
     }
     return token;
   }
@@ -3078,10 +3085,10 @@ export class LexerEx {
                 this.setKeyword_(token, true);
                 generalProcStmt = false;
               }
-            } else if (procName === "LUA") {
-              if (word === "SUBMIT") {
+            } else if (procName === "LUA" || procName === "PYTHON") {
+              if (["SUBMIT", "INTERACTIVE"].includes(word)) {
                 this.stack.push({
-                  parse: this.readSubmitBlock_,
+                  parse: this.readSubmitOrInteractiveBlock_,
                   state: this.PARSING_STATE.IN_PROC,
                 });
                 this.setKeyword_(token, true);
