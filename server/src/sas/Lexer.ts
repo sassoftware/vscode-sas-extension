@@ -311,7 +311,7 @@ export class Lexer {
             let match;
             do {
               if (match) {
-                pos = match.index + match[0].length;
+                pos += match.index + match[0].length;
               }
               if (multiLineStrState) {
                 match = /'''|"""/.exec(lineContent.substring(pos));
@@ -319,19 +319,24 @@ export class Lexer {
                   multiLineStrState = false;
                 }
               } else {
-                match =
-                  /'''|"""|("[^"]*?("|$))|('[^']*?('|$))|(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$)/m.exec(
-                    lineContent.substring(pos),
-                  );
+                const stringReg = /'''|"""|("[^"]*?("|$))|('[^']*?('|$))/;
+                const commentReg = /#.*$/;
+                const secReg =
+                  /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$)/;
+                match = new RegExp(
+                  `${stringReg.source}|${commentReg.source}|${secReg.source}`,
+                  "m",
+                ).exec(lineContent.substring(pos));
                 if (match) {
                   const matchedText = match[0];
                   if (matchedText === "'''" || matchedText === '"""') {
                     multiLineStrState = matchedText;
                   } else if (
                     matchedText.startsWith("'") ||
-                    matchedText.startsWith('"')
+                    matchedText.startsWith('"') ||
+                    matchedText.startsWith("#")
                   ) {
-                    // do nothing to skip string
+                    // do nothing to skip string and single line comment
                   } else {
                     token.end = { ...token.end }; // token.end is this.curr
                     this.curr.line = line;
@@ -356,7 +361,7 @@ export class Lexer {
       }
       case EmbeddedLangState.PROC_LUA_SUBMIT_OR_INTERACTIVE: {
         if (token.type === "sep" && token.text === ";") {
-          let isInMultiLineStr = false;
+          let multiLineStrState: false | "[[" | "--[[" | "/*" = false;
           FIND_LUA_END: for (
             let line = this.curr.line;
             line < this.model.getLineCount();
@@ -372,27 +377,46 @@ export class Lexer {
             let match;
             do {
               if (match) {
-                pos = match.index + match[0].length;
+                pos += match.index + match[0].length;
               }
-              if (isInMultiLineStr) {
-                match = /\]\]/.exec(lineContent.substring(pos));
+              if (multiLineStrState) {
+                match = /\]\]|--\]\]|\*\//.exec(lineContent.substring(pos));
                 if (match) {
-                  isInMultiLineStr = false;
+                  if (multiLineStrState === "[[" && match[0] === "]]") {
+                    multiLineStrState = false;
+                  } else if (
+                    multiLineStrState === "--[[" &&
+                    (match[0] === "--]]" || match[0] === "]]")
+                  ) {
+                    multiLineStrState = false;
+                  } else if (multiLineStrState === "/*" && match[0] === "*/") {
+                    multiLineStrState = false;
+                  }
                 }
               } else {
-                match =
-                  /("[^"]*?("|$))|('[^']*?('|$))|\[\[|(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$)/m.exec(
-                    lineContent.substring(pos),
-                  );
+                const stringReg = /("[^"]*("|$))|('[^']*('|$))|\[\[/;
+                const commentReg = /--[^[].*$|--\[\[|\/\*/;
+                const secReg =
+                  /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$)/;
+                const reg = new RegExp(
+                  `${stringReg.source}|${commentReg.source}|${secReg.source}`,
+                  "m",
+                );
+                match = reg.exec(lineContent.substring(pos));
                 if (match) {
                   const matchedText = match[0];
                   if (matchedText.startsWith("[[")) {
-                    isInMultiLineStr = true;
+                    multiLineStrState = "[[";
+                  } else if (matchedText.startsWith("--[[")) {
+                    multiLineStrState = "--[[";
+                  } else if (matchedText.startsWith("/*")) {
+                    multiLineStrState = "/*";
                   } else if (
                     matchedText.startsWith("'") ||
-                    matchedText.startsWith('"')
+                    matchedText.startsWith('"') ||
+                    matchedText.startsWith("--")
                   ) {
-                    // do nothing to skip string
+                    // do nothing to skip string or single line comment
                   } else {
                     token.end = { ...token.end }; // token.end is this.curr
                     this.curr.line = line;
