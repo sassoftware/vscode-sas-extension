@@ -688,20 +688,17 @@ export class CodeZoneManager {
 
     context.syntaxIdx = -1;
     context.tokens = null;
-    do {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
       token = this._getPrev(context);
       tokens.push(token);
-    } while (
-      token &&
-      ![";", "ENDSUBMIT", "ENDINTERACTIVE"].includes(token.text?.toUpperCase())
-    );
+      if (!token || token.text === ";" || token.type === "embedded-code") {
+        break;
+      }
+    }
     if (token) {
       context.line = token.line;
-      if (";" === token.text) {
-        context.col = token.col + 1;
-      } else {
-        context.col = token.col;
-      }
+      context.col = token.col + token.text.length;
       context.syntaxIdx = -1;
       context.lastStmtEnd = { line: token.line, col: token.col };
     } else {
