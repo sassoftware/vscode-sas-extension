@@ -216,6 +216,26 @@ export class ContentModel {
     return res.data;
   }
 
+  public async downloadFile(item: ContentItem): Promise<Buffer | undefined> {
+    const uri = getUri(item);
+    const resourceId = getResourceId(uri);
+
+    try {
+      const res = await this.connection.get(resourceId + "/content", {
+        responseType: "arraybuffer",
+      });
+
+      this.fileTokenMaps[resourceId] = {
+        etag: res.headers.etag,
+        lastModified: res.headers["last-modified"],
+      };
+
+      return Buffer.from(res.data, "binary");
+    } catch (e) {
+      throw new Error(Messages.FileDownloadError);
+    }
+  }
+
   public async createFile(
     item: ContentItem,
     fileName: string,

@@ -525,7 +525,6 @@ describe("ContentDataProvider", async function () {
     });
 
     await dataProvider.connect("http://test.io");
-    await dataProvider.readFile(getUri(item));
 
     axiosInstance.put
       .withArgs("uri://test/content", "/* This is the content */")

@@ -543,7 +543,7 @@ class ContentDataProvider
       } else {
         await workspace.fs.writeFile(
           Uri.joinPath(folderUri, selection.name),
-          await this.readFile(getUri(selection)),
+          await this.model.downloadFile(selection),
         );
       }
     }
