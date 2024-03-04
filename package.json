@@ -1056,7 +1056,7 @@
     "concurrently": "^8.2.2",
     "esbuild": "^0.20.1",
     "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react": "^7.34.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "mocha": "^10.3.0",
     "nock": "^13.5.4",
