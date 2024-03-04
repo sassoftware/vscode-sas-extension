@@ -313,6 +313,7 @@ export class ITCSession extends Session {
    */
   private onShellStdErr = (chunk: Buffer): void => {
     const msg = chunk.toString();
+
     const errorMessage = this._errorParser.processLine(msg);
     if (!errorMessage) {
       return;
@@ -343,6 +344,10 @@ export class ITCSession extends Session {
 
     // Dump error to console
     console.warn("shellProcess stderr: " + errorMessage);
+
+    if (/powershell\.exe: command not found/.test(msg)) {
+      return l10n.t("This platform does not support this connection type.");
+    }
 
     // Do we have SAS messages?
     const sasMessages = errorMessage

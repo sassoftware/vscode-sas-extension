@@ -22,7 +22,7 @@ export class LineParser {
       return;
     }
 
-    return;
+    return line;
   }
 
   protected processedError(): string {
