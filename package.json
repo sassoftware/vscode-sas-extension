@@ -1050,7 +1050,7 @@
     "@types/node": "^20.11.24",
     "@types/sinon": "^17.0.3",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^6.21.0",
+    "@typescript-eslint/parser": "^7.1.1",
     "@vscode/l10n-dev": "^0.0.34",
     "chai": "^4.4.1",
     "concurrently": "^8.2.2",
