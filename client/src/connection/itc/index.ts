@@ -26,7 +26,7 @@ import { scriptContent } from "./script";
 import { LineCodes } from "./types";
 import { decodeEntities } from "./util";
 
-const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE-1";
+const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE";
 
 const LogLineTypes: LogLineTypeEnum[] = [
   "normal",

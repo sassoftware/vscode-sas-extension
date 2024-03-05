@@ -4,13 +4,11 @@
 export class LineParser {
   protected errorLines: string[] = [];
   protected capturingError: boolean = false;
-  protected startTag: string;
-  protected endTag: string;
 
-  public constructor(startTag: string, endTag: string) {
-    this.startTag = startTag;
-    this.endTag = endTag;
-  }
+  public constructor(
+    protected startTag: string,
+    protected endTag: string,
+  ) {}
 
   public processLine(line: string): string | undefined {
     if (line.includes(this.startTag) || this.capturingError) {
