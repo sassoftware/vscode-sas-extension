@@ -324,7 +324,7 @@ export class ITCSession extends Session {
     );
 
     // If we encountered an error in setup, we need to go through everything again
-    const fatalErrors = [/Setup error/, /powershell\.exe: command not found/];
+    const fatalErrors = [/Setup error/, /powershell\.exe/];
     if (fatalErrors.find((regex) => regex.test(errorMessage))) {
       // If we can't even run the shell script (i.e. powershell.exe not found),
       // we'll also need to dismiss the password prompt
@@ -345,7 +345,7 @@ export class ITCSession extends Session {
     // Dump error to console
     console.warn("shellProcess stderr: " + errorMessage);
 
-    if (/powershell\.exe: command not found/.test(msg)) {
+    if (/powershell\.exe/.test(msg)) {
       return l10n.t("This platform does not support this connection type.");
     }
 
