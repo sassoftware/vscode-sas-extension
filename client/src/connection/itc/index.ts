@@ -21,7 +21,12 @@ import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
 import { Session } from "../session";
 import { LineParser } from "./LineParser";
-import { ERROR_END_TAG, ERROR_START_TAG } from "./const";
+import {
+  ERROR_END_TAG,
+  ERROR_START_TAG,
+  WORK_DIR_END_TAG,
+  WORK_DIR_START_TAG,
+} from "./const";
 import { scriptContent } from "./script";
 import { LineCodes } from "./types";
 import { decodeEntities } from "./util";
@@ -74,13 +79,19 @@ export class ITCSession extends Session {
     | CancellationTokenSource
     | undefined;
   private _errorParser: LineParser;
+  private _workDirectoryParser: LineParser;
 
   constructor() {
     super();
     this._password = "";
     this._secretStorage = getSecretStorage(SECRET_STORAGE_NAMESPACE);
     this._pollingForLogResults = false;
-    this._errorParser = new LineParser(ERROR_START_TAG, ERROR_END_TAG);
+    this._errorParser = new LineParser(ERROR_START_TAG, ERROR_END_TAG, true);
+    this._workDirectoryParser = new LineParser(
+      WORK_DIR_START_TAG,
+      WORK_DIR_END_TAG,
+      false,
+    );
   }
 
   public set config(value: Config) {
@@ -338,6 +349,24 @@ export class ITCSession extends Session {
     }
   };
 
+  private fetchWorkDirectory = (line: string): string | undefined => {
+    let foundWorkDirectory = "";
+    if (
+      !line.includes(`%put ${WORK_DIR_START_TAG}&workDir${WORK_DIR_END_TAG};`)
+    ) {
+      foundWorkDirectory = this._workDirectoryParser.processLine(line);
+    } else {
+      // If the line is the put statement, we don't need to log that
+      return;
+    }
+    // We don't want to output any of the captured lines
+    if (this._workDirectoryParser.isCapturingLine()) {
+      return;
+    }
+
+    return foundWorkDirectory || "";
+  };
+
   private fetchHumanReadableErrorMessage = (msg: string): string => {
     const atLineIndex = msg.indexOf("At line");
     const errorMessage = atLineIndex ? msg.slice(0, atLineIndex) : msg;
@@ -400,9 +429,13 @@ export class ITCSession extends Session {
         return;
       }
 
-      if (!this._workDirectory && line.startsWith("WORKDIR=")) {
-        const parts = line.split("WORKDIR=");
-        this._workDirectory = parts[1].trim();
+      const foundWorkDirectory = this.fetchWorkDirectory(line);
+      if (foundWorkDirectory === undefined) {
+        return;
+      }
+
+      if (!this._workDirectory && foundWorkDirectory) {
+        this._workDirectory = foundWorkDirectory;
         this._runResolve();
         updateStatusBarItem(true);
         return;

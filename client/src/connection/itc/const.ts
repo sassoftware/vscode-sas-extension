@@ -3,3 +3,6 @@
 
 export const ERROR_START_TAG = "<ITCError>";
 export const ERROR_END_TAG = "</ITCError>";
+
+export const WORK_DIR_START_TAG = "<WorkDirectory>";
+export const WORK_DIR_END_TAG = "</WorkDirectory>";

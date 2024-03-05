@@ -2,34 +2,39 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export class LineParser {
-  protected errorLines: string[] = [];
-  protected capturingError: boolean = false;
+  protected processedLines: string[] = [];
+  protected capturingLine: boolean = false;
 
   public constructor(
     protected startTag: string,
     protected endTag: string,
+    protected returnNonProcessedLines: boolean,
   ) {}
 
   public processLine(line: string): string | undefined {
-    if (line.includes(this.startTag) || this.capturingError) {
-      this.errorLines.push(line);
-      this.capturingError = true;
+    if (line.includes(this.startTag) || this.capturingLine) {
+      this.processedLines.push(line);
+      this.capturingLine = true;
       if (line.includes(this.endTag)) {
-        return this.processedError();
+        return this.processedLine();
       }
       return;
     }
 
-    return line;
+    return this.returnNonProcessedLines ? line : undefined;
   }
 
-  protected processedError(): string {
-    this.capturingError = false;
-    const fullError = this.errorLines
+  protected processedLine(): string {
+    this.capturingLine = false;
+    const fullError = this.processedLines
       .join("")
       .replace(this.startTag, "")
       .replace(this.endTag, "");
-    this.errorLines = [];
+    this.processedLines = [];
     return fullError;
+  }
+
+  public isCapturingLine(): boolean {
+    return this.capturingLine;
   }
 }
