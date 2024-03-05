@@ -10,6 +10,10 @@ import { v4 } from "uuid";
 
 import { setContext } from "../../../src/components/ExtensionContext";
 import { ITCProtocol, getSession } from "../../../src/connection/itc";
+import {
+  WORK_DIR_END_TAG,
+  WORK_DIR_START_TAG,
+} from "../../../src/connection/itc/const";
 import { scriptContent } from "../../../src/connection/itc/script";
 import { LineCodes } from "../../../src/connection/itc/types";
 import { Session } from "../../../src/connection/session";
@@ -85,6 +89,12 @@ describe("ITC connection", () => {
       const setupPromise = session.setup();
 
       onDataCallback(Buffer.from(`WORKDIR="/work/dir"\n`));
+      onDataCallback(
+        Buffer.from(`%put ${WORK_DIR_START_TAG}&workDir${WORK_DIR_END_TAG};`),
+      );
+      onDataCallback(
+        Buffer.from(`${WORK_DIR_START_TAG}/work/dir${WORK_DIR_END_TAG}`),
+      );
 
       await setupPromise;
 
@@ -133,6 +143,12 @@ describe("ITC connection", () => {
       writeFileSync(tempHtmlPath, html5);
       const setupPromise = session.setup();
       onDataCallback(Buffer.from(`WORKDIR=/work/dir`));
+      onDataCallback(
+        Buffer.from(`%put ${WORK_DIR_START_TAG}&workDir${WORK_DIR_END_TAG};`),
+      );
+      onDataCallback(
+        Buffer.from(`${WORK_DIR_START_TAG}/work/dir${WORK_DIR_END_TAG}`),
+      );
       await setupPromise;
     });
     afterEach(() => {
@@ -172,6 +188,12 @@ $runner.FetchResultsFile($filePath, $outputFile)
     beforeEach(async () => {
       const setupPromise = session.setup();
       onDataCallback(Buffer.from(`WORKDIR=/work/dir`));
+      onDataCallback(
+        Buffer.from(`%put ${WORK_DIR_START_TAG}&workDir${WORK_DIR_END_TAG};`),
+      );
+      onDataCallback(
+        Buffer.from(`${WORK_DIR_START_TAG}/work/dir${WORK_DIR_END_TAG}`),
+      );
       await setupPromise;
     });
 
