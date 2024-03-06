@@ -817,6 +817,10 @@
           "command": "SAS.runRegion"
         },
         {
+          "command": "SAS.authorize",
+          "when": "(!SAS.authorized && SAS.connectionType == rest) && !SAS.connection.direct"
+        },
+        {
           "when": "false",
           "command": "SAS.restoreResource"
         },
