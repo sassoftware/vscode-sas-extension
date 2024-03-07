@@ -630,6 +630,12 @@
         "category": "SAS Notebook"
       },
       {
+        "command": "SAS.file.new",
+        "shortTitle": "%commands.SAS.file.new.short%",
+        "title": "%commands.SAS.file.new%",
+        "category": "SAS"
+      },
+      {
         "command": "SAS.downloadResource",
         "title": "%commands.SAS.download%",
         "category": "SAS"
@@ -901,6 +907,10 @@
         {
           "command": "SAS.notebook.new",
           "group": "notebook"
+        },
+        {
+          "command": "SAS.file.new",
+          "group": "file"
         }
       ]
     },
