@@ -975,30 +975,34 @@
         {
           "id": "librarydataprovider",
           "name": "%views.SAS.libraries%",
-          "when": "(SAS.authorized && SAS.connectionType == rest) || SAS.connection.direct"
+          "when": "(SAS.authorized && SAS.librariesEnabled) || SAS.connection.direct"
         },
         {
           "id": "sas-content-get-started",
           "name": "%views.SAS.signIn%",
-          "when": "(!SAS.authorized && SAS.connectionType == rest) && !SAS.connection.direct"
+          "when": "(!SAS.authorized && SAS.canSignIn) && !SAS.connection.direct"
         },
         {
           "id": "sas-content-invalid-connection",
           "name": "%views.SAS.signIn%",
-          "when": "!SAS.authorized && SAS.connectionType != rest"
+          "when": "!SAS.authorized && !SAS.canSignIn"
         }
       ]
     },
     "viewsWelcome": [
       {
         "view": "sas-content-get-started",
-        "when": "(!SAS.authorized && SAS.connectionType == rest) && !SAS.connection.direct",
+        "when": "SAS.connectionType == rest",
         "contents": "%views.SAS.welcome%",
         "enablement": "!SAS.authorizing"
       },
       {
-        "view": "sas-content-invalid-connection",
+        "view": "sas-content-get-started",
         "when": "SAS.connectionType != rest",
+        "contents": "%views.SAS.loadLibraries%"
+      },
+      {
+        "view": "sas-content-invalid-connection",
         "contents": "%views.SAS.unsupportedConnection%"
       }
     ],
