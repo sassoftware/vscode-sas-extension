@@ -1,35 +1,30 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import {
-  CancellationTokenSource,
-  Uri,
-  env,
-  l10n,
-  window,
-  workspace,
-} from "vscode";
+import { CancellationTokenSource, Uri, l10n, window, workspace } from "vscode";
 
-import { ChildProcessWithoutNullStreams, spawn } from "child_process";
+import { ChildProcessWithoutNullStreams } from "child_process";
 import { resolve } from "path";
 
-import { BaseConfig, LogLineTypeEnum, RunResult } from "..";
-import {
-  getGlobalStorageUri,
-  getSecretStorage,
-} from "../../components/ExtensionContext";
+import { LogLineTypeEnum, RunResult } from "..";
+import { getGlobalStorageUri } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
 import { Session } from "../session";
 import { LineParser } from "./LineParser";
+import PasswordStore from "./PasswordStore";
 import {
   ERROR_END_TAG,
   ERROR_START_TAG,
   WORK_DIR_END_TAG,
   WORK_DIR_START_TAG,
 } from "./const";
-import { scriptContent } from "./script";
-import { LineCodes } from "./types";
-import { decodeEntities } from "./util";
+import { Config, ITCProtocol, LineCodes } from "./types";
+import {
+  decodeEntities,
+  defaultSessionConfig,
+  runSetup,
+  spawnPowershellProcess,
+} from "./util";
 
 const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE";
 
@@ -48,21 +43,6 @@ const LogLineTypes: LogLineTypeEnum[] = [
 
 let sessionInstance: ITCSession;
 
-export enum ITCProtocol {
-  COM = 0,
-  IOMBridge = 2,
-}
-
-/**
- * Configuration parameters for this connection provider
- */
-export interface Config extends BaseConfig {
-  host: string;
-  port: number;
-  username: string;
-  protocol: ITCProtocol;
-}
-
 export class ITCSession extends Session {
   private _config: Config;
   private _shellProcess: ChildProcessWithoutNullStreams;
@@ -70,9 +50,6 @@ export class ITCSession extends Session {
   private _runResolve: ((value?) => void) | undefined;
   private _runReject: ((reason?) => void) | undefined;
   private _workDirectory: string;
-  private _password: string;
-  private _secretStorage;
-  private _passwordKey: string;
   private _pollingForLogResults: boolean;
   private _logLineType = 0;
   private _passwordInputCancellationTokenSource:
@@ -80,11 +57,11 @@ export class ITCSession extends Session {
     | undefined;
   private _errorParser: LineParser;
   private _workDirectoryParser: LineParser;
+  private _passwordStore: PasswordStore;
 
   constructor() {
     super();
-    this._password = "";
-    this._secretStorage = getSecretStorage(SECRET_STORAGE_NAMESPACE);
+    this._passwordStore = new PasswordStore();
     this._pollingForLogResults = false;
     this._errorParser = new LineParser(ERROR_START_TAG, ERROR_END_TAG, true);
     this._workDirectoryParser = new LineParser(
@@ -96,7 +73,11 @@ export class ITCSession extends Session {
 
   public set config(value: Config) {
     this._config = value;
-    this._passwordKey = `${value.host}${value.protocol}${value.username}`;
+    this._passwordStore.allowEmptyPassword =
+      this._config.protocol === ITCProtocol.COM;
+    this._passwordStore.updatePasswordKey(
+      `${value.host}${value.protocol}${value.username}`,
+    );
   }
 
   /**
@@ -114,19 +95,10 @@ export class ITCSession extends Session {
       return; // manually terminate to avoid executing the code below
     }
 
-    this._shellProcess = spawn(
-      "chcp 65001 >NUL & powershell.exe -NonInteractive -NoProfile -Command -",
-      {
-        shell: true,
-        env: process.env,
-      },
-    );
-    this._shellProcess.stdout.on("data", this.onShellStdOut);
-    this._shellProcess.stderr.on("data", this.onShellStdErr);
-    this._shellProcess.stdin.write(scriptContent + "\n", this.onWriteComplete);
-    this._shellProcess.stdin.write(
-      "$runner = New-Object -TypeName SASRunner\n",
+    this._shellProcess = spawnPowershellProcess(
       this.onWriteComplete,
+      this.onShellStdOut,
+      this.onShellStdErr,
     );
 
     /*
@@ -135,38 +107,13 @@ export class ITCSession extends Session {
      * will not exist. The work dir should only be deleted when close is invoked.
      */
     if (!this._workDirectory) {
-      const { host, port, protocol, username } = this._config;
-      this._shellProcess.stdin.write(`$profileHost = "${host}"\n`);
-      this._shellProcess.stdin.write(`$port = ${port}\n`);
-      this._shellProcess.stdin.write(`$protocol = ${protocol}\n`);
-      this._shellProcess.stdin.write(`$username = "${username}"\n`);
-      const password = await this.fetchPassword();
-      this._shellProcess.stdin.write(`$password = "${password}"\n`);
-      this._shellProcess.stdin.write(
-        `$serverName = "${
-          protocol === ITCProtocol.COM ? "ITC Local" : "ITC IOM Bridge"
-        }"\n`,
-      );
-      this._shellProcess.stdin.write(`$displayLang = "${env.language}"\n`);
-      this._shellProcess.stdin.write(
-        `$runner.Setup($profileHost,$username,$password,$port,$protocol,$serverName,$displayLang)\n`,
+      const password = await this._passwordStore.fetchPassword();
+      runSetup(
+        this._shellProcess,
+        this._config,
+        password,
         this.onWriteComplete,
       );
-      this._shellProcess.stdin.write(
-        "$runner.ResolveSystemVars()\n",
-        this.onWriteComplete,
-      );
-
-      if (this._config.sasOptions?.length > 0) {
-        const sasOptsInput = `$sasOpts=${this.formatSASOptions(
-          this._config.sasOptions,
-        )}\n`;
-        this._shellProcess.stdin.write(sasOptsInput, this.onWriteComplete);
-        this._shellProcess.stdin.write(
-          `$runner.SetOptions($sasOpts)\n`,
-          this.onWriteComplete,
-        );
-      }
     }
 
     // free objects in the scripting env
@@ -266,7 +213,7 @@ export class ITCSession extends Session {
         this._runReject = undefined;
         this._runResolve = undefined;
       }
-      this.clearPassword();
+      this._passwordStore.clearPassword();
       resolve();
       updateStatusBarItem(false);
     });
@@ -284,17 +231,6 @@ export class ITCSession extends Session {
 
       await this.fetchLog();
     });
-  };
-
-  /**
-   * Formats the SAS Options provided in the profile into a format
-   * that the shell process can understand.
-   * @param sasOptions SAS Options array from the connection profile.
-   * @returns a string  denoting powershell syntax for an array literal.
-   */
-  private formatSASOptions = (sasOptions: string[]): string => {
-    const optionsVariable = `@("${sasOptions.join(`","`)}")`;
-    return optionsVariable;
   };
 
   /**
@@ -463,7 +399,7 @@ export class ITCSession extends Session {
     }
 
     if (line.includes(LineCodes.SessionCreatedCode)) {
-      this.storePassword();
+      this._passwordStore.persistPassword();
       return true;
     }
 
@@ -575,12 +511,7 @@ export const getSession = (
   c: Partial<Config>,
   protocol: ITCProtocol,
 ): Session => {
-  const defaults = {
-    host: "localhost",
-    port: 0,
-    username: "",
-    protocol,
-  };
+  const defaults = defaultSessionConfig(protocol);
 
   if (!sessionInstance) {
     sessionInstance = new ITCSession();
