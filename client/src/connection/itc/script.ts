@@ -15,8 +15,7 @@ class SASRunner{
    run;
 '@
     $this.Run($code)
-    $varLogs = $this.FlushLog(4096)
-    Write-Host $varLogs
+    $this.FlushLogLines(4096)
   }
   [void]Setup([string]$profileHost, [string]$username, [string]$password, [int]$port, [int]$protocol, [string]$serverName, [string]$displayLang) {
     try {
@@ -115,6 +114,23 @@ class SASRunner{
         throw "FlushLog error"
       }
       return ""
+  }
+
+  [int]FlushLogLines([int]$chunkSize) {
+    [ref]$carriageControls = [int[]]::new($chunkSize)
+    [ref]$lineTypes = [int[]]::new($chunkSize)
+    [ref]$logLines = [string[]]::new($chunkSize)
+
+    try{
+      $this.objSAS.LanguageService.FlushLogLines($chunkSize,$carriageControls,$lineTypes,$logLines)
+    } catch{
+      throw "FlushLog error"
+    }
+    for ($i = 0; $i -lt $logLines.Value.Length; $i++) {
+      Write-Host "${LineCodes.LogLineType}" $lineTypes.Value[$i]
+      Write-Host $logLines.Value[$i]
+    }
+    return $logLines.Value.Length
   }
 
   [void]FlushCompleteLog(){

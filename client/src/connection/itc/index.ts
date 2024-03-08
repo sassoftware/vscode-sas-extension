@@ -5,7 +5,7 @@ import { Uri, env, l10n, window, workspace } from "vscode";
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { resolve } from "path";
 
-import { BaseConfig, RunResult } from "..";
+import { BaseConfig, LogLineTypeEnum, RunResult } from "..";
 import {
   getGlobalStorageUri,
   getSecretStorage,
@@ -17,6 +17,19 @@ import { scriptContent } from "./script";
 import { LineCodes } from "./types";
 
 const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE";
+
+const LogLineTypes: LogLineTypeEnum[] = [
+  "normal",
+  "hilighted",
+  "source",
+  "title",
+  "byline",
+  "footnote",
+  "error",
+  "warning",
+  "note",
+  "message",
+];
 
 let sessionInstance: ITCSession;
 
@@ -46,6 +59,7 @@ export class ITCSession extends Session {
   private _secretStorage;
   private _passwordKey: string;
   private _pollingForLogResults: boolean;
+  private _logLineType = 0;
 
   constructor() {
     super();
@@ -265,9 +279,8 @@ export class ITCSession extends Session {
         `
   do {
     $chunkSize = 32768
-    $log = $runner.FlushLog($chunkSize)
-    Write-Host $log
-  } while ($log.Length -gt 0)\n
+    $count = $runner.FlushLogLines($chunkSize)
+  } while ($count -gt 0)\n
     `,
         this.onWriteComplete,
       );
@@ -301,7 +314,7 @@ export class ITCSession extends Session {
    * @param data a buffer of stdout output from the child process.
    */
   private onShellStdOut = (data: Buffer): void => {
-    const output = data.toString().trimEnd();
+    const output = data.toString();
     const outputLines = output.split(/\n|\r\n/);
 
     outputLines.forEach((line: string) => {
@@ -323,9 +336,9 @@ export class ITCSession extends Session {
         );
 
         if (this._workDirectory) {
-          this._onExecutionLogFn?.([{ type: "normal", line }]);
+          this._onExecutionLogFn?.([{ type: this.getLogLineType(), line }]);
         } else {
-          this._onSessionLogFn?.([{ type: "normal", line }]);
+          this._onSessionLogFn?.([{ type: this.getLogLineType(), line }]);
         }
       }
     });
@@ -353,7 +366,20 @@ export class ITCSession extends Session {
       return true;
     }
 
+    if (line.includes(LineCodes.LogLineType)) {
+      const start =
+        line.indexOf(LineCodes.LogLineType) + LineCodes.LogLineType.length + 1;
+      this._logLineType = parseInt(line.slice(start, start + 1));
+      return true;
+    }
+
     return false;
+  }
+
+  private getLogLineType(): LogLineTypeEnum {
+    const result = LogLineTypes[this._logLineType];
+    this._logLineType = 0;
+    return result;
   }
 
   /**
