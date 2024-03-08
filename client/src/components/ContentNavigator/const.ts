@@ -57,6 +57,7 @@ export const Messages = {
     "Are you sure you want to permanently delete all the items? You cannot undo this action.",
   ),
   FileDeletionError: l10n.t("Unable to delete file."),
+  FileDownloadError: l10n.t("Unable to download files."),
   FileDragFromFavorites: l10n.t("Unable to drag files from my favorites."),
   FileDragFromTrashError: l10n.t("Unable to drag files from trash."),
   FileDropError: l10n.t('Unable to drop item "{name}".'),
