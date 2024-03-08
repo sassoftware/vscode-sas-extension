@@ -1,6 +1,7 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import { ChildProcessWithoutNullStreams } from "child_process";
+import { v4 } from "uuid";
 
 import { profileConfig } from "../../commands/profile";
 import {
@@ -10,8 +11,9 @@ import {
 } from "../../components/LibraryNavigator/types";
 import { ConnectionType } from "../../components/profile";
 import { ColumnCollection, TableInfo } from "../rest/api/compute";
+import CodeRunner from "./CodeRunner";
 import PasswordStore from "./PasswordStore";
-import { ITCProtocol } from "./types";
+import { Config, ITCProtocol } from "./types";
 import { defaultSessionConfig, runSetup, spawnPowershellProcess } from "./util";
 
 // NOTE: THIS NEEDS TO BE REMOVED
@@ -25,6 +27,8 @@ class ItcLibraryAdapter implements LibraryAdapter {
   protected log: string[] = [];
   protected endTag: string = "";
   protected outputFinished: boolean = false;
+  protected codeRunners: Record<string, CodeRunner> = {};
+  protected config: Config;
 
   public async connect(): Promise<void> {
     this.hasEstablishedConnection = true;
@@ -40,18 +44,12 @@ class ItcLibraryAdapter implements LibraryAdapter {
       ...defaultSessionConfig(protocol),
       ...activeProfile,
     };
-
     this.passwordStore.updatePasswordKey(
       `${config.host}${config.protocol}${config.username}`,
     );
-    const password = await this.passwordStore.fetchPassword();
-    this.shellProcess = spawnPowershellProcess(
-      this.onWriteComplete,
-      this.onStdOutput,
-      this.onStdError,
-    );
+    this.config = config;
 
-    runSetup(this.shellProcess, config, password, this.onWriteComplete);
+    await this.passwordStore.fetchPassword();
   }
 
   public async setup(): Promise<void> {
@@ -133,87 +131,25 @@ class ItcLibraryAdapter implements LibraryAdapter {
     return { items: [], count: 0 };
   }
 
-  protected async runCode(code: string, startTag: string, endTag: string) {
-    const results = await new Promise<string>((resolve, reject) => {
-      this.pollingForLogResults = true;
-      this.shellProcess.stdin.write(
-        `$code=\n@'\n${code}\n'@\n$runner.Run($code)\n`,
-        async (error) => {
-          if (error) {
-            return reject(error);
-          }
-
-          const response = await this.pollUntilEnd(startTag, endTag);
-          resolve(response);
-        },
-      );
-    });
-
-    return results;
-  }
-
-  protected async pollUntilEnd(
+  protected async runCode(
+    code: string,
     startTag: string,
     endTag: string,
   ): Promise<string> {
-    this.log = [];
-    this.endTag = endTag;
-    this.outputFinished = false;
-    await this.fetchLog();
+    const processId = v4();
+    this.codeRunners[processId] = new CodeRunner(
+      processId,
+      (processId: string) => delete this.codeRunners[processId],
+    );
 
-    return await new Promise<string>((resolve) => {
-      if (resultInterval) {
-        clearInterval(resultInterval);
-      }
-      resultInterval = setInterval(() => {
-        if (this.outputFinished) {
-          const logText = this.log.join("");
-          resolve(
-            logText
-              .slice(logText.lastIndexOf(startTag))
-              .replace(startTag, "")
-              .replace(endTag, ""),
-          );
-          clearInterval(resultInterval);
-        }
-      }, 100);
-    });
+    return await this.codeRunners[processId].runCode(
+      code,
+      startTag,
+      endTag,
+      this.config,
+      this.passwordStore.fetchInMemoryPassword(),
+    );
   }
-
-  protected onWriteComplete = (error: Error) => {
-    this.pollingForLogResults = false;
-    console.log(error);
-  };
-
-  protected onStdError = (data: Buffer) => {
-    console.log(data.toString());
-  };
-
-  protected onStdOutput = (data: Buffer) => {
-    const line = data.toString();
-    this.log.push(line);
-    if (this.endTag && line.includes(this.endTag)) {
-      this.outputFinished = true;
-    }
-  };
-
-  private fetchLog = async (): Promise<void> => {
-    const pollingInterval = setInterval(() => {
-      if (!this.pollingForLogResults) {
-        clearInterval(pollingInterval);
-      }
-      this.shellProcess.stdin.write(
-        `
-  do {
-    $chunkSize = 32768
-    $log = $runner.FlushLog($chunkSize)
-    Write-Host $log
-  } while ($log.Length -gt 0)\n
-    `,
-        this.onWriteComplete,
-      );
-    }, 2 * 1000);
-  };
 }
 
 export default ItcLibraryAdapter;

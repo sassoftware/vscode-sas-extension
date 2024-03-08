@@ -33,6 +33,10 @@ class PasswordStore {
     await this.secretStorage.store(this.passwordKey, this.password);
   }
 
+  public fetchInMemoryPassword(): string {
+    return this.password;
+  }
+
   public async fetchPassword(): Promise<string> {
     if (this.emptyPasswordAllowed) {
       return "";
