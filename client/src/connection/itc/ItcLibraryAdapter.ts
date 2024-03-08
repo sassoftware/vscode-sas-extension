@@ -8,9 +8,10 @@ import {
   LibraryAdapter,
   LibraryItem,
   TableData,
+  TableRow,
 } from "../../components/LibraryNavigator/types";
 import { ConnectionType } from "../../components/profile";
-import { ColumnCollection, TableInfo } from "../rest/api/compute";
+import { Column, ColumnCollection, TableInfo } from "../rest/api/compute";
 import CodeRunner from "./CodeRunner";
 import PasswordStore from "./PasswordStore";
 import { Config, ITCProtocol } from "./types";
@@ -61,12 +62,38 @@ class ItcLibraryAdapter implements LibraryAdapter {
     throw new Error("Method not implemented.");
   }
 
-  getColumns(
+  public async getColumns(
     item: LibraryItem,
     start: number,
     limit: number,
   ): Promise<ColumnCollection> {
-    throw new Error("Method not implemented.");
+    const sql = `
+      proc sql;
+        select catx(',',name, type, varnum) as column into: OUTPUT separated by '~'
+        from sashelp.vcolumn
+        where libname='${item.library}' and memname='${item.name}'
+        order by varnum;
+      quit;
+      %put <COLOUTPUT>; %put &OUTPUT; %put </COLOUTPUT>;
+    `;
+
+    const columnLines = processQueryRows(
+      await this.runCode(sql, "<COLOUTPUT>", "</COLOUTPUT>"),
+    );
+    const columns = columnLines.map((lineText): Column => {
+      const [name, type, index] = lineText.split(",");
+
+      return {
+        name,
+        type,
+        index: parseInt(index, 10),
+      };
+    });
+
+    return {
+      items: columns,
+      count: columns.length,
+    };
   }
 
   public async getLibraries(
@@ -108,8 +135,47 @@ class ItcLibraryAdapter implements LibraryAdapter {
     };
   }
 
-  getRows(item: LibraryItem, start: number, limit: number): Promise<TableData> {
-    throw new Error("Method not implemented.");
+  public async getRows(
+    item: LibraryItem,
+    start: number,
+    limit: number,
+  ): Promise<TableData> {
+    const code = `
+      options nonotes nosource;
+      %put <TABLEDATA>;
+      data _null_;
+        set ${item.library}.${item.name};
+        if ${start + 1} <= _N_ <= ${limit + 1} then put _all_;
+      run;
+      %put </TABLEDATA>;
+    `;
+
+    const output = await this.runCode(code, "<TABLEDATA>", "</TABLEDATA>");
+    const lines = output.replace(/\n|\t/gm, "").split(/_N_=\d+/);
+
+    const rows = lines
+      .filter((line) => line.trim())
+      .map((line): TableRow => {
+        const keyValues = line.split(/([a-zA-Z_]+=)/g);
+        const rowData = [];
+        keyValues.forEach((value, index) => {
+          if (
+            /.*=$/.test(value) &&
+            keyValues[index + 1] &&
+            value !== "_ERROR_="
+          ) {
+            rowData.push(keyValues[index + 1].trim());
+          }
+        });
+
+        return { cells: rowData };
+      });
+
+    return {
+      rows: rows,
+      // @TOOD Should this be total count?
+      count: rows.length,
+    };
   }
 
   getRowsAsCSV(
