@@ -147,6 +147,9 @@ class LibraryModel {
       items = [...items, ...data.items];
       totalItemCount = data.count;
       offset += DefaultRecordLimit;
+      if (data.containsAllResults) {
+        break;
+      }
     } while (offset < totalItemCount);
 
     items.sort(sortById);
@@ -169,6 +172,9 @@ class LibraryModel {
       items = [...items, ...data.items];
       totalItemCount = data.count;
       offset += DefaultRecordLimit;
+      if (data.containsAllResults) {
+        break;
+      }
     } while (offset < totalItemCount);
 
     return this.processItems(items, "table", item);

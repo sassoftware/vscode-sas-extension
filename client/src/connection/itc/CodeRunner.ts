@@ -120,6 +120,7 @@ class CodeRunner {
   };
 
   protected onStdOutput = (data: Buffer) => {
+    console.log(data.toString());
     const line = data.toString();
     this.log.push(line);
     if (this.endTag && line.includes(this.endTag)) {

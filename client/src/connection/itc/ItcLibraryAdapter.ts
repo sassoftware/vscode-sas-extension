@@ -16,9 +16,6 @@ import PasswordStore from "./PasswordStore";
 import { Config, ITCProtocol } from "./types";
 import { defaultSessionConfig, runSetup, spawnPowershellProcess } from "./util";
 
-// NOTE: THIS NEEDS TO BE REMOVED
-/* eslint-disable @typescript-eslint/no-unused-vars */
-let resultInterval = null;
 class ItcLibraryAdapter implements LibraryAdapter {
   protected hasEstablishedConnection: boolean = false;
   protected shellProcess: ChildProcessWithoutNullStreams;
@@ -75,7 +72,11 @@ class ItcLibraryAdapter implements LibraryAdapter {
   public async getLibraries(
     start: number,
     limit: number,
-  ): Promise<{ items: LibraryItem[]; count: number }> {
+  ): Promise<{
+    items: LibraryItem[];
+    count: number;
+    containsAllResults?: boolean;
+  }> {
     const sql = `
       proc sql;
         select catx(',', libname, readonly) as libname_target into: OUTPUT separated by '~'
@@ -84,13 +85,9 @@ class ItcLibraryAdapter implements LibraryAdapter {
       %put <LIBOUTPUT>; %put &OUTPUT; %put </LIBOUTPUT>;
     `;
 
-    const response = await this.runCode(sql, "<LIBOUTPUT>", "</LIBOUTPUT>");
-
-    const libNames = response
-      .trim()
-      .replace(/\n|\t/gm, "")
-      .split("~")
-      .filter((value, index, array) => array.indexOf(value) === index);
+    const libNames = processQueryRows(
+      await this.runCode(sql, "<LIBOUTPUT>", "</LIBOUTPUT>"),
+    );
     libNames.sort();
     const libraries = libNames.map((lineText): LibraryItem => {
       const [libName, readOnlyValue] = lineText.split(",");
@@ -104,7 +101,11 @@ class ItcLibraryAdapter implements LibraryAdapter {
       };
     });
 
-    return { items: libraries, count: libraries.length };
+    return {
+      items: libraries,
+      count: libraries.length,
+      containsAllResults: true,
+    };
   }
 
   getRows(item: LibraryItem, start: number, limit: number): Promise<TableData> {
@@ -127,8 +128,39 @@ class ItcLibraryAdapter implements LibraryAdapter {
     item: LibraryItem,
     start: number,
     limit: number,
-  ): Promise<{ items: LibraryItem[]; count: number }> {
-    return { items: [], count: 0 };
+  ): Promise<{
+    items: LibraryItem[];
+    count: number;
+    containsAllResults?: boolean;
+  }> {
+    const sql = `
+      proc sql;
+        select memname into: OUTPUT separated by '~'
+        from sashelp.vtable
+        where libname='${item.name!}'
+        order by memname asc;
+      quit;
+      %put <TABLEOUTPUT>; %put &OUTPUT; %put </TABLEOUTPUT>;
+    `;
+
+    const tableNames = processQueryRows(
+      await this.runCode(sql, "<TABLEOUTPUT>", "</TABLEOUTPUT>"),
+    );
+    tableNames.sort();
+    const tables = tableNames.map((lineText): LibraryItem => {
+      const [table] = lineText.split(",");
+
+      return {
+        type: "table",
+        uid: `${item.name!}.${table}`,
+        id: `${item.name!}.${table}`,
+        name: table,
+        library: item.name,
+        readOnly: item.readOnly,
+      };
+    });
+
+    return { items: tables, count: tables.length, containsAllResults: true };
   }
 
   protected async runCode(
@@ -151,5 +183,15 @@ class ItcLibraryAdapter implements LibraryAdapter {
     );
   }
 }
+
+const processQueryRows = (response: string): string[] => {
+  const items = response
+    .trim()
+    .replace(/\n|\t/gm, "")
+    .split("~")
+    .filter((value, index, array) => array.indexOf(value) === index);
+
+  return items;
+};
 
 export default ItcLibraryAdapter;
