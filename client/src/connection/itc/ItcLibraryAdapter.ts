@@ -135,11 +135,12 @@ class ItcLibraryAdapter implements LibraryAdapter {
     };
   }
 
-  public async getRows(
+  private async getDatasetInformation(
     item: LibraryItem,
     start: number,
     limit: number,
-  ): Promise<TableData> {
+  ): Promise<{ rows: string[]; count: number }> {
+    const tempTable = `${item.name}${hms()}`;
     const code = `
       options nonotes nosource nodate nonumber;
       %put <TABLEDATA>;
@@ -147,11 +148,17 @@ class ItcLibraryAdapter implements LibraryAdapter {
         SELECT COUNT(1) into: COUNT FROM  ${item.library}.${item.name};
       quit;
       %put <Count>&COUNT</Count>;
-      data _null_;
+      data work.${tempTable};
         set ${item.library}.${item.name};
-        if ${start + 1} <= _N_ <= ${start + limit} then put _all_;
+        if ${start + 1} <= _N_ <= ${start + limit} then output;
       run;
-      %put </TABLEDATA>;
+
+      filename out temp;
+      proc json out=out; export work.${tempTable}; run;
+
+      data _null_; infile out; input; put _infile_; %put </TABLEDATA>; run;
+      proc datasets library=work nolist nodetails; delete ${tempTable}; run;
+      ;
     `;
 
     let output = await this.runCode(code, "<TABLEDATA>", "</TABLEDATA>");
@@ -162,35 +169,30 @@ class ItcLibraryAdapter implements LibraryAdapter {
     const count = parseInt(countMatches[1].replace(/\s|\n/gm, ""), 10);
     output = output.replace(countRegex, "");
 
-    // Our output can contain title lines for new pages. Lets make
-    // sure we trim those out.
-    output = output
-      .split("\n")
-      .filter((line) => !/\s{5,}/.test(line) || /=/.test(line))
-      .join("\n");
+    const rows = output.replace(/\n|\t/gm, "");
+    const tableData = JSON.parse(rows);
 
-    const lines = output.replace(/\n|\t/gm, "").split(/_N_=\d+/);
+    return { rows: tableData[`SASTableData+${tempTable}`], count };
+  }
 
-    const rows = lines
-      .filter((line) => line.trim())
-      .map((line): TableRow => {
-        const keyValues = line.split(/([a-zA-Z_]+=)/g);
-        const rowData = [];
-        keyValues.forEach((value, index) => {
-          if (
-            /.*=$/.test(value) &&
-            keyValues[index + 1] &&
-            value !== "_ERROR_="
-          ) {
-            rowData.push(keyValues[index + 1].trim());
-          }
-        });
+  public async getRows(
+    item: LibraryItem,
+    start: number,
+    limit: number,
+  ): Promise<TableData> {
+    const { rows: rawRowValues, count } = await this.getDatasetInformation(
+      item,
+      start,
+      limit,
+    );
 
-        return { cells: rowData };
-      });
+    const rows = rawRowValues.map((line, idx: number): TableRow => {
+      const rowData = [`${start + idx + 1}`].concat(Object.values(line));
+      return { cells: rowData };
+    });
 
     return {
-      rows: rows,
+      rows,
       count,
     };
   }
@@ -267,6 +269,11 @@ class ItcLibraryAdapter implements LibraryAdapter {
   }
 }
 
+const getKeyValuePairs = (line: string) => line.split(/([a-zA-Z_]+=)/g);
+
+const validKeyValuePair = (value: string) =>
+  /.*=$/.test(value) && value !== "_ERROR_=";
+
 const processQueryRows = (response: string): string[] => {
   const items = response
     .trim()
@@ -275,6 +282,11 @@ const processQueryRows = (response: string): string[] => {
     .filter((value, index, array) => array.indexOf(value) === index);
 
   return items;
+};
+
+const hms = () => {
+  const date = new Date();
+  return `${date.getHours()}${date.getMinutes()}${date.getSeconds()}`;
 };
 
 export default ItcLibraryAdapter;

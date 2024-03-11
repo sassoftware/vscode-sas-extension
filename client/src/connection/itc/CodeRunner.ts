@@ -1,19 +1,7 @@
 import { ChildProcessWithoutNullStreams } from "child_process";
-import { ChildProcessWithoutNullStreams } from "child_process";
-import { v4 } from "uuid";
 
-import { profileConfig } from "../../commands/profile";
-import {
-  LibraryAdapter,
-  LibraryItem,
-  TableData,
-} from "../../components/LibraryNavigator/types";
-import { ConnectionType } from "../../components/profile";
-import { ColumnCollection, TableInfo } from "../rest/api/compute";
-import CodeRunner from "./CodeRunner";
-import PasswordStore from "./PasswordStore";
-import { Config, ITCProtocol } from "./types";
-import { defaultSessionConfig, runSetup, spawnPowershellProcess } from "./util";
+import { Config } from "./types";
+import { runSetup, spawnPowershellProcess } from "./util";
 
 class CodeRunner {
   protected pollingForLogResults: boolean = false;
@@ -22,22 +10,20 @@ class CodeRunner {
   protected outputFinished: boolean = false;
   protected shellProcess: ChildProcessWithoutNullStreams;
   protected resultInterval;
+  protected sasSystemLine: string;
 
   public constructor(
     protected readonly processId: string,
     protected readonly onCodeExecutionFinished: (processId: string) => void,
-  ) {
-  }
+  ) {}
 
   public async runCode(
     code: string,
     startTag: string,
     endTag: string,
     config: Config,
-    password: string
+    password: string,
   ): Promise<string> {
-    
-
     this.shellProcess = spawnPowershellProcess(
       this.onWriteComplete,
       this.onStdOutput,
@@ -79,7 +65,15 @@ class CodeRunner {
       }
       this.resultInterval = setInterval(() => {
         if (this.outputFinished) {
-          const logText = this.log.join("");
+          let logText = this.log.join("");
+
+          // Lets filter our log text such that we don't have empty lines,
+          // or lines that just include "The SAS System"
+          logText = logText
+            .split("\n")
+            .filter((str) => str.trim() && !str.includes(this.sasSystemLine))
+            .join("\n");
+
           resolve(
             logText
               .slice(logText.lastIndexOf(startTag))
@@ -120,9 +114,15 @@ class CodeRunner {
   };
 
   protected onStdOutput = (data: Buffer) => {
-    // console.log(data.toString());
     const line = data.toString();
+
+    const sasSystemRegex = /1\s{4,}(.*)\s{4,}/;
+    if (sasSystemRegex.test(line) && !this.sasSystemLine) {
+      this.sasSystemLine = line.match(sasSystemRegex)[1].trim();
+    }
+
     this.log.push(line);
+
     if (this.endTag && line.includes(this.endTag)) {
       this.outputFinished = true;
       this.shellProcess.kill();
