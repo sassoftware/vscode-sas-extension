@@ -141,16 +141,34 @@ class ItcLibraryAdapter implements LibraryAdapter {
     limit: number,
   ): Promise<TableData> {
     const code = `
-      options nonotes nosource;
+      options nonotes nosource nodate nonumber;
       %put <TABLEDATA>;
+      proc sql;
+        SELECT COUNT(1) into: COUNT FROM  ${item.library}.${item.name};
+      quit;
+      %put <Count>&COUNT</Count>;
       data _null_;
         set ${item.library}.${item.name};
-        if ${start + 1} <= _N_ <= ${limit + 1} then put _all_;
+        if ${start + 1} <= _N_ <= ${start + limit} then put _all_;
       run;
       %put </TABLEDATA>;
     `;
 
-    const output = await this.runCode(code, "<TABLEDATA>", "</TABLEDATA>");
+    let output = await this.runCode(code, "<TABLEDATA>", "</TABLEDATA>");
+
+    // Extract result count
+    const countRegex = /<Count>(.*)<\/Count>/;
+    const countMatches = output.match(countRegex);
+    const count = parseInt(countMatches[1].replace(/\s|\n/gm, ""), 10);
+    output = output.replace(countRegex, "");
+
+    // Our output can contain title lines for new pages. Lets make
+    // sure we trim those out.
+    output = output
+      .split("\n")
+      .filter((line) => !/\s{5,}/.test(line) || /=/.test(line))
+      .join("\n");
+
     const lines = output.replace(/\n|\t/gm, "").split(/_N_=\d+/);
 
     const rows = lines
@@ -173,8 +191,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
 
     return {
       rows: rows,
-      // @TOOD Should this be total count?
-      count: rows.length,
+      count,
     };
   }
 
