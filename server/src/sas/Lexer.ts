@@ -504,6 +504,9 @@ export class Lexer {
               " ".repeat(this.curr.column) +
               lineContent.slice(this.curr.column);
           }
+          if (lineContent.trimStart().startsWith("%put")) {
+            continue;
+          }
           const match = endReg.exec(lineContent);
           if (match) {
             token = this._foundEmbeddedCodeToken(this.curr, {

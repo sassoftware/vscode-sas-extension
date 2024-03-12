@@ -20,8 +20,12 @@
     {
       "begin": "(?i)proc(\\s|/\\*.*?\\*/)*(sql|fedsql)",
       "end": "(?i)(quit(\\s|/\\*.*?\\*/)*;|(?=(data|proc|%macro)\\b[^;]*;))",
-      "name": "entity.name.function.proc.sql",
-      "contentName": "entity.name.function.proc.sql.content",
+      "beginCaptures": {
+        "0": {
+          "name": "entity.name.function.proc.sql"
+        }
+      },
+      "contentName": "proc.sql.content",
       "patterns": [
         {
           "include": "source.sassql"
@@ -31,7 +35,11 @@
     {
       "begin": "(?i)proc(\\s|/\\*.*?\\*/)*lua",
       "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
-      "name": "entity.name.function.proc.lua",
+      "beginCaptures": {
+        "0": {
+          "name": "entity.name.function.proc.lua"
+        }
+      },
       "contentName": "entity.name.function.proc.lua.content",
       "patterns": [
         {
@@ -42,7 +50,11 @@
     {
       "begin": "(?i)proc(\\s|/\\*.*?\\*/)*python",
       "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
-      "name": "entity.name.function.proc.python",
+      "beginCaptures": {
+        "0": {
+          "name": "entity.name.function.proc.python"
+        }
+      },
       "contentName": "entity.name.function.proc.python.content",
       "patterns": [
         {
@@ -53,19 +65,38 @@
   ],
   "repository": {
     "comment-block": {
-      "name": "comment.block",
-      "begin": "(/\\*)",
-      "beginCaptures": {
-        "1": {
-          "name": "punctuation.definition.comment"
+      "patterns": [
+        {
+          "name": "comment.block",
+          "begin": "(/\\*)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.comment"
+            }
+          },
+          "end": "\\*/",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment"
+            }
+          }
+        },
+        {
+          "name": "comment.block",
+          "begin": "(\\*)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.comment"
+            }
+          },
+          "end": ";",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment"
+            }
+          }
         }
-      },
-      "end": "\\*/",
-      "endCaptures": {
-        "0": {
-          "name": "punctuation.definition.comment"
-        }
-      }
+      ]
     },
     "string": {
       "patterns": [
