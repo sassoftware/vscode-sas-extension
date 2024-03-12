@@ -149,7 +149,6 @@ class ItcLibraryAdapter implements LibraryAdapter {
 
       data _null_; infile out; input; put _infile_; %put </TABLEDATA>; run;
       proc datasets library=work nolist nodetails; delete ${tempTable}; run;
-      ;
     `;
 
     let output = await this.runCode(code, "<TABLEDATA>", "</TABLEDATA>");
@@ -188,16 +187,45 @@ class ItcLibraryAdapter implements LibraryAdapter {
     };
   }
 
-  getRowsAsCSV(
+  public async getRowsAsCSV(
     item: LibraryItem,
     start: number,
     limit: number,
   ): Promise<TableData> {
-    throw new Error("Method not implemented.");
+    // We only need the columns for the first page of results
+    const columns =
+      start === 0
+        ? {
+            columns: (await this.getColumns(item)).items.map(
+              (column) => column.name,
+            ),
+          }
+        : {};
+
+    const { rows } = await this.getRows(item, start, limit);
+
+    rows.unshift(columns);
+
+    // Fetching csv doesn't rely on count. Instead, we get the count
+    // upfront via getTableRowCount
+    return { rows, count: -1 };
   }
 
-  getTable(item: LibraryItem): Promise<TableInfo> {
-    throw new Error("Method not implemented.");
+  public async getTableRowCount(
+    item: LibraryItem,
+  ): Promise<{ rowCount: number; maxNumberOfRowsToRead: number }> {
+    const code = `
+      options nonotes nosource nodate nonumber;
+      proc sql;
+        SELECT COUNT(1) into: COUNT FROM  ${item.library}.${item.name};
+      quit;
+      %put <Count>&COUNT</Count>;
+    `;
+
+    const output = await this.runCode(code, "<Count>", "</Count>");
+    const rowCount = parseInt(output.replace(/[^0-9]/g, ""), 10);
+
+    return { rowCount, maxNumberOfRowsToRead: 100 };
   }
 
   public async getTables(item: LibraryItem): Promise<{

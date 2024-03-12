@@ -123,7 +123,9 @@ class RestLibraryAdapter implements LibraryAdapter {
     return data;
   }
 
-  public async getTable(item: LibraryItem): Promise<TableInfo> {
+  public async getTableRowCount(
+    item: LibraryItem,
+  ): Promise<{ rowCount: number; maxNumberOfRowsToRead: number }> {
     await this.setup();
     const response = await this.retryOnFail(
       async () =>
@@ -137,7 +139,7 @@ class RestLibraryAdapter implements LibraryAdapter {
         ),
     );
 
-    return response.data;
+    return { rowCount: response.data.rowCount, maxNumberOfRowsToRead: 1000 };
   }
 
   private async retryOnFail<T>(

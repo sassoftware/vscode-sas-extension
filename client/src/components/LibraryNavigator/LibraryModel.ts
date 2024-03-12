@@ -39,8 +39,8 @@ class LibraryModel {
   ) {
     await this.libraryAdapter.setup();
     let offset = 0;
-    const limit = 1000;
-    const { rowCount: totalItemCount } = await this.getTable(item);
+    const { rowCount: totalItemCount, maxNumberOfRowsToRead: limit } =
+      await this.libraryAdapter.getTableRowCount(item);
     let hasWrittenHeader: boolean = false;
     const stringArrayToCsvString = (strings: string[]): string =>
       `"${strings
@@ -105,10 +105,6 @@ class LibraryModel {
     } while (offset < totalItemCount && totalItemCount !== -1);
 
     return items;
-  }
-
-  public async getTable(item: LibraryItem) {
-    return this.libraryAdapter.getTable(item);
   }
 
   public async deleteTable(item: LibraryItem) {
