@@ -62,11 +62,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     throw new Error("Method not implemented.");
   }
 
-  public async getColumns(
-    item: LibraryItem,
-    start: number,
-    limit: number,
-  ): Promise<ColumnCollection> {
+  public async getColumns(item: LibraryItem): Promise<ColumnCollection> {
     const sql = `
       proc sql;
         select catx(',',name, type, varnum) as column into: OUTPUT separated by '~'
@@ -92,17 +88,13 @@ class ItcLibraryAdapter implements LibraryAdapter {
 
     return {
       items: columns,
-      count: columns.length,
+      count: -1,
     };
   }
 
-  public async getLibraries(
-    start: number,
-    limit: number,
-  ): Promise<{
+  public async getLibraries(): Promise<{
     items: LibraryItem[];
     count: number;
-    containsAllResults?: boolean;
   }> {
     const sql = `
       proc sql;
@@ -130,8 +122,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
 
     return {
       items: libraries,
-      count: libraries.length,
-      containsAllResults: true,
+      count: -1,
     };
   }
 
@@ -209,14 +200,9 @@ class ItcLibraryAdapter implements LibraryAdapter {
     throw new Error("Method not implemented.");
   }
 
-  public async getTables(
-    item: LibraryItem,
-    start: number,
-    limit: number,
-  ): Promise<{
+  public async getTables(item: LibraryItem): Promise<{
     items: LibraryItem[];
     count: number;
-    containsAllResults?: boolean;
   }> {
     const sql = `
       proc sql;
@@ -238,14 +224,14 @@ class ItcLibraryAdapter implements LibraryAdapter {
       return {
         type: "table",
         uid: `${item.name!}.${table}`,
-        id: `${item.name!}.${table}`,
+        id: table,
         name: table,
         library: item.name,
         readOnly: item.readOnly,
       };
     });
 
-    return { items: tables, count: tables.length, containsAllResults: true };
+    return { items: tables, count: -1 };
   }
 
   protected async runCode(
@@ -268,11 +254,6 @@ class ItcLibraryAdapter implements LibraryAdapter {
     );
   }
 }
-
-const getKeyValuePairs = (line: string) => line.split(/([a-zA-Z_]+=)/g);
-
-const validKeyValuePair = (value: string) =>
-  /.*=$/.test(value) && value !== "_ERROR_=";
 
 const processQueryRows = (response: string): string[] => {
   const items = response

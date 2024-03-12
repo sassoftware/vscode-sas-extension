@@ -38,7 +38,6 @@ export interface LibraryAdapter {
   ): Promise<{
     items: LibraryItem[];
     count: number;
-    containsAllResults?: boolean;
   }>;
   getRows(item: LibraryItem, start: number, limit: number): Promise<TableData>;
   getRowsAsCSV(
@@ -54,7 +53,6 @@ export interface LibraryAdapter {
   ): Promise<{
     items: LibraryItem[];
     count: number;
-    containsAllResults?: boolean;
   }>;
   setup(): Promise<void>;
 }
