@@ -665,6 +665,29 @@
         "when": "editorLangId == sas && !SAS.hideRunMenuItem",
         "command": "SAS.runSelected",
         "key": "f3"
+      },
+      {
+        "when": "editorLangId == sas && !editorPartMaximizedEditorGroup",
+        "command": "runCommands",
+        "args": {
+          "commands": [
+            "workbench.action.togglePanel",
+            "workbench.action.focusNextGroup",
+            "workbench.action.maximizeEditorHideSidebar"
+          ]
+        },
+        "key": "f1"
+      },
+      {
+        "when": "!editorFocus && activeWebviewPanelId =~ /SASResultPanel/ && editorPartMaximizedEditorGroup",
+        "command": "runCommands",
+        "args": {
+          "commands": [
+            "workbench.action.toggleMaximizeEditorGroup",
+            "workbench.action.togglePanel"
+          ]
+        },
+        "key": "f1"
       }
     ],
     "menus": {
