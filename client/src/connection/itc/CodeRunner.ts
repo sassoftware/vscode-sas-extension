@@ -1,5 +1,6 @@
 import { ChildProcessWithoutNullStreams } from "child_process";
 
+import { getSession } from "..";
 import { Config } from "./types";
 import { runSetup, spawnPowershellProcess } from "./util";
 
@@ -24,30 +25,43 @@ class CodeRunner {
     config: Config,
     password: string,
   ): Promise<string> {
-    this.shellProcess = spawnPowershellProcess(
-      this.onWriteComplete,
-      this.onStdOutput,
-      this.onStdError,
+    // this.shellProcess = spawnPowershellProcess(
+    //   this.onWriteComplete,
+    //   this.onStdOutput,
+    //   this.onStdError,
+    // );
+
+    // runSetup(this.shellProcess, config, password, this.onWriteComplete);
+    const session = getSession();
+    await session.setup(true);
+    const runStuff = await session.run(
+      `/* ${this.processId} */${code}`,
+      this.processId,
     );
 
-    runSetup(this.shellProcess, config, password, this.onWriteComplete);
+    let logText = runStuff.logOutput;
+    logText = logText
+      .slice(logText.lastIndexOf(startTag), logText.lastIndexOf(endTag))
+      .replace(startTag, "")
+      .replace(endTag, "");
 
-    const results = await new Promise<string>((resolve, reject) => {
-      this.pollingForLogResults = true;
-      this.shellProcess.stdin.write(
-        `$code=\n@'\n${code}\n'@\n$runner.Run($code)\n`,
-        async (error) => {
-          if (error) {
-            return reject(error);
-          }
+    // const results = await new Promise<string>((resolve, reject) => {
+    //   this.pollingForLogResults = true;
+    //   this.shellProcess.stdin.write(
+    //     `$code=\n@'\n${code}\n'@\n$runner.Run($code)\n`,
+    //     async (error) => {
+    //       if (error) {
+    //         return reject(error);
+    //       }
 
-          const response = await this.pollUntilEnd(startTag, endTag);
-          resolve(response);
-        },
-      );
-    });
+    //       const response = await this.pollUntilEnd(startTag, endTag);
+    //       resolve(response);
+    //     },
+    //   );
+    // });
 
-    return results;
+    // return results;
+    return logText;
   }
 
   protected async pollUntilEnd(
