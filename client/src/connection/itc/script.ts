@@ -1,5 +1,11 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import {
+  ERROR_END_TAG,
+  ERROR_START_TAG,
+  WORK_DIR_END_TAG,
+  WORK_DIR_START_TAG,
+} from "./const";
 import { LineCodes } from "./types";
 
 export const scriptContent = `
@@ -10,6 +16,7 @@ class SASRunner{
   $code =
 @'
    %let workDir = %sysfunc(pathname(work));
+   %put ${WORK_DIR_START_TAG}&workDir${WORK_DIR_END_TAG};
    %put &=workDir;
    %let rc = %sysfunc(dlgcdir("&workDir"));
    run;
@@ -45,7 +52,7 @@ class SASRunner{
 
         Write-Host "${LineCodes.SessionCreatedCode}"
     } catch {
-      throw "Setup error"
+      Write-Error "${ERROR_START_TAG}Setup error: $_${ERROR_END_TAG}"
     }
   }
 
@@ -75,7 +82,7 @@ class SASRunner{
           throw $errVals
       }
     } catch{
-        Write-Error $Error[0].Exception.Message
+        Write-Error "${ERROR_START_TAG}$Error[0].Exception.Message${ERROR_END_TAG}"
     }
   }
 
@@ -85,8 +92,7 @@ class SASRunner{
         $this.objSAS.LanguageService.Async = $true
         $this.objSAS.LanguageService.Submit($code)
     }catch{
-      Write-Error $_.ScriptStackTrace
-      throw "Run error"
+      Write-Error "${ERROR_START_TAG}Run error: $_${ERROR_END_TAG}"
     }
   }
 
@@ -94,7 +100,7 @@ class SASRunner{
   try{
         $this.objSAS.Close()
     }catch{
-      throw "Close error"
+      Write-Error "${ERROR_START_TAG}Close error: $_${ERROR_END_TAG}"
     }
   }
 
@@ -103,7 +109,7 @@ class SASRunner{
         $this.objSAS.LanguageService.Cancel()
         Write-Host "${LineCodes.RunCancelledCode}"
       }catch{
-        throw "Cancel error"
+        Write-Error "${ERROR_START_TAG}Cancel error: $_${ERROR_END_TAG}"
       }
     }
 
@@ -111,7 +117,7 @@ class SASRunner{
       try{
         return $this.objSAS.LanguageService.FlushLog($chunkSize)
       } catch{
-        throw "FlushLog error"
+        Write-Error "${ERROR_START_TAG}FlushLog error: $_${ERROR_END_TAG}"
       }
       return ""
   }

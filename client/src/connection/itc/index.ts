@@ -1,6 +1,13 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri, env, l10n, window, workspace } from "vscode";
+import {
+  CancellationTokenSource,
+  Uri,
+  env,
+  l10n,
+  window,
+  workspace,
+} from "vscode";
 
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { resolve } from "path";
@@ -13,8 +20,16 @@ import {
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
 import { Session } from "../session";
+import { LineParser } from "./LineParser";
+import {
+  ERROR_END_TAG,
+  ERROR_START_TAG,
+  WORK_DIR_END_TAG,
+  WORK_DIR_START_TAG,
+} from "./const";
 import { scriptContent } from "./script";
 import { LineCodes } from "./types";
+import { decodeEntities } from "./util";
 
 const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE";
 
@@ -60,12 +75,23 @@ export class ITCSession extends Session {
   private _passwordKey: string;
   private _pollingForLogResults: boolean;
   private _logLineType = 0;
+  private _passwordInputCancellationTokenSource:
+    | CancellationTokenSource
+    | undefined;
+  private _errorParser: LineParser;
+  private _workDirectoryParser: LineParser;
 
   constructor() {
     super();
     this._password = "";
     this._secretStorage = getSecretStorage(SECRET_STORAGE_NAMESPACE);
     this._pollingForLogResults = false;
+    this._errorParser = new LineParser(ERROR_START_TAG, ERROR_END_TAG, true);
+    this._workDirectoryParser = new LineParser(
+      WORK_DIR_START_TAG,
+      WORK_DIR_END_TAG,
+      false,
+    );
   }
 
   public set config(value: Config) {
@@ -170,13 +196,18 @@ export class ITCSession extends Session {
       return storedPassword;
     }
 
+    const source = new CancellationTokenSource();
+    this._passwordInputCancellationTokenSource = source;
     this._password =
-      (await window.showInputBox({
-        ignoreFocusOut: true,
-        password: true,
-        prompt: l10n.t("Enter your password for this connection."),
-        title: l10n.t("Enter your password"),
-      })) || "";
+      (await window.showInputBox(
+        {
+          ignoreFocusOut: true,
+          password: true,
+          prompt: l10n.t("Enter your password for this connection."),
+          title: l10n.t("Enter your password"),
+        },
+        this._passwordInputCancellationTokenSource.token,
+      )) || "";
 
     return this._password;
   };
@@ -293,20 +324,96 @@ export class ITCSession extends Session {
    */
   private onShellStdErr = (chunk: Buffer): void => {
     const msg = chunk.toString();
-    console.warn("shellProcess stderr: " + msg);
-    this.clearPassword();
+
+    const errorMessage = this._errorParser.processLine(msg);
+    if (!errorMessage) {
+      return;
+    }
+
     this._runReject(
-      new Error(
-        l10n.t(
-          "There was an error executing the SAS Program. See [console log](command:workbench.action.toggleDevTools) for more details.",
-        ),
-      ),
+      new Error(this.fetchHumanReadableErrorMessage(errorMessage)),
     );
+
     // If we encountered an error in setup, we need to go through everything again
-    if (/Setup error/.test(msg)) {
+    const fatalErrors = [/Setup error/, /powershell\.exe/];
+    if (fatalErrors.find((regex) => regex.test(errorMessage))) {
+      // If we can't even run the shell script (i.e. powershell.exe not found),
+      // we'll also need to dismiss the password prompt
+      this._passwordInputCancellationTokenSource &&
+        this._passwordInputCancellationTokenSource.cancel();
+
+      this.clearPassword();
+
       this._shellProcess.kill();
       this._workDirectory = undefined;
     }
+  };
+
+  private fetchWorkDirectory = (line: string): string | undefined => {
+    let foundWorkDirectory = "";
+    if (
+      !line.includes(`%put ${WORK_DIR_START_TAG}&workDir${WORK_DIR_END_TAG};`)
+    ) {
+      foundWorkDirectory = this._workDirectoryParser.processLine(line);
+    } else {
+      // If the line is the put statement, we don't need to log that
+      return;
+    }
+    // We don't want to output any of the captured lines
+    if (this._workDirectoryParser.isCapturingLine()) {
+      return;
+    }
+
+    return foundWorkDirectory || "";
+  };
+
+  private fetchHumanReadableErrorMessage = (msg: string): string => {
+    const atLineIndex = msg.indexOf("At line");
+    const errorMessage = atLineIndex ? msg.slice(0, atLineIndex) : msg;
+
+    // Dump error to console
+    console.warn("shellProcess stderr: " + errorMessage);
+
+    if (/powershell\.exe/.test(msg)) {
+      return l10n.t("This platform does not support this connection type.");
+    }
+
+    // Do we have SAS messages?
+    const sasMessages = errorMessage
+      .replace(/\n|\t/gm, "")
+      .match(/<SASMessage severity="[A-Za-z]*">([^<]*)<\/SASMessage>/g);
+    if (sasMessages && sasMessages.length) {
+      return decodeEntities(
+        sasMessages
+          .map((sasMessage) =>
+            sasMessage
+              .replace(/<SASMessage severity="[A-Za-z]*">/, "")
+              .replace(/<\/SASMessage>/, ""),
+          )
+          .join("  "),
+      );
+    }
+
+    // Do we have a description?
+    const descriptions = errorMessage
+      .replace(/\n|\t/gm, "")
+      .match(/<description>([^<]*)<\/description>/g);
+    if (descriptions && descriptions.length) {
+      return decodeEntities(
+        descriptions
+          .map((sasMessage) =>
+            sasMessage
+              .replace(/<description>/, "")
+              .replace(/<\/description>/, ""),
+          )
+          .join("  "),
+      );
+    }
+
+    // If we have neither of those, lets just point the user to the console
+    return l10n.t(
+      "There was an error executing the SAS Program. See [console log](command:workbench.action.toggleDevTools) for more details.",
+    );
   };
 
   /**
@@ -322,9 +429,13 @@ export class ITCSession extends Session {
         return;
       }
 
-      if (!this._workDirectory && line.startsWith("WORKDIR=")) {
-        const parts = line.split("WORKDIR=");
-        this._workDirectory = parts[1].trim();
+      const foundWorkDirectory = this.fetchWorkDirectory(line);
+      if (foundWorkDirectory === undefined) {
+        return;
+      }
+
+      if (!this._workDirectory && foundWorkDirectory) {
+        this._workDirectory = foundWorkDirectory;
         this._runResolve();
         updateStatusBarItem(true);
         return;
