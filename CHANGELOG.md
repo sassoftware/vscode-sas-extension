@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Fixed an issue where users were not able to add new profiles if starting with no profiles ([#826](https://github.com/sassoftware/vscode-sas-extension/pull/826))
 
+### Added
+
+- Add Spanish translation ([#749](https://github.com/sassoftware/vscode-sas-extension/pull/749))
+
 ## [v1.7.0] - 2024-02-08
 
 ### Added
