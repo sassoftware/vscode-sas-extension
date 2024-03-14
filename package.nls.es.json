@@ -12,6 +12,8 @@
   "commands.SAS.deleteTable": "Eliminar",
   "commands.SAS.download": "Descargar",
   "commands.SAS.emptyRecycleBin": "Vaciar papelera de reciclaje",
+  "commands.SAS.file.new": "New SAS File",
+  "commands.SAS.file.new.short": "SAS File",
   "commands.SAS.notebook.new": "Nuevo bloc de notas SAS",
   "commands.SAS.notebook.new.short": "Bloc de notas SAS",
   "commands.SAS.refresh": "Actualizar",

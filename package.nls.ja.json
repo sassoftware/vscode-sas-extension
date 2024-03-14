@@ -12,6 +12,8 @@
   "commands.SAS.deleteTable": "削除",
   "commands.SAS.download": "ダウンロード",
   "commands.SAS.emptyRecycleBin": "ごみ箱を空にする",
+  "commands.SAS.file.new": "New SAS File",
+  "commands.SAS.file.new.short": "SAS File",
   "commands.SAS.notebook.new": "新しい SAS ノートブック",
   "commands.SAS.notebook.new.short": "SAS ノートブック",
   "commands.SAS.refresh": "更新",

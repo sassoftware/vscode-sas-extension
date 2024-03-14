@@ -12,6 +12,8 @@
   "commands.SAS.deleteTable": "Supprimer la table",
   "commands.SAS.download": "Télécharger",
   "commands.SAS.emptyRecycleBin": "Vider la corbeille",
+  "commands.SAS.file.new": "New SAS File",
+  "commands.SAS.file.new.short": "SAS File",
   "commands.SAS.notebook.new": "Nouveau Notebook SAS",
   "commands.SAS.notebook.new.short": "Notebook SAS",
   "commands.SAS.refresh": "Actualiser",

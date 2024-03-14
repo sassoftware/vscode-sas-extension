@@ -12,6 +12,8 @@
   "commands.SAS.deleteTable": "Exclui tabela",
   "commands.SAS.download": "Download",
   "commands.SAS.emptyRecycleBin": "Esvazia a lixeira",
+  "commands.SAS.file.new": "New SAS File",
+  "commands.SAS.file.new.short": "SAS File",
   "commands.SAS.notebook.new": "Novo Notebook SAS",
   "commands.SAS.notebook.new.short": "Notebook SAS",
   "commands.SAS.refresh": "Refrescar",

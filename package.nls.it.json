@@ -12,6 +12,8 @@
   "commands.SAS.deleteTable": "Elimina",
   "commands.SAS.download": "Esegui download",
   "commands.SAS.emptyRecycleBin": "Svuota Cestino",
+  "commands.SAS.file.new": "New SAS File",
+  "commands.SAS.file.new.short": "SAS File",
   "commands.SAS.notebook.new": "Nuovo SAS Notebook",
   "commands.SAS.notebook.new.short": "SAS Notebook",
   "commands.SAS.refresh": "Aggiorna",
