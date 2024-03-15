@@ -1,16 +1,22 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-import { CancellationTokenSource, Uri, l10n, window, workspace } from "vscode";
-
-import { env } from "vscode";
+import {
+  CancellationTokenSource,
+  Uri,
+  env,
+  l10n,
+  window,
+  workspace,
+} from "vscode";
 
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { resolve } from "path";
 
-
 import { LogLineTypeEnum, RunResult } from "..";
-import { getGlobalStorageUri, getSecretStorage } from "../../components/ExtensionContext";
+import {
+  getGlobalStorageUri,
+  getSecretStorage,
+} from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
 import { Session } from "../session";
@@ -21,12 +27,9 @@ import {
   WORK_DIR_END_TAG,
   WORK_DIR_START_TAG,
 } from "./const";
+import { scriptContent } from "./script";
 import { Config, ITCProtocol, LineCodes } from "./types";
-import {
-  decodeEntities
-} from "./util";
-
-const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE";
+import { decodeEntities } from "./util";
 
 const LogLineTypes: LogLineTypeEnum[] = [
   "normal",
@@ -40,37 +43,10 @@ const LogLineTypes: LogLineTypeEnum[] = [
   "note",
   "message",
 ];
-=======
-import { BaseConfig, RunResult } from "..";
-import {
-  getGlobalStorageUri,
-  getSecretStorage,
-} from "../../components/ExtensionContext";
-import { updateStatusBarItem } from "../../components/StatusBarItem";
-import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
-import { Session } from "../session";
-import { scriptContent } from "./script";
-import { LineCodes } from "./types";
 
 const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE";
->>>>>>> 9ca7b320 (wip)
 
 let sessionInstance: ITCSession;
-
-export enum ITCProtocol {
-  COM = 0,
-  IOMBridge = 2,
-}
-
-/**
- * Configuration parameters for this connection provider
- */
-export interface Config extends BaseConfig {
-  host: string;
-  port: number;
-  username: string;
-  protocol: ITCProtocol;
-}
 
 export class ITCSession extends Session {
   private _config: Config;
