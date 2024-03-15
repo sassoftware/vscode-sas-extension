@@ -15,7 +15,6 @@ import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
 import { Session } from "../session";
 import { LineParser } from "./LineParser";
-import PasswordStore from "./PasswordStore";
 import {
   ERROR_END_TAG,
   ERROR_START_TAG,
@@ -90,8 +89,8 @@ export class ITCSession extends Session {
     | undefined;
   private _errorParser: LineParser;
   private _workDirectoryParser: LineParser;
-  private _passwordStore: PasswordStore;
-  private _runId?: string;
+  private outputLines: string[] = [];
+  private _sasSystemLine: string;
 
   constructor() {
     super();
@@ -230,8 +229,7 @@ export class ITCSession extends Session {
    * @param onLog A callback handler responsible for marshalling log lines back to the higher level extension API.
    * @returns A promise that eventually resolves to contain the given {@link RunResult} for the input code execution.
    */
-  public run = async (code: string, runId?: string): Promise<RunResult> => {
-    this._runId = runId;
+  public run = async (code: string): Promise<RunResult> => {
     const runPromise = new Promise<RunResult>((resolve, reject) => {
       this._runResolve = resolve;
       this._runReject = reject;
@@ -315,9 +313,6 @@ export class ITCSession extends Session {
    * writing each chunk to stdout.
    */
   private fetchLog = async (): Promise<void> => {
-    const logLine = this._runId
-      ? `Write-Host "(runId: ${this._runId})$log"`
-      : `Write-Host $log`;
     const pollingInterval = setInterval(() => {
       if (!this._pollingForLogResults) {
         clearInterval(pollingInterval);
@@ -327,7 +322,7 @@ export class ITCSession extends Session {
   do {
     $chunkSize = 32768
     $log = $runner.FlushLog($chunkSize)
-    ${logLine}
+    Write-Host $log
   } while ($log.Length -gt 0)\n
     `,
         this.onWriteComplete,
@@ -439,7 +434,11 @@ export class ITCSession extends Session {
    */
   private onShellStdOut = (data: Buffer): void => {
     const output = data.toString().trimEnd();
-    this.outputLines = this.outputLines || [];
+    const sasSystemRegex = /1\s{4,}(.*)\s{4,}/;
+    if (sasSystemRegex.test(output) && !this._sasSystemLine) {
+      this._sasSystemLine = output.match(sasSystemRegex)[1].trim();
+    }
+
     this.outputLines.push(output);
 
     const outputLines = output.split(/\n|\r\n/);
@@ -476,11 +475,6 @@ export class ITCSession extends Session {
   };
 
   private processLineCodes(line: string): boolean {
-    if (this._runId && line.includes(this._runId)) {
-      console.log("Not printing this line", line);
-      return true;
-    }
-
     if (line.endsWith(LineCodes.RunEndCode)) {
       // run completed
       this.fetchResults();
@@ -540,9 +534,15 @@ export class ITCSession extends Session {
    */
   private fetchResults = async () => {
     if (!this._html5FileName) {
-      // NOOOOO, this is bad
+      // Lets prep our log output to exclude the system lines
+      const logOutput = this.outputLines
+        .join("")
+        .split("\n")
+        .filter((str) => str.trim() && !str.includes(this._sasSystemLine))
+        .join("\n");
+      this.outputLines = [];
       this._pollingForLogResults = false;
-      return this._runResolve({ logOutput: this.outputLines?.join("") || "" });
+      return this._runResolve({ logOutput });
     }
 
     const globalStorageUri = getGlobalStorageUri();
@@ -553,7 +553,6 @@ export class ITCSession extends Session {
     }
 
     this._pollingForLogResults = false;
-    this._runId = undefined;
     const outputFileUri = Uri.joinPath(
       globalStorageUri,
       `${this._html5FileName}.htm`,
@@ -589,6 +588,11 @@ $runner.FetchResultsFile($filePath, $outputFile)\n`,
     if (htmlResults.search('<*id="IDX*.+">') !== -1) {
       runResult.html5 = htmlResults;
       runResult.title = "Result";
+    }
+    if (this.outputLines.length > 0) {
+      const logOutput = this.outputLines.join("") || "";
+      this.outputLines = [];
+      runResult.logOutput = logOutput;
     }
     this._runResolve(runResult);
   };

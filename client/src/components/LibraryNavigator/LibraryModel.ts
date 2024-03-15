@@ -109,7 +109,7 @@ class LibraryModel {
 
   public async deleteTable(item: LibraryItem) {
     try {
-      this.libraryAdapter.deleteTable(item);
+      await this.libraryAdapter.deleteTable(item);
     } catch (error) {
       throw new Error(
         l10n.t(Messages.TableDeletionError, { tableName: item.uid }),

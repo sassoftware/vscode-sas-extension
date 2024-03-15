@@ -9,12 +9,7 @@ import {
   TableData,
 } from "../../components/LibraryNavigator/types";
 import { appendSessionLogFn } from "../../components/logViewer";
-import {
-  ColumnCollection,
-  DataAccessApi,
-  RowCollection,
-  TableInfo,
-} from "./api/compute";
+import { ColumnCollection, DataAccessApi, RowCollection } from "./api/compute";
 import { getApiConfig } from "./common";
 
 const requestOptions = {

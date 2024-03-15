@@ -1,53 +1,29 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import { ChildProcessWithoutNullStreams } from "child_process";
-import { v4 } from "uuid";
 
-import { profileConfig } from "../../commands/profile";
 import {
   LibraryAdapter,
   LibraryItem,
   TableData,
   TableRow,
 } from "../../components/LibraryNavigator/types";
-import { ConnectionType } from "../../components/profile";
-import { Column, ColumnCollection, TableInfo } from "../rest/api/compute";
+import { Column, ColumnCollection } from "../rest/api/compute";
 import CodeRunner from "./CodeRunner";
-import PasswordStore from "./PasswordStore";
-import { Config, ITCProtocol } from "./types";
-import { defaultSessionConfig, runSetup, spawnPowershellProcess } from "./util";
+import { Config } from "./types";
 
 class ItcLibraryAdapter implements LibraryAdapter {
   protected hasEstablishedConnection: boolean = false;
   protected shellProcess: ChildProcessWithoutNullStreams;
-  protected passwordStore: PasswordStore = new PasswordStore();
   protected pollingForLogResults: boolean = false;
   protected log: string[] = [];
   protected endTag: string = "";
   protected outputFinished: boolean = false;
-  protected codeRunners: Record<string, CodeRunner> = {};
   protected config: Config;
+  protected codeRunner = new CodeRunner();
 
   public async connect(): Promise<void> {
     this.hasEstablishedConnection = true;
-
-    const activeProfile = profileConfig.getProfileByName(
-      profileConfig.getActiveProfile(),
-    );
-    const protocol =
-      activeProfile.connectionType === ConnectionType.COM
-        ? ITCProtocol.COM
-        : ITCProtocol.IOMBridge;
-    const config = {
-      ...defaultSessionConfig(protocol),
-      ...activeProfile,
-    };
-    this.passwordStore.updatePasswordKey(
-      `${config.host}${config.protocol}${config.username}`,
-    );
-    this.config = config;
-
-    await this.passwordStore.fetchPassword();
   }
 
   public async setup(): Promise<void> {
@@ -58,12 +34,17 @@ class ItcLibraryAdapter implements LibraryAdapter {
     await this.connect();
   }
 
-  deleteTable(item: LibraryItem): Promise<void> {
-    throw new Error("Method not implemented.");
+  public async deleteTable(item: LibraryItem): Promise<void> {
+    const code = `
+      proc datasets library=${item.library} nolist nodetails; delete ${item.name}; run;
+    `;
+
+    await this.codeRunner.runCode(code);
   }
 
   public async getColumns(item: LibraryItem): Promise<ColumnCollection> {
     const sql = `
+      %let OUTPUT;
       proc sql;
         select catx(',',name, type, varnum) as column into: OUTPUT separated by '~'
         from sashelp.vcolumn
@@ -74,7 +55,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     `;
 
     const columnLines = processQueryRows(
-      await this.runCode(sql, "<COLOUTPUT>", "</COLOUTPUT>"),
+      await this.codeRunner.runCode(sql, "<COLOUTPUT>", "</COLOUTPUT>"),
     );
     const columns = columnLines.map((lineText): Column => {
       const [name, type, index] = lineText.split(",");
@@ -97,6 +78,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     count: number;
   }> {
     const sql = `
+      %let OUTPUT;
       proc sql;
         select catx(',', libname, readonly) as libname_target into: OUTPUT separated by '~'
         from sashelp.vlibnam order by libname asc;
@@ -105,7 +87,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     `;
 
     const libNames = processQueryRows(
-      await this.runCode(sql, "<LIBOUTPUT>", "</LIBOUTPUT>"),
+      await this.codeRunner.runCode(sql, "<LIBOUTPUT>", "</LIBOUTPUT>"),
     );
     libNames.sort();
     const libraries = libNames.map((lineText): LibraryItem => {
@@ -131,14 +113,17 @@ class ItcLibraryAdapter implements LibraryAdapter {
     start: number,
     limit: number,
   ): Promise<{ rows: string[]; count: number }> {
-    const tempTable = `${item.name}${hms()}`;
-    const code = `
+    const maxTableNameLength = 32;
+    const tempTable = `${item.name}${hms()}${start}`.substring(
+      0,
+      maxTableNameLength,
+    );
+    const code = ` 
       options nonotes nosource nodate nonumber;
-      %put <TABLEDATA>;
+      %let COUNT;
       proc sql;
         SELECT COUNT(1) into: COUNT FROM  ${item.library}.${item.name};
       quit;
-      %put <Count>&COUNT</Count>;
       data work.${tempTable};
         set ${item.library}.${item.name};
         if ${start + 1} <= _N_ <= ${start + limit} then output;
@@ -147,11 +132,19 @@ class ItcLibraryAdapter implements LibraryAdapter {
       filename out temp;
       proc json out=out; export work.${tempTable}; run;
 
-      data _null_; infile out; input; put _infile_; %put </TABLEDATA>; run;
+      %put <TABLEDATA>;
+      %put <Count>&COUNT</Count>;
+      data _null_; infile out; input; put _infile_; run;
+      %put </TABLEDATA>;
       proc datasets library=work nolist nodetails; delete ${tempTable}; run;
+      options notes source date number;
     `;
 
-    let output = await this.runCode(code, "<TABLEDATA>", "</TABLEDATA>");
+    let output = await this.codeRunner.runCode(
+      code,
+      "<TABLEDATA>",
+      "</TABLEDATA>",
+    );
 
     // Extract result count
     const countRegex = /<Count>(.*)<\/Count>/;
@@ -215,14 +208,13 @@ class ItcLibraryAdapter implements LibraryAdapter {
     item: LibraryItem,
   ): Promise<{ rowCount: number; maxNumberOfRowsToRead: number }> {
     const code = `
-      options nonotes nosource nodate nonumber;
       proc sql;
         SELECT COUNT(1) into: COUNT FROM  ${item.library}.${item.name};
       quit;
       %put <Count>&COUNT</Count>;
     `;
 
-    const output = await this.runCode(code, "<Count>", "</Count>");
+    const output = await this.codeRunner.runCode(code, "<Count>", "</Count>");
     const rowCount = parseInt(output.replace(/[^0-9]/g, ""), 10);
 
     return { rowCount, maxNumberOfRowsToRead: 100 };
@@ -233,6 +225,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     count: number;
   }> {
     const sql = `
+      %let OUTPUT;
       proc sql;
         select memname into: OUTPUT separated by '~'
         from sashelp.vtable
@@ -243,7 +236,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     `;
 
     const tableNames = processQueryRows(
-      await this.runCode(sql, "<TABLEOUTPUT>", "</TABLEOUTPUT>"),
+      await this.codeRunner.runCode(sql, "<TABLEOUTPUT>", "</TABLEOUTPUT>"),
     );
     tableNames.sort();
     const tables = tableNames.map((lineText): LibraryItem => {
@@ -261,36 +254,17 @@ class ItcLibraryAdapter implements LibraryAdapter {
 
     return { items: tables, count: -1 };
   }
-
-  protected async runCode(
-    code: string,
-    startTag: string,
-    endTag: string,
-  ): Promise<string> {
-    const processId = v4();
-    this.codeRunners[processId] = new CodeRunner(
-      processId,
-      (processId: string) => delete this.codeRunners[processId],
-    );
-
-    return await this.codeRunners[processId].runCode(
-      code,
-      startTag,
-      endTag,
-      this.config,
-      this.passwordStore.fetchInMemoryPassword(),
-    );
-  }
 }
 
 const processQueryRows = (response: string): string[] => {
-  const items = response
-    .trim()
-    .replace(/\n|\t/gm, "")
+  const processedResponse = response.trim().replace(/\n|\t/gm, "");
+  if (!processedResponse) {
+    return [];
+  }
+
+  return processedResponse
     .split("~")
     .filter((value, index, array) => array.indexOf(value) === index);
-
-  return items;
 };
 
 const hms = () => {

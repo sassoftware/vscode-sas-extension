@@ -72,7 +72,7 @@ class DataViewer extends WebView {
     switch (event.command) {
       case "request:loadData":
         this.panel.webview.postMessage({
-          command: "response:loadData",
+          command: `response:loadData`,
           key: event.key,
           data: await this._paginator.getData(
             event.data!.start!,

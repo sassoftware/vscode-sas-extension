@@ -1,8 +1,10 @@
+import { commands } from "vscode";
+
 import { ChildProcessWithoutNullStreams } from "child_process";
+import { createHash } from "crypto";
 
 import { getSession } from "..";
-import { Config } from "./types";
-import { runSetup, spawnPowershellProcess } from "./util";
+import { useRunStore } from "../../store";
 
 class CodeRunner {
   protected pollingForLogResults: boolean = false;
@@ -10,139 +12,67 @@ class CodeRunner {
   protected endTag: string = "";
   protected outputFinished: boolean = false;
   protected shellProcess: ChildProcessWithoutNullStreams;
-  protected resultInterval;
+  protected awaitExecutionInterval;
   protected sasSystemLine: string;
-
-  public constructor(
-    protected readonly processId: string,
-    protected readonly onCodeExecutionFinished: (processId: string) => void,
-  ) {}
+  protected executionIntervals: Record<string, ReturnType<typeof setInterval>> =
+    {};
 
   public async runCode(
     code: string,
-    startTag: string,
-    endTag: string,
-    config: Config,
-    password: string,
+    startTag: string = "",
+    endTag: string = "",
   ): Promise<string> {
-    // this.shellProcess = spawnPowershellProcess(
-    //   this.onWriteComplete,
-    //   this.onStdOutput,
-    //   this.onStdError,
-    // );
+    const key = createHash("md5")
+      .update(code + startTag + endTag)
+      .digest("hex");
+    await new Promise((resolve) => {
+      if (this.executionIntervals[key]) {
+        clearInterval(this.executionIntervals[key]);
+      }
 
-    // runSetup(this.shellProcess, config, password, this.onWriteComplete);
+      this.executionIntervals[key] = setInterval(() => {
+        if (!useRunStore.getState().isExecutingCode) {
+          clearInterval(this.executionIntervals[key]);
+          return resolve(true);
+        }
+      }, 200);
+    });
+
+    const { setIsExecutingCode } = useRunStore.getState();
+    setIsExecutingCode(true);
+    commands.executeCommand("setContext", "SAS.running", true);
+
     const session = getSession();
     await session.setup(true);
-    const runStuff = await session.run(
-      `/* ${this.processId} */${code}`,
-      this.processId,
-    );
 
-    let logText = runStuff.logOutput;
-    logText = logText
-      .slice(logText.lastIndexOf(startTag), logText.lastIndexOf(endTag))
-      .replace(startTag, "")
-      .replace(endTag, "");
+    // Lets prevent anything from being appended to our log
+    const onSessionLogFn = session.onSessionLogFn;
+    const onExecutionLogFn = session.onExecutionLogFn;
+    session.onSessionLogFn = () => {};
+    session.onExecutionLogFn = () => {};
 
-    // const results = await new Promise<string>((resolve, reject) => {
-    //   this.pollingForLogResults = true;
-    //   this.shellProcess.stdin.write(
-    //     `$code=\n@'\n${code}\n'@\n$runner.Run($code)\n`,
-    //     async (error) => {
-    //       if (error) {
-    //         return reject(error);
-    //       }
+    const { logOutput } = await session.run(code);
+    const logText =
+      startTag && endTag
+        ? logOutput
+            .slice(
+              logOutput.lastIndexOf(startTag),
+              logOutput.lastIndexOf(endTag),
+            )
+            .replace(startTag, "")
+            .replace(endTag, "")
+        : logOutput;
 
-    //       const response = await this.pollUntilEnd(startTag, endTag);
-    //       resolve(response);
-    //     },
-    //   );
-    // });
+    // Lets update our session to write to the log
+    session.onSessionLogFn = onSessionLogFn;
+    session.onExecutionLogFn = onExecutionLogFn;
 
-    // return results;
+    setIsExecutingCode(false);
+    commands.executeCommand("setContext", "SAS.running", false);
+    delete this.executionIntervals[key];
+
     return logText;
   }
-
-  protected async pollUntilEnd(
-    startTag: string,
-    endTag: string,
-  ): Promise<string> {
-    this.log = [];
-    this.endTag = endTag;
-    this.outputFinished = false;
-    await this.fetchLog();
-
-    return await new Promise<string>((resolve) => {
-      if (this.resultInterval) {
-        clearInterval(this.resultInterval);
-      }
-      this.resultInterval = setInterval(() => {
-        if (this.outputFinished) {
-          let logText = this.log.join("");
-
-          // Lets filter our log text such that we don't have empty lines,
-          // or lines that just include "The SAS System"
-          logText = logText
-            .split("\n")
-            .filter((str) => str.trim() && !str.includes(this.sasSystemLine))
-            .join("\n");
-
-          resolve(
-            logText
-              .slice(logText.lastIndexOf(startTag))
-              .replace(startTag, "")
-              .replace(endTag, ""),
-          );
-          clearInterval(this.resultInterval);
-        }
-      }, 100);
-    });
-  }
-
-  private fetchLog = async (): Promise<void> => {
-    const pollingInterval = setInterval(() => {
-      if (!this.pollingForLogResults) {
-        clearInterval(pollingInterval);
-      }
-      this.shellProcess.stdin.write(
-        `
-  do {
-    $chunkSize = 32768
-    $log = $runner.FlushLog($chunkSize)
-    Write-Host $log
-  } while ($log.Length -gt 0)\n
-    `,
-        this.onWriteComplete,
-      );
-    }, 2 * 1000);
-  };
-
-  protected onWriteComplete = (error: Error) => {
-    this.pollingForLogResults = false;
-    console.log(error);
-  };
-
-  protected onStdError = (data: Buffer) => {
-    console.log(data.toString());
-  };
-
-  protected onStdOutput = (data: Buffer) => {
-    const line = data.toString();
-
-    const sasSystemRegex = /1\s{4,}(.*)\s{4,}/;
-    if (sasSystemRegex.test(line) && !this.sasSystemLine) {
-      this.sasSystemLine = line.match(sasSystemRegex)[1].trim();
-    }
-
-    this.log.push(line);
-
-    if (this.endTag && line.includes(this.endTag)) {
-      this.outputFinished = true;
-      this.shellProcess.kill();
-      this.onCodeExecutionFinished(this.processId);
-    }
-  };
 }
 
 export default CodeRunner;

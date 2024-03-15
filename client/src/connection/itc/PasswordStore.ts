@@ -15,6 +15,8 @@ class PasswordStore {
   }
 
   constructor() {
+    throw new Error("NOOOOO");
+
     this.password = "";
     this.secretStorage = getSecretStorage(SECRET_STORAGE_NAMESPACE);
     this.emptyPasswordAllowed = false;
