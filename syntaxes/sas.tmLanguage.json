@@ -40,7 +40,7 @@
           "name": "entity.name.function.proc.lua"
         }
       },
-      "contentName": "entity.name.function.proc.lua.content",
+      "contentName": "proc.lua.content",
       "patterns": [
         {
           "include": "source.lua"
@@ -55,7 +55,7 @@
           "name": "entity.name.function.proc.python"
         }
       },
-      "contentName": "entity.name.function.proc.python.content",
+      "contentName": "proc.python.content",
       "patterns": [
         {
           "include": "source.python"
