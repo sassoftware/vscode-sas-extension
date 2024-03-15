@@ -2261,7 +2261,14 @@ export class LexerEx {
 
     return isKeyword;
   }
-  private handleLongStmtName_(procName: string, startWord: string) {
+  private handleLongStmtName_(
+    procName: string,
+    startWord: string,
+  ): {
+    isKeyword: boolean;
+    stmtName: string;
+    stmtNameLen: number;
+  } {
     const name1 = startWord,
       it = { pos: 1 },
       next1 = this.prefetch_(it);
@@ -2273,6 +2280,7 @@ export class LexerEx {
       next3,
       stmtNameLen = 1,
       fullStmtName = name1;
+
     if (next1 && Lexer.isWord[next1.type]) {
       name2 = name1 + " " + next1.text; // the keyword has 2 words
       next2 = this.prefetch_(it);

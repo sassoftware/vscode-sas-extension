@@ -291,10 +291,7 @@ export class Lexer {
           this.context.lastNoncommentToken?.type === "text" &&
           this.context.lastNoncommentToken.text === "PROC"
         ) {
-          if (
-            token.type === "text" &&
-            (token.text === "SQL" || token.text === "FEDSQL")
-          ) {
+          if (token.type === "text" && token.text === "FEDSQL") {
             this.context.embeddedLangState = EmbeddedLangState.PROC_SQL_DEF;
           } else if (token.type === "text" && token.text === "PYTHON") {
             this.context.embeddedLangState = EmbeddedLangState.PROC_PYTHON_DEF;
