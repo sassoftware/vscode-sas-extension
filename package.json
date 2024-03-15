@@ -975,12 +975,12 @@
         {
           "id": "librarydataprovider",
           "name": "%views.SAS.libraries%",
-          "when": "(SAS.authorized && SAS.librariesEnabled) || SAS.connection.direct"
+          "when": "((SAS.authorized || SAS.librariesDisplayed) && SAS.librariesEnabled) || SAS.connection.direct"
         },
         {
           "id": "sas-content-get-started",
           "name": "%views.SAS.signIn%",
-          "when": "(!SAS.authorized && SAS.canSignIn) && !SAS.connection.direct"
+          "when": "(!(SAS.authorized || SAS.librariesDisplayed) && SAS.canSignIn) && !SAS.connection.direct"
         },
         {
           "id": "sas-content-invalid-connection",

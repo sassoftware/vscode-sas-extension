@@ -123,7 +123,7 @@ export function activate(context: ExtensionContext): void {
     commands.registerCommand("SAS.updateProfile", updateProfile),
     commands.registerCommand("SAS.authorize", checkProfileAndAuthorize),
     commands.registerCommand("SAS.loadLibraries", () => {
-      commands.executeCommand("setContext", "SAS.authorized", true);
+      commands.executeCommand("setContext", "SAS.librariesDisplayed", true);
     }),
     authentication.registerAuthenticationProvider(
       SASAuthProvider.id,
@@ -175,8 +175,7 @@ function updateViewSettings(): void {
     canSignIn: false,
     librariesEnabled: false,
     contentEnabled: false,
-    // When we switch profiles, lets unauthorize
-    authorized: false,
+    librariesDisplayed: false,
   };
   if (activeProfile) {
     settings.canSignIn = activeProfile.connectionType !== ConnectionType.SSH;
