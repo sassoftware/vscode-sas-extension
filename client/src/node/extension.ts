@@ -124,6 +124,7 @@ export function activate(context: ExtensionContext): void {
     commands.registerCommand("SAS.authorize", checkProfileAndAuthorize),
     commands.registerCommand("SAS.loadLibraries", () => {
       commands.executeCommand("setContext", "SAS.librariesDisplayed", true);
+      libraryNavigator.refresh();
     }),
     authentication.registerAuthenticationProvider(
       SASAuthProvider.id,

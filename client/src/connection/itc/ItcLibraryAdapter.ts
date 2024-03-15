@@ -1,7 +1,10 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { commands } from "vscode";
+
 import { ChildProcessWithoutNullStreams } from "child_process";
 
+import { onRunError } from "../../commands/run";
 import {
   LibraryAdapter,
   LibraryItem,
@@ -39,7 +42,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
       proc datasets library=${item.library} nolist nodetails; delete ${item.name}; run;
     `;
 
-    await this.codeRunner.runCode(code);
+    await this.runCode(code);
   }
 
   public async getColumns(item: LibraryItem): Promise<ColumnCollection> {
@@ -55,7 +58,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     `;
 
     const columnLines = processQueryRows(
-      await this.codeRunner.runCode(sql, "<COLOUTPUT>", "</COLOUTPUT>"),
+      await this.runCode(sql, "<COLOUTPUT>", "</COLOUTPUT>"),
     );
     const columns = columnLines.map((lineText): Column => {
       const [name, type, index] = lineText.split(",");
@@ -87,7 +90,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     `;
 
     const libNames = processQueryRows(
-      await this.codeRunner.runCode(sql, "<LIBOUTPUT>", "</LIBOUTPUT>"),
+      await this.runCode(sql, "<LIBOUTPUT>", "</LIBOUTPUT>"),
     );
     libNames.sort();
     const libraries = libNames.map((lineText): LibraryItem => {
@@ -140,11 +143,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
       options notes source date number;
     `;
 
-    let output = await this.codeRunner.runCode(
-      code,
-      "<TABLEDATA>",
-      "</TABLEDATA>",
-    );
+    let output = await this.runCode(code, "<TABLEDATA>", "</TABLEDATA>");
 
     // Extract result count
     const countRegex = /<Count>(.*)<\/Count>/;
@@ -214,7 +213,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
       %put <Count>&COUNT</Count>;
     `;
 
-    const output = await this.codeRunner.runCode(code, "<Count>", "</Count>");
+    const output = await this.runCode(code, "<Count>", "</Count>");
     const rowCount = parseInt(output.replace(/[^0-9]/g, ""), 10);
 
     return { rowCount, maxNumberOfRowsToRead: 100 };
@@ -236,7 +235,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     `;
 
     const tableNames = processQueryRows(
-      await this.codeRunner.runCode(sql, "<TABLEOUTPUT>", "</TABLEOUTPUT>"),
+      await this.runCode(sql, "<TABLEOUTPUT>", "</TABLEOUTPUT>"),
     );
     tableNames.sort();
     const tables = tableNames.map((lineText): LibraryItem => {
@@ -253,6 +252,20 @@ class ItcLibraryAdapter implements LibraryAdapter {
     });
 
     return { items: tables, count: -1 };
+  }
+
+  protected async runCode(
+    code: string,
+    startTag: string = "",
+    endTag: string = "",
+  ): Promise<string> {
+    try {
+      return await this.codeRunner.runCode(code, startTag, endTag);
+    } catch (e) {
+      onRunError(e);
+      commands.executeCommand("setContext", "SAS.librariesDisplayed", false);
+      return "";
+    }
   }
 }
 
