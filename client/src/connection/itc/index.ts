@@ -65,7 +65,6 @@ export class ITCSession extends Session {
     | undefined;
   private _errorParser: LineParser;
   private _workDirectoryParser: LineParser;
-  private _outputLines: string[] = [];
   private _sasSystemLine: string;
 
   constructor() {
@@ -84,6 +83,10 @@ export class ITCSession extends Session {
   public set config(value: Config) {
     this._config = value;
     this._passwordKey = `${value.host}${value.protocol}${value.username}`;
+  }
+
+  public get sasSystemLine() {
+    return this._sasSystemLine;
   }
 
   /**
@@ -415,8 +418,6 @@ export class ITCSession extends Session {
       this._sasSystemLine = output.match(sasSystemRegex)[1].trim();
     }
 
-    this._outputLines.push(output);
-
     const outputLines = output.split(/\n|\r\n/);
 
     outputLines.forEach((line: string) => {
@@ -510,15 +511,8 @@ export class ITCSession extends Session {
    */
   private fetchResults = async () => {
     if (!this._html5FileName) {
-      // Lets prep our log output to exclude the system lines
-      const logOutput = this._outputLines
-        .join("")
-        .split("\n")
-        .filter((str) => str.trim() && !str.includes(this._sasSystemLine))
-        .join("\n");
-      this._outputLines = [];
       this._pollingForLogResults = false;
-      return this._runResolve({ logOutput });
+      return this._runResolve({});
     }
 
     const globalStorageUri = getGlobalStorageUri();
@@ -564,11 +558,6 @@ $runner.FetchResultsFile($filePath, $outputFile)\n`,
     if (htmlResults.search('<*id="IDX*.+">') !== -1) {
       runResult.html5 = htmlResults;
       runResult.title = "Result";
-    }
-    if (this._outputLines.length > 0) {
-      const logOutput = this._outputLines.join("") || "";
-      this._outputLines = [];
-      runResult.logOutput = logOutput;
     }
     this._runResolve(runResult);
   };

@@ -92,7 +92,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     const libNames = processQueryRows(
       await this.runCode(sql, "<LIBOUTPUT>", "</LIBOUTPUT>"),
     );
-    libNames.sort();
+
     const libraries = libNames.map((lineText): LibraryItem => {
       const [libName, readOnlyValue] = lineText.split(",");
 
@@ -237,7 +237,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     const tableNames = processQueryRows(
       await this.runCode(sql, "<TABLEOUTPUT>", "</TABLEOUTPUT>"),
     );
-    tableNames.sort();
+
     const tables = tableNames.map((lineText): LibraryItem => {
       const [table] = lineText.split(",");
 

@@ -2,7 +2,8 @@ import { commands } from "vscode";
 
 import { createHash } from "crypto";
 
-import { getSession } from "..";
+import { ITCSession } from ".";
+import { LogLine, getSession } from "..";
 import { useRunStore } from "../../store";
 
 class CodeRunner {
@@ -39,14 +40,33 @@ class CodeRunner {
     let logText = "";
     const onSessionLogFn = session.onSessionLogFn;
     const onExecutionLogFn = session.onExecutionLogFn;
+    const outputLines = [];
+
+    const addLine = (logLines: LogLine[]) =>
+      outputLines.push(...logLines.map(({ line }) => line));
+
     try {
       await session.setup(true);
 
-      // Lets prevent anything from being appended to our log
-      session.onSessionLogFn = () => {};
-      session.onExecutionLogFn = () => {};
+      // Lets capture output to use it later
+      session.onSessionLogFn = addLine;
+      session.onExecutionLogFn = addLine;
 
-      const { logOutput } = await session.run(code);
+      await session.run(code);
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const sasSystemLine = (session as ITCSession).sasSystemLine;
+      // Lets gather our log output, excluding any string including the system
+      // line (NOTE: This is necessary for large log outputs that span multiple
+      // "pages")
+      const logOutput = outputLines
+        .filter((str) =>
+          sasSystemLine
+            ? str.trim() && !str.includes(sasSystemLine)
+            : str.trim(),
+        )
+        .join("");
+
       logText =
         startTag && endTag
           ? logOutput
