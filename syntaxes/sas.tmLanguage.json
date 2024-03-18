@@ -139,7 +139,7 @@
       }
     },
     "macro-quotes": {
-      "begin": "(?i)%(?:bquote|superq|nrbquote|nrquote|nrstr)",
+      "begin": "(?i)%(?:bquote|superq|nrbquote|nrquote|nrstr|str)",
       "beginCaptures": {
         "0": {
           "name": "entity.name.function.macro"

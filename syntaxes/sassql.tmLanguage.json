@@ -389,9 +389,6 @@
       "name": "meta.block.sql"
     },
     {
-      "include": "#sasformat"
-    },
-    {
       "include": "#saskeywords"
     },
     {
@@ -520,14 +517,6 @@
     "strings": {
       "patterns": [
         {
-          "match": "'[^']*'d",
-          "name": "string.quoted.single.date"
-        },
-        {
-          "match": "\"[^\"]*\"d",
-          "name": "string.quoted.double.date"
-        },
-        {
           "captures": {
             "2": {
               "name": "punctuation.definition.string.begin.sql"
@@ -648,10 +637,6 @@
         }
       ]
     },
-    "sasformat": {
-      "match": "\\$?\\w+\\.\\d*",
-      "name": "constant.format.sas"
-    },
     "saskeywords": {
       "patterns": [
         {
@@ -661,9 +646,29 @@
       ]
     },
     "sas-macro-put": {
-      "begin": "(?i)%put",
-      "end": "$",
-      "name": "macro"
+      "begin": "(?i)%put\\b",
+      "end": ";",
+      "name": "macro",
+      "patterns": [
+        {
+          "include": "#macro-quotes"
+        }
+      ]
+    },
+    "macro-quotes": {
+      "begin": "(?i)%(?:bquote|superq|nrbquote|nrquote|nrstr|str)",
+      "beginCaptures": {
+        "0": {
+          "name": "entity.name.function.macro"
+        }
+      },
+      "end": "\\)|(?=\\n)",
+      "name": "string.quoted.macro",
+      "patterns": [
+        {
+          "include": "#macro-quotes"
+        }
+      ]
     }
   }
 }

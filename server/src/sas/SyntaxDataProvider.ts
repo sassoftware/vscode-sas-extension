@@ -2652,7 +2652,7 @@ export class SyntaxDataProvider {
     stmtName: string,
     optName?: string,
     valName?: string,
-  ) {
+  ): boolean {
     if (procName === "SQL") {
       return this.isStatementKeyword("global", stmtName, optName, valName);
     }
@@ -2701,8 +2701,8 @@ export class SyntaxDataProvider {
     stmtName: string,
     optName?: string,
     valName?: string,
-  ) {
-    return _tryToLoadStatementsFromPubs(context, null, function () {
+  ): boolean {
+    return !!_tryToLoadStatementsFromPubs(context, null, function () {
       return !!_procStmtObj(context, stmtName, optName, valName);
     });
   }
