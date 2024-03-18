@@ -21,7 +21,7 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
-    "@types/react": "^18.2.61",
+    "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.19",
     "@types/ssh2": "^1.11.19",
     "@types/vscode": "1.82.0",
