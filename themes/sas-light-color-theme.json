@@ -28,14 +28,6 @@
   },
   "tokenColors": [
     {
-      "scope": ["string.quoted.single.date", "string.quoted.double.date"],
-      "settings": { "foreground": "#3c8275", "fontStyle": "bold" }
-    },
-    {
-      "scope": "constant.format.sas",
-      "settings": { "foreground": "#3c8275" }
-    },
-    {
       "scope": "keyword.section.sas",
       "settings": { "foreground": "#224c7c", "fontStyle": "bold" }
     }
