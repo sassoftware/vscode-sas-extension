@@ -1,40 +1,39 @@
+// Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 import { commands } from "vscode";
-
-import { createHash } from "crypto";
 
 import { ITCSession } from ".";
 import { LogLine, getSession } from "..";
 import { useRunStore } from "../../store";
 
 class CodeRunner {
-  protected executionIntervals: Record<string, ReturnType<typeof setInterval>> =
-    {};
+  protected executionInterval: ReturnType<typeof setInterval>;
 
   public async runCode(
     code: string,
     startTag: string = "",
     endTag: string = "",
   ): Promise<string> {
-    const key = createHash("md5")
-      .update(code + startTag + endTag)
-      .digest("hex");
-    await new Promise((resolve) => {
-      if (this.executionIntervals[key]) {
-        clearInterval(this.executionIntervals[key]);
-      }
-
-      this.executionIntervals[key] = setInterval(() => {
-        if (!useRunStore.getState().isExecutingCode) {
-          clearInterval(this.executionIntervals[key]);
-          return resolve(true);
+    // If we're already executing code, lets wait for it
+    // to finish up.
+    if (useRunStore.getState().isExecutingCode) {
+      await new Promise((resolve) => {
+        if (this.executionInterval) {
+          clearInterval(this.executionInterval);
         }
-      }, 200);
-    });
+
+        this.executionInterval = setInterval(() => {
+          if (!useRunStore.getState().isExecutingCode) {
+            clearInterval(this.executionInterval);
+            return resolve(true);
+          }
+        }, 200);
+      });
+    }
 
     const { setIsExecutingCode } = useRunStore.getState();
     setIsExecutingCode(true);
     commands.executeCommand("setContext", "SAS.running", true);
-
     const session = getSession();
 
     let logText = "";
@@ -60,10 +59,10 @@ class CodeRunner {
       // line (NOTE: This is necessary for large log outputs that span multiple
       // "pages")
       const logOutput = outputLines
-        .filter((str) =>
+        .filter((line) =>
           sasSystemLine
-            ? str.trim() && !str.includes(sasSystemLine)
-            : str.trim(),
+            ? line.trim() && !line.includes(sasSystemLine)
+            : line.trim(),
         )
         .join("");
 
@@ -84,7 +83,6 @@ class CodeRunner {
 
       setIsExecutingCode(false);
       commands.executeCommand("setContext", "SAS.running", false);
-      delete this.executionIntervals[key];
     }
 
     return logText;

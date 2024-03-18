@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - Update command palette entry `SAS: Sign in` so that it's only visible for Viya profiles. Non-viya users will still be able to connect and execute code by using the running man icon ([#862](https://github.com/sassoftware/vscode-sas-extension/pull/862))
+- Add data viewer support for IOM/COM connections ([#680](https://github.com/sassoftware/vscode-sas-extension/issues/680))
 
 ## [v1.7.1] - 2024-02-15
 

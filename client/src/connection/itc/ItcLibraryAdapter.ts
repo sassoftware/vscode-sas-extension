@@ -49,7 +49,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     const sql = `
       %let OUTPUT;
       proc sql;
-        select catx(',',name, type, varnum) as column into: OUTPUT separated by '~'
+        select catx(',', name, type, varnum) as column into: OUTPUT separated by '~'
         from sashelp.vcolumn
         where libname='${item.library}' and memname='${item.name}'
         order by varnum;
@@ -60,6 +60,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     const columnLines = processQueryRows(
       await this.runCode(sql, "<COLOUTPUT>", "</COLOUTPUT>"),
     );
+
     const columns = columnLines.map((lineText): Column => {
       const [name, type, index] = lineText.split(",");
 
@@ -111,52 +112,6 @@ class ItcLibraryAdapter implements LibraryAdapter {
     };
   }
 
-  private async getDatasetInformation(
-    item: LibraryItem,
-    start: number,
-    limit: number,
-  ): Promise<{ rows: string[]; count: number }> {
-    const maxTableNameLength = 32;
-    const tempTable = `${item.name}${hms()}${start}`.substring(
-      0,
-      maxTableNameLength,
-    );
-    const code = ` 
-      options nonotes nosource nodate nonumber;
-      %let COUNT;
-      proc sql;
-        SELECT COUNT(1) into: COUNT FROM  ${item.library}.${item.name};
-      quit;
-      data work.${tempTable};
-        set ${item.library}.${item.name};
-        if ${start + 1} <= _N_ <= ${start + limit} then output;
-      run;
-
-      filename out temp;
-      proc json out=out; export work.${tempTable}; run;
-
-      %put <TABLEDATA>;
-      %put <Count>&COUNT</Count>;
-      data _null_; infile out; input; put _infile_; run;
-      %put </TABLEDATA>;
-      proc datasets library=work nolist nodetails; delete ${tempTable}; run;
-      options notes source date number;
-    `;
-
-    let output = await this.runCode(code, "<TABLEDATA>", "</TABLEDATA>");
-
-    // Extract result count
-    const countRegex = /<Count>(.*)<\/Count>/;
-    const countMatches = output.match(countRegex);
-    const count = parseInt(countMatches[1].replace(/\s|\n/gm, ""), 10);
-    output = output.replace(countRegex, "");
-
-    const rows = output.replace(/\n|\t/gm, "");
-    const tableData = JSON.parse(rows);
-
-    return { rows: tableData[`SASTableData+${tempTable}`], count };
-  }
-
   public async getRows(
     item: LibraryItem,
     start: number,
@@ -188,8 +143,8 @@ class ItcLibraryAdapter implements LibraryAdapter {
     const columns =
       start === 0
         ? {
-            columns: (await this.getColumns(item)).items.map(
-              (column) => column.name,
+            columns: ["INDEX"].concat(
+              (await this.getColumns(item)).items.map((column) => column.name),
             ),
           }
         : {};
@@ -252,6 +207,52 @@ class ItcLibraryAdapter implements LibraryAdapter {
     });
 
     return { items: tables, count: -1 };
+  }
+
+  protected async getDatasetInformation(
+    item: LibraryItem,
+    start: number,
+    limit: number,
+  ): Promise<{ rows: string[]; count: number }> {
+    const maxTableNameLength = 32;
+    const tempTable = `${item.name}${hms()}${start}`.substring(
+      0,
+      maxTableNameLength,
+    );
+    const code = `
+      options nonotes nosource nodate nonumber;
+      %let COUNT;
+      proc sql;
+        SELECT COUNT(1) into: COUNT FROM  ${item.library}.${item.name};
+      quit;
+      data work.${tempTable};
+        set ${item.library}.${item.name};
+        if ${start + 1} <= _N_ <= ${start + limit} then output;
+      run;
+
+      filename out temp;
+      proc json out=out; export work.${tempTable}; run;
+
+      %put <TABLEDATA>;
+      %put <Count>&COUNT</Count>;
+      data _null_; infile out; input; put _infile_; run;
+      %put </TABLEDATA>;
+      proc datasets library=work nolist nodetails; delete ${tempTable}; run;
+      options notes source date number;
+    `;
+
+    let output = await this.runCode(code, "<TABLEDATA>", "</TABLEDATA>");
+
+    // Extract result count
+    const countRegex = /<Count>(.*)<\/Count>/;
+    const countMatches = output.match(countRegex);
+    const count = parseInt(countMatches[1].replace(/\s|\n/gm, ""), 10);
+    output = output.replace(countRegex, "");
+
+    const rows = output.replace(/\n|\t/gm, "");
+    const tableData = JSON.parse(rows);
+
+    return { rows: tableData[`SASTableData+${tempTable}`], count };
   }
 
   protected async runCode(

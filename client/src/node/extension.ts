@@ -121,11 +121,10 @@ export function activate(context: ExtensionContext): void {
     commands.registerCommand("SAS.addProfile", addProfile),
     commands.registerCommand("SAS.deleteProfile", deleteProfile),
     commands.registerCommand("SAS.updateProfile", updateProfile),
-    commands.registerCommand("SAS.authorize", checkProfileAndAuthorize),
-    commands.registerCommand("SAS.loadLibraries", () => {
-      commands.executeCommand("setContext", "SAS.librariesDisplayed", true);
-      libraryNavigator.refresh();
-    }),
+    commands.registerCommand(
+      "SAS.authorize",
+      checkProfileAndAuthorize(libraryNavigator),
+    ),
     authentication.registerAuthenticationProvider(
       SASAuthProvider.id,
       "SAS",
@@ -173,13 +172,13 @@ function updateViewSettings(): void {
   );
 
   const settings = {
-    canSignIn: false,
+    canSignIn:
+      !activeProfile || activeProfile.connectionType !== ConnectionType.SSH,
     librariesEnabled: false,
     contentEnabled: false,
     librariesDisplayed: false,
   };
   if (activeProfile) {
-    settings.canSignIn = activeProfile.connectionType !== ConnectionType.SSH;
     settings.librariesEnabled =
       activeProfile.connectionType !== ConnectionType.SSH;
     settings.contentEnabled =

@@ -992,14 +992,8 @@
     "viewsWelcome": [
       {
         "view": "sas-content-get-started",
-        "when": "SAS.connectionType == rest",
         "contents": "%views.SAS.welcome%",
         "enablement": "!SAS.authorizing"
-      },
-      {
-        "view": "sas-content-get-started",
-        "when": "SAS.connectionType != rest",
-        "contents": "%views.SAS.loadLibraries%"
       },
       {
         "view": "sas-content-invalid-connection",

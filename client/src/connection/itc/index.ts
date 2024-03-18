@@ -300,9 +300,8 @@ export class ITCSession extends Session {
         `
   do {
     $chunkSize = 32768
-    $log = $runner.FlushLog($chunkSize)
-    Write-Host $log
-  } while ($log.Length -gt 0)\n
+    $count = $runner.FlushLogLines($chunkSize)
+  } while ($count -gt 0)\n
     `,
         this.onWriteComplete,
       );

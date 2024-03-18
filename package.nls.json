@@ -72,6 +72,5 @@
   "views.SAS.libraries": "Libraries",
   "views.SAS.signIn": "Sign In",
   "views.SAS.unsupportedConnection": "Your connection does not support SAS content navigation within the SAS Extension for Visual Studio Code. You can access files only using the Explorer view.",
-  "views.SAS.welcome": "To use the SAS Extension for Visual Studio Code, you must sign in to SAS.\n[Sign In](command:SAS.authorize)",
-  "views.SAS.loadLibraries": "To use the SAS Extension for Visual Studio Code, you must sign in to SAS.\n[Sign In](command:SAS.loadLibraries)"
+  "views.SAS.welcome": "To use the SAS Extension for Visual Studio Code, you must sign in to SAS.\n[Sign In](command:SAS.authorize)"
 }
