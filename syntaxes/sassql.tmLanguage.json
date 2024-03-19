@@ -389,7 +389,7 @@
       "name": "meta.block.sql"
     },
     {
-      "include": "#saskeywords"
+      "include": "#sas-keywords"
     },
     {
       "include": "#sas-macro-put"
@@ -637,7 +637,7 @@
         }
       ]
     },
-    "saskeywords": {
+    "sas-keywords": {
       "patterns": [
         {
           "match": "(run|quit|%mend)(\\s|/\\*.*\\*/|\\*[^;]*;)*;$",
@@ -651,11 +651,11 @@
       "name": "macro",
       "patterns": [
         {
-          "include": "#macro-quotes"
+          "include": "#sas-macro-quotes"
         }
       ]
     },
-    "macro-quotes": {
+    "sas-macro-quotes": {
       "begin": "(?i)%(?:bquote|superq|nrbquote|nrquote|nrstr|str)",
       "beginCaptures": {
         "0": {
@@ -666,7 +666,7 @@
       "name": "string.quoted.macro",
       "patterns": [
         {
-          "include": "#macro-quotes"
+          "include": "#sas-macro-quotes"
         }
       ]
     }

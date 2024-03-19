@@ -346,12 +346,7 @@ export class Lexer {
           line < this.model.getLineCount();
           line++
         ) {
-          let lineContent = this.model.getLine(line);
-          if (line === this.curr.line) {
-            lineContent =
-              " ".repeat(this.curr.column) +
-              lineContent.slice(this.curr.column);
-          }
+          const lineContent = this._readEmbeddedCodeLine(this.curr, line);
           let pos = 0;
           let match;
           do {
@@ -413,12 +408,7 @@ export class Lexer {
           line < this.model.getLineCount();
           line++
         ) {
-          let lineContent = this.model.getLine(line);
-          if (line === this.curr.line) {
-            lineContent =
-              " ".repeat(this.curr.column) +
-              lineContent.slice(this.curr.column);
-          }
+          const lineContent = this._readEmbeddedCodeLine(this.curr, line);
           let pos = 0;
           let match;
           do {
@@ -495,12 +485,7 @@ export class Lexer {
           line < this.model.getLineCount();
           line++
         ) {
-          let lineContent = this.model.getLine(line);
-          if (line === this.curr.line) {
-            lineContent =
-              " ".repeat(this.curr.column) +
-              lineContent.slice(this.curr.column);
-          }
+          const lineContent = this._readEmbeddedCodeLine(this.curr, line);
           if (lineContent.trimStart().startsWith("%put")) {
             continue;
           }
@@ -527,6 +512,18 @@ export class Lexer {
       }
     }
     return token;
+  }
+
+  private _readEmbeddedCodeLine(
+    startPos: TextPosition,
+    curLine: number,
+  ): string {
+    let lineContent = this.model.getLine(curLine);
+    if (curLine === startPos.line) {
+      lineContent =
+        " ".repeat(startPos.column) + lineContent.slice(startPos.column);
+    }
+    return lineContent;
   }
 
   private _foundEmbeddedCodeToken(
