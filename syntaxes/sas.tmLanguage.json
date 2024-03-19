@@ -6,7 +6,7 @@
       "include": "#comment-block"
     },
     {
-      "include": "#macro-quotes"
+      "include": "#sas-macro-quotes"
     },
     {
       "include": "#cards"
@@ -138,7 +138,7 @@
         }
       }
     },
-    "macro-quotes": {
+    "sas-macro-quotes": {
       "begin": "(?i)%(?:bquote|superq|nrbquote|nrquote|nrstr|str)",
       "beginCaptures": {
         "0": {
@@ -149,7 +149,7 @@
       "name": "string.quoted.macro",
       "patterns": [
         {
-          "include": "#macro-quotes"
+          "include": "#sas-macro-quotes"
         }
       ]
     },

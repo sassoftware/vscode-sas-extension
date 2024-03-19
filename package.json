@@ -931,26 +931,23 @@
       },
       {
         "id": "sas-log"
-      },
-      {
-        "id": "sassql"
       }
     ],
     "grammars": [
       {
-        "language": "sassql",
         "scopeName": "source.sassql",
-        "path": "./syntaxes/sassql.tmLanguage.json"
+        "path": "./syntaxes/sassql.tmLanguage.json",
+        "injectTo": [
+          "source.sas"
+        ]
       },
       {
         "language": "sas",
         "scopeName": "source.sas",
         "path": "./syntaxes/sas.tmLanguage.json",
         "embeddedLanguages": {
-          "source.sql": "sql",
           "source.python": "python",
-          "source.lua": "lua",
-          "source.sassql": "sassql"
+          "source.lua": "lua"
         }
       }
     ],
