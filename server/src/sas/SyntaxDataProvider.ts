@@ -2651,7 +2651,10 @@ export class SyntaxDataProvider {
     stmtName: string,
     optName?: string,
     valName?: string,
-  ) {
+  ): boolean {
+    if (procName === "SQL") {
+      return this.isStatementKeyword("global", stmtName, optName, valName);
+    }
     _loadProcedureImmediately(procName);
     let ret = _procStmtObj(procName, stmtName, optName, valName);
     if (stmtName && !ret) {
@@ -2697,8 +2700,8 @@ export class SyntaxDataProvider {
     stmtName: string,
     optName?: string,
     valName?: string,
-  ) {
-    return _tryToLoadStatementsFromPubs(context, null, function () {
+  ): boolean {
+    return !!_tryToLoadStatementsFromPubs(context, null, function () {
       return !!_procStmtObj(context, stmtName, optName, valName);
     });
   }

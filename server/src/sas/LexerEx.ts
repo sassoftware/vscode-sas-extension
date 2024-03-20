@@ -614,7 +614,7 @@ export class LexerEx {
     }
   }
   private _pushRootBlock(block: FoldingBlock) {
-    // adjujst previous block
+    // adjust previous block
     const stack: FoldingBlock[] = [block];
     while (stack.length > 0) {
       const curBlock: FoldingBlock = stack.pop()!;
@@ -1493,9 +1493,11 @@ export class LexerEx {
   ) {
     //assert(token, "Token must be valid.");
     //assert(SasLexer.isWord[token.type], "Token must be word type.");
-    if (isKeyword && token.type === "text") {
-      token.type = Lexer.TOKEN_TYPES.KEYWORD;
-      token.notCheckKeyword = true;
+    if (token.type === "text") {
+      if (isKeyword) {
+        token.type = Lexer.TOKEN_TYPES.KEYWORD;
+        token.notCheckKeyword = true;
+      }
     }
     return token;
   }
@@ -2259,7 +2261,14 @@ export class LexerEx {
 
     return isKeyword;
   }
-  private handleLongStmtName_(procName: string, startWord: string) {
+  private handleLongStmtName_(
+    procName: string,
+    startWord: string,
+  ): {
+    isKeyword: boolean;
+    stmtName: string;
+    stmtNameLen: number;
+  } {
     const name1 = startWord,
       it = { pos: 1 },
       next1 = this.prefetch_(it);
@@ -2271,6 +2280,7 @@ export class LexerEx {
       next3,
       stmtNameLen = 1,
       fullStmtName = name1;
+
     if (next1 && Lexer.isWord[next1.type]) {
       name2 = name1 + " " + next1.text; // the keyword has 2 words
       next2 = this.prefetch_(it);
@@ -2883,24 +2893,31 @@ export class LexerEx {
   private readDefineEventEnd_() {
     return this.handleEnd_();
   }
-  private readSubmitBlock_() {
+  private readSubmitOrInteractiveBlock_() {
     const token = this.getNext_();
-    const next = this.prefetch_({ pos: 1 });
-    const nextNext = this.prefetch_({ pos: 2 });
+    const next = this.prefetch_({ pos: 1 }); // <embedded code>
+    const next2 = this.prefetch_({ pos: 2 }); // endsubmit(endinteractive)
+    const next3 = this.prefetch_({ pos: 3 }); // ;
+    if (!token) {
+      return undefined;
+    }
     if (
-      token &&
       next &&
-      nextNext &&
-      token.end.line < next.start.line &&
-      next.text === "ENDSUBMIT" &&
-      nextNext.type === "sep" &&
-      nextNext.text === ";"
+      next2 &&
+      next3 &&
+      token.end.line <= next.start.line &&
+      next.type === "embedded-code" &&
+      ["ENDSUBMIT", "ENDINTERACTIVE"].includes(next2.text) &&
+      next3.type === "sep" &&
+      next3.text === ";"
     ) {
       this.stack.push({
         parse: this.handleEnd_,
         state: this.PARSING_STATE.IN_PROC,
       });
-      this.setKeyword_(next, true);
+      this.setKeyword_(next2, true);
+    } else if (next && ["DATA", "PROC", "%MACRO"].includes(next.text)) {
+      this.stack.pop();
     }
     return token;
   }
@@ -3078,14 +3095,17 @@ export class LexerEx {
                 this.setKeyword_(token, true);
                 generalProcStmt = false;
               }
-            } else if (procName === "LUA") {
-              if (word === "SUBMIT") {
-                this.stack.push({
-                  parse: this.readSubmitBlock_,
-                  state: this.PARSING_STATE.IN_PROC,
-                });
-                this.setKeyword_(token, true);
-                generalProcStmt = false;
+            } else if (procName === "LUA" || procName === "PYTHON") {
+              if (["SUBMIT", "INTERACTIVE"].includes(word)) {
+                const next = this.prefetch_({ pos: 1 });
+                if (next && next.text === ";" && next.type === "sep") {
+                  this.stack.push({
+                    parse: this.readSubmitOrInteractiveBlock_,
+                    state: this.PARSING_STATE.IN_PROC,
+                  });
+                  this.setKeyword_(token, true);
+                  generalProcStmt = false;
+                }
               }
             } else if (token.type === Lexer.TOKEN_TYPES.MREF) {
               this.handleMref_(this.PARSING_STATE.IN_PROC);

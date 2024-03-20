@@ -279,6 +279,10 @@ export class CompletionProvider {
     this.czMgr = new CodeZoneManager(model, this.loader, syntaxProvider);
   }
 
+  getCodeZoneManager(): CodeZoneManager {
+    return this.czMgr;
+  }
+
   getHelp(position: Position): Promise<Hover | undefined> | undefined {
     const line = this.model.getLine(position.line);
     const tokens = this.syntaxProvider.getSyntax(position.line);
@@ -1118,6 +1122,19 @@ export class CompletionProvider {
           keyword,
           cb,
         );
+        break;
+      case ZONE_TYPE.EMBEDDED_LANG:
+        if (context.procName === "SQL") {
+          help = this.loader.getProcedureStatementHelp(
+            context.procName,
+            keyword,
+            cb,
+          );
+        } else {
+          if (cb) {
+            _notify(cb, undefined);
+          }
+        }
         break;
       case ZONE_TYPE.GBL_STMT_SUB_OPT_NAME:
         help = this.loader.getStatementSubOptionHelp(

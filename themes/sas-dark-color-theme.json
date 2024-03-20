@@ -26,6 +26,12 @@
     "warning": { "foreground": "#ffb829" },
     "note": { "foreground": "#2fa8fe" }
   },
+  "tokenColors": [
+    {
+      "scope": "keyword.section.sas",
+      "settings": { "foreground": "#92c3fc", "fontStyle": "bold" }
+    }
+  ],
   "colors": {
     "editor.background": "#021727",
     "editor.foreground": "#dddfe4",

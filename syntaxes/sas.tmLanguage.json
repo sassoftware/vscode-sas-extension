@@ -1,0 +1,191 @@
+{
+  "name": "SAS",
+  "scopeName": "source.sas",
+  "patterns": [
+    {
+      "include": "#comment-block"
+    },
+    {
+      "include": "#sas-macro-quotes"
+    },
+    {
+      "include": "#cards"
+    },
+    {
+      "include": "#cards4"
+    },
+    {
+      "include": "#string"
+    },
+    {
+      "begin": "(?i)proc(\\s|/\\*.*?\\*/)*(sql|fedsql)",
+      "end": "(?i)(quit(\\s|/\\*.*?\\*/)*;|(?=(data|proc|%macro)\\b[^;]*;))",
+      "beginCaptures": {
+        "0": {
+          "name": "entity.name.function.proc.sql"
+        }
+      },
+      "contentName": "proc.sql.content",
+      "patterns": [
+        {
+          "include": "source.sassql"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)proc(\\s|/\\*.*?\\*/)*lua",
+      "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
+      "beginCaptures": {
+        "0": {
+          "name": "entity.name.function.proc.lua"
+        }
+      },
+      "contentName": "proc.lua.content",
+      "patterns": [
+        {
+          "include": "source.lua"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)proc(\\s|/\\*.*?\\*/)*python",
+      "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
+      "beginCaptures": {
+        "0": {
+          "name": "entity.name.function.proc.python"
+        }
+      },
+      "contentName": "proc.python.content",
+      "patterns": [
+        {
+          "include": "source.python"
+        }
+      ]
+    }
+  ],
+  "repository": {
+    "comment-block": {
+      "patterns": [
+        {
+          "name": "comment.block",
+          "begin": "(/\\*)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.comment"
+            }
+          },
+          "end": "\\*/",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment"
+            }
+          }
+        },
+        {
+          "name": "comment.block",
+          "begin": "(\\*)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.comment"
+            }
+          },
+          "end": ";",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment"
+            }
+          }
+        }
+      ]
+    },
+    "string": {
+      "patterns": [
+        {
+          "include": "#qstring-single"
+        },
+        {
+          "include": "#qstring-double"
+        }
+      ]
+    },
+    "qstring-double": {
+      "name": "string.quoted.double",
+      "begin": "\"",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin"
+        }
+      },
+      "end": "\"|(?=\\n)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end"
+        }
+      }
+    },
+    "qstring-single": {
+      "name": "string.quoted.single",
+      "begin": "'",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin"
+        }
+      },
+      "end": "'|(?=\\n)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end"
+        }
+      }
+    },
+    "sas-macro-quotes": {
+      "begin": "(?i)%(?:bquote|superq|nrbquote|nrquote|nrstr|str)",
+      "beginCaptures": {
+        "0": {
+          "name": "entity.name.function.macro"
+        }
+      },
+      "end": "\\)|(?=\\n)",
+      "name": "string.quoted.macro",
+      "patterns": [
+        {
+          "include": "#sas-macro-quotes"
+        }
+      ]
+    },
+    "cards": {
+      "begin": "(?i)\\b(?:cards|lines|datalines)\\b",
+      "beginCaptures": {
+        "0": {
+          "name": "entity.name.function.cards"
+        }
+      },
+      "end": ";",
+      "endCaptures": {
+        "0": {
+          "name": "entity.name.function.cards"
+        }
+      },
+      "name": "string.quoted.cards"
+    },
+    "cards4": {
+      "begin": "(?i)\\b(?:cards4|lines4|datalines4)\\b",
+      "beginCaptures": {
+        "0": {
+          "name": "entity.name.function.cards4"
+        }
+      },
+      "end": ";;;;",
+      "endCaptures": {
+        "0": {
+          "name": "entity.name.function.cards4"
+        }
+      },
+      "name": "string.quoted.cards4"
+    },
+    "ws": {
+      "name": "ws",
+      "match": "\\s"
+    }
+  }
+}
