@@ -12,6 +12,8 @@
   "commands.SAS.deleteTable": "삭제",
   "commands.SAS.download": "다운로드",
   "commands.SAS.emptyRecycleBin": "휴지통 비우기",
+  "commands.SAS.file.new": "새 SAS 파일",
+  "commands.SAS.file.new.short": "SAS 파일",
   "commands.SAS.notebook.new": "새로운 SAS 노트북",
   "commands.SAS.notebook.new.short": "SAS 노트북",
   "commands.SAS.refresh": "새로고침",
