@@ -4,6 +4,7 @@ import { FoldingRange } from "vscode-languageserver";
 import { Range, TextDocument } from "vscode-languageserver-textdocument";
 import { DocumentSymbol, SymbolKind } from "vscode-languageserver-types";
 
+import { CodeZoneManager } from "./CodeZoneManager";
 import { CompletionProvider } from "./CompletionProvider";
 import { FormatOnTypeProvider } from "./FormatOnTypeProvider";
 import { FoldingBlock } from "./LexerEx";
@@ -96,6 +97,10 @@ export class LanguageServiceProvider {
         },
       },
     });
+  }
+
+  getCodeZoneManager(): CodeZoneManager {
+    return this.completionProvider.getCodeZoneManager();
   }
 
   getTokens(): number[] {
