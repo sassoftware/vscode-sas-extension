@@ -279,6 +279,10 @@ export class CompletionProvider {
     this.czMgr = new CodeZoneManager(model, this.loader, syntaxProvider);
   }
 
+  getCodeZoneManager(): CodeZoneManager {
+    return this.czMgr;
+  }
+
   getHelp(position: Position): Promise<Hover | undefined> | undefined {
     const line = this.model.getLine(position.line);
     const tokens = this.syntaxProvider.getSyntax(position.line);

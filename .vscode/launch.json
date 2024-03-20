@@ -54,6 +54,28 @@
         "type": "npm",
         "script": "pretest"
       }
+    },
+    {
+      "name": "Server Test",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "--require",
+        "ts-node/register",
+        "-u",
+        "bdd",
+        "--timeout",
+        "999999",
+        "--colors",
+        "${workspaceFolder}/server/test/**/*.test.ts"
+      ],
+      "env": {
+        "TS_NODE_PROJECT": "${workspaceFolder}/server/tsconfig.json"
+      },
+      "cwd": "${workspaceFolder}",
+      "internalConsoleOptions": "openOnSessionStart",
+      "sourceMaps": true
     }
   ],
   "compounds": [
