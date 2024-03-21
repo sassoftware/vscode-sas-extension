@@ -9,9 +9,9 @@ import {
   getGlobalStorageUri
 } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
-import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
+import { extractOutputHtmlFileName, wrapCodeWithOutputHtml } from "../../components/utils/sasCode";
 import { Session } from "../session";
-import { scriptContent } from "./script";
+// import { scriptContent } from "./script";
 import { LineCodes } from "./types";
 
 let sessionInstance: SASPYSession;
@@ -55,23 +55,70 @@ export class SASPYSession extends Session {
     this._shellProcess = spawn(
       `${this._config.pythonpath}`,
       ["-i", "-q", "-X utf8"],
-      // ["-i", "-q"],
       {
         //shell: true,
         // env: process.env,
-        // env: {
-        //     ...process.env,
-        //     //PATH: process.env.PATH + require('path').delimiter + __dirname,
-        //     PYTHONIOENCODING: "utf-8"
-        // }
+        env: {
+            ...process.env,
+            //PATH: process.env.PATH + require('path').delimiter + __dirname,
+            PYTHONIOENCODING: "utf-8"
+        }
       },
     );
-    // console.log(`sas \n`);
     this._shellProcess.stdout.on("data", this.onShellStdOut);
     this._shellProcess.stderr.on("data", this.onShellStdErr);
-    // console.log(`import saspy\n`);
-    this._shellProcess.stdin.write(scriptContent + "\n", this.onWriteComplete);
-    // console.log(`import saspy done\n`);
+    const saspyWorkDir = `
+%let workDir = %sysfunc(pathname(work));
+%put &=workDir;
+%let rc = %sysfunc(dlgcdir("&workDir"));
+run;
+`;
+      const saspyWorkDirWithODS = wrapCodeWithOutputHtml(saspyWorkDir);
+      const saspyHtmlStyle = saspyWorkDirWithODS.match(/style=([^ ]+) /)?.[1] ?? "Illuminate";
+
+      // const { cfgname } = this._config;
+      const cfgname = this._config.cfgname?.length > 0 ? this._config.cfgname : "";
+      const scriptContent = `
+import saspy
+
+_cfgname = "${cfgname}"
+
+
+if(not _cfgname):
+    try:
+        sas
+        if sas is None:
+            sas = saspy.SASsession(cfgname=_cfgname, results='HTML', HTML_Style='${saspyHtmlStyle}')
+        elif not sas.SASpid:
+            sas = saspy.SASsession(cfgname=_cfgname, results='HTML', HTML_Style='${saspyHtmlStyle}')
+    except NameError:
+        sas = saspy.SASsession(cfgname=_cfgname, results='HTML', HTML_Style='${saspyHtmlStyle}')
+else:
+    try:
+        sas
+        if sas is None:
+            sas = saspy.SASsession(results='HTML', HTML_Style='${saspyHtmlStyle}')
+        elif not sas.SASpid:
+            sas = saspy.SASsession(results='HTML', HTML_Style='${saspyHtmlStyle}')
+    except NameError:
+        sas = saspy.SASsession(results='HTML', HTML_Style='${saspyHtmlStyle}')
+
+
+try:
+    sas
+except NameError:
+    raise Exception("Setup error")
+
+
+vscode_saspy_code = r"""
+${saspyWorkDir}
+"""
+
+ll=sas.submit(vscode_saspy_code)
+
+`;
+
+      this._shellProcess.stdin.write(scriptContent + "\n", this.onWriteComplete);
     // this._shellProcess.stdin.write(
     //   "$runner = New-Object -TypeName SASRunner\n",
     //   this.onWriteComplete,
@@ -83,30 +130,8 @@ export class SASPYSession extends Session {
      * will not exist. The work dir should only be deleted when close is invoked.
      */
     if (!this._workDirectory) {
-      const { cfgname } = this._config;
-      // console.log(`cfgname\n`);
-      if (this._config.cfgname?.length > 0) {
-        // console.log(`sas = saspy.SASsession(cfgname="${cfgname}", results='html')\n`);
-        this._shellProcess.stdin.write(
-          `
-sas = saspy.SASsession(cfgname="${cfgname}", results='html')
-# sas
-\n`,
-          this.onWriteComplete,
-        );
-        // console.log(`cfgname done\n`);
-      } else {
-        // console.log(`cfgname\n`);
-        // console.log(`sas = saspy.SASsession(results='html')\n`);
-        this._shellProcess.stdin.write(
-          `
-sas = saspy.SASsession(results='html')
-sas
-\n`,
-          this.onWriteComplete,
-        );
-        // console.log(`cfgname done\n`);
-      }
+
+        this._shellProcess.stdin.write(`sas\n`);
 
       if (this._config.sasOptions?.length > 0) {
         // console.log('sas option');
@@ -143,28 +168,31 @@ sas
 
     //write ODS output to work so that the session cleans up after itself
     const codeWithODSPath = code.replace(
-      "ods html5;",
-      `ods html5 path="${this._workDirectory}";`,
+      /\bods html5\(id=vscode\)([^;]*;)/i,
+      `ods html5(id=vscode) path="${this._workDirectory}"$1`,
+    );
+    const codeWithODSPath2 = codeWithODSPath.replace(
+      /\bods _all_ close;/i,
+      ``,
     );
 
     //write an end mnemonic so that the handler knows when execution has finished
-    const codeWithEnd = `${codeWithODSPath}\n%put ${LineCodes.RunEndCode};`;
-    const codeToRun = `code=r"""
+    const codeWithEnd = `${codeWithODSPath2}\n%put ${LineCodes.RunEndCode};`;
+    const codeToRun = `codeToRun=r"""
 ${codeWithEnd}
 """
 `;
 
-    // console.log("codeToRun = " + code);
+    // console.log("codeToRun = " + codeToRun);
 
     this._html5FileName = "";
     this._shellProcess.stdin.write(codeToRun);
     this._pollingForLogResults = true;
-      this._shellProcess.stdin.write(`ll=sas.submit(code)\n`, async (error) => {
+      await this._shellProcess.stdin.write(`ll=sas.submit(codeToRun, results='HTML')\n`, async (error) => {
       if (error) {
         this._runReject(error);
       }
 
-      // console.log(`sas to fetchLog`);
       await this.fetchLog();
     });
 
@@ -177,8 +205,6 @@ ${codeWithEnd}
    */
   public close = async (): Promise<void> => {
     return new Promise((resolve) => {
-      // console.log(`close`);
-
       if (this._shellProcess) {
         this._shellProcess.stdin.write(
           "sas.endsas()\nquit()\n",
@@ -201,7 +227,7 @@ ${codeWithEnd}
    */
   public cancel = async () => {
     this._pollingForLogResults = false;
-    this._shellProcess.stdin.write("\n", async (error) => {
+      this._shellProcess.stdin.write("print(r'abc')\n", async (error) => {
       if (error) {
         this._runReject(error);
       }
@@ -226,22 +252,7 @@ ${codeWithEnd}
    * writing each chunk to stdout.
    */
   private fetchLog = async (): Promise<void> => {
-    // console.log('sas to fetching log');
-
-    // const pollingInterval = setInterval(() => {
-    //   if (!this._pollingForLogResults) {
-    //     clearInterval(pollingInterval);
-    //   }
-    //   this._shellProcess.stdin.write(
-    //     `ll['LOG]\n`,
-    //     this.onWriteComplete,
-    //   );
-    // }, 2 * 1000);
-      this._shellProcess.stdin.write(
-       `print(ll['LOG'])\n`,
-        this.onWriteComplete,
-      );
-    // console.log('sas to fetching log done');
+    this._shellProcess.stdin.write(`print(ll['LOG'])\n`,this.onWriteComplete,);
   };
 
   /**
@@ -249,15 +260,17 @@ ${codeWithEnd}
    * @param chunk a buffer of stderr output from the child process.
    */
   private onShellStdErr = (chunk: Buffer): void => {
-    const msg = chunk.toString();
+    const msg = chunk.toString('utf8');
     console.warn("shellProcess stderr: " + msg);
-    this._runReject(
-      new Error(
-        "There was an error executing the SAS Program.\nSee console log for more details.",
-      ),
-    );
+    if (/[^.> ]/.test(msg)) {
+      this._runReject(
+        new Error(
+          "There was an error executing the SAS Program.\nSee console log for more details.",
+        ),
+      );
+    }
     // If we encountered an error in setup, we need to go through everything again
-    if (/Setup error/.test(msg)) {
+    if (/^We failed in getConnection|Setup error|spawn .+ ENOENT: Error/i.test(msg)) {
       this._shellProcess.kill();
       this._workDirectory = undefined;
     }
@@ -268,21 +281,23 @@ ${codeWithEnd}
    * @param data a buffer of stdout output from the child process.
    */
   private onShellStdOut = (data: Buffer): void => {
-    // console.log('sas to fetching out');
-    // console.log(data.toString());
-
     const output = data.toString().trimEnd();
     const outputLines = output.split(/\n|\r\n/);
-
-    // console.log(output);
 
     outputLines.forEach((line: string) => {
       if (!line) {
         return;
       }
 
-      if (!this._workDirectory && line.startsWith("WORKDIR=")) {
-        const parts = line.split("WORKDIR=");
+      // if (!this._workDirectory && line.startsWith("WORKDIR=")) {
+      //   const parts = line.split("WORKDIR=");
+      //   this._workDirectory = parts[1].trim();
+      //   this._runResolve();
+      //   updateStatusBarItem(true);
+      //   return;
+      // }
+      if (!this._workDirectory && /^WORK Path +=/.test(line)) {
+        const parts = line.split(/WORK Path +=/);
         this._workDirectory = parts[1].trim();
         this._runResolve();
         updateStatusBarItem(true);
@@ -299,10 +314,8 @@ ${codeWithEnd}
   };
 
   private processLineCodes(line: string): boolean {
-    // console.log('sas linecode');
     if (line.endsWith(LineCodes.RunEndCode)) {
       // run completed
-      // console.log('sas to fetc rest');
       this.fetchResults();
       return true;
     }
@@ -341,7 +354,6 @@ ${codeWithEnd}
    * Fetches the ODS output results for the latest html results file.
    */
   private fetchResults = async () => {
-    // console.log('sas to fetching result');
     if (!this._html5FileName) {
       return this._runResolve({});
     }
@@ -364,11 +376,17 @@ ${codeWithEnd}
     //   this._config.protocol === ITCProtocol.COM
     //     ? resolve(this._workDirectory, this._html5FileName + ".htm")
     //     : `${this._workDirectory}${directorySeparator}${this._html5FileName}.htm`;
-    this._shellProcess.stdin.write(
+    await this._shellProcess.stdin.write(
       `
-with open(r"${outputFileUri.fsPath}", 'w') as f1:
-  f1.write(ll['LST'])
-\n`,
+with open(r"${outputFileUri.fsPath}", 'w', encoding='utf8') as f1:
+    f1.write(ll['LST'])
+
+print(r"""
+${LineCodes.ResultsFetchedCode}
+"""
+)
+
+`,
       this.onWriteComplete,
     );
   };
@@ -391,7 +409,7 @@ with open(r"${outputFileUri.fsPath}", 'w') as f1:
       runResult.html5 = htmlResults;
       runResult.title = "Result";
     }
-    this._runResolve(runResult);
+    this._runResolve?.(runResult);
   };
 }
 
