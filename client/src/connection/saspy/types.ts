@@ -6,4 +6,5 @@ export enum LineCodes {
   RunCancelledCode = "--vscode-sas-extension-run-cancelled--",
   RunEndCode = "--vscode-sas-extension-submit-end--",
   SessionCreatedCode = "--vscode-sas-extension-session-created--",
+  LogLineType = "--vscode-sas-extension-log-line-type--",
 }
