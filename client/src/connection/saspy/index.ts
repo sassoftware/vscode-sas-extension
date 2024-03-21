@@ -4,7 +4,7 @@ import { Uri, workspace } from "vscode";
 
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 
-import { BaseConfig, RunResult } from "..";
+import { BaseConfig, LogLineTypeEnum, RunResult } from "..";
 import {
   getGlobalStorageUri
 } from "../../components/ExtensionContext";
@@ -13,6 +13,19 @@ import { extractOutputHtmlFileName, wrapCodeWithOutputHtml } from "../../compone
 import { Session } from "../session";
 // import { scriptContent } from "./script";
 import { LineCodes } from "./types";
+
+const LogLineTypes: LogLineTypeEnum[] = [
+  "normal",
+  "hilighted",
+  "source",
+  "title",
+  "byline",
+  "footnote",
+  "error",
+  "warning",
+  "note",
+  "message",
+];
 
 let sessionInstance: SASPYSession;
 
@@ -32,7 +45,8 @@ export class SASPYSession extends Session {
   private _runReject: ((reason?) => void) | undefined;
   private _workDirectory: string;
   private _pollingForLogResults: boolean;
-
+  private _logLineType = 0;
+    
   public set config(value: Config) {
     this._config = value;
   }
@@ -41,7 +55,7 @@ export class SASPYSession extends Session {
    * Initialization logic that should be performed prior to execution.
    * @returns void promise.
    */
-  public setup = async (): Promise<void> => {
+  protected establishConnection = async (): Promise<void> => {
     const setupPromise = new Promise<void>((resolve, reject) => {
       this._runResolve = resolve;
       this._runReject = reject;
@@ -133,7 +147,6 @@ ll=sas.submit(vscode_saspy_code)
         this._shellProcess.stdin.write(`sas\n`);
 
       if (this._config.sasOptions?.length > 0) {
-        // console.log('sas option');
         const sasOptsInput = `$sasOpts=${this.formatSASOptions(
           this._config.sasOptions,
         )}\n`;
@@ -309,9 +322,9 @@ ${codeWithEnd}
         );
 
         if (this._workDirectory) {
-          this._onExecutionLogFn?.([{ type: "normal", line }]);
+          this._onExecutionLogFn?.([{ type: this.getLogLineType(), line }]);
         } else {
-          this._onSessionLogFn?.([{ type: "normal", line }]);
+          this._onSessionLogFn?.([{ type: this.getLogLineType(), line }]);
         }
       }
     });
@@ -334,7 +347,20 @@ ${codeWithEnd}
       return true;
     }
 
+    if (line.includes(LineCodes.LogLineType)) {
+      const start =
+        line.indexOf(LineCodes.LogLineType) + LineCodes.LogLineType.length + 1;
+      this._logLineType = parseInt(line.slice(start, start + 1));
+      return true;
+    }
+
     return false;
+  }
+
+  private getLogLineType(): LogLineTypeEnum {
+    const result = LogLineTypes[this._logLineType];
+    this._logLineType = 0;
+    return result;
   }
 
   /**
