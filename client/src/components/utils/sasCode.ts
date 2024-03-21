@@ -53,7 +53,7 @@ export function wrapCodeWithOutputHtml(code: string): string {
   const activeProfile = profileConfig.getActiveProfileDetail();
   const outputDestination =
     activeProfile &&
-      activeProfile.profile.connectionType !== ConnectionType.Rest
+    activeProfile.profile.connectionType !== ConnectionType.Rest
       ? ` body="${v4()}.htm"`
       : "";
 
