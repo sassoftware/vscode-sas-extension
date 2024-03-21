@@ -61,9 +61,9 @@ export function wrapCodeWithOutputHtml(code: string): string {
     const htmlStyleOption = generateHtmlStyleOption();
     return `title;footnote;ods _all_ close;
 ods graphics on;
-ods html5${htmlStyleOption} options(bitmap_mode='inline' svg_mode='inline')${outputDestination};
+ods html5(id=_vscode_sas)${htmlStyleOption} options(bitmap_mode='inline' svg_mode='inline')${outputDestination};
 ${code}
-;*';*";*/;run;quit;ods html5 close;`;
+;*';*";*/;run;quit;ods html5(id=_vscode_sas) close;`;
   } else {
     return code;
   }
