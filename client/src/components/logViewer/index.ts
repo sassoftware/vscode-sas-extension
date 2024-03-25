@@ -8,6 +8,7 @@ import {
   window,
 } from "vscode";
 
+import type { OnLogFn } from "../../connection";
 import { useLogStore, useRunStore } from "../../store";
 import { logSelectors, runSelectors } from "../../store/selectors";
 import {
@@ -45,7 +46,7 @@ export const LogTokensProvider: DocumentSemanticTokensProvider = {
  * Handles log lines generated for the SAS session startup.
  * @param logs array of log lines to write.
  */
-export const appendSessionLogFn = (logLines) => {
+export const appendSessionLogFn: OnLogFn = (logLines) => {
   appendLogLines(logLines);
 };
 
@@ -53,7 +54,7 @@ export const appendSessionLogFn = (logLines) => {
  * Handles log lines generated for the SAS session execution.
  * @param logs array of log lines to write.
  */
-export const appendExecutionLogFn = (logLines) => {
+export const appendExecutionLogFn: OnLogFn = (logLines) => {
   appendLogLines(logLines);
 
   if (!useLogStore.getState().producedExecutionOutput) {
@@ -65,13 +66,13 @@ export const appendLogToken = (type: string): void => {
   data.push(type);
 };
 
-const appendLogLines = (logs) => {
+const appendLogLines: OnLogFn = (logs) => {
   if (!outputChannel) {
     outputChannel = window.createOutputChannel(l10n.t("SAS Log"), "sas-log");
   }
   for (const line of logs) {
     appendLogToken(line.type);
-    outputChannel.appendLine(line.line);
+    outputChannel.appendLine(line.line.trimEnd());
   }
 };
 
