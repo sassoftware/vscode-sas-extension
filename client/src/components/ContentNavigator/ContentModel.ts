@@ -8,6 +8,7 @@ import axios, {
   AxiosRequestConfig,
   AxiosResponse,
 } from "axios";
+import mime from "mime";
 
 import {
   associateFlowObject,
@@ -249,7 +250,9 @@ export class ContentModel {
         buffer || Buffer.from("", "binary"),
         {
           headers: {
-            "Content-Type": "text/plain",
+            "Content-Type":
+              mime.getType(fileName.split(".").pop().toLowerCase()) ||
+              "text/plain",
             "Content-Disposition": `filename*=UTF-8''${encodeURI(fileName)}`,
             Accept: "application/vnd.sas.file+json",
           },
