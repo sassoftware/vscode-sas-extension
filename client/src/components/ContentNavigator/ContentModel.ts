@@ -24,6 +24,7 @@ import {
   ROOT_FOLDER,
   TRASH_FOLDER_TYPE,
 } from "./const";
+import mimeTypes from "./mime-types";
 import { ContentItem, Link, Permission } from "./types";
 import {
   getLink,
@@ -243,13 +244,16 @@ export class ContentModel {
   ): Promise<ContentItem | undefined> {
     const contentType = await this.getFileContentType(fileName);
     let createdResource: ContentItem;
+
     try {
       const fileCreationResponse = await this.connection.post<ContentItem>(
         `/files/files#rawUpload?typeDefName=${contentType}`,
         buffer || Buffer.from("", "binary"),
         {
           headers: {
-            "Content-Type": "text/plain",
+            "Content-Type":
+              mimeTypes[fileName.split(".").pop().toLowerCase()] ||
+              "text/plain",
             "Content-Disposition": `filename*=UTF-8''${encodeURI(fileName)}`,
             Accept: "application/vnd.sas.file+json",
           },
