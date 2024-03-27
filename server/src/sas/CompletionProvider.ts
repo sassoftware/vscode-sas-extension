@@ -1670,7 +1670,7 @@ export class CompletionProvider {
 
   private _notifyOptValue(
     cb: (data?: (string | LibCompleteItem)[]) => void,
-    data: OptionValues,
+    data: OptionValues | undefined,
     optName: string,
   ) {
     if (data) {

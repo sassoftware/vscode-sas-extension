@@ -2181,9 +2181,10 @@ export class SyntaxDataProvider {
     procName: string,
     stmtName: string,
     optName: string,
-    cb: (data: OptionValues) => void,
+    cb: (data?: OptionValues) => void,
   ) {
     if (!optName) {
+      cb(undefined);
       return null;
     }
     stmtName = stmtName.toUpperCase();
