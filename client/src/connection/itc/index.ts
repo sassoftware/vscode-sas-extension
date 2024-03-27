@@ -411,7 +411,7 @@ export class ITCSession extends Session {
    * @param data a buffer of stdout output from the child process.
    */
   private onShellStdOut = (data: Buffer): void => {
-    const output = data.toString().trimEnd();
+    const output = data.toString();
     const sasSystemRegex = /1\s{4,}(.*)\s{4,}/;
     if (sasSystemRegex.test(output) && !this._sasSystemLine) {
       this._sasSystemLine = output.match(sasSystemRegex)[1].trim();
