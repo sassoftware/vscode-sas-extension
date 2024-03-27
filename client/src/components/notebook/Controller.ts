@@ -3,11 +3,9 @@
 import * as vscode from "vscode";
 
 import { getSession } from "../../connection";
+import { SASCodeDocument } from "../utils/SASCodeDocument";
+import { getCodeDocumentConstructionParameters } from "../utils/SASCodeDocumentHelper";
 import { Deferred, deferred } from "../utils/deferred";
-import {
-  assign_SASProgramFile,
-  wrapCodeWithOutputHtml,
-} from "../utils/sasCode";
 
 export class NotebookController {
   readonly controllerId = "sas-notebook-controller-id";
@@ -68,9 +66,14 @@ export class NotebookController {
       logs = logs.concat(logLines);
     };
 
+    const { metadata, options } = getCodeDocumentConstructionParameters(
+      cell.document,
+    );
+    const codeDoc = new SASCodeDocument(metadata, options);
+
     let logs = [];
     try {
-      const result = await session.run(getCode(cell.document));
+      const result = await session.run(codeDoc.getWrappedCode());
 
       execution.replaceOutput([
         new vscode.NotebookCellOutput([
@@ -119,34 +122,3 @@ export class NotebookController {
     session.cancel?.();
   }
 }
-
-const getCode = (doc: vscode.TextDocument) => {
-  let codeFile = "";
-  if (doc) {
-    if (doc.fileName) {
-      codeFile = doc.fileName;
-    } else if (doc.uri && doc.uri.fsPath) {
-      codeFile = doc.uri.fsPath;
-    }
-  }
-  let code = doc.getText();
-  if (doc.languageId === "sql") {
-    code = wrapSQL(code);
-  } else if (doc.languageId === "python") {
-    code = wrapPython(code);
-  }
-  if (codeFile) {
-    code = assign_SASProgramFile(code, codeFile);
-  }
-  return wrapCodeWithOutputHtml(code);
-};
-
-const wrapSQL = (code: string) => `proc sql;
-${code}
-;quit;`;
-
-const wrapPython = (code: string) => `proc python;
-submit;
-${code}
-endsubmit;
-run;`;

@@ -43,6 +43,8 @@ import {
   updateStatusBarItem,
 } from "../components/StatusBarItem";
 import { LogTokensProvider, legend } from "../components/logViewer";
+import { DiagnosticCodeActionProvider } from "../components/logViewer/DiagnosticCodeActionProvider";
+import { SASDiagnostic } from "../components/logViewer/sasDiagnostics";
 import { NotebookController } from "../components/notebook/Controller";
 import { NotebookSerializer } from "../components/notebook/Serializer";
 import { ConnectionType } from "../components/profile";
@@ -150,6 +152,40 @@ export function activate(context: ExtensionContext): void {
     commands.registerCommand("SAS.notebook.new", newSASNotebook),
     commands.registerCommand("SAS.file.new", newSASFile),
     tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
+    SASDiagnostic.getSasDiagnosticCollection(),
+    commands.registerCommand(
+      SASDiagnostic.DiagnosticCommands.IgnoreCommand,
+      SASDiagnostic.ignore,
+    ),
+
+    commands.registerCommand(
+      SASDiagnostic.DiagnosticCommands.IgnoreAllWarningCommand,
+      SASDiagnostic.ignoreAll,
+    ),
+    commands.registerCommand(
+      SASDiagnostic.DiagnosticCommands.IgnoreAllErrorCommand,
+      SASDiagnostic.ignoreAll,
+    ),
+    commands.registerCommand(
+      SASDiagnostic.DiagnosticCommands.IgnoreAllCommand,
+      SASDiagnostic.ignoreAll,
+    ),
+    languages.registerCodeActionsProvider(
+      "sas",
+      new DiagnosticCodeActionProvider(),
+    ),
+
+    workspace.onDidRenameFiles((e) => {
+      e.files.forEach((file) =>
+        SASDiagnostic.updateDiagnosticUri(file.oldUri, file.newUri),
+      );
+    }),
+
+    workspace.onDidDeleteFiles((e) => {
+      e.files.forEach((uri) => {
+        SASDiagnostic.ignoreAll(uri);
+      });
+    }),
   );
 
   // Reset first to set "No Active Profiles"
