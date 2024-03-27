@@ -160,7 +160,7 @@ describe("ITC connection", () => {
     });
     it("calls run function from script", async () => {
       const runPromise = session.run(
-        `ods html5;\nproc print data=sashelp.cars;\nrun;`,
+        `ods html5(id=vscode);\nproc print data=sashelp.cars;\nrun;`,
       );
 
       //simulate log message for body file
@@ -174,7 +174,7 @@ describe("ITC connection", () => {
       expect(runResult.title).to.equal("Result");
 
       expect(stdinStub.args[13][0]).to.deep.equal(
-        `$code=\n@'\nods html5 path="/work/dir";\nproc print data=sashelp.cars;\nrun;\n%put --vscode-sas-extension-submit-end--;\n'@\n`,
+        `$code=\n@'\nods html5(id=vscode) path="/work/dir" ;\nproc print data=sashelp.cars;\nrun;\n%put --vscode-sas-extension-submit-end--;\n'@\n`,
       );
 
       expect(stdinStub.args[14][0]).to.deep.equal(`$runner.Run($code)\n`);
