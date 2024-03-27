@@ -30,7 +30,6 @@ export type OnLogFn = (logs: LogLine[]) => void;
 export interface RunResult {
   html5?: string;
   title?: string;
-  logOutput?: string;
 }
 
 export interface BaseConfig {
