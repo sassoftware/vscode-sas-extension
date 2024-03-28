@@ -65,7 +65,7 @@ export class ITCSession extends Session {
     | undefined;
   private _errorParser: LineParser;
   private _workDirectoryParser: LineParser;
-  private _sasSystemLine: string;
+  private _skipPageHeaders: boolean;
 
   constructor() {
     super();
@@ -78,6 +78,7 @@ export class ITCSession extends Session {
       WORK_DIR_END_TAG,
       false,
     );
+    this._skipPageHeaders = false;
   }
 
   public set config(value: Config) {
@@ -85,8 +86,8 @@ export class ITCSession extends Session {
     this._passwordKey = `${value.host}${value.protocol}${value.username}`;
   }
 
-  public get sasSystemLine() {
-    return this._sasSystemLine;
+  public set skipPageHeaders(skipPageHeaders: boolean) {
+    this._skipPageHeaders = true;
   }
 
   /**
@@ -267,6 +268,7 @@ export class ITCSession extends Session {
    */
   public cancel = async () => {
     this._pollingForLogResults = false;
+    this._skipPageHeaders = false;
     this._shellProcess.stdin.write("$runner.Cancel()\n", async (error) => {
       if (error) {
         this._runReject(error);
@@ -296,11 +298,12 @@ export class ITCSession extends Session {
       if (!this._pollingForLogResults) {
         clearInterval(pollingInterval);
       }
+      const skipPageHeadersValue = this._skipPageHeaders ? "$true" : "$false";
       this._shellProcess.stdin.write(
         `
   do {
     $chunkSize = 32768
-    $count = $runner.FlushLogLines($chunkSize)
+    $count = $runner.FlushLogLines($chunkSize, ${skipPageHeadersValue})
   } while ($count -gt 0)\n
     `,
         this.onWriteComplete,
@@ -412,11 +415,6 @@ export class ITCSession extends Session {
    */
   private onShellStdOut = (data: Buffer): void => {
     const output = data.toString();
-    const sasSystemRegex = /1\s{4,}(.*)\s{4,}/;
-    if (sasSystemRegex.test(output) && !this._sasSystemLine) {
-      this._sasSystemLine = output.match(sasSystemRegex)[1].trim();
-    }
-
     const outputLines = output.split(/\n|\r\n/);
 
     outputLines.forEach((line: string) => {
@@ -511,6 +509,7 @@ export class ITCSession extends Session {
   private fetchResults = async () => {
     if (!this._html5FileName) {
       this._pollingForLogResults = false;
+      this._skipPageHeaders = false;
       return this._runResolve({});
     }
 
@@ -522,6 +521,7 @@ export class ITCSession extends Session {
     }
 
     this._pollingForLogResults = false;
+    this._skipPageHeaders = false;
     const outputFileUri = Uri.joinPath(
       globalStorageUri,
       `${this._html5FileName}.htm`,

@@ -97,25 +97,4 @@ describe("CodeRunner tests", () => {
         .join(""),
     );
   });
-
-  it("strips system line from output", async () => {
-    const codeString = `
-// prefixed sas code
-<CodeTag>
-Test Code
-   The Sas System
-More Test Code
-</CodeTag>
-// postfixed sas code
-    `;
-
-    const codeRunner = new CodeRunner();
-    const results = await codeRunner.runCode(
-      codeString,
-      "<CodeTag>",
-      "</CodeTag>",
-    );
-
-    expect(results).to.equal("Test CodeMore Test Code");
-  });
 });

@@ -37,7 +37,6 @@ class CodeRunner {
     const session = getSession();
 
     let logText = "";
-    const onSessionLogFn = session.onSessionLogFn;
     const onExecutionLogFn = session.onExecutionLogFn;
     const outputLines = [];
 
@@ -47,24 +46,14 @@ class CodeRunner {
     try {
       await session.setup(true);
 
-      // Lets capture output to use it later
-      session.onSessionLogFn = addLine;
+      // Lets capture output to use it on
       session.onExecutionLogFn = addLine;
 
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      (session as ITCSession).skipPageHeaders = true;
       await session.run(code);
 
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const sasSystemLine = (session as ITCSession).sasSystemLine;
-      // Lets gather our log output, excluding any string including the system
-      // line (NOTE: This is necessary for large log outputs that span multiple
-      // "pages")
-      const logOutput = outputLines
-        .filter((line) =>
-          sasSystemLine
-            ? line.trim() && !line.includes(sasSystemLine)
-            : line.trim(),
-        )
-        .join("");
+      const logOutput = outputLines.filter((line) => line.trim()).join("");
 
       logText =
         startTag && endTag
@@ -78,7 +67,6 @@ class CodeRunner {
           : logOutput;
     } finally {
       // Lets update our session to write to the log
-      session.onSessionLogFn = onSessionLogFn;
       session.onExecutionLogFn = onExecutionLogFn;
 
       setIsExecutingCode(false);
