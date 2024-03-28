@@ -235,7 +235,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
 
       %put <TABLEDATA>;
       %put <Count>&COUNT</Count>;
-      data _null_; infile out; input; put _infile_; run;
+      data _null_; infile out lrecl=100000; input; put _infile_; run;
       %put </TABLEDATA>;
       proc datasets library=work nolist nodetails; delete ${tempTable}; run;
       options notes source date number;
