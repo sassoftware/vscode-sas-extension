@@ -23,12 +23,20 @@ class LibraryModel {
     this.libraryAdapter = adapter;
   }
 
-  public getTableResultSet(item: LibraryItem): PaginatedResultSet<TableData> {
-    return new PaginatedResultSet<TableData>(
+  public getTableResultSet(
+    item: LibraryItem,
+  ): PaginatedResultSet<{ data: TableData; error?: Error }> {
+    return new PaginatedResultSet<{ data: TableData; error?: Error }>(
       async (start: number, end: number) => {
         await this.libraryAdapter.setup();
         const limit = end - start + 1;
-        return await this.libraryAdapter.getRows(item, start, limit);
+        try {
+          return {
+            data: await this.libraryAdapter.getRows(item, start, limit),
+          };
+        } catch (e) {
+          return { error: e, data: { rows: [], count: 0 } };
+        }
       },
     );
   }

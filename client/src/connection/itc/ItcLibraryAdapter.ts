@@ -1,6 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { commands } from "vscode";
+import { commands, l10n } from "vscode";
 
 import { ChildProcessWithoutNullStreams } from "child_process";
 
@@ -124,7 +124,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     );
 
     const rows = rawRowValues.map((line, idx: number): TableRow => {
-      const rowData = [`${start + idx + 1}`].concat(Object.values(line));
+      const rowData = [`${start + idx + 1}`].concat(line);
       return { cells: rowData };
     });
 
@@ -213,7 +213,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     item: LibraryItem,
     start: number,
     limit: number,
-  ): Promise<{ rows: string[]; count: number }> {
+  ): Promise<{ rows: Array<string[]>; count: number }> {
     const maxTableNameLength = 32;
     const tempTable = `${item.name}${hms()}${start}`.substring(
       0,
@@ -231,11 +231,11 @@ class ItcLibraryAdapter implements LibraryAdapter {
       run;
 
       filename out temp;
-      proc json out=out; export work.${tempTable}; run;
+      proc json nokeys out=out; export work.${tempTable}; run;
 
       %put <TABLEDATA>;
       %put <Count>&COUNT</Count>;
-      data _null_; infile out lrecl=100000; input; put _infile_; run;
+      data _null_; infile out; input; put _infile_; run;
       %put </TABLEDATA>;
       proc datasets library=work nolist nodetails; delete ${tempTable}; run;
       options notes source date number;
@@ -250,9 +250,18 @@ class ItcLibraryAdapter implements LibraryAdapter {
     output = output.replace(countRegex, "");
 
     const rows = output.replace(/\n|\t/gm, "");
-    const tableData = JSON.parse(rows);
-
-    return { rows: tableData[`SASTableData+${tempTable}`], count };
+    try {
+      const tableData = JSON.parse(rows);
+      return { rows: tableData[`SASTableData+${tempTable}`], count };
+    } catch (e) {
+      console.warn("Failed to load table data with error", e);
+      console.warn("Raw output", rows);
+      throw new Error(
+        l10n.t(
+          "An error was encountered when loading table data. This usually happens when a table is too large or the data couldn't be processed. See console for more details.",
+        ),
+      );
+    }
   }
 
   protected async runCode(

@@ -22,7 +22,7 @@ test1,yes~test2,no
   TABLEDATA: `
 <TABLEDATA>
 <Count>1234</Count>
-{"SASTableData+TEST${now.getHours()}${now.getMinutes()}${now.getSeconds()}0": [{"a": "Peter","b":"Parker"},{"a": "Tony","b":"Stark"}]}
+{"SASTableData+TEST${now.getHours()}${now.getMinutes()}${now.getSeconds()}0": [["Peter","Parker"],["Tony","Stark"]]}
 </TABLEDATA>`,
   "SELECT COUNT(1)": `<Count>1234</Count>`,
   TABLEOUTPUT: `
@@ -31,7 +31,7 @@ test1~test2
 </TABLEOUTPUT>`,
 });
 
-describe.only("ItcLibraryAdapter tests", () => {
+describe("ItcLibraryAdapter tests", () => {
   let now;
   let clock;
   let sessionStub;
