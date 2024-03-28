@@ -94,8 +94,8 @@ const useDataViewer = () => {
     (event) => {
       const dataSource = {
         rowCount: undefined,
-        getRows: (params: IGetRowsParams) => {
-          queryTableData(params.startRow, params.endRow).then(
+        getRows: async (params: IGetRowsParams) => {
+          await queryTableData(params.startRow, params.endRow).then(
             ({ rows, count }: TableData) => {
               const rowData = rows.map(({ cells }) => {
                 const row = cells.reduce(

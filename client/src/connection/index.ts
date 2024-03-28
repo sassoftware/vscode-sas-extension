@@ -9,7 +9,8 @@ import {
   ViyaProfile,
   toAutoExecLines,
 } from "../components/profile";
-import { ITCProtocol, getSession as getITCSession } from "./itc";
+import { getSession as getITCSession } from "./itc";
+import { ITCProtocol } from "./itc/types";
 import { Config as RestConfig, getSession as getRestSession } from "./rest";
 import {
   Error2 as ComputeError,

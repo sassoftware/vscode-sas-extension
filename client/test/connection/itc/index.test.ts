@@ -9,13 +9,13 @@ import { stubInterface } from "ts-sinon";
 import { v4 } from "uuid";
 
 import { setContext } from "../../../src/components/ExtensionContext";
-import { ITCProtocol, getSession } from "../../../src/connection/itc";
+import { getSession } from "../../../src/connection/itc";
 import {
   WORK_DIR_END_TAG,
   WORK_DIR_START_TAG,
 } from "../../../src/connection/itc/const";
 import { scriptContent } from "../../../src/connection/itc/script";
-import { LineCodes } from "../../../src/connection/itc/types";
+import { ITCProtocol, LineCodes } from "../../../src/connection/itc/types";
 import { Session } from "../../../src/connection/session";
 import { extensionContext } from "../../../src/node/extension";
 

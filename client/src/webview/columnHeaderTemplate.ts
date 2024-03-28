@@ -2,18 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 const getIconForColumnType = (type: string) => {
-  switch (type) {
-    case "FLOAT":
+  switch (type.toLocaleLowerCase()) {
+    case "float":
+    case "num":
       return "float";
-    case "Date":
+    case "date":
       return "date";
-    case "Time":
+    case "time":
       return "time";
-    case "DateTime":
+    case "datetime":
       return "date-time";
-    case "Currency":
+    case "currency":
       return "currency";
-    case "CHAR":
+    case "char":
       return "char";
     default:
       return "";

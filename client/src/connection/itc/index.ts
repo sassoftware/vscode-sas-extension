@@ -12,7 +12,7 @@ import {
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { resolve } from "path";
 
-import { BaseConfig, LogLineTypeEnum, RunResult } from "..";
+import { LogLineTypeEnum, RunResult } from "..";
 import {
   getGlobalStorageUri,
   getSecretStorage,
@@ -28,10 +28,8 @@ import {
   WORK_DIR_START_TAG,
 } from "./const";
 import { scriptContent } from "./script";
-import { LineCodes } from "./types";
+import { Config, ITCProtocol, LineCodes } from "./types";
 import { decodeEntities } from "./util";
-
-const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE";
 
 const LogLineTypes: LogLineTypeEnum[] = [
   "normal",
@@ -46,22 +44,9 @@ const LogLineTypes: LogLineTypeEnum[] = [
   "message",
 ];
 
+const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE";
+
 let sessionInstance: ITCSession;
-
-export enum ITCProtocol {
-  COM = 0,
-  IOMBridge = 2,
-}
-
-/**
- * Configuration parameters for this connection provider
- */
-export interface Config extends BaseConfig {
-  host: string;
-  port: number;
-  username: string;
-  protocol: ITCProtocol;
-}
 
 export class ITCSession extends Session {
   private _config: Config;
@@ -80,6 +65,7 @@ export class ITCSession extends Session {
     | undefined;
   private _errorParser: LineParser;
   private _workDirectoryParser: LineParser;
+  private _skipPageHeaders: boolean;
 
   constructor() {
     super();
@@ -92,11 +78,16 @@ export class ITCSession extends Session {
       WORK_DIR_END_TAG,
       false,
     );
+    this._skipPageHeaders = false;
   }
 
   public set config(value: Config) {
     this._config = value;
     this._passwordKey = `${value.host}${value.protocol}${value.username}`;
+  }
+
+  public set skipPageHeaders(skipPageHeaders: boolean) {
+    this._skipPageHeaders = true;
   }
 
   /**
@@ -277,6 +268,7 @@ export class ITCSession extends Session {
    */
   public cancel = async () => {
     this._pollingForLogResults = false;
+    this._skipPageHeaders = false;
     this._shellProcess.stdin.write("$runner.Cancel()\n", async (error) => {
       if (error) {
         this._runReject(error);
@@ -306,11 +298,12 @@ export class ITCSession extends Session {
       if (!this._pollingForLogResults) {
         clearInterval(pollingInterval);
       }
+      const skipPageHeadersValue = this._skipPageHeaders ? "$true" : "$false";
       this._shellProcess.stdin.write(
         `
   do {
     $chunkSize = 32768
-    $count = $runner.FlushLogLines($chunkSize)
+    $count = $runner.FlushLogLines($chunkSize, ${skipPageHeadersValue})
   } while ($count -gt 0)\n
     `,
         this.onWriteComplete,
@@ -515,6 +508,8 @@ export class ITCSession extends Session {
    */
   private fetchResults = async () => {
     if (!this._html5FileName) {
+      this._pollingForLogResults = false;
+      this._skipPageHeaders = false;
       return this._runResolve({});
     }
 
@@ -526,6 +521,7 @@ export class ITCSession extends Session {
     }
 
     this._pollingForLogResults = false;
+    this._skipPageHeaders = false;
     const outputFileUri = Uri.joinPath(
       globalStorageUri,
       `${this._html5FileName}.htm`,

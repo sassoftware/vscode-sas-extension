@@ -254,7 +254,7 @@ const isErrorRep = (err: unknown): err is ErrorRepresentation => {
   return false;
 };
 
-const onRunError = (err) => {
+export const onRunError = (err) => {
   console.dir(err);
 
   if (err.response) {

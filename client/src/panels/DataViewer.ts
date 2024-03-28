@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri } from "vscode";
+import { Uri, window } from "vscode";
 
 import PaginatedResultSet from "../components/LibraryNavigator/PaginatedResultSet";
 import { TableData } from "../components/LibraryNavigator/types";
@@ -10,13 +10,13 @@ import { WebView } from "./WebviewManager";
 class DataViewer extends WebView {
   private _uid: string;
   private _extensionUri: Uri;
-  private _paginator: PaginatedResultSet<TableData>;
+  private _paginator: PaginatedResultSet<{ data: TableData; error?: Error }>;
   private _fetchColumns: () => Column[];
 
   public constructor(
     extensionUri: Uri,
     uid: string,
-    paginator: PaginatedResultSet<TableData>,
+    paginator: PaginatedResultSet<{ data: TableData; error?: Error }>,
     fetchColumns: () => Column[],
   ) {
     super();
@@ -70,16 +70,21 @@ class DataViewer extends WebView {
     },
   ): Promise<void> {
     switch (event.command) {
-      case "request:loadData":
+      case "request:loadData": {
+        const { data, error } = await this._paginator.getData(
+          event.data!.start!,
+          event.data!.end!,
+        );
+        if (error) {
+          await window.showErrorMessage(error.message);
+        }
         this.panel.webview.postMessage({
           command: "response:loadData",
           key: event.key,
-          data: await this._paginator.getData(
-            event.data!.start!,
-            event.data!.end!,
-          ),
+          data,
         });
         break;
+      }
       case "request:loadColumns":
         this.panel.webview.postMessage({
           key: event.key,

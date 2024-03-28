@@ -44,7 +44,7 @@ class LibraryNavigator implements SubscriptionProvider {
         "SAS.viewTable",
         async (
           item: LibraryItem,
-          paginator: PaginatedResultSet<TableData>,
+          paginator: PaginatedResultSet<{ data: TableData; error?: Error }>,
           fetchColumns: () => Column[],
         ) => {
           this.webviewManager.render(
