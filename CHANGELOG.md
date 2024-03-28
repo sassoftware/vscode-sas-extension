@@ -4,12 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
-## [Unreleased]
+## [v1.8.0] - 2024-03-20
+
+### Added
+
+- Added SAS file entry to `New File...` menu ([#812](https://github.com/sassoftware/vscode-sas-extension/pull/812))
+- SAS log colors for Local 94 and IOM ([#843](https://github.com/sassoftware/vscode-sas-extension/pull/843))
+- Added better error reporting for COM/IOM connections ([#842](https://github.com/sassoftware/vscode-sas-extension/pull/842))
 
 ### Changed
 
 - Update command palette entry `SAS: Sign in` so that it's only visible for Viya profiles. Non-viya users will still be able to connect and execute code by using the running man icon ([#862](https://github.com/sassoftware/vscode-sas-extension/pull/862))
 - Add data viewer support for IOM/COM connections ([#680](https://github.com/sassoftware/vscode-sas-extension/issues/680))
+
+### Fixed
+
+- Formatting issue when lua submit block is empty ([#848](https://github.com/sassoftware/vscode-sas-extension/issues/848))
+- Remote Unix machine x window issue ([#699](https://github.com/sassoftware/vscode-sas-extension/issues/699))
+- PDF Download doesn't display content ([#838](https://github.com/sassoftware/vscode-sas-extension/issues/838))
+- Prevent Viya connection from generating guid based html files ([#815](https://github.com/sassoftware/vscode-sas-extension/pull/815))
 
 ## [v1.7.1] - 2024-02-15
 
