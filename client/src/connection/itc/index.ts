@@ -214,8 +214,8 @@ export class ITCSession extends Session {
 
     //write ODS output to work so that the session cleans up after itself
     const codeWithODSPath = code.replace(
-      "ods html5;",
-      `ods html5 path="${this._workDirectory}";`,
+      /\bods html5\(id=vscode\)([^;]*;)/i,
+      `ods html5(id=vscode) path="${this._workDirectory}" $1`,
     );
 
     //write an end mnemonic so that the handler knows when execution has finished
