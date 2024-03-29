@@ -30,7 +30,7 @@ export abstract class Session {
   }
 
   protected abstract establishConnection(): Promise<void>;
-  abstract run(code: string): Promise<RunResult>;
+  abstract run(code: string, skipPageHeaders?: boolean): Promise<RunResult>;
   cancel?(): Promise<void>;
   abstract close(): Promise<void> | void;
   abstract sessionId?(): string | undefined;

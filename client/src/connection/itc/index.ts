@@ -65,7 +65,6 @@ export class ITCSession extends Session {
     | undefined;
   private _errorParser: LineParser;
   private _workDirectoryParser: LineParser;
-  private _skipPageHeaders: boolean;
 
   constructor() {
     super();
@@ -78,16 +77,11 @@ export class ITCSession extends Session {
       WORK_DIR_END_TAG,
       false,
     );
-    this._skipPageHeaders = false;
   }
 
   public set config(value: Config) {
     this._config = value;
     this._passwordKey = `${value.host}${value.protocol}${value.username}`;
-  }
-
-  public set skipPageHeaders(skipPageHeaders: boolean) {
-    this._skipPageHeaders = true;
   }
 
   /**
@@ -209,7 +203,10 @@ export class ITCSession extends Session {
    * @param onLog A callback handler responsible for marshalling log lines back to the higher level extension API.
    * @returns A promise that eventually resolves to contain the given {@link RunResult} for the input code execution.
    */
-  public run = async (code: string): Promise<RunResult> => {
+  public run = async (
+    code: string,
+    skipPageHeaders?: boolean,
+  ): Promise<RunResult> => {
     const runPromise = new Promise<RunResult>((resolve, reject) => {
       this._runResolve = resolve;
       this._runReject = reject;
@@ -233,7 +230,7 @@ export class ITCSession extends Session {
         this._runReject(error);
       }
 
-      await this.fetchLog();
+      await this.fetchLog(skipPageHeaders);
     });
 
     return runPromise;
@@ -268,7 +265,6 @@ export class ITCSession extends Session {
    */
   public cancel = async () => {
     this._pollingForLogResults = false;
-    this._skipPageHeaders = false;
     this._shellProcess.stdin.write("$runner.Cancel()\n", async (error) => {
       if (error) {
         this._runReject(error);
@@ -293,12 +289,12 @@ export class ITCSession extends Session {
    * Flushes the SAS log in chunks of [chunkSize] length,
    * writing each chunk to stdout.
    */
-  private fetchLog = async (): Promise<void> => {
+  private fetchLog = async (skipPageHeaders?: boolean): Promise<void> => {
     const pollingInterval = setInterval(() => {
       if (!this._pollingForLogResults) {
         clearInterval(pollingInterval);
       }
-      const skipPageHeadersValue = this._skipPageHeaders ? "$true" : "$false";
+      const skipPageHeadersValue = skipPageHeaders ? "$true" : "$false";
       this._shellProcess.stdin.write(
         `
   do {
@@ -509,7 +505,6 @@ export class ITCSession extends Session {
   private fetchResults = async () => {
     if (!this._html5FileName) {
       this._pollingForLogResults = false;
-      this._skipPageHeaders = false;
       return this._runResolve({});
     }
 
@@ -521,7 +516,6 @@ export class ITCSession extends Session {
     }
 
     this._pollingForLogResults = false;
-    this._skipPageHeaders = false;
     const outputFileUri = Uri.joinPath(
       globalStorageUri,
       `${this._html5FileName}.htm`,

@@ -2,13 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 import { commands } from "vscode";
 
-import { ITCSession } from ".";
 import { LogLine, getSession } from "..";
 import { useRunStore } from "../../store";
 
 class CodeRunner {
-  protected executionInterval: ReturnType<typeof setInterval>;
-
   public async runCode(
     code: string,
     startTag: string = "",
@@ -18,16 +15,10 @@ class CodeRunner {
     // to finish up.
     if (useRunStore.getState().isExecutingCode) {
       await new Promise((resolve) => {
-        if (this.executionInterval) {
-          clearInterval(this.executionInterval);
-        }
-
-        this.executionInterval = setInterval(() => {
-          if (!useRunStore.getState().isExecutingCode) {
-            clearInterval(this.executionInterval);
-            return resolve(true);
-          }
-        }, 200);
+        useRunStore.subscribe(
+          (state) => state.isExecutingCode,
+          (isExecutingCode) => !isExecutingCode && resolve(true),
+        );
       });
     }
 
@@ -49,9 +40,7 @@ class CodeRunner {
       // Lets capture output to use it on
       session.onExecutionLogFn = addLine;
 
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      (session as ITCSession).skipPageHeaders = true;
-      await session.run(code);
+      await session.run(code, true);
 
       const logOutput = outputLines.filter((line) => line.trim()).join("");
 
