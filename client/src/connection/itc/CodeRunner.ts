@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { commands } from "vscode";
 
+import { ITCSession } from ".";
 import { LogLine, getSession } from "..";
 import { useRunStore } from "../../store";
 
@@ -13,9 +14,10 @@ class CodeRunner {
   ): Promise<string> {
     // If we're already executing code, lets wait for it
     // to finish up.
+    let unsubscribe;
     if (useRunStore.getState().isExecutingCode) {
       await new Promise((resolve) => {
-        useRunStore.subscribe(
+        unsubscribe = useRunStore.subscribe(
           (state) => state.isExecutingCode,
           (isExecutingCode) => !isExecutingCode && resolve(true),
         );
@@ -40,7 +42,8 @@ class CodeRunner {
       // Lets capture output to use it on
       session.onExecutionLogFn = addLine;
 
-      await session.run(code, true);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      await (session as ITCSession).run(code, true);
 
       const logOutput = outputLines.filter((line) => line.trim()).join("");
 
@@ -55,6 +58,7 @@ class CodeRunner {
               .replace(endTag, "")
           : logOutput;
     } finally {
+      unsubscribe && unsubscribe();
       // Lets update our session to write to the log
       session.onExecutionLogFn = onExecutionLogFn;
 
