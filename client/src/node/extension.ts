@@ -37,7 +37,7 @@ import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
 import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
-import ResultPanelSubscriptionProvider from "../components/ResultPanel";
+import { ResultPanelSubscriptionProvider } from "../components/ResultPanel";
 import {
   SAS_RESULT_PANEL,
   initResultPanelManager,
