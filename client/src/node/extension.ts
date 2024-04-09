@@ -9,6 +9,7 @@ import {
   l10n,
   languages,
   tasks,
+  window,
   workspace,
 } from "vscode";
 import {
@@ -37,6 +38,10 @@ import ContentNavigator from "../components/ContentNavigator";
 import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
 import ResultPanelSubscriptionProvider from "../components/ResultPanel";
+import {
+  SAS_RESULT_PANEL,
+  initResultPanelManager,
+} from "../components/ResultPanel/ResultPanelManager";
 import {
   getStatusBarItem,
   resetStatusBarItem,
@@ -98,6 +103,8 @@ export function activate(context: ExtensionContext): void {
   const libraryNavigator = new LibraryNavigator(context);
   const contentNavigator = new ContentNavigator(context);
   const resultPanelSubscriptionProvider = new ResultPanelSubscriptionProvider();
+  const resultPanelManager = initResultPanelManager(context);
+  window.registerWebviewPanelSerializer(SAS_RESULT_PANEL, resultPanelManager);
 
   context.subscriptions.push(
     commands.registerCommand("SAS.run", async () => {
@@ -150,6 +157,7 @@ export function activate(context: ExtensionContext): void {
     commands.registerCommand("SAS.notebook.new", newSASNotebook),
     commands.registerCommand("SAS.file.new", newSASFile),
     tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
+    resultPanelManager,
   );
 
   // Reset first to set "No Active Profiles"

@@ -3,15 +3,22 @@
 import { Disposable, Uri, commands, window, workspace } from "vscode";
 
 import { SubscriptionProvider } from "../SubscriptionProvider";
-import { resultPanels } from "./ResultPanel";
+import { resultPanelManager } from "./ResultPanelManager";
 
+const scriptRegex = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
+
+interface ResultPanelContext {
+  webview: string;
+  resultPanelId: string;
+}
 export class ResultPanelSubscriptionProvider implements SubscriptionProvider {
   getSubscriptions(): Disposable[] {
     return [
       commands.registerCommand(
         "SAS.saveHTML",
-        async (context: { webview: string }) => {
-          const panel = resultPanels[context.webview] || undefined;
+        async (context: ResultPanelContext) => {
+          const panel =
+            resultPanelManager.resultPanels[context.resultPanelId] || undefined;
           if (!panel) {
             return;
           }
@@ -23,9 +30,10 @@ export class ResultPanelSubscriptionProvider implements SubscriptionProvider {
             return;
           }
 
+          const sanitizedHtml = panel.webview.html.replace(scriptRegex, "");
           await workspace.fs.writeFile(
             uri,
-            new TextEncoder().encode(panel.webview.html),
+            new TextEncoder().encode(sanitizedHtml),
           );
         },
       ),
