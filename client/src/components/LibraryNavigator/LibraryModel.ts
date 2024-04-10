@@ -23,12 +23,20 @@ class LibraryModel {
     this.libraryAdapter = adapter;
   }
 
-  public getTableResultSet(item: LibraryItem): PaginatedResultSet<TableData> {
-    return new PaginatedResultSet<TableData>(
+  public getTableResultSet(
+    item: LibraryItem,
+  ): PaginatedResultSet<{ data: TableData; error?: Error }> {
+    return new PaginatedResultSet<{ data: TableData; error?: Error }>(
       async (start: number, end: number) => {
         await this.libraryAdapter.setup();
         const limit = end - start + 1;
-        return await this.libraryAdapter.getRows(item, start, limit);
+        try {
+          return {
+            data: await this.libraryAdapter.getRows(item, start, limit),
+          };
+        } catch (e) {
+          return { error: e, data: { rows: [], count: 0 } };
+        }
       },
     );
   }
@@ -39,8 +47,8 @@ class LibraryModel {
   ) {
     await this.libraryAdapter.setup();
     let offset = 0;
-    const limit = 1000;
-    const { rowCount: totalItemCount } = await this.getTable(item);
+    const { rowCount: totalItemCount, maxNumberOfRowsToRead: limit } =
+      await this.libraryAdapter.getTableRowCount(item);
     let hasWrittenHeader: boolean = false;
     const stringArrayToCsvString = (strings: string[]): string =>
       `"${strings
@@ -102,18 +110,14 @@ class LibraryModel {
       items = [...items, ...data.items];
       totalItemCount = data.count;
       offset += DefaultRecordLimit;
-    } while (offset < totalItemCount);
+    } while (offset < totalItemCount && totalItemCount !== -1);
 
     return items;
   }
 
-  public async getTable(item: LibraryItem) {
-    return this.libraryAdapter.getTable(item);
-  }
-
   public async deleteTable(item: LibraryItem) {
     try {
-      this.libraryAdapter.deleteTable(item);
+      await this.libraryAdapter.deleteTable(item);
     } catch (error) {
       throw new Error(
         l10n.t(Messages.TableDeletionError, { tableName: item.uid }),
@@ -147,7 +151,7 @@ class LibraryModel {
       items = [...items, ...data.items];
       totalItemCount = data.count;
       offset += DefaultRecordLimit;
-    } while (offset < totalItemCount);
+    } while (offset < totalItemCount && totalItemCount !== -1);
 
     items.sort(sortById);
 
@@ -169,7 +173,7 @@ class LibraryModel {
       items = [...items, ...data.items];
       totalItemCount = data.count;
       offset += DefaultRecordLimit;
-    } while (offset < totalItemCount);
+    } while (offset < totalItemCount && totalItemCount !== -1);
 
     return this.processItems(items, "table", item);
   }

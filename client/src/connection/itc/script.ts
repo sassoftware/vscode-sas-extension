@@ -22,7 +22,7 @@ class SASRunner{
    run;
 '@
     $this.Run($code)
-    $this.FlushLogLines(4096)
+    $this.FlushLogLines(4096, $false)
   }
   [void]Setup([string]$profileHost, [string]$username, [string]$password, [int]$port, [int]$protocol, [string]$serverName, [string]$displayLang) {
     try {
@@ -122,7 +122,7 @@ class SASRunner{
       return ""
   }
 
-  [int]FlushLogLines([int]$chunkSize) {
+  [int]FlushLogLines([int]$chunkSize,[bool]$skipPageHeader) {
     [ref]$carriageControls = [int[]]::new($chunkSize)
     [ref]$lineTypes = [int[]]::new($chunkSize)
     [ref]$logLines = [string[]]::new($chunkSize)
@@ -133,6 +133,9 @@ class SASRunner{
       throw "FlushLog error"
     }
     for ($i = 0; $i -lt $logLines.Value.Length; $i++) {
+      if (($carriageControls.Value[$i] -eq 1) -and $skipPageHeader) {
+        continue
+      }
       Write-Host "${LineCodes.LogLineType}" $lineTypes.Value[$i]
       Write-Host $logLines.Value[$i]
     }

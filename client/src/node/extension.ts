@@ -121,7 +121,10 @@ export function activate(context: ExtensionContext): void {
     commands.registerCommand("SAS.addProfile", addProfile),
     commands.registerCommand("SAS.deleteProfile", deleteProfile),
     commands.registerCommand("SAS.updateProfile", updateProfile),
-    commands.registerCommand("SAS.authorize", checkProfileAndAuthorize),
+    commands.registerCommand(
+      "SAS.authorize",
+      checkProfileAndAuthorize(libraryNavigator),
+    ),
     authentication.registerAuthenticationProvider(
       SASAuthProvider.id,
       "SAS",
@@ -140,6 +143,7 @@ export function activate(context: ExtensionContext): void {
     workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
       if (event.affectsConfiguration("SAS.connectionProfiles")) {
         triggerProfileUpdate();
+        updateViewSettings();
       }
     }),
     workspace.registerNotebookSerializer(
@@ -159,6 +163,31 @@ export function activate(context: ExtensionContext): void {
 
   profileConfig.migrateLegacyProfiles();
   triggerProfileUpdate();
+  updateViewSettings();
+}
+
+function updateViewSettings(): void {
+  const activeProfile = profileConfig.getProfileByName(
+    profileConfig.getActiveProfile(),
+  );
+
+  const settings = {
+    canSignIn:
+      !activeProfile || activeProfile.connectionType !== ConnectionType.SSH,
+    librariesEnabled: false,
+    contentEnabled: false,
+    librariesDisplayed: false,
+  };
+  if (activeProfile) {
+    settings.librariesEnabled =
+      activeProfile.connectionType !== ConnectionType.SSH;
+    settings.contentEnabled =
+      activeProfile.connectionType === ConnectionType.Rest;
+  }
+
+  Object.entries(settings).forEach(([key, value]) =>
+    commands.executeCommand("setContext", `SAS.${key}`, value),
+  );
 }
 
 function triggerProfileUpdate(): void {
