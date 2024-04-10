@@ -1,7 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import {
-  Disposable,
   ExtensionContext,
   Uri,
   ViewColumn,
@@ -24,13 +23,13 @@ interface ResultPanelState {
 }
 
 export const initResultPanelManager = (
-  extension: ExtensionContext,
+  context: ExtensionContext,
 ): ResultPanelManager => {
-  resultPanelManager = new ResultPanelManager(extension);
+  resultPanelManager = new ResultPanelManager(context);
   return resultPanelManager;
 };
 
-export class ResultPanelManager implements WebviewPanelSerializer, Disposable {
+export class ResultPanelManager implements WebviewPanelSerializer {
   private _context: ExtensionContext;
   private _resultPanels: Record<string, WebviewPanel>;
   private _currentPanel: WebviewPanel;
@@ -38,11 +37,6 @@ export class ResultPanelManager implements WebviewPanelSerializer, Disposable {
   constructor(context: ExtensionContext) {
     this._context = context;
     this._resultPanels = {};
-  }
-  dispose() {
-    Object.keys(this.resultPanels).forEach((key) => {
-      this._resultPanels[key].dispose();
-    });
   }
 
   public get resultPanels(): Record<string, WebviewPanel> {

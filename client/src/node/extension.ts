@@ -157,7 +157,6 @@ export function activate(context: ExtensionContext): void {
     commands.registerCommand("SAS.notebook.new", newSASNotebook),
     commands.registerCommand("SAS.file.new", newSASFile),
     tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
-    resultPanelManager,
   );
 
   // Reset first to set "No Active Profiles"
