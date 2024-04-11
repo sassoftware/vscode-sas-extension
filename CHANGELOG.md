@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Add data viewer support for IOM/COM connections ([#680](https://github.com/sassoftware/vscode-sas-extension/issues/680))
+
 ### Fixed
 
 - Content type for file creation/upload ([#878](https://github.com/sassoftware/vscode-sas-extension/issues/878))

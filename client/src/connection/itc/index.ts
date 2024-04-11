@@ -12,7 +12,7 @@ import {
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { resolve } from "path";
 
-import { BaseConfig, LogLineTypeEnum, RunResult } from "..";
+import { LogLineTypeEnum, RunResult } from "..";
 import {
   getGlobalStorageUri,
   getSecretStorage,
@@ -28,10 +28,8 @@ import {
   WORK_DIR_START_TAG,
 } from "./const";
 import { scriptContent } from "./script";
-import { LineCodes } from "./types";
+import { Config, ITCProtocol, LineCodes } from "./types";
 import { decodeEntities } from "./util";
-
-const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE";
 
 const LogLineTypes: LogLineTypeEnum[] = [
   "normal",
@@ -46,22 +44,9 @@ const LogLineTypes: LogLineTypeEnum[] = [
   "message",
 ];
 
+const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE";
+
 let sessionInstance: ITCSession;
-
-export enum ITCProtocol {
-  COM = 0,
-  IOMBridge = 2,
-}
-
-/**
- * Configuration parameters for this connection provider
- */
-export interface Config extends BaseConfig {
-  host: string;
-  port: number;
-  username: string;
-  protocol: ITCProtocol;
-}
 
 export class ITCSession extends Session {
   private _config: Config;
@@ -218,7 +203,10 @@ export class ITCSession extends Session {
    * @param onLog A callback handler responsible for marshalling log lines back to the higher level extension API.
    * @returns A promise that eventually resolves to contain the given {@link RunResult} for the input code execution.
    */
-  public run = async (code: string): Promise<RunResult> => {
+  public run = async (
+    code: string,
+    skipPageHeaders?: boolean,
+  ): Promise<RunResult> => {
     const runPromise = new Promise<RunResult>((resolve, reject) => {
       this._runResolve = resolve;
       this._runReject = reject;
@@ -242,7 +230,7 @@ export class ITCSession extends Session {
         this._runReject(error);
       }
 
-      await this.fetchLog();
+      await this.fetchLog(skipPageHeaders);
     });
 
     return runPromise;
@@ -301,16 +289,17 @@ export class ITCSession extends Session {
    * Flushes the SAS log in chunks of [chunkSize] length,
    * writing each chunk to stdout.
    */
-  private fetchLog = async (): Promise<void> => {
+  private fetchLog = async (skipPageHeaders?: boolean): Promise<void> => {
     const pollingInterval = setInterval(() => {
       if (!this._pollingForLogResults) {
         clearInterval(pollingInterval);
       }
+      const skipPageHeadersValue = skipPageHeaders ? "$true" : "$false";
       this._shellProcess.stdin.write(
         `
   do {
     $chunkSize = 32768
-    $count = $runner.FlushLogLines($chunkSize)
+    $count = $runner.FlushLogLines($chunkSize, ${skipPageHeadersValue})
   } while ($count -gt 0)\n
     `,
         this.onWriteComplete,
@@ -515,6 +504,7 @@ export class ITCSession extends Session {
    */
   private fetchResults = async () => {
     if (!this._html5FileName) {
+      this._pollingForLogResults = false;
       return this._runResolve({});
     }
 

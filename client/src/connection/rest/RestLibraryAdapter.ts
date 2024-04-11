@@ -9,12 +9,7 @@ import {
   TableData,
 } from "../../components/LibraryNavigator/types";
 import { appendSessionLogFn } from "../../components/logViewer";
-import {
-  ColumnCollection,
-  DataAccessApi,
-  RowCollection,
-  TableInfo,
-} from "./api/compute";
+import { ColumnCollection, DataAccessApi, RowCollection } from "./api/compute";
 import { getApiConfig } from "./common";
 
 const requestOptions = {
@@ -123,7 +118,9 @@ class RestLibraryAdapter implements LibraryAdapter {
     return data;
   }
 
-  public async getTable(item: LibraryItem): Promise<TableInfo> {
+  public async getTableRowCount(
+    item: LibraryItem,
+  ): Promise<{ rowCount: number; maxNumberOfRowsToRead: number }> {
     await this.setup();
     const response = await this.retryOnFail(
       async () =>
@@ -137,7 +134,7 @@ class RestLibraryAdapter implements LibraryAdapter {
         ),
     );
 
-    return response.data;
+    return { rowCount: response.data.rowCount, maxNumberOfRowsToRead: 1000 };
   }
 
   private async retryOnFail<T>(
