@@ -5,8 +5,6 @@ import { Disposable, Uri, commands, window, workspace } from "vscode";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { resultPanelManager } from "./ResultPanelManager";
 
-const scriptRegex = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
-
 interface ResultPanelContext {
   webview: string;
   resultPanelId: string;
@@ -17,11 +15,14 @@ export class ResultPanelSubscriptionProvider implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.saveHTML",
         async (context: ResultPanelContext) => {
-          const panel =
-            resultPanelManager.resultPanels[context.resultPanelId] || undefined;
-          if (!panel) {
+          const panelHtml = resultPanelManager.fetchHtmlFor(
+            context.resultPanelId,
+          );
+
+          if (panelHtml.length === 0) {
             return;
           }
+
           const uri = await window.showSaveDialog({
             defaultUri: Uri.file(`results.html`),
           });
@@ -30,10 +31,9 @@ export class ResultPanelSubscriptionProvider implements SubscriptionProvider {
             return;
           }
 
-          const sanitizedHtml = panel.webview.html.replace(scriptRegex, "");
           await workspace.fs.writeFile(
             uri,
-            new TextEncoder().encode(sanitizedHtml),
+            new TextEncoder().encode(panelHtml),
           );
         },
       ),

@@ -18,6 +18,8 @@ export const SAS_RESULT_PANEL = "SASResultPanel";
 let resultPanelManager: ResultPanelManager;
 export { resultPanelManager };
 
+const scriptRegex = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
+
 interface ResultPanelState {
   panelId: string;
 }
@@ -43,16 +45,26 @@ export class ResultPanelManager implements WebviewPanelSerializer {
     return this._resultPanels;
   }
 
-  async deserializeWebviewPanel(
+  public fetchHtmlFor = (panelId: string) => {
+    const foundPanel = this._resultPanels[panelId];
+    let panelHtml: string = "";
+
+    if (foundPanel !== undefined) {
+      panelHtml = foundPanel.webview.html.replace(scriptRegex, "");
+    }
+    return panelHtml;
+  };
+
+  deserializeWebviewPanel = async (
     webviewPanel: WebviewPanel,
     state: ResultPanelState,
-  ): Promise<void> {
+  ): Promise<void> => {
     const panelHtml: string = this._context.workspaceState.get(state.panelId);
     webviewPanel.webview.html = panelHtml;
     this._resultPanels[state.panelId] = webviewPanel;
-  }
+  };
 
-  public showResult(html: string, uri?: Uri, title?: string) {
+  public showResult = (html: string, uri?: Uri, title?: string) => {
     const resultPanelId = `${v4()}`;
     html = html
       // Inject vscode context into our results html body
@@ -90,7 +102,7 @@ export class ResultPanelManager implements WebviewPanelSerializer {
           preserveFocus: true,
           viewColumn: sideResult ? ViewColumn.Beside : ViewColumn.Active,
         }, // Editor column to show the new webview panel in.
-        { enableScripts: true }, // Webview options. More on these later.
+        { enableScripts: true }, // Webview options
       );
       resultPanel.webview;
       resultPanel.onDidDispose(
@@ -118,5 +130,5 @@ export class ResultPanelManager implements WebviewPanelSerializer {
       );
     }
     this._currentPanel.webview.html = html;
-  }
+  };
 }
