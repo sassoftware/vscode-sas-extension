@@ -126,7 +126,9 @@ export class ITCSession extends Session {
       this._shellProcess.stdin.write(`$protocol = ${protocol}\n`);
       this._shellProcess.stdin.write(`$username = "${username}"\n`);
       const password = await this.fetchPassword();
-      this._shellProcess.stdin.write(`$password = "${password}"\n`);
+      this._shellProcess.stdin.write(
+        `$password = "${password.replace(/(`|"|'|\$|\(|\)|%|{|}|\[|\])/g, "`$1")}"\n`,
+      );
       this._shellProcess.stdin.write(
         `$serverName = "${
           protocol === ITCProtocol.COM ? "ITC Local" : "ITC IOM Bridge"
