@@ -25,11 +25,5 @@
     "error": { "foreground": "#f5a3a3" },
     "warning": { "foreground": "#f2d08c" },
     "note": { "foreground": "#8cc8f2" }
-  },
-  "tokenColors": [
-    {
-      "scope": "keyword.section.sas",
-      "settings": { "foreground": "#61a8fa", "fontStyle": "bold" }
-    }
-  ]
+  }
 }

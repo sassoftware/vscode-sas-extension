@@ -1135,7 +1135,7 @@ export class CodeZoneManager {
       } else {
         return CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG;
       }
-    } else if (["SQL", "FEDSQL"].includes(this._procName)) {
+    } else if (["FEDSQL"].includes(this._procName)) {
       return CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG;
     }
     const zone = this._stmtEx(context, stmt);

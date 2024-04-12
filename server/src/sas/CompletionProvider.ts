@@ -1124,17 +1124,10 @@ export class CompletionProvider {
         );
         break;
       case ZONE_TYPE.EMBEDDED_LANG:
-        if (context.procName === "SQL") {
-          help = this.loader.getProcedureStatementHelp(
-            context.procName,
-            keyword,
-            cb,
-          );
-        } else {
-          if (cb) {
-            _notify(cb, undefined);
-          }
+        if (cb) {
+          _notify(cb, undefined);
         }
+
         break;
       case ZONE_TYPE.GBL_STMT_SUB_OPT_NAME:
         help = this.loader.getStatementSubOptionHelp(

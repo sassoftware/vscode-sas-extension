@@ -3,29 +3,12 @@
   "scopeName": "source.sas",
   "patterns": [
     {
-      "include": "#comment-block"
-    },
-    {
-      "include": "#sas-macro-quotes"
-    },
-    {
-      "include": "#cards"
-    },
-    {
-      "include": "#cards4"
-    },
-    {
-      "include": "#string"
+      "include": "#strings"
     },
     {
       "begin": "(?i)proc(\\s|/\\*.*?\\*/)*(sql|fedsql)",
       "end": "(?i)(quit(\\s|/\\*.*?\\*/)*;|(?=(data|proc|%macro)\\b[^;]*;))",
-      "beginCaptures": {
-        "0": {
-          "name": "entity.name.function.proc.sql"
-        }
-      },
-      "contentName": "proc.sql.content",
+      "contentName": "sas.proc.sql.content",
       "patterns": [
         {
           "include": "source.sassql"
@@ -35,12 +18,7 @@
     {
       "begin": "(?i)proc(\\s|/\\*.*?\\*/)*lua",
       "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
-      "beginCaptures": {
-        "0": {
-          "name": "entity.name.function.proc.lua"
-        }
-      },
-      "contentName": "proc.lua.content",
+      "contentName": "sas.proc.lua.content",
       "patterns": [
         {
           "include": "source.lua"
@@ -52,7 +30,7 @@
       "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
       "beginCaptures": {
         "0": {
-          "name": "entity.name.function.proc.python"
+          "name": "sas.proc.python"
         }
       },
       "contentName": "proc.python.content",
@@ -61,40 +39,54 @@
           "include": "source.python"
         }
       ]
+    },
+    {
+      "begin": "(?i)data\\b.*?;",
+      "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
+      "beginCaptures": {
+        "0": {
+          "name": "sas.data"
+        }
+      },
+      "contentName": "data.content",
+      "patterns": [
+        {
+          "include": "#strings"
+        }
+      ]
     }
   ],
   "repository": {
+    "strings": {
+      "patterns": [
+        {
+          "include": "#comment-block"
+        },
+        {
+          "include": "#sas-macro-quotes"
+        },
+        {
+          "include": "#cards"
+        },
+        {
+          "include": "#cards4"
+        },
+        {
+          "include": "#string"
+        }
+      ]
+    },
     "comment-block": {
       "patterns": [
         {
-          "name": "comment.block",
+          "name": "sas.commentblock",
           "begin": "(/\\*)",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.definition.comment"
-            }
-          },
-          "end": "\\*/",
-          "endCaptures": {
-            "0": {
-              "name": "punctuation.definition.comment"
-            }
-          }
+          "end": "\\*/"
         },
         {
-          "name": "comment.block",
+          "name": "sas.commentblock",
           "begin": "(\\*)",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.definition.comment"
-            }
-          },
-          "end": ";",
-          "endCaptures": {
-            "0": {
-              "name": "punctuation.definition.comment"
-            }
-          }
+          "end": ";"
         }
       ]
     },
@@ -109,44 +101,19 @@
       ]
     },
     "qstring-double": {
-      "name": "string.quoted.double",
+      "name": "sas.string.quoted.double",
       "begin": "\"",
-      "beginCaptures": {
-        "0": {
-          "name": "punctuation.definition.string.begin"
-        }
-      },
-      "end": "\"|(?=\\n)",
-      "endCaptures": {
-        "0": {
-          "name": "punctuation.definition.string.end"
-        }
-      }
+      "end": "\"|(?=\\n)"
     },
     "qstring-single": {
-      "name": "string.quoted.single",
+      "name": "sas.string.quoted.single",
       "begin": "'",
-      "beginCaptures": {
-        "0": {
-          "name": "punctuation.definition.string.begin"
-        }
-      },
-      "end": "'|(?=\\n)",
-      "endCaptures": {
-        "0": {
-          "name": "punctuation.definition.string.end"
-        }
-      }
+      "end": "'|(?=\\n)"
     },
     "sas-macro-quotes": {
       "begin": "(?i)%(?:bquote|superq|nrbquote|nrquote|nrstr|str)",
-      "beginCaptures": {
-        "0": {
-          "name": "entity.name.function.macro"
-        }
-      },
       "end": "\\)|(?=\\n)",
-      "name": "string.quoted.macro",
+      "name": "sas.string.quoted.macro",
       "patterns": [
         {
           "include": "#sas-macro-quotes"
@@ -154,34 +121,14 @@
       ]
     },
     "cards": {
-      "begin": "(?i)\\b(?:cards|lines|datalines)\\b",
-      "beginCaptures": {
-        "0": {
-          "name": "entity.name.function.cards"
-        }
-      },
+      "begin": "(?i)\\b(?:cards|lines|datalines)\\b(\\s|/\\*.*?\\*/)*;",
       "end": ";",
-      "endCaptures": {
-        "0": {
-          "name": "entity.name.function.cards"
-        }
-      },
-      "name": "string.quoted.cards"
+      "name": "sas.string.quoted.cards"
     },
     "cards4": {
-      "begin": "(?i)\\b(?:cards4|lines4|datalines4)\\b",
-      "beginCaptures": {
-        "0": {
-          "name": "entity.name.function.cards4"
-        }
-      },
+      "begin": "(?i)\\b(?:cards4|lines4|datalines4)\\b(\\s|/\\*.*?\\*/)*;;;;",
       "end": ";;;;",
-      "endCaptures": {
-        "0": {
-          "name": "entity.name.function.cards4"
-        }
-      },
-      "name": "string.quoted.cards4"
+      "name": "sas.string.quoted.cards4"
     },
     "ws": {
       "name": "ws",

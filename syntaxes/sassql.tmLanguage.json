@@ -442,7 +442,7 @@
         }
       },
       "end": "\\*/",
-      "name": "comment.block",
+      "name": "commentblock",
       "patterns": [
         {
           "include": "#comment-block"
@@ -641,7 +641,7 @@
       "patterns": [
         {
           "match": "(run|quit|%mend)(\\s|/\\*.*\\*/|\\*[^;]*;)*;$",
-          "name": "keyword.section.sas"
+          "name": "sas.keyword.section.sas"
         }
       ]
     },
@@ -657,13 +657,8 @@
     },
     "sas-macro-quotes": {
       "begin": "(?i)%(?:bquote|superq|nrbquote|nrquote|nrstr|str)",
-      "beginCaptures": {
-        "0": {
-          "name": "entity.name.function.macro"
-        }
-      },
       "end": "\\)|(?=\\n)",
-      "name": "string.quoted.macro",
+      "name": "sas.string.quoted.macro",
       "patterns": [
         {
           "include": "#sas-macro-quotes"
