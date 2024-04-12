@@ -29,7 +29,7 @@ import {
 } from "./const";
 import { scriptContent } from "./script";
 import { Config, ITCProtocol, LineCodes } from "./types";
-import { decodeEntities } from "./util";
+import { decodeEntities, escapePowershellString } from "./util";
 
 const LogLineTypes: LogLineTypeEnum[] = [
   "normal",
@@ -124,10 +124,12 @@ export class ITCSession extends Session {
       this._shellProcess.stdin.write(`$profileHost = "${host}"\n`);
       this._shellProcess.stdin.write(`$port = ${port}\n`);
       this._shellProcess.stdin.write(`$protocol = ${protocol}\n`);
-      this._shellProcess.stdin.write(`$username = "${username}"\n`);
+      this._shellProcess.stdin.write(
+        `$username = "${escapePowershellString(username)}"\n`,
+      );
       const password = await this.fetchPassword();
       this._shellProcess.stdin.write(
-        `$password = "${password.replace(/(`|"|'|\$|\(|\)|%|{|}|\[|\])/g, "`$1")}"\n`,
+        `$password = "${escapePowershellString(password)}"\n`,
       );
       this._shellProcess.stdin.write(
         `$serverName = "${
