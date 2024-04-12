@@ -1,4 +1,5 @@
 {
+  "An error was encountered when loading table data. This usually happens when a table is too large or the data couldn't be processed. See console for more details.": "An error was encountered when loading table data. This usually happens when a table is too large or the data couldn't be processed. See console for more details.",
   "Are you sure you want to permanently delete all the items? You cannot undo this action.": "Sind Sie sicher, dass Sie alle Elemente dauerhaft löschen möchten? Sie können diese Aktion nicht rückgängig machen.",
   "Are you sure you want to permanently delete the item \"{name}\"?": "Sind Sie sicher, das Sie \"{name}\" permanent löschen wollen?",
   "Cancelling job...": "Abbruch des Jobs...",
