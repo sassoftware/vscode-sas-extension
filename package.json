@@ -947,7 +947,8 @@
         "path": "./syntaxes/sas.tmLanguage.json",
         "embeddedLanguages": {
           "source.python": "python",
-          "source.lua": "lua"
+          "source.lua": "lua",
+          "source.sql": "sql"
         }
       }
     ],
