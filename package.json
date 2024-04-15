@@ -1063,7 +1063,7 @@
     "@types/sinon": "^17.0.3",
     "@typescript-eslint/eslint-plugin": "^7.5.0",
     "@typescript-eslint/parser": "^7.5.0",
-    "@vscode/l10n-dev": "^0.0.34",
+    "@vscode/l10n-dev": "^0.0.35",
     "chai": "^4.4.1",
     "concurrently": "^8.2.2",
     "esbuild": "^0.20.2",
