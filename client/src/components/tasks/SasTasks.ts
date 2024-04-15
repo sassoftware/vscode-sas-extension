@@ -4,7 +4,7 @@ import { EventEmitter, TaskDefinition, l10n } from "vscode";
 
 import { runTask } from "../../commands/run";
 import { RunResult } from "../../connection";
-import { resultPanelManager } from "../ResultPanel";
+import { showResult } from "../ResultPanel";
 import {
   getSASCodeFromActiveEditor,
   getSASCodeFromFile,
@@ -72,7 +72,7 @@ function showRunResult(
 
   if (outputHtml && results.html5) {
     messageEmitter.fire(l10n.t("Show results...") + "\r\n");
-    resultPanelManager.showResult(
+    showResult(
       results.html5,
       undefined,
       l10n.t("Result: {result}", { result: taskName }),

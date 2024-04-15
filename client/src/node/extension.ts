@@ -37,11 +37,11 @@ import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
 import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
-import { ResultPanelSubscriptionProvider } from "../components/ResultPanel";
 import {
+  ResultPanelSubscriptionProvider,
   SAS_RESULT_PANEL,
-  initResultPanelManager,
-} from "../components/ResultPanel/ResultPanelManager";
+  deserializeWebviewPanel,
+} from "../components/ResultPanel";
 import {
   getStatusBarItem,
   resetStatusBarItem,
@@ -103,8 +103,10 @@ export function activate(context: ExtensionContext): void {
   const libraryNavigator = new LibraryNavigator(context);
   const contentNavigator = new ContentNavigator(context);
   const resultPanelSubscriptionProvider = new ResultPanelSubscriptionProvider();
-  const resultPanelManager = initResultPanelManager(context);
-  window.registerWebviewPanelSerializer(SAS_RESULT_PANEL, resultPanelManager);
+
+  window.registerWebviewPanelSerializer(SAS_RESULT_PANEL, {
+    deserializeWebviewPanel,
+  });
 
   context.subscriptions.push(
     commands.registerCommand("SAS.run", async () => {

@@ -3,7 +3,7 @@
 import { Disposable, Uri, commands, window, workspace } from "vscode";
 
 import { SubscriptionProvider } from "../SubscriptionProvider";
-import { resultPanelManager } from "./ResultPanelManager";
+import { fetchHtmlFor } from "./ResultPanel";
 
 interface ResultPanelContext {
   webview: string;
@@ -15,9 +15,7 @@ export class ResultPanelSubscriptionProvider implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.saveHTML",
         async (context: ResultPanelContext) => {
-          const panelHtml = resultPanelManager.fetchHtmlFor(
-            context.resultPanelId,
-          );
+          const panelHtml = fetchHtmlFor(context.resultPanelId);
 
           if (panelHtml.length === 0) {
             return;

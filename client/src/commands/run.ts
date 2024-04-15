@@ -12,7 +12,7 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
-import { resultPanelManager } from "../components/ResultPanel/ResultPanelManager";
+import { showResult } from "../components/ResultPanel";
 import {
   appendExecutionLogFn,
   appendSessionLogFn,
@@ -158,7 +158,7 @@ async function runCode(selected?: boolean, uri?: Uri) {
       });
       return session.run(code).then((results) => {
         if (outputHtml && results.html5) {
-          resultPanelManager.showResult(results.html5, uri);
+          showResult(results.html5, uri);
         }
       });
     },
