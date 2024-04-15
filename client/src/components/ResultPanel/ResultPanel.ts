@@ -33,7 +33,7 @@ export const showResult = (html: string, uri?: Uri, title?: string) => {
         preserveFocus: true,
         viewColumn: sideResult ? ViewColumn.Beside : ViewColumn.Active,
       }, // Editor column to show the new webview panel in.
-      { enableScripts: true }, // Webview options. More on these later.
+      { enableScripts: true }, // Webview options.
     );
     resultPanel.onDidDispose(() => disposePanel(resultPanelId));
     resultPanels[resultPanelId] = resultPanel;
