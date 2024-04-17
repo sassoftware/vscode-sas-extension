@@ -7,7 +7,7 @@ import { fetchHtmlFor } from "./ResultPanel";
 
 interface ResultPanelContext {
   webview: string;
-  resultPanelId: string;
+  panelId: string;
 }
 export class ResultPanelSubscriptionProvider implements SubscriptionProvider {
   getSubscriptions(): Disposable[] {
@@ -15,7 +15,7 @@ export class ResultPanelSubscriptionProvider implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.saveHTML",
         async (context: ResultPanelContext) => {
-          const panelHtml = fetchHtmlFor(context.resultPanelId);
+          const panelHtml = await fetchHtmlFor(context.panelId);
 
           if (panelHtml.length === 0) {
             return;

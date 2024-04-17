@@ -10,23 +10,29 @@ import { isSideResultEnabled, isSinglePanelEnabled } from "../utils/settings";
 const SCRIPT_REGEX = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
 export const SAS_RESULT_PANEL = "SASResultPanel";
 
-let resultPanel: WebviewPanel | undefined;
-export const resultPanels: Record<string, WebviewPanel> = {};
-
 interface ResultPanelState {
   panelId: string;
 }
 
+interface IdentifiableWebviewPanel {
+  webviewPanel: WebviewPanel;
+  panelId: string;
+}
+
+let resultPanel: IdentifiableWebviewPanel | undefined;
+
 export const showResult = (html: string, uri?: Uri, title?: string) => {
-  const resultPanelId = `${v4()}`;
   const sideResult = isSideResultEnabled();
   const singlePanel = isSinglePanelEnabled();
+  let panelId: string;
+
   if (!title) {
     title = l10n.t("Result");
   }
 
   if (!singlePanel || !resultPanel) {
-    resultPanel = window.createWebviewPanel(
+    panelId = `${v4()}`;
+    const webviewPanel = window.createWebviewPanel(
       SAS_RESULT_PANEL, // Identifies the type of the webview. Used internally
       title, // Title of the panel displayed to the user
       {
@@ -35,47 +41,57 @@ export const showResult = (html: string, uri?: Uri, title?: string) => {
       }, // Editor column to show the new webview panel in.
       { enableScripts: true }, // Webview options.
     );
-    resultPanel.onDidDispose(() => disposePanel(resultPanelId));
-    resultPanels[resultPanelId] = resultPanel;
+    webviewPanel.onDidDispose(() => disposePanel(panelId));
+    resultPanel = { webviewPanel, panelId };
   } else {
     const editor = uri
       ? window.visibleTextEditors.find(
           (editor) => editor.document.uri.toString() === uri.toString(),
         )
       : window.activeTextEditor;
-    if (resultPanel.title !== title) {
-      resultPanel.title = title;
+    if (resultPanel.webviewPanel.title !== title) {
+      resultPanel.webviewPanel.title = title;
     }
-    resultPanel.reveal(
+    panelId = resultPanel.panelId;
+    resultPanel.webviewPanel.reveal(
       sideResult ? ViewColumn.Beside : editor?.viewColumn,
       true,
     );
   }
 
-  html = html
-    // Inject vscode context into our results html body
-    .replace(
-      "<body ",
-      `<body data-vscode-context='${JSON.stringify({
-        preventDefaultContextMenuItems: true,
-        resultPanelId,
-      })}' `,
-    )
-    // Make sure the html and body take up the full height of the parent
-    // iframe so that the context menu is clickable anywhere on the page
-    .replace(
-      "</head>",
-      `<script language="javascript">
+  const panelHtml = wrapPanelHtml(html, panelId);
+  resultPanel.webviewPanel.webview.html = panelHtml;
+  setContextValue(resultPanel.panelId, panelHtml);
+};
+
+/**
+ *
+ * */
+const wrapPanelHtml = (html: string, panelId: string): string => {
+  return (
+    html
+      // Inject vscode context into our results html body
+      .replace(
+        "<body ",
+        `<body data-vscode-context='${JSON.stringify({
+          preventDefaultContextMenuItems: true,
+          panelId,
+        })}' `,
+      )
+      // Make sure the html and body take up the full height of the parent
+      // iframe so that the context menu is clickable anywhere on the page
+      .replace(
+        "</head>",
+        `<script language="javascript">
           if(acquireVsCodeApi){
             const vscode = acquireVsCodeApi();
-            const panelId = '${resultPanelId}'
+            const panelId = '${panelId}'
             vscode.setState({panelId});
           }
          </script>
          <style>html,body { height: 100% !important; }</style></head>`,
-    );
-  resultPanel.webview.html = html;
-  setContextValue(resultPanelId, html);
+      )
+  );
 };
 
 export const deserializeWebviewPanel = async (
@@ -83,24 +99,21 @@ export const deserializeWebviewPanel = async (
   state: ResultPanelState,
 ): Promise<void> => {
   const panelHtml: string = await getContextValue(state.panelId);
-  resultPanel = webviewPanel;
+  resultPanel = { panelId: state.panelId, webviewPanel: webviewPanel };
   webviewPanel.webview.html = panelHtml;
   webviewPanel.onDidDispose(() => disposePanel(state.panelId));
-  resultPanels[state.panelId] = webviewPanel;
 };
 
-export const fetchHtmlFor = (panelId: string) => {
-  const foundPanel = resultPanels[panelId];
+export const fetchHtmlFor = async (panelId: string) => {
   let panelHtml: string = "";
+  panelHtml = await getContextValue(panelId);
+  panelHtml = panelHtml.replace(SCRIPT_REGEX, "");
 
-  if (foundPanel !== undefined) {
-    panelHtml = foundPanel.webview.html.replace(SCRIPT_REGEX, "");
-  }
   return panelHtml;
 };
 
 const disposePanel = (id: string) => {
-  delete resultPanels[id];
+  console.log(`disposing panel ${id}`);
   resultPanel = undefined;
   setContextValue(id, undefined);
 };
