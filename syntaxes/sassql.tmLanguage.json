@@ -393,6 +393,9 @@
     },
     {
       "include": "#sas-macro-put"
+    },
+    {
+      "include": "#sas-global-stmt"
     }
   ],
   "repository": {
@@ -640,7 +643,7 @@
     "sas-keywords": {
       "patterns": [
         {
-          "match": "(run|quit|%mend)(\\s|/\\*.*\\*/|\\*[^;]*;)*;$",
+          "match": "(?i)(run|quit|%mend)(\\s|/\\*.*\\*/|\\*[^;]*;)*;$",
           "name": "sas.keyword.section.sas"
         }
       ]
@@ -659,6 +662,16 @@
       "begin": "(?i)%(?:bquote|superq|nrbquote|nrquote|nrstr|str)",
       "end": "\\)|(?=\\n)",
       "name": "sas.string.quoted.macro",
+      "patterns": [
+        {
+          "include": "#sas-macro-quotes"
+        }
+      ]
+    },
+    "sas-global-stmt": {
+      "begin": "(?i)(libname|((title|footnote|axis|legend|pattern|synbol)\\d{0,}))\\b",
+      "end": ";",
+      "name": "macro",
       "patterns": [
         {
           "include": "#sas-macro-quotes"

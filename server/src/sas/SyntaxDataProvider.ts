@@ -1802,8 +1802,6 @@ function _tryToLoadStatementOptionsImmediately(stmtName: string) {
 }
 
 export class SyntaxDataProvider {
-  noGlobal: boolean | undefined;
-
   // private functions
   private _handleOptionValues(
     data: OptionValues,
@@ -1981,7 +1979,11 @@ export class SyntaxDataProvider {
       return data;
     });
   }
-  getProcedureStatements(procName: string, cb?: (data: string[]) => void) {
+  getProcedureStatements(
+    procName: string,
+    noGlobal: boolean,
+    cb?: (data: string[]) => void,
+  ) {
     procName = procName.toUpperCase();
     return _tryToLoadProcedure(procName, cb, () => {
       let data = _procStmtObj(procName);
@@ -1991,7 +1993,7 @@ export class SyntaxDataProvider {
       if (!data) {
         data = [];
       }
-      if (!this.noGlobal) {
+      if (!noGlobal) {
         const gps = this.getGlobalProcedureStatements();
         if (gps) {
           data = data.concat(gps);

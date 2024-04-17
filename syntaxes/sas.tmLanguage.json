@@ -13,7 +13,6 @@
         {
           "begin": "\\G",
           "end": "(?i)(?=quit(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
-          "name": "source.sql",
           "beginCaptures": {
             "0": {
               "name": "strange_bug"

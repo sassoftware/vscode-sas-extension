@@ -732,13 +732,16 @@ export class CompletionProvider {
         this.loader.getProcedureSubOptions(procName, optName, cb);
         break;
       case ZONE_TYPE.PROC_STMT:
-        this.loader.getProcedureStatements(procName, function (data) {
+        this.loader.getProcedureStatements(procName, false, (data) => {
           if (procName === "ODS") {
             cb(_cleanUpODSStmts(data));
           } else {
             cb(data);
           }
         });
+        break;
+      case ZONE_TYPE.EMBEDDED_LANG:
+        this.loader.getProcedureStatements(procName, true, cb);
         break;
       case ZONE_TYPE.PROC_STMT_OPT:
       case ZONE_TYPE.PROC_STMT_OPT_REQ:

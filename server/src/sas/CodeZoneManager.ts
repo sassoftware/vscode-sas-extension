@@ -158,7 +158,7 @@ export class CodeZoneManager {
     let stmts, setCache;
 
     if (!this._stmtCache[procName]) {
-      stmts = this._syntaxDb.getProcedureStatements(procName);
+      stmts = this._syntaxDb.getProcedureStatements(procName, false);
       setCache = (stmts?: string[]) => {
         if (stmts && stmts.length > 0) {
           this._stmtCache[procName] = arrayToMap(stmts);
