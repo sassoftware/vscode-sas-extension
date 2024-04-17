@@ -1,5 +1,5 @@
 {
-  "An error was encountered when loading table data. This usually happens when a table is too large or the data couldn't be processed. See console for more details.": "An error was encountered when loading table data. This usually happens when a table is too large or the data couldn't be processed. See console for more details.",
+  "An error was encountered when loading table data. This usually happens when a table is too large or the data couldn't be processed. See console for more details.": "테이블 데이터를 로드하는 중에 오류가 발생했습니다. 이는 일반적으로 테이블이 너무 크거나 데이터를 처리할 수 없는 경우에 발생합니다. 자세한 내용은 콘솔을 참조하세요.",
   "Are you sure you want to permanently delete all the items? You cannot undo this action.": "모든 항목을 영구적으로 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
   "Are you sure you want to permanently delete the item \"{name}\"?": "항목 \"{name}\"을(를) 영구적으로 삭제하시겠습니까?",
   "Cancelling job...": "작업 취소 중...",
