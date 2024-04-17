@@ -1,3 +1,5 @@
+// Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 import { assert } from "chai";
@@ -26,9 +28,9 @@ describe("Test code zone for embedded language", () => {
     }
 
     assert.equal(zoneList[0], CodeZoneManager.ZONE_TYPE.COMMENT);
-    assert.equal(zoneList[3], CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG);
+    assert.equal(zoneList[3], CodeZoneManager.ZONE_TYPE.PROC_STMT);
     assert.equal(zoneList[5], CodeZoneManager.ZONE_TYPE.COMMENT);
-    assert.equal(zoneList[8], CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG);
+    assert.equal(zoneList[8], CodeZoneManager.ZONE_TYPE.PROC_STMT);
   });
 
   it("proc python", () => {

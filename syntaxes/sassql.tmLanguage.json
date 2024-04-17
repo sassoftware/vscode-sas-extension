@@ -669,7 +669,7 @@
       ]
     },
     "sas-global-stmt": {
-      "begin": "(?i)(libname|((title|footnote|axis|legend|pattern|synbol)\\d{0,}))\\b",
+      "begin": "(?i)(libname|((title|footnote|axis|legend|pattern|symbol)\\d{0,}))\\b",
       "end": ";",
       "name": "macro",
       "patterns": [

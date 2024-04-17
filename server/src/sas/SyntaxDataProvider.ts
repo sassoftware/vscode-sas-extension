@@ -1981,7 +1981,7 @@ export class SyntaxDataProvider {
   }
   getProcedureStatements(
     procName: string,
-    noGlobal: boolean,
+    noGlobal?: boolean,
     cb?: (data: string[]) => void,
   ) {
     procName = procName.toUpperCase();
