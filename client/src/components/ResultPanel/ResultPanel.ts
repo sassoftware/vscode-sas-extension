@@ -64,9 +64,6 @@ export const showResult = (html: string, uri?: Uri, title?: string) => {
   setContextValue(resultPanel.panelId, panelHtml);
 };
 
-/**
- *
- * */
 const wrapPanelHtml = (html: string, panelId: string): string => {
   return (
     html
@@ -113,7 +110,6 @@ export const fetchHtmlFor = async (panelId: string) => {
 };
 
 const disposePanel = (id: string) => {
-  console.log(`disposing panel ${id}`);
   resultPanel = undefined;
   setContextValue(id, undefined);
 };
