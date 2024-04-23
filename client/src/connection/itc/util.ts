@@ -1,7 +1,7 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-export function decodeEntities(msg: string) {
+export const decodeEntities = (msg: string): string => {
   // Some of our messages from the server contain html encoded
   // characters. This converts them back.
   const specialCharacters = {
@@ -13,4 +13,7 @@ export function decodeEntities(msg: string) {
   });
 
   return msg;
-}
+};
+
+export const escapePowershellString = (unescapedString: string): string =>
+  unescapedString.replace(/(`|"|'|\$|\(|\)|%|{|}|\[|\])/g, "`$1");
