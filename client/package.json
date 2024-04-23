@@ -9,8 +9,8 @@
     "vscode": "^1.82.0"
   },
   "dependencies": {
-    "ag-grid-community": "^31.2.0",
-    "ag-grid-react": "^31.2.0",
+    "ag-grid-community": "^31.2.1",
+    "ag-grid-react": "^31.2.1",
     "axios": "^1.6.8",
     "media-typer": "^1.1.0",
     "react": "^18.2.0",
@@ -21,8 +21,8 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
-    "@types/react": "^18.2.74",
-    "@types/react-dom": "^18.2.24",
+    "@types/react": "^18.2.79",
+    "@types/react-dom": "^18.2.25",
     "@types/ssh2": "^1.15.0",
     "@types/uuid": "^9.0.8",
     "@types/vscode": "1.82.0",

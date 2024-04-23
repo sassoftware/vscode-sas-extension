@@ -231,7 +231,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
       run;
 
       filename out temp;
-      proc json nokeys out=out; export work.${tempTable}; run;
+      proc json nokeys out=out pretty; export work.${tempTable}; run;
 
       %put <TABLEDATA>;
       %put <Count>&COUNT</Count>;
