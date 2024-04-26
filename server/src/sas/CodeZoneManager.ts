@@ -686,6 +686,9 @@ export class CodeZoneManager {
       len = 0;
     const tokens = [];
 
+    const initLine = context.line;
+    const initCol = context.col;
+
     context.syntaxIdx = -1;
     context.tokens = null;
     // eslint-disable-next-line no-constant-condition
@@ -696,16 +699,25 @@ export class CodeZoneManager {
         break;
       }
     }
-    if (token) {
-      context.line = token.line;
-      context.col = token.col + token.text.length;
-      context.syntaxIdx = -1;
-      context.lastStmtEnd = { line: token.line, col: token.col };
-    } else {
+    if (!token) {
       context.line = 0;
       context.col = 0;
       context.syntaxIdx = -1;
       context.lastStmtEnd = null;
+    } else if (
+      token.line === initLine &&
+      token.col <= initCol &&
+      token.col + token.text.length >= initCol
+    ) {
+      context.line = token.line;
+      context.col = token.col;
+      context.syntaxIdx = -1;
+      context.lastStmtEnd = { line: token.line, col: token.col };
+    } else {
+      context.line = token.line;
+      context.col = token.col + token.text.length;
+      context.syntaxIdx = -1;
+      context.lastStmtEnd = { line: token.line, col: token.col };
     }
     // ignore label
     len = tokens.length;
@@ -1125,6 +1137,8 @@ export class CodeZoneManager {
     let type;
     this._topZone = CodeZoneManager.ZONE_TYPE.PROC_STMT;
     this._getFullStmtName(context, this._procName, stmt);
+    const zone = this._stmtEx(context, stmt);
+    type = zone.type;
     if (["PYTHON", "LUA"].includes(this._procName)) {
       if (
         ["SUBMIT", "ENDSUBMIT", "INTERACTIVE", "ENDINTERACTIVE"].includes(
@@ -1137,10 +1151,7 @@ export class CodeZoneManager {
       }
     } else if (["FEDSQL"].includes(this._procName)) {
       return CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG;
-    }
-    const zone = this._stmtEx(context, stmt);
-    type = zone.type;
-    if (this._isCall(zone)) {
+    } else if (this._isCall(zone)) {
       type = CodeZoneManager.ZONE_TYPE.RESTRICTED;
     } else if (zone.type === CodeZoneManager.ZONE_TYPE.STMT_NAME) {
       type = CodeZoneManager.ZONE_TYPE.PROC_STMT;
