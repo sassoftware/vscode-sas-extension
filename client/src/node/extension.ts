@@ -9,6 +9,7 @@ import {
   l10n,
   languages,
   tasks,
+  window,
   workspace,
 } from "vscode";
 import {
@@ -36,7 +37,11 @@ import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
 import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
-import ResultPanelSubscriptionProvider from "../components/ResultPanel";
+import {
+  ResultPanelSubscriptionProvider,
+  SAS_RESULT_PANEL,
+  deserializeWebviewPanel,
+} from "../components/ResultPanel";
 import {
   getStatusBarItem,
   resetStatusBarItem,
@@ -98,6 +103,10 @@ export function activate(context: ExtensionContext): void {
   const libraryNavigator = new LibraryNavigator(context);
   const contentNavigator = new ContentNavigator(context);
   const resultPanelSubscriptionProvider = new ResultPanelSubscriptionProvider();
+
+  window.registerWebviewPanelSerializer(SAS_RESULT_PANEL, {
+    deserializeWebviewPanel,
+  });
 
   context.subscriptions.push(
     commands.registerCommand("SAS.run", async () => {
