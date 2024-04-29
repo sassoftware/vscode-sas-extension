@@ -72,12 +72,24 @@ export interface Token {
     | "numeric"
     | "text"
     | "format"
-    | "blank";
+    | "blank"
+    | "embedded-code";
   start: TextPosition;
   end: TextPosition;
   text: string;
 }
 
+enum EmbeddedLangState {
+  NONE,
+  PROC_SQL_DEF,
+  PROC_SQL_CODE,
+  PROC_PYTHON_DEF,
+  PROC_PYTHON_SUBMIT_OR_INTERACTIVE,
+  PROC_PYTHON_CODE,
+  PROC_LUA_DEF,
+  PROC_LUA_SUBMIT_OR_INTERACTIVE,
+  PROC_LUA_CODE,
+}
 export class Lexer {
   start = { line: 0, column: 0 };
   curr = { line: 0, column: 0 };
@@ -87,7 +99,8 @@ export class Lexer {
   private syntaxDb = new SyntaxDataProvider();
   private context: {
     lastNoncommentToken?: Token | null;
-  } = {};
+    embeddedLangState?: EmbeddedLangState;
+  } = { embeddedLangState: EmbeddedLangState.NONE };
 
   constructor(private model: Model) {
     if (!macroKwMap) {
@@ -233,8 +246,262 @@ export class Lexer {
   //'**','<>','><','^=','\u00AC=','~=','>=','<=','||','=:','>:','<:',  //len 2
   //'^=:','\u00AC=:','~=:','>=:','<=:'   //len 3
 
-  getNext(): Token | undefined {
+  _readToken(): Token | undefined {
     const token = this.getNext_() as Token | undefined;
+    if (!token) {
+      this.context.embeddedLangState = EmbeddedLangState.NONE;
+      return undefined;
+    }
+    if (Lexer.isLiteral[token.type]) {
+      token.text = this.getText(token);
+    } else {
+      token.text = this.getWord(token).toUpperCase();
+    }
+    if (Lexer.isComment[token.type] === undefined) {
+      this.quoting = checkQuote(
+        this.quoting,
+        !!Lexer.isQuoting[token.text],
+        token.text,
+      );
+      this.bquoting = checkQuote(
+        this.bquoting,
+        !!Lexer.isBQuoting[token.text],
+        token.text,
+      );
+      if (this.quoting === -1 && this.bquoting === -1) {
+        if (!this.ignoreFormat && token.text === "%PUT") {
+          this.ignoreFormat = true;
+        } else if (this.ignoreFormat && token.text === ";") {
+          this.ignoreFormat = false;
+        }
+      }
+    }
+    return token;
+  }
+
+  getNext(): Token | undefined {
+    let token: Token | undefined;
+    SWITCH: switch (this.context.embeddedLangState) {
+      case EmbeddedLangState.NONE: {
+        token = this._readToken();
+        if (!token) {
+          break SWITCH;
+        }
+        if (
+          this.context.lastNoncommentToken?.type === "text" &&
+          this.context.lastNoncommentToken.text === "PROC"
+        ) {
+          if (token.type === "text" && token.text === "FEDSQL") {
+            this.context.embeddedLangState = EmbeddedLangState.PROC_SQL_DEF;
+          } else if (token.type === "text" && token.text === "PYTHON") {
+            this.context.embeddedLangState = EmbeddedLangState.PROC_PYTHON_DEF;
+          } else if (token.type === "text" && token.text === "LUA") {
+            this.context.embeddedLangState = EmbeddedLangState.PROC_LUA_DEF;
+          }
+        }
+        break SWITCH;
+      }
+      case EmbeddedLangState.PROC_PYTHON_DEF: {
+        token = this._readToken();
+        if (!token) {
+          break SWITCH;
+        }
+        if (
+          token.type === "text" &&
+          ["SUBMIT", "INTERACTIVE"].includes(token.text)
+        ) {
+          this.context.embeddedLangState =
+            EmbeddedLangState.PROC_PYTHON_SUBMIT_OR_INTERACTIVE;
+        }
+        break SWITCH;
+      }
+      case EmbeddedLangState.PROC_LUA_DEF: {
+        token = this._readToken();
+        if (!token) {
+          break SWITCH;
+        }
+        if (
+          token.type === "text" &&
+          ["SUBMIT", "INTERACTIVE"].includes(token.text)
+        ) {
+          this.context.embeddedLangState =
+            EmbeddedLangState.PROC_LUA_SUBMIT_OR_INTERACTIVE;
+        }
+        break SWITCH;
+      }
+      case EmbeddedLangState.PROC_PYTHON_SUBMIT_OR_INTERACTIVE: {
+        token = this._readToken();
+        if (!token) {
+          break SWITCH;
+        }
+        if (token.type === "sep" && token.text === ";") {
+          this.context.embeddedLangState = EmbeddedLangState.PROC_PYTHON_CODE;
+        }
+        break SWITCH;
+      }
+      case EmbeddedLangState.PROC_PYTHON_CODE: {
+        let multiLineStrState: false | '"""' | "'''" = false;
+        for (
+          let line = this.curr.line;
+          line < this.model.getLineCount();
+          line++
+        ) {
+          const lineContent = this._readEmbeddedCodeLine(this.curr, line);
+          let pos = 0;
+          let match;
+          do {
+            if (match) {
+              pos += match.index + match[0].length;
+            }
+            if (multiLineStrState) {
+              match = /'''|"""/.exec(lineContent.substring(pos));
+              if (match && match[0] === multiLineStrState) {
+                multiLineStrState = false;
+              }
+            } else {
+              const stringReg = /'''|"""|("[^"]*?("|$))|('[^']*?('|$))/;
+              const commentReg = /#.*$/;
+              const secReg =
+                /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$)/;
+              match = new RegExp(
+                `${stringReg.source}|${commentReg.source}|${secReg.source}`,
+                "m",
+              ).exec(lineContent.substring(pos));
+              if (match) {
+                const matchedText = match[0];
+                if (matchedText === "'''" || matchedText === '"""') {
+                  multiLineStrState = matchedText;
+                } else if (
+                  matchedText.startsWith("'") ||
+                  matchedText.startsWith('"') ||
+                  matchedText.startsWith("#")
+                ) {
+                  // do nothing to skip string and single line comment
+                } else {
+                  token = this._foundEmbeddedCodeToken(this.curr, {
+                    line: line,
+                    column: match.index,
+                  });
+                  break SWITCH;
+                }
+              }
+            }
+          } while (match);
+        }
+        token = this._foundEmbeddedCodeToken(this.curr);
+        break SWITCH;
+      }
+      case EmbeddedLangState.PROC_LUA_SUBMIT_OR_INTERACTIVE: {
+        token = this._readToken();
+        if (!token) {
+          break SWITCH;
+        }
+        if (token.type === "sep" && token.text === ";") {
+          this.context.embeddedLangState = EmbeddedLangState.PROC_LUA_CODE;
+        }
+        break SWITCH;
+      }
+      case EmbeddedLangState.PROC_LUA_CODE: {
+        let multiLineStrState: false | "[[" | "--[[" | "/*" = false;
+        for (
+          let line = this.curr.line;
+          line < this.model.getLineCount();
+          line++
+        ) {
+          const lineContent = this._readEmbeddedCodeLine(this.curr, line);
+          let pos = 0;
+          let match;
+          do {
+            if (match) {
+              pos += match.index + match[0].length;
+            }
+            if (multiLineStrState) {
+              match = /\]\]|--\]\]|\*\//.exec(lineContent.substring(pos));
+              if (match) {
+                if (multiLineStrState === "[[" && match[0] === "]]") {
+                  multiLineStrState = false;
+                } else if (
+                  multiLineStrState === "--[[" &&
+                  (match[0] === "--]]" || match[0] === "]]")
+                ) {
+                  multiLineStrState = false;
+                } else if (multiLineStrState === "/*" && match[0] === "*/") {
+                  multiLineStrState = false;
+                }
+              }
+            } else {
+              const stringReg = /("[^"]*("|$))|('[^']*('|$))|\[\[/;
+              const commentReg = /--[^[].*$|--\[\[|\/\*/;
+              const secReg =
+                /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$)/;
+              const reg = new RegExp(
+                `${stringReg.source}|${commentReg.source}|${secReg.source}`,
+                "m",
+              );
+              match = reg.exec(lineContent.substring(pos));
+              if (match) {
+                const matchedText = match[0];
+                if (matchedText.startsWith("[[")) {
+                  multiLineStrState = "[[";
+                } else if (matchedText.startsWith("--[[")) {
+                  multiLineStrState = "--[[";
+                } else if (matchedText.startsWith("/*")) {
+                  multiLineStrState = "/*";
+                } else if (
+                  matchedText.startsWith("'") ||
+                  matchedText.startsWith('"') ||
+                  matchedText.startsWith("--")
+                ) {
+                  // do nothing to skip string or single line comment
+                } else {
+                  token = this._foundEmbeddedCodeToken(this.curr, {
+                    line: line,
+                    column: match.index,
+                  });
+                  break SWITCH;
+                }
+              }
+            }
+          } while (match);
+        }
+        token = this._foundEmbeddedCodeToken(this.curr);
+        break SWITCH;
+      }
+      case EmbeddedLangState.PROC_SQL_DEF: {
+        token = this._readToken();
+        if (!token) {
+          break SWITCH;
+        }
+        if (token.type === "sep" && token.text === ";") {
+          this.context.embeddedLangState = EmbeddedLangState.PROC_SQL_CODE;
+        }
+        break SWITCH;
+      }
+      case EmbeddedLangState.PROC_SQL_CODE: {
+        const endReg =
+          /\b((quit)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$/i;
+        for (
+          let line = this.curr.line;
+          line < this.model.getLineCount();
+          line++
+        ) {
+          const lineContent = this._readEmbeddedCodeLine(this.curr, line);
+          if (lineContent.trimStart().startsWith("%put")) {
+            continue;
+          }
+          const match = endReg.exec(lineContent);
+          if (match) {
+            token = this._foundEmbeddedCodeToken(this.curr, {
+              line: line,
+              column: match.index,
+            });
+            break SWITCH;
+          }
+        }
+        token = this._foundEmbeddedCodeToken(this.curr);
+        break SWITCH;
+      }
+    }
     if (token) {
       if (Lexer.isComment[token.type] === undefined) {
         this.context.lastNoncommentToken = {
@@ -243,33 +510,48 @@ export class Lexer {
           end: { ...token.end },
         };
       }
-      if (Lexer.isLiteral[token.type]) {
-        token.text = this.getText(token);
-      } else {
-        token.text = this.getWord(token).toUpperCase();
-      }
-      if (Lexer.isComment[token.type] === undefined) {
-        this.quoting = checkQuote(
-          this.quoting,
-          !!Lexer.isQuoting[token.text],
-          token.text,
-        );
-        this.bquoting = checkQuote(
-          this.bquoting,
-          !!Lexer.isBQuoting[token.text],
-          token.text,
-        );
-        if (this.quoting === -1 && this.bquoting === -1) {
-          if (!this.ignoreFormat && token.text === "%PUT") {
-            this.ignoreFormat = true;
-          } else if (this.ignoreFormat && token.text === ";") {
-            this.ignoreFormat = false;
-          }
-        }
-      }
     }
     return token;
   }
+
+  private _readEmbeddedCodeLine(
+    startPos: TextPosition,
+    curLine: number,
+  ): string {
+    let lineContent = this.model.getLine(curLine);
+    if (curLine === startPos.line) {
+      lineContent =
+        " ".repeat(startPos.column) + lineContent.slice(startPos.column);
+    }
+    return lineContent;
+  }
+
+  private _foundEmbeddedCodeToken(
+    startPos: TextPosition,
+    endPos?: TextPosition,
+  ): Token {
+    const start = { ...startPos };
+    let end;
+    if (endPos) {
+      end = { ...endPos };
+    } else {
+      const lastLine = this.model.getLineCount() - 1;
+      end = {
+        line: lastLine,
+        column: this.model.getColumnCount(lastLine),
+      };
+    }
+    const token: Token = {
+      type: "embedded-code",
+      start,
+      end,
+      text: this.model.getText({ start, end }).trim(),
+    };
+    this.curr = { ...token.end };
+    this.context.embeddedLangState = EmbeddedLangState.NONE;
+    return token;
+  }
+
   /**
    * @returns {object}
    * type: 'sep', 'comment', 'keyword', 'date', 'time', 'dt', 'normaltext',

@@ -1,0 +1,169 @@
+{
+  "name": "SAS",
+  "scopeName": "source.sas",
+  "patterns": [
+    {
+      "include": "#strings-or-comments"
+    },
+    {
+      "begin": "(?i)proc(\\s|/\\*.*?\\*/)*(sql|fedsql)\\b[^;]*;",
+      "end": "(?i)(quit(\\s|/\\*.*?\\*/)*;|(?=(data|proc|%macro)\\b[^;]*;))",
+      "name": "sas.proc.sql",
+      "patterns": [
+        {
+          "begin": "\\G",
+          "end": "(?i)(?=quit(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
+          "beginCaptures": {
+            "0": {
+              "name": "strange_bug"
+            }
+          },
+          "patterns": [
+            {
+              "include": "source.sassql"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "begin": "(?i)proc(\\s|/\\*.*?\\*/)*lua",
+      "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
+      "name": "sas.proc.lua",
+      "patterns": [
+        {
+          "include": "#strings-or-comments"
+        },
+        {
+          "begin": "(?i)(?<=submit|interactive)(\\s|/\\*.*?\\*/)*;",
+          "end": "(?i)(endsubmit|endinteractive)(\\s|/\\*.*?\\*/)*;",
+          "name": "source.lua",
+          "beginCaptures": {
+            "0": {
+              "name": "strange_bug"
+            }
+          },
+          "patterns": [
+            {
+              "include": "source.lua"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "begin": "(?i)proc(\\s|/\\*.*?\\*/)*python",
+      "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
+      "name": "sas.proc.python",
+      "patterns": [
+        {
+          "include": "#strings-or-comments"
+        },
+        {
+          "begin": "(?i)(?<=submit|interactive)(\\s|/\\*.*?\\*/)*;",
+          "end": "(?i)(endsubmit|endinteractive)(\\s|/\\*.*?\\*/)*;",
+          "name": "source.python",
+          "beginCaptures": {
+            "0": {
+              "name": "strange_bug"
+            }
+          },
+          "patterns": [
+            {
+              "include": "source.python"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "begin": "(?i)data\\b.*?;",
+      "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
+      "name": "sas.data",
+      "patterns": [
+        {
+          "include": "#strings-or-comments"
+        }
+      ]
+    }
+  ],
+  "repository": {
+    "strings-or-comments": {
+      "patterns": [
+        {
+          "include": "#comment-block"
+        },
+        {
+          "include": "#sas-macro-quotes"
+        },
+        {
+          "include": "#cards"
+        },
+        {
+          "include": "#cards4"
+        },
+        {
+          "include": "#string"
+        }
+      ]
+    },
+    "comment-block": {
+      "patterns": [
+        {
+          "name": "sas.commentblock",
+          "begin": "(/\\*)",
+          "end": "\\*/"
+        },
+        {
+          "name": "sas.commentblock",
+          "begin": "(\\*)",
+          "end": ";"
+        }
+      ]
+    },
+    "string": {
+      "patterns": [
+        {
+          "include": "#qstring-single"
+        },
+        {
+          "include": "#qstring-double"
+        }
+      ]
+    },
+    "qstring-double": {
+      "name": "sas.string.quoted.double",
+      "begin": "\"",
+      "end": "\"|(?=\\n)"
+    },
+    "qstring-single": {
+      "name": "sas.string.quoted.single",
+      "begin": "'",
+      "end": "'|(?=\\n)"
+    },
+    "sas-macro-quotes": {
+      "begin": "(?i)%(?:bquote|superq|nrbquote|nrquote|nrstr|str)",
+      "end": "\\)|(?=\\n)",
+      "name": "sas.string.quoted.macro",
+      "patterns": [
+        {
+          "include": "#sas-macro-quotes"
+        }
+      ]
+    },
+    "cards": {
+      "begin": "(?i)\\b(?:cards|lines|datalines)\\b(\\s|/\\*.*?\\*/)*;",
+      "end": ";",
+      "name": "sas.string.quoted.cards"
+    },
+    "cards4": {
+      "begin": "(?i)\\b(?:cards4|lines4|datalines4)\\b(\\s|/\\*.*?\\*/)*;;;;",
+      "end": ";;;;",
+      "name": "sas.string.quoted.cards4"
+    },
+    "ws": {
+      "name": "ws",
+      "match": "\\s"
+    }
+  }
+}
