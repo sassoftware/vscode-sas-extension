@@ -933,6 +933,25 @@
         "id": "sas-log"
       }
     ],
+    "grammars": [
+      {
+        "scopeName": "source.sassql",
+        "path": "./syntaxes/sassql.tmLanguage.json",
+        "injectTo": [
+          "source.sas"
+        ]
+      },
+      {
+        "language": "sas",
+        "scopeName": "source.sas",
+        "path": "./syntaxes/sas.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.python": "python",
+          "source.lua": "lua",
+          "source.sql": "sql"
+        }
+      }
+    ],
     "themes": [
       {
         "label": "%themes.SAS.light%",
@@ -1049,7 +1068,9 @@
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "pretest": "npm run compile && tsc -p ./client",
-    "test": "node ./client/out/test/runTest.js",
+    "test-client": "node ./client/out/test/runTest.js",
+    "test-server": "cross-env TS_NODE_PROJECT=./server/tsconfig.json mocha -r ts-node/register ./server/test/**/*.test.ts",
+    "test": "npm run test-server && npm run test-client",
     "pseudoLocalize": "npx @vscode/l10n-dev export -o ./l10n ./client/src && npx @vscode/l10n-dev generate-pseudo -o ./l10n/ ./l10n/bundle.l10n.json ./package.nls.json",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
     "copyright:check": "node ./tools/check-copyright.mjs",
@@ -1061,15 +1082,16 @@
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.12.7",
     "@types/sinon": "^17.0.3",
-    "@typescript-eslint/eslint-plugin": "^7.7.0",
+    "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
     "@vscode/l10n-dev": "^0.0.35",
     "chai": "^4.4.1",
     "concurrently": "^8.2.2",
     "esbuild": "^0.20.2",
+    "cross-env": "^7.0.3",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.1",
-    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
     "mocha": "^10.4.0",
     "nock": "^13.5.4",
     "papaparse": "^5.4.1",
@@ -1077,6 +1099,7 @@
     "prettier": "^3.2.5",
     "sinon": "^17.0.1",
     "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
     "ts-sinon": "^2.0.2",
     "typescript": "^5.4.5",
     "webpack": "^5.91.0",

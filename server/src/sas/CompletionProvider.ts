@@ -279,6 +279,10 @@ export class CompletionProvider {
     this.czMgr = new CodeZoneManager(model, this.loader, syntaxProvider);
   }
 
+  getCodeZoneManager(): CodeZoneManager {
+    return this.czMgr;
+  }
+
   getHelp(position: Position): Promise<Hover | undefined> | undefined {
     const line = this.model.getLine(position.line);
     const tokens = this.syntaxProvider.getSyntax(position.line);
@@ -728,13 +732,16 @@ export class CompletionProvider {
         this.loader.getProcedureSubOptions(procName, optName, cb);
         break;
       case ZONE_TYPE.PROC_STMT:
-        this.loader.getProcedureStatements(procName, function (data) {
+        this.loader.getProcedureStatements(procName, false, (data) => {
           if (procName === "ODS") {
             cb(_cleanUpODSStmts(data));
           } else {
             cb(data);
           }
         });
+        break;
+      case ZONE_TYPE.EMBEDDED_LANG:
+        this.loader.getProcedureStatements(procName, true, cb);
         break;
       case ZONE_TYPE.PROC_STMT_OPT:
       case ZONE_TYPE.PROC_STMT_OPT_REQ:
@@ -1118,6 +1125,12 @@ export class CompletionProvider {
           keyword,
           cb,
         );
+        break;
+      case ZONE_TYPE.EMBEDDED_LANG:
+        if (cb) {
+          _notify(cb, undefined);
+        }
+
         break;
       case ZONE_TYPE.GBL_STMT_SUB_OPT_NAME:
         help = this.loader.getStatementSubOptionHelp(
