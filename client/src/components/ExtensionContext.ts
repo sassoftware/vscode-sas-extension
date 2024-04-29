@@ -8,7 +8,7 @@ export function setContext(c: ExtensionContext) {
   context = c;
 }
 
-/*
+/**
  * Set an extension context value.
  */
 export async function setContextValue(
@@ -18,7 +18,7 @@ export async function setContextValue(
   context.workspaceState.update(key, value);
 }
 
-/*
+/**
  * Get an extension context value.
  */
 export async function getContextValue(

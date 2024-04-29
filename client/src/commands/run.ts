@@ -12,7 +12,7 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
-import { showResult } from "../components/ResultPanel/ResultPanel";
+import { showResult } from "../components/ResultPanel";
 import {
   appendExecutionLogFn,
   appendSessionLogFn,

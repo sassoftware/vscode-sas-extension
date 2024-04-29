@@ -16,6 +16,7 @@
     "vscode": "^1.82.0"
   },
   "activationEvents": [
+    "onWebviewPanel:SASResultPanel",
     "onLanguage:sas",
     "onNotebook:sas-notebook"
   ],
@@ -677,7 +678,7 @@
       "webview/context": [
         {
           "command": "SAS.saveHTML",
-          "when": "webviewId =~ /SASResultPanel-/"
+          "when": "webviewId =~ /SASResultPanel/"
         }
       ],
       "view/title": [
