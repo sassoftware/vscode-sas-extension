@@ -4,15 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
-## [Unreleased]
+## [v1.9.0] - 2024-04-30
 
 ### Added
 
 - Add data viewer support for IOM/COM connections ([#680](https://github.com/sassoftware/vscode-sas-extension/issues/680))
+- SQL/Python/Lua syntax highlighting ([#813](https://github.com/sassoftware/vscode-sas-extension/pull/813))
 
 ### Fixed
 
 - Content type for file creation/upload ([#878](https://github.com/sassoftware/vscode-sas-extension/issues/878))
+- ods html5 output path to work directory ([#664](https://github.com/sassoftware/vscode-sas-extension/pull/664))
+- Log with Error type has no color with Viya connection ([#886](https://github.com/sassoftware/vscode-sas-extension/issues/886))
+- Function autocomplete display issue ([#905](https://github.com/sassoftware/vscode-sas-extension/issues/905))
+- Result panels are empty on VS Code restart ([#937](https://github.com/sassoftware/vscode-sas-extension/issues/937))
+- using pretty for json output to avoid long line ([#938](https://github.com/sassoftware/vscode-sas-extension/pull/938))
+- Password Character Parsing for SAS 9.4 Remote IOM Connection ([#939](https://github.com/sassoftware/vscode-sas-extension/issues/939))
 
 ## [v1.8.0] - 2024-03-20
 
