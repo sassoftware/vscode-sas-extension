@@ -1083,7 +1083,7 @@
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.12.8",
     "@types/sinon": "^17.0.3",
-    "@typescript-eslint/eslint-plugin": "^7.7.1",
+    "@typescript-eslint/eslint-plugin": "^7.8.0",
     "@typescript-eslint/parser": "^7.8.0",
     "@vscode/l10n-dev": "^0.0.35",
     "chai": "^4.4.1",
