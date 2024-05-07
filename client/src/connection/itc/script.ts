@@ -152,7 +152,7 @@ class SASRunner{
 
   [void]FetchResultsFile([string]$filePath, [string]$outputFile) {
     $fileRef = ""
-    $objFile = $this.objSAS.FileService.AssignFileref("outfile", "DISK", $filePath, "", [ref] $fileRef)
+    $objFile = $this.objSAS.FileService.AssignFileref("", "DISK", $filePath, "", [ref] $fileRef)
     $objStream = $objFile.OpenBinaryStream(1);
     [Byte[]] $bytes = 0x0
 
