@@ -523,7 +523,7 @@ export class CodeZoneManager {
       if (token) {
         token = this._transToken(token);
         tokens.push(token);
-        if (token.text === ";") {
+        if (token.type === "sep" && token.text === ";") {
           break;
         }
       }
