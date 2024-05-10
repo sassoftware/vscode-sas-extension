@@ -44,7 +44,7 @@ interface AddMemberProperties {
 export class ContentModel {
   private connection: AxiosInstance;
   private fileTokenMaps: {
-    [id: string]: { etag: string; lastModified: string };
+    [id: string]: { etag: string; lastModified: string; contentType: string };
   };
   private authorized: boolean;
   private viyaCadence: string;
@@ -187,6 +187,7 @@ export class ContentModel {
     this.fileTokenMaps[resourceId] = {
       etag: res.headers.etag,
       lastModified: res.headers["last-modified"],
+      contentType: res.data.contentType,
     };
 
     return res.data;
@@ -203,10 +204,11 @@ export class ContentModel {
       throw new Error(Messages.FileOpenError);
     }
 
-    this.fileTokenMaps[resourceId] = {
-      etag: res.headers.etag,
-      lastModified: res.headers["last-modified"],
-    };
+    // I DON'T THINK WE NEED THIS
+    // this.fileTokenMaps[resourceId] = {
+    //   etag: res.headers.etag,
+    //   lastModified: res.headers["last-modified"],
+    // };
 
     // We expect the returned data to be a string. If this isn't a string,
     // we can't really open it
@@ -226,10 +228,11 @@ export class ContentModel {
         responseType: "arraybuffer",
       });
 
-      this.fileTokenMaps[resourceId] = {
-        etag: res.headers.etag,
-        lastModified: res.headers["last-modified"],
-      };
+      // I also don't think we need this
+      // this.fileTokenMaps[resourceId] = {
+      //   etag: res.headers.etag,
+      //   lastModified: res.headers["last-modified"],
+      // };
 
       return Buffer.from(res.data, "binary");
     } catch (e) {
@@ -244,7 +247,7 @@ export class ContentModel {
   ): Promise<ContentItem | undefined> {
     const contentType = await this.getFileContentType(fileName);
     let createdResource: ContentItem;
-
+    console.log(mimeTypes[fileName.split(".").pop().toLowerCase()]);
     try {
       const fileCreationResponse = await this.connection.post<ContentItem>(
         `/files/files#rawUpload?typeDefName=${contentType}`,
@@ -315,9 +318,11 @@ export class ContentModel {
     try {
       // not sure why but the response of moveTo request does not return the latest etag so request it every time
       const res = await this.connection.get(uri);
+      const contentType = res.data.contentType;
       const fileTokenMap = {
         etag: res.headers.etag,
         lastModified: res.headers["last-modified"],
+        contentType,
       };
 
       const validationUri = getLink(item.links, "PUT", "validateRename")?.uri;
@@ -343,6 +348,7 @@ export class ContentModel {
       this.fileTokenMaps[uri] = {
         etag: patchResponse.headers.etag,
         lastModified: patchResponse.headers["last-modified"],
+        contentType,
       };
 
       // The links in My Favorites are of type reference. Instead of passing
@@ -362,20 +368,21 @@ export class ContentModel {
   private getFileInfo(resourceId: string): {
     etag: string;
     lastModified: string;
+    contentType: string;
   } {
     if (resourceId in this.fileTokenMaps) {
       return this.fileTokenMaps[resourceId];
     }
     const now = new Date();
     const timestamp = now.toUTCString();
-    return { etag: "", lastModified: timestamp };
+    return { etag: "", lastModified: timestamp, contentType: "text/plain" };
   }
 
   public async saveContentToUri(uri: Uri, content: string): Promise<void> {
     const resourceId = getResourceId(uri);
-    const { etag, lastModified } = this.getFileInfo(resourceId);
+    const { etag, lastModified, contentType } = this.getFileInfo(resourceId);
     const headers = {
-      "Content-Type": "text/plain",
+      "Content-Type": contentType,
       "If-Unmodified-Since": lastModified,
     };
     if (etag !== "") {
@@ -388,6 +395,7 @@ export class ContentModel {
       this.fileTokenMaps[resourceId] = {
         etag: res.headers.etag,
         lastModified: res.headers["last-modified"],
+        contentType,
       };
     } catch (error) {
       console.log(error);
