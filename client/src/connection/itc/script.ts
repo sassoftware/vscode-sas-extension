@@ -16,8 +16,9 @@ class SASRunner{
   $code =
 @'
    %let workDir = %sysfunc(pathname(work));
-   %put ${WORK_DIR_START_TAG}&workDir${WORK_DIR_END_TAG};
-   %put &=workDir;
+   %put ${WORK_DIR_START_TAG};
+   %put &workDir;
+   %put ${WORK_DIR_END_TAG};
    %let rc = %sysfunc(dlgcdir("&workDir"));
    run;
 '@

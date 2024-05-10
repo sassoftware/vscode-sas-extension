@@ -345,7 +345,9 @@ export class ITCSession extends Session {
   private fetchWorkDirectory = (line: string): string | undefined => {
     let foundWorkDirectory = "";
     if (
-      !line.includes(`%put ${WORK_DIR_START_TAG}&workDir${WORK_DIR_END_TAG};`)
+      !line.includes(`%put ${WORK_DIR_START_TAG};`) &&
+      !line.includes(`%put &workDir;`) &&
+      !line.includes(`%put ${WORK_DIR_END_TAG};`)
     ) {
       foundWorkDirectory = this._workDirectoryParser.processLine(line);
     } else {
@@ -422,18 +424,21 @@ export class ITCSession extends Session {
         return;
       }
 
-      const foundWorkDirectory = this.fetchWorkDirectory(line);
-      if (foundWorkDirectory === undefined) {
-        return;
-      }
-
-      if (!this._workDirectory && foundWorkDirectory) {
-        this._workDirectory = foundWorkDirectory;
-        this._runResolve();
-        updateStatusBarItem(true);
-        return;
-      }
       if (!this.processLineCodes(line)) {
+        if (!this._workDirectory) {
+          const foundWorkDirectory = this.fetchWorkDirectory(line);
+          if (foundWorkDirectory === undefined) {
+            return;
+          }
+
+          if (foundWorkDirectory) {
+            this._workDirectory = foundWorkDirectory.trim();
+            this._runResolve();
+            updateStatusBarItem(true);
+            return;
+          }
+        }
+
         this._html5FileName = extractOutputHtmlFileName(
           line,
           this._html5FileName,
