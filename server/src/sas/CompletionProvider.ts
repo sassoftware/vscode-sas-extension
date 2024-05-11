@@ -609,9 +609,7 @@ export class CompletionProvider {
     });
   }
 
-  getCompleteItems(
-    position: Position,
-  ): Promise<CompletionItem[] | CompletionList | undefined> {
+  getCompleteItems(position: Position): Promise<CompletionList | undefined> {
     return new Promise((resolve) => {
       this._getZone(position);
       const prefix = this.popupContext.prefix;

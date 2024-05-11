@@ -1,14 +1,37 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import {
+  CancellationToken,
   Connection,
+  DidChangeConfigurationParams,
+  DidChangeWatchedFilesParams,
+  DocumentHighlightParams,
+  DocumentSymbol,
+  ExecuteCommandParams,
   InitializeResult,
+  Location,
+  Position,
+  PrepareRenameParams,
+  Range,
+  ReferenceParams,
+  RenameParams,
+  ResultProgressReporter,
   SemanticTokensRequest,
+  SignatureHelpParams,
+  TextDocumentPositionParams,
   TextDocumentSyncKind,
-  TextDocuments,
+  WorkDoneProgressReporter,
+  WorkspaceSymbolParams,
 } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
+import { ReadOnlyFileSystem } from "pyright-internal-lsp/dist/packages/pyright-internal/src/common/fileSystem";
+import { DocumentRange } from "pyright-internal-lsp/dist/packages/pyright-internal/src/common/textRange";
+import { Uri } from "pyright-internal-lsp/dist/packages/pyright-internal/src/common/uri/uri";
+import { CollectionResult } from "pyright-internal-lsp/dist/packages/pyright-internal/src/languageService/documentSymbolCollector";
+import { ParseFileResults } from "pyright-internal-lsp/dist/packages/pyright-internal/src/parser/parser";
+
+import { PyrightLanguageProvider } from "./python/PyrightLanguageProvider";
 import { CompletionProvider } from "./sas/CompletionProvider";
 import { LanguageServiceProvider, legend } from "./sas/LanguageServiceProvider";
 import type { LibCompleteItem } from "./sas/SyntaxDataProvider";
@@ -20,11 +43,17 @@ let completionProvider: CompletionProvider;
 let connection: Connection;
 let supportSASGetLibList = false;
 
-// Create a simple text document manager.
-const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+let _pyrightLanguageProvider: PyrightLanguageProvider;
 
 export const init = (conn: Connection): void => {
   connection = conn;
+  _pyrightLanguageProvider = new PyrightLanguageProvider(
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+    connection,
+    1,
+    getLanguageService,
+  );
+
   connection.onInitialize((params) => {
     if (
       params.initializationOptions &&
@@ -32,6 +61,9 @@ export const init = (conn: Connection): void => {
     ) {
       supportSASGetLibList = true;
     }
+
+    _pyrightLanguageProvider.initialize(params, [], []);
+
     const result: InitializeResult = {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Incremental,
@@ -39,25 +71,49 @@ export const init = (conn: Connection): void => {
           legend,
           full: true,
         },
-        documentSymbolProvider: true,
         documentFormattingProvider: true,
         foldingRangeProvider: true,
-        hoverProvider: true,
-        completionProvider: {
-          triggerCharacters: [" "],
-          resolveProvider: true,
-        },
         documentOnTypeFormattingProvider: {
           firstTriggerCharacter: "\n",
           moreTriggerCharacter: [";"],
         },
+        definitionProvider: { workDoneProgress: true },
+        declarationProvider: { workDoneProgress: true },
+        typeDefinitionProvider: { workDoneProgress: true },
+        referencesProvider: { workDoneProgress: true },
+        documentSymbolProvider: { workDoneProgress: true },
+        workspaceSymbolProvider: { workDoneProgress: true },
+        hoverProvider: { workDoneProgress: true },
+        documentHighlightProvider: { workDoneProgress: true },
+        renameProvider: { prepareProvider: true, workDoneProgress: true },
+        completionProvider: {
+          triggerCharacters: _pyrightLanguageProvider.getClientCapabilities()
+            .hasVisualStudioExtensionsCapability
+            ? [".", "[", "@", '"', "'", " "]
+            : [".", "[", '"', "'", " "],
+          resolveProvider: true,
+          workDoneProgress: true,
+          completionItem: {
+            labelDetailsSupport: true,
+          },
+        },
         signatureHelpProvider: {
-          triggerCharacters: ["(", ","],
+          triggerCharacters: ["(", ",", ")"],
+          workDoneProgress: true,
+        },
+        callHierarchyProvider: true,
+        workspace: {
+          workspaceFolders: {
+            supported: true,
+            changeNotifications: true,
+          },
         },
       },
     };
     return result;
   });
+
+  connection.onInitialized(() => _pyrightLanguageProvider.onInitialized());
 
   connection.onRequest(SemanticTokensRequest.type, (params) => {
     const languageService = getLanguageService(params.textDocument.uri);
@@ -65,67 +121,149 @@ export const init = (conn: Connection): void => {
     return { data: languageService.getTokens() };
   });
 
-  connection.onHover((params) => {
+  connection.onHover(async (params, token) => {
+    return await dispatch(params, {
+      async sas(languageService) {
+        return await languageService.completionProvider.getHelp(
+          params.position,
+        );
+      },
+      async python(pyrightLanguageService) {
+        return await pyrightLanguageService.onHover(params, token);
+      },
+    });
+  });
+
+  connection.onCompletion(async (params, token) => {
+    return await dispatch(params, {
+      async sas(languageService) {
+        completionProvider = languageService.completionProvider;
+        const complitionList = await completionProvider.getCompleteItems(
+          params.position,
+        );
+        if (complitionList) {
+          for (const item of complitionList.items) {
+            if (!item.data) {
+              item.data = {};
+            }
+            item.data._languageService = "sas";
+            item.data._uri = params.textDocument.uri;
+          }
+        }
+        return complitionList;
+      },
+      async python(pyrightLanguageService) {
+        const complitionList = await pyrightLanguageService.onCompletion(
+          params,
+          token,
+        );
+        if (complitionList) {
+          for (const item of complitionList.items) {
+            if (!item.data) {
+              item.data = {};
+            }
+            item.data._languageService = "python";
+            item.data._uri = params.textDocument.uri;
+          }
+        }
+        return complitionList;
+      },
+    });
+  });
+
+  connection.onCompletionResolve(async (completionItem, token) => {
+    if (completionItem.data._languageService === "sas") {
+      const languageService = getLanguageService(completionItem.data._uri);
+      return await languageService.completionProvider.getCompleteItemHelp(
+        completionItem,
+      );
+    } else if (completionItem.data._languageService === "python") {
+      return await _pyrightLanguageProvider.onCompletionResolve(
+        completionItem,
+        token,
+      );
+    } else {
+      return completionItem;
+    }
+  });
+
+  connection.onDocumentSymbol(async (params, token) => {
     const languageService = getLanguageService(params.textDocument.uri);
-
-    return languageService.completionProvider.getHelp(params.position);
+    const sasSymbols = languageService.getDocumentSymbols();
+    const pythonSymbols =
+      (await _pyrightLanguageProvider.onDocumentSymbol(params, token)) ?? [];
+    for (const sasSymbol of sasSymbols) {
+      if (sasSymbol.name?.toUpperCase() === "PROC PYTHON") {
+        for (const pythonSymbol of pythonSymbols) {
+          if (!("range" in pythonSymbol)) {
+            continue;
+          }
+          if (isRangeIncluded(sasSymbol.range, pythonSymbol.range)) {
+            sasSymbol.children?.push(pythonSymbol);
+          }
+        }
+      }
+    }
+    return sasSymbols;
   });
 
-  connection.onCompletion((params) => {
-    const languageService = getLanguageService(params.textDocument.uri);
-    completionProvider = languageService.completionProvider;
-
-    return completionProvider.getCompleteItems(params.position);
-  });
-
-  connection.onCompletionResolve((params) => {
-    return completionProvider.getCompleteItemHelp(params);
-  });
-
-  connection.onDocumentSymbol((params) => {
-    const languageService = getLanguageService(params.textDocument.uri);
-    return languageService.getDocumentSymbols();
-  });
-
+  // todo
   connection.onFoldingRanges((params) => {
     const languageService = getLanguageService(params.textDocument.uri);
     return languageService.getFoldingRanges();
   });
 
-  connection.onRequest("sas/getFoldingBlock", (params) => {
-    const languageService = getLanguageService(params.textDocument.uri);
-    const block = languageService.getFoldingBlock(
-      params.line,
-      params.col,
-      params.strict ?? true,
-      params.ignoreCustomBlock,
-      params.ignoreGlobalBlock,
-    );
-    if (!block) {
-      return undefined;
-    } else {
-      return { ...block, outerBlock: undefined, innerBlocks: undefined };
-    }
+  connection.onRequest("sas/getFoldingBlock", async (params) => {
+    return await dispatch(params, {
+      async sas(languageService) {
+        const block = languageService.getFoldingBlock(
+          params.line,
+          params.col,
+          params.strict ?? true,
+          params.ignoreCustomBlock,
+          params.ignoreGlobalBlock,
+        );
+        if (!block) {
+          return undefined;
+        } else {
+          return { ...block, outerBlock: undefined, innerBlocks: undefined };
+        }
+      },
+    });
   });
 
-  connection.onDocumentOnTypeFormatting((params) => {
-    const languageService = getLanguageService(params.textDocument.uri);
-    return languageService.formatOnTypeProvider.getIndentEdit(
-      params.position.line,
-      params.position.character,
-      params.ch,
-      params.options.tabSize,
-      params.options.insertSpaces,
-    );
+  connection.onDocumentOnTypeFormatting(async (params) => {
+    return await dispatch(params, {
+      async sas(languageService) {
+        return languageService.formatOnTypeProvider.getIndentEdit(
+          params.position.line,
+          params.position.character,
+          params.ch,
+          params.options.tabSize,
+          params.options.insertSpaces,
+        );
+      },
+    });
   });
 
-  connection.onSignatureHelp((params) => {
-    const languageService = getLanguageService(params.textDocument.uri);
-    completionProvider = languageService.completionProvider;
-    return completionProvider.getSignatureHelp(
-      params.position,
-      params.context?.activeSignatureHelp?.activeSignature,
-    );
+  connection.onSignatureHelp(async (params, token) => {
+    return await dispatch(params, {
+      async sas(languageService) {
+        completionProvider = languageService.completionProvider;
+        return await completionProvider.getSignatureHelp(
+          params.position,
+          params.context?.activeSignatureHelp?.activeSignature,
+        );
+      },
+      async python(pyrightLanguageService) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+        return (await pyrightLanguageService.onSignatureHelp(
+          params,
+          token,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        )) as any;
+      },
+    });
   });
 
   connection.onDocumentFormatting((params) => {
@@ -136,26 +274,233 @@ export const init = (conn: Connection): void => {
     });
   });
 
-  documents.onDidChangeContent((event) => {
-    if (servicePool[event.document.uri]) {
-      documentPool[event.document.uri] = event.document;
-      return;
-    }
-    servicePool[event.document.uri] = new LanguageServiceProvider(
-      event.document,
+  connection.onDidOpenTextDocument(async (params) => {
+    const doc = TextDocument.create(
+      params.textDocument.uri,
+      "sas",
+      params.textDocument.version,
+      params.textDocument.text,
+    );
+    documentPool[doc.uri] = doc;
+    await _pyrightLanguageProvider.onDidOpenTextDocument(params);
+  });
+
+  connection.onDidCloseTextDocument(async (params) => {
+    const uri = params.textDocument.uri;
+    delete documentPool[uri];
+    delete servicePool[uri];
+    await _pyrightLanguageProvider.onDidCloseTextDocument(params);
+  });
+
+  connection.onDidChangeTextDocument((params) => {
+    const uri = params.textDocument.uri;
+    const doc = documentPool[uri];
+    TextDocument.update(
+      doc,
+      params.contentChanges,
+      params.textDocument.version,
+    );
+    delete servicePool[uri];
+    _pyrightLanguageProvider.addContentChange(doc);
+  });
+
+  connection.onDidChangeConfiguration(
+    async (params: DidChangeConfigurationParams) => {
+      return await _pyrightLanguageProvider.onDidChangeConfiguration(params);
+    },
+  );
+
+  connection.onDefinition(
+    async (params: TextDocumentPositionParams, token: CancellationToken) => {
+      return await dispatch(params, {
+        async python(pyrightLanguageService) {
+          return await pyrightLanguageService.onDefinition(params, token);
+        },
+      });
+    },
+  );
+
+  connection.onDeclaration(
+    async (params: TextDocumentPositionParams, token: CancellationToken) => {
+      return await dispatch(params, {
+        async python(pyrightLanguageService) {
+          return await pyrightLanguageService.onDeclaration(params, token);
+        },
+      });
+    },
+  );
+
+  connection.onTypeDefinition(
+    async (params: TextDocumentPositionParams, token: CancellationToken) => {
+      return await dispatch(params, {
+        async python(pyrightLanguageService) {
+          return await pyrightLanguageService.onTypeDefinition(params, token);
+        },
+      });
+    },
+  );
+
+  connection.onReferences(
+    async (
+      params: ReferenceParams,
+      token: CancellationToken,
+      workDoneReporter: WorkDoneProgressReporter,
+      resultReporter: ResultProgressReporter<Location[]> | undefined,
+      createDocumentRange?: (
+        uri: Uri,
+        result: CollectionResult,
+        parseResults: ParseFileResults,
+      ) => DocumentRange,
+      convertToLocation?: (
+        fs: ReadOnlyFileSystem,
+        ranges: DocumentRange,
+      ) => Location | undefined,
+    ) => {
+      return await dispatch(params, {
+        async python(pyrightLanguageService) {
+          return await pyrightLanguageService.onReferences(
+            params,
+            token,
+            workDoneReporter,
+            resultReporter,
+            createDocumentRange,
+            convertToLocation,
+          );
+        },
+      });
+    },
+  );
+
+  connection.onWorkspaceSymbol(
+    async (
+      params: WorkspaceSymbolParams,
+      token: CancellationToken,
+      workDoneProgress,
+      resultProgress,
+    ) => {
+      return await _pyrightLanguageProvider.onWorkspaceSymbol(
+        params,
+        token,
+        resultProgress,
+      );
+    },
+  );
+
+  connection.onDocumentHighlight(
+    async (params: DocumentHighlightParams, token: CancellationToken) => {
+      return await dispatch(params, {
+        async python(pyrightLanguageService) {
+          return await pyrightLanguageService.onDocumentHighlight(
+            params,
+            token,
+          );
+        },
+      });
+    },
+  );
+
+  connection.onSignatureHelp(
+    async (params: SignatureHelpParams, token: CancellationToken) => {
+      return await dispatch(params, {
+        async python(pyrightLanguageService) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          return (await pyrightLanguageService.onSignatureHelp(
+            params,
+            token,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          )) as any;
+        },
+      });
+    },
+  );
+
+  connection.onPrepareRename(
+    async (params: PrepareRenameParams, token: CancellationToken) => {
+      return await dispatch(params, {
+        async python(pyrightLanguageService) {
+          return await pyrightLanguageService.onPrepareRenameRequest(
+            params,
+            token,
+          );
+        },
+      });
+    },
+  );
+
+  connection.onRenameRequest(
+    async (params: RenameParams, token: CancellationToken) => {
+      return await dispatch(params, {
+        async python(pyrightLanguageService) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          return (await pyrightLanguageService.onRenameRequest(
+            params,
+            token,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          )) as any;
+        },
+      });
+    },
+  );
+
+  connection.onDidChangeWatchedFiles(
+    async (params: DidChangeWatchedFilesParams) => {
+      _pyrightLanguageProvider.onDidChangeWatchedFiles(params);
+    },
+  );
+
+  connection.onExecuteCommand(
+    async (
+      params: ExecuteCommandParams,
+      token: CancellationToken,
+      reporter: WorkDoneProgressReporter,
+    ) => {
+      return await _pyrightLanguageProvider.onExecuteCommand(
+        params,
+        token,
+        reporter,
+      );
+    },
+  );
+
+  const callHierarchy = connection.languages.callHierarchy;
+
+  callHierarchy.onPrepare(async (params, token) => {
+    return (
+      (await dispatch(params, {
+        async python(pyrightLanguageService) {
+          return await pyrightLanguageService.onCallHierarchyPrepare(
+            params,
+            token,
+          );
+        },
+      })) ?? []
     );
   });
 
-  // Make the text document manager listen on the connection
-  // for open, change and close text document events
-  documents.listen(connection);
+  callHierarchy.onIncomingCalls(async (params, token) => {
+    return await _pyrightLanguageProvider.onCallHierarchyIncomingCalls(
+      params,
+      token,
+    );
+  });
+
+  callHierarchy.onOutgoingCalls(async (params, token) => {
+    return await _pyrightLanguageProvider.onCallHierarchyOutgoingCalls(
+      params,
+      token,
+    );
+  });
+
+  connection.onShutdown(async (token) => {
+    await _pyrightLanguageProvider.onShutdown(token);
+  });
 
   // Listen on the connection
   connection.listen();
 };
 
 function getLanguageService(uri: string) {
-  if (documentPool[uri]) {
+  if (!servicePool[uri]) {
     // re-create LanguageServer if document changed
     servicePool[uri] = new LanguageServiceProvider(documentPool[uri]);
 
@@ -166,7 +511,54 @@ function getLanguageService(uri: string) {
           .then(resolve),
       );
     }
-    delete documentPool[uri];
   }
   return servicePool[uri];
 }
+
+const dispatch = async <Ret>(
+  params: { textDocument: { uri: string }; position: Position },
+  callbacks: {
+    sas?: (languageService: LanguageServiceProvider) => Promise<Ret>;
+    python?: (pyrightLanguageService: PyrightLanguageProvider) => Promise<Ret>;
+  },
+) => {
+  const languageService = getLanguageService(params.textDocument.uri);
+  const pos = params.position;
+  const symbols: DocumentSymbol[] = languageService.getDocumentSymbols();
+  for (const symbol of symbols) {
+    const start = symbol.range.start;
+    const end = symbol.range.end;
+    if (
+      (start.line < pos.line ||
+        (start.line === pos.line && start.character <= pos.character)) &&
+      (end.line > pos.line ||
+        (end.line === pos.line && end.character >= pos.character))
+    ) {
+      if (symbol.name?.toUpperCase() === "PROC PYTHON") {
+        if (callbacks.python) {
+          return await callbacks.python(_pyrightLanguageProvider);
+        } else {
+          return undefined;
+        }
+      }
+    }
+  }
+  if (callbacks.sas) {
+    return await callbacks.sas(languageService);
+  } else {
+    return undefined;
+  }
+};
+
+const isRangeIncluded = (a: Range, b: Range) => {
+  if (
+    (b.start.line > a.start.line ||
+      (b.start.line === a.start.line &&
+        b.start.character >= a.start.character)) &&
+    (b.end.line < a.end.line ||
+      (b.end.line === a.end.line && b.end.character <= a.end.character))
+  ) {
+    return true;
+  }
+  return false;
+};

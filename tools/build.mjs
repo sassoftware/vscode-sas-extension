@@ -1,3 +1,5 @@
+import esbuildCopyPlugin from "@sprout2000/esbuild-copy-plugin";
+
 import concurrently from "concurrently";
 import esbuild from "esbuild";
 
@@ -5,6 +7,18 @@ console.log("start");
 const dev = process.argv[2];
 
 const plugins = [
+  esbuildCopyPlugin.copyPlugin({
+    src: "./server/node_modules/jsonc-parser/lib/umd/impl",
+    dest: "./server/dist/node/impl",
+  }),
+  esbuildCopyPlugin.copyPlugin({
+    src: "./server/node_modules/pyright-internal-lsp/dist/packages/pyright-internal/typeshed-fallback",
+    dest: "./server/dist/node/typeshed-fallback",
+  }),
+];
+
+const devPlugins = [
+  ...plugins,
   {
     name: "watch-plugin",
     setup(build) {
@@ -28,7 +42,7 @@ const commonBuildOptions = {
   },
   sourcemap: !!dev,
   minify: !dev,
-  plugins: dev ? plugins : [],
+  plugins: dev ? devPlugins : plugins,
   define: {
     "process.env.NODE_ENV": dev ? `"development"` : `"production"`,
   },

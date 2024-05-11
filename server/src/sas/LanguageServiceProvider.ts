@@ -52,8 +52,8 @@ const SymbolKinds = [
 ];
 
 export class LanguageServiceProvider {
-  private model;
-  private syntaxProvider;
+  public model;
+  public syntaxProvider;
   public completionProvider;
   public formatOnTypeProvider;
   public formatter;

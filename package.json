@@ -1086,6 +1086,7 @@
     "@typescript-eslint/eslint-plugin": "^7.8.0",
     "@typescript-eslint/parser": "^7.8.0",
     "@vscode/l10n-dev": "^0.0.35",
+    "@sprout2000/esbuild-copy-plugin": "^1.1.14",
     "chai": "^4.4.1",
     "concurrently": "^8.2.2",
     "esbuild": "^0.20.2",
