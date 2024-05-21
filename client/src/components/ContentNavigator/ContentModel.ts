@@ -15,7 +15,6 @@ import {
 } from "../../connection/studio";
 import { SASAuthProvider } from "../AuthProvider";
 import {
-  DEFAULT_FILE_CONTENT_TYPE,
   FILE_TYPES,
   FOLDER_TYPES,
   Messages,
@@ -43,7 +42,7 @@ interface AddMemberProperties {
 
 export class ContentModel {
   private connection: AxiosInstance;
-  private fileTokenMaps: {
+  private fileMetadataMap: {
     [id: string]: { etag: string; lastModified: string; contentType: string };
   };
   private authorized: boolean;
@@ -51,7 +50,7 @@ export class ContentModel {
   private delegateFolders: { [name: string]: ContentItem };
 
   constructor() {
-    this.fileTokenMaps = {};
+    this.fileMetadataMap = {};
     this.authorized = false;
     this.delegateFolders = {};
     this.viyaCadence = "";
@@ -181,24 +180,6 @@ export class ContentModel {
     }
   }
 
-  private updateFileMetadata(
-    id: string,
-    { headers, data }: AxiosResponse,
-    contentType?: string,
-  ) {
-    this.fileTokenMaps[id] = {
-      etag: headers.etag,
-      lastModified: headers["last-modified"],
-      contentType: contentType || data.contentType,
-    };
-  }
-
-  private async getResourceById(id: string): Promise<AxiosResponse> {
-    const res = await this.connection.get(id);
-    this.updateFileMetadata(id, res);
-    return res;
-  }
-
   public async getResourceByUri(uri: Uri): Promise<ContentItem> {
     const resourceId = getResourceId(uri);
     return (await this.getResourceById(resourceId)).data;
@@ -312,10 +293,6 @@ export class ContentModel {
       : item.uri;
 
     try {
-      // not sure why but the response of moveTo request does not return the latest etag so request it every time
-      const res = await this.getResourceById(uri);
-      const fileTokenMap = this.fileTokenMaps[uri];
-
       const validationUri = getLink(item.links, "PUT", "validateRename")?.uri;
       if (validationUri) {
         await this.connection.put(
@@ -325,14 +302,17 @@ export class ContentModel {
         );
       }
 
+      // not sure why but the response of moveTo request does not return the latest etag so request it every time
+      const { data: fileData } = await this.getResourceById(uri);
       const contentType = fetchFileContentType(name);
+      const fileMetadata = this.fileMetadataMap[uri];
       const patchResponse = await this.connection.put(
         uri,
-        { ...res.data, name, contentType },
+        { ...fileData, name },
         {
           headers: {
-            "If-Unmodified-Since": fileTokenMap.lastModified,
-            "If-Match": fileTokenMap.etag,
+            "If-Unmodified-Since": fileMetadata.lastModified,
+            "If-Match": fileMetadata.etag,
             "Content-Type": fetchItemContentType(item),
           },
         },
@@ -358,8 +338,8 @@ export class ContentModel {
     lastModified: string;
     contentType: string;
   } {
-    if (resourceId in this.fileTokenMaps) {
-      return this.fileTokenMaps[resourceId];
+    if (resourceId in this.fileMetadataMap) {
+      return this.fileMetadataMap[resourceId];
     }
     const now = new Date();
     const timestamp = now.toUTCString();
@@ -690,5 +670,23 @@ export class ContentModel {
     } while (currentContentItem.parentFolderUri);
 
     return "/" + filePathParts.reverse().join("/");
+  }
+
+  private updateFileMetadata(
+    id: string,
+    { headers, data }: AxiosResponse,
+    contentType?: string,
+  ) {
+    this.fileMetadataMap[id] = {
+      etag: headers.etag,
+      lastModified: headers["last-modified"],
+      contentType: contentType || data.contentType,
+    };
+  }
+
+  private async getResourceById(id: string): Promise<AxiosResponse> {
+    const res = await this.connection.get(id);
+    this.updateFileMetadata(id, res);
+    return res;
   }
 }
