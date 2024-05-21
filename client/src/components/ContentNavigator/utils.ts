@@ -3,12 +3,16 @@
 import { SnippetString, Uri } from "vscode";
 
 import {
+  DATAFLOW_TYPE,
+  DEFAULT_FILE_CONTENT_TYPE,
+  FAVORITES_FOLDER_TYPE,
   FILE_TYPES,
   FOLDER_TYPE,
   FOLDER_TYPES,
   TRASH_FOLDER_TYPE,
 } from "./const";
-import { ContentItem, Link } from "./types";
+import mimeTypes from "./mime-types";
+import { ContentItem, Link, Permission } from "./types";
 
 export const getLink = (
   links: Array<Link>,
@@ -138,4 +142,40 @@ export const getFileStatement = (
       .replace("$1", fileFolderPath.replace(/'/g, "''"))
       .replace("$2", contentItemName.replace(/'/g, "''")),
   );
+};
+
+export const getPermission = (item: ContentItem): Permission => {
+  const itemType = getTypeName(item);
+  return [FOLDER_TYPE, ...FILE_TYPES].includes(itemType) // normal folders and files
+    ? {
+        write: !!getLink(item.links, "PUT", "update"),
+        delete: !!getLink(item.links, "DELETE", "deleteResource"),
+        addMember: !!getLink(item.links, "POST", "createChild"),
+      }
+    : {
+        // delegate folders, user folder and user root folder
+        write: false,
+        delete: false,
+        addMember:
+          itemType !== TRASH_FOLDER_TYPE &&
+          itemType !== FAVORITES_FOLDER_TYPE &&
+          !!getLink(item.links, "POST", "createChild"),
+      };
+};
+
+export const fetchFileContentType = (fileName: string) =>
+  mimeTypes[fileName.split(".").pop().toLowerCase()] ||
+  DEFAULT_FILE_CONTENT_TYPE;
+
+export const fetchItemContentType = (item: ContentItem): string | undefined => {
+  const itemIsReference = item.type === "reference";
+  if (itemIsReference || isContainer(item)) {
+    return undefined;
+  }
+
+  if (item.contentType === DATAFLOW_TYPE) {
+    return "application/json";
+  }
+
+  return "application/vnd.sas.file+json";
 };
