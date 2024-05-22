@@ -1098,7 +1098,7 @@
     "papaparse": "^5.4.1",
     "path-browserify": "^1.0.1",
     "prettier": "^3.2.5",
-    "sinon": "^17.0.1",
+    "sinon": "^18.0.0",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "ts-sinon": "^2.0.2",
