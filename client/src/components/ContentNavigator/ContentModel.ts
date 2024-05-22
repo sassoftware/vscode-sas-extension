@@ -15,6 +15,7 @@ import {
 } from "../../connection/studio";
 import { SASAuthProvider } from "../AuthProvider";
 import {
+  DEFAULT_FILE_CONTENT_TYPE,
   FILE_TYPES,
   FOLDER_TYPES,
   Messages,
@@ -23,8 +24,8 @@ import {
 } from "./const";
 import { ContentItem, Link } from "./types";
 import {
-  fetchFileContentType,
-  fetchItemContentType,
+  getFileContentType,
+  getItemContentType,
   getLink,
   getPermission,
   getResourceId,
@@ -225,15 +226,15 @@ export class ContentModel {
     fileName: string,
     buffer?: ArrayBufferLike,
   ): Promise<ContentItem | undefined> {
-    const contentType = await this.getFileContentType(fileName);
+    const typeDef = await this.getTypeDefinition(fileName);
     let createdResource: ContentItem;
     try {
       const fileCreationResponse = await this.connection.post<ContentItem>(
-        `/files/files#rawUpload?typeDefName=${contentType}`,
+        `/files/files#rawUpload?typeDefName=${typeDef}`,
         buffer || Buffer.from("", "binary"),
         {
           headers: {
-            "Content-Type": fetchFileContentType(fileName),
+            "Content-Type": getFileContentType(fileName),
             "Content-Disposition": `filename*=UTF-8''${encodeURI(fileName)}`,
             Accept: "application/vnd.sas.file+json",
           },
@@ -250,7 +251,7 @@ export class ContentModel {
       getLink(item.links, "POST", "addMember")?.uri,
       {
         name: fileName,
-        contentType,
+        contentType: typeDef,
       },
     );
     if (!memberAdded) {
@@ -304,7 +305,7 @@ export class ContentModel {
 
       // not sure why but the response of moveTo request does not return the latest etag so request it every time
       const { data: fileData } = await this.getResourceById(uri);
-      const contentType = fetchFileContentType(name);
+      const contentType = getFileContentType(name);
       const fileMetadata = this.fileMetadataMap[uri];
       const patchResponse = await this.connection.put(
         uri,
@@ -313,7 +314,7 @@ export class ContentModel {
           headers: {
             "If-Unmodified-Since": fileMetadata.lastModified,
             "If-Match": fileMetadata.etag,
-            "Content-Type": fetchItemContentType(item),
+            "Content-Type": getItemContentType(item),
           },
         },
       );
@@ -343,7 +344,11 @@ export class ContentModel {
     }
     const now = new Date();
     const timestamp = now.toUTCString();
-    return { etag: "", lastModified: timestamp, contentType: "text/plain" };
+    return {
+      etag: "",
+      lastModified: timestamp,
+      contentType: DEFAULT_FILE_CONTENT_TYPE,
+    };
   }
 
   public async saveContentToUri(uri: Uri, content: string): Promise<void> {
@@ -561,7 +566,7 @@ export class ContentModel {
     return typeQuery;
   }
 
-  private async getFileContentType(fileName: string): Promise<string> {
+  private async getTypeDefinition(fileName: string): Promise<string> {
     const defaultContentType = "file";
     const ext = fileName.split(".").pop().toLowerCase();
     if (ext === "sas") {

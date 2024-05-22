@@ -163,11 +163,11 @@ export const getPermission = (item: ContentItem): Permission => {
       };
 };
 
-export const fetchFileContentType = (fileName: string) =>
+export const getFileContentType = (fileName: string) =>
   mimeTypes[fileName.split(".").pop().toLowerCase()] ||
   DEFAULT_FILE_CONTENT_TYPE;
 
-export const fetchItemContentType = (item: ContentItem): string | undefined => {
+export const getItemContentType = (item: ContentItem): string | undefined => {
   const itemIsReference = item.type === "reference";
   if (itemIsReference || isContainer(item)) {
     return undefined;
