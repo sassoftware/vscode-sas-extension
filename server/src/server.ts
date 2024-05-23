@@ -32,6 +32,7 @@ import { CollectionResult } from "pyright-internal-lsp/dist/packages/pyright-int
 import { ParseFileResults } from "pyright-internal-lsp/dist/packages/pyright-internal/src/parser/parser";
 
 import { PyrightLanguageProvider } from "./python/PyrightLanguageProvider";
+import { CodeZoneManager } from "./sas/CodeZoneManager";
 import { CompletionProvider } from "./sas/CompletionProvider";
 import { LanguageServiceProvider, legend } from "./sas/LanguageServiceProvider";
 import type { LibCompleteItem } from "./sas/SyntaxDataProvider";
@@ -61,7 +62,6 @@ export const init = (conn: Connection): void => {
     ) {
       supportSASGetLibList = true;
     }
-
     _pyrightLanguageProvider.initialize(params, [], []);
 
     const result: InitializeResult = {
@@ -523,6 +523,7 @@ const dispatch = async <Ret>(
   },
 ) => {
   const languageService = getLanguageService(params.textDocument.uri);
+  const codeZoneManager = languageService.getCodeZoneManager();
   const pos = params.position;
   const symbols: DocumentSymbol[] = languageService.getDocumentSymbols();
   for (const symbol of symbols) {
@@ -534,7 +535,11 @@ const dispatch = async <Ret>(
       (end.line > pos.line ||
         (end.line === pos.line && end.character >= pos.character))
     ) {
-      if (symbol.name?.toUpperCase() === "PROC PYTHON") {
+      if (
+        symbol.name?.toUpperCase() === "PROC PYTHON" &&
+        codeZoneManager.getCurrentZone(pos.line, pos.character) ===
+          CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG
+      ) {
         if (callbacks.python) {
           return await callbacks.python(_pyrightLanguageProvider);
         } else {

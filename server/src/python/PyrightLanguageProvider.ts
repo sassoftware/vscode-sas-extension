@@ -1,3 +1,5 @@
+// Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 import {
   CallHierarchyIncomingCallsParams,
   CallHierarchyItem,
@@ -203,6 +205,7 @@ export class PyrightLanguageProvider extends PyrightServer {
   }
 
   public onInitialized(): void {
+    this.updateSettingsForAllWorkspaces();
     super.onInitialized();
   }
 
@@ -241,7 +244,7 @@ export class PyrightLanguageProvider extends PyrightServer {
   }
 
   public async onDidCloseTextDocument(params: DidCloseTextDocumentParams) {
-    // delete this.docOffsetMap[params.textDocument.uri];
+    delete this.docChangeRecords[params.textDocument.uri];
     await super.onDidCloseTextDocument(params);
   }
 
