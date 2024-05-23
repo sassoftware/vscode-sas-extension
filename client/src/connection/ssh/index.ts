@@ -6,8 +6,8 @@ import { Client, ClientChannel, ConnectConfig } from "ssh2";
 
 import { BaseConfig, RunResult } from "..";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
-import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
 import { Session } from "../session";
+import { extractOutputHtmlFileName } from "../util";
 
 const endCode = "--vscode-sas-extension-submit-end--";
 const sasLaunchTimeout = 10000;

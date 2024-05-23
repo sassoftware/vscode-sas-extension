@@ -49,7 +49,7 @@ import {
   TRASH_FOLDER_TYPE,
 } from "./const";
 import { convertNotebookToFlow } from "./convert";
-import { ContentItem } from "./types";
+import { ContentItem, FileManipulationEvent } from "./types";
 import {
   getCreationDate,
   getFileStatement,
@@ -76,6 +76,7 @@ class ContentDataProvider
     SubscriptionProvider,
     TreeDragAndDropController<ContentItem>
 {
+  private _onDidManipulateFile: EventEmitter<FileManipulationEvent>;
   private _onDidChangeFile: EventEmitter<FileChangeEvent[]>;
   private _onDidChangeTreeData: EventEmitter<ContentItem | undefined>;
   private _onDidChange: EventEmitter<Uri>;
@@ -92,6 +93,7 @@ class ContentDataProvider
   }
 
   constructor(model: ContentModel, extensionUri: Uri) {
+    this._onDidManipulateFile = new EventEmitter<FileManipulationEvent>();
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
     this._onDidChange = new EventEmitter<Uri>();
@@ -197,6 +199,10 @@ class ContentDataProvider
     return this._onDidChange.event;
   }
 
+  get onDidManipulateFile(): Event<FileManipulationEvent> {
+    return this._onDidManipulateFile.event;
+  }
+
   public async connect(baseUrl: string): Promise<void> {
     await this.model.connect(baseUrl);
     this.refresh();
@@ -292,6 +298,7 @@ class ContentDataProvider
     if (!(await closing)) {
       return;
     }
+
     const newItem = await this.model.renameResource(item, name);
     if (newItem) {
       const newUri = getUri(newItem);
@@ -299,6 +306,11 @@ class ContentDataProvider
         // File was open before rename, so re-open it
         commands.executeCommand("vscode.open", newUri);
       }
+      this._onDidManipulateFile.fire({
+        type: "rename",
+        uri: getUri(item),
+        newUri,
+      });
       return newUri;
     }
   }
@@ -314,6 +326,7 @@ class ContentDataProvider
     const success = await this.model.delete(item);
     if (success) {
       this.refresh();
+      this._onDidManipulateFile.fire({ type: "delete", uri: getUri(item) });
     }
     return success;
   }
@@ -331,11 +344,16 @@ class ContentDataProvider
     if (!(await closeFileIfOpen(item))) {
       return false;
     }
+
     const success = await this.model.moveTo(item, recycleBinUri);
     if (success) {
       this.refresh();
       // update the text document content as well just in case that this file was just restored and updated
       this._onDidChange.fire(getUri(item, true));
+      this._onDidManipulateFile.fire({
+        type: "recycle",
+        uri: getUri(item),
+      });
     }
     return success;
   }
