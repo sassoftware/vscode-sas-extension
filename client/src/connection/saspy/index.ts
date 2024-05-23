@@ -10,6 +10,11 @@ import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 import { extractOutputHtmlFileName } from "../util";
 // import { scriptContent } from "./script";
+import { LineParser } from "../itc/LineParser";
+import {
+  WORK_DIR_END_TAG,
+  WORK_DIR_START_TAG,
+} from "../itc/const";
 import { Config, LineCodes } from "./types";
 import { saspyGetHtmlStyleValue } from "./util";
 
@@ -37,6 +42,16 @@ export class SASPYSession extends Session {
   private _workDirectory: string;
   private _pollingForLogResults: boolean;
   private _logLineType = 0;
+  private _workDirectoryParser: LineParser;
+    
+  constructor() {
+    super();
+    this._workDirectoryParser = new LineParser(
+      WORK_DIR_START_TAG,
+      WORK_DIR_END_TAG,
+      false,
+    );
+  }
 
   public set config(value: Config) {
     this._config = value;
@@ -73,9 +88,11 @@ export class SASPYSession extends Session {
     this._shellProcess.stdout.on("data", this.onShellStdOut);
     this._shellProcess.stderr.on("data", this.onShellStdErr);
     const saspyWorkDir = `
-%let workDir = %sysfunc(pathname(work));
-%put &=workDir;
-%let rc = %sysfunc(dlgcdir("&workDir"));
+%let __workDir = %sysfunc(pathname(work));
+%put ${WORK_DIR_START_TAG};
+%put &__workDir.;
+%put ${WORK_DIR_END_TAG};
+%let rc = %sysfunc(dlgcdir("&__workDir"));
 run;
 `;
     const saspyHtmlStyle = saspyGetHtmlStyleValue() ?? "Illuminate";
@@ -119,6 +136,7 @@ ${saspyWorkDir}
 """
 
 ll=sas.submit(vscode_saspy_code)
+print(ll['LOG'])
 
 `;
 
@@ -134,7 +152,7 @@ ll=sas.submit(vscode_saspy_code)
      * will not exist. The work dir should only be deleted when close is invoked.
      */
     if (!this._workDirectory) {
-      this._shellProcess.stdin.write(`sas\n`);
+      // this._shellProcess.stdin.write(`sas\n`);
 
       if (this._config.sasOptions?.length > 0) {
         const sasOptsInput = `$sasOpts=${this.formatSASOptions(
@@ -189,12 +207,12 @@ ${codeWithEnd}
     this._pollingForLogResults = true;
     await this._shellProcess.stdin.write(
       `ll=sas.submit(codeToRun, results='HTML')\n`,
+
       async (error) => {
+        await this.fetchLog();
         if (error) {
           this._runReject(error);
         }
-
-        await this.fetchLog();
       },
     );
 
@@ -282,6 +300,26 @@ ${codeWithEnd}
     }
   };
 
+  private fetchWorkDirectory = (line: string): string | undefined => {
+    let foundWorkDirectory = "";
+    if (
+      !line.includes(`%put ${WORK_DIR_START_TAG};`) &&
+      !line.includes(`%put &__workDir.;`) &&
+      !line.includes(`%put ${WORK_DIR_END_TAG};`)
+    ) {
+      foundWorkDirectory = this._workDirectoryParser.processLine(line);
+    } else {
+      // If the line is the put statement, we don't need to log that
+      return;
+    }
+    // We don't want to output any of the captured lines
+    if (this._workDirectoryParser.isCapturingLine()) {
+      return;
+    }
+
+    return foundWorkDirectory || "";
+  };
+
   /**
    * Handles stdout output from the powershell child process.
    * @param data a buffer of stdout output from the child process.
@@ -295,21 +333,21 @@ ${codeWithEnd}
         return;
       }
 
-      // if (!this._workDirectory && line.startsWith("WORKDIR=")) {
-      //   const parts = line.split("WORKDIR=");
-      //   this._workDirectory = parts[1].trim();
-      //   this._runResolve();
-      //   updateStatusBarItem(true);
-      //   return;
-      // }
-      if (!this._workDirectory && /^WORK Path +=/.test(line)) {
-        const parts = line.split(/WORK Path +=/);
-        this._workDirectory = parts[1].trim();
-        this._runResolve();
-        updateStatusBarItem(true);
-        return;
-      }
       if (!this.processLineCodes(line)) {
+        if (!this._workDirectory) {
+          const foundWorkDirectory = this.fetchWorkDirectory(line);
+          if (foundWorkDirectory === undefined) {
+            return;
+          }
+
+          if (foundWorkDirectory) {
+            this._workDirectory = foundWorkDirectory.trim();
+            this._runResolve();
+            updateStatusBarItem(true);
+            return;
+          }
+        }
+
         this._html5FileName = extractOutputHtmlFileName(
           line,
           this._html5FileName,
