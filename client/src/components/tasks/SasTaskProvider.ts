@@ -25,6 +25,7 @@ export class SasTaskProvider implements TaskProvider {
   provideTasks(): ProviderResult<Task[]> {
     return [generateTask(SasTaskNames.RunSasFile, runSasFileTask)];
   }
+
   resolveTask(task: Task): ProviderResult<Task> {
     if (task.definition.task === SasTaskNames.RunSasFile) {
       return generateTask(task, runSasFileTask);

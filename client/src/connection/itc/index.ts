@@ -18,8 +18,8 @@ import {
   getSecretStorage,
 } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
-import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
 import { Session } from "../session";
+import { extractOutputHtmlFileName } from "../util";
 import { LineParser } from "./LineParser";
 import {
   ERROR_END_TAG,
@@ -224,7 +224,11 @@ export class ITCSession extends Session {
 
     //write an end mnemonic so that the handler knows when execution has finished
     const codeWithEnd = `${codeWithODSPath}\n%put ${LineCodes.RunEndCode};`;
-    const codeToRun = `$code=\n@'\n${codeWithEnd}\n'@\n`;
+    const codeWithEscapeNewLine = codeWithEnd.replace(
+      /\n/g,
+      "\n'@+[environment]::NewLine+@'\n",
+    );
+    const codeToRun = `$code=\n@'\n${codeWithEscapeNewLine}\n'@\n`;
 
     this._html5FileName = "";
     this._shellProcess.stdin.write(codeToRun);

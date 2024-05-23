@@ -172,7 +172,17 @@ describe("ITC connection", () => {
       expect(runResult.title).to.equal("Result");
 
       expect(stdinStub.args[13][0]).to.deep.equal(
-        `$code=\n@'\nods html5(id=vscode) path="/work/dir" ;\nproc print data=sashelp.cars;\nrun;\n%put --vscode-sas-extension-submit-end--;\n'@\n`,
+        `$code=
+@'
+ods html5(id=vscode) path="/work/dir" ;
+'@+[environment]::NewLine+@'
+proc print data=sashelp.cars;
+'@+[environment]::NewLine+@'
+run;
+'@+[environment]::NewLine+@'
+%put --vscode-sas-extension-submit-end--;
+'@
+`,
       );
 
       expect(stdinStub.args[14][0]).to.deep.equal(`$runner.Run($code)\n`);
