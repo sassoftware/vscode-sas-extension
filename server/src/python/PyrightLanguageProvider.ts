@@ -58,7 +58,6 @@ import { CodeZoneManager } from "../sas/CodeZoneManager";
 import { LanguageServiceProvider } from "../sas/LanguageServiceProvider";
 
 export class PyrightLanguageProvider extends PyrightServer {
-  protected docChangeRecords: Record<string, TextDocument>;
   protected sasLspProvider: (uri: string) => LanguageServiceProvider;
 
   constructor(
@@ -70,28 +69,10 @@ export class PyrightLanguageProvider extends PyrightServer {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     super({ ...connection, listen() {} } as LSPAny, maxWorkers, realFileSystem);
     this.sasLspProvider = sasLspProvider;
-    this.docChangeRecords = {};
-    this.startDocSynchronizer();
   }
 
   public getClientCapabilities(): ClientCapabilities {
     return this.client;
-  }
-
-  protected startDocSynchronizer() {
-    setInterval(() => {
-      const changes = this.docChangeRecords;
-      this.docChangeRecords = {};
-      for (const uri in changes) {
-        const doc = changes[uri];
-        const pythonDoc = this.extractPythonCodes(doc);
-
-        this.onDidChangeTextDocument({
-          textDocument: doc,
-          contentChanges: [{ text: pythonDoc }],
-        });
-      }
-    }, 1000);
   }
 
   protected extractPythonCodes(doc: TextDocument): string {
@@ -218,7 +199,12 @@ export class PyrightLanguageProvider extends PyrightServer {
   }
 
   public addContentChange(doc: TextDocument): void {
-    this.docChangeRecords[doc.uri] = doc;
+    const pythonDoc = this.extractPythonCodes(doc);
+
+    this.onDidChangeTextDocument({
+      textDocument: doc,
+      contentChanges: [{ text: pythonDoc }],
+    });
   }
 
   public async onHover(params: HoverParams, token: CancellationToken) {
@@ -244,7 +230,6 @@ export class PyrightLanguageProvider extends PyrightServer {
   }
 
   public async onDidCloseTextDocument(params: DidCloseTextDocumentParams) {
-    delete this.docChangeRecords[params.textDocument.uri];
     await super.onDidCloseTextDocument(params);
   }
 

@@ -17,7 +17,6 @@ import {
   RenameParams,
   ResultProgressReporter,
   SemanticTokensRequest,
-  SignatureHelpParams,
   TextDocumentPositionParams,
   TextDocumentSyncKind,
   WorkDoneProgressReporter,
@@ -37,8 +36,13 @@ import { CompletionProvider } from "./sas/CompletionProvider";
 import { LanguageServiceProvider, legend } from "./sas/LanguageServiceProvider";
 import type { LibCompleteItem } from "./sas/SyntaxDataProvider";
 
-const servicePool: Record<string, LanguageServiceProvider> = {};
-const documentPool: Record<string, TextDocument> = {};
+interface DocumentInfo {
+  document: TextDocument;
+  changed: boolean;
+  service?: LanguageServiceProvider;
+}
+
+const documentPool: Record<string, DocumentInfo> = {};
 
 let completionProvider: CompletionProvider;
 let connection: Connection;
@@ -116,6 +120,7 @@ export const init = (conn: Connection): void => {
   connection.onInitialized(() => _pyrightLanguageProvider.onInitialized());
 
   connection.onRequest(SemanticTokensRequest.type, (params) => {
+    syncIfDocChange(params.textDocument.uri);
     const languageService = getLanguageService(params.textDocument.uri);
 
     return { data: languageService.getTokens() };
@@ -188,6 +193,7 @@ export const init = (conn: Connection): void => {
   });
 
   connection.onDocumentSymbol(async (params, token) => {
+    syncIfDocChange(params.textDocument.uri);
     const languageService = getLanguageService(params.textDocument.uri);
     const sasSymbols = languageService.getDocumentSymbols();
     const pythonSymbols =
@@ -209,6 +215,7 @@ export const init = (conn: Connection): void => {
 
   // todo
   connection.onFoldingRanges((params) => {
+    syncIfDocChange(params.textDocument.uri);
     const languageService = getLanguageService(params.textDocument.uri);
     return languageService.getFoldingRanges();
   });
@@ -267,6 +274,7 @@ export const init = (conn: Connection): void => {
   });
 
   connection.onDocumentFormatting((params) => {
+    syncIfDocChange(params.textDocument.uri);
     const languageService = getLanguageService(params.textDocument.uri);
     return languageService.formatter.format({
       tabWidth: params.options.tabSize,
@@ -281,27 +289,25 @@ export const init = (conn: Connection): void => {
       params.textDocument.version,
       params.textDocument.text,
     );
-    documentPool[doc.uri] = doc;
+    documentPool[doc.uri] = { document: doc, changed: false };
     await _pyrightLanguageProvider.onDidOpenTextDocument(params);
   });
 
   connection.onDidCloseTextDocument(async (params) => {
     const uri = params.textDocument.uri;
     delete documentPool[uri];
-    delete servicePool[uri];
     await _pyrightLanguageProvider.onDidCloseTextDocument(params);
   });
 
   connection.onDidChangeTextDocument((params) => {
     const uri = params.textDocument.uri;
-    const doc = documentPool[uri];
+    const docInfo = documentPool[uri];
     TextDocument.update(
-      doc,
+      docInfo.document,
       params.contentChanges,
       params.textDocument.version,
     );
-    delete servicePool[uri];
-    _pyrightLanguageProvider.addContentChange(doc);
+    docInfo.changed = true;
   });
 
   connection.onDidChangeConfiguration(
@@ -378,6 +384,7 @@ export const init = (conn: Connection): void => {
       workDoneProgress,
       resultProgress,
     ) => {
+      syncAllChangedDoc();
       return await _pyrightLanguageProvider.onWorkspaceSymbol(
         params,
         token,
@@ -394,21 +401,6 @@ export const init = (conn: Connection): void => {
             params,
             token,
           );
-        },
-      });
-    },
-  );
-
-  connection.onSignatureHelp(
-    async (params: SignatureHelpParams, token: CancellationToken) => {
-      return await dispatch(params, {
-        async python(pyrightLanguageService) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          return (await pyrightLanguageService.onSignatureHelp(
-            params,
-            token,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          )) as any;
         },
       });
     },
@@ -444,6 +436,9 @@ export const init = (conn: Connection): void => {
 
   connection.onDidChangeWatchedFiles(
     async (params: DidChangeWatchedFilesParams) => {
+      params.changes.forEach((item) => {
+        syncIfDocChange(item.uri);
+      });
       _pyrightLanguageProvider.onDidChangeWatchedFiles(params);
     },
   );
@@ -454,6 +449,7 @@ export const init = (conn: Connection): void => {
       token: CancellationToken,
       reporter: WorkDoneProgressReporter,
     ) => {
+      syncAllChangedDoc();
       return await _pyrightLanguageProvider.onExecuteCommand(
         params,
         token,
@@ -500,19 +496,20 @@ export const init = (conn: Connection): void => {
 };
 
 function getLanguageService(uri: string) {
-  if (!servicePool[uri]) {
-    // re-create LanguageServer if document changed
-    servicePool[uri] = new LanguageServiceProvider(documentPool[uri]);
+  const docInfo = documentPool[uri];
+  // re-create LanguageServer if document changed
+  if (!docInfo.service || docInfo.changed) {
+    docInfo.service = new LanguageServiceProvider(docInfo.document);
 
     if (supportSASGetLibList) {
-      servicePool[uri].setLibService((libId, resolve) =>
+      docInfo.service.setLibService((libId, resolve) =>
         connection
           .sendRequest<LibCompleteItem[]>("sas/getLibList", { libId: libId })
           .then(resolve),
       );
     }
   }
-  return servicePool[uri];
+  return docInfo.service!;
 }
 
 const dispatch = async <Ret>(
@@ -522,6 +519,7 @@ const dispatch = async <Ret>(
     python?: (pyrightLanguageService: PyrightLanguageProvider) => Promise<Ret>;
   },
 ) => {
+  syncIfDocChange(params.textDocument.uri);
   const languageService = getLanguageService(params.textDocument.uri);
   const codeZoneManager = languageService.getCodeZoneManager();
   const pos = params.position;
@@ -566,4 +564,19 @@ const isRangeIncluded = (a: Range, b: Range) => {
     return true;
   }
   return false;
+};
+
+const syncIfDocChange = (uri: string) => {
+  const docInfo = documentPool[uri];
+  if (!docInfo.changed) {
+    return;
+  }
+  docInfo.changed = false;
+  _pyrightLanguageProvider.addContentChange(docInfo.document);
+};
+
+const syncAllChangedDoc = () => {
+  for (const uri in documentPool) {
+    syncIfDocChange(uri);
+  }
 };
