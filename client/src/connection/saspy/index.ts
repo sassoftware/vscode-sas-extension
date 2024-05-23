@@ -7,13 +7,11 @@ import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { LogLineTypeEnum, RunResult } from "..";
 import { getGlobalStorageUri } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
-import {
-  extractOutputHtmlFileName,
-  wrapCodeWithOutputHtml,
-} from "../../components/utils/sasCode";
 import { Session } from "../session";
+import { extractOutputHtmlFileName } from "../util";
 // import { scriptContent } from "./script";
 import { Config, LineCodes } from "./types";
+import { saspyGetHtmlStyleValue } from "./util";
 
 const LogLineTypes: LogLineTypeEnum[] = [
   "normal",
@@ -80,9 +78,7 @@ export class SASPYSession extends Session {
 %let rc = %sysfunc(dlgcdir("&workDir"));
 run;
 `;
-    const saspyWorkDirWithODS = wrapCodeWithOutputHtml(saspyWorkDir);
-    const saspyHtmlStyle =
-      saspyWorkDirWithODS.match(/style=([^ ]+) /)?.[1] ?? "Illuminate";
+    const saspyHtmlStyle = saspyGetHtmlStyleValue() ?? "Illuminate";
 
     const cfgname =
       this._config.cfgname?.length > 0 ? this._config.cfgname : "";
@@ -233,7 +229,7 @@ ${codeWithEnd}
    */
   public cancel = async () => {
     this._pollingForLogResults = false;
-    this._shellProcess.stdin.write("print(r'abc')\n", async (error) => {
+    this._shellProcess.stdin.write("%abort cancel;\n", async (error) => {
       if (error) {
         this._runReject(error);
       }
