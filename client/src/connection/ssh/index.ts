@@ -216,7 +216,10 @@ export class SSHSession extends Session {
     this.stream.on("close", this.onStreamClose);
     this.stream.on("data", this.onStreamData);
 
-    const resolvedEnv: string[] = ['_JAVA_OPTIONS="-Djava.awt.headless=true"'];
+    const resolvedEnv: string[] = [
+      "env",
+      '_JAVA_OPTIONS="-Djava.awt.headless=true"',
+    ];
     const execArgs: string = resolvedEnv.join(" ");
 
     const resolvedSasOpts: string[] = [
