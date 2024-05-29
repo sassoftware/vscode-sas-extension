@@ -77,10 +77,6 @@ async function updateDiagnostics(
 
   const problems = parseLog(logs, codeDoc.wrappedCodeLineAt(0));
 
-  if (!problems || problems.length === 0) {
-    return;
-  }
-
   updateProblemLocation(problems, codeDoc);
 
   const problemsWithValidLocation = problems.filter((problem) => {
@@ -90,7 +86,10 @@ async function updateDiagnostics(
 
   const diagnostics = constructDiagnostics(problemsWithValidLocation);
 
-  getSasDiagnosticCollection().set(Uri.parse(codeDoc.getUri()), diagnostics);
+  getSasDiagnosticCollection().set(
+    Uri.parse(codeDoc.getUri()),
+    diagnostics.length > 0 ? diagnostics : undefined,
+  );
 }
 
 function updateProblemLocation(problems: Problem[], codeDoc: SASCodeDocument) {
