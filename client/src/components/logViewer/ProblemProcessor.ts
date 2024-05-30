@@ -245,8 +245,8 @@ export class ProblemProcessor {
     const isSameLineNumber = lastCodeInfo.lineNumber === newCodeInfo.lineNumber;
     const lastLine = lastCodeInfo.code.trim();
     const newLine = newCodeInfo.code.trim();
-    const isSameCode = lastLine.includes(newLine) || newLine.includes(lastLine);
-    const beginIndex = lastSourceCodeLine.indexOf(newLine[0]);
+    const isSameCode =
+      lastLine.startsWith(newLine) || newLine.startsWith(lastLine);
 
     if (!isSameLineNumber) {
       this.currentSourceCodeLines = [newSourceCodeLine];
@@ -254,6 +254,7 @@ export class ProblemProcessor {
     }
 
     if (isSameCode) {
+      const beginIndex = lastSourceCodeLine.indexOf(newLine[0]);
       this.currentSourceCodeLines.pop();
       this.currentSourceCodeLines.push(
         lastSourceCodeLine.substring(0, beginIndex) + newLine,
@@ -491,9 +492,25 @@ function processSourceCodeLines(
 
   // the source code log line may be separated into multiple lines, and the error occurred at the latter line,
   // in this case, must take account of the previous lines length to make start column correct.
-  const leadingLines = sourceCodeLines.slice(0, -1);
-  const columnCorrection = leadingLines.reduce(
-    (accumulator, line) => accumulator + line.length - columnOffset + 1,
+  const columnCorrection = sourceCodeLines.reduce(
+    (accumulator, line, index, lines) => {
+      // it is possible the beginning and end spaces are trimmed, which makes the column correction wrong.
+      // so in such case, 1 additional column (suppose only one space between two lines) will be considered.
+      const isLastLineEndWithSpace =
+        index === 0 || lines[index - 1].endsWith(" ");
+      const isCurrentLineStartWithSpace = lines[index]
+        .substring(columnOffset)
+        .startsWith(" ");
+      // excludes the length of last line
+      const currentLineLength =
+        lines.length - index === 1 ? 0 : line.length - columnOffset;
+
+      return (
+        accumulator +
+        currentLineLength +
+        (!(isLastLineEndWithSpace || isCurrentLineStartWithSpace) ? 1 : 0)
+      );
+    },
     0,
   );
 
