@@ -55,6 +55,7 @@
   "configuration.SAS.flowConversionModeSwimlane": "Convertir cada celda del bloc de notas en un canal",
   "configuration.SAS.log.showOnExecutionFinish": "Mostrar log de SAS al finalizar la ejecución del código",
   "configuration.SAS.log.showOnExecutionStart": "Mostrar log de SAS al iniciar la ejecución del código",
+  "configuration.SAS.problems.log.enabled": "Show problems from SAS log",
   "configuration.SAS.results.html.enabled": "Habilitar/desabilitar la salida ODS HTML5",
   "configuration.SAS.results.html.style": "Especifica el estilo para resultados ODS HTML5.",
   "configuration.SAS.results.html.style.(auto)": "Permitir que la extensión seleccione un estilo que más se aproxime al tema de color.",
