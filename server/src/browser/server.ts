@@ -107,8 +107,8 @@ connection.onFoldingRanges((params) => {
 connection.onRequest("sas/getFoldingBlock", (params) => {
   const languageService = getLanguageService(params.textDocument.uri);
   const block = languageService.getFoldingBlock(
-    params.line,
-    params.col,
+    params.position.line,
+    params.position.col,
     params.strict ?? true,
     params.ignoreCustomBlock,
     params.ignoreGlobalBlock,

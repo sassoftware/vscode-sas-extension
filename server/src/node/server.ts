@@ -14,11 +14,15 @@ import {
   PrepareRenameParams,
   Range,
   ReferenceParams,
+  Registration,
+  RegistrationRequest,
   RenameParams,
   ResultProgressReporter,
   SemanticTokensRequest,
   TextDocumentPositionParams,
   TextDocumentSyncKind,
+  Unregistration,
+  UnregistrationRequest,
   WorkDoneProgressReporter,
   WorkspaceSymbolParams,
 } from "vscode-languageserver";
@@ -48,6 +52,7 @@ interface DocumentInfo {
 const documentPool: Record<string, DocumentInfo> = {};
 
 let supportSASGetLibList = false;
+let registeredAdvancedCapabilities = false;
 
 const connection: Connection = createConnection(ProposedFeatures.all);
 
@@ -81,15 +86,9 @@ connection.onInitialize((params) => {
         firstTriggerCharacter: "\n",
         moreTriggerCharacter: [";"],
       },
-      definitionProvider: { workDoneProgress: true },
-      declarationProvider: { workDoneProgress: true },
-      typeDefinitionProvider: { workDoneProgress: true },
-      referencesProvider: { workDoneProgress: true },
       documentSymbolProvider: { workDoneProgress: true },
       workspaceSymbolProvider: { workDoneProgress: true },
       hoverProvider: { workDoneProgress: true },
-      documentHighlightProvider: { workDoneProgress: true },
-      renameProvider: { prepareProvider: true, workDoneProgress: true },
       completionProvider: {
         triggerCharacters: _pyrightLanguageProvider.getClientCapabilities()
           .hasVisualStudioExtensionsCapability
@@ -105,7 +104,6 @@ connection.onInitialize((params) => {
         triggerCharacters: ["(", ",", ")"],
         workDoneProgress: true,
       },
-      callHierarchyProvider: true,
       workspace: {
         workspaceFolders: {
           supported: true,
@@ -196,8 +194,10 @@ connection.onDocumentSymbol(async (params, token) => {
   const sasSymbols = languageService.getDocumentSymbols();
   const pythonSymbols =
     (await _pyrightLanguageProvider.onDocumentSymbol(params, token)) ?? [];
+  let hasPythonCode = false;
   for (const sasSymbol of sasSymbols) {
     if (sasSymbol.name?.toUpperCase() === "PROC PYTHON") {
+      hasPythonCode = true;
       for (const pythonSymbol of pythonSymbols) {
         if (!("range" in pythonSymbol)) {
           continue;
@@ -206,6 +206,15 @@ connection.onDocumentSymbol(async (params, token) => {
           sasSymbol.children?.push(pythonSymbol);
         }
       }
+    }
+  }
+  if (registeredAdvancedCapabilities) {
+    if (!hasPythonCode) {
+      unregisterAdvancedCapabilities(connection);
+    }
+  } else {
+    if (hasPythonCode) {
+      registerAdvancedCapabilities(connection);
     }
   }
   return sasSymbols;
@@ -573,4 +582,43 @@ const syncAllChangedDoc = () => {
   for (const uri in documentPool) {
     syncIfDocChange(uri);
   }
+};
+
+const advancedCapabilities = [
+  "textDocument/declaration",
+  "textDocument/definition",
+  "textDocument/typeDefinition",
+  "textDocument/references",
+  "textDocument/rename",
+  "textDocument/documentHighlight",
+  "textDocument/prepareCallHierarchy",
+];
+
+const registerAdvancedCapabilities = async (conn: Connection) => {
+  if (registeredAdvancedCapabilities) {
+    return;
+  }
+  registeredAdvancedCapabilities = true;
+  const registerOptions = {
+    documentSelector: [{ language: "sas" }],
+  };
+  const registrations: Registration[] = [];
+  for (const capability of advancedCapabilities) {
+    registrations.push({ id: capability, method: capability, registerOptions });
+  }
+  await conn.sendRequest(RegistrationRequest.type, { registrations });
+};
+
+const unregisterAdvancedCapabilities = async (conn: Connection) => {
+  if (!registeredAdvancedCapabilities) {
+    return;
+  }
+  registeredAdvancedCapabilities = false;
+  const unregisterations: Unregistration[] = [];
+  for (const capability of advancedCapabilities) {
+    unregisterations.push({ id: capability, method: capability });
+  }
+  await conn.sendRequest(UnregistrationRequest.type, {
+    unregisterations: unregisterations,
+  });
 };
