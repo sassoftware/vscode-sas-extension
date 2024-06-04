@@ -55,7 +55,7 @@
   "configuration.SAS.flowConversionModeSwimlane": "Converta cada célula do notebook em uma raia (swimlane)",
   "configuration.SAS.log.showOnExecutionFinish": "Mostrar log SAS quando a execução for concluída",
   "configuration.SAS.log.showOnExecutionStart": "Mostrar log SAS quando a execução começa",
-  "configuration.SAS.problems.log.enabled": "Show problems from SAS log",
+  "configuration.SAS.problems.log.enabled": "Mostre os problemas do log do SAS",
   "configuration.SAS.results.html.enabled": "Habilitar/desabilitar resultados HTML5 do ODS",
   "configuration.SAS.results.html.style": "Especifica o estilo dos resultados HTML5 do ODS.",
   "configuration.SAS.results.html.style.(auto)": "Deixa que a extensão escolha o estilo que corresponda melhor ao tema de cores.",
