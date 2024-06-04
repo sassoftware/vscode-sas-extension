@@ -55,7 +55,7 @@
   "configuration.SAS.flowConversionModeSwimlane": "各ノートブックのセルをスイムレーンに変換する",
   "configuration.SAS.log.showOnExecutionFinish": "コードの実行終了時に SAS ログを表示する",
   "configuration.SAS.log.showOnExecutionStart": "コードの実行開始時に SAS ログを表示する",
-  "configuration.SAS.problems.log.enabled": "Show problems from SAS log",
+  "configuration.SAS.problems.log.enabled": "SAS ログから問題を表示する",
   "configuration.SAS.results.html.enabled": "ODS HTML5 出力の有効化/無効化を設定する",
   "configuration.SAS.results.html.style": "ODS HTML5 結果のスタイルを指定する",
   "configuration.SAS.results.html.style.(auto)": "カラーテーマに最も近いスタイルを拡張機能に選択させます。",
