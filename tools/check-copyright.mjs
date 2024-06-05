@@ -10,6 +10,7 @@ const filesToIgnore = [
   "*.config.js",
   "*.test.tsx?",
   "tools/**",
+  "website/**",
 ];
 
 const COPYRIGHT_REGEX = /^\/\/ Copyright © ([0-9-\s]+), SAS Institute/;

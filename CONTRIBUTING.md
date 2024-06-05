@@ -106,6 +106,10 @@ Follow these steps to update a locale for the SAS Extension for VSCode:
 - Press ▷ to run the launch config (F5).
 - See test result in the `Debug Console` panel.
 
+## Update documentation
+
+The `website` directory powers the [documentation website](https://sassoftware.github.io/vscode-sas-extension/). Update the markdown files in `website/docs/` directory. It will be built to the website when pushed to the `main` branch. See its [README](./website/README.md) for details.
+
 # Testing unpublished versions
 
 You can still try out any commit or pull request (PR) if you don't want to manually build from source code.
