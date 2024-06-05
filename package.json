@@ -1078,6 +1078,7 @@
     "locale": "npx @vscode/l10n-dev export -o ./l10n ./client/src && node ./tools/locale.mjs"
   },
   "devDependencies": {
+    "@sprout2000/esbuild-copy-plugin": "^1.1.14",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.6",
@@ -1086,11 +1087,11 @@
     "@typescript-eslint/eslint-plugin": "^7.8.0",
     "@typescript-eslint/parser": "^7.8.0",
     "@vscode/l10n-dev": "^0.0.35",
-    "@sprout2000/esbuild-copy-plugin": "^1.1.14",
+    "buffer": "6.0.3",
     "chai": "^4.4.1",
     "concurrently": "^8.2.2",
-    "esbuild": "^0.20.2",
     "cross-env": "^7.0.3",
+    "esbuild": "^0.20.2",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.1",
     "eslint-plugin-react-hooks": "^4.6.2",

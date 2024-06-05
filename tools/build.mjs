@@ -12,7 +12,7 @@ const plugins = [
     dest: "./server/dist/node/impl",
   }),
   esbuildCopyPlugin.copyPlugin({
-    src: "./server/node_modules/pyright-internal-lsp/dist/packages/pyright-internal/typeshed-fallback",
+    src: "./server/node_modules/pyright-internal-node/dist/packages/pyright-internal/typeshed-fallback",
     dest: "./server/dist/node/typeshed-fallback",
   }),
 ];
