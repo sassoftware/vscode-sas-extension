@@ -89,11 +89,7 @@ export class FormatOnTypeProvider {
         }
       }
     }
-    // If no need to decrease indent
-    if (!shouldDecIndent) {
-      return [];
-    }
-    // Otherwise, need to decrease indent of current line
+
     const foldingBlock: FoldingBlock | null =
       this.syntaxProvider.getFoldingBlock(
         line,
@@ -102,17 +98,6 @@ export class FormatOnTypeProvider {
         true,
         true,
       );
-    let blockStartLine;
-    if (!foldingBlock) {
-      const lastNotEmptyLine = this._getLastNotEmptyLine(line - 1);
-      if (lastNotEmptyLine === undefined) {
-        return [];
-      } else {
-        blockStartLine = lastNotEmptyLine;
-      }
-    } else {
-      blockStartLine = foldingBlock.startLine;
-    }
     // Detect recursive block, which is not supported yet
     switch (curBlockZoneType) {
       case "data": {
@@ -134,16 +119,104 @@ export class FormatOnTypeProvider {
         break;
       }
     }
-    const blockStartLineText = this.model.getLine(blockStartLine);
-    const blockStartIndentLen = this._getIndentLength(
-      blockStartLineText,
-      tabSize,
-    );
-    const expectedCurLineIndent = blockStartIndentLen;
+
+    let referLine;
+    let extraIndent = 0;
+    if (!foldingBlock || foldingBlock.startLine === line) {
+      const lastNotEmptyLine = this._getLastNotEmptyLine(line - 1);
+      if (lastNotEmptyLine === undefined) {
+        return [];
+      } else {
+        referLine = lastNotEmptyLine;
+      }
+      if (foldingBlock?.startLine === line && line > 0) {
+        const prevLineText = this.model.getLine(line - 1);
+        const lastFoldingBlock: FoldingBlock | null =
+          this.syntaxProvider.getFoldingBlock(
+            line - 1,
+            prevLineText.length - 1,
+            false,
+            true,
+            true,
+          );
+        if (
+          lastFoldingBlock?.startLine === line - 1 &&
+          lastFoldingBlock?.startLine !== lastFoldingBlock?.endLine
+        ) {
+          // if the last line is the start line of the block, need to add extra indent.
+          extraIndent = tabSize;
+        }
+      }
+    } else {
+      referLine = foldingBlock.startLine;
+    }
+    // when the ending word is in the separate line as following cases, the indentationRules cannot match it,
+    // we need to ajust the line indent to the same as the last line.
+    if (!shouldDecIndent) {
+      /*
+       * if the ending word is part of a string or comment and is in the next line.
+       * a ='
+       * run;
+       */
+      const [tokenText, tokenCol, tokenStyle] = this._getPrevValidTokenInfo(
+        line,
+        semicolonCol - 1,
+        false,
+      );
+      if (tokenStyle && ["comment", "string"].includes(tokenStyle)) {
+        const curLineText = this.model.getLine(line);
+        if (
+          curLineText.match(
+            /(;|^\s*)(\s|\/\*.*\*\/|\*[^;]*;)*(run|quit|%mend)(\s|\/\*.*\*\/|\*[^;]*;)*;$/i,
+          )
+        ) {
+          shouldDecIndent = true;
+        }
+      }
+      /*
+       * a =
+       * run;
+       */
+      if (
+        tokenText &&
+        ["RUN", "QUIT", "%MEND"].includes(tokenText.toUpperCase())
+      ) {
+        let sameLinePrevTokenText;
+        if (tokenCol) {
+          [sameLinePrevTokenText] = this._getPrevValidTokenInfo(
+            line,
+            tokenCol - 1,
+            false,
+          );
+        }
+        // if no valid token in the same line, we should find the last valid token in the last line.
+        if (!sameLinePrevTokenText) {
+          const [prevLineTokenText] = this._getPrevValidTokenInfo(
+            line - 1,
+            undefined,
+          );
+          if (prevLineTokenText !== ";") {
+            shouldDecIndent = true;
+          }
+        }
+      }
+      if (!shouldDecIndent) {
+        return [];
+      }
+      referLine = line - 1;
+      // if the last line is the start line of the block, need to add extra indent.
+      // it's impossible to be the end line of the block here.
+      if (foldingBlock?.startLine === line - 1) {
+        extraIndent = tabSize;
+      }
+    }
+
+    const referLineText = this.model.getLine(referLine);
+    const referLineIndentLen = this._getIndentLength(referLineText, tabSize);
+    const expectedCurLineIndent = referLineIndentLen + extraIndent;
     const curLineText = this.model.getLine(line);
     const curLineIndentText = this._getIndentText(curLineText);
     const curLineIndentLen = this._getIndentLength(curLineText, tabSize);
-
     if (expectedCurLineIndent === curLineIndentLen) {
       return [];
     } else {
@@ -413,6 +486,33 @@ export class FormatOnTypeProvider {
       text = lineText.substring(curToken.start, tokens[index + 1].start);
     }
     return text;
+  }
+
+  private _getPrevValidTokenInfo(
+    line: number,
+    col: number | undefined,
+    needMultiLine = true,
+  ): [string, number, string] | [] {
+    const tokens: SyntaxToken[] = this.syntaxProvider.getSyntax(line);
+    let _line = line;
+    while (_line >= 0) {
+      const lineText = this.model.getLine(line);
+      for (let i = tokens.length - 1; i >= 0; i--) {
+        const curToken = tokens[i];
+        const text = this._getTokenText(tokens, i, lineText);
+        if (
+          !this._isCommentOrBlankToken(curToken, text) &&
+          curToken.start <= (_line < line || !col ? lineText.length : col)
+        ) {
+          return [text, curToken.start, curToken.style];
+        }
+      }
+      if (!needMultiLine) {
+        return [];
+      }
+      _line--;
+    }
+    return [];
   }
 
   private _isCommentOrBlankToken(token: SyntaxToken, text: string): boolean {
