@@ -670,7 +670,8 @@ export class CodeZoneManager {
       if (token && token.text) {
         word = token.text.toUpperCase();
         if (_isBlockEnd[word]) {
-          return true;
+          token = this._getPrev(context);
+          return token?.text === ";";
         } else if (word === "CANCEL") {
           token = this._getPrev(context);
           if (token && token.text && _isBlockEnd[token.text.toUpperCase()]) {
@@ -704,15 +705,6 @@ export class CodeZoneManager {
       context.col = 0;
       context.syntaxIdx = -1;
       context.lastStmtEnd = null;
-    } else if (
-      token.line === initLine &&
-      token.col <= initCol &&
-      token.col + token.text.length >= initCol
-    ) {
-      context.line = token.line;
-      context.col = token.col;
-      context.syntaxIdx = -1;
-      context.lastStmtEnd = { line: token.line, col: token.col };
     } else {
       context.line = token.line;
       context.col = token.col + token.text.length;
