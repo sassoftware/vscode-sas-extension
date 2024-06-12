@@ -20,6 +20,7 @@ sidebar_position: 2
 | [Pop-up syntax help](./Features/sasCodeEditing.md#pop-up-syntax-help)                         | :heavy_check_mark: |              :heavy_check_mark:              |   :heavy_check_mark:   |
 | [Snippets](./Features/sasCodeEditing.md#snippets)                                             | :heavy_check_mark: |              :heavy_check_mark:              |   :heavy_check_mark:   |
 | Able to cancel a running program                                                              | :heavy_check_mark: |              :heavy_check_mark:              |          :x:           |
+| Show problems from SAS log                                                                    | :heavy_check_mark: |              :heavy_check_mark:              |          :x:           |
 
 # Choose Connection Type
 
