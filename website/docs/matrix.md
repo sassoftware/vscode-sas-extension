@@ -15,12 +15,12 @@ sidebar_position: 2
 | Convert SAS Notebook to SAS Studio Flow                                                       | :heavy_check_mark: |                     :x:                      |          :x:           |
 | [SAS syntax highlighting in SAS code](./Features/sasCodeEditing.md#sas-syntax-highlighting)   | :heavy_check_mark: |              :heavy_check_mark:              |   :heavy_check_mark:   |
 | SAS errors, warnings, and notes highlighting in SAS log                                       | :heavy_check_mark: |              :heavy_check_mark:              |          :x:           | A SAS color theme is required.                                       |
+| Show problems from SAS log                                                                    | :heavy_check_mark: |              :heavy_check_mark:              |          :x:           |
 | [Code folding and code outline](./Features/sasCodeEditing.md#code-folding-and-code-outline)   | :heavy_check_mark: |              :heavy_check_mark:              |   :heavy_check_mark:   |
 | [Code completion](./Features/sasCodeEditing.md#code-completion)                               | :heavy_check_mark: |              :heavy_check_mark:              |   :heavy_check_mark:   |
 | [Pop-up syntax help](./Features/sasCodeEditing.md#pop-up-syntax-help)                         | :heavy_check_mark: |              :heavy_check_mark:              |   :heavy_check_mark:   |
 | [Snippets](./Features/sasCodeEditing.md#snippets)                                             | :heavy_check_mark: |              :heavy_check_mark:              |   :heavy_check_mark:   |
 | Able to cancel a running program                                                              | :heavy_check_mark: |              :heavy_check_mark:              |          :x:           |
-| Show problems from SAS log                                                                    | :heavy_check_mark: |              :heavy_check_mark:              |          :x:           |
 
 # Choose Connection Type
 
