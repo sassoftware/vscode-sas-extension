@@ -332,7 +332,10 @@ export class FormatOnTypeProvider {
         line,
         tokenBeforeSemicolon.start,
       );
-      if (prevSemicolonZone === CodeZoneManager.ZONE_TYPE.RESTRICTED) {
+      if (
+        prevSemicolonZone === CodeZoneManager.ZONE_TYPE.RESTRICTED ||
+        prevSemicolonZone === CodeZoneManager.ZONE_TYPE.MACRO_SUB_OPT_NAME
+      ) {
         return undefined;
       }
       if (this._isDefZone(prevSemicolonZone)) {

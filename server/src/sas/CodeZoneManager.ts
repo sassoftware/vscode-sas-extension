@@ -2356,6 +2356,9 @@ export class CodeZoneManager {
     }
     this._context({ op: "%MACRO", op1: opts }, stack);
     const zone = this._zone(stack, context);
+    if (zone.type === CodeZoneManager.ZONE_TYPE.SUB_OPT_NAME) {
+      return CodeZoneManager.ZONE_TYPE.MACRO_SUB_OPT_NAME;
+    }
     return zone.type;
   }
   private _macroStmt(context: Context, stmt: TokenWithPos) {
@@ -2593,6 +2596,7 @@ export class CodeZoneManager {
     MACRO_STMT_OPT: 548,
     MACRO_STMT_OPT_VALUE: 549,
     MACRO_STMT_BODY: 550,
+    MACRO_SUB_OPT_NAME: 551,
     // style related
     STYLE_LOC: 555,
     STYLE_ELEMENT: 556,
