@@ -91,13 +91,7 @@ export class FormatOnTypeProvider {
     }
 
     const foldingBlock: FoldingBlock | null =
-      this.syntaxProvider.getFoldingBlock(
-        line,
-        semicolonCol,
-        false,
-        true,
-        true,
-      );
+      this.syntaxProvider.getFoldingBlock(line, semicolonCol, true, true, true);
     // Detect recursive block, which is not supported yet
     switch (curBlockZoneType) {
       case "data": {
@@ -135,7 +129,7 @@ export class FormatOnTypeProvider {
         this.syntaxProvider.getFoldingBlock(
           lastNotEmptyLine,
           prevLineText.length - 1,
-          false,
+          true,
           true,
           true,
         );
@@ -300,51 +294,35 @@ export class FormatOnTypeProvider {
     curIndent: number,
     tabSize: number,
   ): number | undefined {
-    // find semicolon token
     const tokens: SyntaxToken[] = this.syntaxProvider.getSyntax(line);
     const cleanedTokens = this._cleanTokens(line, tokens);
-    if (cleanedTokens.length === 0) {
-      return 0;
-    }
-    // find patterns of "data xxx;", "proc xxx;" or "%macro xxx;"
     const lineText = this.model.getLine(line);
-    let curIndex = cleanedTokens.length;
-    do {
-      curIndex = this._findSemicolonTokenRightToLeft(
-        line,
+    let curIndex = cleanedTokens.length - 1;
+    while (curIndex >= 0) {
+      const curToken = cleanedTokens[curIndex];
+      const curTokenText = this._getTokenText(
         cleanedTokens,
-        curIndex - 1,
-      );
-      if (curIndex <= 0) {
-        return 0;
-      }
-      const tokenBeforeSemicolon = cleanedTokens[curIndex - 1]; // curIndex must be > 0
-      const tokenBeforeSemicolonText = this._getTokenText(
-        cleanedTokens,
-        curIndex - 1,
+        curIndex,
         lineText,
       ).trim();
       if (
-        (tokenBeforeSemicolon.style === Lexer.TOKEN_TYPES.SKEYWORD ||
-          tokenBeforeSemicolon.style === Lexer.TOKEN_TYPES.MSKEYWORD) &&
-        (tokenBeforeSemicolonText.toLowerCase() === "run" ||
-          tokenBeforeSemicolonText.toLowerCase() === "quit" ||
-          tokenBeforeSemicolonText.toLowerCase() === "%mend")
+        (curToken.style === Lexer.TOKEN_TYPES.SKEYWORD ||
+          curToken.style === Lexer.TOKEN_TYPES.MSKEYWORD) &&
+        (curTokenText.toLowerCase() === "run" ||
+          curTokenText.toLowerCase() === "quit" ||
+          curTokenText.toLowerCase() === "%mend")
       ) {
         return 0;
       }
-      // calculate indent
-      const prevSemicolonZone: number = this.czMgr.getCurrentZone(
-        line,
-        tokenBeforeSemicolon.start,
-      );
-      if (prevSemicolonZone === CodeZoneManager.ZONE_TYPE.RESTRICTED) {
-        return undefined;
-      }
-      if (this._isDefZone(prevSemicolonZone)) {
+      if (
+        curTokenText.toLowerCase() === "data" ||
+        curTokenText.toLowerCase() === "proc" ||
+        curTokenText.toLowerCase() === "%macro"
+      ) {
         return tabSize - (curIndent % tabSize);
       }
-    } while (curIndex > 0);
+      curIndex--;
+    }
     return 0;
   }
 
@@ -363,57 +341,6 @@ export class FormatOnTypeProvider {
       cleanedTokens.push(curToken);
     }
     return cleanedTokens;
-  }
-
-  private _findSemicolonTokenRightToLeft(
-    line: number,
-    tokens: SyntaxToken[],
-    startIndex: number,
-  ): number {
-    const lineText = this.model.getLine(line);
-    if (startIndex < 0) {
-      return -1;
-    } else if (startIndex >= tokens.length) {
-      startIndex = tokens.length - 1;
-    }
-    let semicolonTokenIdx = -1;
-    for (let i = startIndex; i >= 0; i--) {
-      const curToken = tokens[i];
-      if (lineText[curToken.start] === ";") {
-        semicolonTokenIdx = i;
-        break;
-      }
-    }
-    return semicolonTokenIdx;
-  }
-
-  private _isDefZone(codeZode: number) {
-    const ZT = CodeZoneManager.ZONE_TYPE;
-    switch (codeZode) {
-      case ZT.DATA_STEP_DEF:
-      case ZT.DATA_STEP_DEF_OPT:
-      case ZT.DATA_STEP_OPT_NAME:
-      case ZT.DATA_STEP_OPT_VALUE:
-      case ZT.DATA_SET_NAME:
-      case ZT.VIEW_OR_DATA_SET_NAME:
-      case ZT.DATA_SET_OPT_NAME:
-      case ZT.DATA_SET_OPT_VALUE:
-      case ZT.VIEW_OR_PGM_NAME:
-      case ZT.VIEW_OR_PGM_OPT_NAME:
-      case ZT.VIEW_OR_PGM_OPT_VALUE:
-      case ZT.VIEW_OR_PGM_SUB_OPT_NAME:
-      case ZT.PROC_DEF:
-      case ZT.PROC_OPT:
-      case ZT.PROC_OPT_VALUE:
-      case ZT.PROC_SUB_OPT_NAME:
-      case ZT.MACRO_DEF:
-      case ZT.MACRO_DEF_OPT:
-      case ZT.MACRO_FUNC:
-      case ZT.MACRO_VAR:
-        return true;
-      default:
-        return false;
-    }
   }
 
   private _getLastNotEmptyLine(line: number): number | undefined {
