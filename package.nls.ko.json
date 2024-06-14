@@ -55,7 +55,7 @@
   "configuration.SAS.flowConversionModeSwimlane": "각 노트북 셀을 스윔레인으로 변환",
   "configuration.SAS.log.showOnExecutionFinish": "코드 실행이 완료되면 SAS 로그 표시",
   "configuration.SAS.log.showOnExecutionStart": "코드 실행이 시작되면 SAS 로그 표시",
-  "configuration.SAS.problems.log.enabled": "Show problems from SAS log",
+  "configuration.SAS.problems.log.enabled": "SAS 로그에서 문제 표시",
   "configuration.SAS.results.html.enabled": "ODS HTML5 출력 활성화/비활성화",
   "configuration.SAS.results.html.style": "ODS HTML5 결과에 대한 스타일 지정",
   "configuration.SAS.results.html.style.(auto)": "확장 기능이 색상 테마와 가장 일치하는 스타일을 선택하도록 합니다.",
