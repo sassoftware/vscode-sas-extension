@@ -48,6 +48,7 @@ import {
   updateStatusBarItem,
 } from "../components/StatusBarItem";
 import { LogTokensProvider, legend } from "../components/logViewer";
+import { sasDiagnostic } from "../components/logViewer/sasDiagnostics";
 import { NotebookController } from "../components/notebook/Controller";
 import { NotebookSerializer } from "../components/notebook/Serializer";
 import { ConnectionType } from "../components/profile";
@@ -148,6 +149,17 @@ export function activate(context: ExtensionContext): void {
     ...libraryNavigator.getSubscriptions(),
     ...contentNavigator.getSubscriptions(),
     ...resultPanelSubscriptionProvider.getSubscriptions(),
+    contentNavigator.onDidManipulateFile((e) => {
+      switch (e.type) {
+        case "rename":
+          sasDiagnostic.updateDiagnosticUri(e.uri, e.newUri);
+          break;
+        case "recycle":
+        case "delete":
+          sasDiagnostic.ignoreAll(e.uri);
+          break;
+      }
+    }),
     // If configFile setting is changed, update watcher to watch new configuration file
     workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
       if (event.affectsConfiguration("SAS.connectionProfiles")) {
@@ -163,6 +175,7 @@ export function activate(context: ExtensionContext): void {
     commands.registerCommand("SAS.notebook.new", newSASNotebook),
     commands.registerCommand("SAS.file.new", newSASFile),
     tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
+    ...sasDiagnostic.getSubscriptions(),
   );
 
   // Reset first to set "No Active Profiles"

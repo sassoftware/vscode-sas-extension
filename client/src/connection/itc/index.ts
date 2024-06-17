@@ -18,8 +18,8 @@ import {
   getSecretStorage,
 } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
-import { extractOutputHtmlFileName } from "../../components/utils/sasCode";
 import { Session } from "../session";
+import { extractOutputHtmlFileName } from "../util";
 import { LineParser } from "./LineParser";
 import {
   ERROR_END_TAG,
@@ -224,7 +224,11 @@ export class ITCSession extends Session {
 
     //write an end mnemonic so that the handler knows when execution has finished
     const codeWithEnd = `${codeWithODSPath}\n%put ${LineCodes.RunEndCode};`;
-    const codeToRun = `$code=\n@'\n${codeWithEnd}\n'@\n`;
+    const codeWithEscapeNewLine = codeWithEnd.replace(
+      /\n/g,
+      "\n'@+[environment]::NewLine+@'\n",
+    );
+    const codeToRun = `$code=\n@'\n${codeWithEscapeNewLine}\n'@\n`;
 
     this._html5FileName = "";
     this._shellProcess.stdin.write(codeToRun);
@@ -345,7 +349,9 @@ export class ITCSession extends Session {
   private fetchWorkDirectory = (line: string): string | undefined => {
     let foundWorkDirectory = "";
     if (
-      !line.includes(`%put ${WORK_DIR_START_TAG}&workDir${WORK_DIR_END_TAG};`)
+      !line.includes(`%put ${WORK_DIR_START_TAG};`) &&
+      !line.includes(`%put &workDir;`) &&
+      !line.includes(`%put ${WORK_DIR_END_TAG};`)
     ) {
       foundWorkDirectory = this._workDirectoryParser.processLine(line);
     } else {
@@ -422,18 +428,21 @@ export class ITCSession extends Session {
         return;
       }
 
-      const foundWorkDirectory = this.fetchWorkDirectory(line);
-      if (foundWorkDirectory === undefined) {
-        return;
-      }
-
-      if (!this._workDirectory && foundWorkDirectory) {
-        this._workDirectory = foundWorkDirectory;
-        this._runResolve();
-        updateStatusBarItem(true);
-        return;
-      }
       if (!this.processLineCodes(line)) {
+        if (!this._workDirectory) {
+          const foundWorkDirectory = this.fetchWorkDirectory(line);
+          if (foundWorkDirectory === undefined) {
+            return;
+          }
+
+          if (foundWorkDirectory) {
+            this._workDirectory = foundWorkDirectory.trim();
+            this._runResolve();
+            updateStatusBarItem(true);
+            return;
+          }
+        }
+
         this._html5FileName = extractOutputHtmlFileName(
           line,
           this._html5FileName,

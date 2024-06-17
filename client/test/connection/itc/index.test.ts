@@ -88,13 +88,12 @@ describe("ITC connection", () => {
     it("creates a well-formed local session", async () => {
       const setupPromise = session.setup();
 
-      onDataCallback(Buffer.from(`WORKDIR="/work/dir"\n`));
-      onDataCallback(
-        Buffer.from(`%put ${WORK_DIR_START_TAG}&workDir${WORK_DIR_END_TAG};`),
-      );
-      onDataCallback(
-        Buffer.from(`${WORK_DIR_START_TAG}/work/dir${WORK_DIR_END_TAG}`),
-      );
+      onDataCallback(Buffer.from(`%put ${WORK_DIR_START_TAG};`));
+      onDataCallback(Buffer.from(`%put &workDir;`));
+      onDataCallback(Buffer.from(`%put ${WORK_DIR_END_TAG};`));
+      onDataCallback(Buffer.from(`${WORK_DIR_START_TAG}`));
+      onDataCallback(Buffer.from(`/work/dir`));
+      onDataCallback(Buffer.from(`${WORK_DIR_END_TAG}`));
 
       await setupPromise;
 
@@ -142,13 +141,12 @@ describe("ITC connection", () => {
     beforeEach(async () => {
       writeFileSync(tempHtmlPath, html5);
       const setupPromise = session.setup();
-      onDataCallback(Buffer.from(`WORKDIR=/work/dir`));
-      onDataCallback(
-        Buffer.from(`%put ${WORK_DIR_START_TAG}&workDir${WORK_DIR_END_TAG};`),
-      );
-      onDataCallback(
-        Buffer.from(`${WORK_DIR_START_TAG}/work/dir${WORK_DIR_END_TAG}`),
-      );
+      onDataCallback(Buffer.from(`%put ${WORK_DIR_START_TAG};`));
+      onDataCallback(Buffer.from(`%put &workDir;`));
+      onDataCallback(Buffer.from(`%put ${WORK_DIR_END_TAG};`));
+      onDataCallback(Buffer.from(`${WORK_DIR_START_TAG}`));
+      onDataCallback(Buffer.from(`/work/dir`));
+      onDataCallback(Buffer.from(`${WORK_DIR_END_TAG}`));
       await setupPromise;
     });
     afterEach(() => {
@@ -174,7 +172,17 @@ describe("ITC connection", () => {
       expect(runResult.title).to.equal("Result");
 
       expect(stdinStub.args[13][0]).to.deep.equal(
-        `$code=\n@'\nods html5(id=vscode) path="/work/dir" ;\nproc print data=sashelp.cars;\nrun;\n%put --vscode-sas-extension-submit-end--;\n'@\n`,
+        `$code=
+@'
+ods html5(id=vscode) path="/work/dir" ;
+'@+[environment]::NewLine+@'
+proc print data=sashelp.cars;
+'@+[environment]::NewLine+@'
+run;
+'@+[environment]::NewLine+@'
+%put --vscode-sas-extension-submit-end--;
+'@
+`,
       );
 
       expect(stdinStub.args[14][0]).to.deep.equal(`$runner.Run($code)\n`);
@@ -187,13 +195,12 @@ $runner.FetchResultsFile($filePath, $outputFile)
   describe("close", () => {
     beforeEach(async () => {
       const setupPromise = session.setup();
-      onDataCallback(Buffer.from(`WORKDIR=/work/dir`));
-      onDataCallback(
-        Buffer.from(`%put ${WORK_DIR_START_TAG}&workDir${WORK_DIR_END_TAG};`),
-      );
-      onDataCallback(
-        Buffer.from(`${WORK_DIR_START_TAG}/work/dir${WORK_DIR_END_TAG}`),
-      );
+      onDataCallback(Buffer.from(`%put ${WORK_DIR_START_TAG};`));
+      onDataCallback(Buffer.from(`%put &workDir;`));
+      onDataCallback(Buffer.from(`%put ${WORK_DIR_END_TAG};`));
+      onDataCallback(Buffer.from(`${WORK_DIR_START_TAG}`));
+      onDataCallback(Buffer.from(`/work/dir`));
+      onDataCallback(Buffer.from(`${WORK_DIR_END_TAG}`));
       await setupPromise;
     });
 

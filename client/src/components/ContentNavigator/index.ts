@@ -3,6 +3,7 @@
 import {
   ConfigurationChangeEvent,
   Disposable,
+  Event,
   ExtensionContext,
   OpenDialogOptions,
   ProgressLocation,
@@ -21,7 +22,7 @@ import { ConnectionType } from "../profile";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
 import { Messages } from "./const";
-import { ContentItem } from "./types";
+import { ContentItem, FileManipulationEvent } from "./types";
 import {
   isContainer as getIsContainer,
   getUri,
@@ -62,6 +63,10 @@ class ContentNavigator implements SubscriptionProvider {
       "sasReadOnly",
       this.contentDataProvider,
     );
+  }
+
+  get onDidManipulateFile(): Event<FileManipulationEvent> {
+    return this.contentDataProvider.onDidManipulateFile;
   }
 
   public getSubscriptions(): Disposable[] {

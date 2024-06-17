@@ -15,19 +15,19 @@ import {
 } from "../../connection/studio";
 import { SASAuthProvider } from "../AuthProvider";
 import {
-  DATAFLOW_TYPE,
-  FAVORITES_FOLDER_TYPE,
+  DEFAULT_FILE_CONTENT_TYPE,
   FILE_TYPES,
-  FOLDER_TYPE,
   FOLDER_TYPES,
   Messages,
   ROOT_FOLDER,
   TRASH_FOLDER_TYPE,
 } from "./const";
-import mimeTypes from "./mime-types";
-import { ContentItem, Link, Permission } from "./types";
+import { ContentItem, Link } from "./types";
 import {
+  getFileContentType,
+  getItemContentType,
   getLink,
+  getPermission,
   getResourceId,
   getResourceIdFromItem,
   getTypeName,
@@ -43,15 +43,15 @@ interface AddMemberProperties {
 
 export class ContentModel {
   private connection: AxiosInstance;
-  private fileTokenMaps: {
-    [id: string]: { etag: string; lastModified: string };
+  private fileMetadataMap: {
+    [id: string]: { etag: string; lastModified: string; contentType: string };
   };
   private authorized: boolean;
   private viyaCadence: string;
   private delegateFolders: { [name: string]: ContentItem };
 
   constructor() {
-    this.fileTokenMaps = {};
+    this.fileMetadataMap = {};
     this.authorized = false;
     this.delegateFolders = {};
     this.viyaCadence = "";
@@ -183,13 +183,7 @@ export class ContentModel {
 
   public async getResourceByUri(uri: Uri): Promise<ContentItem> {
     const resourceId = getResourceId(uri);
-    const res = await this.connection.get(resourceId);
-    this.fileTokenMaps[resourceId] = {
-      etag: res.headers.etag,
-      lastModified: res.headers["last-modified"],
-    };
-
-    return res.data;
+    return (await this.getResourceById(resourceId)).data;
   }
 
   public async getContentByUri(uri: Uri): Promise<string> {
@@ -202,11 +196,6 @@ export class ContentModel {
     } catch (e) {
       throw new Error(Messages.FileOpenError);
     }
-
-    this.fileTokenMaps[resourceId] = {
-      etag: res.headers.etag,
-      lastModified: res.headers["last-modified"],
-    };
 
     // We expect the returned data to be a string. If this isn't a string,
     // we can't really open it
@@ -226,11 +215,6 @@ export class ContentModel {
         responseType: "arraybuffer",
       });
 
-      this.fileTokenMaps[resourceId] = {
-        etag: res.headers.etag,
-        lastModified: res.headers["last-modified"],
-      };
-
       return Buffer.from(res.data, "binary");
     } catch (e) {
       throw new Error(Messages.FileDownloadError);
@@ -242,18 +226,15 @@ export class ContentModel {
     fileName: string,
     buffer?: ArrayBufferLike,
   ): Promise<ContentItem | undefined> {
-    const contentType = await this.getFileContentType(fileName);
+    const typeDef = await this.getTypeDefinition(fileName);
     let createdResource: ContentItem;
-
     try {
       const fileCreationResponse = await this.connection.post<ContentItem>(
-        `/files/files#rawUpload?typeDefName=${contentType}`,
+        `/files/files#rawUpload?typeDefName=${typeDef}`,
         buffer || Buffer.from("", "binary"),
         {
           headers: {
-            "Content-Type":
-              mimeTypes[fileName.split(".").pop().toLowerCase()] ||
-              "text/plain",
+            "Content-Type": getFileContentType(fileName),
             "Content-Disposition": `filename*=UTF-8''${encodeURI(fileName)}`,
             Accept: "application/vnd.sas.file+json",
           },
@@ -270,7 +251,7 @@ export class ContentModel {
       getLink(item.links, "POST", "addMember")?.uri,
       {
         name: fileName,
-        contentType,
+        contentType: typeDef,
       },
     );
     if (!memberAdded) {
@@ -313,13 +294,6 @@ export class ContentModel {
       : item.uri;
 
     try {
-      // not sure why but the response of moveTo request does not return the latest etag so request it every time
-      const res = await this.connection.get(uri);
-      const fileTokenMap = {
-        etag: res.headers.etag,
-        lastModified: res.headers["last-modified"],
-      };
-
       const validationUri = getLink(item.links, "PUT", "validateRename")?.uri;
       if (validationUri) {
         await this.connection.put(
@@ -329,28 +303,29 @@ export class ContentModel {
         );
       }
 
+      // not sure why but the response of moveTo request does not return the latest etag so request it every time
+      const { data: fileData } = await this.getResourceById(uri);
+      const contentType = getFileContentType(name);
+      const fileMetadata = this.fileMetadataMap[uri];
       const patchResponse = await this.connection.put(
         uri,
-        { ...res.data, name },
+        { ...fileData, name },
         {
           headers: {
-            "If-Unmodified-Since": fileTokenMap.lastModified,
-            "If-Match": fileTokenMap.etag,
-            "Content-Type": fetchItemContentType(item),
+            "If-Unmodified-Since": fileMetadata.lastModified,
+            "If-Match": fileMetadata.etag,
+            "Content-Type": getItemContentType(item),
           },
         },
       );
-      this.fileTokenMaps[uri] = {
-        etag: patchResponse.headers.etag,
-        lastModified: patchResponse.headers["last-modified"],
-      };
+
+      this.updateFileMetadata(uri, patchResponse, contentType);
 
       // The links in My Favorites are of type reference. Instead of passing
       // back the reference objects, we want to pass back the underlying source
       // objects.
       if (itemIsReference) {
-        const referencedItem = await this.connection.get(item.uri);
-        return referencedItem.data;
+        return (await this.getResourceById(item.uri)).data;
       }
 
       return patchResponse.data;
@@ -362,20 +337,25 @@ export class ContentModel {
   private getFileInfo(resourceId: string): {
     etag: string;
     lastModified: string;
+    contentType: string;
   } {
-    if (resourceId in this.fileTokenMaps) {
-      return this.fileTokenMaps[resourceId];
+    if (resourceId in this.fileMetadataMap) {
+      return this.fileMetadataMap[resourceId];
     }
     const now = new Date();
     const timestamp = now.toUTCString();
-    return { etag: "", lastModified: timestamp };
+    return {
+      etag: "",
+      lastModified: timestamp,
+      contentType: DEFAULT_FILE_CONTENT_TYPE,
+    };
   }
 
   public async saveContentToUri(uri: Uri, content: string): Promise<void> {
     const resourceId = getResourceId(uri);
-    const { etag, lastModified } = this.getFileInfo(resourceId);
+    const { etag, lastModified, contentType } = this.getFileInfo(resourceId);
     const headers = {
-      "Content-Type": "text/plain",
+      "Content-Type": contentType,
       "If-Unmodified-Since": lastModified,
     };
     if (etag !== "") {
@@ -385,10 +365,7 @@ export class ContentModel {
       const res = await this.connection.put(resourceId + "/content", content, {
         headers,
       });
-      this.fileTokenMaps[resourceId] = {
-        etag: res.headers.etag,
-        lastModified: res.headers["last-modified"],
-      };
+      this.updateFileMetadata(resourceId, res, contentType);
     } catch (error) {
       console.log(error);
     }
@@ -589,7 +566,7 @@ export class ContentModel {
     return typeQuery;
   }
 
-  private async getFileContentType(fileName: string): Promise<string> {
+  private async getTypeDefinition(fileName: string): Promise<string> {
     const defaultContentType = "file";
     const ext = fileName.split(".").pop().toLowerCase();
     if (ext === "sas") {
@@ -699,36 +676,22 @@ export class ContentModel {
 
     return "/" + filePathParts.reverse().join("/");
   }
+
+  private updateFileMetadata(
+    id: string,
+    { headers, data }: AxiosResponse,
+    contentType?: string,
+  ) {
+    this.fileMetadataMap[id] = {
+      etag: headers.etag,
+      lastModified: headers["last-modified"],
+      contentType: contentType || data.contentType,
+    };
+  }
+
+  private async getResourceById(id: string): Promise<AxiosResponse> {
+    const res = await this.connection.get(id);
+    this.updateFileMetadata(id, res);
+    return res;
+  }
 }
-
-const getPermission = (item: ContentItem): Permission => {
-  const itemType = getTypeName(item);
-  return [FOLDER_TYPE, ...FILE_TYPES].includes(itemType) // normal folders and files
-    ? {
-        write: !!getLink(item.links, "PUT", "update"),
-        delete: !!getLink(item.links, "DELETE", "deleteResource"),
-        addMember: !!getLink(item.links, "POST", "createChild"),
-      }
-    : {
-        // delegate folders, user folder and user root folder
-        write: false,
-        delete: false,
-        addMember:
-          itemType !== TRASH_FOLDER_TYPE &&
-          itemType !== FAVORITES_FOLDER_TYPE &&
-          !!getLink(item.links, "POST", "createChild"),
-      };
-};
-
-const fetchItemContentType = (item: ContentItem): string | undefined => {
-  const itemIsReference = item.type === "reference";
-  if (itemIsReference || isContainer(item)) {
-    return undefined;
-  }
-
-  if (item.contentType === DATAFLOW_TYPE) {
-    return "application/json";
-  }
-
-  return "application/vnd.sas.file+json";
-};

@@ -22,6 +22,10 @@ updates:
     directory: "/server"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/website"
+    schedule:
+      interval: "weekly"
   - package-ecosystem: "github-actions"
     # Don't need to specify `/.github/workflows` for `directory`. Github knows it.
     directory: "/"

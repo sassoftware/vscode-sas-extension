@@ -7,6 +7,7 @@
 **/*.ts
 **/*.map
 **/node_modules/**
+**/website/**
 tools
 .gitignore
 .prettierignore
@@ -16,5 +17,6 @@ contributing.md
 ContributorAgreement.txt
 .travis.yml
 .eslintignore
+.nvmrc
 pull_request_template.md
 l10n/bundle.l10n.json
