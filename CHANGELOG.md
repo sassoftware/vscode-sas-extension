@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [v1.10.0] - 2024-06-18
+
+### Added
+
+- Show problems from SAS log ([#627](https://github.com/sassoftware/vscode-sas-extension/pull/627))
+- New [documentation site](https://sassoftware.github.io/vscode-sas-extension/) ([#1030](https://github.com/sassoftware/vscode-sas-extension/pull/1030))
+
+### Fixed
+
+- Fileref OUTFILE should be allowed for COM/IOM ([#868](https://github.com/sassoftware/vscode-sas-extension/issues/868))
+- Syntax help issue in special case ([#900](https://github.com/sassoftware/vscode-sas-extension/issues/900)) ([#954](https://github.com/sassoftware/vscode-sas-extension/issues/954))
+- IOM connection hang when work dir is long ([#964](https://github.com/sassoftware/vscode-sas-extension/issues/964))
+- Support cshell for ssh ([#1005](https://github.com/sassoftware/vscode-sas-extension/issues/1005))
+- Fix content type when saving files ([#878](https://github.com/sassoftware/vscode-sas-extension/issues/878))
+
 ## [v1.9.0] - 2024-04-30
 
 ### Added
