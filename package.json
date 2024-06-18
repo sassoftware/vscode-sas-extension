@@ -1089,7 +1089,7 @@
     "@types/node": "^20.14.2",
     "@types/sinon": "^17.0.3",
     "@typescript-eslint/eslint-plugin": "^7.13.0",
-    "@typescript-eslint/parser": "^7.11.0",
+    "@typescript-eslint/parser": "^7.13.1",
     "@vscode/l10n-dev": "^0.0.35",
     "chai": "^4.4.1",
     "concurrently": "^8.2.2",
