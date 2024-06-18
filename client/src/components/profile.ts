@@ -20,7 +20,7 @@ enum ConnectionOptions {
   SAS9COM = "SAS 9.4 (local)",
   SAS9IOM = "SAS 9.4 (remote - IOM)",
   SAS9SSH = "SAS 9.4 (remote - SSH)",
-  SAS9SASPY = "SASPY",
+  SAS9SASPY = "SAS 9.4 (SASPy)",
   SASViya = "SAS Viya",
 }
 
@@ -95,7 +95,6 @@ export interface SSHProfile extends BaseProfile {
 
 export interface SASPYProfile extends BaseProfile {
   connectionType: ConnectionType.SASPY;
-  // saspath: string;
   cfgname: string;
   pythonpath: string;
 }
@@ -112,7 +111,12 @@ export interface IOMProfile extends BaseProfile {
   port: number;
 }
 
-export type Profile = ViyaProfile | SSHProfile | SASPYProfile | COMProfile | IOMProfile;
+export type Profile =
+  | ViyaProfile
+  | SSHProfile
+  | SASPYProfile
+  | COMProfile
+  | IOMProfile;
 
 export enum AutoExecType {
   File = "file",
@@ -601,24 +605,8 @@ export class ProfileConfig {
 
       await this.upsertProfile(name, profileClone);
     } else if (profileClone.connectionType === ConnectionType.SASPY) {
-      // profileClone.pythonpath = await createInputTextBox(
-      //   ProfilePromptType.PYTHONPath,
-      //   profileClone.pythonpath,
-      // );
-      // if (profileClone.pythonpath === undefined) {
-      //   return;
-      // }
-
-      // profileClone.cfgname = await createInputTextBox(
-      //   ProfilePromptType.Cfgname,
-      //   profileClone.cfgname,
-      // );
-      // if (profileClone.cfgname === undefined) {
-      //   return;
-      // }
-
       profileClone.cfgname = "";
-      // profileClone.sasOptions = [];        
+      // profileClone.sasOptions = [];
       await this.upsertProfile(name, profileClone);
     } else if (profileClone.connectionType === ConnectionType.COM) {
       profileClone.sasOptions = [];
@@ -697,7 +685,7 @@ export enum ProfilePromptType {
   Port,
   Username,
   Cfgname,
-  PYTHONpath
+  PYTHONpath,
 }
 
 /**

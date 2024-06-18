@@ -4,15 +4,16 @@ import { Uri, workspace } from "vscode";
 
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 
-import { BaseConfig, LogLineTypeEnum, RunResult } from "..";
-import {
-  getGlobalStorageUri
-} from "../../components/ExtensionContext";
+import { LogLineTypeEnum, RunResult } from "..";
+import { getGlobalStorageUri } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
-import { extractOutputHtmlFileName, wrapCodeWithOutputHtml } from "../../components/utils/sasCode";
+import {
+  extractOutputHtmlFileName,
+  wrapCodeWithOutputHtml,
+} from "../../components/utils/sasCode";
 import { Session } from "../session";
 // import { scriptContent } from "./script";
-import { LineCodes } from "./types";
+import { Config, LineCodes } from "./types";
 
 const LogLineTypes: LogLineTypeEnum[] = [
   "normal",
@@ -29,14 +30,6 @@ const LogLineTypes: LogLineTypeEnum[] = [
 
 let sessionInstance: SASPYSession;
 
-/**
- * Configuration parameters for this connection provider
- */
-export interface Config extends BaseConfig {
-  cfgname: string;
-  pythonpath: string;
-}
-
 export class SASPYSession extends Session {
   private _config: Config;
   private _shellProcess: ChildProcessWithoutNullStreams;
@@ -46,7 +39,7 @@ export class SASPYSession extends Session {
   private _workDirectory: string;
   private _pollingForLogResults: boolean;
   private _logLineType = 0;
-    
+
   public set config(value: Config) {
     this._config = value;
   }
@@ -73,10 +66,10 @@ export class SASPYSession extends Session {
         //shell: true,
         // env: process.env,
         env: {
-            ...process.env,
-            //PATH: process.env.PATH + require('path').delimiter + __dirname,
-            PYTHONIOENCODING: "utf-8"
-        }
+          ...process.env,
+          //PATH: process.env.PATH + require('path').delimiter + __dirname,
+          PYTHONIOENCODING: "utf-8",
+        },
       },
     );
     this._shellProcess.stdout.on("data", this.onShellStdOut);
@@ -87,11 +80,13 @@ export class SASPYSession extends Session {
 %let rc = %sysfunc(dlgcdir("&workDir"));
 run;
 `;
-      const saspyWorkDirWithODS = wrapCodeWithOutputHtml(saspyWorkDir);
-      const saspyHtmlStyle = saspyWorkDirWithODS.match(/style=([^ ]+) /)?.[1] ?? "Illuminate";
+    const saspyWorkDirWithODS = wrapCodeWithOutputHtml(saspyWorkDir);
+    const saspyHtmlStyle =
+      saspyWorkDirWithODS.match(/style=([^ ]+) /)?.[1] ?? "Illuminate";
 
-      const cfgname = this._config.cfgname?.length > 0 ? this._config.cfgname : "";
-      const scriptContent = `
+    const cfgname =
+      this._config.cfgname?.length > 0 ? this._config.cfgname : "";
+    const scriptContent = `
 import saspy
 
 _cfgname = "${cfgname}"
@@ -131,7 +126,7 @@ ll=sas.submit(vscode_saspy_code)
 
 `;
 
-      this._shellProcess.stdin.write(scriptContent + "\n", this.onWriteComplete);
+    this._shellProcess.stdin.write(scriptContent + "\n", this.onWriteComplete);
     // this._shellProcess.stdin.write(
     //   "$runner = New-Object -TypeName SASRunner\n",
     //   this.onWriteComplete,
@@ -143,8 +138,7 @@ ll=sas.submit(vscode_saspy_code)
      * will not exist. The work dir should only be deleted when close is invoked.
      */
     if (!this._workDirectory) {
-
-        this._shellProcess.stdin.write(`sas\n`);
+      this._shellProcess.stdin.write(`sas\n`);
 
       if (this._config.sasOptions?.length > 0) {
         const sasOptsInput = `$sasOpts=${this.formatSASOptions(
@@ -183,10 +177,7 @@ ll=sas.submit(vscode_saspy_code)
       /\bods html5\(id=vscode\)([^;]*;)/i,
       `ods html5(id=vscode) path="${this._workDirectory}"$1`,
     );
-    const codeWithODSPath2 = codeWithODSPath.replace(
-      /\bods _all_ close;/i,
-      ``,
-    );
+    const codeWithODSPath2 = codeWithODSPath.replace(/\bods _all_ close;/i, ``);
 
     //write an end mnemonic so that the handler knows when execution has finished
     const codeWithEnd = `${codeWithODSPath2}\n%put ${LineCodes.RunEndCode};`;
@@ -200,13 +191,16 @@ ${codeWithEnd}
     this._html5FileName = "";
     this._shellProcess.stdin.write(codeToRun);
     this._pollingForLogResults = true;
-      await this._shellProcess.stdin.write(`ll=sas.submit(codeToRun, results='HTML')\n`, async (error) => {
-      if (error) {
-        this._runReject(error);
-      }
+    await this._shellProcess.stdin.write(
+      `ll=sas.submit(codeToRun, results='HTML')\n`,
+      async (error) => {
+        if (error) {
+          this._runReject(error);
+        }
 
-      await this.fetchLog();
-    });
+        await this.fetchLog();
+      },
+    );
 
     return runPromise;
   };
@@ -239,7 +233,7 @@ ${codeWithEnd}
    */
   public cancel = async () => {
     this._pollingForLogResults = false;
-      this._shellProcess.stdin.write("print(r'abc')\n", async (error) => {
+    this._shellProcess.stdin.write("print(r'abc')\n", async (error) => {
       if (error) {
         this._runReject(error);
       }
@@ -264,7 +258,7 @@ ${codeWithEnd}
    * writing each chunk to stdout.
    */
   private fetchLog = async (): Promise<void> => {
-    this._shellProcess.stdin.write(`print(ll['LOG'])\n`,this.onWriteComplete,);
+    this._shellProcess.stdin.write(`print(ll['LOG'])\n`, this.onWriteComplete);
   };
 
   /**
@@ -272,7 +266,7 @@ ${codeWithEnd}
    * @param chunk a buffer of stderr output from the child process.
    */
   private onShellStdErr = (chunk: Buffer): void => {
-    const msg = chunk.toString('utf8');
+    const msg = chunk.toString("utf8");
     console.warn("shellProcess stderr: " + msg);
     if (/[^.> ]/.test(msg)) {
       this._runReject(
@@ -282,7 +276,11 @@ ${codeWithEnd}
       );
     }
     // If we encountered an error in setup, we need to go through everything again
-    if (/^We failed in getConnection|Setup error|spawn .+ ENOENT: Error/i.test(msg)) {
+    if (
+      /^We failed in getConnection|Setup error|spawn .+ ENOENT: Error/i.test(
+        msg,
+      )
+    ) {
       this._shellProcess.kill();
       this._workDirectory = undefined;
     }
@@ -385,6 +383,7 @@ ${codeWithEnd}
    */
   private fetchResults = async () => {
     if (!this._html5FileName) {
+      this._pollingForLogResults = false;
       return this._runResolve({});
     }
 
@@ -448,9 +447,7 @@ ${LineCodes.ResultsFetchedCode}
  * @param c Instance denoting configuration parameters for this connection profile.
  * @returns  created COM session.
  */
-export const getSession = (
-  c: Partial<Config>,
-): Session => {
+export const getSession = (c: Partial<Config>): Session => {
   const defaults = {
     cfgname: "",
     pythonpath: "python",

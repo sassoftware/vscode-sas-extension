@@ -17,9 +17,9 @@ import {
   LogLine as ComputeLogLine,
   LogLineTypeEnum as ComputeLogLineTypeEnum,
 } from "./rest/api/compute";
+import { getSession as getSASPYSession } from "./saspy";
 import { Session } from "./session";
 import { getSession as getSSHSession } from "./ssh";
-import { getSession as getSASPYSession } from "./saspy";
 
 let profileConfig: ProfileConfig;
 
