@@ -394,7 +394,7 @@ export class CodeZoneManager {
     } while (/^\s*$/.test(text));
 
     if (Lexer.isComment[type] || Lexer.isLiteral[type]) {
-      token = this._token(context.line, col + 1)!;
+      token = this._token(context.line, col - 1)!;
       if (
         token.endLine &&
         (token.line !== context.line || token.col !== context.col)
