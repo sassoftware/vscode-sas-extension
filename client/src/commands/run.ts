@@ -21,12 +21,7 @@ import { sasDiagnostic } from "../components/logViewer/sasDiagnostics";
 import { SASCodeDocument } from "../components/utils/SASCodeDocument";
 import { getCodeDocumentConstructionParameters } from "../components/utils/SASCodeDocumentHelper";
 import { isOutputHtmlEnabled } from "../components/utils/settings";
-import {
-  ErrorRepresentation,
-  OnLogFn,
-  RunResult,
-  getSession,
-} from "../connection";
+import { ErrorRepresentation, RunResult, getSession } from "../connection";
 import { useRunStore } from "../store";
 import { profileConfig, switchProfile } from "./profile";
 
@@ -175,12 +170,28 @@ export function hasRunningTask() {
 }
 
 export async function runTask(
-  code: string,
+  codeDoc: SASCodeDocument,
   messageEmitter?: EventEmitter<string>,
   closeEmitter?: EventEmitter<number>,
-  onExecutionLog?: OnLogFn,
-  onSessionLog?: OnLogFn,
-): Promise<RunResult> {
+  taskLabel?: string,
+): Promise<void> {
+  return _runTask(codeDoc, messageEmitter, closeEmitter, taskLabel)
+    .catch((err) => {
+      onRunError(err);
+      throw err;
+    })
+    .finally(() => {
+      setIsExecutingCode(false);
+      commands.executeCommand("setContext", "SAS.running", false);
+    });
+}
+
+async function _runTask(
+  codeDoc: SASCodeDocument,
+  messageEmitter?: EventEmitter<string>,
+  closeEmitter?: EventEmitter<number>,
+  taskLabel?: string,
+): Promise<void> {
   if (useRunStore.getState().isExecutingCode) {
     return;
   }
@@ -204,14 +215,39 @@ export async function runTask(
     setIsExecutingCode(false);
     commands.executeCommand("setContext", "SAS.running", false);
   });
-  session.onExecutionLogFn = onExecutionLog ?? appendExecutionLogFn;
-  session.onSessionLogFn = onSessionLog ?? appendSessionLogFn;
+
+  session.onExecutionLogFn = sasDiagnostic.generateLogFn(
+    codeDoc,
+    appendExecutionLogFn,
+  );
+  session.onSessionLogFn = appendSessionLogFn;
 
   messageEmitter.fire(`${l10n.t("Connecting to SAS session...")}\r\n`);
   !cancelled && (await session.setup(true));
 
   messageEmitter.fire(`${l10n.t("SAS code running...")}\r\n`);
-  return cancelled ? undefined : session.run(code);
+  return cancelled
+    ? undefined
+    : session.run(codeDoc.getWrappedCode()).then((results) => {
+        showRunResult(results, messageEmitter, taskLabel);
+      });
+}
+
+function showRunResult(
+  results: RunResult,
+  messageEmitter: EventEmitter<string>,
+  taskName: string,
+) {
+  const outputHtml = isOutputHtmlEnabled();
+
+  if (outputHtml && results.html5) {
+    messageEmitter.fire(l10n.t("Show results...") + "\r\n");
+    showResult(
+      results.html5,
+      undefined,
+      l10n.t("Result: {result}", { result: taskName }),
+    );
+  }
 }
 
 const isErrorRep = (err: unknown): err is ErrorRepresentation => {
