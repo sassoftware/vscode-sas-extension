@@ -21,7 +21,7 @@ import { sasDiagnostic } from "../components/logViewer/sasDiagnostics";
 import { SASCodeDocument } from "../components/utils/SASCodeDocument";
 import { getCodeDocumentConstructionParameters } from "../components/utils/SASCodeDocumentHelper";
 import { isOutputHtmlEnabled } from "../components/utils/settings";
-import { ErrorRepresentation, RunResult, getSession } from "../connection";
+import { ErrorRepresentation, getSession } from "../connection";
 import { useRunStore } from "../store";
 import { profileConfig, switchProfile } from "./profile";
 
@@ -229,25 +229,17 @@ async function _runTask(
   return cancelled
     ? undefined
     : session.run(codeDoc.getWrappedCode()).then((results) => {
-        showRunResult(results, messageEmitter, taskLabel);
+        const outputHtml = isOutputHtmlEnabled();
+
+        if (outputHtml && results.html5) {
+          messageEmitter.fire(l10n.t("Show results...") + "\r\n");
+          showResult(
+            results.html5,
+            undefined,
+            l10n.t("Result: {result}", { result: taskLabel }),
+          );
+        }
       });
-}
-
-function showRunResult(
-  results: RunResult,
-  messageEmitter: EventEmitter<string>,
-  taskName: string,
-) {
-  const outputHtml = isOutputHtmlEnabled();
-
-  if (outputHtml && results.html5) {
-    messageEmitter.fire(l10n.t("Show results...") + "\r\n");
-    showResult(
-      results.html5,
-      undefined,
-      l10n.t("Result: {result}", { result: taskName }),
-    );
-  }
 }
 
 const isErrorRep = (err: unknown): err is ErrorRepresentation => {
