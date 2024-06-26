@@ -7,9 +7,6 @@
   "engines": {
     "node": "*"
   },
-  "browser": {
-    "path": "path-browserify"
-  },
   "dependencies": {
     "pyright-internal-node": "^1.1.367",
     "pyright-internal-browser": "^1.1.367",

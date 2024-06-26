@@ -1,4 +1,4 @@
-// Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import {
   CancellationToken,
@@ -225,8 +225,8 @@ export const runServer = (
     return await dispatch(params, {
       async sas(languageService) {
         const block = languageService.getFoldingBlock(
-          params.line,
-          params.col,
+          params.position.line,
+          params.position.col,
           params.strict ?? true,
           params.ignoreCustomBlock,
           params.ignoreGlobalBlock,
