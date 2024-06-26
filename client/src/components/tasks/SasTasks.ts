@@ -5,12 +5,8 @@ import { EventEmitter, TaskDefinition, l10n, window, workspace } from "vscode";
 import { isAbsolute } from "path";
 
 import { runTask } from "../../commands/run";
-import { RunResult } from "../../connection";
-import { showResult } from "../ResultPanel/ResultPanel";
-import { sasDiagnostic } from "../logViewer/sasDiagnostics";
 import { SASCodeDocument } from "../utils/SASCodeDocument";
 import { getCodeDocumentConstructionParameters } from "../utils/SASCodeDocumentHelper";
-import { isOutputHtmlEnabled } from "../utils/settings";
 
 export const SAS_TASK_TYPE = "sas";
 
@@ -57,32 +53,7 @@ export async function runSasFileTask(
 
   const codeDoc = new SASCodeDocument(parameters);
 
-  const logFn = sasDiagnostic.generateLogFn(codeDoc);
-  return runTask(
-    codeDoc.getWrappedCode(),
-    messageEmitter,
-    closeEmitter,
-    logFn,
-  ).then((results) => {
-    showRunResult(results, messageEmitter, `${label}`);
-  });
-}
-
-function showRunResult(
-  results: RunResult,
-  messageEmitter: EventEmitter<string>,
-  taskName: string,
-) {
-  const outputHtml = isOutputHtmlEnabled();
-
-  if (outputHtml && results.html5) {
-    messageEmitter.fire(l10n.t("Show results...") + "\r\n");
-    showResult(
-      results.html5,
-      undefined,
-      l10n.t("Result: {result}", { result: taskName }),
-    );
-  }
+  return runTask(codeDoc, messageEmitter, closeEmitter, label);
 }
 
 async function getTextDocumentFromFile(file: string | undefined) {

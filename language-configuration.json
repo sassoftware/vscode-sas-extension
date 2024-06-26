@@ -29,7 +29,7 @@
       "flags": "i"
     },
     "decreaseIndentPattern": {
-      "pattern": "(run|quit|%mend)(\\s|/\\*.*\\*/|\\*[^;]*;)*;$",
+      "pattern": "(;|^\\s*)(\\s|/\\*.*\\*/|\\*[^;]*;)*(run|quit|%mend)(\\s|/\\*.*\\*/|\\*[^;]*;)*;$",
       "flags": "i"
     }
   },
