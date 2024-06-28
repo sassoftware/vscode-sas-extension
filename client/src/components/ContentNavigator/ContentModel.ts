@@ -14,23 +14,12 @@ import {
   createStudioSession,
 } from "../../connection/studio";
 import { SASAuthProvider } from "../AuthProvider";
+import { Messages, ROOT_FOLDERS } from "./const";
+import { ContentAdapter, ContentItem } from "./types";
 import {
-  DEFAULT_FILE_CONTENT_TYPE,
-  FILE_TYPES,
-  FOLDER_TYPES,
-  Messages,
-  ROOT_FOLDER,
-  TRASH_FOLDER_TYPE,
-} from "./const";
-import { ContentItem, Link } from "./types";
-import {
-  getFileContentType,
-  getItemContentType,
   getLink,
-  getPermission,
   getResourceId,
   getResourceIdFromItem,
-  getTypeName,
   getUri,
   isContainer,
 } from "./utils";
@@ -49,8 +38,10 @@ export class ContentModel {
   private authorized: boolean;
   private viyaCadence: string;
   private delegateFolders: { [name: string]: ContentItem };
+  private contentAdapter: ContentAdapter;
 
-  constructor() {
+  constructor(contentAdapter: ContentAdapter) {
+    this.contentAdapter = contentAdapter;
     this.fileMetadataMap = {};
     this.authorized = false;
     this.delegateFolders = {};
@@ -58,10 +49,13 @@ export class ContentModel {
   }
 
   public connected(): boolean {
-    return this.authorized;
+    return this.contentAdapter.connected();
   }
 
   public async connect(baseURL: string): Promise<void> {
+    await this.contentAdapter.connect(baseURL);
+
+    // TODO Get rid of this
     this.connection = axios.create({ baseURL });
     this.connection.interceptors.response.use(
       (response: AxiosResponse) => response,
@@ -84,291 +78,85 @@ export class ContentModel {
   }
 
   public async getChildren(item?: ContentItem): Promise<ContentItem[]> {
-    if (!this.authorized) {
+    if (!this.connected()) {
       return [];
     }
 
     if (!item) {
-      return this.getRootChildren();
+      return Object.entries(await this.contentAdapter.getRootItems())
+        .sort(
+          // sort the delegate folders as the order in the supportedDelegateFolders
+          (a, b) => ROOT_FOLDERS.indexOf(a[0]) - ROOT_FOLDERS.indexOf(b[0]),
+        )
+        .map((entry) => entry[1]);
     }
 
-    if (!this.viyaCadence) {
-      this.viyaCadence = await this.getViyaCadence();
-    }
-
-    const parentIsContent = item.uri === ROOT_FOLDER.uri;
-    const typeQuery = this.generateTypeQuery(parentIsContent);
-
-    const membersLink = getLink(item.links, "GET", "members");
-    let membersUrl = membersLink ? membersLink.uri : null;
-    if (!membersUrl && item.uri) {
-      membersUrl = `${item.uri}/members`;
-    }
-
-    if (!membersUrl) {
-      const selfLink = getLink(item.links, "GET", "self");
-      if (!selfLink) {
-        console.error(
-          "Invalid state: FolderService object has no self link : " + item.name,
-        );
-        return Promise.reject({ status: 404 });
-      }
-      membersUrl = selfLink.uri + "/members";
-    }
-
-    membersUrl = membersUrl + "?limit=1000000";
-
-    const filters = [];
-
-    if (parentIsContent) {
-      filters.push("isNull(parent)");
-    }
-    if (typeQuery) {
-      filters.push(typeQuery);
-    }
-
-    if (filters.length === 1) {
-      membersUrl = membersUrl + "&filter=" + filters[0];
-    } else if (filters.length > 1) {
-      membersUrl = membersUrl + "&filter=and(" + filters.join(",") + ")";
-    }
-    membersUrl =
-      membersUrl +
-      `&sortBy=${
-        parentIsContent || this.viyaCadence === "2023.03" // 2023.03 fails query with this sortBy param
-          ? ""
-          : "eq(contentType,'folder'):descending,"
-      }name:primary:ascending,type:ascending`;
-
-    const res = await this.connection.get(membersUrl);
-    const result = res.data;
-    if (!result.items) {
-      return Promise.reject();
-    }
-    const myFavoritesFolder = this.getDelegateFolder("@myFavorites");
-    const isInRecycleBin =
-      TRASH_FOLDER_TYPE === getTypeName(item) || item.flags?.isInRecycleBin;
-    const isInMyFavorites =
-      getResourceIdFromItem(item) === getResourceIdFromItem(myFavoritesFolder);
-    const all_favorites = isInMyFavorites
-      ? []
-      : await this.getChildren(myFavoritesFolder);
-
-    return result.items.map((childItem: ContentItem, index) => ({
-      ...childItem,
-      uid: `${item.uid}/${index}`,
-      permission: getPermission(childItem),
-      flags: {
-        isInRecycleBin,
-        isInMyFavorites,
-        hasFavoriteId: all_favorites.find(
-          (favorite) =>
-            getResourceIdFromItem(favorite) ===
-            getResourceIdFromItem(childItem),
-        )?.id,
-      },
-    }));
+    return await this.contentAdapter.getChildItems(item);
   }
 
   public async getParent(item: ContentItem): Promise<ContentItem | undefined> {
-    const ancestorsLink = getLink(item.links, "GET", "ancestors");
-    if (!ancestorsLink) {
-      return;
-    }
-    const resp = await this.connection.get(ancestorsLink.uri);
-    if (resp.data && resp.data.length > 0) {
-      return resp.data[0];
-    }
+    return this.contentAdapter.getParentOfItem(item);
   }
 
   public async getResourceByUri(uri: Uri): Promise<ContentItem> {
-    const resourceId = getResourceId(uri);
-    return (await this.getResourceById(resourceId)).data;
+    return this.contentAdapter.getItemOfUri(uri);
   }
 
   public async getContentByUri(uri: Uri): Promise<string> {
-    const resourceId = getResourceId(uri);
-    let res;
+    let data;
     try {
-      res = await this.connection.get(resourceId + "/content", {
-        transformResponse: (response) => response,
-      });
+      data = (await this.contentAdapter.getContentOfUri(uri)).toString();
     } catch (e) {
       throw new Error(Messages.FileOpenError);
     }
 
     // We expect the returned data to be a string. If this isn't a string,
     // we can't really open it
-    if (typeof res.data === "object") {
+    if (typeof data === "object") {
       throw new Error(Messages.FileOpenError);
     }
 
-    return res.data;
+    return data;
   }
 
   public async downloadFile(item: ContentItem): Promise<Buffer | undefined> {
-    const uri = getUri(item);
-    const resourceId = getResourceId(uri);
-
     try {
-      const res = await this.connection.get(resourceId + "/content", {
-        responseType: "arraybuffer",
-      });
+      const data = await this.contentAdapter.getContentOfItem(item);
 
-      return Buffer.from(res.data, "binary");
+      return Buffer.from(data, "binary");
     } catch (e) {
       throw new Error(Messages.FileDownloadError);
     }
   }
 
   public async createFile(
-    item: ContentItem,
+    parentItem: ContentItem,
     fileName: string,
     buffer?: ArrayBufferLike,
   ): Promise<ContentItem | undefined> {
-    const typeDef = await this.getTypeDefinition(fileName);
-    let createdResource: ContentItem;
-    try {
-      const fileCreationResponse = await this.connection.post<ContentItem>(
-        `/files/files#rawUpload?typeDefName=${typeDef}`,
-        buffer || Buffer.from("", "binary"),
-        {
-          headers: {
-            "Content-Type": getFileContentType(fileName),
-            "Content-Disposition": `filename*=UTF-8''${encodeURI(fileName)}`,
-            Accept: "application/vnd.sas.file+json",
-          },
-        },
-      );
-      createdResource = fileCreationResponse.data;
-    } catch (error) {
-      return;
-    }
-
-    const fileLink: Link | null = getLink(createdResource.links, "GET", "self");
-    const memberAdded = await this.addMember(
-      fileLink?.uri,
-      getLink(item.links, "POST", "addMember")?.uri,
-      {
-        name: fileName,
-        contentType: typeDef,
-      },
+    return await this.contentAdapter.createNewItem(
+      parentItem,
+      fileName,
+      buffer,
     );
-    if (!memberAdded) {
-      return;
-    }
-
-    return createdResource;
   }
 
   public async createFolder(
     item: ContentItem,
     name: string,
   ): Promise<ContentItem | undefined> {
-    const parentFolderUri =
-      item.uri || getLink(item.links || [], "GET", "self")?.uri || null;
-    if (!parentFolderUri) {
-      return;
-    }
-
-    try {
-      const createFolderResponse = await this.connection.post(
-        `/folders/folders?parentFolderUri=${parentFolderUri}`,
-        {
-          name,
-        },
-      );
-      return createFolderResponse.data;
-    } catch (error) {
-      return;
-    }
+    return await this.contentAdapter.createNewFolder(item, name);
   }
 
   public async renameResource(
     item: ContentItem,
     name: string,
   ): Promise<ContentItem | undefined> {
-    const itemIsReference = item.type === "reference";
-    const uri = itemIsReference
-      ? getLink(item.links, "GET", "self").uri
-      : item.uri;
-
-    try {
-      const validationUri = getLink(item.links, "PUT", "validateRename")?.uri;
-      if (validationUri) {
-        await this.connection.put(
-          validationUri
-            .replace("{newname}", encodeURI(name))
-            .replace("{newtype}", getTypeName(item)),
-        );
-      }
-
-      // not sure why but the response of moveTo request does not return the latest etag so request it every time
-      const { data: fileData } = await this.getResourceById(uri);
-      const contentType = getFileContentType(name);
-      const fileMetadata = this.fileMetadataMap[uri];
-      const patchResponse = await this.connection.put(
-        uri,
-        { ...fileData, name },
-        {
-          headers: {
-            "If-Unmodified-Since": fileMetadata.lastModified,
-            "If-Match": fileMetadata.etag,
-            "Content-Type": getItemContentType(item),
-          },
-        },
-      );
-
-      this.updateFileMetadata(uri, patchResponse, contentType);
-
-      // The links in My Favorites are of type reference. Instead of passing
-      // back the reference objects, we want to pass back the underlying source
-      // objects.
-      if (itemIsReference) {
-        return (await this.getResourceById(item.uri)).data;
-      }
-
-      return patchResponse.data;
-    } catch (error) {
-      return;
-    }
-  }
-
-  private getFileInfo(resourceId: string): {
-    etag: string;
-    lastModified: string;
-    contentType: string;
-  } {
-    if (resourceId in this.fileMetadataMap) {
-      return this.fileMetadataMap[resourceId];
-    }
-    const now = new Date();
-    const timestamp = now.toUTCString();
-    return {
-      etag: "",
-      lastModified: timestamp,
-      contentType: DEFAULT_FILE_CONTENT_TYPE,
-    };
+    return await this.contentAdapter.renameItem(item, name);
   }
 
   public async saveContentToUri(uri: Uri, content: string): Promise<void> {
-    const resourceId = getResourceId(uri);
-    const { etag, lastModified, contentType } = this.getFileInfo(resourceId);
-    const headers = {
-      "Content-Type": contentType,
-      "If-Unmodified-Since": lastModified,
-    };
-    if (etag !== "") {
-      headers["If-Match"] = etag;
-    }
-    try {
-      const res = await this.connection.put(resourceId + "/content", content, {
-        headers,
-      });
-      this.updateFileMetadata(resourceId, res, contentType);
-    } catch (error) {
-      console.log(error);
-    }
+    await this.contentAdapter.updateContentOfItem(uri, content);
   }
 
   public async acquireStudioSessionId(): Promise<string> {
@@ -493,31 +281,9 @@ export class ContentModel {
     return true;
   }
 
-  public async addMember(
-    uri: string | undefined,
-    addMemberUri: string | undefined,
-    properties: AddMemberProperties,
-  ): Promise<boolean> {
-    if (!uri || !addMemberUri) {
-      return false;
-    }
-
-    try {
-      await this.connection.post(addMemberUri, {
-        uri,
-        type: "CHILD",
-        ...properties,
-      });
-    } catch (error) {
-      return false;
-    }
-
-    return true;
-  }
-
   public async addFavorite(item: ContentItem): Promise<boolean> {
     const myFavorites = this.getDelegateFolder("@myFavorites");
-    return await this.addMember(
+    return await this.contentAdapter.addChildItem(
       getResourceIdFromItem(item),
       getLink(myFavorites.links, "POST", "addMember").uri,
       {
@@ -529,13 +295,7 @@ export class ContentModel {
   }
 
   public async removeFavorite(item: ContentItem): Promise<boolean> {
-    const deleteMemberUri = item.flags?.isInMyFavorites
-      ? getLink(item.links, "DELETE", "delete")?.uri
-      : item.flags?.hasFavoriteId
-        ? `${getResourceIdFromItem(
-            this.getDelegateFolder("@myFavorites"),
-          )}/members/${item.flags?.hasFavoriteId}`
-        : undefined;
+    const deleteMemberUri = await getDeleteMemberUri();
     if (!deleteMemberUri) {
       return false;
     }
@@ -545,25 +305,24 @@ export class ContentModel {
       return false;
     }
     return true;
-  }
 
-  private generateTypeQuery(parentIsContent: boolean): string {
-    // Generate type query segment if applicable
-    let typeQuery = "";
-    // Determine the set of types on which to filter
-    const includedTypes = FILE_TYPES.concat(FOLDER_TYPES);
-
-    // Generate type query string
-    typeQuery = "in(" + (parentIsContent ? "type" : "contentType") + ",";
-    for (let i = 0; i < includedTypes.length; i++) {
-      typeQuery += "'" + includedTypes[i] + "'";
-      if (i !== includedTypes.length - 1) {
-        typeQuery += ",";
+    async function getDeleteMemberUri(): Promise<string> {
+      if (item.flags?.isInMyFavorites) {
+        return getLink(item.links, "DELETE", "delete")?.uri;
       }
-    }
-    typeQuery += ")";
 
-    return typeQuery;
+      const myFavoritesFolder = this.getDelegateFolder("@myFavorites");
+      const allFavorites = await this.getChildren(myFavoritesFolder);
+      const favoriteId = allFavorites.find(
+        (favorite) =>
+          getResourceIdFromItem(favorite) === getResourceIdFromItem(item),
+      )?.id;
+      if (!favoriteId) {
+        return undefined;
+      }
+
+      return `${getResourceIdFromItem(myFavoritesFolder)}/members/${favoriteId}`;
+    }
   }
 
   private async getTypeDefinition(fileName: string): Promise<string> {
@@ -588,48 +347,6 @@ export class ContentModel {
     return defaultContentType;
   }
 
-  private async getRootChildren(): Promise<ContentItem[]> {
-    const supportedDelegateFolders = [
-      "@myFavorites",
-      "@myFolder",
-      "@sasRoot",
-      "@myRecycleBin",
-    ];
-    let numberCompletedServiceCalls = 0;
-
-    return new Promise<ContentItem[]>((resolve) => {
-      supportedDelegateFolders.forEach(async (sDelegate, index) => {
-        let result;
-        if (sDelegate === "@sasRoot") {
-          result = {
-            data: ROOT_FOLDER,
-          };
-        } else {
-          result = await this.connection.get(`/folders/folders/${sDelegate}`);
-        }
-        this.delegateFolders[sDelegate] = {
-          ...result.data,
-          uid: `${index}`,
-          permission: getPermission(result.data),
-        };
-
-        numberCompletedServiceCalls++;
-        if (numberCompletedServiceCalls === supportedDelegateFolders.length) {
-          resolve(
-            Object.entries(this.delegateFolders)
-              .sort(
-                // sort the delegate folders as the order in the supportedDelegateFolders
-                (a, b) =>
-                  supportedDelegateFolders.indexOf(a[0]) -
-                  supportedDelegateFolders.indexOf(b[0]),
-              )
-              .map((entry) => entry[1]),
-          );
-        }
-      });
-    });
-  }
-
   public getDelegateFolder(name: string): ContentItem | undefined {
     return this.delegateFolders[name];
   }
@@ -639,18 +356,6 @@ export class ContentModel {
       createIfNone: true,
     });
     this.connection.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`;
-  }
-
-  private async getViyaCadence(): Promise<string> {
-    try {
-      const { data } = await this.connection.get(
-        "/deploymentData/cadenceVersion",
-      );
-      return data.cadenceVersion;
-    } catch (e) {
-      console.error("fail to retrieve the viya cadence");
-    }
-    return "unknown";
   }
 
   public async getFileFolderPath(contentItem: ContentItem): Promise<string> {

@@ -70,7 +70,7 @@ export const resourceType = (item: ContentItem): string | undefined => {
     actions.push("empty");
   }
 
-  if (item.flags?.isInMyFavorites || item.flags?.hasFavoriteId) {
+  if (item.flags?.isInMyFavorites) {
     actions.push("removeFromFavorites");
   } else if (
     item.type !== "reference" &&
