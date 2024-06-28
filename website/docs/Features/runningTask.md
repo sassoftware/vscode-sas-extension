@@ -1,3 +1,7 @@
+---
+sidebar_position: 5
+---
+
 # Running SAS Code by Task
 
 ## Run selected code or all code in active editor
