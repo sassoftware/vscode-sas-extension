@@ -410,6 +410,8 @@ export class FormatOnTypeProvider {
       case ZT.MACRO_DEF_OPT:
       case ZT.MACRO_FUNC:
       case ZT.MACRO_VAR:
+      case ZT.MACRO_SUB_OPT_NAME:
+      case ZT.MACRO_SUB_OPT_VALUE:
         return true;
       default:
         return false;

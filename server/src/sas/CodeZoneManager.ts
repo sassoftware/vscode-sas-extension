@@ -669,14 +669,20 @@ export class CodeZoneManager {
       token = this._getPrev(context);
       if (token && token.text) {
         word = token.text.toUpperCase();
+        token = this._getPrev(context);
         if (_isBlockEnd[word]) {
-          token = this._getPrev(context);
-          return token?.text === ";";
-        } else if (word === "CANCEL") {
-          token = this._getPrev(context);
+          if (token?.text === ";") {
+            return true;
+          }
+        }
+        if (word === "CANCEL") {
           if (token && token.text && _isBlockEnd[token.text.toUpperCase()]) {
             return true;
           }
+        }
+        if (token?.text.toUpperCase() === "%MEND") {
+          token = this._getPrev(context);
+          return token?.text === ";";
         }
       }
     }
@@ -2262,7 +2268,12 @@ export class CodeZoneManager {
     if (Lexer.isWord[token.type]) {
       text = token.text;
       if (token.pos >= 0) {
-        if (this._inBlock(context.block, token)! >= 0) {
+        const inBlock = this._inBlock(context.block, token)! >= 0;
+        if (
+          (inBlock && text !== "%MACRO") ||
+          (!inBlock && //not in block
+            !this._endedReally(context.block))
+        ) {
           // in block
           embeddedBlock = this._embeddedBlock(context.block, {
             line: token.line,
@@ -2278,6 +2289,7 @@ export class CodeZoneManager {
               return this._dataSec(context);
             }
           }
+          return CodeZoneManager.ZONE_TYPE.MACRO_STMT;
         }
         if (text[0] === "%") {
           return CodeZoneManager.ZONE_TYPE.MACRO_STMT;
@@ -2356,6 +2368,12 @@ export class CodeZoneManager {
     }
     this._context({ op: "%MACRO", op1: opts }, stack);
     const zone = this._zone(stack, context);
+    if (zone.type === CodeZoneManager.ZONE_TYPE.SUB_OPT_NAME) {
+      return CodeZoneManager.ZONE_TYPE.MACRO_SUB_OPT_NAME;
+    }
+    if (zone.type === CodeZoneManager.ZONE_TYPE.SUB_OPT_VALUE) {
+      return CodeZoneManager.ZONE_TYPE.MACRO_SUB_OPT_VALUE;
+    }
     return zone.type;
   }
   private _macroStmt(context: Context, stmt: TokenWithPos) {
@@ -2593,6 +2611,8 @@ export class CodeZoneManager {
     MACRO_STMT_OPT: 548,
     MACRO_STMT_OPT_VALUE: 549,
     MACRO_STMT_BODY: 550,
+    MACRO_SUB_OPT_NAME: 551,
+    MACRO_SUB_OPT_VALUE: 552,
     // style related
     STYLE_LOC: 555,
     STYLE_ELEMENT: 556,
