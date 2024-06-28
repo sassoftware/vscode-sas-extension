@@ -17,12 +17,13 @@ import {
 import { basename } from "path";
 
 import { profileConfig } from "../../commands/profile";
+import RestContentAdapter from "../../connection/rest/RestContentAdapter";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ConnectionType } from "../profile";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
 import { Messages } from "./const";
-import { ContentItem, FileManipulationEvent } from "./types";
+import { ContentAdapter, ContentItem, FileManipulationEvent } from "./types";
 import {
   isContainer as getIsContainer,
   getUri,
@@ -54,7 +55,7 @@ class ContentNavigator implements SubscriptionProvider {
 
   constructor(context: ExtensionContext) {
     this.contentDataProvider = new ContentDataProvider(
-      new ContentModel(),
+      new ContentModel(this.contentAdapterForConnectionType()),
       context.extensionUri,
     );
 
@@ -422,6 +423,20 @@ class ContentNavigator implements SubscriptionProvider {
     return items.filter(
       ({ parentFolderUri }: ContentItem) => !uris.includes(parentFolderUri),
     );
+  }
+
+  private contentAdapterForConnectionType(): ContentAdapter | undefined {
+    // const activeProfile = profileConfig.getProfileByName(
+    //   profileConfig.getActiveProfile(),
+    // );
+
+    // if (!activeProfile) {
+    //   return;
+    // }
+
+    // return new ContentAdapterFactory().create(activeProfile.connectionType);
+
+    return new RestContentAdapter();
   }
 }
 
