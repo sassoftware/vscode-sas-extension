@@ -578,7 +578,7 @@ export class ProfileConfig {
         ProfilePromptType.IdentityFile,
         profileClone.identityFile,
       );
-      if (profileClone.username === undefined) {
+      if (profileClone.identityFile === undefined) {
         return;
       }
 
@@ -806,8 +806,10 @@ const input: ProfilePromptInput = {
   },
   [ProfilePromptType.IdentityFile]: {
     title: l10n.t("SAS Server Private Key"),
-    placeholder: l10n.t("Enter your private key path"),
-    description: l10n.t("Enter path to private key for your SAS server."),
+    placeholder: l10n.t("(Optional) Enter your private key path"),
+    description: l10n.t(
+      "(Optional) Enter path to private key for your SAS server.",
+    ),
   },
 };
 
