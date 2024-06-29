@@ -4,10 +4,10 @@ sidebar_position: 4
 
 # SAS 9.4 (remote - SSH) Connection Profile
 
-For a secure connection to SAS 9.4 (remote - SSH) server, a public / private SSH key pair is required. There are two ways to proviate a Private Key:
+For a secure connection to SAS 9.4 (remote - SSH) server, a public / private SSH key pair is required. There are two ways to provide a Private Key:
 
 1. (Preferred) The socket defined in the environment variable `SSH_AUTH_SOCK` is used to communicate with ssh-agent to authenticate the SSH session. The private key must be registered with the ssh-agent. The steps for configuring SSH follow.
-1. (Non-Preferred) When creating an SSH profile, you will be asked for an identityFile. This is the full path to a private key. Note that this private key must be created without a passphrase protecting it (hence, this is the non-preferred path)
+1. (Non-Preferred) When creating an SSH profile, you will be asked for an identityFile. This is the full path to a private key. Note that this private key must be created without a passphrase protecting it (hence, this is the non-preferred path). Leave this blank if using ssh-agent
 
 ## Profile Anatomy
 
@@ -76,7 +76,7 @@ Note: if ~/.ssh/config does not exist, run the following Powershell command to c
 
 Note: the default path to the SAS executable (saspath) is /opt/sasinside/SASHome/SASFoundation/9.4/bin/sas_u8. Check with your SAS administrator for the exact path.
 
-9. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
+9. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file. If you have it on your system, you can use "ssh-copy-id" command to make this easy. By default, ```ssh-copy-id host.machine.name``` will probably do what you need.
 
 ### Mac
 
@@ -115,11 +115,11 @@ Host host.machine.name
 }
 ```
 
-6. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
+6. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file. If you have it on your system, you can use "ssh-copy-id" command to make this easy. By default, ```ssh-copy-id host.machine.name``` will probably do what you need.
 
 ## Windows/Mac/Linux using only identityFile
 
-1. Create a keypair and copy to the server, as described in section above
+1. Create a keypair and copy to the server, as described in sections above
    1. It must be created without a passphrase
 1. In the profile, provide the full path to your private key:
 
@@ -133,3 +133,4 @@ Host host.machine.name
     "identityFile": "c:\\Users\\username\\.ssh\\id_ed25519"
 }
 ```
+
