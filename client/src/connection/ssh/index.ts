@@ -77,7 +77,7 @@ export class SSHSession extends Session {
       // Exception bubbles up usefully if this is set, but the file doesn't exist
       let privateKey = undefined;
       if (this._config.identityFile && this._config.identityFile.length) {
-        readFileSync(this._config.identityFile);
+        privateKey = readFileSync(this._config.identityFile);
       }
 
       const cfg: ConnectConfig = {
