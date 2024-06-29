@@ -654,6 +654,7 @@ describe("Profiles", async function () {
           sasOptions: ["-nonews"],
           saspath: "/sas/path",
           username: "username",
+          identityFile: "",
         };
         // Arrange
         // Act

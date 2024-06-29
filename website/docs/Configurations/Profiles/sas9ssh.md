@@ -4,7 +4,10 @@ sidebar_position: 4
 
 # SAS 9.4 (remote - SSH) Connection Profile
 
-For a secure connection to SAS 9.4 (remote - SSH) server, a public / private SSH key pair is required. The socket defined in the environment variable `SSH_AUTH_SOCK` is used to communicate with ssh-agent to authenticate the SSH session. The private key must be registered with the ssh-agent. The steps for configuring SSH follow.
+For a secure connection to SAS 9.4 (remote - SSH) server, a public / private SSH key pair is required. There are two ways to proviate a Private Key:
+
+1. (Preferred) The socket defined in the environment variable `SSH_AUTH_SOCK` is used to communicate with ssh-agent to authenticate the SSH session. The private key must be registered with the ssh-agent. The steps for configuring SSH follow.
+1. (Non-Preferred) When creating an SSH profile, you will be asked for an identityFile. This is the full path to a private key. Note that this private key must be created without a passphrase protecting it (hence, this is the non-preferred path)
 
 ## Profile Anatomy
 
@@ -12,12 +15,13 @@ A SAS 9.4 (remote – SSH) connection profile includes the following parameters:
 
 `"connectionType": "ssh"`
 
-| Name       | Description                          | Additional Notes                                                           |
-| ---------- | ------------------------------------ | -------------------------------------------------------------------------- |
-| `host`     | SSH Server Host                      | Appears when hovering over the status bar.                                 |
-| `username` | SSH Server Username                  | The username to establish the SSH connection to the server.                |
-| `port`     | SSH Server Port                      | The SSH port of the SSH server. The default value is 22.                   |
-| `saspath`  | Path to SAS Executable on the server | Must be a fully qualified path on the SSH server to a SAS executable file. |
+| Name           | Description                          | Additional Notes                                                           |
+| -------------- | ------------------------------------ | -------------------------------------------------------------------------- |
+| `host`         | SSH Server Host                      | Appears when hovering over the status bar.                                 |
+| `username`     | SSH Server Username                  | The username to establish the SSH connection to the server.                |
+| `port`         | SSH Server Port                      | The SSH port of the SSH server. The default value is 22.                   |
+| `saspath`      | Path to SAS Executable on the server | Must be a fully qualified path on the SSH server to a SAS executable file. |
+| `identityFile` | Full path to private key             | Must be a fully qualified path on local host to an unshielded private key. |
 
 ## Required setup for connection to SAS 9.4 (remote - SSH)
 
@@ -112,3 +116,20 @@ Host host.machine.name
 ```
 
 6. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
+
+## Windows/Mac/Linux using only identityFile
+
+1. Create a keypair and copy to the server, as described in section above
+   1. It must be created without a passphrase
+1. In the profile, provide the full path to your private key:
+
+```json
+"ssh_test": {
+    "connectionType": "ssh",
+    "host": "host.machine.name",
+    "saspath": "/path/to/sas/executable",
+    "username": "username",
+    "port": 22,
+    "identityFile": "c:\\Users\\username\\.ssh\\id_ed25519"
+}
+```

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { l10n } from "vscode";
 
+import { readFileSync } from "fs";
 import { Client, ClientChannel, ConnectConfig } from "ssh2";
 
 import { BaseConfig, RunResult } from "..";
@@ -18,12 +19,18 @@ export interface Config extends BaseConfig {
   username: string;
   saspath: string;
   port: number;
+  identityFile: string;
 }
 
 export function getSession(c: Config): Session {
-  if (!process.env.SSH_AUTH_SOCK) {
+  if (
+    !process.env.SSH_AUTH_SOCK &&
+    !(c.identityFile && c.identityFile.length)
+  ) {
     throw new Error(
-      l10n.t("SSH_AUTH_SOCK not set. Check Environment Variables."),
+      l10n.t(
+        "SSH_AUTH_SOCK not set and no identityFile provided. Check Environment Variables and profile.",
+      ),
     );
   }
 
@@ -67,12 +74,19 @@ export class SSHSession extends Session {
         return;
       }
 
+      // Exception bubbles up usefully if this is set, but the file doesn't exist
+      let privateKey = undefined;
+      if (this._config.identityFile && this._config.identityFile.length) {
+        readFileSync(this._config.identityFile);
+      }
+
       const cfg: ConnectConfig = {
         host: this._config.host,
         port: this._config.port,
         username: this._config.username,
         readyTimeout: sasLaunchTimeout,
         agent: process.env.SSH_AUTH_SOCK || undefined,
+        privateKey: privateKey,
       };
 
       this.conn

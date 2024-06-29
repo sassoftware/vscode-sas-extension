@@ -88,6 +88,7 @@ export interface SSHProfile extends BaseProfile {
   saspath: string;
   port: number;
   username: string;
+  identityFile: string;
 }
 
 export interface COMProfile extends BaseProfile {
@@ -573,6 +574,14 @@ export class ProfileConfig {
         return;
       }
 
+      profileClone.identityFile = await createInputTextBox(
+        ProfilePromptType.IdentityFile,
+        profileClone.identityFile,
+      );
+      if (profileClone.username === undefined) {
+        return;
+      }
+
       profileClone.port = parseInt(
         await createInputTextBox(ProfilePromptType.Port, DEFAULT_SSH_PORT),
       );
@@ -657,6 +666,7 @@ export enum ProfilePromptType {
   SASPath,
   Port,
   Username,
+  IdentityFile,
 }
 
 /**
@@ -793,6 +803,11 @@ const input: ProfilePromptInput = {
     title: l10n.t("SAS Server Username"),
     placeholder: l10n.t("Enter your username"),
     description: l10n.t("Enter your SAS server username."),
+  },
+  [ProfilePromptType.IdentityFile]: {
+    title: l10n.t("SAS Server Private Key"),
+    placeholder: l10n.t("Enter your private key path"),
+    description: l10n.t("Enter path to private key for your SAS server."),
   },
 };
 
