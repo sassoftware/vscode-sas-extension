@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri } from "vscode";
+import { FileStat, Uri } from "vscode";
 
 export interface ContentItem {
   id: string;
@@ -19,6 +19,13 @@ export interface ContentItem {
   memberCount?: number;
   permission: Permission;
   parentFolderUri?: string;
+  // PROPS FOR VISUAL STUFF
+  vscUri?: Uri;
+  fileStat?: FileStat;
+  contextValue?: string;
+  resourceId?: string;
+  isReference?: boolean;
+  typeName?: string;
 }
 
 export interface Link {
@@ -82,10 +89,12 @@ export interface ContentAdapter {
     item: ContentItem,
     targetParentFolderUri: string,
   ) => Promise<boolean>;
+  recycleItem: (item: ContentItem) => Promise<{ newUri?: Uri; oldUri?: Uri }>;
   removeItemFromFavorites: (item: ContentItem) => Promise<boolean>;
   renameItem: (
     item: ContentItem,
     newName: string,
   ) => Promise<ContentItem | undefined>;
+  restoreItem: (item: ContentItem) => Promise<boolean>;
   updateContentOfItem(uri: Uri, content: string): Promise<void>;
 }

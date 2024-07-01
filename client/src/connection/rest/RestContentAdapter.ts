@@ -1,4 +1,4 @@
-import { Uri, authentication } from "vscode";
+import { FileType, Uri, authentication } from "vscode";
 
 import axios, {
   AxiosError,
@@ -25,6 +25,11 @@ import {
 } from "../../components/ContentNavigator/types";
 import {
   getFileContentType,
+  isContainer,
+  isItemInRecycleBin,
+  isReference,
+} from "../../components/ContentNavigator/utils";
+import {
   getItemContentType,
   getLink,
   getPermission,
@@ -32,8 +37,8 @@ import {
   getResourceIdFromItem,
   getTypeName,
   getUri,
-  isContainer,
-} from "../../components/ContentNavigator/utils";
+  resourceType,
+} from "./util";
 
 class RestContentAdapter implements ContentAdapter {
   private connection: AxiosInstance;
@@ -109,7 +114,7 @@ class RestContentAdapter implements ContentAdapter {
     }
     const resp = await this.connection.get(ancestorsLink.uri);
     if (resp.data && resp.data.length > 0) {
-      return resp.data[0];
+      return this.enrichWithDataProviderProperties(resp.data[0]);
     }
   }
 
@@ -130,19 +135,20 @@ class RestContentAdapter implements ContentAdapter {
       getResourceIdFromItem(parentItem) ===
       getResourceIdFromItem(myFavoritesFolder);
 
-    return result.items.map((childItem: ContentItem, index) => ({
-      ...childItem,
-      uid: `${parentItem.uid}/${index}`,
-      permission: getPermission(childItem),
-      flags: {
-        isInRecycleBin,
-        isInMyFavorites,
-      },
-    }));
+    return result.items.map(
+      (childItem: ContentItem, index): ContentItem => ({
+        ...childItem,
+        uid: `${parentItem.uid}/${index}`,
+        ...this.enrichWithDataProviderProperties(childItem, {
+          isInRecycleBin,
+          isInMyFavorites,
+        }),
+      }),
+    );
   }
 
   public async getFolderPathForItem(item: ContentItem): Promise<string> {
-    if (isContainer(item)) {
+    if (item) {
       return "";
     }
 
@@ -264,7 +270,7 @@ class RestContentAdapter implements ContentAdapter {
       this.rootFolders[delegateFolderName] = {
         ...result.data,
         uid: `${index}`,
-        permission: getPermission(result.data),
+        ...this.enrichWithDataProviderProperties(result.data),
       };
     }
 
@@ -272,9 +278,10 @@ class RestContentAdapter implements ContentAdapter {
   }
 
   public async getItemOfId(id: string): Promise<ContentItem> {
-    const res = await this.connection.get(id);
-    this.updateFileMetadata(id, res);
-    return res.data;
+    const response = await this.connection.get(id);
+    this.updateFileMetadata(id, response);
+
+    return this.enrichWithDataProviderProperties(response.data);
   }
 
   public async getItemOfUri(uri: Uri): Promise<ContentItem> {
@@ -292,8 +299,7 @@ class RestContentAdapter implements ContentAdapter {
   }
 
   public async getContentOfItem(item: ContentItem): Promise<string> {
-    const uri = getUri(item);
-    return await this.getContentOfUri(uri);
+    return await this.getContentOfUri(item.vscUri);
   }
 
   public async createNewFolder(
@@ -313,9 +319,42 @@ class RestContentAdapter implements ContentAdapter {
         `/folders/folders?parentFolderUri=${parentFolderUri}`,
         { name: folderName },
       );
-      return createFolderResponse.data;
+      return this.enrichWithDataProviderProperties(createFolderResponse.data);
     } catch (error) {
       return;
+    }
+  }
+
+  private enrichWithDataProviderProperties(
+    item: ContentItem,
+    flags?: ContentItem["flags"],
+  ): ContentItem {
+    return {
+      ...item,
+      permission: getPermission(item),
+      contextValue: resourceType(item),
+      fileStat: {
+        ctime: item.creationTimeStamp,
+        mtime: item.modifiedTimeStamp,
+        size: 0,
+        type: getIsContainer(item) ? FileType.Directory : FileType.File,
+      },
+      isReference: isReference(item),
+      resourceId: getResourceIdFromItem(item),
+      vscUri: getUri(item, flags?.isInRecycleBin || false),
+      typeName: getTypeName(item),
+      flags,
+    };
+
+    function getIsContainer(item: ContentItem): boolean {
+      const typeName = getTypeName(item);
+      if (isItemInRecycleBin(item) && isReference(item)) {
+        return false;
+      }
+      if (FOLDER_TYPES.indexOf(typeName) >= 0) {
+        return true;
+      }
+      return false;
     }
   }
 
@@ -363,7 +402,7 @@ class RestContentAdapter implements ContentAdapter {
         return await this.getItemOfId(item.uri);
       }
 
-      return patchResponse.data;
+      return this.enrichWithDataProviderProperties(patchResponse.data);
     } catch (error) {
       return;
     }
@@ -406,7 +445,7 @@ class RestContentAdapter implements ContentAdapter {
       return;
     }
 
-    return createdResource;
+    return this.enrichWithDataProviderProperties(createdResource);
 
     async function getTypeDefinition(fileName: string): Promise<string> {
       const defaultContentType = "file";
@@ -473,19 +512,16 @@ class RestContentAdapter implements ContentAdapter {
     }
   }
 
-  public async getUriOfItem(
-    item: ContentItem,
-    readOnly: boolean,
-  ): Promise<Uri> {
+  public async getUriOfItem(item: ContentItem): Promise<Uri> {
     if (item.type !== "reference") {
-      return getUri(item, readOnly);
+      return item.vscUri;
     }
 
     // If we're attempting to open a favorite, open the underlying file instead.
     try {
-      return getUri(await this.getItemOfId(item.uri), readOnly);
+      return (await this.getItemOfId(item.uri)).vscUri;
     } catch (error) {
-      return getUri(item, readOnly);
+      return item.vscUri;
     }
   }
 
@@ -538,6 +574,42 @@ class RestContentAdapter implements ContentAdapter {
 
       return `${getResourceIdFromItem(myFavoritesFolder)}/members/${favoriteId}`;
     }
+  }
+
+  public async recycleItem(
+    item: ContentItem,
+  ): Promise<{ newUri?: Uri; oldUri?: Uri }> {
+    const recycleBin = this.getRootFolder("@myRecycleBin");
+    if (!recycleBin) {
+      // fallback to delete
+      return recycleItemResponse(await this.deleteItem(item));
+    }
+    const recycleBinUri = getLink(recycleBin.links, "GET", "self")?.uri;
+    if (!recycleBinUri) {
+      return {};
+    }
+
+    const success = await this.moveItem(item, recycleBinUri);
+    return recycleItemResponse(success);
+
+    function recycleItemResponse(success: boolean) {
+      if (!success) {
+        return {};
+      }
+
+      return {
+        newUri: getUri(item, true),
+        oldUri: getUri(item),
+      };
+    }
+  }
+
+  public async restoreItem(item: ContentItem): Promise<boolean> {
+    const previousParentUri = getLink(item.links, "GET", "previousParent")?.uri;
+    if (!previousParentUri) {
+      return false;
+    }
+    await this.moveItem(item, previousParentUri);
   }
 
   private async updateAccessToken(): Promise<void> {
