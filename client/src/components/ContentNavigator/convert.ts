@@ -13,12 +13,7 @@ import {
 import { ContentModel } from "./ContentModel";
 import { MYFOLDER_TYPE, Messages } from "./const";
 import { ContentItem } from "./types";
-import {
-  getResourceId,
-  getResourceIdFromItem,
-  getUri,
-  isContentItem,
-} from "./utils";
+import { isContentItem } from "./utils";
 
 const stepRef: Record<string, string> = {
   sas: "a7190700-f59c-4a94-afe2-214ce639fcde",
@@ -385,7 +380,7 @@ export class NotebookToFlowConverter {
 
   public async content() {
     return isContentItem(this.resource)
-      ? await this.contentModel.getContentByUri(getUri(this.resource))
+      ? await this.contentModel.getContentByUri(this.resource.vscUri)
       : (await workspace.fs.readFile(this.resource)).toString();
   }
 
@@ -431,8 +426,8 @@ export class NotebookToFlowConverter {
     // associate the new .flw file with SAS Studio
     const folderName = await associateFlowObject(
       outputName,
-      getResourceId(getUri(newItem)),
-      getResourceIdFromItem(parentItem),
+      newItem.resourceId,
+      parentItem.resourceId,
       this.studioSessionId,
       this.connection,
     );

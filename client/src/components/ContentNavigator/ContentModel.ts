@@ -136,4 +136,12 @@ export class ContentModel {
   public async getFileFolderPath(contentItem: ContentItem): Promise<string> {
     return await this.contentAdapter.getFolderPathForItem(contentItem);
   }
+
+  public async recycleResource(item: ContentItem) {
+    return await this.contentAdapter.recycleItem(item);
+  }
+
+  public async restoreResource(item: ContentItem) {
+    return await this.contentAdapter.restoreItem(item);
+  }
 }

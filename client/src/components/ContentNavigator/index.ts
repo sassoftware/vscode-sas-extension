@@ -57,9 +57,12 @@ class ContentNavigator implements SubscriptionProvider {
       context.extensionUri,
     );
 
-    workspace.registerFileSystemProvider("sas", this.contentDataProvider);
+    workspace.registerFileSystemProvider(
+      "sasContent",
+      this.contentDataProvider,
+    );
     workspace.registerTextDocumentContentProvider(
-      "sasReadOnly",
+      "sasContentReadOnly",
       this.contentDataProvider,
     );
   }
