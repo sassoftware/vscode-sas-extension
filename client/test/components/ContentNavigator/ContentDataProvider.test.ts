@@ -148,6 +148,7 @@ describe("ContentDataProvider", async function () {
     const dataProvider = createDataProvider();
 
     const treeItem = await dataProvider.getTreeItem(contentItem);
+    // TODO FIX ME!
     const uri = await dataProvider.getUri(contentItem, false);
     const expectedTreeItem: TreeItem = {
       iconPath: ThemeIcon.File,
