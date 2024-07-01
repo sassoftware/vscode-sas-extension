@@ -55,6 +55,7 @@ export interface ContentAdapter {
     parentItemUri: string | undefined,
     properties: AddChildItemProperties,
   ) => Promise<boolean>;
+  addItemToFavorites: (item: ContentItem) => Promise<boolean>;
   connect: (baseUrl: string) => Promise<void>;
   connected: () => boolean;
   createNewFolder: (
@@ -66,13 +67,22 @@ export interface ContentAdapter {
     fileName: string,
     buffer?: ArrayBufferLike,
   ) => Promise<ContentItem | undefined>;
+  deleteItem: (item: ContentItem) => Promise<boolean>;
   getChildItems: (parentItem: ContentItem) => Promise<ContentItem[]>;
   getContentOfItem: (item: ContentItem) => Promise<string>;
   getContentOfUri: (uri: Uri) => Promise<string>;
+  getFolderPathForItem: (item: ContentItem) => Promise<string>;
   getItemOfId: (id: string) => Promise<ContentItem>;
   getItemOfUri: (uri: Uri) => Promise<ContentItem>;
   getParentOfItem: (item: ContentItem) => Promise<ContentItem | undefined>;
+  getRootFolder: (name: string) => ContentItem | undefined;
   getRootItems: () => Promise<RootFolderMap>;
+  getUriOfItem: (item: ContentItem, readOnly: boolean) => Promise<Uri>;
+  moveItem: (
+    item: ContentItem,
+    targetParentFolderUri: string,
+  ) => Promise<boolean>;
+  removeItemFromFavorites: (item: ContentItem) => Promise<boolean>;
   renameItem: (
     item: ContentItem,
     newName: string,

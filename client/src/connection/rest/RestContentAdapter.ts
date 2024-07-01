@@ -32,6 +32,7 @@ import {
   getResourceIdFromItem,
   getTypeName,
   getUri,
+  isContainer,
 } from "../../components/ContentNavigator/utils";
 
 class RestContentAdapter implements ContentAdapter {
@@ -87,8 +88,16 @@ class RestContentAdapter implements ContentAdapter {
     }
   }
 
+  public getConnection() {
+    return this.connection;
+  }
+
   public get myFavoritesFolder(): ContentItem | undefined {
     return this.rootFolders["@myFavorites"];
+  }
+
+  public getRootFolder(name: string): ContentItem | undefined {
+    return this.rootFolders[name];
   }
 
   public async getParentOfItem(
@@ -132,6 +141,47 @@ class RestContentAdapter implements ContentAdapter {
     }));
   }
 
+  public async getFolderPathForItem(item: ContentItem): Promise<string> {
+    if (isContainer(item)) {
+      return "";
+    }
+
+    const filePathParts = [];
+    let currentContentItem: Pick<ContentItem, "parentFolderUri" | "name"> =
+      item;
+    do {
+      try {
+        const { data: parentData } = await this.connection.get(
+          currentContentItem.parentFolderUri,
+        );
+        currentContentItem = parentData;
+      } catch (e) {
+        return "";
+      }
+
+      filePathParts.push(currentContentItem.name);
+    } while (currentContentItem.parentFolderUri);
+
+    return "/" + filePathParts.reverse().join("/");
+  }
+
+  public async moveItem(
+    item: ContentItem,
+    targetParentFolderUri: string,
+  ): Promise<boolean> {
+    const newItemData = {
+      ...item,
+      parentFolderUri: targetParentFolderUri,
+    };
+    const updateLink = getLink(item.links, "PUT", "update");
+    try {
+      await this.connection.put(updateLink.uri, newItemData);
+    } catch (error) {
+      return false;
+    }
+    return true;
+  }
+
   private async generatedMembersUrlForParentItem(
     parentItem: ContentItem,
   ): Promise<string> {
@@ -148,7 +198,8 @@ class RestContentAdapter implements ContentAdapter {
       const selfLink = getLink(parentItem.links, "GET", "self");
       if (!selfLink) {
         console.error(
-          "Invalid state: FolderService object has no self link : " + item.name,
+          "Invalid state: FolderService object has no self link : " +
+            parentItem.name,
         );
         return Promise.reject({ status: 404 });
       }
@@ -402,25 +453,6 @@ class RestContentAdapter implements ContentAdapter {
     return true;
   }
 
-  private async updateAccessToken(): Promise<void> {
-    const session = await authentication.getSession(SASAuthProvider.id, [], {
-      createIfNone: true,
-    });
-    this.connection.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`;
-  }
-
-  private updateFileMetadata(
-    id: string,
-    { headers, data }: AxiosResponse,
-    contentType?: string,
-  ) {
-    this.fileMetadataMap[id] = {
-      etag: headers.etag,
-      lastModified: headers["last-modified"],
-      contentType: contentType || data.contentType,
-    };
-  }
-
   public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
     const resourceId = getResourceId(uri);
     const { etag, lastModified, contentType } = this.getFileInfo(resourceId);
@@ -441,6 +473,92 @@ class RestContentAdapter implements ContentAdapter {
     }
   }
 
+  public async getUriOfItem(
+    item: ContentItem,
+    readOnly: boolean,
+  ): Promise<Uri> {
+    if (item.type !== "reference") {
+      return getUri(item, readOnly);
+    }
+
+    // If we're attempting to open a favorite, open the underlying file instead.
+    try {
+      return getUri(await this.getItemOfId(item.uri), readOnly);
+    } catch (error) {
+      return getUri(item, readOnly);
+    }
+  }
+
+  public async deleteItem(item: ContentItem): Promise<boolean> {
+    // folder service will return 409 error if the deleting folder has non-folder item even if add recursive parameter
+    // delete the resource or move item to recycle bin will automatically delete the favorites as well.
+    return await (isContainer(item)
+      ? this.deleteFolder(item)
+      : this.deleteResource(item));
+  }
+
+  public async addItemToFavorites(item: ContentItem): Promise<boolean> {
+    return await this.addChildItem(
+      getResourceIdFromItem(item),
+      getLink(this.myFavoritesFolder.links, "POST", "addMember").uri,
+      {
+        type: "reference",
+        name: item.name,
+        contentType: item.contentType,
+      },
+    );
+  }
+
+  public async removeItemFromFavorites(item: ContentItem): Promise<boolean> {
+    const deleteMemberUri = await getDeleteMemberUri();
+    if (!deleteMemberUri) {
+      return false;
+    }
+    try {
+      await this.connection.delete(deleteMemberUri);
+    } catch (error) {
+      return false;
+    }
+    return true;
+
+    async function getDeleteMemberUri(): Promise<string> {
+      if (item.flags?.isInMyFavorites) {
+        return getLink(item.links, "DELETE", "delete")?.uri;
+      }
+
+      const myFavoritesFolder = this.getDelegateFolder("@myFavorites");
+      const allFavorites = await this.getChildren(myFavoritesFolder);
+      const favoriteId = allFavorites.find(
+        (favorite) =>
+          getResourceIdFromItem(favorite) === getResourceIdFromItem(item),
+      )?.id;
+      if (!favoriteId) {
+        return undefined;
+      }
+
+      return `${getResourceIdFromItem(myFavoritesFolder)}/members/${favoriteId}`;
+    }
+  }
+
+  private async updateAccessToken(): Promise<void> {
+    const session = await authentication.getSession(SASAuthProvider.id, [], {
+      createIfNone: true,
+    });
+    this.connection.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`;
+  }
+
+  private updateFileMetadata(
+    id: string,
+    { headers, data }: AxiosResponse,
+    contentType?: string,
+  ) {
+    this.fileMetadataMap[id] = {
+      etag: headers.etag,
+      lastModified: headers["last-modified"],
+      contentType: contentType || data.contentType,
+    };
+  }
+
   private getFileInfo(resourceId: string): {
     etag: string;
     lastModified: string;
@@ -456,6 +574,61 @@ class RestContentAdapter implements ContentAdapter {
       lastModified: timestamp,
       contentType: DEFAULT_FILE_CONTENT_TYPE,
     };
+  }
+
+  private async deleteFolder(item: ContentItem): Promise<boolean> {
+    try {
+      const children = await this.getChildItems(item);
+      await Promise.all(children.map((child) => this.deleteItem(child)));
+      const deleteRecursivelyLink = getLink(
+        item.links,
+        "DELETE",
+        "deleteRecursively",
+      )?.uri;
+      const deleteResourceLink = getLink(
+        item.links,
+        "DELETE",
+        "deleteResource",
+      )?.uri;
+      if (!deleteRecursivelyLink && !deleteResourceLink) {
+        return false;
+      }
+      const deleteLink =
+        deleteRecursivelyLink ?? `${deleteResourceLink}?recursive=true`;
+      await this.connection.delete(deleteLink);
+    } catch (error) {
+      return false;
+    }
+    return true;
+  }
+
+  private async deleteResource(item: ContentItem): Promise<boolean> {
+    const deleteResourceLink = getLink(
+      item.links,
+      "DELETE",
+      "deleteResource",
+    )?.uri;
+    if (!deleteResourceLink) {
+      return false;
+    }
+    try {
+      await this.connection.delete(deleteResourceLink);
+    } catch (error) {
+      return false;
+    }
+    // Due to delay in folders service's automatic deletion of associated member we need
+    // to attempt manual deletion of member to ensure subsequent data refreshes don't occur before
+    // member is deleted. Per Gary Williams, we must do these steps sequentially not concurrently.
+    // If member already deleted, server treats this call as NO-OP.
+    try {
+      const deleteLink = getLink(item.links, "DELETE", "delete")?.uri;
+      if (deleteLink) {
+        await this.connection.delete(deleteLink);
+      }
+    } catch (error) {
+      return error.response.status === 404 || error.response.status === 403;
+    }
+    return true;
   }
 }
 

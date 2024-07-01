@@ -37,8 +37,6 @@ export const getResourceIdFromItem = (item: ContentItem): string | null => {
   return getLink(item.links, "GET", "self")?.uri || null;
 };
 
-export const getLabel = (item: ContentItem): string => item.name;
-
 export const getTypeName = (item: ContentItem): string =>
   item.contentType || item.type;
 
@@ -98,9 +96,9 @@ export const resourceType = (item: ContentItem): string | undefined => {
 
 export const getUri = (item: ContentItem, readOnly?: boolean): Uri =>
   Uri.parse(
-    `${readOnly ? "sasReadOnly" : "sas"}:/${getLabel(
-      item,
-    )}?id=${getResourceIdFromItem(item)}`,
+    `${readOnly ? "sasReadOnly" : "sas"}:/${
+      item.name
+    }?id=${getResourceIdFromItem(item)}`,
   );
 
 export const getModifyDate = (item: ContentItem): number =>

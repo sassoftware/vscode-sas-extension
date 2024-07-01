@@ -43,19 +43,16 @@ import { ViyaProfile } from "../profile";
 import { ContentModel } from "./ContentModel";
 import {
   FAVORITES_FOLDER_TYPE,
-  MYFOLDER_TYPE,
   Messages,
   ROOT_FOLDER_TYPE,
   TRASH_FOLDER_TYPE,
 } from "./const";
-import { convertNotebookToFlow } from "./convert";
 import { ContentItem, FileManipulationEvent } from "./types";
 import {
   getCreationDate,
   getFileStatement,
   getId,
   isContainer as getIsContainer,
-  getLabel,
   getLink,
   getModifyDate,
   getResourceIdFromItem,
@@ -211,13 +208,13 @@ class ContentDataProvider
   public async getTreeItem(item: ContentItem): Promise<TreeItem> {
     const isContainer = getIsContainer(item);
 
-    const uri = await this.getUri(item, false);
+    const uri = await this.model.getUri(item, false);
 
     return {
       iconPath: this.iconPathForItem(item),
       contextValue: resourceType(item),
       id: getId(item),
-      label: getLabel(item),
+      label: item.name,
       collapsibleState: isContainer
         ? TreeItemCollapsibleState.Collapsed
         : undefined,
@@ -261,10 +258,6 @@ class ContentDataProvider
     return await this.model
       .getContentByUri(uri)
       .then((content) => new TextEncoder().encode(content));
-  }
-
-  public getUri(item: ContentItem, readOnly: boolean): Promise<Uri> {
-    return this.model.getUri(item, readOnly);
   }
 
   public async createFolder(
@@ -413,67 +406,6 @@ class ContentDataProvider
     }
 
     this.reveal(resource);
-  }
-
-  public async acquireStudioSessionId(endpoint: string): Promise<string> {
-    if (endpoint && !this.model.connected()) {
-      await this.connect(endpoint);
-    }
-    return await this.model.acquireStudioSessionId();
-  }
-
-  public async convertNotebookToFlow(
-    inputName: string,
-    outputName: string,
-    content: string,
-    studioSessionId: string,
-    parentItem?: ContentItem,
-  ): Promise<string> {
-    if (!parentItem) {
-      const rootFolders = await this.model.getChildren();
-      const myFolder = rootFolders.find(
-        (rootFolder) => rootFolder.type === MYFOLDER_TYPE,
-      );
-      if (!myFolder) {
-        return "";
-      }
-      parentItem = myFolder;
-    }
-
-    try {
-      // convert the notebook file to a .flw file
-      const flowDataString = convertNotebookToFlow(
-        content,
-        inputName,
-        outputName,
-      );
-      const flowDataUint8Array = new TextEncoder().encode(flowDataString);
-      if (flowDataUint8Array.length === 0) {
-        window.showErrorMessage(Messages.NoCodeToConvert);
-        return;
-      }
-      const newUri = await this.createFile(
-        parentItem,
-        outputName,
-        flowDataUint8Array,
-      );
-      this.handleCreationResponse(
-        parentItem,
-        newUri,
-        l10n.t(Messages.NewFileCreationError, { name: inputName }),
-      );
-      // associate the new .flw file with SAS Studio
-      await this.model.associateFlowFile(
-        outputName,
-        newUri,
-        parentItem,
-        studioSessionId,
-      );
-    } catch (error) {
-      window.showErrorMessage(error);
-    }
-
-    return parentItem.name;
   }
 
   public refresh(): void {
