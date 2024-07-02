@@ -46,6 +46,13 @@ export const FOLDER_TYPES = [
   TRASH_FOLDER_TYPE,
 ];
 
+export const ROOT_FOLDERS = [
+  "@myFavorites",
+  "@myFolder",
+  "@sasRoot",
+  "@myRecycleBin",
+];
+
 export const Messages = {
   AddFileToMyFolderFailure: l10n.t("Unable to add file to my folder."),
   AddFileToMyFolderSuccess: l10n.t("File added to my folder."),

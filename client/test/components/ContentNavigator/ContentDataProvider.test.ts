@@ -148,6 +148,7 @@ describe("ContentDataProvider", async function () {
     const dataProvider = createDataProvider();
 
     const treeItem = await dataProvider.getTreeItem(contentItem);
+    // TODO FIX ME!
     const uri = await dataProvider.getUri(contentItem, false);
     const expectedTreeItem: TreeItem = {
       iconPath: ThemeIcon.File,
@@ -224,7 +225,6 @@ describe("ContentDataProvider", async function () {
       flags: {
         isInMyFavorites: true,
         isInRecycleBin: false,
-        hasFavoriteId: undefined,
       },
       uid: "my-favorite/0",
     });
@@ -687,9 +687,7 @@ describe("ContentDataProvider", async function () {
     const item = mockContentItem({
       type: "file",
       name: "file.sas",
-      flags: {
-        hasFavoriteId: "favorite-id",
-      },
+      flags: {},
     });
     const dataProvider = createDataProvider();
 

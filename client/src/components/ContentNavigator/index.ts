@@ -14,21 +14,16 @@ import {
   workspace,
 } from "vscode";
 
-import { basename } from "path";
-
 import { profileConfig } from "../../commands/profile";
+import RestContentAdapter from "../../connection/rest/RestContentAdapter";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ConnectionType } from "../profile";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
 import { Messages } from "./const";
-import { ContentItem, FileManipulationEvent } from "./types";
-import {
-  isContainer as getIsContainer,
-  getUri,
-  isContentItem,
-  isItemInRecycleBin,
-} from "./utils";
+import { NotebookToFlowConverter } from "./convert";
+import { ContentAdapter, ContentItem, FileManipulationEvent } from "./types";
+import { isContainer as getIsContainer, isItemInRecycleBin } from "./utils";
 
 const fileValidator = (value: string): string | null =>
   /^([^/<>;\\{}?#]+)\.\w+$/.test(
@@ -51,16 +46,23 @@ const folderValidator = (value: string): string | null =>
 
 class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
+  private contentModel: ContentModel;
 
   constructor(context: ExtensionContext) {
+    this.contentModel = new ContentModel(
+      this.contentAdapterForConnectionType(),
+    );
     this.contentDataProvider = new ContentDataProvider(
-      new ContentModel(),
+      this.contentModel,
       context.extensionUri,
     );
 
-    workspace.registerFileSystemProvider("sas", this.contentDataProvider);
+    workspace.registerFileSystemProvider(
+      "sasContent",
+      this.contentDataProvider,
+    );
     workspace.registerTextDocumentContentProvider(
-      "sasReadOnly",
+      "sasContentReadOnly",
       this.contentDataProvider,
     );
   }
@@ -251,9 +253,13 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.convertNotebookToFlow",
         async (resource: ContentItem | Uri) => {
-          const inputName = isContentItem(resource)
-            ? resource.name
-            : basename(resource.fsPath);
+          const notebookToFlowConverter = new NotebookToFlowConverter(
+            resource,
+            this.contentModel,
+            this.viyaEndpoint(),
+          );
+
+          const inputName = notebookToFlowConverter.inputName;
           // Open window to chose the name and location of the new .flw file
           const outputName = await window.showInputBox({
             prompt: Messages.ConvertNotebookToFlowPrompt,
@@ -272,40 +278,30 @@ class ContentNavigator implements SubscriptionProvider {
               title: l10n.t("Converting SAS notebook to flow..."),
             },
             async () => {
-              // Make sure we're connected
-              const endpoint = this.viyaEndpoint();
-              const studioSessionId =
-                await this.contentDataProvider.acquireStudioSessionId(endpoint);
-              if (!studioSessionId) {
+              if (!(await notebookToFlowConverter.establishConnection())) {
                 window.showErrorMessage(Messages.StudioConnectionError);
                 return;
               }
 
-              const content = isContentItem(resource)
-                ? await this.contentDataProvider.provideTextDocumentContent(
-                    getUri(resource),
-                  )
-                : (await workspace.fs.readFile(resource)).toString();
+              let parentItem;
+              try {
+                const response =
+                  await notebookToFlowConverter.convert(outputName);
+                parentItem = response.parentItem;
+                if (!response.folderName) {
+                  throw new Error(Messages.NotebookToFlowConversionError);
+                }
 
-              const folderName =
-                await this.contentDataProvider.convertNotebookToFlow(
-                  inputName,
-                  outputName,
-                  content,
-                  studioSessionId,
-                  isContentItem(resource)
-                    ? await this.contentDataProvider.getParent(resource)
-                    : undefined,
-                );
-
-              if (folderName) {
                 window.showInformationMessage(
                   l10n.t(Messages.NotebookToFlowConversionSuccess, {
-                    folderName,
+                    folderName: response.folderName,
                   }),
                 );
-              } else {
-                window.showErrorMessage(Messages.NotebookToFlowConversionError);
+
+                this.contentDataProvider.refresh();
+              } catch (e) {
+                window.showErrorMessage(e.message);
+                this.contentDataProvider.reveal(parentItem);
               }
             },
           );
@@ -422,6 +418,20 @@ class ContentNavigator implements SubscriptionProvider {
     return items.filter(
       ({ parentFolderUri }: ContentItem) => !uris.includes(parentFolderUri),
     );
+  }
+
+  private contentAdapterForConnectionType(): ContentAdapter | undefined {
+    // const activeProfile = profileConfig.getProfileByName(
+    //   profileConfig.getActiveProfile(),
+    // );
+
+    // if (!activeProfile) {
+    //   return;
+    // }
+
+    // return new ContentAdapterFactory().create(activeProfile.connectionType);
+
+    return new RestContentAdapter();
   }
 }
 
