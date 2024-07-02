@@ -1025,6 +1025,7 @@ export class Lexer {
     this.curr.line = line;
     this.curr.column = col;
     this.context.lastNoncommentToken = null;
+    this.context.embeddedLangState = EmbeddedLangState.NONE;
     this.quoting = -1;
     this.bquoting = -1;
     this.ignoreFormat = false;

@@ -256,7 +256,7 @@ export class CodeZoneManager {
       type: Token["type"] = "text",
       currLine = line;
     for (; i < len; i++) {
-      if (syntax[i].start >= col) {
+      if (syntax[i].start > col) {
         if (syntax[i - 1].start <= col) {
           j = i - 1;
           type = syntax[j].style;
@@ -394,7 +394,7 @@ export class CodeZoneManager {
     } while (/^\s*$/.test(text));
 
     if (Lexer.isComment[type] || Lexer.isLiteral[type]) {
-      token = this._token(context.line, col + 1)!;
+      token = this._token(context.line, col - 1)!;
       if (
         token.endLine &&
         (token.line !== context.line || token.col !== context.col)
@@ -1133,9 +1133,13 @@ export class CodeZoneManager {
     type = zone.type;
     if (["PYTHON", "LUA"].includes(this._procName)) {
       if (
-        ["SUBMIT", "ENDSUBMIT", "INTERACTIVE", "ENDINTERACTIVE"].includes(
-          stmt.text,
-        )
+        [
+          "SUBMIT",
+          "ENDSUBMIT",
+          "INTERACTIVE",
+          "ENDINTERACTIVE",
+          "RUN",
+        ].includes(stmt.text)
       ) {
         return CodeZoneManager.ZONE_TYPE.PROC_STMT;
       } else {
@@ -2449,8 +2453,11 @@ export class CodeZoneManager {
     }
   }
   private _currentZone(line: number, col: number) {
-    const newToken = this._token(line, col)!,
-      type = newToken.type; //self.type(line,col),
+    const newToken = this._token(line, col)!;
+    const type = newToken.type;
+    if (type === "embedded-code") {
+      return CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG;
+    }
     let context = null,
       pos: any = this._normalize(line, col - 1);
     const tmpLine = pos.line,
