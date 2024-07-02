@@ -98,3 +98,9 @@ export interface ContentAdapter {
   restoreItem: (item: ContentItem) => Promise<boolean>;
   updateContentOfItem(uri: Uri, content: string): Promise<void>;
 }
+
+export interface ContentNavigatorConfig {
+  treeIdentifier: string;
+  mimeType: string;
+  sourceType: "sasContent" | "sasServer";
+}

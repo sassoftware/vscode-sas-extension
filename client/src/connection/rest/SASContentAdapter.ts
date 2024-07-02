@@ -40,7 +40,7 @@ import {
   resourceType,
 } from "./util";
 
-class RestContentAdapter implements ContentAdapter {
+class SASContentAdapter implements ContentAdapter {
   private connection: AxiosInstance;
   private authorized: boolean;
   private viyaCadence: string;
@@ -704,4 +704,4 @@ class RestContentAdapter implements ContentAdapter {
   }
 }
 
-export default RestContentAdapter;
+export default SASContentAdapter;
