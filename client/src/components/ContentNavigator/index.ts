@@ -52,6 +52,7 @@ const folderValidator = (value: string): string | null =>
 class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
   private contentModel: ContentModel;
+  private sourceType: ContentNavigatorConfig["sourceType"];
 
   constructor(context: ExtensionContext, config: ContentNavigatorConfig) {
     this.contentModel = new ContentModel(
@@ -62,6 +63,7 @@ class ContentNavigator implements SubscriptionProvider {
       context.extensionUri,
       config,
     );
+    this.sourceType = config.sourceType;
 
     workspace.registerFileSystemProvider(
       config.sourceType,
@@ -78,10 +80,11 @@ class ContentNavigator implements SubscriptionProvider {
   }
 
   public getSubscriptions(): Disposable[] {
+    const SAS = `SAS.${this.sourceType === `${SAS}.ontent` ? "content" : "server"}`;
     return [
       ...this.contentDataProvider.getSubscriptions(),
       commands.registerCommand(
-        "SAS.deleteResource",
+        `${SAS}.deleteResource`,
         async (item: ContentItem) => {
           this.treeViewSelections(item).forEach(
             async (resource: ContentItem) => {
@@ -115,7 +118,7 @@ class ContentNavigator implements SubscriptionProvider {
         },
       ),
       commands.registerCommand(
-        "SAS.restoreResource",
+        `${SAS}.restoreResource`,
         async (item: ContentItem) => {
           this.treeViewSelections(item).forEach(
             async (resource: ContentItem) => {
@@ -131,7 +134,7 @@ class ContentNavigator implements SubscriptionProvider {
           );
         },
       ),
-      commands.registerCommand("SAS.emptyRecycleBin", async () => {
+      commands.registerCommand(`${SAS}.emptyRecycleBin`, async () => {
         if (
           !(await window.showWarningMessage(
             Messages.EmptyRecycleBinWarningMessage,
@@ -145,11 +148,11 @@ class ContentNavigator implements SubscriptionProvider {
           window.showErrorMessage(Messages.EmptyRecycleBinError);
         }
       }),
-      commands.registerCommand("SAS.refreshContent", () =>
+      commands.registerCommand(`${SAS}.refreshContent`, () =>
         this.contentDataProvider.refresh(),
       ),
       commands.registerCommand(
-        "SAS.addFileResource",
+        `${SAS}.addFileResource`,
         async (resource: ContentItem) => {
           const fileName = await window.showInputBox({
             prompt: Messages.NewFilePrompt,
@@ -176,7 +179,7 @@ class ContentNavigator implements SubscriptionProvider {
         },
       ),
       commands.registerCommand(
-        "SAS.addFolderResource",
+        `${SAS}.addFolderResource`,
         async (resource: ContentItem) => {
           const folderName = await window.showInputBox({
             prompt: Messages.NewFolderPrompt,
@@ -199,7 +202,7 @@ class ContentNavigator implements SubscriptionProvider {
         },
       ),
       commands.registerCommand(
-        "SAS.renameResource",
+        `${SAS}.renameResource`,
         async (resource: ContentItem) => {
           const isContainer = getIsContainer(resource);
 
@@ -234,7 +237,7 @@ class ContentNavigator implements SubscriptionProvider {
         },
       ),
       commands.registerCommand(
-        "SAS.addToFavorites",
+        `${SAS}.addToFavorites`,
         async (resource: ContentItem) => {
           if (!(await this.contentDataProvider.addToMyFavorites(resource))) {
             window.showErrorMessage(Messages.AddToFavoritesError);
@@ -242,7 +245,7 @@ class ContentNavigator implements SubscriptionProvider {
         },
       ),
       commands.registerCommand(
-        "SAS.removeFromFavorites",
+        `${SAS}.removeFromFavorites`,
         async (resource: ContentItem) => {
           if (
             !(await this.contentDataProvider.removeFromMyFavorites(resource))
@@ -251,13 +254,13 @@ class ContentNavigator implements SubscriptionProvider {
           }
         },
       ),
-      commands.registerCommand("SAS.collapseAllContent", () => {
+      commands.registerCommand(`${SAS}.collapseAllContent`, () => {
         commands.executeCommand(
           "workbench.actions.treeView.contentdataprovider.collapseAll",
         );
       }),
       commands.registerCommand(
-        "SAS.convertNotebookToFlow",
+        `${SAS}.convertNotebookToFlow`,
         async (resource: ContentItem | Uri) => {
           const notebookToFlowConverter = new NotebookToFlowConverter(
             resource,
@@ -314,7 +317,7 @@ class ContentNavigator implements SubscriptionProvider {
         },
       ),
       commands.registerCommand(
-        "SAS.downloadResource",
+        `${SAS}.downloadResource`,
         async (resource: ContentItem) => {
           const selections = this.treeViewSelections(resource);
           const uris = await window.showOpenDialog({
@@ -350,16 +353,16 @@ class ContentNavigator implements SubscriptionProvider {
       // that isn't Mac, we list a distinct upload file(s) or upload folder(s) command.
       // See the `OpenDialogOptions` interface for more information.
       commands.registerCommand(
-        "SAS.uploadResource",
+        `${SAS}.uploadResource`,
         async (resource: ContentItem) => this.uploadResource(resource),
       ),
       commands.registerCommand(
-        "SAS.uploadFileResource",
+        `${SAS}.uploadFileResource`,
         async (resource: ContentItem) =>
           this.uploadResource(resource, { canSelectFolders: false }),
       ),
       commands.registerCommand(
-        "SAS.uploadFolderResource",
+        `${SAS}.uploadFolderResource`,
         async (resource: ContentItem) =>
           this.uploadResource(resource, { canSelectFiles: false }),
       ),
