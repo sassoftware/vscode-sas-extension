@@ -35,6 +35,7 @@ import { run, runRegion, runSelected } from "../commands/run";
 import { SASAuthProvider } from "../components/AuthProvider";
 import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
+import { ContentSourceType } from "../components/ContentNavigator/types";
 import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
 import {
@@ -112,7 +113,7 @@ export function activate(context: ExtensionContext): void {
   // - itc/iom connection w/ sourceType="sasServer" uses ITCSASServerAdapter
   const sasContentNavigator = new ContentNavigator(context, {
     mimeType: "application/vnd.code.tree.contentdataprovider",
-    sourceType: "sasContent",
+    sourceType: ContentSourceType.SASContent,
     treeIdentifier: "contentdataprovider",
   });
   // TODO #889 Create/use this

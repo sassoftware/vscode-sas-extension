@@ -3,29 +3,27 @@
 import { FileStat, Uri } from "vscode";
 
 export interface ContentItem {
-  id: string;
+  // Data returned from service
   contentType?: string;
   creationTimeStamp: number;
+  id: string;
   links: Link[];
+  memberCount?: number;
   modifiedTimeStamp: number;
   name: string;
+  parentFolderUri?: string;
   type?: string;
   uri: string;
-  uid?: string;
-  flags?: {
-    isInRecycleBin?: boolean;
-    isInMyFavorites?: boolean;
-  };
-  memberCount?: number;
-  permission: Permission;
-  parentFolderUri?: string;
-  // PROPS FOR VISUAL STUFF
-  vscUri?: Uri;
-  fileStat?: FileStat;
+  // UI properties inferred from service data
   contextValue?: string;
-  resourceId?: string;
+  fileStat?: FileStat;
+  flags?: { isInRecycleBin?: boolean; isInMyFavorites?: boolean };
   isReference?: boolean;
+  permission: Permission;
+  resourceId?: string;
   typeName?: string;
+  uid?: string;
+  vscUri?: Uri;
 }
 
 export interface Link {
@@ -99,8 +97,13 @@ export interface ContentAdapter {
   updateContentOfItem(uri: Uri, content: string): Promise<void>;
 }
 
+export enum ContentSourceType {
+  SASContent = "sasContent",
+  SASServer = "sasServer",
+}
+
 export interface ContentNavigatorConfig {
   treeIdentifier: string;
   mimeType: string;
-  sourceType: "sasContent" | "sasServer";
+  sourceType: ContentSourceType;
 }

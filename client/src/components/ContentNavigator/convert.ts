@@ -5,7 +5,7 @@ import { Uri, l10n, workspace } from "vscode";
 import { basename } from "path";
 import { v4 } from "uuid";
 
-import RestContentAdapter from "../../connection/rest/RestContentAdapter";
+import SASContentAdapter from "../../connection/rest/SASContentAdapter";
 import {
   associateFlowObject,
   createStudioSession,
@@ -354,7 +354,7 @@ export class NotebookToFlowConverter {
   private get connection() {
     return (
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      (this.contentModel.getAdapter() as RestContentAdapter).getConnection()
+      (this.contentModel.getAdapter() as SASContentAdapter).getConnection()
     );
   }
 

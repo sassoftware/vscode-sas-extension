@@ -10,6 +10,7 @@ import {
 } from "../../components/ContentNavigator/const";
 import {
   ContentItem,
+  ContentSourceType,
   Link,
   Permission,
 } from "../../components/ContentNavigator/types";
@@ -93,7 +94,7 @@ export const resourceType = (item: ContentItem): string | undefined => {
 
 export const getUri = (item: ContentItem, readOnly?: boolean): Uri =>
   Uri.parse(
-    `${readOnly ? "sasContentReadOnly" : "sasContent"}:/${
+    `${readOnly ? `${ContentSourceType.SASContent}ReadOnly` : ContentSourceType.SASContent}:/${
       item.name
     }?id=${getResourceIdFromItem(item)}`,
   );

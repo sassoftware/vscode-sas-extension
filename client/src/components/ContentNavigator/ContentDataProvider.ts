@@ -118,6 +118,7 @@ class ContentDataProvider
     target: ContentItem,
     sources: DataTransfer,
   ): Promise<void> {
+    console.log(this.dropMimeTypes);
     for (const mimeType of this.dropMimeTypes) {
       const item = sources.get(mimeType);
       if (!item || !item.value) {
@@ -522,6 +523,7 @@ class ContentDataProvider
     }
 
     if (!success) {
+      console.log("OH NO", message);
       window.showErrorMessage(
         l10n.t(message, {
           name: item.name,
