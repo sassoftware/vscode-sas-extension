@@ -386,7 +386,7 @@ export class NotebookToFlowConverter {
 
   public async establishConnection() {
     if (!this.contentModel.connected()) {
-      this.contentModel.connect(this.viyaEndpoint);
+      await this.contentModel.connect(this.viyaEndpoint);
     }
 
     try {
@@ -411,7 +411,6 @@ export class NotebookToFlowConverter {
     }
 
     const parentItem = await this.parent();
-
     const newItem = await this.contentModel.createFile(
       parentItem,
       outputName,

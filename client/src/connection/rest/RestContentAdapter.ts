@@ -329,6 +329,7 @@ class RestContentAdapter implements ContentAdapter {
     item: ContentItem,
     flags?: ContentItem["flags"],
   ): ContentItem {
+    item.flags = flags;
     return {
       ...item,
       permission: getPermission(item),
@@ -343,7 +344,6 @@ class RestContentAdapter implements ContentAdapter {
       resourceId: getResourceIdFromItem(item),
       vscUri: getUri(item, flags?.isInRecycleBin || false),
       typeName: getTypeName(item),
-      flags,
     };
 
     function getIsContainer(item: ContentItem): boolean {
@@ -609,7 +609,7 @@ class RestContentAdapter implements ContentAdapter {
     if (!previousParentUri) {
       return false;
     }
-    await this.moveItem(item, previousParentUri);
+    return await this.moveItem(item, previousParentUri);
   }
 
   private async updateAccessToken(): Promise<void> {

@@ -320,6 +320,8 @@ class ContentDataProvider
         uri: oldUri,
       });
     }
+
+    return !!newUri;
   }
 
   public async restoreResource(item: ContentItem): Promise<boolean> {

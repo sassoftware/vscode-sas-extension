@@ -93,7 +93,7 @@ export const resourceType = (item: ContentItem): string | undefined => {
 
 export const getUri = (item: ContentItem, readOnly?: boolean): Uri =>
   Uri.parse(
-    `${readOnly ? "sasReadOnly" : "sas"}:/${
+    `${readOnly ? "sasContentReadOnly" : "sasContent"}:/${
       item.name
     }?id=${getResourceIdFromItem(item)}`,
   );
