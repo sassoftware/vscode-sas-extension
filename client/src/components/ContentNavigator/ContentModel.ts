@@ -126,6 +126,7 @@ export class ContentModel {
     item: ContentItem,
     targetParentFolderUri: string,
   ): Promise<boolean> {
+    console.log("OHKAY WE ARE ABOUT TO CALL THINGS T");
     return await this.contentAdapter.moveItem(item, targetParentFolderUri);
   }
 

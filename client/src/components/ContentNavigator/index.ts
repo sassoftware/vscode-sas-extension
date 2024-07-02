@@ -26,6 +26,7 @@ import {
   ContentAdapter,
   ContentItem,
   ContentNavigatorConfig,
+  ContentSourceType,
   FileManipulationEvent,
 } from "./types";
 import { isContainer as getIsContainer, isItemInRecycleBin } from "./utils";
@@ -80,7 +81,7 @@ class ContentNavigator implements SubscriptionProvider {
   }
 
   public getSubscriptions(): Disposable[] {
-    const SAS = `SAS.${this.sourceType === `${SAS}.ontent` ? "content" : "server"}`;
+    const SAS = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}`;
     return [
       ...this.contentDataProvider.getSubscriptions(),
       commands.registerCommand(
@@ -438,7 +439,10 @@ class ContentNavigator implements SubscriptionProvider {
       return;
     }
 
-    return new ContentAdapterFactory().create(activeProfile.connectionType);
+    return new ContentAdapterFactory().create(
+      activeProfile.connectionType,
+      this.sourceType,
+    );
   }
 }
 

@@ -78,31 +78,19 @@ class SASContentAdapter implements ContentAdapter {
     await this.updateAccessToken();
 
     this.authorized = true;
-    this.viyaCadence = await getViyaCadence();
-
-    async function getViyaCadence(): Promise<string> {
-      try {
-        const { data } = await this.connection.get(
-          "/deploymentData/cadenceVersion",
-        );
-        return data.cadenceVersion;
-      } catch (e) {
-        console.error("fail to retrieve the viya cadence");
-      }
-      return "unknown";
-    }
+    this.viyaCadence = await this.getViyaCadence();
   }
 
   public getConnection() {
     return this.connection;
   }
 
-  public get myFavoritesFolder(): ContentItem | undefined {
-    return this.rootFolders["@myFavorites"];
-  }
-
   public getRootFolder(name: string): ContentItem | undefined {
     return this.rootFolders[name];
+  }
+
+  public get myFavoritesFolder(): ContentItem | undefined {
+    return this.getRootFolder("@myFavorites");
   }
 
   public async getParentOfItem(
@@ -112,17 +100,16 @@ class SASContentAdapter implements ContentAdapter {
     if (!ancestorsLink) {
       return;
     }
-    const resp = await this.connection.get(ancestorsLink.uri);
-    if (resp.data && resp.data.length > 0) {
-      return this.enrichWithDataProviderProperties(resp.data[0]);
+    const { data } = await this.connection.get(ancestorsLink.uri);
+    if (data && data.length > 0) {
+      return this.enrichWithDataProviderProperties(data[0]);
     }
   }
 
   public async getChildItems(parentItem: ContentItem): Promise<ContentItem[]> {
-    const res = await this.connection.get(
+    const { data: result } = await this.connection.get(
       await this.generatedMembersUrlForParentItem(parentItem),
     );
-    const result = res.data;
     if (!result.items) {
       return Promise.reject();
     }
@@ -148,7 +135,7 @@ class SASContentAdapter implements ContentAdapter {
   }
 
   public async getFolderPathForItem(item: ContentItem): Promise<string> {
-    if (item) {
+    if (!item) {
       return "";
     }
 
@@ -173,12 +160,9 @@ class SASContentAdapter implements ContentAdapter {
 
   public async moveItem(
     item: ContentItem,
-    targetParentFolderUri: string,
+    parentFolderUri: string,
   ): Promise<boolean> {
-    const newItemData = {
-      ...item,
-      parentFolderUri: targetParentFolderUri,
-    };
+    const newItemData = { ...item, parentFolderUri };
     const updateLink = getLink(item.links, "PUT", "update");
     try {
       await this.connection.put(updateLink.uri, newItemData);
@@ -381,6 +365,7 @@ class SASContentAdapter implements ContentAdapter {
       const fileData = await this.getItemOfId(uri);
       const contentType = getFileContentType(newName);
       const fileMetadata = this.fileMetadataMap[uri];
+
       const patchResponse = await this.connection.put(
         uri,
         { ...fileData, name: newName },
@@ -413,7 +398,7 @@ class SASContentAdapter implements ContentAdapter {
     fileName: string,
     buffer?: ArrayBufferLike,
   ): Promise<ContentItem | undefined> {
-    const typeDef = await getTypeDefinition(fileName);
+    const typeDef = await this.getTypeDefinition(fileName);
     let createdResource: ContentItem;
     try {
       const fileCreationResponse = await this.connection.post<ContentItem>(
@@ -446,28 +431,6 @@ class SASContentAdapter implements ContentAdapter {
     }
 
     return this.enrichWithDataProviderProperties(createdResource);
-
-    async function getTypeDefinition(fileName: string): Promise<string> {
-      const defaultContentType = "file";
-      const ext = fileName.split(".").pop().toLowerCase();
-      if (ext === "sas") {
-        return "programFile";
-      }
-
-      try {
-        const typeResponse = await this.connection.get(
-          `/types/types?filter=contains('extensions', '${ext}')`,
-        );
-
-        if (typeResponse.data.items && typeResponse.data.items.length !== 0) {
-          return typeResponse.data.items[0].name;
-        }
-      } catch {
-        return defaultContentType;
-      }
-
-      return defaultContentType;
-    }
   }
 
   public async addChildItem(
@@ -546,34 +509,17 @@ class SASContentAdapter implements ContentAdapter {
   }
 
   public async removeItemFromFavorites(item: ContentItem): Promise<boolean> {
-    const deleteMemberUri = await getDeleteMemberUri();
+    const deleteMemberUri = await this.deleteMemberUriForFavorite(item);
     if (!deleteMemberUri) {
       return false;
     }
+
     try {
       await this.connection.delete(deleteMemberUri);
     } catch (error) {
       return false;
     }
     return true;
-
-    async function getDeleteMemberUri(): Promise<string> {
-      if (item.flags?.isInMyFavorites) {
-        return getLink(item.links, "DELETE", "delete")?.uri;
-      }
-
-      const myFavoritesFolder = this.getDelegateFolder("@myFavorites");
-      const allFavorites = await this.getChildren(myFavoritesFolder);
-      const favoriteId = allFavorites.find(
-        (favorite) =>
-          getResourceIdFromItem(favorite) === getResourceIdFromItem(item),
-      )?.id;
-      if (!favoriteId) {
-        return undefined;
-      }
-
-      return `${getResourceIdFromItem(myFavoritesFolder)}/members/${favoriteId}`;
-    }
   }
 
   public async recycleItem(
@@ -701,6 +647,58 @@ class SASContentAdapter implements ContentAdapter {
       return error.response.status === 404 || error.response.status === 403;
     }
     return true;
+  }
+
+  private async getViyaCadence(): Promise<string> {
+    try {
+      const { data } = await this.connection.get(
+        "/deploymentData/cadenceVersion",
+      );
+      return data.cadenceVersion;
+    } catch (e) {
+      console.error("fail to retrieve the viya cadence");
+    }
+    return "unknown";
+  }
+
+  private async getTypeDefinition(fileName: string): Promise<string> {
+    const defaultContentType = "file";
+    const ext = fileName.split(".").pop().toLowerCase();
+    if (ext === "sas") {
+      return "programFile";
+    }
+
+    try {
+      const typeResponse = await this.connection.get(
+        `/types/types?filter=contains('extensions', '${ext}')`,
+      );
+
+      if (typeResponse.data.items && typeResponse.data.items.length !== 0) {
+        return typeResponse.data.items[0].name;
+      }
+    } catch {
+      return defaultContentType;
+    }
+
+    return defaultContentType;
+  }
+
+  private async deleteMemberUriForFavorite(item: ContentItem): Promise<string> {
+    if (item.flags?.isInMyFavorites) {
+      return getLink(item.links, "DELETE", "delete")?.uri;
+    }
+
+    const myFavoritesFolder = this.getRootFolder("@myFavorites");
+    const allFavorites = await this.getChildItems(myFavoritesFolder);
+    const favoriteId = allFavorites.find(
+      (favorite) =>
+        getResourceIdFromItem(favorite) === getResourceIdFromItem(item),
+    )?.id;
+    if (!favoriteId) {
+      return undefined;
+    }
+
+    return `${getResourceIdFromItem(myFavoritesFolder)}/members/${favoriteId}`;
   }
 }
 
