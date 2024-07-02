@@ -76,7 +76,7 @@ Note: if ~/.ssh/config does not exist, run the following Powershell command to c
 
 Note: the default path to the SAS executable (saspath) is /opt/sasinside/SASHome/SASFoundation/9.4/bin/sas_u8. Check with your SAS administrator for the exact path.
 
-9. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file. If you have it on your system, you can use "ssh-copy-id" command to make this easy. By default, ```ssh-copy-id host.machine.name``` will probably do what you need.
+9. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file. If you have it on your system, you can use "ssh-copy-id" command to make this easy. By default, `ssh-copy-id host.machine.name` will probably do what you need.
 
 ### Mac
 
@@ -115,7 +115,7 @@ Host host.machine.name
 }
 ```
 
-6. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file. If you have it on your system, you can use "ssh-copy-id" command to make this easy. By default, ```ssh-copy-id host.machine.name``` will probably do what you need.
+6. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file. If you have it on your system, you can use "ssh-copy-id" command to make this easy. By default, `ssh-copy-id host.machine.name` will probably do what you need.
 
 ## Windows/Mac/Linux using only identityFile
 
@@ -133,4 +133,3 @@ Host host.machine.name
     "identityFile": "c:\\Users\\username\\.ssh\\id_ed25519"
 }
 ```
-
