@@ -10,10 +10,14 @@ const plugins = [
   esbuildCopyPlugin.copyPlugin({
     src: "./server/node_modules/jsonc-parser/lib/umd/impl",
     dest: "./server/dist/node/impl",
+    recursive: true,
+    force: true,
   }),
   esbuildCopyPlugin.copyPlugin({
     src: "./server/node_modules/pyright-internal-node/dist/packages/pyright-internal/typeshed-fallback",
     dest: "./server/dist/node/typeshed-fallback",
+    recursive: true,
+    force: true,
   }),
 ];
 
