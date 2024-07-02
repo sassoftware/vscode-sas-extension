@@ -25,6 +25,7 @@ describe("ssh connection", () => {
       saspath: "/path/to/sas_u8",
       sasOptions: [],
       agentSocket: "/agent/socket",
+      identityFile: "",
     };
 
     session = new SSHSession(config);
@@ -46,6 +47,7 @@ describe("ssh connection", () => {
         port: 22,
         saspath: "/path/to/sas_u8",
         sasOptions: [],
+        identityFile: "",
       };
 
       sandbox.stub(Client.prototype, "connect").callsFake(function () {
@@ -85,6 +87,7 @@ describe("ssh connection", () => {
         saspath: "/path/to/sas_u8",
         sasOptions: [],
         agentSocket: "/agent/socket",
+        identityFile: "",
       };
 
       sandbox.stub(Client.prototype, "connect").callsFake(function () {
@@ -106,6 +109,7 @@ describe("ssh connection", () => {
         saspath: "/path/to/sas_u8",
         sasOptions: [],
         agentSocket: "/agent/socket",
+        identityFile: "",
       };
 
       sandbox.stub(Client.prototype, "connect").callsFake(function () {
@@ -133,6 +137,7 @@ describe("ssh connection", () => {
         saspath: "/path/to/sas_u8",
         sasOptions: [],
         agentSocket: "/agent/socket",
+        identityFile: "",
       };
 
       sandbox.stub(Client.prototype, "connect").callsFake(function () {
@@ -159,6 +164,7 @@ describe("ssh connection", () => {
       saspath: "/path/to/sas_u8",
       sasOptions: [],
       agentSocket: "/agent/socket",
+      identityFile: "",
     };
 
     const session = new SSHSession(config);
@@ -339,6 +345,7 @@ describe("ssh connection", () => {
         saspath: "saspath",
         sasOptions: ["-nonews"],
         port: 22,
+        identityFile: "",
       };
     });
 

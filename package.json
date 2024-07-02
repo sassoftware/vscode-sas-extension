@@ -297,7 +297,8 @@
                           "host",
                           "saspath",
                           "username",
-                          "port"
+                          "port",
+                          "identityFile"
                         ],
                         "properties": {
                           "host": {
@@ -321,6 +322,11 @@
                             "description": "%configuration.SAS.connectionProfiles.profiles.ssh.port%",
                             "exclusiveMinimum": 1,
                             "exclusiveMaximum": 65535
+                          },
+                          "identityFile": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.identityFile%"
                           }
                         }
                       }
