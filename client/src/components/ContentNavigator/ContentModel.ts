@@ -42,11 +42,11 @@ export class ContentModel {
   }
 
   public async getParent(item: ContentItem): Promise<ContentItem | undefined> {
-    return this.contentAdapter.getParentOfItem(item);
+    return await this.contentAdapter.getParentOfItem(item);
   }
 
   public async getResourceByUri(uri: Uri): Promise<ContentItem> {
-    return this.contentAdapter.getItemOfUri(uri);
+    return await this.contentAdapter.getItemOfUri(uri);
   }
 
   public async getContentByUri(uri: Uri): Promise<string> {

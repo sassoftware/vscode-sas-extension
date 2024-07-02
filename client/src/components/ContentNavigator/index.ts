@@ -278,7 +278,7 @@ class ContentNavigator implements SubscriptionProvider {
               title: l10n.t("Converting SAS notebook to flow..."),
             },
             async () => {
-              if (!notebookToFlowConverter.establishConnection()) {
+              if (!(await notebookToFlowConverter.establishConnection())) {
                 window.showErrorMessage(Messages.StudioConnectionError);
                 return;
               }
