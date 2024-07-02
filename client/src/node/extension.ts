@@ -102,7 +102,11 @@ export function activate(context: ExtensionContext): void {
   setContext(context);
 
   const libraryNavigator = new LibraryNavigator(context);
-  const contentNavigator = new ContentNavigator(context);
+  const contentNavigator = new ContentNavigator(context, {
+    mimeType: "application/vnd.code.tree.contentdataprovider",
+    sourceType: "sasContent",
+    treeIdentifier: "contentdataprovider",
+  });
   const resultPanelSubscriptionProvider = new ResultPanelSubscriptionProvider();
 
   window.registerWebviewPanelSerializer(SAS_RESULT_PANEL, {

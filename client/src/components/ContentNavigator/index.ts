@@ -15,14 +15,19 @@ import {
 } from "vscode";
 
 import { profileConfig } from "../../commands/profile";
-import RestContentAdapter from "../../connection/rest/RestContentAdapter";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ConnectionType } from "../profile";
+import ContentAdapterFactory from "./ContentAdapterFactory";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
 import { Messages } from "./const";
 import { NotebookToFlowConverter } from "./convert";
-import { ContentAdapter, ContentItem, FileManipulationEvent } from "./types";
+import {
+  ContentAdapter,
+  ContentItem,
+  ContentNavigatorConfig,
+  FileManipulationEvent,
+} from "./types";
 import { isContainer as getIsContainer, isItemInRecycleBin } from "./utils";
 
 const fileValidator = (value: string): string | null =>
@@ -48,21 +53,22 @@ class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
   private contentModel: ContentModel;
 
-  constructor(context: ExtensionContext) {
+  constructor(context: ExtensionContext, config: ContentNavigatorConfig) {
     this.contentModel = new ContentModel(
       this.contentAdapterForConnectionType(),
     );
     this.contentDataProvider = new ContentDataProvider(
       this.contentModel,
       context.extensionUri,
+      config,
     );
 
     workspace.registerFileSystemProvider(
-      "sasContent",
+      config.sourceType,
       this.contentDataProvider,
     );
     workspace.registerTextDocumentContentProvider(
-      "sasContentReadOnly",
+      `${config.sourceType}ReadOnly`,
       this.contentDataProvider,
     );
   }
@@ -421,17 +427,15 @@ class ContentNavigator implements SubscriptionProvider {
   }
 
   private contentAdapterForConnectionType(): ContentAdapter | undefined {
-    // const activeProfile = profileConfig.getProfileByName(
-    //   profileConfig.getActiveProfile(),
-    // );
+    const activeProfile = profileConfig.getProfileByName(
+      profileConfig.getActiveProfile(),
+    );
 
-    // if (!activeProfile) {
-    //   return;
-    // }
+    if (!activeProfile) {
+      return;
+    }
 
-    // return new ContentAdapterFactory().create(activeProfile.connectionType);
-
-    return new RestContentAdapter();
+    return new ContentAdapterFactory().create(activeProfile.connectionType);
   }
 }
 

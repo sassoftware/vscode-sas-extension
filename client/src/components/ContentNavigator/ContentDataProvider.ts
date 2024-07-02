@@ -47,10 +47,13 @@ import {
   ROOT_FOLDER_TYPE,
   TRASH_FOLDER_TYPE,
 } from "./const";
-import { ContentItem, FileManipulationEvent } from "./types";
+import {
+  ContentItem,
+  ContentNavigatorConfig,
+  FileManipulationEvent,
+} from "./types";
 import { getFileStatement, isContainer as getIsContainer } from "./utils";
 
-const contentItemMimeType = "application/vnd.code.tree.contentdataprovider";
 class ContentDataProvider
   implements
     TreeDataProvider<ContentItem>,
@@ -67,23 +70,31 @@ class ContentDataProvider
   private _dropEditProvider: Disposable;
   private readonly model: ContentModel;
   private extensionUri: Uri;
+  private mimeType: string;
 
-  public dropMimeTypes: string[] = [contentItemMimeType, "text/uri-list"];
-  public dragMimeTypes: string[] = [contentItemMimeType];
+  public dropMimeTypes: string[];
+  public dragMimeTypes: string[];
 
   get treeView(): TreeView<ContentItem> {
     return this._treeView;
   }
 
-  constructor(model: ContentModel, extensionUri: Uri) {
+  constructor(
+    model: ContentModel,
+    extensionUri: Uri,
+    { mimeType, treeIdentifier }: ContentNavigatorConfig,
+  ) {
     this._onDidManipulateFile = new EventEmitter<FileManipulationEvent>();
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
     this._onDidChange = new EventEmitter<Uri>();
     this.model = model;
     this.extensionUri = extensionUri;
+    this.dropMimeTypes = [mimeType, "text/uri-list"];
+    this.dragMimeTypes = [mimeType];
+    this.mimeType = mimeType;
 
-    this._treeView = window.createTreeView("contentdataprovider", {
+    this._treeView = window.createTreeView(treeIdentifier, {
       treeDataProvider: this,
       dragAndDropController: this,
       canSelectMany: true,
@@ -114,7 +125,7 @@ class ContentDataProvider
       }
 
       switch (mimeType) {
-        case contentItemMimeType:
+        case this.mimeType:
           await Promise.all(
             item.value.map(
               async (contentItem: ContentItem) =>
