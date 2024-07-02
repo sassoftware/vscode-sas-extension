@@ -102,11 +102,26 @@ export function activate(context: ExtensionContext): void {
   setContext(context);
 
   const libraryNavigator = new LibraryNavigator(context);
-  const contentNavigator = new ContentNavigator(context, {
+
+  // Below we have two content navigators. We'll have one to navigate
+  // SAS Content and another to navigate SAS Server. Both of these will
+  // also determine which adapter to use for processing. The options look
+  // like this:
+  // - rest connection w/ sourceType="sasContent" uses a SASContentAdapter
+  // - rest connection w/ sourceType="sasServer" uses a RestSASServerAdapter
+  // - itc/iom connection w/ sourceType="sasServer" uses ITCSASServerAdapter
+  const sasContentNavigator = new ContentNavigator(context, {
     mimeType: "application/vnd.code.tree.contentdataprovider",
     sourceType: "sasContent",
     treeIdentifier: "contentdataprovider",
   });
+  // TODO #889 Create/use this
+  // const sasServerNavigator = new ContentNavigator(context, {
+  //   mimeType: "application/vnd.code.tree.serverdataprovider",
+  //   sourceType: "sasServer",
+  //   treeIdentifier: "serverdataprovider",
+  // });
+
   const resultPanelSubscriptionProvider = new ResultPanelSubscriptionProvider();
 
   window.registerWebviewPanelSerializer(SAS_RESULT_PANEL, {
@@ -151,9 +166,9 @@ export function activate(context: ExtensionContext): void {
     ),
     getStatusBarItem(),
     ...libraryNavigator.getSubscriptions(),
-    ...contentNavigator.getSubscriptions(),
+    ...sasContentNavigator.getSubscriptions(),
     ...resultPanelSubscriptionProvider.getSubscriptions(),
-    contentNavigator.onDidManipulateFile((e) => {
+    sasContentNavigator.onDidManipulateFile((e) => {
       switch (e.type) {
         case "rename":
           sasDiagnostic.updateDiagnosticUri(e.uri, e.newUri);
