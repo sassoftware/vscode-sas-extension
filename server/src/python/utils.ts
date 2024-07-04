@@ -1,6 +1,7 @@
 // Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { DocumentSymbol, TextDocument } from "vscode-languageserver";
+import { DocumentSymbol } from "vscode-languageserver";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 import { CodeZoneManager } from "../sas/CodeZoneManager";
 import { LanguageServiceProvider } from "../sas/LanguageServiceProvider";
