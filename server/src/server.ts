@@ -132,6 +132,9 @@ export const runServer = (
   connection.onCompletion(async (params, token) => {
     return await dispatch(params, {
       async sas(languageService) {
+        if (params.context?.triggerCharacter !== " ") {
+          return undefined;
+        }
         const complitionList =
           await languageService.completionProvider.getCompleteItems(
             params.position,

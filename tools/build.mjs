@@ -1,28 +1,12 @@
-import esbuildCopyPlugin from "@sprout2000/esbuild-copy-plugin";
-
 import concurrently from "concurrently";
 import esbuild from "esbuild";
+import fs from "fs";
+import path from "path";
 
 console.log("start");
 const dev = process.argv[2];
 
 const plugins = [
-  esbuildCopyPlugin.copyPlugin({
-    src: "./server/node_modules/jsonc-parser/lib/umd/impl",
-    dest: "./server/dist/node/impl",
-    recursive: true,
-    force: true,
-  }),
-  esbuildCopyPlugin.copyPlugin({
-    src: "./server/node_modules/pyright-internal-node/dist/packages/pyright-internal/typeshed-fallback",
-    dest: "./server/dist/node/typeshed-fallback",
-    recursive: true,
-    force: true,
-  }),
-];
-
-const devPlugins = [
-  ...plugins,
   {
     name: "watch-plugin",
     setup(build) {
@@ -46,7 +30,7 @@ const commonBuildOptions = {
   },
   sourcemap: !!dev,
   minify: !dev,
-  plugins: dev ? devPlugins : plugins,
+  plugins: dev ? plugins : [],
   define: {
     "process.env.NODE_ENV": dev ? `"development"` : `"production"`,
   },
@@ -97,7 +81,22 @@ if (process.env.npm_config_webviews || process.env.npm_config_client) {
   ]);
 
   await result.then(
-    () => {},
+    () => {
+      const foldersToCopy = [
+        {
+          src: "./server/node_modules/jsonc-parser/lib/umd/impl",
+          dest: "./server/dist/node/impl",
+        },
+        {
+          src: "./server/node_modules/pyright-internal-node/dist/packages/pyright-internal/typeshed-fallback",
+          dest: "./server/dist/node/typeshed-fallback",
+        },
+      ];
+      for (const item of foldersToCopy) {
+        fs.cpSync(item.src, item.dest, { recursive: true });
+        console.log(`${item.src} was copied to ${item.dest}`);
+      }
+    },
     () => console.error("Assets failed to build successfully"),
   );
 }
