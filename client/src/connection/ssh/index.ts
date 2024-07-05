@@ -6,6 +6,10 @@ import { Client, ClientChannel, ConnectConfig } from "ssh2";
 
 import { BaseConfig, RunResult } from "..";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
+import {
+  ProfilePromptType,
+  createInputTextBox,
+} from "../../components/profile";
 import { Session } from "../session";
 import { extractOutputHtmlFileName } from "../util";
 
@@ -73,13 +77,56 @@ export class SSHSession extends Session {
         username: this._config.username,
         readyTimeout: sasLaunchTimeout,
         agent: process.env.SSH_AUTH_SOCK || undefined,
+        tryKeyboard: true, // Let library know that passwords are on offer
+        password: "", // Setting this to not-undefined, "password" is added to the list of authsAllowed in the client
       };
 
-      this.conn
-        .on("ready", () => {
-          this.conn.shell(this.onShell);
-        })
-        .on("error", this.onConnectionError);
+      // If the server explicitly requests keyboard-interactive password, prompt user for password
+      this.conn.on(
+        "keyboard-interactive",
+        (name, instructions, lang, prompts, finish) => {
+          if (
+            prompts.length === 1 &&
+            prompts[0].prompt.toLowerCase().includes("password")
+          ) {
+            createInputTextBox(ProfilePromptType.SSHPassword, "", true).then(
+              (password) => {
+                finish([password]);
+              },
+            );
+          } else {
+            finish([]);
+          }
+        },
+      );
+
+      // If all other authentication methods fail, re-try the connection after prompting user for a password
+      this.conn.on("error", (err) => {
+        if (err.level === "client-authentication") {
+          // All authentication variants failed. Try with a user-provided password
+          createInputTextBox(ProfilePromptType.SSHPassword, "", true).then(
+            (password) => {
+              if (password != undefined) {
+                cfg.password = password;
+                // Note that this is the same connection object, so it still has this on("error") handler,
+                //  which will ask for password again.
+                //  User hitting cancel/escape after zero or more password attempts is how we exit this loop
+                this.conn.connect(cfg);
+              } else {
+                // User cancels the input - go back to usual error path
+                this.onConnectionError(err);
+              }
+            },
+          );
+        } else {
+          // Any non-authentication error, go back to usual error path
+          this.onConnectionError(err);
+        }
+      });
+
+      this.conn.on("ready", () => {
+        this.conn.shell(this.onShell);
+      });
 
       this.setTimer();
       this.conn.connect(cfg);
