@@ -106,7 +106,7 @@ export class SSHSession extends Session {
           // All authentication variants failed. Try with a user-provided password
           createInputTextBox(ProfilePromptType.SSHPassword, "", true).then(
             (password) => {
-              if (password != undefined) {
+              if (password !== undefined) {
                 cfg.password = password;
                 // Note that this is the same connection object, so it still has this on("error") handler,
                 //  which will ask for password again.
