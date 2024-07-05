@@ -1,3 +1,5 @@
+// Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 import SASContentAdapter from "../../connection/rest/SASContentAdapter";
 import { ConnectionType } from "../profile";
 import {
