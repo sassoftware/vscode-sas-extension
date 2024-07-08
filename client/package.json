@@ -27,6 +27,6 @@
     "@types/uuid": "^10.0.0",
     "@types/vscode": "1.82.0",
     "@types/vscode-notebook-renderer": "^1.72.3",
-    "@vscode/test-electron": "^2.4.0"
+    "@vscode/test-electron": "^2.4.1"
   }
 }
