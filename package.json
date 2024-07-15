@@ -1094,7 +1094,7 @@
     "buffer": "6.0.3",
     "chai": "^4.4.1",
     "concurrently": "^8.2.2",
-    "esbuild": "^0.21.5",
+    "esbuild": "^0.23.0",
     "cross-env": "^7.0.3",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.3",
