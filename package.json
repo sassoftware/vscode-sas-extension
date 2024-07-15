@@ -1085,7 +1085,7 @@
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/chai": "^4.3.11",
-    "@types/mocha": "^10.0.6",
+    "@types/mocha": "^10.0.7",
     "@types/node": "^20.14.9",
     "@types/sinon": "^17.0.3",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
@@ -1099,7 +1099,7 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.3",
     "eslint-plugin-react-hooks": "^4.6.2",
-    "mocha": "^10.4.0",
+    "mocha": "^10.6.0",
     "nock": "^13.5.4",
     "papaparse": "^5.4.1",
     "path-browserify": "^1.0.1",
