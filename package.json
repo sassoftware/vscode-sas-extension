@@ -13,7 +13,7 @@
   "license": "Apache-2.0",
   "icon": "icons/sas.png",
   "engines": {
-    "vscode": "^1.82.0"
+    "vscode": "^1.89.0"
   },
   "activationEvents": [
     "onWebviewPanel:SASResultPanel",

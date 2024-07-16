@@ -6,7 +6,7 @@
   "version": "0.0.1",
   "publisher": "SAS",
   "engines": {
-    "vscode": "^1.82.0"
+    "vscode": "^1.89.0"
   },
   "dependencies": {
     "ag-grid-community": "^31.3.2",
