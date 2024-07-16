@@ -17,5 +17,3 @@ To configure the SAS extension:
 4. After you have created a profile, the Status Bar Item changes from "No Profile" to the name of the new profile.
 
    ![Status Bar Profile](/images/StatusBarProfileItem.png)
-
-5. If you do not want to generate results in HTML format, clear the `Enable/disable ODS HTML5 output` setting. This option is enabled by default.
