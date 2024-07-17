@@ -669,14 +669,20 @@ export class CodeZoneManager {
       token = this._getPrev(context);
       if (token && token.text) {
         word = token.text.toUpperCase();
+        token = this._getPrev(context);
         if (_isBlockEnd[word]) {
-          token = this._getPrev(context);
-          return token?.text === ";";
-        } else if (word === "CANCEL") {
-          token = this._getPrev(context);
+          if (token?.text === ";") {
+            return true;
+          }
+        }
+        if (word === "CANCEL") {
           if (token && token.text && _isBlockEnd[token.text.toUpperCase()]) {
             return true;
           }
+        }
+        if (token?.text.toUpperCase() === "%MEND") {
+          token = this._getPrev(context);
+          return token?.text === ";";
         }
       }
     }
@@ -2262,7 +2268,12 @@ export class CodeZoneManager {
     if (Lexer.isWord[token.type]) {
       text = token.text;
       if (token.pos >= 0) {
-        if (this._inBlock(context.block, token)! >= 0) {
+        const inBlock = this._inBlock(context.block, token)! >= 0;
+        if (
+          (inBlock && text !== "%MACRO") ||
+          (!inBlock && //not in block
+            !this._endedReally(context.block))
+        ) {
           // in block
           embeddedBlock = this._embeddedBlock(context.block, {
             line: token.line,
@@ -2459,7 +2470,7 @@ export class CodeZoneManager {
     const block = this._syntaxProvider.getFoldingBlock(
       tmpLine,
       tmpCol,
-      false,
+      true,
       true,
       true,
     );
