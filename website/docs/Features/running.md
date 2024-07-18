@@ -1,3 +1,7 @@
+---
+sidebar_position: 4
+---
+
 # Running SAS Code
 
 After you configure the SAS extension for your SAS environment, you can run your SAS program and view the log and results. The steps to connect to SAS and run your program are different for SAS Viya and SAS 9.

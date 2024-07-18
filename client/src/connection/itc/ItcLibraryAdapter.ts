@@ -54,7 +54,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
         where libname='${item.library}' and memname='${item.name}'
         order by varnum;
       quit;
-      %put <COLOUTPUT>; %put &OUTPUT; %put </COLOUTPUT>;
+      %put <COLOUTPUT> &OUTPUT; %put </COLOUTPUT>;
     `;
 
     const columnLines = processQueryRows(
@@ -87,7 +87,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
         select catx(',', libname, readonly) as libname_target into: OUTPUT separated by '~'
         from sashelp.vlibnam order by libname asc;
       quit;
-      %put <LIBOUTPUT>; %put &OUTPUT; %put </LIBOUTPUT>;
+      %put <LIBOUTPUT> &OUTPUT; %put </LIBOUTPUT>;
     `;
 
     const libNames = processQueryRows(
@@ -186,7 +186,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
         where libname='${item.name!}'
         order by memname asc;
       quit;
-      %put <TABLEOUTPUT>; %put &OUTPUT; %put </TABLEOUTPUT>;
+      %put <TABLEOUTPUT> &OUTPUT; %put </TABLEOUTPUT>;
     `;
 
     const tableNames = processQueryRows(
@@ -249,7 +249,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     const count = parseInt(countMatches[1].replace(/\s|\n/gm, ""), 10);
     output = output.replace(countRegex, "");
 
-    const rows = output.replace(/\n|\t/gm, "");
+    const rows = output.replace(/\n|\t/gm, "").slice(output.indexOf("{"));
     try {
       const tableData = JSON.parse(rows);
       return { rows: tableData[`SASTableData+${tempTable}`], count };

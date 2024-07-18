@@ -131,7 +131,7 @@ class SASRunner{
     try{
       $this.objSAS.LanguageService.FlushLogLines($chunkSize,$carriageControls,$lineTypes,$logLines)
     } catch{
-      throw "FlushLog error"
+      Write-Error "${ERROR_START_TAG}FlushLog error: $_${ERROR_END_TAG}"
     }
     for ($i = 0; $i -lt $logLines.Value.Length; $i++) {
       if (($carriageControls.Value[$i] -eq 1) -and $skipPageHeader) {

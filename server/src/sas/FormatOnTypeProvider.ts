@@ -58,7 +58,7 @@ export class FormatOnTypeProvider {
       line,
       semicolonCol + 1,
     );
-    let curBlockZoneType: "proc" | "data" | "macro" | undefined;
+    let curBlockZoneType: "proc" | "data" | undefined;
     let shouldDecIndent = false;
     if (
       zoneAfterSemicolon === ZONE_TYPE.GBL_STMT ||
@@ -78,26 +78,12 @@ export class FormatOnTypeProvider {
         case ZT.DATA_STEP_STMT_OPT:
         case ZT.DATA_STEP_STMT_OPT_VALUE:
           !curBlockZoneType && (curBlockZoneType = "data");
-        // eslint-disable-next-line no-fallthrough
-        case ZT.MACRO_STMT:
-        case ZT.MACRO_STMT_OPT:
-        case ZT.MACRO_STMT_OPT_VALUE:
-        case ZT.MACRO_STMT_BODY: {
-          !curBlockZoneType && (curBlockZoneType = "macro");
           shouldDecIndent = true;
-          break;
-        }
       }
     }
 
     const foldingBlock: FoldingBlock | null =
-      this.syntaxProvider.getFoldingBlock(
-        line,
-        semicolonCol,
-        false,
-        true,
-        true,
-      );
+      this.syntaxProvider.getFoldingBlock(line, semicolonCol, true, true, true);
     // Detect recursive block, which is not supported yet
     switch (curBlockZoneType) {
       case "data": {
@@ -108,12 +94,6 @@ export class FormatOnTypeProvider {
       }
       case "proc": {
         if (foldingBlock?.type !== LexerEx.SEC_TYPE.PROC) {
-          return [];
-        }
-        break;
-      }
-      case "macro": {
-        if (foldingBlock?.type !== LexerEx.SEC_TYPE.MACRO) {
           return [];
         }
         break;
@@ -135,7 +115,7 @@ export class FormatOnTypeProvider {
         this.syntaxProvider.getFoldingBlock(
           lastNotEmptyLine,
           prevLineText.length - 1,
-          false,
+          true,
           true,
           true,
         );
@@ -149,19 +129,21 @@ export class FormatOnTypeProvider {
     } else {
       referLine = foldingBlock.startLine;
     }
-    // when the ending word is in the separate line as following cases, the indentationRules cannot match it,
-    // we need to ajust the line indentation to the same as the last line.
+
     if (!shouldDecIndent) {
+      // when the ending word is in the separate line as following cases, the indentationRules cannot match it,
+      // we need to ajust the line indentation to the same as the last line.
+      let [tokenText, tokenStyle, tokenCol] = this._getPrevValidTokenInfo(
+        line,
+        semicolonCol - 1,
+        false,
+        true,
+      );
       /*
        * if the ending word is part of a string or comment and is in the next line.
        * a ='
        * run;
        */
-      const [tokenText, tokenCol, tokenStyle] = this._getPrevValidTokenInfo(
-        line,
-        semicolonCol - 1,
-        false,
-      );
       if (
         tokenStyle &&
         [
@@ -179,6 +161,11 @@ export class FormatOnTypeProvider {
           shouldDecIndent = true;
         }
       }
+      [tokenText, tokenStyle, tokenCol] = this._getPrevValidTokenInfo(
+        line,
+        semicolonCol - 1,
+        false,
+      );
       /*
        * a =
        * run;
@@ -206,14 +193,52 @@ export class FormatOnTypeProvider {
           }
         }
       }
+      if (shouldDecIndent) {
+        referLine = lastNotEmptyLine;
+        // if the last line is the start line of the block, need to add extra indentation.
+        // it's impossible to be the end line of the block here.
+        if (foldingBlock?.startLine === lastNotEmptyLine) {
+          extraIndent = tabSize;
+        }
+      }
+
+      // macro
+      if (!shouldDecIndent) {
+        if (
+          tokenStyle === Lexer.TOKEN_TYPES.MSKEYWORD &&
+          tokenText?.toUpperCase() === "%MEND"
+        ) {
+          shouldDecIndent = true;
+        }
+        if (tokenText?.toUpperCase() !== "%MEND" && tokenCol) {
+          const [prevTokenText, prevTokenStyle] = this._getPrevValidTokenInfo(
+            line,
+            tokenCol - 1,
+          );
+          if (
+            (prevTokenStyle === Lexer.TOKEN_TYPES.MKEYWORD ||
+              prevTokenStyle === Lexer.TOKEN_TYPES.MSKEYWORD) &&
+            prevTokenText?.toUpperCase() === "%MEND"
+          ) {
+            shouldDecIndent = true;
+          }
+        }
+      }
+
+      // multiple run
+      if (
+        zoneBeforeSemicolon === ZT.GBL_STMT &&
+        zoneAfterSemicolon === ZT.GBL_STMT &&
+        (tokenStyle === Lexer.TOKEN_TYPES.SKEYWORD ||
+          tokenStyle === Lexer.TOKEN_TYPES.KEYWORD) &&
+        tokenText?.toUpperCase() === "RUN"
+      ) {
+        shouldDecIndent = true;
+        referLine = lastNotEmptyLine;
+      }
+
       if (!shouldDecIndent) {
         return [];
-      }
-      referLine = lastNotEmptyLine;
-      // if the last line is the start line of the block, need to add extra indentation.
-      // it's impossible to be the end line of the block here.
-      if (foldingBlock?.startLine === lastNotEmptyLine) {
-        extraIndent = tabSize;
       }
     }
 
@@ -300,51 +325,57 @@ export class FormatOnTypeProvider {
     curIndent: number,
     tabSize: number,
   ): number | undefined {
-    // find semicolon token
-    const tokens: SyntaxToken[] = this.syntaxProvider.getSyntax(line);
-    const cleanedTokens = this._cleanTokens(line, tokens);
-    if (cleanedTokens.length === 0) {
-      return 0;
+    let curLine = line;
+    let isFoundSemicolon = false;
+    while (curLine >= 0) {
+      const tokens: SyntaxToken[] = this.syntaxProvider.getSyntax(curLine);
+      const cleanedTokens = this._cleanTokens(curLine, tokens);
+      const lineText = this.model.getLine(curLine);
+      let curIndex = cleanedTokens.length - 1;
+      while (curIndex >= 0) {
+        const curToken = cleanedTokens[curIndex];
+        const curTokenText = this._getTokenText(
+          cleanedTokens,
+          curIndex,
+          lineText,
+        ).trim();
+        curIndex--;
+        // nothing should be done before matching ";"
+        if (!isFoundSemicolon && curTokenText !== ";") {
+          continue;
+        }
+        isFoundSemicolon = true;
+        if (
+          curToken.style === Lexer.TOKEN_TYPES.SKEYWORD ||
+          curToken.style === Lexer.TOKEN_TYPES.KEYWORD ||
+          curToken.style === Lexer.TOKEN_TYPES.MKEYWORD ||
+          curToken.style === Lexer.TOKEN_TYPES.MSKEYWORD
+        ) {
+          if (
+            curTokenText.toUpperCase() === "DATA" ||
+            curTokenText.toUpperCase() === "PROC" ||
+            curTokenText.toUpperCase() === "%MACRO"
+          ) {
+            return tabSize - (curIndent % tabSize);
+          }
+          if (
+            curTokenText.toUpperCase() === "RUN" ||
+            curTokenText.toUpperCase() === "QUIT" ||
+            curTokenText.toUpperCase() === "%MEND"
+          ) {
+            return 0;
+          }
+        }
+
+        // previous lines
+        if (curLine < line && curTokenText === ";") {
+          return 0;
+        }
+      }
+      if (curIndex < 0) {
+        curLine--;
+      }
     }
-    // find patterns of "data xxx;", "proc xxx;" or "%macro xxx;"
-    const lineText = this.model.getLine(line);
-    let curIndex = cleanedTokens.length;
-    do {
-      curIndex = this._findSemicolonTokenRightToLeft(
-        line,
-        cleanedTokens,
-        curIndex - 1,
-      );
-      if (curIndex <= 0) {
-        return 0;
-      }
-      const tokenBeforeSemicolon = cleanedTokens[curIndex - 1]; // curIndex must be > 0
-      const tokenBeforeSemicolonText = this._getTokenText(
-        cleanedTokens,
-        curIndex - 1,
-        lineText,
-      ).trim();
-      if (
-        (tokenBeforeSemicolon.style === Lexer.TOKEN_TYPES.SKEYWORD ||
-          tokenBeforeSemicolon.style === Lexer.TOKEN_TYPES.MSKEYWORD) &&
-        (tokenBeforeSemicolonText.toLowerCase() === "run" ||
-          tokenBeforeSemicolonText.toLowerCase() === "quit" ||
-          tokenBeforeSemicolonText.toLowerCase() === "%mend")
-      ) {
-        return 0;
-      }
-      // calculate indent
-      const prevSemicolonZone: number = this.czMgr.getCurrentZone(
-        line,
-        tokenBeforeSemicolon.start,
-      );
-      if (prevSemicolonZone === CodeZoneManager.ZONE_TYPE.RESTRICTED) {
-        return undefined;
-      }
-      if (this._isDefZone(prevSemicolonZone)) {
-        return tabSize - (curIndent % tabSize);
-      }
-    } while (curIndex > 0);
     return 0;
   }
 
@@ -363,57 +394,6 @@ export class FormatOnTypeProvider {
       cleanedTokens.push(curToken);
     }
     return cleanedTokens;
-  }
-
-  private _findSemicolonTokenRightToLeft(
-    line: number,
-    tokens: SyntaxToken[],
-    startIndex: number,
-  ): number {
-    const lineText = this.model.getLine(line);
-    if (startIndex < 0) {
-      return -1;
-    } else if (startIndex >= tokens.length) {
-      startIndex = tokens.length - 1;
-    }
-    let semicolonTokenIdx = -1;
-    for (let i = startIndex; i >= 0; i--) {
-      const curToken = tokens[i];
-      if (lineText[curToken.start] === ";") {
-        semicolonTokenIdx = i;
-        break;
-      }
-    }
-    return semicolonTokenIdx;
-  }
-
-  private _isDefZone(codeZode: number) {
-    const ZT = CodeZoneManager.ZONE_TYPE;
-    switch (codeZode) {
-      case ZT.DATA_STEP_DEF:
-      case ZT.DATA_STEP_DEF_OPT:
-      case ZT.DATA_STEP_OPT_NAME:
-      case ZT.DATA_STEP_OPT_VALUE:
-      case ZT.DATA_SET_NAME:
-      case ZT.VIEW_OR_DATA_SET_NAME:
-      case ZT.DATA_SET_OPT_NAME:
-      case ZT.DATA_SET_OPT_VALUE:
-      case ZT.VIEW_OR_PGM_NAME:
-      case ZT.VIEW_OR_PGM_OPT_NAME:
-      case ZT.VIEW_OR_PGM_OPT_VALUE:
-      case ZT.VIEW_OR_PGM_SUB_OPT_NAME:
-      case ZT.PROC_DEF:
-      case ZT.PROC_OPT:
-      case ZT.PROC_OPT_VALUE:
-      case ZT.PROC_SUB_OPT_NAME:
-      case ZT.MACRO_DEF:
-      case ZT.MACRO_DEF_OPT:
-      case ZT.MACRO_FUNC:
-      case ZT.MACRO_VAR:
-        return true;
-      default:
-        return false;
-    }
   }
 
   private _getLastNotEmptyLine(line: number): number | undefined {
@@ -498,23 +478,25 @@ export class FormatOnTypeProvider {
     line: number,
     col: number | undefined,
     needMultiLine = true,
-  ): [string | undefined, number | undefined, string] | [] {
-    const tokens: SyntaxToken[] = this.syntaxProvider.getSyntax(line);
+    returnComment = false,
+  ): [string | undefined, string, number | undefined] | [] {
     let _line = line;
     while (_line >= 0) {
-      const lineText = this.model.getLine(line);
+      const tokens: SyntaxToken[] = this.syntaxProvider.getSyntax(_line);
+      const lineText = this.model.getLine(_line);
       for (let i = tokens.length - 1; i >= 0; i--) {
         const curToken = tokens[i];
         const text = this._getTokenText(tokens, i, lineText);
         if (curToken.start <= (_line < line || !col ? lineText.length : col)) {
           if (!this._isCommentOrBlankToken(curToken, text)) {
-            return [text, curToken.start, curToken.style];
+            return [text, curToken.style, curToken.start];
           }
           if (
-            curToken.style === Lexer.TOKEN_TYPES.COMMENT ||
-            curToken.style === Lexer.TOKEN_TYPES.MCOMMENT
+            returnComment &&
+            (curToken.style === Lexer.TOKEN_TYPES.COMMENT ||
+              curToken.style === Lexer.TOKEN_TYPES.MCOMMENT)
           ) {
-            return [undefined, undefined, curToken.style];
+            return [undefined, curToken.style, undefined];
           }
         }
       }
