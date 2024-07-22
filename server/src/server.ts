@@ -132,7 +132,10 @@ export const runServer = (
   connection.onCompletion(async (params, token) => {
     return await dispatch(params, {
       async sas(languageService) {
-        if (params.context?.triggerCharacter && params.context.triggerCharacter !== " ") {
+        if (
+          params.context?.triggerCharacter &&
+          params.context.triggerCharacter !== " "
+        ) {
           return undefined;
         }
         const complitionList =
