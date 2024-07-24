@@ -88,7 +88,7 @@ const fetchColumns = (): Promise<Column[]> => {
 };
 
 const useDataViewer = () => {
-  const [columns, setColumns] = useState([]);
+  const [columns, setColumns] = useState<ColDef[]>([]);
 
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {

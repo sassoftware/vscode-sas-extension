@@ -46,7 +46,7 @@ const DataViewer = () => {
         cacheBlockSize={100}
         columnDefs={columns}
         defaultColDef={{
-          resizable: true,
+          sortable: false,
         }}
         infiniteInitialRowCount={100}
         maxBlocksInCache={10}
