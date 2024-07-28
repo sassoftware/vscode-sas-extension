@@ -5,6 +5,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 import { CodeZoneManager } from "../sas/CodeZoneManager";
 import { LanguageServiceProvider } from "../sas/LanguageServiceProvider";
+import { isCustomRegionStartComment } from "../sas/utils";
 
 export const extractPythonCodes = (
   doc: TextDocument,
@@ -15,6 +16,9 @@ export const extractPythonCodes = (
   const symbols: DocumentSymbol[] = languageService.getDocumentSymbols();
   for (let i = 0; i < symbols.length; i++) {
     const symbol = symbols[i];
+    if (isCustomRegionStartComment(symbol.name)) {
+      symbols.splice(i + 1, 0, ...(symbol.children ?? []));
+    }
     if (symbol.name?.toUpperCase() !== "PROC PYTHON") {
       continue;
     }

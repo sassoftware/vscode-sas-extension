@@ -38,6 +38,7 @@ import { PyrightLanguageProvider } from "./python/PyrightLanguageProvider";
 import { CodeZoneManager } from "./sas/CodeZoneManager";
 import { LanguageServiceProvider, legend } from "./sas/LanguageServiceProvider";
 import type { LibCompleteItem } from "./sas/SyntaxDataProvider";
+import { isCustomRegionStartComment } from "./sas/utils";
 
 interface DocumentInfo {
   document: TextDocument;
@@ -532,7 +533,12 @@ export const runServer = (
     const codeZoneManager = languageService.getCodeZoneManager();
     const pos = params.position;
     const symbols: DocumentSymbol[] = languageService.getDocumentSymbols();
-    for (const symbol of symbols) {
+    for (let i = 0; i < symbols.length; i++) {
+      const symbol = symbols[i];
+      if (isCustomRegionStartComment(symbol.name)) {
+        symbols.splice(i + 1, 0, ...(symbol.children ?? []));
+        continue;
+      }
       const start = symbol.range.start;
       const end = symbol.range.end;
       if (
