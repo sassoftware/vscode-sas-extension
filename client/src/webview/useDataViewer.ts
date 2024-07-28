@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useCallback, useEffect, useState } from "react";
 
-import { ColDef, IGetRowsParams } from "ag-grid-community";
+import { ColDef, GridReadyEvent, IGetRowsParams } from "ag-grid-community";
 import { v4 } from "uuid";
 
 import { TableData } from "../components/LibraryNavigator/types";
@@ -91,7 +91,7 @@ const useDataViewer = () => {
   const [columns, setColumns] = useState([]);
 
   const onGridReady = useCallback(
-    (event) => {
+    (event: GridReadyEvent) => {
       const dataSource = {
         rowCount: undefined,
         getRows: async (params: IGetRowsParams) => {
@@ -115,7 +115,7 @@ const useDataViewer = () => {
         },
       };
 
-      event.api.setDatasource(dataSource);
+      event.api.setGridOption("datasource", dataSource);
     },
     [columns],
   );
