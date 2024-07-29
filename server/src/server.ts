@@ -230,8 +230,8 @@ export const runServer = (
 
   connection.onRequest("sas/getFoldingBlock", async (params) => {
     return await dispatch(params, {
-      async sas(languageService) {
-        const block = languageService.getFoldingBlock(
+      async default(languageServices) {
+        const block = languageServices.sasLanguageService.getFoldingBlock(
           params.position.line,
           params.position.col,
           params.strict ?? true,
@@ -526,6 +526,10 @@ export const runServer = (
       python?: (
         pyrightLanguageService: PyrightLanguageProvider,
       ) => Promise<Ret>;
+      default?: (languageServices: {
+        sasLanguageService: LanguageServiceProvider;
+        pythonLanguageService?: PyrightLanguageProvider;
+      }) => Promise<Ret>;
     },
   ) => {
     syncIfDocChange(params.textDocument.uri);
@@ -554,6 +558,11 @@ export const runServer = (
         ) {
           if (callbacks.python) {
             return await callbacks.python(_pyrightLanguageProvider);
+          } else if (callbacks.default) {
+            return await callbacks.default({
+              sasLanguageService: languageService,
+              pythonLanguageService: _pyrightLanguageProvider,
+            });
           } else {
             return undefined;
           }
@@ -562,7 +571,13 @@ export const runServer = (
     }
     if (callbacks.sas) {
       return await callbacks.sas(languageService);
-    } else {
+    } else if (callbacks.default) {
+      return await callbacks.default({
+        sasLanguageService: languageService,
+        pythonLanguageService: _pyrightLanguageProvider,
+      });
+    }
+    {
       return undefined;
     }
   };
