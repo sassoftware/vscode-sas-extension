@@ -4,6 +4,7 @@ import { l10n } from "vscode";
 
 import {
   AuthHandlerMiddleware,
+  AuthenticationType,
   Client,
   ClientChannel,
   ConnectConfig,
