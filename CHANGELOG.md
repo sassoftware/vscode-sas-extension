@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [v1.10.1] - 2024-07-22
+
+### Fixed
+
+- Auto-indent improvement ([#522](https://github.com/sassoftware/vscode-sas-extension/issues/522)) ([#652](https://github.com/sassoftware/vscode-sas-extension/issues/652))
+- Log output by running task ([#1058](https://github.com/sassoftware/vscode-sas-extension/issues/1058))
+- Resolve the breaking change introduced by AG Grid 32.0 ([#1096](https://github.com/sassoftware/vscode-sas-extension/issues/1096))
+- Library pane crash with option symbolgen ([#1012](https://github.com/sassoftware/vscode-sas-extension/issues/1012))
+
 ## [v1.10.0] - 2024-06-18
 
 ### Added
