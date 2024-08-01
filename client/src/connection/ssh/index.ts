@@ -2,7 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 import { l10n } from "vscode";
 
-import { Client, ClientChannel, ConnectConfig } from "ssh2";
+import {
+  AuthHandlerMiddleware,
+  Client,
+  ClientChannel,
+  ConnectConfig,
+  NextAuthHandler,
+} from "ssh2";
 
 import { BaseConfig, RunResult } from "..";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
@@ -72,7 +78,7 @@ export class SSHSession extends Session {
         port: this._config.port,
         username: this._config.username,
         readyTimeout: sasLaunchTimeout,
-        agent: process.env.SSH_AUTH_SOCK || undefined,
+        authHandler: this.authHandler,
       };
 
       this.conn
@@ -234,5 +240,14 @@ export class SSHSession extends Session {
     const execSasOpts: string = resolvedSasOpts.join(" ");
 
     this.stream.write(`${execArgs} ${this._config.saspath} ${execSasOpts} \n`);
+  };
+
+  private authHandler: AuthHandlerMiddleware = (
+    authsLeft: AuthenticationType[],
+    partialSuccess: boolean,
+    next: NextAuthHandler,
+  ) => {
+    //TODO: auth handler implementation
+    // We need to support username/password, private key, and agent
   };
 }
