@@ -1,7 +1,9 @@
 // Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { l10n } from "vscode";
+import { l10n, window } from "vscode";
+import { CancellationTokenSource } from "vscode-languageclient";
 
+import { readFileSync } from "fs";
 import {
   AuthHandlerMiddleware,
   AuthenticationType,
@@ -9,15 +11,18 @@ import {
   ClientChannel,
   ConnectConfig,
   NextAuthHandler,
+  utils,
 } from "ssh2";
 
 import { BaseConfig, RunResult } from "..";
+import { getSecretStorage } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 import { extractOutputHtmlFileName } from "../util";
 
 const endCode = "--vscode-sas-extension-submit-end--";
-const sasLaunchTimeout = 10000;
+const SECRET_STORAGE_NAMESPACE = "SSH_SECRET_STORAGE";
+const sasLaunchTimeout = 600000;
 let sessionInstance: SSHSession;
 
 export interface Config extends BaseConfig {
@@ -25,6 +30,7 @@ export interface Config extends BaseConfig {
   username: string;
   saspath: string;
   port: number;
+  privateKeyFilePath: string;
 }
 
 export function getSession(c: Config): Session {
@@ -40,20 +46,26 @@ export function getSession(c: Config): Session {
   sessionInstance.config = c;
   return sessionInstance;
 }
-
+type SSHSessionAuthMethod = "password" | "keyboard-interactive" | "publickey";
 export class SSHSession extends Session {
-  private conn: Client;
-  private stream: ClientChannel | undefined;
+  private _conn: Client;
+  private _stream: ClientChannel | undefined;
   private _config: Config;
-  private resolve: ((value?) => void) | undefined;
-  private reject: ((reason?) => void) | undefined;
-  private html5FileName = "";
-  private timer: NodeJS.Timeout;
+  private _resolve: ((value?) => void) | undefined;
+  private _reject: ((reason?) => void) | undefined;
+  private _html5FileName = "";
+  private _timer: NodeJS.Timeout;
+  private _authMethods: SSHSessionAuthMethod[]; //auth methods that this session can support
+  private _cancellationSource: CancellationTokenSource | undefined;
+  private _secretStorage;
+  private _passwordKey: string;
 
   constructor(c?: Config) {
     super();
     this._config = c;
-    this.conn = new Client();
+    this._conn = new Client();
+    this._authMethods = ["publickey", "password", "keyboard-interactive"];
+    this._secretStorage = getSecretStorage(SECRET_STORAGE_NAMESPACE);
   }
 
   public sessionId? = (): string => {
@@ -62,15 +74,16 @@ export class SSHSession extends Session {
 
   set config(newValue: Config) {
     this._config = newValue;
+    this._passwordKey = `${newValue.host}${newValue.username}`;
   }
 
   protected establishConnection = (): Promise<void> => {
     return new Promise((pResolve, pReject) => {
-      this.resolve = pResolve;
-      this.reject = pReject;
+      this._resolve = pResolve;
+      this._reject = pReject;
 
-      if (this.stream) {
-        this.resolve?.({});
+      if (this._stream) {
+        this._resolve?.({});
         return;
       }
 
@@ -79,75 +92,78 @@ export class SSHSession extends Session {
         port: this._config.port,
         username: this._config.username,
         readyTimeout: sasLaunchTimeout,
+        debug: (msg) => {
+          console.log(msg);
+        },
         authHandler: this.authHandler,
       };
 
-      this.conn
+      this._conn
         .on("ready", () => {
-          this.conn.shell(this.onShell);
+          this._conn.shell(this.onShell);
         })
         .on("error", this.onConnectionError);
 
-      this.setTimer();
-      this.conn.connect(cfg);
+      // this.setTimer();
+      this._conn.connect(cfg);
     });
   };
 
   public run = (code: string): Promise<RunResult> => {
-    this.html5FileName = "";
+    this._html5FileName = "";
 
     return new Promise((_resolve, _reject) => {
-      this.resolve = _resolve;
-      this.reject = _reject;
+      this._resolve = _resolve;
+      this._reject = _reject;
 
-      this.stream?.write(`${code}\n`);
-      this.stream?.write(`%put ${endCode};\n`);
+      this._stream?.write(`${code}\n`);
+      this._stream?.write(`%put ${endCode};\n`);
     });
   };
 
   public close = (): void | Promise<void> => {
-    if (!this.stream) {
+    if (!this._stream) {
       return;
     }
-    this.stream.write("endsas;\n");
-    this.stream.close();
+    this._stream.write("endsas;\n");
+    this._stream.close();
   };
 
   private onConnectionError = (err: Error) => {
     this.clearTimer();
-    this.reject?.(err);
+    this._reject?.(err);
   };
 
   private setTimer = (): void => {
     this.clearTimer();
-    this.timer = setTimeout(() => {
-      this.reject?.(
+    this._timer = setTimeout(() => {
+      this._reject?.(
         new Error(
           l10n.t("Failed to connect to Session. Check profile settings."),
         ),
       );
-      this.timer = undefined;
+      this._timer = undefined;
       this.close();
     }, sasLaunchTimeout);
   };
 
   private clearTimer = (): void => {
-    this.timer && clearTimeout(this.timer);
-    this.timer = undefined;
+    this._timer && clearTimeout(this._timer);
+    this._timer = undefined;
   };
 
   private getResult = (): void => {
     const runResult: RunResult = {};
-    if (!this.html5FileName) {
-      this.resolve?.(runResult);
+    if (!this._html5FileName) {
+      this._resolve?.(runResult);
       return;
     }
     let fileContents = "";
-    this.conn.exec(
-      `cat ${this.html5FileName}.htm`,
+    this._conn.exec(
+      `cat ${this._html5FileName}.htm`,
       (err: Error, s: ClientChannel) => {
         if (err) {
-          this.reject?.(err);
+          this._reject?.(err);
           return;
         }
 
@@ -164,28 +180,28 @@ export class SSHSession extends Session {
               runResult.title = l10n.t("Result");
             }
           }
-          this.resolve?.(runResult);
+          this._resolve?.(runResult);
         });
       },
     );
   };
 
   private onStreamClose = (): void => {
-    this.stream = undefined;
-    this.resolve = undefined;
-    this.reject = undefined;
-    this.html5FileName = "";
-    this.timer = undefined;
-    this.conn.end();
+    this._stream = undefined;
+    this._resolve = undefined;
+    this._reject = undefined;
+    this._html5FileName = "";
+    this._timer = undefined;
+    this._conn.end();
     updateStatusBarItem(false);
   };
 
   private onStreamData = (data: Buffer): void => {
     const output = data.toString().trimEnd();
 
-    if (this.timer && output.endsWith("?")) {
+    if (this._timer && output.endsWith("?")) {
       this.clearTimer();
-      this.resolve?.();
+      this._resolve?.();
       updateStatusBarItem(true);
       return;
     }
@@ -200,9 +216,9 @@ export class SSHSession extends Session {
         this.getResult();
       }
       if (!(line.endsWith("?") || line.endsWith(">"))) {
-        this.html5FileName = extractOutputHtmlFileName(
+        this._html5FileName = extractOutputHtmlFileName(
           line,
-          this.html5FileName,
+          this._html5FileName,
         );
         this._onExecutionLogFn?.([{ type: "normal", line }]);
       }
@@ -211,17 +227,17 @@ export class SSHSession extends Session {
 
   private onShell = (err: Error, s: ClientChannel): void => {
     if (err) {
-      this.reject?.(err);
+      this._reject?.(err);
       return;
     }
-    this.stream = s;
-    if (!this.stream) {
-      this.reject?.(err);
+    this._stream = s;
+    if (!this._stream) {
+      this._reject?.(err);
       return;
     }
 
-    this.stream.on("close", this.onStreamClose);
-    this.stream.on("data", this.onStreamData);
+    this._stream.on("close", this.onStreamClose);
+    this._stream.on("data", this.onStreamData);
 
     const resolvedEnv: string[] = [
       "env",
@@ -240,15 +256,154 @@ export class SSHSession extends Session {
     }
     const execSasOpts: string = resolvedSasOpts.join(" ");
 
-    this.stream.write(`${execArgs} ${this._config.saspath} ${execSasOpts} \n`);
+    this._stream.write(`${execArgs} ${this._config.saspath} ${execSasOpts} \n`);
+  };
+
+  private promptForPassphrase = async (): Promise<string> => {
+    //TODO: need to think about whether these should be stored in secret storage
+    // I'm leaning towrds no, but it's worth considering. Intial thought is that
+    // if users want to persist a passphrase, that the ssh-agent should be used,
+    // which seems to be inline with other solutions. Otherwise, the passphrase
+    // should be entered each time a session is established.
+    const passphrase = await window.showInputBox({
+      prompt: l10n.t("Enter the passphrase for the private key."),
+      password: true,
+    });
+    return passphrase;
+  };
+  private promptForPassword = async (): Promise<string> => {
+    //TODO: we need to properly manage the lifecycle of the password secret
+    const storedPassword = await this._secretStorage.get(this._passwordKey);
+    if (storedPassword) {
+      return storedPassword;
+    }
+
+    const source = new CancellationTokenSource();
+    this._cancellationSource = source;
+    const pw = await window.showInputBox(
+      {
+        ignoreFocusOut: true,
+        password: true,
+        prompt: l10n.t("Enter your password for this connection."),
+        title: l10n.t("Password Required"),
+      },
+      this._cancellationSource.token,
+    );
+    return pw;
   };
 
   private authHandler: AuthHandlerMiddleware = (
     authsLeft: AuthenticationType[],
-    partialSuccess: boolean,
-    next: NextAuthHandler,
+    _partialSuccess: boolean,
+    cb: NextAuthHandler,
   ) => {
-    //TODO: auth handler implementation
-    // We need to support username/password, private key, and agent
+    if (!authsLeft) {
+      cb("none"); //sending none will usually prompt the server to send supported auth methods
+      return;
+    }
+
+    if (this._authMethods.length === 0) {
+      //if we're out of auth methods to try, then reject with an error
+      this._reject?.(
+        new Error(l10n.t("Could not authenticate to the SSH server.")),
+      );
+
+      //returning false will stop the auth process
+      return false;
+    }
+
+    //otherwise, fetch the next auth method to try
+    const authMethod = this._authMethods.shift();
+
+    //make sure the auth method is supported by the server
+    if (authsLeft.includes(authMethod)) {
+      switch (authMethod) {
+        //TODO: this is ugly and needs to be broken up into smaller functions
+        // one function per type of auth method would be a good start
+        case "publickey": {
+          //user set a keyfile path in profile config
+          //check for passphrase, prompt if necessary
+          //and then attempt to auth
+          if (this._config.privateKeyFilePath) {
+            const keyContents = readFileSync(this._config.privateKeyFilePath);
+            const parsedKeyResult = utils.parseKey(keyContents);
+            // key is encrypted, prompt for passphrase
+            if (
+              parsedKeyResult instanceof Error &&
+              parsedKeyResult.message ===
+                "Encrypted OpenSSH private key detected, but no passphrase given"
+            ) {
+              this.promptForPassphrase().then((passphrase) => {
+                //parse the keyfile using the passphrase
+                const parsedKeyContentsResult = utils.parseKey(
+                  keyContents,
+                  passphrase,
+                );
+
+                //TODO: refactor typechecking into one place, maybe a utility function
+                if (!(parsedKeyContentsResult instanceof Error)) {
+                  cb({
+                    type: "publickey",
+                    key: parsedKeyContentsResult,
+                    passphrase: passphrase,
+                    username: this._config.username,
+                  });
+                }
+              });
+            } else {
+              //TODO: refactor typechecking into one place, maybe a utility function
+              if (!(parsedKeyResult instanceof Error)) {
+                cb({
+                  type: "publickey",
+                  key: parsedKeyResult,
+                  username: this._config.username,
+                });
+              }
+            }
+          } else if (process.env.SSH_AUTH_SOCK) {
+            //attempt to auth using ssh-agent
+            cb({
+              type: "agent",
+              agent: process.env.SSH_AUTH_SOCK,
+              username: this._config.username,
+            });
+          }
+          break;
+        }
+        case "password": {
+          this.promptForPassword().then((pw) => {
+            cb({
+              type: "password",
+              password: pw,
+              username: this._config.username,
+            });
+          });
+          break;
+        }
+
+        case "keyboard-interactive": {
+          cb({
+            type: "keyboard-interactive",
+            username: this._config.username,
+            prompt: (_name, _instructions, _instructionsLang, prompts, cb) => {
+              if (prompts.length === 1 && prompts[0].prompt === "Password:") {
+                this.promptForPassword().then((pw) => {
+                  cb([pw]);
+                });
+              } else {
+                cb([]);
+              }
+            },
+          });
+          break;
+        }
+        default:
+          //TODO: not sure if cb with "none" is the right thing to do here
+          cb("none");
+      }
+    } else {
+      console.warn(`Server does not support ${authMethod} auth method.`);
+      cb("none");
+    }
   };
 }
