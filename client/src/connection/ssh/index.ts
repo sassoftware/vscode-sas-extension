@@ -261,7 +261,7 @@ export class SSHSession extends Session {
 
   private promptForPassphrase = async (): Promise<string> => {
     //TODO: need to think about whether these should be stored in secret storage
-    // I'm leaning towrds no, but it's worth considering. Intial thought is that
+    // I'm leaning towards no, but it's worth considering. Initial thought is that
     // if users want to persist a passphrase, that the ssh-agent should be used,
     // which seems to be inline with other solutions. Otherwise, the passphrase
     // should be entered each time a session is established.
@@ -325,6 +325,7 @@ export class SSHSession extends Session {
           //check for passphrase, prompt if necessary
           //and then attempt to auth
           if (this._config.privateKeyFilePath) {
+            //TODO: handle "file not found" errors
             const keyContents = readFileSync(this._config.privateKeyFilePath);
             const parsedKeyResult = utils.parseKey(keyContents);
             // key is encrypted, prompt for passphrase
