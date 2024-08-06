@@ -31,6 +31,20 @@ const LogLineTypes: LogLineTypeEnum[] = [
   "message",
 ];
 
+// from SASpy
+const LogLineTypeArray: string[] = [
+  "Normal",
+  "Hilighted",
+  "Source",
+  "Title",
+  "Byline",
+  "Footnote",
+  "Error",
+  "Warning",
+  "Note",
+  "Message",
+];
+
 let sessionInstance: SASPYSession;
 
 export class SASPYSession extends Session {
@@ -43,7 +57,7 @@ export class SASPYSession extends Session {
   private _pollingForLogResults: boolean;
   private _logLineType = 0;
   private _workDirectoryParser: LineParser;
-    
+
   constructor() {
     super();
     this._workDirectoryParser = new LineParser(
@@ -125,7 +139,7 @@ else:
 
 
 try:
-    sas
+    not sas
 except NameError:
     raise Exception("Setup error")
 
@@ -135,8 +149,10 @@ vscode_saspy_code = r"""
 ${saspyWorkDir}
 """
 
-ll=sas.submit(vscode_saspy_code)
-print(ll['LOG'])
+ll_init=sas.submit(vscode_saspy_code)
+if ll_init is not None:
+    print(ll_init['LOG'])
+    ll_init = None
 
 `;
 
@@ -153,6 +169,15 @@ print(ll['LOG'])
      */
     if (!this._workDirectory) {
       // this._shellProcess.stdin.write(`sas\n`);
+
+      // FIXME: Logically, the code for workdirectory should be here
+      //       this._shellProcess.stdin.write(`
+      // ll_init=sas.submit(vscode_saspy_code)
+      // if ll_init is not None:
+      //     print(ll_init['LOG'])
+      //     ll_init = None
+
+      //         `, this.onWriteComplete);
 
       if (this._config.sasOptions?.length > 0) {
         const sasOptsInput = `$sasOpts=${this.formatSASOptions(
@@ -206,7 +231,10 @@ ${codeWithEnd}
     this._shellProcess.stdin.write(codeToRun);
     this._pollingForLogResults = true;
     await this._shellProcess.stdin.write(
-      `ll=sas.submit(codeToRun, results='HTML')\n`,
+      // Below SASPy V5.14.0, we can't get the log line type
+      // `ll=sas.submit(codeToRun, results='HTML')\n`,
+      // from SASPy V5.14.0, it provides an option to get line type in log
+      `ll=sas.submit(codeToRun, results='HTML', loglines=True)\n`,
 
       async (error) => {
         await this.fetchLog();
@@ -247,7 +275,7 @@ ${codeWithEnd}
    */
   public cancel = async () => {
     this._pollingForLogResults = false;
-    this._shellProcess.stdin.write("%abort cancel;\n", async (error) => {
+    this._shellProcess.stdin.write(`sas.submit("""%abort cancel;\n""")\n`, async (error) => {
       if (error) {
         this._runReject(error);
       }
@@ -272,7 +300,26 @@ ${codeWithEnd}
    * writing each chunk to stdout.
    */
   private fetchLog = async (): Promise<void> => {
-    this._shellProcess.stdin.write(`print(ll['LOG'])\n`, this.onWriteComplete);
+    // Below SASPy V5.14.0, we can't get the log line type
+    // this._shellProcess.stdin.write(`print(ll['LOG'])\n`, this.onWriteComplete);
+    // from SASPy V5.14.0, it provides an option to get line type in log
+    // FIXME: The log of code for work directory should be diagnoticed together with 
+    // the first run code, otherwise, as current implentation, the diagnotitics would 
+    // think the actual code has completed after parsing the log of code for working
+    // directory
+    // - update unsubscribe, or
+    // - delay the parsing log of code for working directory
+    this._shellProcess.stdin.write(
+      `
+if ll_init is not None:
+    print(ll_init['LOG'])
+    ll_init = None
+
+for lln in ll["LOG"]:
+    print("${LineCodes.LogLineStarter}=", lln["type"], ":LINE=", lln["line"], sep="")
+
+`,
+      this.onWriteComplete);
   };
 
   /**
@@ -354,9 +401,9 @@ ${codeWithEnd}
         );
 
         if (this._workDirectory) {
-          this._onExecutionLogFn?.([{ type: this.getLogLineType(), line }]);
+          this._onExecutionLogFn?.([{ type: this.getLogLineType(line), line: this.getLogLineLog(line) }]);
         } else {
-          this._onSessionLogFn?.([{ type: this.getLogLineType(), line }]);
+          this._onSessionLogFn?.([{ type: this.getLogLineType(line), line: this.getLogLineLog(line) }]);
         }
       }
     });
@@ -389,9 +436,21 @@ ${codeWithEnd}
     return false;
   }
 
-  private getLogLineType(): LogLineTypeEnum {
+  private getLogLineType(line: string): LogLineTypeEnum {
+    this._logLineType = 0;
+    const rx: RegExp = /^--vscode-sas-extension-log-line-starter--=(\w+):LINE=.*/i;
+    if (rx.test(line)) {
+      const lineType = line.match(rx);
+      this._logLineType = LogLineTypeArray.indexOf(lineType[1]);
+    }
     const result = LogLineTypes[this._logLineType];
     this._logLineType = 0;
+    return result;
+  }
+
+  private getLogLineLog(line: string): string {
+    const rx: RegExp = /^--vscode-sas-extension-log-line-starter--=\w+:LINE=(.*)/i;
+    const result = rx.test(line) ? line.match(rx)[1] : line;
     return result;
   }
 

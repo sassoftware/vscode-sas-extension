@@ -8,6 +8,7 @@ export enum LineCodes {
   RunEndCode = "--vscode-sas-extension-submit-end--",
   SessionCreatedCode = "--vscode-sas-extension-session-created--",
   LogLineType = "--vscode-sas-extension-log-line-type--",
+  LogLineStarter = "--vscode-sas-extension-log-line-starter--",
 }
 
 /**
