@@ -115,6 +115,7 @@ run;
       this._config.cfgname?.length > 0 ? this._config.cfgname : "";
     const scriptContent = `
 import saspy
+from packaging.version import parse
 
 _cfgname = "${cfgname}"
 
@@ -139,9 +140,12 @@ else:
 
 
 try:
-    not sas
+    sas
 except NameError:
     raise Exception("Setup error")
+
+enable_diagnostic = parse(saspy.__version__) >= parse("5.14.0")
+enable_diagnostic
 
 sas.HTML_Style = '${saspyHtmlStyle}'
 
@@ -153,6 +157,8 @@ ll_init=sas.submit(vscode_saspy_code)
 if ll_init is not None:
     print(ll_init['LOG'])
     ll_init = None
+
+print("${LineCodes.SessionCreatedCode}")
 
 `;
 
@@ -177,7 +183,7 @@ if ll_init is not None:
       //     print(ll_init['LOG'])
       //     ll_init = None
 
-      //         `, this.onWriteComplete);
+      //               `, this.onWriteComplete);
 
       if (this._config.sasOptions?.length > 0) {
         const sasOptsInput = `$sasOpts=${this.formatSASOptions(
@@ -225,8 +231,6 @@ ${codeWithEnd}
 """
 `;
 
-    // console.log("codeToRun = " + codeToRun);
-
     this._html5FileName = "";
     this._shellProcess.stdin.write(codeToRun);
     this._pollingForLogResults = true;
@@ -234,8 +238,13 @@ ${codeWithEnd}
       // Below SASPy V5.14.0, we can't get the log line type
       // `ll=sas.submit(codeToRun, results='HTML')\n`,
       // from SASPy V5.14.0, it provides an option to get line type in log
-      `ll=sas.submit(codeToRun, results='HTML', loglines=True)\n`,
+      `
+if enable_diagnostic:
+    ll=sas.submit(codeToRun, results='HTML', loglines=True)
+else:
+    ll=sas.submit(codeToRun, results='HTML')
 
+`,
       async (error) => {
         await this.fetchLog();
         if (error) {
@@ -303,8 +312,8 @@ ${codeWithEnd}
     // Below SASPy V5.14.0, we can't get the log line type
     // this._shellProcess.stdin.write(`print(ll['LOG'])\n`, this.onWriteComplete);
     // from SASPy V5.14.0, it provides an option to get line type in log
-    // FIXME: The log of code for work directory should be diagnoticed together with 
-    // the first run code, otherwise, as current implentation, the diagnotitics would 
+    // FIXME: The log of code for work directory should be diagnoticed together with
+    // the first run code, otherwise, as current implentation, the diagnotitics would
     // think the actual code has completed after parsing the log of code for working
     // directory
     // - update unsubscribe, or
@@ -315,8 +324,11 @@ if ll_init is not None:
     print(ll_init['LOG'])
     ll_init = None
 
-for lln in ll["LOG"]:
-    print("${LineCodes.LogLineStarter}=", lln["type"], ":LINE=", lln["line"], sep="")
+if enable_diagnostic:
+    for lln in ll["LOG"]:
+        print("${LineCodes.LogLineStarter}=", lln["type"], ":LINE=", lln["line"], sep="")
+else:
+    print(ll['LOG'])
 
 `,
       this.onWriteComplete);
