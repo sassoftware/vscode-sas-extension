@@ -163,10 +163,6 @@ print("${LineCodes.SessionCreatedCode}")
 `;
 
     this._shellProcess.stdin.write(scriptContent + "\n", this.onWriteComplete);
-    // this._shellProcess.stdin.write(
-    //   "$runner = New-Object -TypeName SASRunner\n",
-    //   this.onWriteComplete,
-    // );
 
     /*
      * There are cases where the higher level run command will invoke setup multiple times.
@@ -222,6 +218,7 @@ print("${LineCodes.SessionCreatedCode}")
       /\bods html5\(id=vscode\)([^;]*;)/i,
       `ods html5(id=vscode) path="${this._workDirectory}"$1`,
     );
+    // Remove ods close code from SASPy
     const codeWithODSPath2 = codeWithODSPath.replace(/\bods _all_ close;/i, ``);
 
     //write an end mnemonic so that the handler knows when execution has finished
@@ -428,6 +425,10 @@ else:
       return true;
     }
 
+    if (line.includes(LineCodes.SessionCreatedCode)) {
+      return true;
+    }
+
     if (line.includes(LineCodes.ResultsFetchedCode)) {
       this.displayResults();
       return true;
@@ -450,7 +451,7 @@ else:
 
   private getLogLineType(line: string): LogLineTypeEnum {
     this._logLineType = 0;
-    const rx: RegExp = /^--vscode-sas-extension-log-line-starter--=(\w+):LINE=.*/i;
+    const rx: RegExp = new RegExp(`^${LineCodes.LogLineStarter}=(\\w+):LINE=.*i`, 'i');
     if (rx.test(line)) {
       const lineType = line.match(rx);
       this._logLineType = LogLineTypeArray.indexOf(lineType[1]);
@@ -461,7 +462,7 @@ else:
   }
 
   private getLogLineLog(line: string): string {
-    const rx: RegExp = /^--vscode-sas-extension-log-line-starter--=\w+:LINE=(.*)/i;
+    const rx: RegExp = new RegExp(`^${LineCodes.LogLineStarter}=\\w+:LINE=(.*)`, 'i');
     const result = rx.test(line) ? line.match(rx)[1] : line;
     return result;
   }
