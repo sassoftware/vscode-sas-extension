@@ -657,6 +657,7 @@ export enum ProfilePromptType {
   SASPath,
   Port,
   Username,
+  SSHPassword,
 }
 
 /**
@@ -793,6 +794,11 @@ const input: ProfilePromptInput = {
     title: l10n.t("SAS Server Username"),
     placeholder: l10n.t("Enter your username"),
     description: l10n.t("Enter your SAS server username."),
+  },
+  [ProfilePromptType.SSHPassword]: {
+    title: l10n.t("SAS Server password"),
+    placeholder: l10n.t("Enter your password"),
+    description: l10n.t("Enter your SAS server password."),
   },
 };
 
