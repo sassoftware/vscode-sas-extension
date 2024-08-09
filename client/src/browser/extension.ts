@@ -36,8 +36,8 @@ function createWorkerLanguageClient(
   return new LanguageClient(
     "sas-lsp",
     "SAS Language Server",
-    clientOptions,
     worker,
+    clientOptions,
   );
 }
 
