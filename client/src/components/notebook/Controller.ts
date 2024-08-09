@@ -60,6 +60,7 @@ export class NotebookController {
     const execution = this._controller.createNotebookCellExecution(cell);
     execution.executionOrder = ++this._executionOrder;
     execution.start(Date.now()); // Keep track of elapsed time to execute cell.
+    execution.clearOutput();
 
     const session = getSession();
     session.onExecutionLogFn = (logLines) => {
