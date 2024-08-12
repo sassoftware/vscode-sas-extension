@@ -1086,7 +1086,7 @@
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.7",
-    "@types/node": "^20.14.10",
+    "@types/node": "^22.2.0",
     "@types/sinon": "^17.0.3",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "@typescript-eslint/parser": "^7.16.0",
