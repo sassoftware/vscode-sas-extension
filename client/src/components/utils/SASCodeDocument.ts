@@ -138,10 +138,8 @@ export class SASCodeDocument {
 ods graphics on;
 ods html5(id=vscode)${htmlStyleOption} options(bitmap_mode='inline' svg_mode='inline')${outputDestination};
 ${code}
-;*';*";*/;run;quit;
-quit;run;
-ods html5(id=vscode) close;
-ods listing close;`;
+;*';*";*/;run;quit;ods html5(id=vscode) close;
+`;
     } else {
       return code;
     }
