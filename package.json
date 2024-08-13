@@ -1099,7 +1099,7 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.3",
     "eslint-plugin-react-hooks": "^4.6.2",
-    "mocha": "^10.6.0",
+    "mocha": "^10.7.3",
     "nock": "^13.5.4",
     "papaparse": "^5.4.1",
     "path-browserify": "^1.0.1",
