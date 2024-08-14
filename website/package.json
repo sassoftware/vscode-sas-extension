@@ -15,12 +15,9 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@docusaurus/core": "3.5.1",
     "@docusaurus/preset-classic": "3.5.1",
     "@docusaurus/theme-mermaid": "3.5.1",
     "@easyops-cn/docusaurus-search-local": "0.44.5",
-    "@mdx-js/react": "^3.0.0",
-    "clsx": "^2.1.1",
     "prism-react-renderer": "^2.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
@@ -28,7 +25,6 @@
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.5.1",
     "@docusaurus/tsconfig": "3.5.1",
-    "@docusaurus/types": "3.5.1",
     "typescript": "~5.5.4"
   },
   "browserslist": {
