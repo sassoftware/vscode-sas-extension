@@ -196,15 +196,19 @@ export const runServer = (
     const pythonSymbols =
       (await _pyrightLanguageProvider.onDocumentSymbol(params, token)) ?? [];
     let hasPythonCode = false;
-    for (const sasSymbol of sasSymbols) {
-      if (sasSymbol.name?.toUpperCase() === "PROC PYTHON") {
+    const symbolList = [...sasSymbols];
+    for (let i = 0; i < symbolList.length; i++) {
+      const curSymbol = symbolList[i];
+      if (isCustomRegionStartComment(curSymbol.name)) {
+        symbolList.splice(i + 1, 0, ...(curSymbol.children ?? []));
+      } else if (curSymbol.name?.toUpperCase() === "PROC PYTHON") {
         hasPythonCode = true;
         for (const pythonSymbol of pythonSymbols) {
           if (!("range" in pythonSymbol)) {
             continue;
           }
-          if (isRangeIncluded(sasSymbol.range, pythonSymbol.range)) {
-            sasSymbol.children?.push(pythonSymbol);
+          if (isRangeIncluded(curSymbol.range, pythonSymbol.range)) {
+            curSymbol.children?.push(pythonSymbol);
           }
         }
       }
@@ -445,7 +449,9 @@ export const runServer = (
   connection.onDidChangeWatchedFiles(
     async (params: DidChangeWatchedFilesParams) => {
       params.changes.forEach((item) => {
-        syncIfDocChange(item.uri);
+        if (item.uri in documentPool) {
+          syncIfDocChange(item.uri);
+        }
       });
       _pyrightLanguageProvider.onDidChangeWatchedFiles(params);
     },
