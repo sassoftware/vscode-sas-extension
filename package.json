@@ -636,6 +636,11 @@
         "category": "SAS Notebook"
       },
       {
+        "command": "SAS.notebook.export",
+        "title": "%commands.SAS.notebook.export%",
+        "category": "SAS Notebook"
+      },
+      {
         "command": "SAS.file.new",
         "shortTitle": "%commands.SAS.file.new.short%",
         "title": "%commands.SAS.file.new%",
@@ -815,6 +820,12 @@
           "group": "navigation@3"
         }
       ],
+      "notebook/toolbar": [
+        {
+          "when": "notebookType == 'sas-notebook'",
+          "command": "SAS.notebook.export"
+        }
+      ],
       "commandPalette": [
         {
           "when": "editorLangId == sas && !SAS.hideRunMenuItem",
@@ -907,6 +918,10 @@
         {
           "when": "false",
           "command": "SAS.saveHTML"
+        },
+        {
+          "when": "false",
+          "command": "SAS.notebook.export"
         }
       ],
       "file/newFile": [

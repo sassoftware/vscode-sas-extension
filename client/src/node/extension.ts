@@ -50,6 +50,7 @@ import {
 import { LogTokensProvider, legend } from "../components/logViewer";
 import { sasDiagnostic } from "../components/logViewer/sasDiagnostics";
 import { NotebookController } from "../components/notebook/Controller";
+import { exportNotebook } from "../components/notebook/Exporter";
 import { NotebookSerializer } from "../components/notebook/Serializer";
 import { ConnectionType } from "../components/profile";
 import { SasTaskProvider } from "../components/tasks/SasTaskProvider";
@@ -174,6 +175,7 @@ export function activate(context: ExtensionContext): void {
     new NotebookController(),
     commands.registerCommand("SAS.notebook.new", newSASNotebook),
     commands.registerCommand("SAS.file.new", newSASFile),
+    commands.registerCommand("SAS.notebook.export", exportNotebook),
     tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
     ...sasDiagnostic.getSubscriptions(),
   );
