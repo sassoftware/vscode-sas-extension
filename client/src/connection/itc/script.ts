@@ -13,17 +13,23 @@ class SASRunner{
   [System.__ComObject] $objSAS
 
   [void]ResolveSystemVars(){
-  $code =
-@'
-   %let workDir = %sysfunc(pathname(work));
-   %put ${WORK_DIR_START_TAG};
-   %put &workDir;
-   %put ${WORK_DIR_END_TAG};
-   %let rc = %sysfunc(dlgcdir("&workDir"));
-   run;
-'@
-    $this.Run($code)
-    $this.FlushLogLines(4096, $false)
+    try {  
+      $fieldInclusionMask = ($false, $false, $false, $true, $false)
+      [ref]$engineName = [string[]]@()
+      [ref]$engineAttrs = New-Object 'int[,]' 0,0
+      [ref]$libraryAttrs = [int[]]@()
+      [ref]$physicalName = [string[]]::new(1)
+      [ref]$infoPropertyNames = New-Object 'string[,]' 0,0
+      [ref]$infoPropertyValues = New-Object 'string[,]' 0,0
+      $lib = $this.objSAS.DataService.UseLibref("work")
+      $lib.LevelInfo([bool[]]$fieldInclusionMask,$engineName,$engineAttrs,$libraryAttrs,
+                    $physicalName,$infoPropertyNames,$infoPropertyValues)
+      Write-Host "${WORK_DIR_START_TAG}"
+      Write-Host $physicalName.Value[0]
+      Write-Host "${WORK_DIR_END_TAG}"
+    } catch {
+      Write-Error "${ERROR_START_TAG}Setup error: $_${ERROR_END_TAG}"
+    }
   }
   [void]Setup([string]$profileHost, [string]$username, [string]$password, [int]$port, [int]$protocol, [string]$serverName, [string]$displayLang) {
     try {
