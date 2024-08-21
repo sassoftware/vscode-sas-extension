@@ -226,9 +226,21 @@ export const getParser =
 
       if (region && region.block) {
         preserveProc = preserveProcs(preserveProc, region, node, model);
+        if (preserveProc === 0 && i === tokens.length - 1) {
+          // force finish at file end
+          const fakeNode: Token = { ...node, text: ";", type: "sep" };
+          if (node.text.endsWith("\n\n")) {
+            // printer will add trailing new line
+            fakeNode.end = { line: node.end.line - 1, column: 0 };
+          }
+          preserveProc = preserveProcs(1, region, fakeNode, model);
+        }
         if (preserveProc >= 0) {
           continue;
         }
+      }
+      if (node.type === "embedded-code") {
+        continue;
       }
 
       // --- Check for block start: DATA, PROC, %MACRO ---

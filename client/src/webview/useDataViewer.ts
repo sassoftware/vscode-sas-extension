@@ -88,7 +88,7 @@ const fetchColumns = (): Promise<Column[]> => {
 };
 
 const useDataViewer = () => {
-  const [columns, setColumns] = useState([]);
+  const [columns, setColumns] = useState<ColDef[]>([]);
 
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
@@ -128,6 +128,7 @@ const useDataViewer = () => {
     fetchColumns().then((columnsData) => {
       const columns: ColDef[] = columnsData.map((column) => ({
         field: column.name,
+        headerName: column.name,
         headerComponentParams: {
           template: columnHeaderTemplate(column.type),
         },

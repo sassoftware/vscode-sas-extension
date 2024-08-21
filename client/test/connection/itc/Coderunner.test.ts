@@ -2,7 +2,7 @@ import { expect } from "chai";
 import sinon from "sinon";
 
 import * as connection from "../../../src/connection";
-import CodeRunner from "../../../src/connection/itc/CodeRunner";
+import { runCode } from "../../../src/connection/itc/CodeRunner";
 import { Session } from "../../../src/connection/session";
 
 export class MockSession extends Session {
@@ -70,12 +70,7 @@ describe("CodeRunner tests", () => {
 // postfixed sas code
     `;
 
-    const codeRunner = new CodeRunner();
-    const results = await codeRunner.runCode(
-      codeString,
-      "<CodeTag>",
-      "</CodeTag>",
-    );
+    const results = await runCode(codeString, "<CodeTag>", "</CodeTag>");
 
     expect(results).to.equal("Test Code");
   });
@@ -87,8 +82,7 @@ describe("CodeRunner tests", () => {
 // postfixed sas code
     `;
 
-    const codeRunner = new CodeRunner();
-    const results = await codeRunner.runCode(codeString);
+    const results = await runCode(codeString);
 
     expect(results).to.equal(
       codeString

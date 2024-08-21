@@ -31,7 +31,8 @@ python code
 selected python code
 endsubmit;
 run;
-;*';*";*/;run;quit;ods html5(id=vscode) close;`;
+;*';*";*/;run;quit;ods html5(id=vscode) close;
+`;
 
     assert.equal(sasCodeDoc.getWrappedCode(), expected);
   });
@@ -55,7 +56,8 @@ ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inl
 proc sql;
 SELECT * FROM issues WHERE issue.developer = 'scnjdl'
 ;quit;
-;*';*";*/;run;quit;ods html5(id=vscode) close;`;
+;*';*";*/;run;quit;ods html5(id=vscode) close;
+`;
 
     assert.equal(sasCodeDoc.getWrappedCode(), expected);
   });
@@ -84,7 +86,8 @@ ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inl
 proc sgplot data=sashelp.class;
   histogram age;
 run;
-;*';*";*/;run;quit;ods html5(id=vscode) close;`;
+;*';*";*/;run;quit;ods html5(id=vscode) close;
+`;
 
     assert.equal(sasCodeDoc.getWrappedCode(), expected);
   });
@@ -108,7 +111,8 @@ ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
 %let _SASPROGRAMFILE = %nrquote(%nrstr(c:\\temp\\My Test\\R&D\\mean%(95%CI%)\\Parkinson%'s Disease example.sas));
 %put &=_SASPROGRAMFILE;
-;*';*";*/;run;quit;ods html5(id=vscode) close;`;
+;*';*";*/;run;quit;ods html5(id=vscode) close;
+`;
 
     assert.equal(
       sasCodeDoc.getWrappedCode(),
@@ -136,7 +140,8 @@ ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
 %let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)/Parkinson%'s Disease example.sas));
 %put &=_SASPROGRAMFILE;
-;*';*";*/;run;quit;ods html5(id=vscode) close;`;
+;*';*";*/;run;quit;ods html5(id=vscode) close;
+`;
 
     assert.equal(
       sasCodeDoc.getWrappedCode(),
@@ -171,7 +176,8 @@ cas; caslib _all_ assign;
   data casuser.cascars; set sashelp.cars; run;
 
   proc casutil; load data=SASHELP.BASEBALL outcaslib="CASUSER" casout="CASBALL";run;
-;*';*";*/;run;quit;ods html5(id=vscode) close;`;
+;*';*";*/;run;quit;ods html5(id=vscode) close;
+`;
 
     assert.equal(
       sasCodeDoc.getWrappedCode(),
