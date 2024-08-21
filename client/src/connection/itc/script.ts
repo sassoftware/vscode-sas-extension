@@ -13,19 +13,9 @@ class SASRunner{
   [System.__ComObject] $objSAS
 
   [void]ResolveSystemVars(){
-    try {  
-      $fieldInclusionMask = ($false, $false, $false, $true, $false)
-      [ref]$engineName = [string[]]@()
-      [ref]$engineAttrs = New-Object 'int[,]' 0,0
-      [ref]$libraryAttrs = [int[]]@()
-      [ref]$physicalName = [string[]]::new(1)
-      [ref]$infoPropertyNames = New-Object 'string[,]' 0,0
-      [ref]$infoPropertyValues = New-Object 'string[,]' 0,0
-      $lib = $this.objSAS.DataService.UseLibref("work")
-      $lib.LevelInfo([bool[]]$fieldInclusionMask,$engineName,$engineAttrs,$libraryAttrs,
-                    $physicalName,$infoPropertyNames,$infoPropertyValues)
+    try {
       Write-Host "${WORK_DIR_START_TAG}"
-      Write-Host $physicalName.Value[0]
+      Write-Host $this.GetWorkDir()
       Write-Host "${WORK_DIR_END_TAG}"
     } catch {
       Write-Error "${ERROR_START_TAG}Setup error: $_${ERROR_END_TAG}"
@@ -91,6 +81,20 @@ class SASRunner{
     } catch{
         Write-Error "${ERROR_START_TAG}$Error[0].Exception.Message${ERROR_END_TAG}"
     }
+  }
+
+  [string]GetWorkDir() {
+    $fieldInclusionMask = ($false, $false, $false, $true, $false)
+    [ref]$engineName = [string[]]@()
+    [ref]$engineAttrs = New-Object 'int[,]' 0,0
+    [ref]$libraryAttrs = [int[]]@()
+    [ref]$physicalName = [string[]]::new(1)
+    [ref]$infoPropertyNames = New-Object 'string[,]' 0,0
+    [ref]$infoPropertyValues = New-Object 'string[,]' 0,0
+    $lib = $this.objSAS.DataService.UseLibref("work")
+    $lib.LevelInfo([bool[]]$fieldInclusionMask,$engineName,$engineAttrs,$libraryAttrs,
+                  $physicalName,$infoPropertyNames,$infoPropertyValues)
+    return $physicalName.Value[0]
   }
 
   [void]Run([string]$code) {
