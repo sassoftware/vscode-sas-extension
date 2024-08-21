@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import {
   CancellationToken,
+  CompletionItemKind,
   Connection,
   DidChangeConfigurationParams,
   DidChangeWatchedFilesParams,
@@ -160,6 +161,12 @@ export const runServer = (
           token,
         );
         if (complitionList) {
+          const endsubmitItem = {
+            insertText: undefined,
+            kind: CompletionItemKind.Keyword,
+            label: "endsubmit",
+          };
+          complitionList.items.push(endsubmitItem);
           for (const item of complitionList.items) {
             if (!item.data) {
               item.data = {};

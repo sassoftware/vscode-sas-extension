@@ -91,6 +91,7 @@ export class CodeZoneManager {
   private _stmtName = "";
   private _optName = "";
   private _subOptName = "";
+  private _embeddedCodeStarted = false;
 
   private _topZone = 0;
   private _sectionMode: {
@@ -1138,18 +1139,19 @@ export class CodeZoneManager {
     const zone = this._stmtEx(context, stmt);
     type = zone.type;
     if (["PYTHON", "LUA"].includes(this._procName)) {
-      if (
-        [
-          "SUBMIT",
-          "ENDSUBMIT",
-          "INTERACTIVE",
-          "ENDINTERACTIVE",
-          "RUN",
-        ].includes(stmt.text)
-      ) {
+      if (!this._embeddedCodeStarted) {
+        if (["SUBMIT", "INTERACTIVE"].includes(stmt.text)) {
+          this._embeddedCodeStarted = true;
+        }
         return CodeZoneManager.ZONE_TYPE.PROC_STMT;
       } else {
-        return CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG;
+        // this._embeddedCodeStarted is true
+        if (["ENDSUBMIT", "ENDINTERACTIVE", "RUN"].includes(stmt.text)) {
+          this._embeddedCodeStarted = false;
+          return CodeZoneManager.ZONE_TYPE.PROC_STMT;
+        } else {
+          return CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG;
+        }
       }
     } else if (["FEDSQL"].includes(this._procName)) {
       return CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG;
