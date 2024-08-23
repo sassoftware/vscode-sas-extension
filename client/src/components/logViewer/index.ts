@@ -12,6 +12,7 @@ import type { OnLogFn } from "../../connection";
 import { useLogStore, useRunStore } from "../../store";
 import { logSelectors, runSelectors } from "../../store/selectors";
 import {
+  clearLogOnExecutionStart,
   showLogOnExecutionFinish,
   showLogOnExecutionStart,
 } from "../utils/settings";
@@ -20,6 +21,7 @@ const { setProducedExecutionLogOutput } = useLogStore.getState();
 
 let outputChannel: OutputChannel;
 let data: string[] = [];
+let fileName = "";
 
 export const legend = {
   tokenTypes: ["error", "warning", "note"],
@@ -66,9 +68,16 @@ export const appendLogToken = (type: string): void => {
   data.push(type);
 };
 
+export const setFileName = (name: string) => {
+  fileName = name;
+};
+
 const appendLogLines: OnLogFn = (logs) => {
   if (!outputChannel) {
-    outputChannel = window.createOutputChannel(l10n.t("SAS Log"), "sas-log");
+    const name = clearLogOnExecutionStart()
+      ? l10n.t("SAS Log: {name}", { name: fileName })
+      : l10n.t("SAS Log");
+    outputChannel = window.createOutputChannel(name, "sas-log");
   }
   for (const line of logs) {
     appendLogToken(line.type);
@@ -100,6 +109,12 @@ useRunStore.subscribe(
       }
     } else if (isExecuting && !prevIsExecuting) {
       setProducedExecutionLogOutput(false);
+
+      if (clearLogOnExecutionStart() && outputChannel) {
+        outputChannel.dispose();
+        outputChannel = undefined;
+        data = [];
+      }
     }
   },
 );
