@@ -54,8 +54,11 @@ class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
   private contentModel: ContentModel;
   private sourceType: ContentNavigatorConfig["sourceType"];
+  private treeIdentifier: ContentNavigatorConfig["treeIdentifier"];
 
   constructor(context: ExtensionContext, config: ContentNavigatorConfig) {
+    this.sourceType = config.sourceType;
+    this.treeIdentifier = config.treeIdentifier;
     this.contentModel = new ContentModel(
       this.contentAdapterForConnectionType(),
     );
@@ -64,7 +67,6 @@ class ContentNavigator implements SubscriptionProvider {
       context.extensionUri,
       config,
     );
-    this.sourceType = config.sourceType;
 
     workspace.registerFileSystemProvider(
       config.sourceType,
@@ -269,7 +271,7 @@ class ContentNavigator implements SubscriptionProvider {
       ),
       commands.registerCommand(`${SAS}.collapseAllContent`, () => {
         commands.executeCommand(
-          "workbench.actions.treeView.contentdataprovider.collapseAll",
+          `workbench.actions.treeView.${this.treeIdentifier}.collapseAll`,
         );
       }),
       commands.registerCommand(
