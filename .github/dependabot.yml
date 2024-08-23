@@ -10,6 +10,12 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      dev:
+        patterns:
+          - "eslint*"
+          - "@types*"
+          - "ts-*"
   - package-ecosystem: "npm"
     directory: "/client"
     schedule:
@@ -21,6 +27,7 @@ updates:
       react:
         patterns:
           - "react*"
+          - "@types/react*"
     ignore:
       # @types/vscode should match the engine version we're using
       # should not be upgraded on its own
