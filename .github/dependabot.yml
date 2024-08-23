@@ -10,10 +10,24 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      dev:
+        patterns:
+          - "eslint*"
+          - "@types*"
+          - "ts-*"
   - package-ecosystem: "npm"
     directory: "/client"
     schedule:
       interval: "weekly"
+    groups:
+      aggrid:
+        patterns:
+          - "ag-grid*"
+      react:
+        patterns:
+          - "react*"
+          - "@types/react*"
     ignore:
       # @types/vscode should match the engine version we're using
       # should not be upgraded on its own
@@ -26,6 +40,13 @@ updates:
     directory: "/website"
     schedule:
       interval: "weekly"
+    groups:
+      docusaurus:
+        patterns:
+          - "@docusaurus/*"
+      react:
+        patterns:
+          - "react*"
   - package-ecosystem: "github-actions"
     # Don't need to specify `/.github/workflows` for `directory`. Github knows it.
     directory: "/"

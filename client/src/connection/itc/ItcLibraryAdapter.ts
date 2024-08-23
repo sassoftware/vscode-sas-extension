@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "../../components/LibraryNavigator/types";
 import { Column, ColumnCollection } from "../rest/api/compute";
-import CodeRunner from "./CodeRunner";
+import { runCode } from "./CodeRunner";
 import { Config } from "./types";
 
 class ItcLibraryAdapter implements LibraryAdapter {
@@ -23,7 +23,6 @@ class ItcLibraryAdapter implements LibraryAdapter {
   protected endTag: string = "";
   protected outputFinished: boolean = false;
   protected config: Config;
-  protected codeRunner = new CodeRunner();
 
   public async connect(): Promise<void> {
     this.hasEstablishedConnection = true;
@@ -270,7 +269,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     endTag: string = "",
   ): Promise<string> {
     try {
-      return await this.codeRunner.runCode(code, startTag, endTag);
+      return await runCode(code, startTag, endTag);
     } catch (e) {
       onRunError(e);
       commands.executeCommand("setContext", "SAS.librariesDisplayed", false);
