@@ -239,20 +239,32 @@ class ContentNavigator implements SubscriptionProvider {
       ),
       commands.registerCommand(
         `${SAS}.addToFavorites`,
-        async (resource: ContentItem) => {
-          if (!(await this.contentDataProvider.addToMyFavorites(resource))) {
-            window.showErrorMessage(Messages.AddToFavoritesError);
-          }
+        async (item: ContentItem) => {
+          this.treeViewSelections(item).forEach(
+            async (resource: ContentItem) => {
+              if (
+                !(await this.contentDataProvider.addToMyFavorites(resource))
+              ) {
+                window.showErrorMessage(Messages.AddToFavoritesError);
+              }
+            },
+          );
         },
       ),
       commands.registerCommand(
         `${SAS}.removeFromFavorites`,
-        async (resource: ContentItem) => {
-          if (
-            !(await this.contentDataProvider.removeFromMyFavorites(resource))
-          ) {
-            window.showErrorMessage(Messages.RemoveFromFavoritesError);
-          }
+        async (item: ContentItem) => {
+          this.treeViewSelections(item).forEach(
+            async (resource: ContentItem) => {
+              if (
+                !(await this.contentDataProvider.removeFromMyFavorites(
+                  resource,
+                ))
+              ) {
+                window.showErrorMessage(Messages.RemoveFromFavoritesError);
+              }
+            },
+          );
         },
       ),
       commands.registerCommand(`${SAS}.collapseAllContent`, () => {

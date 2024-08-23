@@ -17,7 +17,11 @@ export interface ContentItem {
   // UI properties inferred from service data
   contextValue?: string;
   fileStat?: FileStat;
-  flags?: { isInRecycleBin?: boolean; isInMyFavorites?: boolean };
+  flags?: {
+    isInRecycleBin?: boolean;
+    isInMyFavorites?: boolean;
+    favoriteUri?: string;
+  };
   isReference?: boolean;
   permission: Permission;
   resourceId?: string;

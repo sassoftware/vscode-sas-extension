@@ -677,38 +677,13 @@ describe("ContentDataProvider", async function () {
     expect(success).to.equal(true);
   });
 
-  it("remove from favorites - Remove the reference of an item from My Favorites folder", async function () {
-    const item = mockContentItem({
-      type: "reference",
-      name: "file.sas",
-      links: [
-        {
-          rel: "delete",
-          uri: "uri://delete",
-          method: "DELETE",
-          href: "uri://delete",
-          type: "test",
-        },
-      ],
-      flags: {
-        isInMyFavorites: true,
-      },
-    });
-    const dataProvider = createDataProvider();
-
-    axiosInstance.delete.withArgs("uri://delete").resolves({ data: {} });
-
-    await dataProvider.connect("http://test.io");
-    const success = await dataProvider.removeFromMyFavorites(item);
-
-    expect(success).to.equal(true);
-  });
-
   it("remove from favorites - Remove the reference of an item from the resource", async function () {
     const item = mockContentItem({
       type: "file",
       name: "file.sas",
-      flags: {},
+      flags: {
+        favoriteUri: "uri://myFavorites/members/favorite-id",
+      },
     });
     const dataProvider = createDataProvider();
 

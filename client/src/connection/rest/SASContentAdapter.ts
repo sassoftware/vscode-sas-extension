@@ -120,20 +120,44 @@ class SASContentAdapter implements ContentAdapter {
     const isInRecycleBin =
       TRASH_FOLDER_TYPE === getTypeName(parentItem) ||
       parentItem.flags?.isInRecycleBin;
-    const isInMyFavorites =
+    const parentIdIsFavoritesFolder =
       getResourceIdFromItem(parentItem) ===
       getResourceIdFromItem(myFavoritesFolder);
+    const allFavorites = parentIdIsFavoritesFolder
+      ? []
+      : await this.getChildItems(myFavoritesFolder);
 
-    return result.items.map(
-      (childItem: ContentItem, index): ContentItem => ({
-        ...childItem,
-        uid: `${parentItem.uid}/${index}`,
-        ...this.enrichWithDataProviderProperties(childItem, {
-          isInRecycleBin,
-          isInMyFavorites,
-        }),
-      }),
+    const items = result.items.map(
+      (childItem: ContentItem, index): ContentItem => {
+        const favoriteUri = fetchFavoriteUri(childItem);
+        return {
+          ...childItem,
+          uid: `${parentItem.uid}/${index}`,
+          ...this.enrichWithDataProviderProperties(childItem, {
+            isInRecycleBin,
+            isInMyFavorites: parentIdIsFavoritesFolder || !!favoriteUri,
+            favoriteUri,
+          }),
+        };
+      },
     );
+
+    return items;
+
+    function fetchFavoriteUri(childItem: ContentItem) {
+      if (parentIdIsFavoritesFolder) {
+        return getLink(childItem.links, "DELETE", "delete")?.uri;
+      }
+      const favoriteId = allFavorites.find(
+        (favorite) =>
+          getResourceIdFromItem(favorite) === getResourceIdFromItem(childItem),
+      )?.id;
+      if (!favoriteId) {
+        return undefined;
+      }
+
+      return `${getResourceIdFromItem(myFavoritesFolder)}/members/${favoriteId}`;
+    }
   }
 
   public async getFolderPathForItem(item: ContentItem): Promise<string> {
@@ -511,13 +535,13 @@ class SASContentAdapter implements ContentAdapter {
   }
 
   public async removeItemFromFavorites(item: ContentItem): Promise<boolean> {
-    const deleteMemberUri = await this.deleteMemberUriForFavorite(item);
-    if (!deleteMemberUri) {
+    const deleteFavoriteUri = item.flags.favoriteUri;
+    if (!deleteFavoriteUri) {
       return false;
     }
 
     try {
-      await this.connection.delete(deleteMemberUri);
+      await this.connection.delete(deleteFavoriteUri);
     } catch (error) {
       return false;
     }
