@@ -281,7 +281,7 @@ else:
    */
   public cancel = async () => {
     this._pollingForLogResults = false;
-    this._shellProcess.stdin.write(`sas.submit("""%abort cancel;\n""")\n`, async (error) => {
+    this._shellProcess.stdin.write(`sas.submit("""\n%abort cancel;\n""")\n`, async (error) => {
       if (error) {
         this._runReject(error);
       }

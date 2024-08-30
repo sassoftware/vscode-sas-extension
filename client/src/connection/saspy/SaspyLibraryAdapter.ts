@@ -13,7 +13,7 @@ import {
 } from "../../components/LibraryNavigator/types";
 import { Column, ColumnCollection } from "../rest/api/compute";
 import { runCode } from "./CodeRunner";
-import { Config } from "./types";
+import { Config, LineCodes } from "./types";
 
 class SaspyLibraryAdapter implements LibraryAdapter {
   protected hasEstablishedConnection: boolean = false;
@@ -241,6 +241,10 @@ class SaspyLibraryAdapter implements LibraryAdapter {
     `;
 
     let output = await this.runCode(code, "<TABLEDATA>", "</TABLEDATA>");
+
+    // Remove LogLineStarter
+    const rxLineType: RegExp = new RegExp(`${LineCodes.LogLineStarter}=(\\w+):LINE=`, 'igm');
+    output = output.replace(rxLineType, "");
 
     // Extract result count
     const countRegex = /<Count>(.*)<\/Count>/;
