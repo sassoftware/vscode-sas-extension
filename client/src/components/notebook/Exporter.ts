@@ -19,7 +19,9 @@ export const exportNotebook = async () => {
 
   const content = notebook
     .getCells()
-    .reduce((prev, curr) => prev + exportCell(curr) + "\n\n", "");
+    .map((cell) => exportCell(cell) + "\n")
+    .join("\n");
+
   workspace.fs.writeFile(uri, Buffer.from(content));
 };
 
@@ -38,9 +40,12 @@ const exportCell = (cell: NotebookCell) => {
 };
 
 const wrapSQL = (code: string) => {
+  if (!code.trimEnd().endsWith(";")) {
+    code = `${code};`;
+  }
   return `proc sql;
 ${code}
-;quit;`;
+quit;`;
 };
 
 const wrapPython = (code: string) => {
