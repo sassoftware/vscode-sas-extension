@@ -47,3 +47,32 @@ export const getFileStatement = (
 export const getFileContentType = (fileName: string) =>
   mimeTypes[fileName.split(".").pop().toLowerCase()] ||
   DEFAULT_FILE_CONTENT_TYPE;
+
+export const createStaticFolder = (
+  folderId: string,
+  name: string,
+  type: string,
+  membersUri: string,
+  membersRel: string = "members",
+) => ({
+  id: folderId,
+  name,
+  type: type,
+  uri: folderId,
+  links: [
+    {
+      method: "GET",
+      rel: membersRel,
+      href: membersUri,
+      uri: membersUri,
+      type: "GET",
+    },
+    {
+      method: "GET",
+      rel: "self",
+      href: folderId,
+      uri: folderId,
+      type: "GET",
+    },
+  ],
+});
