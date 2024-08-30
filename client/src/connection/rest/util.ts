@@ -94,9 +94,16 @@ export const resourceType = (item: ContentItem): string | undefined => {
   return actions.sort().join("-");
 };
 
-export const getUri = (item: ContentItem, readOnly?: boolean): Uri =>
+export const getSasContentUri = (item: ContentItem, readOnly?: boolean): Uri =>
   Uri.parse(
     `${readOnly ? `${ContentSourceType.SASContent}ReadOnly` : ContentSourceType.SASContent}:/${
+      item.name
+    }?id=${getResourceIdFromItem(item)}`,
+  );
+
+export const getSasServerUri = (item: ContentItem, readOnly?: boolean): Uri =>
+  Uri.parse(
+    `${readOnly ? `${ContentSourceType.SASServer}ReadOnly` : ContentSourceType.SASServer}:/${
       item.name
     }?id=${getResourceIdFromItem(item)}`,
   );
