@@ -6,67 +6,77 @@ import { SASPYSession } from ".";
 import { LogLine, getSession } from "..";
 import { useRunStore } from "../../store";
 
-class CodeRunner {
-  public async runCode(
-    code: string,
-    startTag: string = "",
-    endTag: string = "",
-  ): Promise<string> {
-    // If we're already executing code, lets wait for it
-    // to finish up.
-    let unsubscribe;
-    if (useRunStore.getState().isExecutingCode) {
-      await new Promise((resolve) => {
-        unsubscribe = useRunStore.subscribe(
-          (state) => state.isExecutingCode,
-          (isExecutingCode) => !isExecutingCode && resolve(true),
-        );
-      });
-    }
+let wait: Promise<string> | undefined;
 
-    const { setIsExecutingCode } = useRunStore.getState();
-    setIsExecutingCode(true);
-    commands.executeCommand("setContext", "SAS.running", true);
-    const session = getSession();
+export async function runCode(
+  code: string,
+  startTag: string = "",
+  endTag: string = "",
+): Promise<string> {
+  const task = () => _runCode(code, startTag, endTag);
 
-    let logText = "";
-    const onExecutionLogFn = session.onExecutionLogFn;
-    const outputLines = [];
-    const addLine = (logLines: LogLine[]) =>
-      outputLines.push(...logLines.map(({ line }) => line));
-
-    try {
-      await session.setup(true);
-
-      // Lets capture output to use it on
-      session.onExecutionLogFn = addLine;
-
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      await (session as SASPYSession).run(code);
-
-      const logOutput = outputLines.filter((line) => line.trim()).join("");
-
-      logText =
-        startTag && endTag
-          ? logOutput
-              .slice(
-                logOutput.lastIndexOf(startTag),
-                logOutput.lastIndexOf(endTag),
-              )
-              .replace(startTag, "")
-              .replace(endTag, "")
-          : logOutput;
-    } finally {
-      unsubscribe && unsubscribe();
-      // Lets update our session to write to the log
-      session.onExecutionLogFn = onExecutionLogFn;
-
-      setIsExecutingCode(false);
-      commands.executeCommand("setContext", "SAS.running", false);
-    }
-
-    return logText;
-  }
+  wait = wait ? wait.then(task) : task();
+  return wait;
 }
 
-export default CodeRunner;
+async function _runCode(
+  code: string,
+  startTag: string = "",
+  endTag: string = "",
+): Promise<string> {
+  // If we're already executing code, lets wait for it
+  // to finish up.
+  let unsubscribe;
+  if (useRunStore.getState().isExecutingCode) {
+    await new Promise((resolve) => {
+      unsubscribe = useRunStore.subscribe(
+        (state) => state.isExecutingCode,
+        (isExecutingCode) => !isExecutingCode && resolve(true),
+      );
+    });
+  }
+
+  const { setIsExecutingCode } = useRunStore.getState();
+  setIsExecutingCode(true);
+  commands.executeCommand("setContext", "SAS.running", true);
+  const session = getSession();
+
+  let logText = "";
+  const onExecutionLogFn = session.onExecutionLogFn;
+  const outputLines = [];
+
+  const addLine = (logLines: LogLine[]) =>
+    outputLines.push(...logLines.map(({ line }) => line));
+
+  try {
+    await session.setup(true);
+
+    // Lets capture output to use it on
+    session.onExecutionLogFn = addLine;
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    await (session as SASPYSession).run(code)
+
+    const logOutput = outputLines.filter((line) => line.trim()).join("");
+
+    logText =
+      startTag && endTag
+        ? logOutput
+            .slice(
+              logOutput.lastIndexOf(startTag),
+              logOutput.lastIndexOf(endTag),
+            )
+            .replace(startTag, "")
+            .replace(endTag, "")
+        : logOutput;
+  } finally {
+    unsubscribe && unsubscribe();
+    // Lets update our session to write to the log
+    session.onExecutionLogFn = onExecutionLogFn;
+
+    setIsExecutingCode(false);
+    commands.executeCommand("setContext", "SAS.running", false);
+  }
+
+  return logText;
+}

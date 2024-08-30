@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "../../components/LibraryNavigator/types";
 import { Column, ColumnCollection } from "../rest/api/compute";
-import CodeRunner from "./CodeRunner";
+import { runCode } from "./CodeRunner";
 import { Config } from "./types";
 
 class SaspyLibraryAdapter implements LibraryAdapter {
@@ -23,7 +23,6 @@ class SaspyLibraryAdapter implements LibraryAdapter {
   protected endTag: string = "";
   protected outputFinished: boolean = false;
   protected config: Config;
-  protected codeRunner = new CodeRunner();
 
   public async connect(): Promise<void> {
     this.hasEstablishedConnection = true;
@@ -54,7 +53,7 @@ class SaspyLibraryAdapter implements LibraryAdapter {
         where libname='${item.library}' and memname='${item.name}'
         order by varnum;
       quit;
-      %put <COLOUTPUT>; %put &OUTPUT; %put </COLOUTPUT>;
+      %put <COLOUTPUT> &OUTPUT; %put </COLOUTPUT>;
     `;
 
     const columnLines = processQueryRows(
@@ -87,7 +86,7 @@ class SaspyLibraryAdapter implements LibraryAdapter {
         select catx(',', libname, readonly) as libname_target into: OUTPUT separated by '~'
         from sashelp.vlibnam order by libname asc;
       quit;
-      %put <LIBOUTPUT>; %put &OUTPUT; %put </LIBOUTPUT>;
+      %put <LIBOUTPUT> &OUTPUT; %put </LIBOUTPUT>;
     `;
 
     const libNames = processQueryRows(
@@ -186,7 +185,7 @@ class SaspyLibraryAdapter implements LibraryAdapter {
         where libname='${item.name!}'
         order by memname asc;
       quit;
-      %put <TABLEOUTPUT>; %put &OUTPUT; %put </TABLEOUTPUT>;
+      %put <TABLEOUTPUT> &OUTPUT; %put </TABLEOUTPUT>;
     `;
 
     const tableNames = processQueryRows(
@@ -249,7 +248,7 @@ class SaspyLibraryAdapter implements LibraryAdapter {
     const count = parseInt(countMatches[1].replace(/\s|\n/gm, ""), 10);
     output = output.replace(countRegex, "");
 
-    const rows = output.replace(/\n|\t/gm, "");
+    const rows = output.replace(/\n|\t/gm, "").slice(output.indexOf("{"));
     try {
       const tableData = JSON.parse(rows);
       return { rows: tableData[`SASTableData+${tempTable}`], count };
@@ -270,7 +269,7 @@ class SaspyLibraryAdapter implements LibraryAdapter {
     endTag: string = "",
   ): Promise<string> {
     try {
-      return await this.codeRunner.runCode(code, startTag, endTag);
+      return await runCode(code, startTag, endTag);
     } catch (e) {
       onRunError(e);
       commands.executeCommand("setContext", "SAS.librariesDisplayed", false);
