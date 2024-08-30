@@ -2,32 +2,27 @@
 // SPDX-License-Identifier: Apache-2.0
 import { l10n } from "vscode";
 
+import { createStaticFolder } from "./utils";
+
 export const DEFAULT_FILE_CONTENT_TYPE = "text/plain";
 
 const CONTENT_FOLDER_ID = "CONTENT_FOLDER_ID";
 export const ROOT_FOLDER_TYPE = "RootFolder";
+export const ROOT_FOLDER = createStaticFolder(
+  CONTENT_FOLDER_ID,
+  "SAS Content",
+  ROOT_FOLDER_TYPE,
+  "/folders/folders",
+);
 
-export const ROOT_FOLDER = {
-  // actual root for service
-  id: CONTENT_FOLDER_ID,
-  name: "SAS Content",
-  type: ROOT_FOLDER_TYPE,
-  uri: CONTENT_FOLDER_ID,
-  links: [
-    {
-      method: "GET",
-      rel: "members",
-      href: "/folders/folders",
-      uri: "/folders/folders",
-    },
-    {
-      method: "GET",
-      rel: "self",
-      href: CONTENT_FOLDER_ID,
-      uri: CONTENT_FOLDER_ID,
-    },
-  ],
-};
+export const SERVER_FOLDER_ID = "SERVER_FOLDER_ID";
+export const SAS_SERVER_ROOT_FOLDER = createStaticFolder(
+  SERVER_FOLDER_ID,
+  "SAS Server",
+  ROOT_FOLDER_TYPE,
+  "/",
+  "getDirectoryMembers",
+);
 
 export const FILE_TYPE = "file";
 export const DATAFLOW_TYPE = "dataFlow";
@@ -46,11 +41,22 @@ export const FOLDER_TYPES = [
   TRASH_FOLDER_TYPE,
 ];
 
-export const ROOT_FOLDERS = [
+export const SAS_CONTENT_ROOT_FOLDERS = [
   "@myFavorites",
   "@myFolder",
   "@sasRoot",
   "@myRecycleBin",
+];
+
+export const SAS_SERVER_ROOT_FOLDERS = [
+  // "@myFavorites",
+  "@sasServerRoot",
+  // "@myRecycleBin",
+];
+
+export const ALL_ROOT_FOLDERS = [
+  ...SAS_CONTENT_ROOT_FOLDERS,
+  ...SAS_SERVER_ROOT_FOLDERS,
 ];
 
 export const Messages = {

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { Uri } from "vscode";
 
-import { Messages, ROOT_FOLDERS } from "./const";
+import { ALL_ROOT_FOLDERS, Messages } from "./const";
 import { ContentAdapter, ContentItem } from "./types";
 
 export class ContentModel {
@@ -33,7 +33,9 @@ export class ContentModel {
       return Object.entries(await this.contentAdapter.getRootItems())
         .sort(
           // sort the delegate folders as the order in the supportedDelegateFolders
-          (a, b) => ROOT_FOLDERS.indexOf(a[0]) - ROOT_FOLDERS.indexOf(b[0]),
+          // TODO MEEEE!
+          (a, b) =>
+            ALL_ROOT_FOLDERS.indexOf(a[0]) - ALL_ROOT_FOLDERS.indexOf(b[0]),
         )
         .map((entry) => entry[1]);
     }
