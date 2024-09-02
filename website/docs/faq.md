@@ -62,9 +62,9 @@ If the steps above do not work, you can bypass the certificate check:
 
 2. Shut down all VS Code instances and then restart the application with the updated environment variable. If you are connecting to a remote workspace, set the environment variable on the remote system and terminate all VS Code server processes (for example, run `ps -aux | grep vscode-server` on the remote Linux machine to see the processes).
 
-### Why did I get the `Invalid endpoint` error​?
+### When I connect to my SAS Viya connection profile, why doesn't VS Code prompt me to open a browser window and sign in using SAS?
 
-Please specify the correct protocol. For example, if your SAS Viya server is on https, make sure you included `https://` in your `endpoint` setting.
+Confirm that you have specified the protocol correctly. For example, if your SAS Viya server is on https, make sure you included `https://` in your `endpoint` setting.
 
 ### Why did I get the `Unable to parse decrypted password` error​?
 
