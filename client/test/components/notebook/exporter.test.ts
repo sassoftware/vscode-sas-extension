@@ -9,7 +9,7 @@ describe("export notebook", () => {
   const writeFileFn = sinon.spy();
   const uri = vscode.Uri.file("/a");
   before(async () => {
-    await openNotebookDoc(getUri("test_multi.sasnb"));
+    await openNotebookDoc(getUri("sasnb_export.sasnb"));
     sinon.stub(vscode.window, "showSaveDialog").resolves(uri);
     sinon.stub(vscode.workspace, "fs").get(() => ({
       writeFile: writeFileFn,
