@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
-  "version": "1.10.1",
+  "version": "1.10.2",
   "categories": [
     "Programming Languages",
     "Data Science",
@@ -1108,7 +1108,7 @@
     "@vscode/l10n-dev": "^0.0.35",
     "chai": "^4.4.1",
     "concurrently": "^8.2.2",
-    "esbuild": "^0.23.0",
+    "esbuild": "^0.23.1",
     "cross-env": "^7.0.3",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.35.0",
@@ -1123,7 +1123,7 @@
     "ts-node": "^10.9.2",
     "ts-sinon": "^2.0.2",
     "typescript": "^5.5.3",
-    "webpack": "^5.93.0",
+    "webpack": "^5.94.0",
     "webpack-cli": "^5.1.4"
   }
 }

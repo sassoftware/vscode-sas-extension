@@ -88,9 +88,6 @@ describe("ITC connection", () => {
     it("creates a well-formed local session", async () => {
       const setupPromise = session.setup();
 
-      onDataCallback(Buffer.from(`%put ${WORK_DIR_START_TAG};`));
-      onDataCallback(Buffer.from(`%put &workDir;`));
-      onDataCallback(Buffer.from(`%put ${WORK_DIR_END_TAG};`));
       onDataCallback(Buffer.from(`${WORK_DIR_START_TAG}`));
       onDataCallback(Buffer.from(`/work/dir`));
       onDataCallback(Buffer.from(`${WORK_DIR_END_TAG}`));
@@ -141,9 +138,6 @@ describe("ITC connection", () => {
     beforeEach(async () => {
       writeFileSync(tempHtmlPath, html5);
       const setupPromise = session.setup();
-      onDataCallback(Buffer.from(`%put ${WORK_DIR_START_TAG};`));
-      onDataCallback(Buffer.from(`%put &workDir;`));
-      onDataCallback(Buffer.from(`%put ${WORK_DIR_END_TAG};`));
       onDataCallback(Buffer.from(`${WORK_DIR_START_TAG}`));
       onDataCallback(Buffer.from(`/work/dir`));
       onDataCallback(Buffer.from(`${WORK_DIR_END_TAG}`));
@@ -195,9 +189,6 @@ $runner.FetchResultsFile($filePath, $outputFile)
   describe("close", () => {
     beforeEach(async () => {
       const setupPromise = session.setup();
-      onDataCallback(Buffer.from(`%put ${WORK_DIR_START_TAG};`));
-      onDataCallback(Buffer.from(`%put &workDir;`));
-      onDataCallback(Buffer.from(`%put ${WORK_DIR_END_TAG};`));
       onDataCallback(Buffer.from(`${WORK_DIR_START_TAG}`));
       onDataCallback(Buffer.from(`/work/dir`));
       onDataCallback(Buffer.from(`${WORK_DIR_END_TAG}`));
