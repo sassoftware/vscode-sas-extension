@@ -551,52 +551,52 @@
         "category": "SAS"
       },
       {
-        "command": "SAS.deleteResource",
+        "command": "SAS.content.deleteResource",
         "title": "%commands.SAS.deleteResource%",
         "category": "SAS"
       },
       {
-        "command": "SAS.addFileResource",
+        "command": "SAS.content.addFileResource",
         "title": "%commands.SAS.addFileResource%",
         "category": "SAS"
       },
       {
-        "command": "SAS.addFolderResource",
+        "command": "SAS.content.addFolderResource",
         "title": "%commands.SAS.addFolderResource%",
         "category": "SAS"
       },
       {
-        "command": "SAS.renameResource",
+        "command": "SAS.content.renameResource",
         "title": "%commands.SAS.renameResource%",
         "category": "SAS"
       },
       {
-        "command": "SAS.restoreResource",
+        "command": "SAS.content.restoreResource",
         "title": "%commands.SAS.restoreResource%",
         "category": "SAS"
       },
       {
-        "command": "SAS.emptyRecycleBin",
+        "command": "SAS.content.emptyRecycleBin",
         "title": "%commands.SAS.emptyRecycleBin%",
         "category": "SAS"
       },
       {
-        "command": "SAS.addToFavorites",
+        "command": "SAS.content.addToFavorites",
         "title": "%commands.SAS.addToFavorites%",
         "category": "SAS"
       },
       {
-        "command": "SAS.convertNotebookToFlow",
+        "command": "SAS.content.convertNotebookToFlow",
         "title": "%commands.SAS.convertNotebookToFlow%",
         "category": "SAS"
       },
       {
-        "command": "SAS.removeFromFavorites",
+        "command": "SAS.content.removeFromFavorites",
         "title": "%commands.SAS.removeFromFavorites%",
         "category": "SAS"
       },
       {
-        "command": "SAS.refreshContent",
+        "command": "SAS.content.refreshContent",
         "title": "%commands.SAS.refresh%",
         "category": "SAS",
         "icon": "$(refresh)"
@@ -608,7 +608,7 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "SAS.collapseAllContent",
+        "command": "SAS.content.collapseAllContent",
         "title": "%commands.SAS.collapseAll%",
         "category": "SAS",
         "icon": "$(collapse-all)"
@@ -647,22 +647,22 @@
         "category": "SAS"
       },
       {
-        "command": "SAS.downloadResource",
+        "command": "SAS.content.downloadResource",
         "title": "%commands.SAS.download%",
         "category": "SAS"
       },
       {
-        "command": "SAS.uploadResource",
+        "command": "SAS.content.uploadResource",
         "title": "%commands.SAS.upload%",
         "category": "SAS"
       },
       {
-        "command": "SAS.uploadFileResource",
+        "command": "SAS.content.uploadFileResource",
         "title": "%commands.SAS.uploadFiles%",
         "category": "SAS"
       },
       {
-        "command": "SAS.uploadFolderResource",
+        "command": "SAS.content.uploadFolderResource",
         "title": "%commands.SAS.uploadFolders%",
         "category": "SAS"
       },
@@ -693,12 +693,12 @@
       ],
       "view/title": [
         {
-          "command": "SAS.refreshContent",
+          "command": "SAS.content.refreshContent",
           "when": "view == contentdataprovider",
           "group": "navigation@0"
         },
         {
-          "command": "SAS.collapseAllContent",
+          "command": "SAS.content.collapseAllContent",
           "when": "view == contentdataprovider",
           "group": "navigation@1"
         },
@@ -715,7 +715,7 @@
       ],
       "explorer/context": [
         {
-          "command": "SAS.convertNotebookToFlow",
+          "command": "SAS.content.convertNotebookToFlow",
           "when": "resourceExtname == .sasnb && SAS.connectionType == rest && !SAS.connection.direct",
           "group": "actionsgroup@0"
         }
@@ -732,67 +732,67 @@
           "group": "download@0"
         },
         {
-          "command": "SAS.addFolderResource",
+          "command": "SAS.content.addFolderResource",
           "when": "viewItem =~ /createChild/ && view == contentdataprovider",
           "group": "addgroup@0"
         },
         {
-          "command": "SAS.addFileResource",
+          "command": "SAS.content.addFileResource",
           "when": "viewItem =~ /createChild/ && view == contentdataprovider",
           "group": "addgroup@1"
         },
         {
-          "command": "SAS.addToFavorites",
+          "command": "SAS.content.addToFavorites",
           "when": "viewItem =~ /addToFavorites/ && view == contentdataprovider",
           "group": "favoritesgroup@0"
         },
         {
-          "command": "SAS.removeFromFavorites",
+          "command": "SAS.content.removeFromFavorites",
           "when": "viewItem =~ /removeFromFavorites/ && view == contentdataprovider",
           "group": "favoritesgroup@1"
         },
         {
-          "command": "SAS.renameResource",
+          "command": "SAS.content.renameResource",
           "when": "viewItem =~ /update/ && view == contentdataprovider && !listMultiSelection",
           "group": "delrenamegroup@0"
         },
         {
-          "command": "SAS.deleteResource",
+          "command": "SAS.content.deleteResource",
           "when": "viewItem =~ /delete/ && view == contentdataprovider",
           "group": "delrenamegroup@1"
         },
         {
-          "command": "SAS.convertNotebookToFlow",
+          "command": "SAS.content.convertNotebookToFlow",
           "when": "viewItem =~ /convertNotebookToFlow/ && view == contentdataprovider",
           "group": "actionsgroup@0"
         },
         {
-          "command": "SAS.restoreResource",
+          "command": "SAS.content.restoreResource",
           "when": "viewItem =~ /restore/ && view == contentdataprovider",
           "group": "restoregroup@0"
         },
         {
-          "command": "SAS.emptyRecycleBin",
+          "command": "SAS.content.emptyRecycleBin",
           "when": "viewItem =~ /empty/ && view == contentdataprovider",
           "group": "emptygroup@0"
         },
         {
-          "command": "SAS.downloadResource",
+          "command": "SAS.content.downloadResource",
           "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider",
           "group": "uploaddownloadgroup@0"
         },
         {
-          "command": "SAS.uploadResource",
+          "command": "SAS.content.uploadResource",
           "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform == mac",
           "group": "uploaddownloadgroup@1"
         },
         {
-          "command": "SAS.uploadFileResource",
+          "command": "SAS.content.uploadFileResource",
           "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform != mac",
           "group": "uploaddownloadgroup@1"
         },
         {
-          "command": "SAS.uploadFolderResource",
+          "command": "SAS.content.uploadFolderResource",
           "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform != mac",
           "group": "uploaddownloadgroup@1"
         }
@@ -845,39 +845,39 @@
         },
         {
           "when": "false",
-          "command": "SAS.restoreResource"
+          "command": "SAS.content.restoreResource"
         },
         {
           "when": "false",
-          "command": "SAS.deleteResource"
+          "command": "SAS.content.deleteResource"
         },
         {
           "when": "false",
-          "command": "SAS.convertNotebookToFlow"
+          "command": "SAS.content.convertNotebookToFlow"
         },
         {
           "when": "false",
-          "command": "SAS.addFileResource"
+          "command": "SAS.content.addFileResource"
         },
         {
           "when": "false",
-          "command": "SAS.addFolderResource"
+          "command": "SAS.content.addFolderResource"
         },
         {
           "when": "false",
-          "command": "SAS.addToFavorites"
+          "command": "SAS.content.addToFavorites"
         },
         {
           "when": "false",
-          "command": "SAS.removeFromFavorites"
+          "command": "SAS.content.removeFromFavorites"
         },
         {
           "when": "false",
-          "command": "SAS.renameResource"
+          "command": "SAS.content.renameResource"
         },
         {
           "when": "false",
-          "command": "SAS.refreshContent"
+          "command": "SAS.content.refreshContent"
         },
         {
           "when": "false",
@@ -885,7 +885,7 @@
         },
         {
           "when": "false",
-          "command": "SAS.collapseAllContent"
+          "command": "SAS.content.collapseAllContent"
         },
         {
           "when": "false",
@@ -901,19 +901,19 @@
         },
         {
           "when": "false",
-          "command": "SAS.downloadResource"
+          "command": "SAS.content.downloadResource"
         },
         {
           "when": "false",
-          "command": "SAS.uploadResource"
+          "command": "SAS.content.uploadResource"
         },
         {
           "when": "false",
-          "command": "SAS.uploadFileResource"
+          "command": "SAS.content.uploadFileResource"
         },
         {
           "when": "false",
-          "command": "SAS.uploadFolderResource"
+          "command": "SAS.content.uploadFolderResource"
         },
         {
           "when": "false",

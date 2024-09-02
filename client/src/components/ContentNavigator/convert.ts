@@ -1,8 +1,19 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { l10n, workspace } from "vscode";
+import { Uri, l10n, workspace } from "vscode";
 
+import { basename } from "path";
 import { v4 } from "uuid";
+
+import SASContentAdapter from "../../connection/rest/SASContentAdapter";
+import {
+  associateFlowObject,
+  createStudioSession,
+} from "../../connection/studio";
+import { ContentModel } from "./ContentModel";
+import { MYFOLDER_TYPE, Messages } from "./const";
+import { ContentItem } from "./types";
+import { isContentItem } from "./utils";
 
 const stepRef: Record<string, string> = {
   sas: "a7190700-f59c-4a94-afe2-214ce639fcde",
@@ -324,4 +335,102 @@ export function convertNotebookToFlow(
   // encode json to utf8 bytes without new lines and spaces
   const flowDataString = JSON.stringify(flowData, null, 0);
   return flowDataString;
+}
+
+export class NotebookToFlowConverter {
+  protected studioSessionId: string;
+  public constructor(
+    protected readonly resource: ContentItem | Uri,
+    protected readonly contentModel: ContentModel,
+    protected readonly viyaEndpoint: string,
+  ) {}
+
+  public get inputName() {
+    return isContentItem(this.resource)
+      ? this.resource.name
+      : basename(this.resource.fsPath);
+  }
+
+  private get connection() {
+    return (
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      (this.contentModel.getAdapter() as SASContentAdapter).getConnection()
+    );
+  }
+
+  private async parent() {
+    const parentItem = isContentItem(this.resource)
+      ? await this.contentModel.getParent(this.resource)
+      : undefined;
+
+    if (parentItem) {
+      return parentItem;
+    }
+
+    const rootFolders = await this.contentModel.getChildren();
+    const myFolder = rootFolders.find(
+      (rootFolder) => rootFolder.type === MYFOLDER_TYPE,
+    );
+    if (!myFolder) {
+      return undefined;
+    }
+
+    return myFolder;
+  }
+
+  public async content() {
+    return isContentItem(this.resource)
+      ? await this.contentModel.getContentByUri(this.resource.vscUri)
+      : (await workspace.fs.readFile(this.resource)).toString();
+  }
+
+  public async establishConnection() {
+    if (!this.contentModel.connected()) {
+      await this.contentModel.connect(this.viyaEndpoint);
+    }
+
+    try {
+      const result = await createStudioSession(this.connection);
+      this.studioSessionId = result;
+    } catch (error) {
+      this.studioSessionId = "";
+    }
+
+    return this.studioSessionId;
+  }
+
+  public async convert(outputName: string) {
+    const flowDataString = convertNotebookToFlow(
+      await this.content(),
+      this.inputName,
+      outputName,
+    );
+    const flowDataUint8Array = new TextEncoder().encode(flowDataString);
+    if (flowDataUint8Array.length === 0) {
+      throw new Error(Messages.NoCodeToConvert);
+    }
+
+    const parentItem = await this.parent();
+    const newItem = await this.contentModel.createFile(
+      parentItem,
+      outputName,
+      flowDataUint8Array,
+    );
+    if (!newItem) {
+      throw new Error(
+        l10n.t(Messages.NewFileCreationError, { name: this.inputName }),
+      );
+    }
+
+    // associate the new .flw file with SAS Studio
+    const folderName = await associateFlowObject(
+      outputName,
+      newItem.resourceId,
+      parentItem.resourceId,
+      this.studioSessionId,
+      this.connection,
+    );
+
+    return { folderName, parentItem };
+  }
 }
