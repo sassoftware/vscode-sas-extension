@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [v1.10.2] - 2024-08-30
+
+### Fixed
+
+- Code lost when formatting proc python without endsubmit ([#992](https://github.com/sassoftware/vscode-sas-extension/issues/992))
+- Library tree view keeps refreshing ([#1022](https://github.com/sassoftware/vscode-sas-extension/issues/1022))
+- Table viewer does not display variable names ([#1114](https://github.com/sassoftware/vscode-sas-extension/issues/1114))
+- Disable sort UI on table as it does nothing ([#1013](https://github.com/sassoftware/vscode-sas-extension/issues/1013))
+- Inconsistency between column title on table viewer and dataset variable name ([#1117](https://github.com/sassoftware/vscode-sas-extension/issues/1117))
+- Reset cell log upon cell submit in sasnb ([#1080](https://github.com/sassoftware/vscode-sas-extension/issues/1080))
+- Log information are missing in certain case with Viya connection ([#963](https://github.com/sassoftware/vscode-sas-extension/issues/963))
+- Get working directory error in IOM connection ([#1163](https://github.com/sassoftware/vscode-sas-extension/issues/1163))
+
 ## [v1.10.1] - 2024-07-22
 
 ### Fixed
