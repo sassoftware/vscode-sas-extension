@@ -6,6 +6,12 @@ sidebar_position: 4
 
 For a secure connection to SAS 9.4 (remote - SSH) server, a public / private SSH key pair is required. The socket defined in the environment variable `SSH_AUTH_SOCK` is used to communicate with ssh-agent to authenticate the SSH session. The private key must be registered with the ssh-agent. The steps for configuring SSH follow.
 
+:::note
+
+You can use the console log to help debug connection issues. For more information, see [How do I debug connection failures?](../../faq.md#how-do-i-debug-connection-failures)
+
+:::
+
 ## Profile Anatomy
 
 A SAS 9.4 (remote – SSH) connection profile includes the following parameters:

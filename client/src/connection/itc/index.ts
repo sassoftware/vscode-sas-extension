@@ -347,17 +347,7 @@ export class ITCSession extends Session {
   };
 
   private fetchWorkDirectory = (line: string): string | undefined => {
-    let foundWorkDirectory = "";
-    if (
-      !line.includes(`%put ${WORK_DIR_START_TAG};`) &&
-      !line.includes(`%put &workDir;`) &&
-      !line.includes(`%put ${WORK_DIR_END_TAG};`)
-    ) {
-      foundWorkDirectory = this._workDirectoryParser.processLine(line);
-    } else {
-      // If the line is the put statement, we don't need to log that
-      return;
-    }
+    const foundWorkDirectory = this._workDirectoryParser.processLine(line);
     // We don't want to output any of the captured lines
     if (this._workDirectoryParser.isCapturingLine()) {
       return;

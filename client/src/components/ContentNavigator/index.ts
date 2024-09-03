@@ -14,21 +14,22 @@ import {
   workspace,
 } from "vscode";
 
-import { basename } from "path";
-
 import { profileConfig } from "../../commands/profile";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ConnectionType } from "../profile";
+import ContentAdapterFactory from "./ContentAdapterFactory";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
 import { Messages } from "./const";
-import { ContentItem, FileManipulationEvent } from "./types";
+import { NotebookToFlowConverter } from "./convert";
 import {
-  isContainer as getIsContainer,
-  getUri,
-  isContentItem,
-  isItemInRecycleBin,
-} from "./utils";
+  ContentAdapter,
+  ContentItem,
+  ContentNavigatorConfig,
+  ContentSourceType,
+  FileManipulationEvent,
+} from "./types";
+import { isContainer as getIsContainer, isItemInRecycleBin } from "./utils";
 
 const fileValidator = (value: string): string | null =>
   /^([^/<>;\\{}?#]+)\.\w+$/.test(
@@ -51,16 +52,26 @@ const folderValidator = (value: string): string | null =>
 
 class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
+  private contentModel: ContentModel;
+  private sourceType: ContentNavigatorConfig["sourceType"];
 
-  constructor(context: ExtensionContext) {
-    this.contentDataProvider = new ContentDataProvider(
-      new ContentModel(),
-      context.extensionUri,
+  constructor(context: ExtensionContext, config: ContentNavigatorConfig) {
+    this.contentModel = new ContentModel(
+      this.contentAdapterForConnectionType(),
     );
+    this.contentDataProvider = new ContentDataProvider(
+      this.contentModel,
+      context.extensionUri,
+      config,
+    );
+    this.sourceType = config.sourceType;
 
-    workspace.registerFileSystemProvider("sas", this.contentDataProvider);
+    workspace.registerFileSystemProvider(
+      config.sourceType,
+      this.contentDataProvider,
+    );
     workspace.registerTextDocumentContentProvider(
-      "sasReadOnly",
+      `${config.sourceType}ReadOnly`,
       this.contentDataProvider,
     );
   }
@@ -70,10 +81,11 @@ class ContentNavigator implements SubscriptionProvider {
   }
 
   public getSubscriptions(): Disposable[] {
+    const SAS = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}`;
     return [
       ...this.contentDataProvider.getSubscriptions(),
       commands.registerCommand(
-        "SAS.deleteResource",
+        `${SAS}.deleteResource`,
         async (item: ContentItem) => {
           this.treeViewSelections(item).forEach(
             async (resource: ContentItem) => {
@@ -107,7 +119,7 @@ class ContentNavigator implements SubscriptionProvider {
         },
       ),
       commands.registerCommand(
-        "SAS.restoreResource",
+        `${SAS}.restoreResource`,
         async (item: ContentItem) => {
           this.treeViewSelections(item).forEach(
             async (resource: ContentItem) => {
@@ -123,7 +135,7 @@ class ContentNavigator implements SubscriptionProvider {
           );
         },
       ),
-      commands.registerCommand("SAS.emptyRecycleBin", async () => {
+      commands.registerCommand(`${SAS}.emptyRecycleBin`, async () => {
         if (
           !(await window.showWarningMessage(
             Messages.EmptyRecycleBinWarningMessage,
@@ -137,11 +149,11 @@ class ContentNavigator implements SubscriptionProvider {
           window.showErrorMessage(Messages.EmptyRecycleBinError);
         }
       }),
-      commands.registerCommand("SAS.refreshContent", () =>
+      commands.registerCommand(`${SAS}.refreshContent`, () =>
         this.contentDataProvider.refresh(),
       ),
       commands.registerCommand(
-        "SAS.addFileResource",
+        `${SAS}.addFileResource`,
         async (resource: ContentItem) => {
           const fileName = await window.showInputBox({
             prompt: Messages.NewFilePrompt,
@@ -168,7 +180,7 @@ class ContentNavigator implements SubscriptionProvider {
         },
       ),
       commands.registerCommand(
-        "SAS.addFolderResource",
+        `${SAS}.addFolderResource`,
         async (resource: ContentItem) => {
           const folderName = await window.showInputBox({
             prompt: Messages.NewFolderPrompt,
@@ -191,7 +203,7 @@ class ContentNavigator implements SubscriptionProvider {
         },
       ),
       commands.registerCommand(
-        "SAS.renameResource",
+        `${SAS}.renameResource`,
         async (resource: ContentItem) => {
           const isContainer = getIsContainer(resource);
 
@@ -226,34 +238,50 @@ class ContentNavigator implements SubscriptionProvider {
         },
       ),
       commands.registerCommand(
-        "SAS.addToFavorites",
-        async (resource: ContentItem) => {
-          if (!(await this.contentDataProvider.addToMyFavorites(resource))) {
-            window.showErrorMessage(Messages.AddToFavoritesError);
-          }
+        `${SAS}.addToFavorites`,
+        async (item: ContentItem) => {
+          this.treeViewSelections(item).forEach(
+            async (resource: ContentItem) => {
+              if (
+                !(await this.contentDataProvider.addToMyFavorites(resource))
+              ) {
+                window.showErrorMessage(Messages.AddToFavoritesError);
+              }
+            },
+          );
         },
       ),
       commands.registerCommand(
-        "SAS.removeFromFavorites",
-        async (resource: ContentItem) => {
-          if (
-            !(await this.contentDataProvider.removeFromMyFavorites(resource))
-          ) {
-            window.showErrorMessage(Messages.RemoveFromFavoritesError);
-          }
+        `${SAS}.removeFromFavorites`,
+        async (item: ContentItem) => {
+          this.treeViewSelections(item).forEach(
+            async (resource: ContentItem) => {
+              if (
+                !(await this.contentDataProvider.removeFromMyFavorites(
+                  resource,
+                ))
+              ) {
+                window.showErrorMessage(Messages.RemoveFromFavoritesError);
+              }
+            },
+          );
         },
       ),
-      commands.registerCommand("SAS.collapseAllContent", () => {
+      commands.registerCommand(`${SAS}.collapseAllContent`, () => {
         commands.executeCommand(
           "workbench.actions.treeView.contentdataprovider.collapseAll",
         );
       }),
       commands.registerCommand(
-        "SAS.convertNotebookToFlow",
+        `${SAS}.convertNotebookToFlow`,
         async (resource: ContentItem | Uri) => {
-          const inputName = isContentItem(resource)
-            ? resource.name
-            : basename(resource.fsPath);
+          const notebookToFlowConverter = new NotebookToFlowConverter(
+            resource,
+            this.contentModel,
+            this.viyaEndpoint(),
+          );
+
+          const inputName = notebookToFlowConverter.inputName;
           // Open window to chose the name and location of the new .flw file
           const outputName = await window.showInputBox({
             prompt: Messages.ConvertNotebookToFlowPrompt,
@@ -272,47 +300,37 @@ class ContentNavigator implements SubscriptionProvider {
               title: l10n.t("Converting SAS notebook to flow..."),
             },
             async () => {
-              // Make sure we're connected
-              const endpoint = this.viyaEndpoint();
-              const studioSessionId =
-                await this.contentDataProvider.acquireStudioSessionId(endpoint);
-              if (!studioSessionId) {
+              if (!(await notebookToFlowConverter.establishConnection())) {
                 window.showErrorMessage(Messages.StudioConnectionError);
                 return;
               }
 
-              const content = isContentItem(resource)
-                ? await this.contentDataProvider.provideTextDocumentContent(
-                    getUri(resource),
-                  )
-                : (await workspace.fs.readFile(resource)).toString();
+              let parentItem;
+              try {
+                const response =
+                  await notebookToFlowConverter.convert(outputName);
+                parentItem = response.parentItem;
+                if (!response.folderName) {
+                  throw new Error(Messages.NotebookToFlowConversionError);
+                }
 
-              const folderName =
-                await this.contentDataProvider.convertNotebookToFlow(
-                  inputName,
-                  outputName,
-                  content,
-                  studioSessionId,
-                  isContentItem(resource)
-                    ? await this.contentDataProvider.getParent(resource)
-                    : undefined,
-                );
-
-              if (folderName) {
                 window.showInformationMessage(
                   l10n.t(Messages.NotebookToFlowConversionSuccess, {
-                    folderName,
+                    folderName: response.folderName,
                   }),
                 );
-              } else {
-                window.showErrorMessage(Messages.NotebookToFlowConversionError);
+
+                this.contentDataProvider.refresh();
+              } catch (e) {
+                window.showErrorMessage(e.message);
+                this.contentDataProvider.reveal(parentItem);
               }
             },
           );
         },
       ),
       commands.registerCommand(
-        "SAS.downloadResource",
+        `${SAS}.downloadResource`,
         async (resource: ContentItem) => {
           const selections = this.treeViewSelections(resource);
           const uris = await window.showOpenDialog({
@@ -348,16 +366,16 @@ class ContentNavigator implements SubscriptionProvider {
       // that isn't Mac, we list a distinct upload file(s) or upload folder(s) command.
       // See the `OpenDialogOptions` interface for more information.
       commands.registerCommand(
-        "SAS.uploadResource",
+        `${SAS}.uploadResource`,
         async (resource: ContentItem) => this.uploadResource(resource),
       ),
       commands.registerCommand(
-        "SAS.uploadFileResource",
+        `${SAS}.uploadFileResource`,
         async (resource: ContentItem) =>
           this.uploadResource(resource, { canSelectFolders: false }),
       ),
       commands.registerCommand(
-        "SAS.uploadFolderResource",
+        `${SAS}.uploadFolderResource`,
         async (resource: ContentItem) =>
           this.uploadResource(resource, { canSelectFiles: false }),
       ),
@@ -421,6 +439,21 @@ class ContentNavigator implements SubscriptionProvider {
     // lets filter it out (i.e. we don't need to include it twice)
     return items.filter(
       ({ parentFolderUri }: ContentItem) => !uris.includes(parentFolderUri),
+    );
+  }
+
+  private contentAdapterForConnectionType(): ContentAdapter | undefined {
+    const activeProfile = profileConfig.getProfileByName(
+      profileConfig.getActiveProfile(),
+    );
+
+    if (!activeProfile) {
+      return;
+    }
+
+    return new ContentAdapterFactory().create(
+      activeProfile.connectionType,
+      this.sourceType,
     );
   }
 }

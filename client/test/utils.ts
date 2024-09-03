@@ -14,6 +14,11 @@ export async function openDoc(docUri: vscode.Uri): Promise<void> {
   await sleep(5000); // Wait for server activation
 }
 
+export async function openNotebookDoc(docUri: vscode.Uri): Promise<void> {
+  const doc = await vscode.workspace.openNotebookDocument(docUri);
+  await vscode.window.showNotebookDocument(doc);
+}
+
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
