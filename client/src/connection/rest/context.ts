@@ -73,15 +73,13 @@ export class ComputeContext extends Compute {
     }
 
     //Create the session
-    //TODO: Add session create options
-    //TODO: Session request should be an interface
     const body = {
       version: 1,
       name: "mysess",
       description: "This is a session",
       attributes: {},
       environment: {
-        options: ["-validmemname EXTEND", "-validvarname ANY", "-memsize 0"],
+        options: ["-validmemname EXTEND", "-validvarname ANY"],
         autoExecLines: [],
       },
     };

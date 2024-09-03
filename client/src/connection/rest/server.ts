@@ -8,11 +8,7 @@ import { Link, Server, ServersApi } from "./api/compute";
 import { BaseCompute, Compute, getApiConfig, stateOptions } from "./common";
 import { ComputeSession } from "./session";
 
-const DEFAULT_COMPUTE_OPTS = [
-  "-validmemname EXTEND",
-  "-validvarname ANY",
-  "-memsize 0",
-];
+const DEFAULT_COMPUTE_OPTS = ["-validmemname EXTEND", "-validvarname ANY"];
 
 export class ComputeServer extends Compute {
   api;
