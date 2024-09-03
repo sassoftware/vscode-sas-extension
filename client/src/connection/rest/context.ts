@@ -4,7 +4,13 @@ import { l10n } from "vscode";
 
 import axios, { AxiosResponse } from "axios";
 
-import { Context, ContextSummary, ContextsApi, Link } from "./api/compute";
+import {
+  Context,
+  ContextSummary,
+  ContextsApi,
+  Link,
+  SessionRequest,
+} from "./api/compute";
 import { BaseCompute, Compute, getApiConfig } from "./common";
 import { ComputeSession } from "./session";
 
@@ -73,7 +79,7 @@ export class ComputeContext extends Compute {
     }
 
     //Create the session
-    const body = {
+    const body: SessionRequest = {
       version: 1,
       name: "mysess",
       description: "This is a session",
