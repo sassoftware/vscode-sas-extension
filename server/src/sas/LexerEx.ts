@@ -3101,7 +3101,7 @@ export class LexerEx {
                 generalProcStmt = false;
               }
             } else if (procName === "LUA" || procName === "PYTHON") {
-              if (["SUBMIT", "INTERACTIVE"].includes(word)) {
+              if (["SUBMIT", "INTERACTIVE", "I"].includes(word)) {
                 const next = this.prefetch_({ pos: 1 });
                 if (next && next.text === ";" && next.type === "sep") {
                   this.stack.push({

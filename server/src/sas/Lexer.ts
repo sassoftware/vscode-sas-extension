@@ -308,7 +308,7 @@ export class Lexer {
         }
         if (
           token.type === "text" &&
-          ["SUBMIT", "INTERACTIVE"].includes(token.text)
+          ["SUBMIT", "INTERACTIVE", "I"].includes(token.text)
         ) {
           this.context.embeddedLangState =
             EmbeddedLangState.PROC_PYTHON_SUBMIT_OR_INTERACTIVE;
@@ -322,7 +322,7 @@ export class Lexer {
         }
         if (
           token.type === "text" &&
-          ["SUBMIT", "INTERACTIVE"].includes(token.text)
+          ["SUBMIT", "INTERACTIVE", "I"].includes(token.text)
         ) {
           this.context.embeddedLangState =
             EmbeddedLangState.PROC_LUA_SUBMIT_OR_INTERACTIVE;
