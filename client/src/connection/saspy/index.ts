@@ -323,7 +323,7 @@ if ll_init is not None:
 
 if enable_diagnostic:
     for lln in ll["LOG"]:
-        print("${LineCodes.LogLineStarter}=", lln["type"], ":LINE=", lln["line"], sep="")
+        print("${LineCodes.LogLineStarter}=", lln["type"], ":LINE=", lln["line"], sep="", end='\\n')
 else:
     print(ll['LOG'])
 

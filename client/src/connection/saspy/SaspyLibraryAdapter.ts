@@ -236,7 +236,7 @@ class SaspyLibraryAdapter implements LibraryAdapter {
       %put <Count>&COUNT</Count>;
       data _null_; infile out; input; put _infile_; run;
       %put </TABLEDATA>;
-      proc datasets library=work nolist nodetails; delete ${tempTable}; run;
+      proc datasets library=work nolist nodetails; delete ${tempTable}; run; quit;
       options notes source date number;
     `;
 
