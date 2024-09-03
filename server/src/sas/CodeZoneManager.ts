@@ -124,6 +124,7 @@ export class CodeZoneManager {
     this._stmtName = "";
     this._optName = "";
     this._subOptName = "";
+    this._embeddedCodeStarted = false;
   }
   private _needOptionDelimiter() {
     if (!this._stmtWithOptionDelimiter[this._procName]) {
@@ -251,57 +252,56 @@ export class CodeZoneManager {
   }
   private _token(line: number, col: number): TokenEx | null {
     let syntax = this._syntaxProvider.getSyntax(line);
-    const len = syntax.length;
-    let i = 1,
-      j = -1,
+    let foundSyntaxIdx = -1,
       type: Token["type"] = "text",
       currLine = line;
-    for (; i < len; i++) {
-      if (syntax[i].start > col) {
-        if (syntax[i - 1].start <= col) {
-          j = i - 1;
-          type = syntax[j].style;
+
+    for (let i = 0; i < syntax.length; i++) {
+      if (syntax[i].start <= col) {
+        if (i === syntax.length - 1 || syntax[i + 1].start > col) {
+          foundSyntaxIdx = i;
+          type = syntax[i].style;
           break;
-        } else {
-          break; //not found, not continue
         }
       }
     }
 
     if (Lexer.isComment[type] || Lexer.isLiteral[type]) {
       while (currLine >= 0) {
-        if (syntax[j].state instanceof Object) {
+        if (syntax[foundSyntaxIdx].state instanceof Object) {
           return {
             type: type,
             text: "",
             line: currLine,
-            col: syntax[j].start,
-            endLine: syntax[j].state.line,
-            endCol: syntax[j].state.col,
+            col: syntax[foundSyntaxIdx].start,
+            endLine: syntax[foundSyntaxIdx].state.line,
+            endCol: syntax[foundSyntaxIdx].state.col,
           };
-        } else if (syntax[j].state === 1) {
+        } else if (syntax[foundSyntaxIdx].state === 1) {
           //met the start of the node
           break;
         } else {
-          j--;
-          if (j < 0) {
+          foundSyntaxIdx--;
+          if (foundSyntaxIdx < 0) {
             do {
               currLine--;
               syntax = this._syntaxProvider.getSyntax(currLine); //skip the line without syntax
             } while (currLine >= 0 && syntax.length === 0);
-            j = syntax.length - 1;
+            foundSyntaxIdx = syntax.length - 1;
           }
         }
       }
     }
-    if (i > 0) {
+    if (foundSyntaxIdx >= 0) {
       const lineText = this._model.getLine(line);
       let endCol = 0,
         startCol = 0;
       syntax = this._syntaxProvider.getSyntax(line);
       if (syntax.length !== 0) {
-        endCol = syntax[i] ? syntax[i].start : lineText.length;
-        startCol = syntax[i - 1].start;
+        endCol = syntax[foundSyntaxIdx + 1]
+          ? syntax[foundSyntaxIdx + 1].start
+          : lineText.length;
+        startCol = syntax[foundSyntaxIdx].start;
       }
       return {
         type: type,
@@ -1140,7 +1140,7 @@ export class CodeZoneManager {
     type = zone.type;
     if (["PYTHON", "LUA"].includes(this._procName)) {
       if (!this._embeddedCodeStarted) {
-        if (["SUBMIT", "INTERACTIVE"].includes(stmt.text)) {
+        if (["SUBMIT", "INTERACTIVE", "I"].includes(stmt.text)) {
           this._embeddedCodeStarted = true;
         }
         return CodeZoneManager.ZONE_TYPE.PROC_STMT;

@@ -3,6 +3,7 @@
 import {
   CancellationToken,
   CompletionItemKind,
+  CompletionTriggerKind,
   Connection,
   DidChangeConfigurationParams,
   DidChangeWatchedFilesParams,
@@ -161,12 +162,24 @@ export const runServer = (
           token,
         );
         if (complitionList) {
-          const endsubmitItem = {
-            insertText: undefined,
-            kind: CompletionItemKind.Keyword,
-            label: "endsubmit",
-          };
-          complitionList.items.push(endsubmitItem);
+          if (
+            params.context?.triggerKind === CompletionTriggerKind.Invoked ||
+            params.context?.triggerKind ===
+              CompletionTriggerKind.TriggerForIncompleteCompletions
+          ) {
+            const endsubmitItem = {
+              insertText: undefined,
+              kind: CompletionItemKind.Keyword,
+              label: "endsubmit",
+            };
+            complitionList.items.push(endsubmitItem);
+            const endinteractiveItem = {
+              insertText: undefined,
+              kind: CompletionItemKind.Keyword,
+              label: "endinteractive",
+            };
+            complitionList.items.push(endinteractiveItem);
+          }
           for (const item of complitionList.items) {
             if (!item.data) {
               item.data = {};
