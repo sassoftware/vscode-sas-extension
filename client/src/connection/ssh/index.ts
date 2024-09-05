@@ -1,9 +1,7 @@
 // Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { l10n, window } from "vscode";
-import { CancellationTokenSource } from "vscode-languageclient";
+import { l10n } from "vscode";
 
-import { readFileSync } from "fs";
 import {
   AuthHandlerMiddleware,
   AuthenticationType,
@@ -11,13 +9,18 @@ import {
   ClientChannel,
   ConnectConfig,
   NextAuthHandler,
-  utils,
 } from "ssh2";
 
 import { BaseConfig, RunResult } from "..";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 import { extractOutputHtmlFileName } from "../util";
+import {
+  keyboardInteractiveAuth,
+  passwordAuth,
+  privateKeyAuth,
+  sshAgentAuth,
+} from "./auth";
 import { SUPPORTED_AUTH_METHODS } from "./const";
 
 const endCode = "--vscode-sas-extension-submit-end--";
@@ -54,7 +57,6 @@ export class SSHSession extends Session {
   private _html5FileName = "";
   private _sessionReady: boolean;
   private _authMethods: AuthenticationType[]; //auth methods that this session can support
-  private _cancellationSource: CancellationTokenSource | undefined;
 
   constructor(c?: Config) {
     super();
@@ -235,39 +237,6 @@ export class SSHSession extends Session {
     this._stream.write(`${execArgs} ${this._config.saspath} ${execSasOpts} \n`);
   };
 
-  private promptForPassphrase = async (): Promise<string> => {
-    //TODO: need to think about whether these should be stored in secret storage
-    // I'm leaning towards no, but it's worth considering. Initial thought is that
-    // if users want to persist a passphrase, that the ssh-agent should be used,
-    // which seems to be inline with other solutions. Otherwise, the passphrase
-    // should be entered each time a session is established.
-    const passphrase = await window.showInputBox({
-      prompt: l10n.t("Enter the passphrase for the private key."),
-      password: true,
-    });
-    return passphrase;
-  };
-  private promptForPassword = async (): Promise<string> => {
-    const source = new CancellationTokenSource();
-    this._cancellationSource = source;
-    const pw = await window.showInputBox(
-      {
-        ignoreFocusOut: true,
-        password: true,
-        prompt: l10n.t("Enter your password for this connection."),
-        title: l10n.t("Password Required"),
-      },
-      this._cancellationSource.token,
-    );
-
-    // user cancelled password dialog
-    if (!pw) {
-      this._resolve?.({});
-    }
-
-    return pw;
-  };
-
   /**
    * Resets the SSH auth state.
    */
@@ -307,99 +276,29 @@ export class SSHSession extends Session {
     //make sure the auth method is supported by the server
     if (SUPPORTED_AUTH_METHODS.includes(authMethod)) {
       switch (authMethod) {
-        //TODO: this is ugly and needs to be broken up into smaller functions
-        // one function per type of auth method would be a good start
         case "publickey": {
           //user set a keyfile path in profile config
-          //check for passphrase, prompt if necessary
-          //and then attempt to auth
           if (this._config.privateKeyFilePath) {
-            let keyContents: Buffer;
-
-            try {
-              keyContents = readFileSync(this._config.privateKeyFilePath);
-            } catch (e) {
-              l10n.t(
-                "Error reading private key file: {filePath}, error: {message}",
-                {
-                  filePath: this._config.privateKeyFilePath,
-                  message: e.message,
-                },
-              );
-            }
-            const parsedKeyResult = utils.parseKey(keyContents);
-            // key is encrypted, prompt for passphrase
-            if (
-              parsedKeyResult instanceof Error &&
-              parsedKeyResult.message ===
-                "Encrypted OpenSSH private key detected, but no passphrase given"
-            ) {
-              this.promptForPassphrase().then((passphrase) => {
-                //parse the keyfile using the passphrase
-                const parsedKeyContentsResult = utils.parseKey(
-                  keyContents,
-                  passphrase,
-                );
-
-                //TODO: refactor typechecking into one place, maybe a utility function
-                if (!(parsedKeyContentsResult instanceof Error)) {
-                  cb({
-                    type: "publickey",
-                    key: parsedKeyContentsResult,
-                    passphrase: passphrase,
-                    username: this._config.username,
-                  });
-                }
-              });
-            } else {
-              //TODO: refactor typechecking into one place, maybe a utility function
-              if (!(parsedKeyResult instanceof Error)) {
-                cb({
-                  type: "publickey",
-                  key: parsedKeyResult,
-                  username: this._config.username,
-                });
-              }
-            }
+            privateKeyAuth(
+              cb,
+              this._resolve,
+              this._config.privateKeyFilePath,
+              this._config.username,
+            );
           } else if (process.env.SSH_AUTH_SOCK) {
-            //attempt to auth using ssh-agent
-            cb({
-              type: "agent",
-              agent: process.env.SSH_AUTH_SOCK,
-              username: this._config.username,
-            });
+            sshAgentAuth(cb, this._config.username);
           }
           break;
         }
         case "password": {
-          this.promptForPassword().then((pw) => {
-            cb({
-              type: "password",
-              password: pw,
-              username: this._config.username,
-            });
-          });
+          passwordAuth(cb, this._resolve, this._config.username);
           break;
         }
-
         case "keyboard-interactive": {
-          cb({
-            type: "keyboard-interactive",
-            username: this._config.username,
-            prompt: (_name, _instructions, _instructionsLang, prompts, cb) => {
-              if (prompts.length === 1 && prompts[0].prompt === "Password:") {
-                this.promptForPassword().then((pw) => {
-                  cb([pw]);
-                });
-              } else {
-                cb([]);
-              }
-            },
-          });
+          keyboardInteractiveAuth(cb, this._resolve, this._config.username);
           break;
         }
         default:
-          //TODO: not sure if cb with "none" is the right thing to do here
           cb("none");
       }
     } else {
