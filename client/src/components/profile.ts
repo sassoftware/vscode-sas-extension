@@ -88,6 +88,7 @@ export interface SSHProfile extends BaseProfile {
   saspath: string;
   port: number;
   username: string;
+  privateKeyFilePath?: string;
 }
 
 export interface COMProfile extends BaseProfile {

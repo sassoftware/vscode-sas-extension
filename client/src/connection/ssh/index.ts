@@ -24,11 +24,11 @@ import {
 import {
   KEEPALIVE_INTERVAL,
   KEEPALIVE_UNANSWERED_THRESHOLD,
+  SAS_LAUNCH_TIMEOUT,
   SUPPORTED_AUTH_METHODS,
 } from "./const";
+import { LineCodes } from "./types";
 
-const endCode = "--vscode-sas-extension-submit-end--";
-const sasLaunchTimeout = 600000;
 let sessionInstance: SSHSession;
 
 export interface Config extends BaseConfig {
@@ -36,16 +36,10 @@ export interface Config extends BaseConfig {
   username: string;
   saspath: string;
   port: number;
-  privateKeyFilePath: string;
+  privateKeyFilePath?: string;
 }
 
 export function getSession(c: Config): Session {
-  if (!process.env.SSH_AUTH_SOCK) {
-    throw new Error(
-      l10n.t("SSH_AUTH_SOCK not set. Check Environment Variables."),
-    );
-  }
-
   if (!sessionInstance) {
     sessionInstance = new SSHSession();
   }
@@ -92,7 +86,7 @@ export class SSHSession extends Session {
         host: this._config.host,
         port: this._config.port,
         username: this._config.username,
-        readyTimeout: sasLaunchTimeout,
+        readyTimeout: SAS_LAUNCH_TIMEOUT,
         keepaliveInterval: KEEPALIVE_INTERVAL,
         keepaliveCountMax: KEEPALIVE_UNANSWERED_THRESHOLD,
         debug: (msg) => {
@@ -119,7 +113,7 @@ export class SSHSession extends Session {
       this._reject = _reject;
 
       this._stream?.write(`${code}\n`);
-      this._stream?.write(`%put ${endCode};\n`);
+      this._stream?.write(`%put ${LineCodes.RunEndCode};\n`);
     });
   };
 
@@ -195,7 +189,7 @@ export class SSHSession extends Session {
       if (!line) {
         return;
       }
-      if (line.endsWith(endCode)) {
+      if (line.endsWith(LineCodes.RunEndCode)) {
         // run completed
         this.getResult();
       }
