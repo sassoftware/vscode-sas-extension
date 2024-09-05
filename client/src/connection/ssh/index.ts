@@ -124,7 +124,7 @@ export class SSHSession extends Session {
   };
 
   private onConnectionError = (err: Error) => {
-    this._sessionReady = false;
+    this.clearAuthState();
     this._reject?.(err);
   };
 
@@ -167,8 +167,7 @@ export class SSHSession extends Session {
     this._resolve = undefined;
     this._reject = undefined;
     this._html5FileName = "";
-    this._sessionReady = false;
-    this._authMethods = undefined;
+    this.clearAuthState();
     this._conn.end();
     updateStatusBarItem(false);
   };
@@ -269,6 +268,14 @@ export class SSHSession extends Session {
     return pw;
   };
 
+  /**
+   * Resets the SSH auth state.
+   */
+  private clearAuthState = (): void => {
+    this._authMethods = undefined;
+    this._sessionReady = false;
+  };
+
   private authHandler: AuthHandlerMiddleware = (
     authsLeft: AuthenticationType[],
     _partialSuccess: boolean,
@@ -289,6 +296,7 @@ export class SSHSession extends Session {
         new Error(l10n.t("Could not authenticate to the SSH server.")),
       );
 
+      this.clearAuthState();
       //returning false will stop the auth process
       return false;
     }
