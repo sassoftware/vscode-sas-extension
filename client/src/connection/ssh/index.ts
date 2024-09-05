@@ -21,7 +21,7 @@ import {
   privateKeyAuth,
   sshAgentAuth,
 } from "./auth";
-import { SUPPORTED_AUTH_METHODS } from "./const";
+import { KEEPALIVE_INTERVAL, SUPPORTED_AUTH_METHODS } from "./const";
 
 const endCode = "--vscode-sas-extension-submit-end--";
 const sasLaunchTimeout = 600000;
@@ -89,6 +89,8 @@ export class SSHSession extends Session {
         port: this._config.port,
         username: this._config.username,
         readyTimeout: sasLaunchTimeout,
+        keepaliveInterval: KEEPALIVE_INTERVAL,
+        keepaliveCountMax: 1440,
         debug: (msg) => {
           console.log(msg);
         },
