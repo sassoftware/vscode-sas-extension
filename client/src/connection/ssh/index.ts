@@ -15,13 +15,12 @@ import {
 } from "ssh2";
 
 import { BaseConfig, RunResult } from "..";
-import { getSecretStorage } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 import { extractOutputHtmlFileName } from "../util";
+import { SUPPORTED_AUTH_METHODS } from "./const";
 
 const endCode = "--vscode-sas-extension-submit-end--";
-const SECRET_STORAGE_NAMESPACE = "SSH_SECRET_STORAGE";
 const sasLaunchTimeout = 600000;
 let sessionInstance: SSHSession;
 
@@ -46,7 +45,6 @@ export function getSession(c: Config): Session {
   sessionInstance.config = c;
   return sessionInstance;
 }
-type SSHSessionAuthMethod = "password" | "keyboard-interactive" | "publickey";
 export class SSHSession extends Session {
   private _conn: Client;
   private _stream: ClientChannel | undefined;
@@ -54,18 +52,16 @@ export class SSHSession extends Session {
   private _resolve: ((value?) => void) | undefined;
   private _reject: ((reason?) => void) | undefined;
   private _html5FileName = "";
-  private _timer: NodeJS.Timeout;
-  private _authMethods: SSHSessionAuthMethod[]; //auth methods that this session can support
+  private _sessionReady: boolean;
+  private _authMethods: AuthenticationType[]; //auth methods that this session can support
   private _cancellationSource: CancellationTokenSource | undefined;
-  private _secretStorage;
-  private _passwordKey: string;
 
   constructor(c?: Config) {
     super();
     this._config = c;
     this._conn = new Client();
     this._authMethods = ["publickey", "password", "keyboard-interactive"];
-    this._secretStorage = getSecretStorage(SECRET_STORAGE_NAMESPACE);
+    this._sessionReady = false;
   }
 
   public sessionId? = (): string => {
@@ -74,7 +70,6 @@ export class SSHSession extends Session {
 
   set config(newValue: Config) {
     this._config = newValue;
-    this._passwordKey = `${newValue.host}${newValue.username}`;
   }
 
   protected establishConnection = (): Promise<void> => {
@@ -104,7 +99,6 @@ export class SSHSession extends Session {
         })
         .on("error", this.onConnectionError);
 
-      // this.setTimer();
       this._conn.connect(cfg);
     });
   };
@@ -130,26 +124,8 @@ export class SSHSession extends Session {
   };
 
   private onConnectionError = (err: Error) => {
-    this.clearTimer();
+    this._sessionReady = false;
     this._reject?.(err);
-  };
-
-  private setTimer = (): void => {
-    this.clearTimer();
-    this._timer = setTimeout(() => {
-      this._reject?.(
-        new Error(
-          l10n.t("Failed to connect to Session. Check profile settings."),
-        ),
-      );
-      this._timer = undefined;
-      this.close();
-    }, sasLaunchTimeout);
-  };
-
-  private clearTimer = (): void => {
-    this._timer && clearTimeout(this._timer);
-    this._timer = undefined;
   };
 
   private getResult = (): void => {
@@ -191,7 +167,8 @@ export class SSHSession extends Session {
     this._resolve = undefined;
     this._reject = undefined;
     this._html5FileName = "";
-    this._timer = undefined;
+    this._sessionReady = false;
+    this._authMethods = undefined;
     this._conn.end();
     updateStatusBarItem(false);
   };
@@ -199,8 +176,8 @@ export class SSHSession extends Session {
   private onStreamData = (data: Buffer): void => {
     const output = data.toString().trimEnd();
 
-    if (this._timer && output.endsWith("?")) {
-      this.clearTimer();
+    if (!this._sessionReady && output.endsWith("?")) {
+      this._sessionReady = true;
       this._resolve?.();
       updateStatusBarItem(true);
       return;
@@ -272,12 +249,6 @@ export class SSHSession extends Session {
     return passphrase;
   };
   private promptForPassword = async (): Promise<string> => {
-    //TODO: we need to properly manage the lifecycle of the password secret
-    const storedPassword = await this._secretStorage.get(this._passwordKey);
-    if (storedPassword) {
-      return storedPassword;
-    }
-
     const source = new CancellationTokenSource();
     this._cancellationSource = source;
     const pw = await window.showInputBox(
@@ -289,6 +260,12 @@ export class SSHSession extends Session {
       },
       this._cancellationSource.token,
     );
+
+    // user cancelled password dialog
+    if (!pw) {
+      this._resolve?.({});
+    }
+
     return pw;
   };
 
@@ -300,6 +277,10 @@ export class SSHSession extends Session {
     if (!authsLeft) {
       cb("none"); //sending none will usually prompt the server to send supported auth methods
       return;
+    }
+
+    if (!this._authMethods) {
+      this._authMethods = authsLeft;
     }
 
     if (this._authMethods.length === 0) {
@@ -316,7 +297,7 @@ export class SSHSession extends Session {
     const authMethod = this._authMethods.shift();
 
     //make sure the auth method is supported by the server
-    if (authsLeft.includes(authMethod)) {
+    if (SUPPORTED_AUTH_METHODS.includes(authMethod)) {
       switch (authMethod) {
         //TODO: this is ugly and needs to be broken up into smaller functions
         // one function per type of auth method would be a good start
@@ -325,8 +306,19 @@ export class SSHSession extends Session {
           //check for passphrase, prompt if necessary
           //and then attempt to auth
           if (this._config.privateKeyFilePath) {
-            //TODO: handle "file not found" errors
-            const keyContents = readFileSync(this._config.privateKeyFilePath);
+            let keyContents: Buffer;
+
+            try {
+              keyContents = readFileSync(this._config.privateKeyFilePath);
+            } catch (e) {
+              l10n.t(
+                "Error reading private key file: {filePath}, error: {message}",
+                {
+                  filePath: this._config.privateKeyFilePath,
+                  message: e.message,
+                },
+              );
+            }
             const parsedKeyResult = utils.parseKey(keyContents);
             // key is encrypted, prompt for passphrase
             if (
