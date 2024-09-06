@@ -1,5 +1,7 @@
 import { FileType, Uri } from "vscode";
 
+import { AxiosResponse } from "axios";
+
 import { getSession } from "..";
 import {
   FOLDER_TYPES,
@@ -15,7 +17,6 @@ import {
 } from "../../components/ContentNavigator/types";
 import {
   createStaticFolder,
-  isItemInRecycleBin,
   isReference,
 } from "../../components/ContentNavigator/utils";
 import { appendSessionLogFn } from "../../components/logViewer";
@@ -23,7 +24,6 @@ import { FileProperties, FileSystemApi } from "./api/compute";
 import { getApiConfig } from "./common";
 import {
   getLink,
-  getPermission,
   getResourceId,
   getResourceIdFromItem,
   getSasServerUri,
@@ -31,14 +31,20 @@ import {
   resourceType,
 } from "./util";
 
+const SAS_SERVER_HOME_DIRECTORY = "SAS_SERVER_HOME_DIRECTORY";
+
 class RestSASServerAdapter implements ContentAdapter {
   protected baseUrl: string;
   protected fileSystemApi: ReturnType<typeof FileSystemApi>;
   protected sessionId: string;
   private rootFolders: RootFolderMap;
+  private fileMetadataMap: {
+    [id: string]: { etag: string; lastModified?: string; contentType?: string };
+  };
 
   public constructor() {
     this.rootFolders = {};
+    this.fileMetadataMap = {};
   }
 
   public async connect(): Promise<void> {
@@ -82,16 +88,11 @@ class RestSASServerAdapter implements ContentAdapter {
   ): Promise<ContentItem | undefined> {
     const response = await this.fileSystemApi.createFileOrDirectory({
       sessionId: this.sessionId,
-      fileOrDirectoryPath: parentItem.uri.replace(
-        `/compute/sessions/${this.sessionId}/files/`,
-        "",
-      ),
+      fileOrDirectoryPath: this.trimComputePrefix(parentItem.uri),
       fileProperties: { name: folderName, isDirectory: true },
     });
 
-    return this.enrichWithDataProviderProperties(
-      this.filePropertiesToContentItem(response.data),
-    );
+    return this.filePropertiesToContentItem(response.data);
   }
 
   public async createNewItem(
@@ -101,18 +102,15 @@ class RestSASServerAdapter implements ContentAdapter {
   ): Promise<ContentItem | undefined> {
     const response = await this.fileSystemApi.createFileOrDirectory({
       sessionId: this.sessionId,
-      fileOrDirectoryPath: parentItem.uri.replace(
-        `/compute/sessions/${this.sessionId}/files/`,
-        "",
-      ),
+      fileOrDirectoryPath: this.trimComputePrefix(parentItem.uri),
       fileProperties: { name: fileName, isDirectory: false },
     });
 
     if (buffer) {
       const etag = response.headers.etag;
-      const filePath = getLink(response.data.links, "GET", "self").uri.replace(
-        `/compute/sessions/${this.sessionId}/files/`,
-        "",
+      // TODO (sas-server) This could be combined with update content most likely.
+      const filePath = this.trimComputePrefix(
+        getLink(response.data.links, "GET", "self").uri,
       );
       await this.fileSystemApi.updateFileContentOnSystem({
         sessionId: this.sessionId,
@@ -122,9 +120,7 @@ class RestSASServerAdapter implements ContentAdapter {
       });
     }
 
-    return this.enrichWithDataProviderProperties(
-      this.filePropertiesToContentItem(response.data),
-    );
+    return this.filePropertiesToContentItem(response.data);
   }
 
   public async deleteItem(item: ContentItem): Promise<boolean> {
@@ -134,46 +130,32 @@ class RestSASServerAdapter implements ContentAdapter {
   public async getChildItems(parentItem: ContentItem): Promise<ContentItem[]> {
     // If the user is fetching child items of the root folder, give them the
     // "home" directory
-    const id = "SAS_SERVER_HOME_DIRECTORY";
     if (parentItem.id === SERVER_FOLDER_ID) {
       return [
-        this.enrichWithDataProviderProperties({
-          ...createStaticFolder(
-            id,
+        this.filePropertiesToContentItem(
+          createStaticFolder(
+            SAS_SERVER_HOME_DIRECTORY,
             "Home",
             "userRoot",
             `/compute/sessions/${this.sessionId}/files/~fs~/members`,
             "getDirectoryMembers",
           ),
-          creationTimeStamp: 0,
-          modifiedTimeStamp: 0,
-          permission: undefined,
-        }),
+        ),
       ];
     }
 
     const { data } = await this.fileSystemApi.getDirectoryMembers({
       sessionId: this.sessionId,
-      directoryPath: parseMemberUri(
+      directoryPath: this.trimComputePrefix(
         getLink(parentItem.links, "GET", "getDirectoryMembers").uri,
-        this.sessionId,
-      ),
+      ).replace("/members", ""),
     });
 
     // TODO (sas-server) We need to paginate and sort results
     return data.items.map((childItem: FileProperties, index) => ({
       ...this.filePropertiesToContentItem(childItem),
       uid: `${parentItem.uid}/${index}`,
-      ...this.enrichWithDataProviderProperties(
-        this.filePropertiesToContentItem(childItem),
-      ),
     }));
-
-    function parseMemberUri(uri: string, sessionId: string): string {
-      return uri
-        .replace(`/compute/sessions/${sessionId}/files/`, "")
-        .replace("/members", "");
-    }
   }
 
   public async getContentOfItem(item: ContentItem): Promise<string> {
@@ -181,13 +163,9 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 
   public async getContentOfUri(uri: Uri): Promise<string> {
-    // TODO (sas-server) We're using this a bunch. Make things more better-er
-    const path = getResourceId(uri).replace(
-      `/compute/sessions/${this.sessionId}/files/`,
-      "",
-    );
+    const path = this.trimComputePrefix(getResourceId(uri));
 
-    const { data } = await this.fileSystemApi.getFileContentFromSystem(
+    const response = await this.fileSystemApi.getFileContentFromSystem(
       {
         sessionId: this.sessionId,
         filePath: path,
@@ -197,11 +175,13 @@ class RestSASServerAdapter implements ContentAdapter {
       },
     );
 
+    this.updateFileMetadata(path, response);
+
     // Disabling typescript checks on this line as this function is typed
     // to return AxiosResponse<void,any>. However, it appears to return
     // AxiosResponse<string,>.
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return data as unknown as string;
+    return response.data as unknown as string;
   }
 
   public async getFolderPathForItem(item: ContentItem): Promise<string> {
@@ -214,18 +194,13 @@ class RestSASServerAdapter implements ContentAdapter {
 
   public async getItemOfUri(uri: Uri): Promise<ContentItem> {
     const resourceId = getResourceId(uri);
+
     const { data } = await this.fileSystemApi.getFileorDirectoryProperties({
       sessionId: this.sessionId,
-      // TODO (sas-server) cleanup/reuse this
-      fileOrDirectoryPath: resourceId.replace(
-        `/compute/sessions/${this.sessionId}/files/`,
-        "",
-      ),
+      fileOrDirectoryPath: this.trimComputePrefix(resourceId),
     });
 
-    return this.enrichWithDataProviderProperties(
-      this.filePropertiesToContentItem(data),
-    );
+    return this.filePropertiesToContentItem(data);
   }
 
   public async getParentOfItem(
@@ -251,7 +226,7 @@ class RestSASServerAdapter implements ContentAdapter {
       this.rootFolders[delegateFolderName] = {
         ...result.data,
         uid: `${index}`,
-        ...this.enrichWithDataProviderProperties(result.data),
+        ...this.filePropertiesToContentItem(result.data),
       };
     }
 
@@ -293,7 +268,23 @@ class RestSASServerAdapter implements ContentAdapter {
     item: ContentItem,
     newName: string,
   ): Promise<ContentItem | undefined> {
-    throw new Error("Method not implemented.");
+    const filePath = this.trimComputePrefix(item.uri);
+
+    const isDirectory = item.fileStat?.type === FileType.Directory;
+    const parsedFilePath = filePath.split("~fs~");
+    parsedFilePath.pop();
+    const path = parsedFilePath.join("/");
+
+    const response = await this.fileSystemApi.updateFileOrDirectoryOnSystem({
+      sessionId: this.sessionId,
+      fileOrDirectoryPath: filePath,
+      ifMatch: "",
+      fileProperties: { name: newName, path, isDirectory },
+    });
+
+    this.updateFileMetadata(filePath, response);
+
+    return this.filePropertiesToContentItem(response.data);
   }
 
   public async restoreItem(item: ContentItem): Promise<boolean> {
@@ -301,48 +292,26 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 
   public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
+    const filePath = this.trimComputePrefix(getResourceId(uri));
+    const { etag } = this.getFileInfo(filePath);
 
-  private enrichWithDataProviderProperties(
-    item: ContentItem,
-    flags?: ContentItem["flags"],
-  ): ContentItem {
-    item.flags = flags;
-    return {
-      ...item,
-      permission: getPermission(item),
-      contextValue: resourceType(item),
-      fileStat: {
-        ctime: item.creationTimeStamp,
-        mtime: item.modifiedTimeStamp,
-        size: 0,
-        type: getIsContainer(item) ? FileType.Directory : FileType.File,
-      },
-      isReference: isReference(item),
-      resourceId: getResourceIdFromItem(item),
-      vscUri: getSasServerUri(item, flags?.isInRecycleBin || false),
-      typeName: getTypeName(item),
-    };
+    const response = await this.fileSystemApi.updateFileContentOnSystem({
+      sessionId: this.sessionId,
+      filePath,
+      // updateFileContentOnSystem requires body to be a File type. However, the
+      // underlying code is expecting a string. This forces compute to accept
+      // a string.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      body: content as unknown as File,
+      ifMatch: etag,
+    });
 
-    function getIsContainer(item: ContentItem): boolean {
-      if (item.fileStat?.type === FileType.Directory) {
-        return true;
-      }
-
-      const typeName = getTypeName(item);
-      if (isItemInRecycleBin(item) && isReference(item)) {
-        return false;
-      }
-      if (FOLDER_TYPES.indexOf(typeName) >= 0) {
-        return true;
-      }
-      return false;
-    }
+    this.updateFileMetadata(filePath, response);
   }
 
   private filePropertiesToContentItem(
     fileProperties: FileProperties,
+    flags?: ContentItem["flags"],
   ): ContentItem {
     const links = fileProperties.links.map((link) => ({
       method: link.method,
@@ -353,25 +322,65 @@ class RestSASServerAdapter implements ContentAdapter {
     }));
 
     const id = getLink(links, "GET", "self").uri;
-    return {
+    const isRootFolder = [SERVER_FOLDER_ID, SAS_SERVER_HOME_DIRECTORY].includes(
+      id,
+    );
+    const item = {
       id,
       uri: id,
       name: fileProperties.name,
       creationTimeStamp: 0,
       modifiedTimeStamp: new Date(fileProperties.modifiedTimeStamp).getTime(),
       links,
-      // These will be overwritten
       permission: {
-        write: false,
-        delete: false,
-        addMember: false,
+        write: !isRootFolder && !fileProperties.readOnly,
+        delete: !isRootFolder && !fileProperties.readOnly,
+        addMember:
+          !!getLink(links, "POST", "makeDirectory") ||
+          !!getLink(links, "POST", "createFile"),
       },
+      flags,
+    };
+
+    const typeName = getTypeName(item);
+
+    return {
+      ...item,
+      contextValue: resourceType(item),
       fileStat: {
-        type: fileProperties.isDirectory ? FileType.Directory : FileType.File,
-        ctime: 0,
-        mtime: 0,
+        ctime: item.creationTimeStamp,
+        mtime: item.modifiedTimeStamp,
         size: 0,
+        type:
+          fileProperties.isDirectory ||
+          FOLDER_TYPES.indexOf(typeName) >= 0 ||
+          isRootFolder
+            ? FileType.Directory
+            : FileType.File,
       },
+      isReference: isReference(item),
+      resourceId: getResourceIdFromItem(item),
+      vscUri: getSasServerUri(item, flags?.isInRecycleBin || false),
+      typeName: getTypeName(item),
+    };
+  }
+
+  private trimComputePrefix(uri: string): string {
+    return uri.replace(`/compute/sessions/${this.sessionId}/files/`, "");
+  }
+
+  private updateFileMetadata(id: string, { headers }: AxiosResponse) {
+    this.fileMetadataMap[id] = {
+      etag: headers.etag,
+    };
+  }
+
+  private getFileInfo(resourceId: string) {
+    if (resourceId in this.fileMetadataMap) {
+      return this.fileMetadataMap[resourceId];
+    }
+    return {
+      etag: "",
     };
   }
 }
