@@ -343,9 +343,9 @@ class SASContentAdapter implements ContentAdapter {
     flags?: ContentItem["flags"],
   ): ContentItem {
     item.flags = flags;
+    item.permission = getPermission(item);
     return {
       ...item,
-      permission: getPermission(item),
       contextValue: resourceType(item),
       fileStat: {
         ctime: item.creationTimeStamp,

@@ -1,6 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { FileType, Uri } from "vscode";
+import { Uri } from "vscode";
 
 import {
   DATAFLOW_TYPE,
@@ -56,7 +56,7 @@ export const resourceType = (item: ContentItem): string | undefined => {
     return;
   }
 
-  const { write, delete: del, addMember } = getPermission(item);
+  const { write, delete: del, addMember } = item.permission;
   const isRecycled = isItemInRecycleBin(item);
   const actions = [
     addMember && !isRecycled && "createChild",
@@ -111,15 +111,11 @@ export const getSasServerUri = (item: ContentItem, readOnly?: boolean): Uri =>
 
 export const getPermission = (item: ContentItem): Permission => {
   const itemType = getTypeName(item);
-  return [FOLDER_TYPE, ...FILE_TYPES].includes(itemType) ||
-    item.fileStat?.type === FileType.Directory
+  return [FOLDER_TYPE, ...FILE_TYPES].includes(itemType) // normal folders and files
     ? {
         write: !!getLink(item.links, "PUT", "update"),
         delete: !!getLink(item.links, "DELETE", "deleteResource"),
-        addMember:
-          !!getLink(item.links, "POST", "createChild") ||
-          !!getLink(item.links, "POST", "makeDirectory") ||
-          !!getLink(item.links, "POST", "createFile"),
+        addMember: !!getLink(item.links, "POST", "createChild"),
       }
     : {
         // delegate folders, user folder and user root folder
