@@ -80,7 +80,18 @@ class RestSASServerAdapter implements ContentAdapter {
     parentItem: ContentItem,
     folderName: string,
   ): Promise<ContentItem | undefined> {
-    throw new Error("cnf Method not implemented.");
+    const response = await this.fileSystemApi.createFileOrDirectory({
+      sessionId: this.sessionId,
+      fileOrDirectoryPath: parentItem.uri.replace(
+        `/compute/sessions/${this.sessionId}/files/`,
+        "",
+      ),
+      fileProperties: { name: folderName, isDirectory: true },
+    });
+
+    return this.enrichWithDataProviderProperties(
+      this.filePropertiesToContentItem(response.data),
+    );
   }
 
   public async createNewItem(
@@ -88,7 +99,32 @@ class RestSASServerAdapter implements ContentAdapter {
     fileName: string,
     buffer?: ArrayBufferLike,
   ): Promise<ContentItem | undefined> {
-    throw new Error("cni Method not implemented.");
+    const response = await this.fileSystemApi.createFileOrDirectory({
+      sessionId: this.sessionId,
+      fileOrDirectoryPath: parentItem.uri.replace(
+        `/compute/sessions/${this.sessionId}/files/`,
+        "",
+      ),
+      fileProperties: { name: fileName, isDirectory: false },
+    });
+
+    if (buffer) {
+      const etag = response.headers.etag;
+      const filePath = getLink(response.data.links, "GET", "self").uri.replace(
+        `/compute/sessions/${this.sessionId}/files/`,
+        "",
+      );
+      await this.fileSystemApi.updateFileContentOnSystem({
+        sessionId: this.sessionId,
+        filePath,
+        body: new File([buffer], response.data.name),
+        ifMatch: etag,
+      });
+    }
+
+    return this.enrichWithDataProviderProperties(
+      this.filePropertiesToContentItem(response.data),
+    );
   }
 
   public async deleteItem(item: ContentItem): Promise<boolean> {
