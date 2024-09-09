@@ -14,6 +14,7 @@
   "commands.SAS.emptyRecycleBin": "清空回收站",
   "commands.SAS.file.new": "新 SAS 文件",
   "commands.SAS.file.new.short": "SAS 文件",
+  "commands.SAS.notebook.export": "导出",
   "commands.SAS.notebook.new": "新 SAS 笔记本",
   "commands.SAS.notebook.new.short": "SAS 笔记本",
   "commands.SAS.refresh": "刷新",
