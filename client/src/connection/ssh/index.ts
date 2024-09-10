@@ -15,12 +15,7 @@ import { BaseConfig, RunResult } from "..";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 import { extractOutputHtmlFileName } from "../util";
-import {
-  keyboardInteractiveAuth,
-  passwordAuth,
-  privateKeyAuth,
-  sshAgentAuth,
-} from "./auth";
+import { AuthHandler } from "./auth";
 import {
   KEEPALIVE_INTERVAL,
   KEEPALIVE_UNANSWERED_THRESHOLD,
@@ -55,6 +50,7 @@ export class SSHSession extends Session {
   private _html5FileName = "";
   private _sessionReady: boolean;
   private _authMethods: AuthenticationType[]; //auth methods that this session can support
+  private _authHandler: AuthHandler;
 
   constructor(c?: Config) {
     super();
@@ -62,6 +58,7 @@ export class SSHSession extends Session {
     this._conn = new Client();
     this._authMethods = ["publickey", "password", "keyboard-interactive"];
     this._sessionReady = false;
+    this._authHandler = new AuthHandler();
   }
 
   public sessionId? = (): string => {
@@ -92,7 +89,7 @@ export class SSHSession extends Session {
         debug: (msg) => {
           console.log(msg);
         },
-        authHandler: this.authHandler,
+        authHandler: this.handleSSHAuthentication,
       };
 
       this._conn
@@ -245,7 +242,7 @@ export class SSHSession extends Session {
     this._sessionReady = false;
   };
 
-  private authHandler: AuthHandlerMiddleware = (
+  private handleSSHAuthentication: AuthHandlerMiddleware = (
     authsLeft: AuthenticationType[],
     _partialSuccess: boolean,
     cb: NextAuthHandler,
@@ -279,23 +276,22 @@ export class SSHSession extends Session {
         case "publickey": {
           //user set a keyfile path in profile config
           if (this._config.privateKeyFilePath) {
-            privateKeyAuth(
+            this._authHandler.privateKeyAuth(
               cb,
-              this._resolve,
               this._config.privateKeyFilePath,
               this._config.username,
             );
           } else if (process.env.SSH_AUTH_SOCK) {
-            sshAgentAuth(cb, this._config.username);
+            this._authHandler.sshAgentAuth(cb, this._config.username);
           }
           break;
         }
         case "password": {
-          passwordAuth(cb, this._resolve, this._config.username);
+          this._authHandler.passwordAuth(cb, this._config.username);
           break;
         }
         case "keyboard-interactive": {
-          keyboardInteractiveAuth(cb, this._resolve, this._config.username);
+          this._authHandler.keyboardInteractiveAuth(cb, this._config.username);
           break;
         }
         default:
