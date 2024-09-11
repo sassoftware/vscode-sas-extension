@@ -29,9 +29,9 @@ export const extractPythonCodes = (
       if (
         !pythonCodeStart &&
         codeZoneManager.getCurrentZone(pos.line, pos.character) ===
-          CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG &&
-        // a codezone bug
-        pos.line >= symbol.range.start.line + 2
+          CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG
+        // // a codezone bug
+        // pos.line >= symbol.range.start.line + 2
       ) {
         pythonCodeStart = { ...pos };
       }
@@ -66,28 +66,47 @@ export const extractPythonCodes = (
         end: pythonCodeEnd ?? symbol.range.end,
       })
       .split("\n");
+    let emptyLineCount = 0;
     let firstNotEmptyLine: string | undefined = undefined;
     for (const line of pythonCodeLines) {
       if (line.trim().length > 0 && !line.trim().startsWith("#")) {
         firstNotEmptyLine = line;
         break;
+      } else {
+        emptyLineCount++;
       }
+    }
+    if (emptyLineCount > 0) {
+      pythonCodeLines.splice(0, emptyLineCount);
+      pythonCodeStart.line += emptyLineCount;
+      pythonCodeStart.character = 0;
     }
     const shouldAddDummyBlock: boolean =
       !!firstNotEmptyLine && [" ", "\t"].includes(firstNotEmptyLine[0]);
     const lineGap = pythonCodeStart.line - pythonDocLines.length;
-    for (let i = 0; i < lineGap; i++) {
-      if (shouldAddDummyBlock && i === lineGap - 1) {
-        pythonDocLines.push("if True:");
-      } else {
-        pythonDocLines.push("");
+    // must be: proc python;submit;<python code>
+    if (lineGap === 0) {
+      let line = "if True:";
+      line += " ".repeat(pythonCodeStart.character - line.length);
+      line += pythonCodeLines[0];
+      if (firstNotEmptyLine) {
+        line += ";pass";
       }
-    }
-    for (const line of pythonCodeLines) {
       pythonDocLines.push(line);
-    }
-    if (firstNotEmptyLine) {
-      pythonDocLines.push("pass");
+    } else {
+      for (let i = 0; i < lineGap; i++) {
+        if (shouldAddDummyBlock && i === lineGap - 1) {
+          pythonDocLines.push("if True:");
+        } else {
+          pythonDocLines.push("");
+        }
+      }
+      for (const line of pythonCodeLines) {
+        pythonDocLines.push(line);
+      }
+      if (firstNotEmptyLine) {
+        pythonDocLines.push("pass");
+      }
     }
   }
   const pythonDoc = pythonDocLines.join("\n");

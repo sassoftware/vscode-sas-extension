@@ -681,20 +681,36 @@ export class CompletionProvider {
 
   getCompleteItemHelp(item: CompletionItem): Promise<CompletionItem> {
     return new Promise((resolve) => {
-      this._loadHelp({
-        keyword: item.label,
-        type: "tooltip",
-        ...this.popupContext,
-        cb: (data) => {
-          if (data && data.data) {
-            item.documentation = {
-              kind: MarkupKind.Markdown,
-              value: this._addLinkContext(this.popupContext.zone, data),
-            };
-          }
-          resolve(item);
-        },
-      });
+      if (["endsubmit", "endinteractive"].includes(item.label?.toLowerCase())) {
+        this.loader.getProcedureStatementHelp(
+          "PYTHON",
+          item.label.toUpperCase(),
+          (data) => {
+            if (data && data.data) {
+              item.documentation = {
+                kind: MarkupKind.Markdown,
+                value: this._addLinkContext(515, data),
+              };
+            }
+            resolve(item);
+          },
+        );
+      } else {
+        this._loadHelp({
+          keyword: item.label,
+          type: "tooltip",
+          ...this.popupContext,
+          cb: (data) => {
+            if (data && data.data) {
+              item.documentation = {
+                kind: MarkupKind.Markdown,
+                value: this._addLinkContext(this.popupContext.zone, data),
+              };
+            }
+            resolve(item);
+          },
+        });
+      }
     });
   }
 

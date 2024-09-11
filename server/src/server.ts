@@ -194,12 +194,18 @@ export const runServer = (
   });
 
   connection.onCompletionResolve(async (completionItem, token) => {
-    if (completionItem.data._languageService === "sas") {
+    const lang = completionItem.data._languageService;
+    const label = completionItem.label;
+    if (
+      lang === "sas" ||
+      (lang === "python" &&
+        ["endsubmit", "endinteractive"].includes(label?.toLowerCase()))
+    ) {
       const languageService = getLanguageService(completionItem.data._uri);
       return await languageService.completionProvider.getCompleteItemHelp(
         completionItem,
       );
-    } else if (completionItem.data._languageService === "python") {
+    } else if (lang === "python") {
       return await _pyrightLanguageProvider.onCompletionResolve(
         completionItem,
         token,
