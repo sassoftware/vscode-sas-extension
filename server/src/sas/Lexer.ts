@@ -362,7 +362,7 @@ export class Lexer {
               const stringReg = /'''|"""|("[^"]*?("|$))|('[^']*?('|$))/;
               const commentReg = /#.*$/;
               const secReg =
-                /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$)/;
+                /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;))/;
               match = new RegExp(
                 `${stringReg.source}|${commentReg.source}|${secReg.source}`,
                 "m",
@@ -380,7 +380,7 @@ export class Lexer {
                 } else {
                   token = this._foundEmbeddedCodeToken(this.curr, {
                     line: line,
-                    column: match.index,
+                    column: pos + match.index,
                   });
                   break SWITCH;
                 }
@@ -433,7 +433,7 @@ export class Lexer {
               const stringReg = /("[^"]*("|$))|('[^']*('|$))|\[\[/;
               const commentReg = /--[^[].*$|--\[\[|\/\*/;
               const secReg =
-                /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$)/;
+                /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;))/;
               const reg = new RegExp(
                 `${stringReg.source}|${commentReg.source}|${secReg.source}`,
                 "m",
@@ -456,7 +456,7 @@ export class Lexer {
                 } else {
                   token = this._foundEmbeddedCodeToken(this.curr, {
                     line: line,
-                    column: match.index,
+                    column: pos + match.index,
                   });
                   break SWITCH;
                 }

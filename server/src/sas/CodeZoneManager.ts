@@ -396,6 +396,9 @@ export class CodeZoneManager {
 
     if (Lexer.isComment[type] || Lexer.isLiteral[type]) {
       token = this._token(context.line, col - 1)!;
+      if (!token) {
+        return null;
+      }
       if (
         token.endLine &&
         (token.line !== context.line || token.col !== context.col)
