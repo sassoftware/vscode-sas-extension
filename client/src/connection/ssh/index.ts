@@ -13,6 +13,7 @@ import {
 
 import { BaseConfig, RunResult } from "..";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
+import { LineParser } from "../LineParser";
 import { Session } from "../session";
 import { extractOutputHtmlFileName } from "../util";
 import { AuthHandler } from "./auth";
@@ -21,6 +22,8 @@ import {
   KEEPALIVE_UNANSWERED_THRESHOLD,
   SAS_LAUNCH_TIMEOUT,
   SUPPORTED_AUTH_METHODS,
+  WORK_DIR_END_TAG,
+  WORK_DIR_START_TAG,
 } from "./const";
 import { LineCodes } from "./types";
 
@@ -51,6 +54,8 @@ export class SSHSession extends Session {
   private _sessionReady: boolean;
   private _authMethods: AuthenticationType[]; //auth methods that this session can support
   private _authHandler: AuthHandler;
+  private _workDirectory: string;
+  private _workDirectoryParser: LineParser;
 
   constructor(c?: Config) {
     super();
@@ -59,6 +64,11 @@ export class SSHSession extends Session {
     this._authMethods = ["publickey", "password", "keyboard-interactive"];
     this._sessionReady = false;
     this._authHandler = new AuthHandler();
+    this._workDirectoryParser = new LineParser(
+      WORK_DIR_START_TAG,
+      WORK_DIR_END_TAG,
+      false,
+    );
   }
 
   public sessionId? = (): string => {
@@ -135,7 +145,7 @@ export class SSHSession extends Session {
     }
     let fileContents = "";
     this._conn.exec(
-      `cat ${this._html5FileName}.htm`,
+      `cat ${this._workDirectory}/${this._html5FileName}.htm`,
       (err: Error, s: ClientChannel) => {
         if (err) {
           this._reject?.(err);
@@ -167,16 +177,47 @@ export class SSHSession extends Session {
     this._reject = undefined;
     this._html5FileName = "";
     this.clearAuthState();
+    this._workDirectory = undefined;
     this._conn.end();
     updateStatusBarItem(false);
   };
 
+  private fetchWorkDirectory = (line: string): string => {
+    let foundWorkDirectory = "";
+    if (
+      !line.includes(`%put ${WORK_DIR_START_TAG};`) &&
+      !line.includes(`%put &workDir;`) &&
+      !line.includes(`%put ${WORK_DIR_END_TAG};`)
+    ) {
+      foundWorkDirectory = this._workDirectoryParser.processLine(line);
+    } else {
+      // If the line is the put statement, we don't need to log that
+      return;
+    }
+    // We don't want to output any of the captured lines
+    if (this._workDirectoryParser.isCapturingLine()) {
+      return;
+    }
+
+    return foundWorkDirectory || "";
+  };
+  private resolveSystemVars = (): void => {
+    const code = `%let workDir = %sysfunc(pathname(work));
+    %put ${WORK_DIR_START_TAG};
+    %put &workDir;
+    %put ${WORK_DIR_END_TAG};
+    %let rc = %sysfunc(dlgcdir("&workDir"));
+    run;
+    `;
+    this._stream.write(code);
+  };
   private onStreamData = (data: Buffer): void => {
     const output = data.toString().trimEnd();
 
     if (!this._sessionReady && output.endsWith("?")) {
       this._sessionReady = true;
       this._resolve?.();
+      this.resolveSystemVars();
       updateStatusBarItem(true);
       return;
     }
@@ -186,16 +227,25 @@ export class SSHSession extends Session {
       if (!line) {
         return;
       }
-      if (line.endsWith(LineCodes.RunEndCode)) {
+      const trimmedLine = line.trim();
+      if (trimmedLine.endsWith(LineCodes.RunEndCode)) {
         // run completed
         this.getResult();
       }
-      if (!(line.endsWith("?") || line.endsWith(">"))) {
+      if (!(trimmedLine.endsWith("?") || trimmedLine.endsWith(">"))) {
         this._html5FileName = extractOutputHtmlFileName(
           line,
           this._html5FileName,
         );
         this._onExecutionLogFn?.([{ type: "normal", line }]);
+      }
+
+      if (this._sessionReady && !this._workDirectory) {
+        const foundWorkDir = this.fetchWorkDirectory(line);
+        if (foundWorkDir) {
+          const match = foundWorkDir.match(/\/[^\s\r]+/);
+          this._workDirectory = match ? match[0] : "";
+        }
       }
     });
   };
