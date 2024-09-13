@@ -71,7 +71,6 @@
   "themes.SAS.dark": "SAS Dark",
   "themes.SAS.highContrast": "SAS High Contrast",
   "themes.SAS.light": "SAS Light",
-  "views.SAS.explorer": "エクスプローラー",
   "views.SAS.libraries": "ライブラリ",
   "views.SAS.signIn": "サインイン",
   "views.SAS.unsupportedConnection": "この接続では、SAS Extension for Visual Studio Code 内の SAS コンテンツナビゲーションがサポートされていません。ファイルにアクセスできるのは、エクスプローラービューのみです。",

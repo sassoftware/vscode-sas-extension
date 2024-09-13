@@ -71,7 +71,6 @@
   "themes.SAS.dark": "SAS 다크",
   "themes.SAS.highContrast": "SAS 고대비",
   "themes.SAS.light": "SAS 라이트",
-  "views.SAS.explorer": "탐색기",
   "views.SAS.libraries": "라이브러리",
   "views.SAS.signIn": "로그인",
   "views.SAS.unsupportedConnection": "귀하의 연결은 SAS Extension for Visual Studio Code 내에서 SAS 콘텐츠 탐색을 지원하지 않습니다. 탐색기 뷰를 사용하여야 파일을 방문할 수 있습니다.",

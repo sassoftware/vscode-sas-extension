@@ -124,7 +124,18 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 
   public async deleteItem(item: ContentItem): Promise<boolean> {
-    throw new Error("di Method not implemented.");
+    const filePath = this.trimComputePrefix(item.uri);
+    try {
+      await this.fileSystemApi.deleteFileOrDirectoryFromSystem({
+        sessionId: this.sessionId,
+        fileOrDirectoryPath: filePath,
+        ifMatch: "",
+      });
+      delete this.fileMetadataMap[filePath];
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   public async getChildItems(parentItem: ContentItem): Promise<ContentItem[]> {
@@ -257,7 +268,11 @@ class RestSASServerAdapter implements ContentAdapter {
   public async recycleItem(
     item: ContentItem,
   ): Promise<{ newUri?: Uri; oldUri?: Uri }> {
-    throw new Error("Method not implemented.");
+    await this.deleteItem(item);
+    return {
+      newUri: getSasServerUri(item, true),
+      oldUri: getSasServerUri(item),
+    };
   }
 
   public async removeItemFromFavorites(item: ContentItem): Promise<boolean> {
