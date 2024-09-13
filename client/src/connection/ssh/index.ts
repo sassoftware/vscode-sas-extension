@@ -298,7 +298,7 @@ export class SSHSession extends Session {
     cb: NextAuthHandler,
   ) => {
     if (!authsLeft) {
-      cb("none"); //sending none will usually prompt the server to send supported auth methods
+      cb("none"); //sending none will prompt the server to send supported auth methods
       return;
     }
 

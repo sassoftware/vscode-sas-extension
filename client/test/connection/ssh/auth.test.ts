@@ -45,6 +45,38 @@ describe("ssh connection auth handler", () => {
       sandbox.restore();
     });
 
+    it("should pass the key contents and passphrase to the callback for an encrypted key", async () => {
+      const cb = sinon.stub();
+      const username = "username";
+      const passphrase = "passphrase";
+      const privateKeyFilePath = "privateKeyFilePath";
+
+      const presenter = stubInterface<AuthPresenter>();
+      const keyParser = stubInterface<KeyParser>();
+
+      const key = stubInterface<ParsedKey>();
+      keyParser.parseKey
+        .withArgs(privateKeyFilePath)
+        .returns(
+          new Error(
+            "Encrypted private OpenSSH key detected, but no passphrase given",
+          ),
+        );
+      keyParser.parseKey.withArgs(privateKeyFilePath, passphrase).returns(key);
+      presenter.presentPassphrasePrompt.resolves(passphrase);
+
+      authHandler = new AuthHandler(presenter, keyParser);
+
+      await authHandler.privateKeyAuth(cb, privateKeyFilePath, username);
+
+      sinon.assert.calledWith(cb, {
+        type: "publickey",
+        key: key,
+        passphrase: passphrase,
+        username: username,
+      });
+    });
+
     it("should pass the key contents to the callback for an unencrypted key", async () => {
       const cb = sandbox.stub();
       const username = "username";
@@ -68,38 +100,6 @@ describe("ssh connection auth handler", () => {
         key: key,
         username: username,
       });
-    });
-  });
-
-  it("should pass the key contents and passphrase to the callback for an encrypted key", async () => {
-    const cb = sinon.stub();
-    const username = "username";
-    const passphrase = "passphrase";
-    const privateKeyFilePath = "privateKeyFilePath";
-
-    const presenter = stubInterface<AuthPresenter>();
-    const keyParser = stubInterface<KeyParser>();
-
-    const key = stubInterface<ParsedKey>();
-    keyParser.parseKey
-      .withArgs(privateKeyFilePath)
-      .returns(
-        new Error(
-          "Encrypted OpenSSH private key detected, but no passphrase given",
-        ),
-      );
-    keyParser.parseKey.withArgs(privateKeyFilePath, passphrase).returns(key);
-    presenter.presentPassphrasePrompt.resolves(passphrase);
-
-    authHandler = new AuthHandler(presenter, keyParser);
-
-    await authHandler.privateKeyAuth(cb, privateKeyFilePath, username);
-
-    sinon.assert.calledWith(cb, {
-      type: "publickey",
-      key: key,
-      passphrase: passphrase,
-      username: username,
     });
   });
 

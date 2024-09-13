@@ -581,6 +581,14 @@ export class ProfileConfig {
         return;
       }
 
+      profileClone.privateKeyFilePath = await createInputTextBox(
+        ProfilePromptType.PrivateKeyFilePath,
+        profileClone.privateKeyFilePath,
+      );
+      if (profileClone.privateKeyFilePath === undefined) {
+        return;
+      }
+
       await this.upsertProfile(name, profileClone);
     } else if (profileClone.connectionType === ConnectionType.COM) {
       profileClone.sasOptions = [];
@@ -658,6 +666,7 @@ export enum ProfilePromptType {
   SASPath,
   Port,
   Username,
+  PrivateKeyFilePath,
 }
 
 /**
@@ -794,6 +803,13 @@ const input: ProfilePromptInput = {
     title: l10n.t("SAS Server Username"),
     placeholder: l10n.t("Enter your username"),
     description: l10n.t("Enter your SAS server username."),
+  },
+  [ProfilePromptType.PrivateKeyFilePath]: {
+    title: l10n.t("Private Key File Path (optional)"),
+    placeholder: l10n.t("Enter the private key file path"),
+    description: l10n.t(
+      "Enter the local path of the private key file. Leave empty to use SSH Agent.",
+    ),
   },
 };
 

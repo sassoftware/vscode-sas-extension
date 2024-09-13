@@ -7,7 +7,7 @@ export const KEEPALIVE_INTERVAL = 60 * SECOND; //How often (in milliseconds) to 
 export const KEEPALIVE_UNANSWERED_THRESHOLD = 720; //How many consecutive, unanswered SSH-level keepalive packets that can be sent to the server before disconnection.
 export const WORK_DIR_START_TAG = "<WorkDirectory>";
 export const WORK_DIR_END_TAG = "</WorkDirectory>";
-export const SAS_LAUNCH_TIMEOUT = 10000;
+export const SAS_LAUNCH_TIMEOUT = 60000;
 export const SUPPORTED_AUTH_METHODS = [
   "publickey",
   "password",

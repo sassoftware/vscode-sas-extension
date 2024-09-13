@@ -13,7 +13,7 @@ export interface AuthPresenter {
    * Prompt the user for a passphrase.
    * @returns the passphrase entered by the user
    */
-  presentPasswordPrompt: () => Promise<string>;
+  presentPasswordPrompt: (username: string) => Promise<string>;
   /**
    * Prompt the user for a password.
    * @returns the password entered by the user
@@ -31,9 +31,9 @@ export interface AuthPresenter {
 }
 
 class AuthPresenterImpl implements AuthPresenter {
-  presentPasswordPrompt = async (): Promise<string> => {
+  presentPasswordPrompt = async (username: string): Promise<string> => {
     return this.presentSecurePrompt(
-      l10n.t("Enter your password for this connection"),
+      l10n.t("Enter the password for user: {username}", { username }),
       l10n.t("Password Required"),
     );
   };
@@ -41,6 +41,7 @@ class AuthPresenterImpl implements AuthPresenter {
   presentPassphrasePrompt = async (): Promise<string> => {
     return this.presentSecurePrompt(
       l10n.t("Enter the passphrase for the private key"),
+      l10n.t("Passphrase Required"),
     );
   };
 
@@ -100,7 +101,7 @@ export class AuthHandler {
    * @param username the user name to use for the connection
    */
   passwordAuth = (cb: NextAuthHandler, username: string) => {
-    this._authPresenter.presentPasswordPrompt().then((pw) => {
+    this._authPresenter.presentPasswordPrompt(username).then((pw) => {
       cb({
         type: "password",
         password: pw,
@@ -162,7 +163,7 @@ export class AuthHandler {
     const passphraseRequired =
       hasParseError &&
       parsedKeyResult.message ===
-        "Encrypted OpenSSH private key detected, but no passphrase given";
+        "Encrypted private OpenSSH key detected, but no passphrase given";
     // key is encrypted, prompt for passphrase
     if (passphraseRequired) {
       this._authPresenter.presentPassphrasePrompt().then((passphrase) => {
