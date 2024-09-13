@@ -71,7 +71,6 @@
   "themes.SAS.dark": "SAS 深色",
   "themes.SAS.highContrast": "SAS 高对比度",
   "themes.SAS.light": "SAS 浅色",
-  "views.SAS.explorer": "资源管理器",
   "views.SAS.libraries": "库",
   "views.SAS.signIn": "登录",
   "views.SAS.unsupportedConnection": "您的连接不支持 SAS Extension for Visual Studio Code 中的 SAS 内容导航。您只能使用资源管理器视图访问文件。",
