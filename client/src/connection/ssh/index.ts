@@ -39,9 +39,8 @@ export interface Config extends BaseConfig {
 
 export function getSession(c: Config): Session {
   if (!sessionInstance) {
-    sessionInstance = new SSHSession();
+    sessionInstance = new SSHSession(c, new Client());
   }
-  sessionInstance.config = c;
   return sessionInstance;
 }
 export class SSHSession extends Session {
@@ -57,10 +56,10 @@ export class SSHSession extends Session {
   private _workDirectory: string;
   private _workDirectoryParser: LineParser;
 
-  constructor(c?: Config) {
+  constructor(c?: Config, client?: Client) {
     super();
     this._config = c;
-    this._conn = new Client();
+    this._conn = client;
     this._authMethods = ["publickey", "password", "keyboard-interactive"];
     this._sessionReady = false;
     this._authHandler = new AuthHandler();
@@ -96,11 +95,16 @@ export class SSHSession extends Session {
         readyTimeout: SAS_LAUNCH_TIMEOUT,
         keepaliveInterval: KEEPALIVE_INTERVAL,
         keepaliveCountMax: KEEPALIVE_UNANSWERED_THRESHOLD,
+
         debug: (msg) => {
           console.log(msg);
         },
         authHandler: this.handleSSHAuthentication,
       };
+
+      if (!this._conn) {
+        this._conn = new Client();
+      }
 
       this._conn
         .on("ready", () => {
@@ -179,6 +183,7 @@ export class SSHSession extends Session {
     this.clearAuthState();
     this._workDirectory = undefined;
     this._conn.end();
+    sessionInstance = undefined;
     updateStatusBarItem(false);
   };
 
@@ -227,7 +232,7 @@ export class SSHSession extends Session {
       if (!line) {
         return;
       }
-      const trimmedLine = line.trim();
+      const trimmedLine = line.trimEnd();
       if (trimmedLine.endsWith(LineCodes.RunEndCode)) {
         // run completed
         this.getResult();

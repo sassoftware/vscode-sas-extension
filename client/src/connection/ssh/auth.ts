@@ -48,9 +48,8 @@ class AuthPresenterImpl implements AuthPresenter {
   presentMultiplePrompts = async (prompts: Prompt[]): Promise<string[]> => {
     const answers: string[] = [];
     for (const prompt of prompts) {
-      this.presentSecurePrompt(prompt.prompt).then((answer) => {
-        answers.push(answer);
-      });
+      const answer = await this.presentSecurePrompt(prompt.prompt);
+      answers.push(answer);
     }
     return answers;
   };
