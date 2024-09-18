@@ -18,10 +18,9 @@ import { Session } from "../session";
 import { extractOutputHtmlFileName } from "../util";
 import { AuthHandler } from "./auth";
 import {
+  CONNECT_READY_TIMEOUT,
   KEEPALIVE_INTERVAL,
   KEEPALIVE_UNANSWERED_THRESHOLD,
-  SAS_LAUNCH_TIMEOUT,
-  SUPPORTED_AUTH_METHODS,
   WORK_DIR_END_TAG,
   WORK_DIR_START_TAG,
 } from "./const";
@@ -51,7 +50,6 @@ export class SSHSession extends Session {
   private _reject: ((reason?) => void) | undefined;
   private _html5FileName = "";
   private _sessionReady: boolean;
-  private _authMethods: AuthenticationType[]; //auth methods that this session can support
   private _authHandler: AuthHandler;
   private _workDirectory: string;
   private _workDirectoryParser: LineParser;
@@ -60,7 +58,6 @@ export class SSHSession extends Session {
     super();
     this._config = c;
     this._conn = client;
-    this._authMethods = ["publickey", "password", "keyboard-interactive"];
     this._sessionReady = false;
     this._authHandler = new AuthHandler();
     this._workDirectoryParser = new LineParser(
@@ -92,7 +89,7 @@ export class SSHSession extends Session {
         host: this._config.host,
         port: this._config.port,
         username: this._config.username,
-        readyTimeout: SAS_LAUNCH_TIMEOUT,
+        readyTimeout: CONNECT_READY_TIMEOUT,
         keepaliveInterval: KEEPALIVE_INTERVAL,
         keepaliveCountMax: KEEPALIVE_UNANSWERED_THRESHOLD,
 
@@ -107,6 +104,7 @@ export class SSHSession extends Session {
       }
 
       this._conn
+        .on("close", this.onConnectionClose)
         .on("ready", () => {
           this._conn.shell(this.onShell);
         })
@@ -134,6 +132,12 @@ export class SSHSession extends Session {
     }
     this._stream.write("endsas;\n");
     this._stream.close();
+  };
+
+  private onConnectionClose = () => {
+    if (!this._sessionReady) {
+      this._reject?.(new Error(l10n.t("Could not connect to the SAS server.")));
+    }
   };
 
   private onConnectionError = (err: Error) => {
@@ -206,6 +210,7 @@ export class SSHSession extends Session {
 
     return foundWorkDirectory || "";
   };
+
   private resolveSystemVars = (): void => {
     const code = `%let workDir = %sysfunc(pathname(work));
     %put ${WORK_DIR_START_TAG};
@@ -216,6 +221,7 @@ export class SSHSession extends Session {
     `;
     this._stream.write(code);
   };
+
   private onStreamData = (data: Buffer): void => {
     const output = data.toString().trimEnd();
 
@@ -293,68 +299,55 @@ export class SSHSession extends Session {
    * Resets the SSH auth state.
    */
   private clearAuthState = (): void => {
-    this._authMethods = undefined;
     this._sessionReady = false;
   };
 
   private handleSSHAuthentication: AuthHandlerMiddleware = (
     authsLeft: AuthenticationType[],
     _partialSuccess: boolean,
-    cb: NextAuthHandler,
+    nextAuth: NextAuthHandler,
   ) => {
     if (!authsLeft) {
-      cb("none"); //sending none will prompt the server to send supported auth methods
+      nextAuth("none"); //sending none will prompt the server to send supported auth methods
       return;
     }
 
-    if (!this._authMethods) {
-      this._authMethods = authsLeft;
-    }
-
-    if (this._authMethods.length === 0) {
-      //if we're out of auth methods to try, then reject with an error
+    if (authsLeft.length === 0) {
       this._reject?.(
         new Error(l10n.t("Could not authenticate to the SSH server.")),
       );
-
       this.clearAuthState();
-      //returning false will stop the auth process
-      return false;
+      return false; //returning false will stop the authentication process
     }
 
-    //otherwise, fetch the next auth method to try
-    const authMethod = this._authMethods.shift();
-
-    //make sure the auth method is supported by the server
-    if (SUPPORTED_AUTH_METHODS.includes(authMethod)) {
-      switch (authMethod) {
-        case "publickey": {
-          //user set a keyfile path in profile config
-          if (this._config.privateKeyFilePath) {
-            this._authHandler.privateKeyAuth(
-              cb,
-              this._config.privateKeyFilePath,
-              this._config.username,
-            );
-          } else if (process.env.SSH_AUTH_SOCK) {
-            this._authHandler.sshAgentAuth(cb, this._config.username);
-          }
-          break;
+    const authMethod = authsLeft.shift();
+    switch (authMethod) {
+      case "publickey": {
+        //user set a keyfile path in profile config
+        if (this._config.privateKeyFilePath) {
+          this._authHandler.privateKeyAuth(
+            nextAuth,
+            this._config.privateKeyFilePath,
+            this._config.username,
+          );
+        } else if (process.env.SSH_AUTH_SOCK) {
+          this._authHandler.sshAgentAuth(nextAuth, this._config.username);
         }
-        case "password": {
-          this._authHandler.passwordAuth(cb, this._config.username);
-          break;
-        }
-        case "keyboard-interactive": {
-          this._authHandler.keyboardInteractiveAuth(cb, this._config.username);
-          break;
-        }
-        default:
-          cb("none");
+        break;
       }
-    } else {
-      console.warn(`Server does not support ${authMethod} auth method.`);
-      cb("none");
+      case "password": {
+        this._authHandler.passwordAuth(nextAuth, this._config.username);
+        break;
+      }
+      case "keyboard-interactive": {
+        this._authHandler.keyboardInteractiveAuth(
+          nextAuth,
+          this._config.username,
+        );
+        break;
+      }
+      default:
+        nextAuth(authMethod);
     }
   };
 }

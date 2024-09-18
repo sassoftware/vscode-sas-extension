@@ -27,29 +27,46 @@ export interface AuthPresenter {
    * @param prompts an array of prompts to present to the user
    * @returns array of answers to the prompts
    */
-  presentMultiplePrompts: (prompts: Prompt[]) => Promise<string[]>;
+  presentMultiplePrompts: (
+    username: string,
+    prompts: Prompt[],
+  ) => Promise<string[]>;
 }
 
 class AuthPresenterImpl implements AuthPresenter {
   presentPasswordPrompt = async (username: string): Promise<string> => {
-    return this.presentSecurePrompt(
+    return this.presentPrompt(
       l10n.t("Enter the password for user: {username}", { username }),
       l10n.t("Password Required"),
+      true,
     );
   };
 
   presentPassphrasePrompt = async (): Promise<string> => {
-    return this.presentSecurePrompt(
+    return this.presentPrompt(
       l10n.t("Enter the passphrase for the private key"),
       l10n.t("Passphrase Required"),
+      true,
     );
   };
 
-  presentMultiplePrompts = async (prompts: Prompt[]): Promise<string[]> => {
+  presentMultiplePrompts = async (
+    username: string,
+    prompts: Prompt[],
+  ): Promise<string[]> => {
     const answers: string[] = [];
     for (const prompt of prompts) {
-      const answer = await this.presentSecurePrompt(prompt.prompt);
-      answers.push(answer);
+      const answer = await this.presentPrompt(
+        undefined,
+        l10n.t("User {username} {prompt}", {
+          username,
+          prompt: prompt.prompt,
+        }),
+        !prompt.echo,
+      );
+      if (answer) {
+        answers.push(answer);
+      }
     }
     return answers;
   };
@@ -58,17 +75,19 @@ class AuthPresenterImpl implements AuthPresenter {
    * Present a secure prompt to the user.
    * @param prompt  the prompt to display to the user
    * @param title  optional title for the prompt
+   * @param isSecureInput  whether the input should be hidden
    * @returns the user's response to the prompt
    */
-  private presentSecurePrompt = async (
+  private presentPrompt = async (
     prompt: string,
     title?: string,
+    isSecureInput?: boolean,
   ): Promise<string> => {
     return window.showInputBox({
       ignoreFocusOut: true,
       prompt: prompt,
       title: title,
-      password: true,
+      password: isSecureInput,
     });
   };
 }
@@ -119,18 +138,20 @@ export class AuthHandler {
     cb({
       type: "keyboard-interactive",
       username: username,
-      prompt: (_name, _instructions, _instructionsLang, prompts, promptCb) => {
+      prompt: (_name, _instructions, _instructionsLang, prompts, finish) => {
         // often, the server will only send a single prompt for the password.
         // however, PAM can send multiple prompts, so we need to handle that case
         this._authPresenter
-          .presentMultiplePrompts(prompts)
-          .then((answers) => promptCb(answers));
+          .presentMultiplePrompts(username, prompts)
+          .then((answers) => {
+            finish(answers);
+          });
       },
     });
   };
 
   /**
-   * Authenticate to the server using the ssh-agent. See the extension README for more information on how to set up the ssh-agent.
+   * Authenticate to the server using the ssh-agent. See the extension Docs for more information on how to set up the ssh-agent.
    * @param cb ssh2 NextHandler callback instance. This is used to pass the authentication information to the ssh server.
    * @param username the user name to use for the connection
    */
