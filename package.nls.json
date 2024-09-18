@@ -55,6 +55,7 @@
   "configuration.SAS.flowConversionMode": "Choose the conversion mode for notebooks",
   "configuration.SAS.flowConversionModeNode": "Convert each notebook cell to a node",
   "configuration.SAS.flowConversionModeSwimlane": "Convert each notebook cell to a swimlane",
+  "configuration.SAS.log.clearOnExecutionStart": "Clear SAS Log when code execution starts",
   "configuration.SAS.log.showOnExecutionFinish": "Show SAS Log when code execution is finished",
   "configuration.SAS.log.showOnExecutionStart": "Show SAS Log when code execution starts",
   "configuration.SAS.problems.log.enabled": "Show problems from SAS log",
