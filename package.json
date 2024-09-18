@@ -474,6 +474,12 @@
             "type": "boolean",
             "default": true,
             "description": "%configuration.SAS.log.showOnExecutionFinish%"
+          },
+          "SAS.log.clearOnExecutionStart": {
+            "order": 9,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.clearOnExecutionStart%"
           }
         }
       }
