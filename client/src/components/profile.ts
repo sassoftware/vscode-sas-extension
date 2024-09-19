@@ -585,7 +585,10 @@ export class ProfileConfig {
         ProfilePromptType.PrivateKeyFilePath,
         profileClone.privateKeyFilePath,
       );
-      if (profileClone.privateKeyFilePath === undefined) {
+      if (
+        profileClone.privateKeyFilePath === undefined ||
+        profileClone.privateKeyFilePath === ""
+      ) {
         return;
       }
 
@@ -806,10 +809,8 @@ const input: ProfilePromptInput = {
   },
   [ProfilePromptType.PrivateKeyFilePath]: {
     title: l10n.t("Private Key File Path (optional)"),
-    placeholder: l10n.t("Enter the private key file path"),
-    description: l10n.t(
-      "Enter the local path of the private key file. Leave empty to use SSH Agent.",
-    ),
+    placeholder: l10n.t("Enter the local private key file path"),
+    description: l10n.t("Leave empty to use SSH Agent or password."),
   },
 };
 
