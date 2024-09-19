@@ -1,6 +1,6 @@
 // Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { BaseConfig, LogLineTypeEnum } from "..";
+import { BaseConfig } from "..";
 
 export interface Config extends BaseConfig {
   host: string;
@@ -9,19 +9,6 @@ export interface Config extends BaseConfig {
   port: number;
   privateKeyFilePath: string;
 }
-
-export const LogLineTypes: LogLineTypeEnum[] = [
-  "normal",
-  "hilighted",
-  "source",
-  "title",
-  "byline",
-  "footnote",
-  "error",
-  "warning",
-  "note",
-  "message",
-];
 
 export enum LineCodes {
   ResultsFetchedCode = "--vscode-sas-extension-results-fetched--",
