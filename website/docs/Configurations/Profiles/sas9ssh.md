@@ -130,7 +130,7 @@ Host host.machine.name
 
 6. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
 
-### Connection Profile
+#### Private Key File Path
 
 A private key can optionally be specified in the `privateKeyFilePath` field in the connection profile for SAS 9.4 (remote - SSH). This is useful for auth setups where the SSH Agent cannot be used. If a private key file contains a passphrase, the user will be prompted to enter it during each Session creation for which it is used.
 
