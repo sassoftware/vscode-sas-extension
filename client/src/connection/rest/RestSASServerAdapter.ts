@@ -56,6 +56,7 @@ class RestSASServerAdapter implements ContentAdapter {
     this.sessionId = session?.sessionId();
     // This proxies all calls to the fileSystem api to reconnect
     // if we ever get a 401 (unauthorized)
+    const reconnect = async () => await this.connect();
     this.fileSystemApi = new Proxy(FileSystemApi(getApiConfig()), {
       get: function (target, property) {
         if (typeof target[property] === "function") {
@@ -68,7 +69,7 @@ class RestSASServerAdapter implements ContentAdapter {
                   throw error;
                 }
 
-                await this.connect();
+                await reconnect();
 
                 return await target(...argList);
               }
@@ -130,21 +131,16 @@ class RestSASServerAdapter implements ContentAdapter {
       fileProperties: { name: fileName, isDirectory: false },
     });
 
+    const contentItem = this.filePropertiesToContentItem(response.data);
+
     if (buffer) {
-      const etag = response.headers.etag;
-      // TODO (sas-server) This could be combined with update content most likely.
-      const filePath = this.trimComputePrefix(
-        getLink(response.data.links, "GET", "self").uri,
+      await this.updateContentOfItemAtPath(
+        this.trimComputePrefix(contentItem.uri),
+        new TextDecoder().decode(buffer),
       );
-      await this.fileSystemApi.updateFileContentOnSystem({
-        sessionId: this.sessionId,
-        filePath,
-        body: new File([buffer], response.data.name),
-        ifMatch: etag,
-      });
     }
 
-    return this.filePropertiesToContentItem(response.data);
+    return contentItem;
   }
 
   public async deleteItem(item: ContentItem): Promise<boolean> {
@@ -218,12 +214,16 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 
   public async getContentOfItem(item: ContentItem): Promise<string> {
-    throw new Error("getContentOfItem");
+    const path = this.trimComputePrefix(item.uri);
+    return await this.getContentOfItemAtPath(path);
   }
 
   public async getContentOfUri(uri: Uri): Promise<string> {
     const path = this.trimComputePrefix(getResourceId(uri));
+    return await this.getContentOfItemAtPath(path);
+  }
 
+  private async getContentOfItemAtPath(path: string) {
     const response = await this.fileSystemApi.getFileContentFromSystem(
       {
         sessionId: this.sessionId,
@@ -313,7 +313,7 @@ class RestSASServerAdapter implements ContentAdapter {
   ): Promise<boolean> {
     const currentFilePath = this.trimComputePrefix(item.uri);
     const newFilePath = this.trimComputePrefix(targetParentFolderUri);
-    const { etag } = await this.getFileInfo(currentFilePath);
+    const { etag } = await this.getFileInfo(currentFilePath, true);
     const params = {
       sessionId: this.sessionId,
       fileOrDirectoryPath: currentFilePath,
@@ -374,9 +374,15 @@ class RestSASServerAdapter implements ContentAdapter {
 
   public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
     const filePath = this.trimComputePrefix(getResourceId(uri));
-    const { etag } = await this.getFileInfo(filePath);
+    return await this.updateContentOfItemAtPath(filePath, content);
+  }
 
-    const response = await this.fileSystemApi.updateFileContentOnSystem({
+  private async updateContentOfItemAtPath(
+    filePath: string,
+    content: string,
+  ): Promise<void> {
+    const { etag } = await this.getFileInfo(filePath);
+    const data = {
       sessionId: this.sessionId,
       filePath,
       // updateFileContentOnSystem requires body to be a File type. However, the
@@ -385,7 +391,8 @@ class RestSASServerAdapter implements ContentAdapter {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       body: content as unknown as File,
       ifMatch: etag,
-    });
+    };
+    const response = await this.fileSystemApi.updateFileContentOnSystem(data);
 
     this.updateFileMetadata(filePath, response);
   }
@@ -401,6 +408,10 @@ class RestSASServerAdapter implements ContentAdapter {
       type: link.type,
       uri: link.uri,
     }));
+
+    if (!getLink(links, "GET", "self")) {
+      console.log("OH NBO");
+    }
 
     const id = getLink(links, "GET", "self").uri;
     const isRootFolder = [SERVER_FOLDER_ID, SAS_SERVER_HOME_DIRECTORY].includes(
@@ -447,7 +458,9 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 
   private trimComputePrefix(uri: string): string {
-    return uri.replace(`/compute/sessions/${this.sessionId}/files/`, "");
+    return decodeURI(
+      uri.replace(`/compute/sessions/${this.sessionId}/files/`, ""),
+    );
   }
 
   private updateFileMetadata(id: string, { headers }: AxiosResponse) {
@@ -458,8 +471,8 @@ class RestSASServerAdapter implements ContentAdapter {
     return this.fileMetadataMap[id];
   }
 
-  private async getFileInfo(path: string) {
-    if (path in this.fileMetadataMap) {
+  private async getFileInfo(path: string, forceRefresh?: boolean) {
+    if (!forceRefresh && path in this.fileMetadataMap) {
       return this.fileMetadataMap[path];
     }
 
