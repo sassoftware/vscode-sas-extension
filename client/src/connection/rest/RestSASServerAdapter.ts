@@ -54,7 +54,31 @@ class RestSASServerAdapter implements ContentAdapter {
     await session.setup(true);
 
     this.sessionId = session?.sessionId();
-    this.fileSystemApi = FileSystemApi(getApiConfig());
+    // This proxies all calls to the fileSystem api to reconnect
+    // if we ever get a 401 (unauthorized)
+    this.fileSystemApi = new Proxy(FileSystemApi(getApiConfig()), {
+      get: function (target, property) {
+        if (typeof target[property] === "function") {
+          return new Proxy(target[property], {
+            apply: async function (target, _this, argList) {
+              try {
+                return await target(...argList);
+              } catch (error) {
+                if (error.response?.status !== 401) {
+                  throw error;
+                }
+
+                await this.connect();
+
+                return await target(...argList);
+              }
+            },
+          });
+        }
+
+        return target[property];
+      },
+    });
   }
 
   public connected(): boolean {
@@ -155,18 +179,42 @@ class RestSASServerAdapter implements ContentAdapter {
       ];
     }
 
-    const { data } = await this.fileSystemApi.getDirectoryMembers({
-      sessionId: this.sessionId,
-      directoryPath: this.trimComputePrefix(
-        getLink(parentItem.links, "GET", "getDirectoryMembers").uri,
-      ).replace("/members", ""),
-    });
+    const allItems = [];
+    const limit = 100;
+    let start = 0;
+    let totalItemCount = 0;
+    do {
+      const response = await this.fileSystemApi.getDirectoryMembers({
+        sessionId: this.sessionId,
+        directoryPath: this.trimComputePrefix(
+          getLink(parentItem.links, "GET", "getDirectoryMembers").uri,
+        ).replace("/members", ""),
+        limit,
+        start,
+      });
+      totalItemCount = response.data.count;
 
-    // TODO (sas-server) We need to paginate and sort results
-    return data.items.map((childItem: FileProperties, index) => ({
-      ...this.filePropertiesToContentItem(childItem),
-      uid: `${parentItem.uid}/${index}`,
-    }));
+      allItems.push(
+        ...response.data.items.map((childItem: FileProperties, index) => ({
+          ...this.filePropertiesToContentItem(childItem),
+          uid: `${parentItem.uid}/${index + start}`,
+        })),
+      );
+
+      start += limit;
+    } while (start < totalItemCount);
+
+    return allItems.sort((a, b) => {
+      const aIsDirectory = a.fileStat?.type === FileType.Directory;
+      const bIsDirectory = b.fileStat?.type === FileType.Directory;
+      if (aIsDirectory && !bIsDirectory) {
+        return -1;
+      } else if (!aIsDirectory && bIsDirectory) {
+        return 1;
+      } else {
+        return a.name.localeCompare(b.name);
+      }
+    });
   }
 
   public async getContentOfItem(item: ContentItem): Promise<string> {
@@ -204,14 +252,15 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 
   public async getItemOfUri(uri: Uri): Promise<ContentItem> {
-    const resourceId = getResourceId(uri);
-
-    const { data } = await this.fileSystemApi.getFileorDirectoryProperties({
+    const fileOrDirectoryPath = this.trimComputePrefix(getResourceId(uri));
+    const response = await this.fileSystemApi.getFileorDirectoryProperties({
       sessionId: this.sessionId,
-      fileOrDirectoryPath: this.trimComputePrefix(resourceId),
+      fileOrDirectoryPath,
     });
 
-    return this.filePropertiesToContentItem(data);
+    this.updateFileMetadata(fileOrDirectoryPath, response);
+
+    return this.filePropertiesToContentItem(response.data);
   }
 
   public async getParentOfItem(
@@ -262,7 +311,25 @@ class RestSASServerAdapter implements ContentAdapter {
     item: ContentItem,
     targetParentFolderUri: string,
   ): Promise<boolean> {
-    throw new Error("Method not implemented.");
+    const currentFilePath = this.trimComputePrefix(item.uri);
+    const newFilePath = this.trimComputePrefix(targetParentFolderUri);
+    const { etag } = await this.getFileInfo(currentFilePath);
+    const params = {
+      sessionId: this.sessionId,
+      fileOrDirectoryPath: currentFilePath,
+      ifMatch: etag,
+      fileProperties: {
+        name: item.name,
+        path: newFilePath.split("~fs~").join("/"),
+      },
+    };
+
+    const response =
+      await this.fileSystemApi.updateFileOrDirectoryOnSystem(params);
+    delete this.fileMetadataMap[currentFilePath];
+    this.updateFileMetadata(newFilePath, response);
+
+    return !!this.filePropertiesToContentItem(response.data);
   }
 
   public async recycleItem(
@@ -285,7 +352,6 @@ class RestSASServerAdapter implements ContentAdapter {
   ): Promise<ContentItem | undefined> {
     const filePath = this.trimComputePrefix(item.uri);
 
-    const isDirectory = item.fileStat?.type === FileType.Directory;
     const parsedFilePath = filePath.split("~fs~");
     parsedFilePath.pop();
     const path = parsedFilePath.join("/");
@@ -294,7 +360,7 @@ class RestSASServerAdapter implements ContentAdapter {
       sessionId: this.sessionId,
       fileOrDirectoryPath: filePath,
       ifMatch: "",
-      fileProperties: { name: newName, path, isDirectory },
+      fileProperties: { name: newName, path },
     });
 
     this.updateFileMetadata(filePath, response);
@@ -308,7 +374,7 @@ class RestSASServerAdapter implements ContentAdapter {
 
   public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
     const filePath = this.trimComputePrefix(getResourceId(uri));
-    const { etag } = this.getFileInfo(filePath);
+    const { etag } = await this.getFileInfo(filePath);
 
     const response = await this.fileSystemApi.updateFileContentOnSystem({
       sessionId: this.sessionId,
@@ -388,12 +454,26 @@ class RestSASServerAdapter implements ContentAdapter {
     this.fileMetadataMap[id] = {
       etag: headers.etag,
     };
+
+    return this.fileMetadataMap[id];
   }
 
-  private getFileInfo(resourceId: string) {
-    if (resourceId in this.fileMetadataMap) {
-      return this.fileMetadataMap[resourceId];
+  private async getFileInfo(path: string) {
+    if (path in this.fileMetadataMap) {
+      return this.fileMetadataMap[path];
     }
+
+    // If we don't have file metadata stored, lets attempt to fetch it
+    try {
+      const response = await this.fileSystemApi.getFileorDirectoryProperties({
+        sessionId: this.sessionId,
+        fileOrDirectoryPath: path,
+      });
+      return this.updateFileMetadata(path, response);
+    } catch (e) {
+      // Intentionally blank
+    }
+
     return {
       etag: "",
     };
