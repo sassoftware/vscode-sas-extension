@@ -501,7 +501,7 @@ class ContentDataProvider
   ): Promise<void> {
     let success = false;
     let message = Messages.FileDropError;
-    if (item.flags.isInRecycleBin) {
+    if (item.flags?.isInRecycleBin) {
       message = Messages.FileDragFromTrashError;
     } else if (item.isReference) {
       message = Messages.FileDragFromFavorites;
