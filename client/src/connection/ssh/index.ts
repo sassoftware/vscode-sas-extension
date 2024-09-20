@@ -92,10 +92,6 @@ export class SSHSession extends Session {
         readyTimeout: CONNECT_READY_TIMEOUT,
         keepaliveInterval: KEEPALIVE_INTERVAL,
         keepaliveCountMax: KEEPALIVE_UNANSWERED_THRESHOLD,
-
-        debug: (msg) => {
-          console.log(msg);
-        },
         authHandler: this.handleSSHAuthentication,
       };
 
