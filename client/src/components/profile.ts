@@ -810,7 +810,7 @@ const input: ProfilePromptInput = {
   [ProfilePromptType.PrivateKeyFilePath]: {
     title: l10n.t("Private Key File Path (optional)"),
     placeholder: l10n.t("Enter the local private key file path"),
-    description: l10n.t("Leave empty to use SSH Agent or password."),
+    description: l10n.t("To use the SSH Agent or a password, leave blank."),
   },
 };
 

@@ -975,7 +975,7 @@ describe("Profiles", async function () {
         name: "Private Key File Path",
         prompt: ProfilePromptType.PrivateKeyFilePath,
         wantTitle: "Private Key File Path (optional)",
-        wantDescription: "Leave empty to use SSH Agent or password.",
+        wantDescription: "To use the SSH Agent or a password, leave blank.",
         wantPlaceHolder: "Enter the local private key file path",
       },
     ];
