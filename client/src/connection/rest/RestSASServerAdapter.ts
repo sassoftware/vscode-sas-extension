@@ -83,7 +83,7 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 
   public connected(): boolean {
-    // TODO
+    // TODO (sas-server)
     return true;
   }
 
@@ -243,12 +243,10 @@ class RestSASServerAdapter implements ContentAdapter {
     return response.data as unknown as string;
   }
 
-  public async getFolderPathForItem(item: ContentItem): Promise<string> {
-    throw new Error("getFolderPathForItem Method not implemented.");
-  }
-
-  public async getItemOfId(id: string): Promise<ContentItem> {
-    throw new Error("getItemOfId Method not implemented.");
+  public async getFolderPathForItem(): Promise<string> {
+    // This is for creating a filename statement which won't work as expected for
+    // file system files.
+    return "";
   }
 
   public async getItemOfUri(uri: Uri): Promise<ContentItem> {
@@ -266,11 +264,15 @@ class RestSASServerAdapter implements ContentAdapter {
   public async getParentOfItem(
     item: ContentItem,
   ): Promise<ContentItem | undefined> {
+    // TODO (sas-server) This is needed for converting a sas
+    // notebook to flow.
     throw new Error("getParentOfItem Method not implemented.");
   }
 
-  public getRootFolder(name: string): ContentItem | undefined {
-    throw new Error("getRootFolder Method not implemented.");
+  public getRootFolder(): ContentItem | undefined {
+    // TODO (sas-server) Re-implement this if SAS server supports
+    // recycle bin
+    return undefined;
   }
 
   public async getRootItems(): Promise<RootFolderMap> {
