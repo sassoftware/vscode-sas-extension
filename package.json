@@ -1114,7 +1114,7 @@
     "@vscode/l10n-dev": "^0.0.35",
     "chai": "^4.4.1",
     "concurrently": "^9.0.0",
-    "esbuild": "^0.23.1",
+    "esbuild": "^0.24.0",
     "cross-env": "^7.0.3",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.35.0",
