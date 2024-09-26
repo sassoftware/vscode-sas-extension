@@ -581,15 +581,13 @@ export class ProfileConfig {
         return;
       }
 
-      profileClone.privateKeyFilePath = await createInputTextBox(
+      const keyPath = await createInputTextBox(
         ProfilePromptType.PrivateKeyFilePath,
         profileClone.privateKeyFilePath,
       );
-      if (
-        profileClone.privateKeyFilePath === undefined ||
-        profileClone.privateKeyFilePath === ""
-      ) {
-        return;
+
+      if (keyPath) {
+        profileClone.privateKeyFilePath = keyPath;
       }
 
       await this.upsertProfile(name, profileClone);
