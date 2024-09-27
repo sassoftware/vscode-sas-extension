@@ -314,6 +314,10 @@ class ContentDataProvider
     return success;
   }
 
+  public canRecycleResource(item: ContentItem): boolean {
+    return this.model.canRecycleResource(item);
+  }
+
   public async recycleResource(item: ContentItem): Promise<boolean> {
     if (!(await closeFileIfOpen(item))) {
       return false;

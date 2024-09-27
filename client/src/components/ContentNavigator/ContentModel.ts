@@ -4,6 +4,7 @@ import { Uri } from "vscode";
 
 import { ALL_ROOT_FOLDERS, Messages } from "./const";
 import { ContentAdapter, ContentItem } from "./types";
+import { isItemInRecycleBin } from "./utils";
 
 export class ContentModel {
   private contentAdapter: ContentAdapter;
@@ -141,11 +142,20 @@ export class ContentModel {
     return await this.contentAdapter.getFolderPathForItem(contentItem);
   }
 
+  public canRecycleResource(item: ContentItem): boolean {
+    return (
+      this.contentAdapter.recycleItem &&
+      this.contentAdapter.restoreItem &&
+      !isItemInRecycleBin(item) &&
+      item.permission.write
+    );
+  }
+
   public async recycleResource(item: ContentItem) {
-    return await this.contentAdapter.recycleItem(item);
+    return await this.contentAdapter?.recycleItem(item);
   }
 
   public async restoreResource(item: ContentItem) {
-    return await this.contentAdapter.restoreItem(item);
+    return await this.contentAdapter?.restoreItem(item);
   }
 }

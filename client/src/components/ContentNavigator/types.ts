@@ -90,13 +90,13 @@ export interface ContentAdapter {
     item: ContentItem,
     targetParentFolderUri: string,
   ) => Promise<boolean>;
-  recycleItem: (item: ContentItem) => Promise<{ newUri?: Uri; oldUri?: Uri }>;
+  recycleItem?: (item: ContentItem) => Promise<{ newUri?: Uri; oldUri?: Uri }>;
   removeItemFromFavorites: (item: ContentItem) => Promise<boolean>;
   renameItem: (
     item: ContentItem,
     newName: string,
   ) => Promise<ContentItem | undefined>;
-  restoreItem: (item: ContentItem) => Promise<boolean>;
+  restoreItem?: (item: ContentItem) => Promise<boolean>;
   updateContentOfItem(uri: Uri, content: string): Promise<void>;
 }
 

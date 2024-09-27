@@ -1,6 +1,5 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import { FileType, Uri } from "vscode";
 
 import { AxiosResponse } from "axios";
@@ -343,16 +342,6 @@ class RestSASServerAdapter implements ContentAdapter {
     return !!this.filePropertiesToContentItem(response.data);
   }
 
-  public async recycleItem(
-    item: ContentItem,
-  ): Promise<{ newUri?: Uri; oldUri?: Uri }> {
-    await this.deleteItem(item);
-    return {
-      newUri: getSasServerUri(item, true),
-      oldUri: getSasServerUri(item),
-    };
-  }
-
   public async removeItemFromFavorites(item: ContentItem): Promise<boolean> {
     throw new Error("Method not implemented.");
   }
@@ -377,10 +366,6 @@ class RestSASServerAdapter implements ContentAdapter {
     this.updateFileMetadata(filePath, response);
 
     return this.filePropertiesToContentItem(response.data);
-  }
-
-  public async restoreItem(item: ContentItem): Promise<boolean> {
-    throw new Error("Method not implemented.");
   }
 
   public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
