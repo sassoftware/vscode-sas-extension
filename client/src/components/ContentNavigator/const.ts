@@ -16,10 +16,12 @@ export const ROOT_FOLDER = createStaticFolder(
 );
 
 export const SERVER_FOLDER_ID = "SERVER_FOLDER_ID";
+export const SERVER_ROOT_FOLDER_TYPE = "ServerRootFolder";
+export const SERVER_HOME_FOLDER_TYPE = "ServerHomeFolder";
 export const SAS_SERVER_ROOT_FOLDER = createStaticFolder(
   SERVER_FOLDER_ID,
   "SAS Server",
-  ROOT_FOLDER_TYPE,
+  SERVER_ROOT_FOLDER_TYPE,
   "/",
   "getDirectoryMembers",
 );
