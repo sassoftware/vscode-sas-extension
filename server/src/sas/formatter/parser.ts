@@ -128,7 +128,7 @@ const preserveProcs = (
     "text" in region.children[0].children[1] &&
     /^(python|lua)$/i.test(region.children[0].children[1].text) &&
     "text" in region.children[1].children[0] &&
-    /^(submit|interactive)$/i.test(region.children[1].children[0].text)
+    /^(submit|interactive|i)$/i.test(region.children[1].children[0].text)
   ) {
     current = 0;
   }
