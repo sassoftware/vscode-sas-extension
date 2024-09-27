@@ -66,21 +66,43 @@ export const extractPythonCodes = (
         end: pythonCodeEnd ?? symbol.range.end,
       })
       .split("\n");
-    let emptyLineCount = 0;
+
+    let startingEmptyLineCount = 0;
     let firstNotEmptyLine: string | undefined = undefined;
     for (const line of pythonCodeLines) {
       if (line.trim().length > 0 && !line.trim().startsWith("#")) {
         firstNotEmptyLine = line;
         break;
       } else {
-        emptyLineCount++;
+        startingEmptyLineCount++;
       }
     }
-    if (emptyLineCount > 0) {
-      pythonCodeLines.splice(0, emptyLineCount);
-      pythonCodeStart.line += emptyLineCount;
+    if (startingEmptyLineCount > 0) {
+      pythonCodeLines.splice(0, startingEmptyLineCount);
+      pythonCodeStart.line += startingEmptyLineCount;
       pythonCodeStart.character = 0;
     }
+
+    let tailingEmptyLineCount = 0;
+    for (let i = pythonCodeLines.length - 1; i >= 0; i--) {
+      if (
+        pythonCodeLines[i].trim().length === 0 ||
+        pythonCodeLines[i].trim().startsWith("#")
+      ) {
+        tailingEmptyLineCount++;
+      } else {
+        break;
+      }
+    }
+    if (tailingEmptyLineCount > 0) {
+      pythonCodeLines.splice(pythonCodeLines.length - tailingEmptyLineCount);
+      if (pythonCodeEnd) {
+        pythonCodeEnd.line -= startingEmptyLineCount;
+        pythonCodeEnd.character =
+          pythonCodeLines[pythonCodeLines.length - 1].length;
+      }
+    }
+
     const shouldAddDummyBlock: boolean =
       !!firstNotEmptyLine && [" ", "\t"].includes(firstNotEmptyLine[0]);
     const lineGap = pythonCodeStart.line - pythonDocLines.length;

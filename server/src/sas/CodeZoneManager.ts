@@ -320,8 +320,7 @@ export class CodeZoneManager {
       text = "",
       col = 0,
       type: Token["type"] = "text",
-      i = 0,
-      token = null;
+      i = 0;
     const lineCount = this._model.getLineCount();
 
     if (context.line >= lineCount) {
@@ -395,7 +394,7 @@ export class CodeZoneManager {
     } while (/^\s*$/.test(text));
 
     if (Lexer.isComment[type] || Lexer.isLiteral[type]) {
-      token = this._token(context.line, col - 1)!;
+      const token = this._token(context.line, col)!;
       if (!token) {
         return null;
       }
