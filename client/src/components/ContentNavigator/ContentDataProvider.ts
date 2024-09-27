@@ -45,6 +45,8 @@ import {
   FAVORITES_FOLDER_TYPE,
   Messages,
   ROOT_FOLDER_TYPE,
+  SERVER_HOME_FOLDER_TYPE,
+  SERVER_ROOT_FOLDER_TYPE,
   TRASH_FOLDER_TYPE,
 } from "./const";
 import {
@@ -642,6 +644,12 @@ class ContentDataProvider
         case FAVORITES_FOLDER_TYPE:
           icon = "favoritesFolder";
           break;
+        case SERVER_HOME_FOLDER_TYPE:
+          icon = "userWorkspace";
+          break;
+        case SERVER_ROOT_FOLDER_TYPE:
+          icon = "server";
+          break;
         default:
           icon = "folder";
           break;
@@ -652,6 +660,7 @@ class ContentDataProvider
         icon = "sasProgramFile";
       }
     }
+
     return icon !== ""
       ? {
           dark: Uri.joinPath(this.extensionUri, `icons/dark/${icon}Dark.svg`),
