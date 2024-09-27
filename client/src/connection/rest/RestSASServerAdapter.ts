@@ -264,9 +264,15 @@ class RestSASServerAdapter implements ContentAdapter {
   public async getParentOfItem(
     item: ContentItem,
   ): Promise<ContentItem | undefined> {
-    // TODO (sas-server) This is needed for converting a sas
-    // notebook to flow.
-    throw new Error("getParentOfItem Method not implemented.");
+    const parentPathPieces = this.trimComputePrefix(item.uri).split("~fs~");
+    parentPathPieces.pop();
+    const fileOrDirectoryPath = parentPathPieces.join("~fs~");
+    const response = await this.fileSystemApi.getFileorDirectoryProperties({
+      sessionId: this.sessionId,
+      fileOrDirectoryPath,
+    });
+
+    return this.filePropertiesToContentItem(response.data);
   }
 
   public getRootFolder(): ContentItem | undefined {
