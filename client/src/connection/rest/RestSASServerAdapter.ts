@@ -10,6 +10,7 @@ import {
   SAS_SERVER_ROOT_FOLDER,
   SAS_SERVER_ROOT_FOLDERS,
   SERVER_FOLDER_ID,
+  SERVER_HOME_FOLDER_TYPE,
 } from "../../components/ContentNavigator/const";
 import {
   AddChildItemProperties,
@@ -169,7 +170,7 @@ class RestSASServerAdapter implements ContentAdapter {
           createStaticFolder(
             SAS_SERVER_HOME_DIRECTORY,
             "Home",
-            "userRoot",
+            SERVER_HOME_FOLDER_TYPE,
             `/compute/sessions/${this.sessionId}/files/~fs~/members`,
             "getDirectoryMembers",
           ),
@@ -278,8 +279,6 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 
   public getRootFolder(): ContentItem | undefined {
-    // TODO (sas-server) Re-implement this if SAS server supports
-    // recycle bin
     return undefined;
   }
 
@@ -394,7 +393,7 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 
   private filePropertiesToContentItem(
-    fileProperties: FileProperties,
+    fileProperties: FileProperties & { type?: string },
     flags?: ContentItem["flags"],
   ): ContentItem {
     const links = fileProperties.links.map((link) => ({
@@ -404,10 +403,6 @@ class RestSASServerAdapter implements ContentAdapter {
       type: link.type,
       uri: link.uri,
     }));
-
-    if (!getLink(links, "GET", "self")) {
-      console.log("OH NBO");
-    }
 
     const id = getLink(links, "GET", "self").uri;
     const isRootFolder = [SERVER_FOLDER_ID, SAS_SERVER_HOME_DIRECTORY].includes(
@@ -428,6 +423,7 @@ class RestSASServerAdapter implements ContentAdapter {
           !!getLink(links, "POST", "createFile"),
       },
       flags,
+      type: fileProperties.type || "",
     };
 
     const typeName = getTypeName(item);
