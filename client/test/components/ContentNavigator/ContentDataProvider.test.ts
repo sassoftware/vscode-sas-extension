@@ -26,7 +26,7 @@ import {
   ContentSourceType,
 } from "../../../src/components/ContentNavigator/types";
 import SASContentAdapter from "../../../src/connection/rest/SASContentAdapter";
-import { getUri } from "../../../src/connection/rest/util";
+import { getSasContentUri as getUri } from "../../../src/connection/rest/util";
 import { getUri as getTestUri } from "../../utils";
 
 let stub;
