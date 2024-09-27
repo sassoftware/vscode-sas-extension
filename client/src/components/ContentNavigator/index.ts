@@ -29,7 +29,7 @@ import {
   ContentSourceType,
   FileManipulationEvent,
 } from "./types";
-import { isContainer as getIsContainer, isItemInRecycleBin } from "./utils";
+import { isContainer as getIsContainer } from "./utils";
 
 const fileValidator = (value: string): string | null =>
   /^([^/<>;\\{}?#]+)\.\w+$/.test(
@@ -93,7 +93,7 @@ class ContentNavigator implements SubscriptionProvider {
             async (resource: ContentItem) => {
               const isContainer = getIsContainer(resource);
               const moveToRecycleBin =
-                !isItemInRecycleBin(resource) && resource.permission.write;
+                this.contentDataProvider.canRecycleResource(resource);
               if (
                 !moveToRecycleBin &&
                 !(await window.showWarningMessage(
