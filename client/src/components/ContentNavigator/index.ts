@@ -281,6 +281,7 @@ class ContentNavigator implements SubscriptionProvider {
             resource,
             this.contentModel,
             this.viyaEndpoint(),
+            this.sourceType,
           );
 
           const inputName = notebookToFlowConverter.inputName;
