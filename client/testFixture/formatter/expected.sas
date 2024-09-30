@@ -167,3 +167,11 @@ submit;
    end
 endsubmit;
 run;
+
+proc python;
+/* comment */
+i;
+print('hello')
+endinteractive;
+  /* comment */
+run;
