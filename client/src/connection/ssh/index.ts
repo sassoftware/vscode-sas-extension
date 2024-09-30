@@ -131,9 +131,13 @@ export class SSHSession extends Session {
   };
 
   private onConnectionClose = () => {
-    if (!this._sessionReady) {
-      this._reject?.(new Error(l10n.t("Could not connect to the SAS server.")));
-    }
+    this._stream = undefined;
+    this._resolve = undefined;
+    this._reject = undefined;
+    this._html5FileName = "";
+    this._workDirectory = undefined;
+    this.clearAuthState();
+    sessionInstance = undefined;
   };
 
   private onConnectionError = (err: Error) => {
@@ -176,14 +180,7 @@ export class SSHSession extends Session {
   };
 
   private onStreamClose = (): void => {
-    this._stream = undefined;
-    this._resolve = undefined;
-    this._reject = undefined;
-    this._html5FileName = "";
-    this.clearAuthState();
-    this._workDirectory = undefined;
     this._conn.end();
-    sessionInstance = undefined;
     updateStatusBarItem(false);
   };
 
