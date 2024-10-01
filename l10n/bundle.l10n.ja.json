@@ -79,6 +79,7 @@
   "SAS 9 Server": "SAS 9 Server",
   "SAS Compute Context": "SAS 計算コンテキスト",
   "SAS Log": "SAS ログ",
+  "SAS Log: {name}": "SAS Log: {name}",
   "SAS Profile": "SAS プロファイル",
   "SAS Program": "SAS プログラム",
   "SAS Server Username": "SAS Server ユーザー名",

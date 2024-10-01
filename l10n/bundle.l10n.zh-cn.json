@@ -79,6 +79,7 @@
   "SAS 9 Server": "SAS 9 服务器",
   "SAS Compute Context": "SAS计算上下文",
   "SAS Log": "SAS 日志",
+  "SAS Log: {name}": "SAS Log: {name}",
   "SAS Profile": "SAS 连接配置文件",
   "SAS Program": "SAS 程序",
   "SAS Server Username": "SAS服务器用户名",
