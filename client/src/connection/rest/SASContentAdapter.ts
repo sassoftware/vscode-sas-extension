@@ -187,15 +187,15 @@ class SASContentAdapter implements ContentAdapter {
   public async moveItem(
     item: ContentItem,
     parentFolderUri: string,
-  ): Promise<boolean> {
+  ): Promise<Uri | undefined> {
     const newItemData = { ...item, parentFolderUri };
     const updateLink = getLink(item.links, "PUT", "update");
     try {
-      await this.connection.put(updateLink.uri, newItemData);
+      const response = await this.connection.put(updateLink.uri, newItemData);
+      return this.enrichWithDataProviderProperties(response.data).vscUri;
     } catch (error) {
-      return false;
+      return;
     }
-    return true;
   }
 
   private async generatedMembersUrlForParentItem(
