@@ -49,6 +49,13 @@ class RestSASServerAdapter implements ContentAdapter {
     this.rootFolders = {};
     this.fileMetadataMap = {};
   }
+  addChildItem: (
+    childItemUri: string | undefined,
+    parentItemUri: string | undefined,
+    properties: AddChildItemProperties,
+  ) => Promise<boolean>;
+  recycleItem?: (item: ContentItem) => Promise<{ newUri?: Uri; oldUri?: Uri }>;
+  restoreItem?: (item: ContentItem) => Promise<boolean>;
 
   public async connect(): Promise<void> {
     const session = getSession();
@@ -86,8 +93,7 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 
   public connected(): boolean {
-    // TODO (sas-server)
-    return true;
+    return !!this.sessionId;
   }
 
   public async setup(): Promise<void> {
@@ -98,16 +104,14 @@ class RestSASServerAdapter implements ContentAdapter {
     await this.connect();
   }
 
-  public async addChildItem(
-    childItemUri: string | undefined,
-    parentItemUri: string | undefined,
-    properties: AddChildItemProperties,
-  ): Promise<boolean> {
+  // TODO #417 Implement favorites
+  public async addItemToFavorites(): Promise<boolean> {
     throw new Error("Method not implemented.");
   }
 
-  public async addItemToFavorites(item: ContentItem): Promise<boolean> {
-    throw new Error("fds Method not implemented.");
+  // TODO #417 Implement favorites
+  public async removeItemFromFavorites(): Promise<boolean> {
+    throw new Error("Method not implemented.");
   }
 
   public async createNewFolder(
@@ -278,6 +282,7 @@ class RestSASServerAdapter implements ContentAdapter {
     return this.filePropertiesToContentItem(response.data);
   }
 
+  // TODO #417 Implement as part of favorites
   public getRootFolder(): ContentItem | undefined {
     return undefined;
   }
@@ -308,6 +313,7 @@ class RestSASServerAdapter implements ContentAdapter {
     }
 
     return item.vscUri;
+    // TODO #417 Implement favorites
     // // If we're attempting to open a favorite, open the underlying file instead.
     // try {
     //   return (await this.getItemOfId(item.uri)).vscUri;
@@ -339,10 +345,6 @@ class RestSASServerAdapter implements ContentAdapter {
     this.updateFileMetadata(newFilePath, response);
 
     return !!this.filePropertiesToContentItem(response.data);
-  }
-
-  public async removeItemFromFavorites(item: ContentItem): Promise<boolean> {
-    throw new Error("Method not implemented.");
   }
 
   public async renameItem(

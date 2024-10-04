@@ -50,11 +50,7 @@ export const SAS_CONTENT_ROOT_FOLDERS = [
   "@myRecycleBin",
 ];
 
-export const SAS_SERVER_ROOT_FOLDERS = [
-  // "@myFavorites",
-  "@sasServerRoot",
-  // "@myRecycleBin",
-];
+export const SAS_SERVER_ROOT_FOLDERS = ["@sasServerRoot"];
 
 export const ALL_ROOT_FOLDERS = [
   ...SAS_CONTENT_ROOT_FOLDERS,
