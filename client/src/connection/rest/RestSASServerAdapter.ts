@@ -325,7 +325,7 @@ class RestSASServerAdapter implements ContentAdapter {
   public async moveItem(
     item: ContentItem,
     targetParentFolderUri: string,
-  ): Promise<boolean> {
+  ): Promise<Uri | undefined> {
     const currentFilePath = this.trimComputePrefix(item.uri);
     const newFilePath = this.trimComputePrefix(targetParentFolderUri);
     const { etag } = await this.getFileInfo(currentFilePath, true);
@@ -344,7 +344,7 @@ class RestSASServerAdapter implements ContentAdapter {
     delete this.fileMetadataMap[currentFilePath];
     this.updateFileMetadata(newFilePath, response);
 
-    return !!this.filePropertiesToContentItem(response.data);
+    return this.filePropertiesToContentItem(response.data).vscUri;
   }
 
   public async renameItem(
