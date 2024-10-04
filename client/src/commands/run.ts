@@ -12,10 +12,13 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
+import { basename, extname } from "path";
+
 import { showResult } from "../components/ResultPanel";
 import {
   appendExecutionLogFn,
   appendSessionLogFn,
+  setFileName,
 } from "../components/logViewer";
 import { sasDiagnostic } from "../components/logViewer/sasDiagnostics";
 import { SASCodeDocument } from "../components/utils/SASCodeDocument";
@@ -111,6 +114,12 @@ async function runCode(selected?: boolean, uri?: Uri) {
   const session = getSession();
   session.onExecutionLogFn = onExecutionLogFn;
   session.onSessionLogFn = appendSessionLogFn;
+
+  const fileName = basename(
+    codeDoc.getFileName(),
+    extname(codeDoc.getFileName()),
+  );
+  setFileName(fileName);
 
   await session.setup();
 
@@ -221,6 +230,12 @@ async function _runTask(
     appendExecutionLogFn,
   );
   session.onSessionLogFn = appendSessionLogFn;
+
+  const fileName = basename(
+    codeDoc.getFileName(),
+    extname(codeDoc.getFileName()),
+  );
+  setFileName(fileName);
 
   messageEmitter.fire(`${l10n.t("Connecting to SAS session...")}\r\n`);
   !cancelled && (await session.setup(true));

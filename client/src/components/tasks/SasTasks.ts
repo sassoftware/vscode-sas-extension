@@ -47,6 +47,10 @@ export async function runSasFileTask(
 
   const textDocument = await getTextDocumentFromFile(file);
   const parameters = getCodeDocumentConstructionParameters(textDocument, {
+    selections:
+      file === undefined || file.trim() === ""
+        ? window.activeTextEditor?.selections
+        : undefined,
     preamble,
     postamble,
   });

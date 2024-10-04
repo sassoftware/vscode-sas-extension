@@ -9,12 +9,9 @@ import {
   isSourceCodeLineAfterLineWrapping,
 } from "./ProblemProcessor";
 
-export function parseLog(
-  logs: LogLine[],
-  logStartFlag: string,
-): Problem[] | null {
+export function parseLog(logs: LogLine[], logStartFlag: string): Problem[] {
   if (logs.length === 0 || logStartFlag.trim() === "") {
-    return null;
+    return [];
   }
 
   // logs cleaning

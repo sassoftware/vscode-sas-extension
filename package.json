@@ -474,6 +474,12 @@
             "type": "boolean",
             "default": true,
             "description": "%configuration.SAS.log.showOnExecutionFinish%"
+          },
+          "SAS.log.clearOnExecutionStart": {
+            "order": 9,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.clearOnExecutionStart%"
           }
         }
       }
@@ -733,6 +739,11 @@
         "category": "SAS Notebook"
       },
       {
+        "command": "SAS.notebook.export",
+        "title": "%commands.SAS.notebook.export%",
+        "category": "SAS Notebook"
+      },
+      {
         "command": "SAS.file.new",
         "shortTitle": "%commands.SAS.file.new.short%",
         "title": "%commands.SAS.file.new%",
@@ -967,6 +978,12 @@
           "group": "navigation@3"
         }
       ],
+      "notebook/toolbar": [
+        {
+          "when": "notebookType == 'sas-notebook'",
+          "command": "SAS.notebook.export"
+        }
+      ],
       "commandPalette": [
         {
           "when": "editorLangId == sas && !SAS.hideRunMenuItem",
@@ -1059,6 +1076,10 @@
         {
           "when": "false",
           "command": "SAS.saveHTML"
+        },
+        {
+          "when": "false",
+          "command": "SAS.notebook.export"
         }
       ],
       "file/newFile": [
@@ -1249,8 +1270,8 @@
     "@typescript-eslint/parser": "^7.16.0",
     "@vscode/l10n-dev": "^0.0.35",
     "chai": "^4.4.1",
-    "concurrently": "^8.2.2",
-    "esbuild": "^0.23.1",
+    "concurrently": "^9.0.0",
+    "esbuild": "^0.24.0",
     "cross-env": "^7.0.3",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.35.0",
@@ -1260,7 +1281,7 @@
     "papaparse": "^5.4.1",
     "path-browserify": "^1.0.1",
     "prettier": "^3.3.3",
-    "sinon": "^18.0.0",
+    "sinon": "^19.0.2",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "ts-sinon": "^2.0.2",
