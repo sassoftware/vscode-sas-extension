@@ -34,7 +34,6 @@ export class ContentModel {
       return Object.entries(await this.contentAdapter.getRootItems())
         .sort(
           // sort the delegate folders as the order in the supportedDelegateFolders
-          // TODO MEEEE!
           (a, b) =>
             ALL_ROOT_FOLDERS.indexOf(a[0]) - ALL_ROOT_FOLDERS.indexOf(b[0]),
         )
