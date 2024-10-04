@@ -35,6 +35,7 @@ import {
 } from "./util";
 
 const SAS_SERVER_HOME_DIRECTORY = "SAS_SERVER_HOME_DIRECTORY";
+const SAS_FILE_SEPARATOR = "~fs~";
 
 class RestSASServerAdapter implements ContentAdapter {
   protected baseUrl: string;
@@ -93,7 +94,7 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 
   public connected(): boolean {
-    return !!this.sessionId;
+    return true;
   }
 
   public async setup(): Promise<void> {
@@ -271,9 +272,9 @@ class RestSASServerAdapter implements ContentAdapter {
   public async getParentOfItem(
     item: ContentItem,
   ): Promise<ContentItem | undefined> {
-    const parentPathPieces = this.trimComputePrefix(item.uri).split("~fs~");
-    parentPathPieces.pop();
-    const fileOrDirectoryPath = parentPathPieces.join("~fs~");
+    const fileOrDirectoryPath = this.getParentPathOfUri(
+      this.trimComputePrefix(item.uri),
+    );
     const response = await this.fileSystemApi.getFileorDirectoryProperties({
       sessionId: this.sessionId,
       fileOrDirectoryPath,
@@ -335,7 +336,7 @@ class RestSASServerAdapter implements ContentAdapter {
       ifMatch: etag,
       fileProperties: {
         name: item.name,
-        path: newFilePath.split("~fs~").join("/"),
+        path: newFilePath.split(SAS_FILE_SEPARATOR).join("/"),
       },
     };
 
@@ -353,7 +354,7 @@ class RestSASServerAdapter implements ContentAdapter {
   ): Promise<ContentItem | undefined> {
     const filePath = this.trimComputePrefix(item.uri);
 
-    const parsedFilePath = filePath.split("~fs~");
+    const parsedFilePath = filePath.split(SAS_FILE_SEPARATOR);
     parsedFilePath.pop();
     const path = parsedFilePath.join("/");
 
@@ -394,6 +395,12 @@ class RestSASServerAdapter implements ContentAdapter {
     this.updateFileMetadata(filePath, response);
   }
 
+  private getParentPathOfUri(uri: string) {
+    const uriPieces = uri.split(SAS_FILE_SEPARATOR);
+    uriPieces.pop();
+    return uriPieces.join(SAS_FILE_SEPARATOR);
+  }
+
   private filePropertiesToContentItem(
     fileProperties: FileProperties & { type?: string },
     flags?: ContentItem["flags"],
@@ -426,6 +433,7 @@ class RestSASServerAdapter implements ContentAdapter {
       },
       flags,
       type: fileProperties.type || "",
+      parentFolderUri: this.getParentPathOfUri(id),
     };
 
     const typeName = getTypeName(item);
