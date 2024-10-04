@@ -89,7 +89,7 @@ export interface ContentAdapter {
   moveItem: (
     item: ContentItem,
     targetParentFolderUri: string,
-  ) => Promise<boolean>;
+  ) => Promise<Uri | undefined>;
   recycleItem?: (item: ContentItem) => Promise<{ newUri?: Uri; oldUri?: Uri }>;
   removeItemFromFavorites: (item: ContentItem) => Promise<boolean>;
   renameItem: (

@@ -14,9 +14,6 @@ import {
   FileType,
   Position,
   ProviderResult,
-  Tab,
-  TabInputNotebook,
-  TabInputText,
   TextDocument,
   TextDocumentContentProvider,
   ThemeIcon,
@@ -54,7 +51,11 @@ import {
   ContentNavigatorConfig,
   FileManipulationEvent,
 } from "./types";
-import { getFileStatement, isContainer as getIsContainer } from "./utils";
+import {
+  getEditorTabForItem,
+  getFileStatement,
+  isContainer as getIsContainer,
+} from "./utils";
 
 class ContentDataProvider
   implements
@@ -501,6 +502,27 @@ class ContentDataProvider
     return this.getChildren(selection);
   }
 
+  private async moveItem(
+    item: ContentItem,
+    targetUri: string,
+  ): Promise<boolean> {
+    if (!targetUri) {
+      return false;
+    }
+
+    const closing = closeFileIfOpen(item);
+    if (!(await closing)) {
+      return false;
+    }
+
+    const newUri = await this.model.moveTo(item, targetUri);
+    if (closing !== true) {
+      commands.executeCommand("vscode.open", newUri);
+    }
+
+    return !!newUri;
+  }
+
   private async handleContentItemDrop(
     target: ContentItem,
     item: ContentItem,
@@ -517,10 +539,7 @@ class ContentDataProvider
       success = await this.addToMyFavorites(item);
     } else {
       const targetUri = target.resourceId;
-      if (targetUri) {
-        success = await this.model.moveTo(item, targetUri);
-      }
-
+      success = await this.moveItem(item, targetUri);
       if (success) {
         this.refresh();
       }
@@ -675,14 +694,7 @@ class ContentDataProvider
 export default ContentDataProvider;
 
 const closeFileIfOpen = (item: ContentItem) => {
-  const fileUri = item.vscUri;
-  const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
-  const tab = tabs.find(
-    (tab) =>
-      (tab.input instanceof TabInputText ||
-        tab.input instanceof TabInputNotebook) &&
-      tab.input.uri.query === fileUri.query, // compare the file id
-  );
+  const tab = getEditorTabForItem(item);
   if (tab) {
     return window.tabGroups.close(tab);
   }

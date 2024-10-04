@@ -129,7 +129,7 @@ export class ContentModel {
   public async moveTo(
     item: ContentItem,
     targetParentFolderUri: string,
-  ): Promise<boolean> {
+  ): Promise<boolean | Uri> {
     return await this.contentAdapter.moveItem(item, targetParentFolderUri);
   }
 
