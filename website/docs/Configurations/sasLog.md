@@ -37,3 +37,9 @@ Example
   }
 }
 ```
+
+:::tip
+
+To view the SAS log as a text file, click the `...` icon on the top right of the OUTPUT panel, and select `Open Output in Editor`.
+
+:::
