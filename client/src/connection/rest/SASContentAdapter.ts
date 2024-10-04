@@ -570,7 +570,7 @@ class SASContentAdapter implements ContentAdapter {
     }
 
     const success = await this.moveItem(item, recycleBinUri);
-    return recycleItemResponse(success);
+    return recycleItemResponse(!!success);
 
     function recycleItemResponse(success: boolean) {
       if (!success) {
@@ -589,7 +589,7 @@ class SASContentAdapter implements ContentAdapter {
     if (!previousParentUri) {
       return false;
     }
-    return await this.moveItem(item, previousParentUri);
+    return !!(await this.moveItem(item, previousParentUri));
   }
 
   private async updateAccessToken(): Promise<void> {
