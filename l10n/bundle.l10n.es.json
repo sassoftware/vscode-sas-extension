@@ -79,7 +79,7 @@
   "SAS 9 Server": "Servidor SSH SAS 9",
   "SAS Compute Context": "Contexto de cálculo SAS",
   "SAS Log": "Log SAS",
-  "SAS Log: {name}": "SAS Log: {name}",
+  "SAS Log: {name}": "Log SAS: {nombre}",
   "SAS Profile": "Perfil SAS",
   "SAS Program": "Programa SAS",
   "SAS Server Username": "Nombre de usuario del servidor SAS",
