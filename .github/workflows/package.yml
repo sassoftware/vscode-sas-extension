@@ -1,4 +1,4 @@
-name: Package VSIX
+name: Package and Publish VSIX
 
 on:
   workflow_dispatch:
@@ -21,3 +21,21 @@ jobs:
         with:
           path: ./*.vsix
           retention-days: 5
+
+      - uses: johnnybenson/package-json-versioned-action@v1.0.9
+        id: package-json
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: echo "vsixPath=sas-lsp-${{ steps.package-json.outputs.version }}.vsix" >> "$GITHUB_OUTPUT"
+        id: vsixPath
+        if: steps.package-json.outputs.has-updated == 'true'
+      - run: npx @vscode/vsce publish -i ${{ steps.vsixPath.outputs.vsixPath }}
+        if: steps.package-json.outputs.has-updated == 'true'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      - run: npx ovsx publish ${{ steps.vsixPath.outputs.vsixPath }} -p ${{ secrets.OVSX_PAT }}
+        if: steps.package-json.outputs.has-updated == 'true'
+      - run: |
+          git tag -f v${{ steps.package-json.outputs.version }}
+          git push -f origin v${{ steps.package-json.outputs.version }}
+        if: steps.package-json.outputs.has-updated == 'true'

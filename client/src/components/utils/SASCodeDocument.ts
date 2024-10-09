@@ -38,6 +38,10 @@ export class SASCodeDocument {
     return this.parameters.uri;
   }
 
+  public getFileName(): string {
+    return this.parameters.fileName;
+  }
+
   public wrappedCodeLineAt(lineNumber: number) {
     return this.getWrappedCode().split("\n")[lineNumber];
   }

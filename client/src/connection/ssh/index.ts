@@ -192,7 +192,7 @@ export class SSHSession extends Session {
         // run completed
         this.getResult();
       }
-      if (!(line.endsWith("?") || line.endsWith(">"))) {
+      if (!(line.trimEnd().endsWith("?") || line.endsWith(">"))) {
         this.html5FileName = extractOutputHtmlFileName(
           line,
           this.html5FileName,
