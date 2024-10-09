@@ -10,6 +10,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Required VS Code version 1.89 at minimum
 
+## [v1.11.0] - 2024-10-09
+
+### Added
+
+- Export sas notebook to sas file ([#1157](https://github.com/sassoftware/vscode-sas-extension/pull/1157))
+- Clear log on execution start (with new setting `SAS.log.clearOnExecutionStart`) ([#1168](https://github.com/sassoftware/vscode-sas-extension/pull/1168))
+
+### Fixed
+
+- "Run sas file" tasks do not respect selected code ([#1177](https://github.com/sassoftware/vscode-sas-extension/issues/1177))
+- Use builtin default System Option MEMSIZE value rather than hardcoding to 0 ([#1189](https://github.com/sassoftware/vscode-sas-extension/issues/1189))
+- Log contents are not rendered properly if trying to switch profile from SSH to other connection types ([#1070](https://github.com/sassoftware/vscode-sas-extension/issues/1070))
+- Try to run a SAS file having no contents will lead to console error ([#1201](https://github.com/sassoftware/vscode-sas-extension/issues/1201))
+- Formatting proc FEDSQL deletes the content of the proc ([#1202](https://github.com/sassoftware/vscode-sas-extension/issues/1202))
+
 ## [v1.10.2] - 2024-08-30
 
 ### Fixed
