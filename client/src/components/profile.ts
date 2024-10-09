@@ -20,12 +20,14 @@ enum ConnectionOptions {
   SAS9COM = "SAS 9.4 (local)",
   SAS9IOM = "SAS 9.4 (remote - IOM)",
   SAS9SSH = "SAS 9.4 (remote - SSH)",
+  SAS9SASPY = "SAS 9.4 (SASPy)",
   SASViya = "SAS Viya",
 }
 
 const CONNECTION_PICK_OPTS: string[] = [
   ConnectionOptions.SASViya,
   ConnectionOptions.SAS9SSH,
+  ConnectionOptions.SAS9SASPY,
   ConnectionOptions.SAS9IOM,
   ConnectionOptions.SAS9COM,
 ];
@@ -60,6 +62,7 @@ export enum ConnectionType {
   IOM = "iom",
   Rest = "rest",
   SSH = "ssh",
+  SASPY = "saspy",
 }
 
 /**
@@ -90,6 +93,12 @@ export interface SSHProfile extends BaseProfile {
   username: string;
 }
 
+export interface SASPYProfile extends BaseProfile {
+  connectionType: ConnectionType.SASPY;
+  cfgname: string;
+  pythonpath: string;
+}
+
 export interface COMProfile extends BaseProfile {
   connectionType: ConnectionType.COM;
   host: string;
@@ -102,7 +111,12 @@ export interface IOMProfile extends BaseProfile {
   port: number;
 }
 
-export type Profile = ViyaProfile | SSHProfile | COMProfile | IOMProfile;
+export type Profile =
+  | ViyaProfile
+  | SSHProfile
+  | SASPYProfile
+  | COMProfile
+  | IOMProfile;
 
 export enum AutoExecType {
   File = "file",
@@ -468,6 +482,15 @@ export class ProfileConfig {
         pv.error = l10n.t("Missing username in active profile.");
         return pv;
       }
+    } else if (profile.connectionType === ConnectionType.SASPY) {
+      // if (!profile.cfgname) {
+      //   pv.error = l10n.t("Missing cfgname in active profile.");
+      //   return pv;
+      // }
+      // if (!profile.pythonpath) {
+      //   pv.error = l10n.t("Missing Python path in active profile.");
+      //   return pv;
+      // }
     }
 
     pv.profile = profileDetail.profile;
@@ -581,6 +604,10 @@ export class ProfileConfig {
       }
 
       await this.upsertProfile(name, profileClone);
+    } else if (profileClone.connectionType === ConnectionType.SASPY) {
+      profileClone.cfgname = "";
+      // profileClone.sasOptions = [];
+      await this.upsertProfile(name, profileClone);
     } else if (profileClone.connectionType === ConnectionType.COM) {
       profileClone.sasOptions = [];
       profileClone.host = "localhost"; //once remote support rolls out this should be set via prompting
@@ -657,6 +684,8 @@ export enum ProfilePromptType {
   SASPath,
   Port,
   Username,
+  Cfgname,
+  PYTHONpath,
 }
 
 /**
@@ -794,6 +823,16 @@ const input: ProfilePromptInput = {
     placeholder: l10n.t("Enter your username"),
     description: l10n.t("Enter your SAS server username."),
   },
+  [ProfilePromptType.Cfgname]: {
+    title: l10n.t("SAS Server Cfgname"),
+    placeholder: l10n.t("Enter your cfgname"),
+    description: l10n.t("Enter your SAS server cfgname."),
+  },
+  [ProfilePromptType.PYTHONpath]: {
+    title: l10n.t("Server Path"),
+    placeholder: l10n.t("Enter the server path"),
+    description: l10n.t("Enter the server path of the PYTHON Executable."),
+  },
 };
 
 /**
@@ -812,6 +851,8 @@ function mapQuickPickToEnum(connectionTypePickInput: string): ConnectionType {
       return ConnectionType.Rest;
     case ConnectionOptions.SAS9SSH:
       return ConnectionType.SSH;
+    case ConnectionOptions.SAS9SASPY:
+      return ConnectionType.SASPY;
     case ConnectionOptions.SAS9COM:
       return ConnectionType.COM;
     case ConnectionOptions.SAS9IOM:
