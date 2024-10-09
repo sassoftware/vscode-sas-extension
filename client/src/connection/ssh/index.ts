@@ -2,15 +2,30 @@
 // SPDX-License-Identifier: Apache-2.0
 import { l10n } from "vscode";
 
-import { Client, ClientChannel, ConnectConfig } from "ssh2";
+import {
+  AuthHandlerMiddleware,
+  AuthenticationType,
+  Client,
+  ClientChannel,
+  ConnectConfig,
+  NextAuthHandler,
+} from "ssh2";
 
 import { BaseConfig, RunResult } from "..";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
+import { LineParser } from "../LineParser";
 import { Session } from "../session";
 import { extractOutputHtmlFileName } from "../util";
+import { AuthHandler } from "./auth";
+import {
+  CONNECT_READY_TIMEOUT,
+  KEEPALIVE_INTERVAL,
+  KEEPALIVE_UNANSWERED_THRESHOLD,
+  WORK_DIR_END_TAG,
+  WORK_DIR_START_TAG,
+} from "./const";
+import { LineCodes } from "./types";
 
-const endCode = "--vscode-sas-extension-submit-end--";
-const sasLaunchTimeout = 10000;
 let sessionInstance: SSHSession;
 
 export interface Config extends BaseConfig {
@@ -18,35 +33,38 @@ export interface Config extends BaseConfig {
   username: string;
   saspath: string;
   port: number;
+  privateKeyFilePath?: string;
 }
 
 export function getSession(c: Config): Session {
-  if (!process.env.SSH_AUTH_SOCK) {
-    throw new Error(
-      l10n.t("SSH_AUTH_SOCK not set. Check Environment Variables."),
-    );
-  }
-
   if (!sessionInstance) {
-    sessionInstance = new SSHSession();
+    sessionInstance = new SSHSession(c, new Client());
   }
-  sessionInstance.config = c;
   return sessionInstance;
 }
-
 export class SSHSession extends Session {
-  private conn: Client;
-  private stream: ClientChannel | undefined;
+  private _conn: Client;
+  private _stream: ClientChannel | undefined;
   private _config: Config;
-  private resolve: ((value?) => void) | undefined;
-  private reject: ((reason?) => void) | undefined;
-  private html5FileName = "";
-  private timer: NodeJS.Timeout;
+  private _resolve: ((value?) => void) | undefined;
+  private _reject: ((reason?) => void) | undefined;
+  private _html5FileName = "";
+  private _sessionReady: boolean;
+  private _authHandler: AuthHandler;
+  private _workDirectory: string;
+  private _workDirectoryParser: LineParser;
 
-  constructor(c?: Config) {
+  constructor(c?: Config, client?: Client) {
     super();
     this._config = c;
-    this.conn = new Client();
+    this._conn = client;
+    this._sessionReady = false;
+    this._authHandler = new AuthHandler();
+    this._workDirectoryParser = new LineParser(
+      WORK_DIR_START_TAG,
+      WORK_DIR_END_TAG,
+      false,
+    );
   }
 
   public sessionId? = (): string => {
@@ -59,11 +77,11 @@ export class SSHSession extends Session {
 
   protected establishConnection = (): Promise<void> => {
     return new Promise((pResolve, pReject) => {
-      this.resolve = pResolve;
-      this.reject = pReject;
+      this._resolve = pResolve;
+      this._reject = pReject;
 
-      if (this.stream) {
-        this.resolve?.({});
+      if (this._stream) {
+        this._resolve?.({});
         return;
       }
 
@@ -71,76 +89,74 @@ export class SSHSession extends Session {
         host: this._config.host,
         port: this._config.port,
         username: this._config.username,
-        readyTimeout: sasLaunchTimeout,
-        agent: process.env.SSH_AUTH_SOCK || undefined,
+        readyTimeout: CONNECT_READY_TIMEOUT,
+        keepaliveInterval: KEEPALIVE_INTERVAL,
+        keepaliveCountMax: KEEPALIVE_UNANSWERED_THRESHOLD,
+        authHandler: this.handleSSHAuthentication,
       };
 
-      this.conn
+      if (!this._conn) {
+        this._conn = new Client();
+      }
+
+      this._conn
+        .on("close", this.onConnectionClose)
         .on("ready", () => {
-          this.conn.shell(this.onShell);
+          this._conn.shell(this.onShell);
         })
         .on("error", this.onConnectionError);
 
-      this.setTimer();
-      this.conn.connect(cfg);
+      this._conn.connect(cfg);
     });
   };
 
   public run = (code: string): Promise<RunResult> => {
-    this.html5FileName = "";
+    this._html5FileName = "";
 
     return new Promise((_resolve, _reject) => {
-      this.resolve = _resolve;
-      this.reject = _reject;
+      this._resolve = _resolve;
+      this._reject = _reject;
 
-      this.stream?.write(`${code}\n`);
-      this.stream?.write(`%put ${endCode};\n`);
+      this._stream?.write(`${code}\n`);
+      this._stream?.write(`%put ${LineCodes.RunEndCode};\n`);
     });
   };
 
   public close = (): void | Promise<void> => {
-    if (!this.stream) {
+    if (!this._stream) {
       return;
     }
-    this.stream.write("endsas;\n");
-    this.stream.close();
+    this._stream.write("endsas;\n");
+    this._stream.close();
+  };
+
+  private onConnectionClose = () => {
+    this._stream = undefined;
+    this._resolve = undefined;
+    this._reject = undefined;
+    this._html5FileName = "";
+    this._workDirectory = undefined;
+    this.clearAuthState();
+    sessionInstance = undefined;
   };
 
   private onConnectionError = (err: Error) => {
-    this.clearTimer();
-    this.reject?.(err);
-  };
-
-  private setTimer = (): void => {
-    this.clearTimer();
-    this.timer = setTimeout(() => {
-      this.reject?.(
-        new Error(
-          l10n.t("Failed to connect to Session. Check profile settings."),
-        ),
-      );
-      this.timer = undefined;
-      this.close();
-    }, sasLaunchTimeout);
-  };
-
-  private clearTimer = (): void => {
-    this.timer && clearTimeout(this.timer);
-    this.timer = undefined;
+    this.clearAuthState();
+    this._reject?.(err);
   };
 
   private getResult = (): void => {
     const runResult: RunResult = {};
-    if (!this.html5FileName) {
-      this.resolve?.(runResult);
+    if (!this._html5FileName) {
+      this._resolve?.(runResult);
       return;
     }
     let fileContents = "";
-    this.conn.exec(
-      `cat ${this.html5FileName}.htm`,
+    this._conn.exec(
+      `cat ${this._workDirectory}/${this._html5FileName}.htm`,
       (err: Error, s: ClientChannel) => {
         if (err) {
-          this.reject?.(err);
+          this._reject?.(err);
           return;
         }
 
@@ -157,28 +173,55 @@ export class SSHSession extends Session {
               runResult.title = l10n.t("Result");
             }
           }
-          this.resolve?.(runResult);
+          this._resolve?.(runResult);
         });
       },
     );
   };
 
   private onStreamClose = (): void => {
-    this.stream = undefined;
-    this.resolve = undefined;
-    this.reject = undefined;
-    this.html5FileName = "";
-    this.timer = undefined;
-    this.conn.end();
+    this._conn.end();
     updateStatusBarItem(false);
+  };
+
+  private fetchWorkDirectory = (line: string): string => {
+    let foundWorkDirectory = "";
+    if (
+      !line.includes(`%put ${WORK_DIR_START_TAG};`) &&
+      !line.includes(`%put &workDir;`) &&
+      !line.includes(`%put ${WORK_DIR_END_TAG};`)
+    ) {
+      foundWorkDirectory = this._workDirectoryParser.processLine(line);
+    } else {
+      // If the line is the put statement, we don't need to log that
+      return;
+    }
+    // We don't want to output any of the captured lines
+    if (this._workDirectoryParser.isCapturingLine()) {
+      return;
+    }
+
+    return foundWorkDirectory || "";
+  };
+
+  private resolveSystemVars = (): void => {
+    const code = `%let workDir = %sysfunc(pathname(work));
+    %put ${WORK_DIR_START_TAG};
+    %put &workDir;
+    %put ${WORK_DIR_END_TAG};
+    %let rc = %sysfunc(dlgcdir("&workDir"));
+    run;
+    `;
+    this._stream.write(code);
   };
 
   private onStreamData = (data: Buffer): void => {
     const output = data.toString().trimEnd();
 
-    if (this.timer && output.endsWith("?")) {
-      this.clearTimer();
-      this.resolve?.();
+    if (!this._sessionReady && output.endsWith("?")) {
+      this._sessionReady = true;
+      this._resolve?.();
+      this.resolveSystemVars();
       updateStatusBarItem(true);
       return;
     }
@@ -188,33 +231,42 @@ export class SSHSession extends Session {
       if (!line) {
         return;
       }
-      if (line.endsWith(endCode)) {
+      const trimmedLine = line.trimEnd();
+      if (trimmedLine.endsWith(LineCodes.RunEndCode)) {
         // run completed
         this.getResult();
       }
-      if (!(line.trimEnd().endsWith("?") || line.endsWith(">"))) {
-        this.html5FileName = extractOutputHtmlFileName(
+      if (!(trimmedLine.endsWith("?") || trimmedLine.endsWith(">"))) {
+        this._html5FileName = extractOutputHtmlFileName(
           line,
-          this.html5FileName,
+          this._html5FileName,
         );
         this._onExecutionLogFn?.([{ type: "normal", line }]);
+      }
+
+      if (this._sessionReady && !this._workDirectory) {
+        const foundWorkDir = this.fetchWorkDirectory(line);
+        if (foundWorkDir) {
+          const match = foundWorkDir.match(/\/[^\s\r]+/);
+          this._workDirectory = match ? match[0] : "";
+        }
       }
     });
   };
 
   private onShell = (err: Error, s: ClientChannel): void => {
     if (err) {
-      this.reject?.(err);
+      this._reject?.(err);
       return;
     }
-    this.stream = s;
-    if (!this.stream) {
-      this.reject?.(err);
+    this._stream = s;
+    if (!this._stream) {
+      this._reject?.(err);
       return;
     }
 
-    this.stream.on("close", this.onStreamClose);
-    this.stream.on("data", this.onStreamData);
+    this._stream.on("close", this.onStreamClose);
+    this._stream.on("data", this.onStreamData);
 
     const resolvedEnv: string[] = [
       "env",
@@ -233,6 +285,62 @@ export class SSHSession extends Session {
     }
     const execSasOpts: string = resolvedSasOpts.join(" ");
 
-    this.stream.write(`${execArgs} ${this._config.saspath} ${execSasOpts} \n`);
+    this._stream.write(`${execArgs} ${this._config.saspath} ${execSasOpts} \n`);
+  };
+
+  /**
+   * Resets the SSH auth state.
+   */
+  private clearAuthState = (): void => {
+    this._sessionReady = false;
+  };
+
+  private handleSSHAuthentication: AuthHandlerMiddleware = (
+    authsLeft: AuthenticationType[],
+    _partialSuccess: boolean,
+    nextAuth: NextAuthHandler,
+  ) => {
+    if (!authsLeft) {
+      nextAuth("none"); //sending none will prompt the server to send supported auth methods
+      return;
+    }
+
+    if (authsLeft.length === 0) {
+      this._reject?.(
+        new Error(l10n.t("Could not authenticate to the SSH server.")),
+      );
+      this.clearAuthState();
+      return false; //returning false will stop the authentication process
+    }
+
+    const authMethod = authsLeft.shift();
+    switch (authMethod) {
+      case "publickey": {
+        //user set a keyfile path in profile config
+        if (this._config.privateKeyFilePath) {
+          this._authHandler.privateKeyAuth(
+            nextAuth,
+            this._config.privateKeyFilePath,
+            this._config.username,
+          );
+        } else if (process.env.SSH_AUTH_SOCK) {
+          this._authHandler.sshAgentAuth(nextAuth, this._config.username);
+        }
+        break;
+      }
+      case "password": {
+        this._authHandler.passwordAuth(nextAuth, this._config.username);
+        break;
+      }
+      case "keyboard-interactive": {
+        this._authHandler.keyboardInteractiveAuth(
+          nextAuth,
+          this._config.username,
+        );
+        break;
+      }
+      default:
+        nextAuth(authMethod);
+    }
   };
 }

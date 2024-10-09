@@ -321,6 +321,11 @@
                             "description": "%configuration.SAS.connectionProfiles.profiles.ssh.port%",
                             "exclusiveMinimum": 1,
                             "exclusiveMaximum": 65535
+                          },
+                          "privateKeyFilePath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath%"
                           }
                         }
                       }
