@@ -269,11 +269,10 @@ class ContentNavigator implements SubscriptionProvider {
           );
         },
       ),
-      commands.registerCommand(`${SAS}.collapseAllContent`, () => {
-        commands.executeCommand(
-          `workbench.actions.treeView.${this.treeIdentifier}.collapseAll`,
-        );
-      }),
+      commands.registerCommand(
+        `${SAS}.collapseAllContent`,
+        this.collapseAllContent,
+      ),
       commands.registerCommand(
         `${SAS}.convertNotebookToFlow`,
         async (resource: ContentItem | Uri) => {
@@ -386,13 +385,22 @@ class ContentNavigator implements SubscriptionProvider {
         async (event: ConfigurationChangeEvent) => {
           if (event.affectsConfiguration("SAS.connectionProfiles")) {
             const endpoint = this.viyaEndpoint();
+            this.collapseAllContent();
             if (endpoint) {
               await this.contentDataProvider.connect(endpoint);
+            } else {
+              await this.contentDataProvider.refresh();
             }
           }
         },
       ),
     ];
+  }
+
+  private collapseAllContent() {
+    commands.executeCommand(
+      `workbench.actions.treeView.${this.treeIdentifier}.collapseAll`,
+    );
   }
 
   private async uploadResource(
