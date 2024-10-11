@@ -119,16 +119,19 @@ const preserveProcs = (
   model: Model,
 ) => {
   // should not format python/lua, treat it as raw data
+  const lastStatement =
+    region.children.length >= 2 &&
+    region.children[region.children.length - 1].children;
   if (
     current === -1 &&
     region.block?.name === "PROC" &&
-    region.children.length === 2 &&
+    lastStatement &&
     region.children[0].children.length > 0 &&
-    region.children[1].children.length > 1 &&
+    lastStatement.length > 1 &&
     "text" in region.children[0].children[1] &&
     /^(python|lua)$/i.test(region.children[0].children[1].text) &&
-    "text" in region.children[1].children[0] &&
-    /^(submit|interactive)$/i.test(region.children[1].children[0].text)
+    "text" in lastStatement[0] &&
+    /^(submit|interactive|i)$/i.test(lastStatement[0].text)
   ) {
     current = 0;
   }
