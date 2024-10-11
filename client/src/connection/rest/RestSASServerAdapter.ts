@@ -58,16 +58,22 @@ class RestSASServerAdapter implements ContentAdapter {
   recycleItem?: (item: ContentItem) => Promise<{ newUri?: Uri; oldUri?: Uri }>;
   restoreItem?: (item: ContentItem) => Promise<boolean>;
 
-  public async connect(): Promise<void> {
+  private async establishConnection() {
     const session = getSession();
     session.onSessionLogFn = appendSessionLogFn;
-
     await session.setup(true);
-
     this.sessionId = session?.sessionId();
+
+    return this.sessionId;
+  }
+
+  public async connect(): Promise<void> {
+    await this.establishConnection();
     // This proxies all calls to the fileSystem api to reconnect
     // if we ever get a 401 (unauthorized)
-    const reconnect = async () => await this.connect();
+    const reconnect = async () => {
+      return await this.establishConnection();
+    };
     this.fileSystemApi = new Proxy(FileSystemApi(getApiConfig()), {
       get: function (target, property) {
         if (typeof target[property] === "function") {
@@ -76,11 +82,14 @@ class RestSASServerAdapter implements ContentAdapter {
               try {
                 return await target(...argList);
               } catch (error) {
-                if (error.response?.status !== 401) {
-                  throw error;
-                }
+                // If we get any error, lets reconnect and try again. If we fail a second time,
+                // then we can assume it's a "real" error
+                const sessionId = await reconnect();
 
-                await reconnect();
+                // If we reconnected, lets make sure we update our session id
+                if (argList.length && argList[0].sessionId) {
+                  argList[0].sessionId = sessionId;
+                }
 
                 return await target(...argList);
               }
@@ -461,7 +470,7 @@ class RestSASServerAdapter implements ContentAdapter {
 
   private trimComputePrefix(uri: string): string {
     return decodeURI(
-      uri.replace(`/compute/sessions/${this.sessionId}/files/`, ""),
+      uri.replace(/\/compute\/sessions\/[a-zA-Z0-9-]*\/files\//, ""),
     );
   }
 
