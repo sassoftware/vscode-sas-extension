@@ -4,7 +4,6 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
-
 ## [Unreleased]
 
 ### Changed
@@ -25,7 +24,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Log contents are not rendered properly if trying to switch profile from SSH to other connection types ([#1070](https://github.com/sassoftware/vscode-sas-extension/issues/1070))
 - Try to run a SAS file having no contents will lead to console error ([#1201](https://github.com/sassoftware/vscode-sas-extension/issues/1201))
 - Formatting proc FEDSQL deletes the content of the proc ([#1202](https://github.com/sassoftware/vscode-sas-extension/issues/1202))
-
 
 ## [v1.10.2] - 2024-08-30
 
