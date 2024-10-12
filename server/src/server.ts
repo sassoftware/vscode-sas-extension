@@ -167,18 +167,30 @@ export const runServer = (
             params.context?.triggerKind ===
               CompletionTriggerKind.TriggerForIncompleteCompletions
           ) {
-            const endsubmitItem = {
-              insertText: undefined,
-              kind: CompletionItemKind.Keyword,
-              label: "endsubmit",
-            };
-            complitionList.items.push(endsubmitItem);
-            const endinteractiveItem = {
-              insertText: undefined,
-              kind: CompletionItemKind.Keyword,
-              label: "endinteractive",
-            };
-            complitionList.items.push(endinteractiveItem);
+            if (
+              complitionList.items.findIndex(
+                (item) => item.label === "endsubmit",
+              ) === -1
+            ) {
+              const endsubmitItem = {
+                insertText: undefined,
+                kind: CompletionItemKind.Keyword,
+                label: "endsubmit",
+              };
+              complitionList.items.push(endsubmitItem);
+            }
+            if (
+              complitionList.items.findIndex(
+                (item) => item.label === "endinteractive",
+              ) === -1
+            ) {
+              const endinteractiveItem = {
+                insertText: undefined,
+                kind: CompletionItemKind.Keyword,
+                label: "endinteractive",
+              };
+              complitionList.items.push(endinteractiveItem);
+            }
           }
           for (const item of complitionList.items) {
             if (!item.data) {
@@ -196,9 +208,11 @@ export const runServer = (
   connection.onCompletionResolve(async (completionItem, token) => {
     const lang = completionItem.data._languageService;
     const label = completionItem.label;
+    const kind = completionItem.kind;
     if (
       lang === "sas" ||
       (lang === "python" &&
+        kind === CompletionItemKind.Keyword &&
         ["endsubmit", "endinteractive"].includes(label?.toLowerCase()))
     ) {
       const languageService = getLanguageService(completionItem.data._uri);
