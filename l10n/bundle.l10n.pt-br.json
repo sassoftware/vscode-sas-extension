@@ -79,6 +79,7 @@
   "SAS 9 Server": "Servidor SAS 9",
   "SAS Compute Context": "Contexto de computação SAS",
   "SAS Log": "Registro de SAS",
+  "SAS Log: {name}": "Registro de SAS: {name}",
   "SAS Profile": "Perfil SAS",
   "SAS Program": "Programa SAS",
   "SAS Server Username": "Nome de usuário para o servidor de SAS",

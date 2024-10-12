@@ -81,8 +81,6 @@ export interface Token {
 
 enum EmbeddedLangState {
   NONE,
-  PROC_SQL_DEF,
-  PROC_SQL_CODE,
   PROC_PYTHON_DEF,
   PROC_PYTHON_SUBMIT_OR_INTERACTIVE,
   PROC_PYTHON_CODE,
@@ -291,9 +289,7 @@ export class Lexer {
           this.context.lastNoncommentToken?.type === "text" &&
           this.context.lastNoncommentToken.text === "PROC"
         ) {
-          if (token.type === "text" && token.text === "FEDSQL") {
-            this.context.embeddedLangState = EmbeddedLangState.PROC_SQL_DEF;
-          } else if (token.type === "text" && token.text === "PYTHON") {
+          if (token.type === "text" && token.text === "PYTHON") {
             this.context.embeddedLangState = EmbeddedLangState.PROC_PYTHON_DEF;
           } else if (token.type === "text" && token.text === "LUA") {
             this.context.embeddedLangState = EmbeddedLangState.PROC_LUA_DEF;
@@ -463,40 +459,6 @@ export class Lexer {
               }
             }
           } while (match);
-        }
-        token = this._foundEmbeddedCodeToken(this.curr);
-        break SWITCH;
-      }
-      case EmbeddedLangState.PROC_SQL_DEF: {
-        token = this._readToken();
-        if (!token) {
-          break SWITCH;
-        }
-        if (token.type === "sep" && token.text === ";") {
-          this.context.embeddedLangState = EmbeddedLangState.PROC_SQL_CODE;
-        }
-        break SWITCH;
-      }
-      case EmbeddedLangState.PROC_SQL_CODE: {
-        const endReg =
-          /\b((quit)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$/i;
-        for (
-          let line = this.curr.line;
-          line < this.model.getLineCount();
-          line++
-        ) {
-          const lineContent = this._readEmbeddedCodeLine(this.curr, line);
-          if (lineContent.trimStart().startsWith("%put")) {
-            continue;
-          }
-          const match = endReg.exec(lineContent);
-          if (match) {
-            token = this._foundEmbeddedCodeToken(this.curr, {
-              line: line,
-              column: match.index,
-            });
-            break SWITCH;
-          }
         }
         token = this._foundEmbeddedCodeToken(this.curr);
         break SWITCH;

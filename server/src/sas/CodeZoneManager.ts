@@ -1155,8 +1155,6 @@ export class CodeZoneManager {
           return CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG;
         }
       }
-    } else if (["FEDSQL"].includes(this._procName)) {
-      return CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG;
     } else if (this._isCall(zone)) {
       type = CodeZoneManager.ZONE_TYPE.RESTRICTED;
     } else if (zone.type === CodeZoneManager.ZONE_TYPE.STMT_NAME) {
