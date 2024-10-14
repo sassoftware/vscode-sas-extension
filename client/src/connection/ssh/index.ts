@@ -309,7 +309,7 @@ export class SSHSession extends Session {
 
   private handleSSHAuthentication: AuthHandlerMiddleware = (
     authsLeft: AuthenticationType[],
-    partialSuccess: boolean,
+    partialSuccess: boolean, //used in scenarios which require multiple auth methods to denote partial success
     nextAuth: NextAuthHandler,
   ) => {
     if (!authsLeft) {
