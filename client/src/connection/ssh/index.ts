@@ -53,6 +53,7 @@ export class SSHSession extends Session {
   private _authHandler: AuthHandler;
   private _workDirectory: string;
   private _workDirectoryParser: LineParser;
+  private _authsLeft: AuthenticationType[];
 
   constructor(c?: Config, client?: Client) {
     super();
@@ -65,6 +66,7 @@ export class SSHSession extends Session {
       WORK_DIR_END_TAG,
       false,
     );
+    this._authsLeft = [];
   }
 
   public sessionId? = (): string => {
@@ -124,6 +126,7 @@ export class SSHSession extends Session {
 
   public close = (): void | Promise<void> => {
     if (!this._stream) {
+      this.disposeResources();
       return;
     }
     this._stream.write("endsas;\n");
@@ -131,6 +134,14 @@ export class SSHSession extends Session {
   };
 
   private onConnectionClose = () => {
+    if (!this._sessionReady) {
+      this._reject?.(new Error(l10n.t("Could not connect to the SAS server.")));
+    }
+
+    this.disposeResources();
+  };
+
+  private disposeResources = () => {
     this._stream = undefined;
     this._resolve = undefined;
     this._reject = undefined;
@@ -138,6 +149,7 @@ export class SSHSession extends Session {
     this._workDirectory = undefined;
     this.clearAuthState();
     sessionInstance = undefined;
+    this._authsLeft = [];
   };
 
   private onConnectionError = (err: Error) => {
@@ -297,7 +309,7 @@ export class SSHSession extends Session {
 
   private handleSSHAuthentication: AuthHandlerMiddleware = (
     authsLeft: AuthenticationType[],
-    _partialSuccess: boolean,
+    partialSuccess: boolean,
     nextAuth: NextAuthHandler,
   ) => {
     if (!authsLeft) {
@@ -313,30 +325,47 @@ export class SSHSession extends Session {
       return false; //returning false will stop the authentication process
     }
 
-    const authMethod = authsLeft.shift();
+    if (this._authsLeft.length === 0 || partialSuccess) {
+      this._authsLeft = authsLeft;
+    }
+
+    const authMethod = this._authsLeft.shift();
+
     switch (authMethod) {
       case "publickey": {
         //user set a keyfile path in profile config
         if (this._config.privateKeyFilePath) {
-          this._authHandler.privateKeyAuth(
-            nextAuth,
-            this._config.privateKeyFilePath,
-            this._config.username,
-          );
+          this._authHandler
+            .privateKeyAuth(
+              nextAuth,
+              this._config.privateKeyFilePath,
+              this._config.username,
+            )
+            .catch((e) => {
+              this._reject?.(e);
+              return false;
+            });
         } else if (process.env.SSH_AUTH_SOCK) {
           this._authHandler.sshAgentAuth(nextAuth, this._config.username);
         }
         break;
       }
       case "password": {
-        this._authHandler.passwordAuth(nextAuth, this._config.username);
+        this._authHandler
+          .passwordAuth(nextAuth, this._config.username)
+          .catch((e) => {
+            this._reject?.(e);
+            return false;
+          });
         break;
       }
       case "keyboard-interactive": {
-        this._authHandler.keyboardInteractiveAuth(
-          nextAuth,
-          this._config.username,
-        );
+        this._authHandler
+          .keyboardInteractiveAuth(nextAuth, this._config.username)
+          .catch((e) => {
+            this._reject?.(e);
+            return false;
+          });
         break;
       }
       default:

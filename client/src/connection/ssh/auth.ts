@@ -118,13 +118,12 @@ export class AuthHandler {
    * @param resolve a function that resolves the promise that is waiting for the password
    * @param username the user name to use for the connection
    */
-  passwordAuth = (cb: NextAuthHandler, username: string) => {
-    this._authPresenter.presentPasswordPrompt(username).then((pw) => {
-      cb({
-        type: "password",
-        password: pw,
-        username: username,
-      });
+  passwordAuth = async (cb: NextAuthHandler, username: string) => {
+    const pw = await this._authPresenter.presentPasswordPrompt(username);
+    cb({
+      type: "password",
+      password: pw,
+      username: username,
     });
   };
 
@@ -134,7 +133,7 @@ export class AuthHandler {
    * @param resolve a function that resolves the promise that is waiting for authentication
    * @param username the user name to use for the connection
    */
-  keyboardInteractiveAuth = (cb: NextAuthHandler, username: string) => {
+  keyboardInteractiveAuth = async (cb: NextAuthHandler, username: string) => {
     cb({
       type: "keyboard-interactive",
       username: username,
@@ -172,7 +171,7 @@ export class AuthHandler {
    * @param privateKeyFilePath the path to the private key file defined in the connection profile
    * @param username the user name to use for the connection
    */
-  privateKeyAuth = (
+  privateKeyAuth = async (
     cb: NextAuthHandler,
     privateKeyFilePath: string,
     username: string,
@@ -186,22 +185,23 @@ export class AuthHandler {
         "Encrypted private OpenSSH key detected, but no passphrase given";
     // key is encrypted, prompt for passphrase
     if (passphraseRequired) {
-      this._authPresenter.presentPassphrasePrompt().then((passphrase) => {
-        //parse the keyfile using the passphrase
-        const passphrasedKeyContentsResult = this._keyParser.parseKey(
-          privateKeyFilePath,
-          passphrase,
-        );
+      const passphrase = await this._authPresenter.presentPassphrasePrompt();
 
-        if (passphrasedKeyContentsResult instanceof Error) {
-          throw passphrasedKeyContentsResult;
-        }
-        cb({
-          type: "publickey",
-          key: passphrasedKeyContentsResult,
-          passphrase: passphrase,
-          username: username,
-        });
+      //parse the keyfile using the passphrase
+      const passphrasedKeyContentsResult = this._keyParser.parseKey(
+        privateKeyFilePath,
+        passphrase,
+      );
+
+      if (passphrasedKeyContentsResult instanceof Error) {
+        throw passphrasedKeyContentsResult;
+      }
+
+      cb({
+        type: "publickey",
+        key: passphrasedKeyContentsResult,
+        passphrase: passphrase,
+        username: username,
       });
     } else {
       if (hasParseError) {
