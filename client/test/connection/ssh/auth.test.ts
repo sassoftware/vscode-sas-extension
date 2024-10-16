@@ -18,16 +18,15 @@ describe("ssh connection auth handler", () => {
     });
 
     it("pass socket path to the callback", async () => {
-      const cb = sinon.stub();
       const username = "username";
       const socketPath = "socketPath";
 
       const presenter = stubInterface<AuthPresenter>();
       authHandler = new AuthHandler(presenter);
 
-      await authHandler.sshAgentAuth(cb, username);
+      const agentPayload = authHandler.sshAgentAuth(username);
 
-      sinon.assert.calledWith(cb, {
+      expect(agentPayload).to.deep.equal({
         type: "agent",
         agent: socketPath,
         username: username,
@@ -46,7 +45,6 @@ describe("ssh connection auth handler", () => {
     });
 
     it("should pass the key contents and passphrase to the callback for an encrypted key", async () => {
-      const cb = sinon.stub();
       const username = "username";
       const passphrase = "passphrase";
       const privateKeyFilePath = "privateKeyFilePath";
@@ -67,9 +65,12 @@ describe("ssh connection auth handler", () => {
 
       authHandler = new AuthHandler(presenter, keyParser);
 
-      await authHandler.privateKeyAuth(cb, privateKeyFilePath, username);
+      const pkPayload = await authHandler.privateKeyAuth(
+        privateKeyFilePath,
+        username,
+      );
 
-      sinon.assert.calledWith(cb, {
+      expect(pkPayload).to.deep.equal({
         type: "publickey",
         key: key,
         passphrase: passphrase,
@@ -78,7 +79,6 @@ describe("ssh connection auth handler", () => {
     });
 
     it("should pass the key contents to the callback for an unencrypted key", async () => {
-      const cb = sandbox.stub();
       const username = "username";
       const privateKeyFilePath = "privateKeyFilePath";
 
@@ -93,9 +93,11 @@ describe("ssh connection auth handler", () => {
       keyParser.parseKey.returns(key);
       authHandler = new AuthHandler(presenter, keyParser);
 
-      await authHandler.privateKeyAuth(cb, privateKeyFilePath, username);
-
-      sinon.assert.calledWith(cb, {
+      const pkPayload = await authHandler.privateKeyAuth(
+        privateKeyFilePath,
+        username,
+      );
+      expect(pkPayload).to.deep.equal({
         type: "publickey",
         key: key,
         username: username,
@@ -105,7 +107,6 @@ describe("ssh connection auth handler", () => {
 
   describe("passwordAuth", () => {
     it("should pass the password to the callback", async () => {
-      const cb = sinon.stub();
       const username = "username";
       const pw = "password";
 
@@ -114,9 +115,9 @@ describe("ssh connection auth handler", () => {
 
       authHandler = new AuthHandler(presenter);
 
-      await authHandler.passwordAuth(cb, username);
+      const pwPayload = await authHandler.passwordAuth(username);
 
-      sinon.assert.calledWith(cb, {
+      expect(pwPayload).to.deep.equal({
         type: "password",
         password: pw,
         username: username,
@@ -126,7 +127,9 @@ describe("ssh connection auth handler", () => {
 
   describe("keyboardAuth", () => {
     it("should present input prompts and pass the answers to the callback", async () => {
-      const promptCbStub = sinon.stub();
+      const promptCbStub = (answers: string[]) => {
+        expect(answers).to.deep.equal(["answer1", "answer2"]);
+      };
       const cb = (auth: KeyboardInteractiveAuthMethod) => {
         expect(auth.type).to.equal("keyboard-interactive");
         expect(auth.username).to.equal("username");
@@ -145,8 +148,8 @@ describe("ssh connection auth handler", () => {
 
       authHandler = new AuthHandler(presenter);
 
-      await authHandler.keyboardInteractiveAuth(cb, "username");
-      sinon.assert.calledWith(promptCbStub, answers);
+      const kbPayload = await authHandler.keyboardInteractiveAuth("username");
+      cb(kbPayload);
     });
   });
 });

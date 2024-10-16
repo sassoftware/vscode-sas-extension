@@ -3,7 +3,15 @@
 import { l10n, window } from "vscode";
 
 import { readFileSync } from "fs";
-import { NextAuthHandler, ParsedKey, Prompt, utils } from "ssh2";
+import {
+  AgentAuthMethod,
+  KeyboardInteractiveAuthMethod,
+  ParsedKey,
+  PasswordAuthMethod,
+  Prompt,
+  PublicKeyAuthMethod,
+  utils,
+} from "ssh2";
 
 /**
  * Abstraction for presenting authentication prompts to the user.
@@ -118,13 +126,13 @@ export class AuthHandler {
    * @param resolve a function that resolves the promise that is waiting for the password
    * @param username the user name to use for the connection
    */
-  passwordAuth = async (cb: NextAuthHandler, username: string) => {
+  passwordAuth = async (username: string): Promise<PasswordAuthMethod> => {
     const pw = await this._authPresenter.presentPasswordPrompt(username);
-    cb({
+    return {
       type: "password",
       password: pw,
       username: username,
-    });
+    };
   };
 
   /**
@@ -133,8 +141,10 @@ export class AuthHandler {
    * @param resolve a function that resolves the promise that is waiting for authentication
    * @param username the user name to use for the connection
    */
-  keyboardInteractiveAuth = async (cb: NextAuthHandler, username: string) => {
-    cb({
+  keyboardInteractiveAuth = async (
+    username: string,
+  ): Promise<KeyboardInteractiveAuthMethod> => {
+    return {
       type: "keyboard-interactive",
       username: username,
       prompt: (_name, _instructions, _instructionsLang, prompts, finish) => {
@@ -146,7 +156,7 @@ export class AuthHandler {
             finish(answers);
           });
       },
-    });
+    };
   };
 
   /**
@@ -154,12 +164,12 @@ export class AuthHandler {
    * @param cb ssh2 NextHandler callback instance. This is used to pass the authentication information to the ssh server.
    * @param username the user name to use for the connection
    */
-  sshAgentAuth = (cb: NextAuthHandler, username: string) => {
-    cb({
+  sshAgentAuth = (username: string): AgentAuthMethod => {
+    return {
       type: "agent",
       agent: process.env.SSH_AUTH_SOCK,
       username: username,
-    });
+    };
   };
 
   /**
@@ -172,10 +182,9 @@ export class AuthHandler {
    * @param username the user name to use for the connection
    */
   privateKeyAuth = async (
-    cb: NextAuthHandler,
     privateKeyFilePath: string,
     username: string,
-  ) => {
+  ): Promise<PublicKeyAuthMethod> => {
     // first, try to parse the key file without a passphrase
     const parsedKeyResult = this._keyParser.parseKey(privateKeyFilePath);
     const hasParseError = parsedKeyResult instanceof Error;
@@ -186,7 +195,6 @@ export class AuthHandler {
     // key is encrypted, prompt for passphrase
     if (passphraseRequired) {
       const passphrase = await this._authPresenter.presentPassphrasePrompt();
-
       //parse the keyfile using the passphrase
       const passphrasedKeyContentsResult = this._keyParser.parseKey(
         privateKeyFilePath,
@@ -195,23 +203,24 @@ export class AuthHandler {
 
       if (passphrasedKeyContentsResult instanceof Error) {
         throw passphrasedKeyContentsResult;
+      } else {
+        return {
+          type: "publickey",
+          key: passphrasedKeyContentsResult,
+          passphrase: passphrase,
+          username: username,
+        };
       }
-
-      cb({
-        type: "publickey",
-        key: passphrasedKeyContentsResult,
-        passphrase: passphrase,
-        username: username,
-      });
     } else {
       if (hasParseError) {
         throw parsedKeyResult;
+      } else {
+        return {
+          type: "publickey",
+          key: parsedKeyResult,
+          username: username,
+        };
       }
-      cb({
-        type: "publickey",
-        key: parsedKeyResult,
-        username: username,
-      });
     }
   };
 }

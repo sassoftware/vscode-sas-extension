@@ -3,12 +3,16 @@
 import { l10n } from "vscode";
 
 import {
+  AgentAuthMethod,
   AuthHandlerMiddleware,
   AuthenticationType,
   Client,
   ClientChannel,
   ConnectConfig,
+  KeyboardInteractiveAuthMethod,
   NextAuthHandler,
+  PasswordAuthMethod,
+  PublicKeyAuthMethod,
 } from "ssh2";
 
 import { BaseConfig, RunResult } from "..";
@@ -87,6 +91,7 @@ export class SSHSession extends Session {
         return;
       }
 
+      const authHandlerFn = this.handleSSHAuthentication();
       const cfg: ConnectConfig = {
         host: this._config.host,
         port: this._config.port,
@@ -94,7 +99,9 @@ export class SSHSession extends Session {
         readyTimeout: CONNECT_READY_TIMEOUT,
         keepaliveInterval: KEEPALIVE_INTERVAL,
         keepaliveCountMax: KEEPALIVE_UNANSWERED_THRESHOLD,
-        authHandler: this.handleSSHAuthentication,
+        authHandler: (methodsLeft, partialSuccess, callback) => (
+          authHandlerFn(methodsLeft, partialSuccess, callback), undefined
+        ),
       };
 
       if (!this._conn) {
@@ -305,71 +312,74 @@ export class SSHSession extends Session {
    */
   private clearAuthState = (): void => {
     this._sessionReady = false;
+    this._authsLeft = [];
   };
 
-  private handleSSHAuthentication: AuthHandlerMiddleware = (
-    authsLeft: AuthenticationType[],
-    partialSuccess: boolean, //used in scenarios which require multiple auth methods to denote partial success
-    nextAuth: NextAuthHandler,
-  ) => {
-    if (!authsLeft) {
-      nextAuth("none"); //sending none will prompt the server to send supported auth methods
-      return;
-    }
-
-    if (authsLeft.length === 0) {
-      this._reject?.(
-        new Error(l10n.t("Could not authenticate to the SSH server.")),
-      );
-      this.clearAuthState();
-      return false; //returning false will stop the authentication process
-    }
-
-    if (this._authsLeft.length === 0 || partialSuccess) {
-      this._authsLeft = authsLeft;
-    }
-
-    const authMethod = this._authsLeft.shift();
-
-    switch (authMethod) {
-      case "publickey": {
-        //user set a keyfile path in profile config
-        if (this._config.privateKeyFilePath) {
-          this._authHandler
-            .privateKeyAuth(
-              nextAuth,
-              this._config.privateKeyFilePath,
-              this._config.username,
-            )
-            .catch((e) => {
-              this._reject?.(e);
-              return false;
-            });
-        } else if (process.env.SSH_AUTH_SOCK) {
-          this._authHandler.sshAgentAuth(nextAuth, this._config.username);
+  private handleSSHAuthentication = (): AuthHandlerMiddleware => {
+    //The ssh2 library supports sending false to stop the authentication process
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const END_AUTH = false as unknown as AuthenticationType;
+    return async (
+      authsLeft: AuthenticationType[],
+      partialSuccess: boolean, //used in scenarios which require multiple auth methods to denote partial success
+      nextAuth: NextAuthHandler,
+    ) => {
+      if (!authsLeft) {
+        return nextAuth({ type: "none", username: this._config.username }); //sending none will prompt the server to send supported auth methods
+      } else {
+        if (authsLeft.length === 0) {
+          return nextAuth(END_AUTH);
         }
-        break;
+
+        if (this._authsLeft.length === 0 || partialSuccess) {
+          this._authsLeft = authsLeft;
+        }
+
+        const authMethod = this._authsLeft.shift();
+
+        try {
+          let authPayload:
+            | PublicKeyAuthMethod
+            | AgentAuthMethod
+            | PasswordAuthMethod
+            | KeyboardInteractiveAuthMethod;
+
+          switch (authMethod) {
+            case "publickey": {
+              //user set a keyfile path in profile config
+              if (this._config.privateKeyFilePath) {
+                authPayload = await this._authHandler.privateKeyAuth(
+                  this._config.privateKeyFilePath,
+                  this._config.username,
+                );
+              } else if (process.env.SSH_AUTH_SOCK) {
+                authPayload = this._authHandler.sshAgentAuth(
+                  this._config.username,
+                );
+              }
+              break;
+            }
+            case "password": {
+              authPayload = await this._authHandler.passwordAuth(
+                this._config.username,
+              );
+              break;
+            }
+            case "keyboard-interactive": {
+              authPayload = await this._authHandler.keyboardInteractiveAuth(
+                this._config.username,
+              );
+              break;
+            }
+            default:
+              nextAuth(authMethod);
+          }
+          return nextAuth(authPayload);
+        } catch (e) {
+          this._reject?.(e);
+          return nextAuth(END_AUTH);
+        }
       }
-      case "password": {
-        this._authHandler
-          .passwordAuth(nextAuth, this._config.username)
-          .catch((e) => {
-            this._reject?.(e);
-            return false;
-          });
-        break;
-      }
-      case "keyboard-interactive": {
-        this._authHandler
-          .keyboardInteractiveAuth(nextAuth, this._config.username)
-          .catch((e) => {
-            this._reject?.(e);
-            return false;
-          });
-        break;
-      }
-      default:
-        nextAuth(authMethod);
-    }
+    };
   };
 }
