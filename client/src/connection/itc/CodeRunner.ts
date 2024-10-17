@@ -37,7 +37,7 @@ async function _runCode(
   }
 
   const { setIsExecutingCode } = useRunStore.getState();
-  setIsExecutingCode(true);
+  setIsExecutingCode(true, false);
   commands.executeCommand("setContext", "SAS.running", true);
   const session = getSession();
 

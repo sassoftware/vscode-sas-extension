@@ -12,6 +12,7 @@ describe("run actions", () => {
     const { setIsExecutingCode } = useRunStore.getState();
     const expectedState: RunState = {
       isExecutingCode: true,
+      isUserExecuting: true,
     };
 
     setIsExecutingCode(true);
