@@ -1,4 +1,4 @@
-import glob from "glob";
+import { glob } from "glob";
 import Mocha from "mocha";
 import path from "path";
 
@@ -17,11 +17,7 @@ export function run(): Promise<void> {
     : "**/**.test.js";
 
   return new Promise((resolve, reject) => {
-    glob(pattern, { cwd: testsRoot }, (err, files) => {
-      if (err) {
-        return reject(err);
-      }
-
+    glob(pattern, { cwd: testsRoot }).then((files) => {
       // Add files to the test suite
       files.forEach((f) => mocha.addFile(path.resolve(testsRoot, f)));
 
@@ -38,6 +34,6 @@ export function run(): Promise<void> {
         console.error(err);
         reject(err);
       }
-    });
+    }, reject);
   });
 }
