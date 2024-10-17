@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from "fs";
-import glob from "glob";
+import { glob } from "glob";
 
 // These files will not be checked for copyright information
 const filesToIgnore = [
