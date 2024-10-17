@@ -28,7 +28,7 @@ let bundle: Record<string, string>;
 const locale: string =
   typeof process !== "undefined" && process.env.VSCODE_NLS_CONFIG
     ? JSON.parse(process.env.VSCODE_NLS_CONFIG).locale
-    : (global.navigator?.language ?? "en");
+    : global.navigator?.language ?? "en";
 const supportedLanguages = [
   "ar",
   "cs",
@@ -103,3 +103,11 @@ export function getText(key: string, arg?: string): string {
   }
   return result;
 }
+
+export const isCustomRegionStartComment = (commmentText?: string) => {
+  return /^\s*[%/]?\*\s*region\b/i.test(commmentText ?? "");
+};
+
+export const isCustomRegionEndComment = (commmentText?: string) => {
+  return /^\s*[%/]?\*\s*endregion\b/i.test(commmentText ?? "");
+};
