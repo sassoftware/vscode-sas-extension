@@ -14,9 +14,6 @@ import {
   FileType,
   Position,
   ProviderResult,
-  Tab,
-  TabInputNotebook,
-  TabInputText,
   TextDocument,
   TextDocumentContentProvider,
   ThemeIcon,
@@ -45,6 +42,8 @@ import {
   FAVORITES_FOLDER_TYPE,
   Messages,
   ROOT_FOLDER_TYPE,
+  SERVER_HOME_FOLDER_TYPE,
+  SERVER_ROOT_FOLDER_TYPE,
   TRASH_FOLDER_TYPE,
 } from "./const";
 import {
@@ -52,7 +51,11 @@ import {
   ContentNavigatorConfig,
   FileManipulationEvent,
 } from "./types";
-import { getFileStatement, isContainer as getIsContainer } from "./utils";
+import {
+  getEditorTabForItem,
+  getFileStatement,
+  isContainer as getIsContainer,
+} from "./utils";
 
 class ContentDataProvider
   implements
@@ -315,6 +318,10 @@ class ContentDataProvider
     return success;
   }
 
+  public canRecycleResource(item: ContentItem): boolean {
+    return this.model.canRecycleResource(item);
+  }
+
   public async recycleResource(item: ContentItem): Promise<boolean> {
     if (!(await closeFileIfOpen(item))) {
       return false;
@@ -496,13 +503,34 @@ class ContentDataProvider
     return this.getChildren(selection);
   }
 
+  private async moveItem(
+    item: ContentItem,
+    targetUri: string,
+  ): Promise<boolean> {
+    if (!targetUri) {
+      return false;
+    }
+
+    const closing = closeFileIfOpen(item);
+    if (!(await closing)) {
+      return false;
+    }
+
+    const newUri = await this.model.moveTo(item, targetUri);
+    if (closing !== true) {
+      commands.executeCommand("vscode.open", newUri);
+    }
+
+    return !!newUri;
+  }
+
   private async handleContentItemDrop(
     target: ContentItem,
     item: ContentItem,
   ): Promise<void> {
     let success = false;
     let message = Messages.FileDropError;
-    if (item.flags.isInRecycleBin) {
+    if (item.flags?.isInRecycleBin) {
       message = Messages.FileDragFromTrashError;
     } else if (item.isReference) {
       message = Messages.FileDragFromFavorites;
@@ -512,10 +540,7 @@ class ContentDataProvider
       success = await this.addToMyFavorites(item);
     } else {
       const targetUri = target.resourceId;
-      if (targetUri) {
-        success = await this.model.moveTo(item, targetUri);
-      }
-
+      success = await this.moveItem(item, targetUri);
       if (success) {
         this.refresh();
       }
@@ -638,6 +663,12 @@ class ContentDataProvider
         case FAVORITES_FOLDER_TYPE:
           icon = "favoritesFolder";
           break;
+        case SERVER_HOME_FOLDER_TYPE:
+          icon = "userWorkspace";
+          break;
+        case SERVER_ROOT_FOLDER_TYPE:
+          icon = "server";
+          break;
         default:
           icon = "folder";
           break;
@@ -648,6 +679,7 @@ class ContentDataProvider
         icon = "sasProgramFile";
       }
     }
+
     return icon !== ""
       ? {
           dark: Uri.joinPath(this.extensionUri, `icons/dark/${icon}Dark.svg`),
@@ -663,14 +695,7 @@ class ContentDataProvider
 export default ContentDataProvider;
 
 const closeFileIfOpen = (item: ContentItem) => {
-  const fileUri = item.vscUri;
-  const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
-  const tab = tabs.find(
-    (tab) =>
-      (tab.input instanceof TabInputText ||
-        tab.input instanceof TabInputNotebook) &&
-      tab.input.uri.query === fileUri.query, // compare the file id
-  );
+  const tab = getEditorTabForItem(item);
   if (tab) {
     return window.tabGroups.close(tab);
   }
