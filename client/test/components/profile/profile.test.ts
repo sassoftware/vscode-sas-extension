@@ -92,6 +92,7 @@ describe("Profiles", async function () {
           sasPath: "sasPath",
           sasOptions: ["-nonews"],
           connectionType: "ssh",
+          privateKeyFilePath: "/private/key/file/path",
         },
       },
     };
@@ -654,6 +655,7 @@ describe("Profiles", async function () {
           sasOptions: ["-nonews"],
           saspath: "/sas/path",
           username: "username",
+          privateKeyFilePath: "/private/key/file/path",
         };
         // Arrange
         // Act
@@ -968,6 +970,13 @@ describe("Profiles", async function () {
         wantTitle: "SAS Server Username",
         wantDescription: "Enter your SAS server username.",
         wantPlaceHolder: "Enter your username",
+      },
+      {
+        name: "Private Key File Path",
+        prompt: ProfilePromptType.PrivateKeyFilePath,
+        wantTitle: "Private Key File Path (optional)",
+        wantDescription: "To use the SSH Agent or a password, leave blank.",
+        wantPlaceHolder: "Enter the local private key file path",
       },
     ];
 

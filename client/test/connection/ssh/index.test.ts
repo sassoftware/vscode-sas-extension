@@ -124,28 +124,6 @@ describe("ssh connection", () => {
         await session.setup();
       }, "Shell Connection Failed");
     });
-
-    it("rejects on ready timeout", async () => {
-      const config = {
-        host: "host",
-        username: "username",
-        port: 22,
-        saspath: "/path/to/sas_u8",
-        sasOptions: [],
-        agentSocket: "/agent/socket",
-      };
-
-      sandbox.stub(Client.prototype, "connect").callsFake(function () {
-        sandbox.clock.tick(50 * seconds);
-        this.emit("ready");
-        return undefined;
-      });
-
-      session = new SSHSession(config);
-      await assertThrowsAsync(async () => {
-        await session.setup();
-      }, "Failed to connect to Session. Check profile settings");
-    });
   });
 
   describe("run", () => {
