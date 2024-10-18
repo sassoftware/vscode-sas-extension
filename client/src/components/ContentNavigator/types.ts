@@ -81,7 +81,6 @@ export interface ContentAdapter {
   getContentOfItem: (item: ContentItem) => Promise<string>;
   getContentOfUri: (uri: Uri) => Promise<string>;
   getFolderPathForItem: (item: ContentItem) => Promise<string>;
-  getItemOfId: (id: string) => Promise<ContentItem>;
   getItemOfUri: (uri: Uri) => Promise<ContentItem>;
   getParentOfItem: (item: ContentItem) => Promise<ContentItem | undefined>;
   getRootFolder: (name: string) => ContentItem | undefined;
@@ -90,14 +89,14 @@ export interface ContentAdapter {
   moveItem: (
     item: ContentItem,
     targetParentFolderUri: string,
-  ) => Promise<boolean>;
-  recycleItem: (item: ContentItem) => Promise<{ newUri?: Uri; oldUri?: Uri }>;
+  ) => Promise<Uri | undefined>;
+  recycleItem?: (item: ContentItem) => Promise<{ newUri?: Uri; oldUri?: Uri }>;
   removeItemFromFavorites: (item: ContentItem) => Promise<boolean>;
   renameItem: (
     item: ContentItem,
     newName: string,
   ) => Promise<ContentItem | undefined>;
-  restoreItem: (item: ContentItem) => Promise<boolean>;
+  restoreItem?: (item: ContentItem) => Promise<boolean>;
   updateContentOfItem(uri: Uri, content: string): Promise<void>;
 }
 
