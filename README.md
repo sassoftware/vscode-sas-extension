@@ -2,7 +2,7 @@
 
 [Capabilities](https://sassoftware.github.io/vscode-sas-extension/matrix) | [Installation](https://sassoftware.github.io/vscode-sas-extension/installation) | [Configuration](https://sassoftware.github.io/vscode-sas-extension/Configurations/) | [Features](https://sassoftware.github.io/vscode-sas-extension/Features/) | [FAQ](https://sassoftware.github.io/vscode-sas-extension/faq)
 
-Welcome to the SAS Extension for Visual Studio Code! The SAS extension is lightweight, runs anywhere, and allows you to integrate SAS with other languages. You can connect directly to SAS Viya and SAS 9 and run code.
+Welcome to the SAS Extenssion for Visual Studio Code! The SAS extension is lightweight, runs anywhere, and allows you to integrate SAS with other languages. You can connect directly to SAS Viya and SAS 9 and run code.
 
 Before you can run SAS code, you must [configure the SAS extension](https://sassoftware.github.io/vscode-sas-extension/Configurations/) to access your SAS 9.4 (remote or local) server or a SAS Viya server and [add a connection profile](https://sassoftware.github.io/vscode-sas-extension/Configurations/Profiles/).
 
