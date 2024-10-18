@@ -1120,7 +1120,7 @@
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "mocha": "^10.7.3",
-    "nock": "^13.5.4",
+    "nock": "^13.5.5",
     "papaparse": "^5.4.1",
     "path-browserify": "^1.0.1",
     "prettier": "^3.3.3",
