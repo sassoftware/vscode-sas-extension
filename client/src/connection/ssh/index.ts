@@ -204,17 +204,7 @@ export class SSHSession extends Session {
   };
 
   private fetchWorkDirectory = (line: string): string => {
-    let foundWorkDirectory = "";
-    if (
-      !line.includes(`%put ${WORK_DIR_START_TAG};`) &&
-      !line.includes(`%put &workDir;`) &&
-      !line.includes(`%put ${WORK_DIR_END_TAG};`)
-    ) {
-      foundWorkDirectory = this._workDirectoryParser.processLine(line);
-    } else {
-      // If the line is the put statement, we don't need to log that
-      return;
-    }
+    const foundWorkDirectory = this._workDirectoryParser.processLine(line);
     // We don't want to output any of the captured lines
     if (this._workDirectoryParser.isCapturingLine()) {
       return;
@@ -225,9 +215,7 @@ export class SSHSession extends Session {
 
   private resolveSystemVars = (): void => {
     const code = `%let workDir = %sysfunc(pathname(work));
-    %put ${WORK_DIR_START_TAG};
-    %put &workDir;
-    %put ${WORK_DIR_END_TAG};
+    %put ${WORK_DIR_START_TAG}&workDir${WORK_DIR_END_TAG};
     %let rc = %sysfunc(dlgcdir("&workDir"));
     run;
     `;
