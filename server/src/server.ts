@@ -59,6 +59,10 @@ export const runServer = (
 
   _pyrightLanguageProvider.setSasLspProvider(getLanguageService);
 
+  setInterval(() => {
+    console.log("I'm alive! " + new Date().getTime());
+  }, 1000);
+
   connection.onInitialize((params) => {
     if (
       params.initializationOptions &&

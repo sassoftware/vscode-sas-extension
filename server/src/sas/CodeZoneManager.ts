@@ -356,14 +356,16 @@ export class CodeZoneManager {
       if (
         /*syntax[syntaxLen-1].state !== 0 && */ // for the line without normal end mark.
         syntax[syntaxLen - 1].start <= context.col &&
-        lineLen >= context.col
+        lineLen >= context.col &&
+        syntax[syntaxLen - 1].start < lineLen // to prevent ""
       ) {
         i = syntaxLen - 1;
       } else {
         for (i = context.syntaxIdx; i >= 0; i--) {
           if (
             syntax[i].start <= context.col &&
-            syntax[i + 1].start >= context.col
+            syntax[i + 1].start >= context.col &&
+            syntax[i].start !== syntax[i + 1].start // to prevent ""
           ) {
             break;
           }
