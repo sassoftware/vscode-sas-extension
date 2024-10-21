@@ -174,23 +174,19 @@ export class SSHSession extends Session {
 
         s.on("data", (data) => {
           fileContents += data.toString();
-        })
-          .on("close", (code) => {
-            const rc: number = code;
+        }).on("close", (code) => {
+          const rc: number = code;
 
-            if (rc === 0) {
-              //Make sure that the html has a valid body
-              //TODO #185: should this be refactored into a shared location?
-              if (fileContents.search('<*id="IDX*.+">') !== -1) {
-                runResult.html5 = fileContents;
-                runResult.title = l10n.t("Result");
-              }
+          if (rc === 0) {
+            //Make sure that the html has a valid body
+            //TODO #185: should this be refactored into a shared location?
+            if (fileContents.search('<*id="IDX*.+">') !== -1) {
+              runResult.html5 = fileContents;
+              runResult.title = l10n.t("Result");
             }
-            this._resolve?.(runResult);
-          })
-          .on("error", (err) => {
-            console.log(err);
-          });
+          }
+          this._resolve?.(runResult);
+        });
       },
     );
   };
