@@ -28,7 +28,7 @@ let bundle: Record<string, string>;
 const locale: string =
   typeof process !== "undefined" && process.env.VSCODE_NLS_CONFIG
     ? JSON.parse(process.env.VSCODE_NLS_CONFIG).locale
-    : global.navigator?.language ?? "en";
+    : (global.navigator?.language ?? "en");
 const supportedLanguages = [
   "ar",
   "cs",
