@@ -17,7 +17,6 @@ import {
 
 import { BaseConfig, RunResult } from "..";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
-import { LineParser } from "../LineParser";
 import { Session } from "../session";
 import { extractOutputHtmlFileName } from "../util";
 import { AuthHandler } from "./auth";
@@ -56,7 +55,6 @@ export class SSHSession extends Session {
   private _sessionReady: boolean;
   private _authHandler: AuthHandler;
   private _workDirectory: string;
-  private _workDirectoryParser: LineParser;
   private _authsLeft: AuthenticationType[];
 
   constructor(c?: Config, client?: Client) {
@@ -65,11 +63,6 @@ export class SSHSession extends Session {
     this._conn = client;
     this._sessionReady = false;
     this._authHandler = new AuthHandler();
-    this._workDirectoryParser = new LineParser(
-      WORK_DIR_START_TAG,
-      WORK_DIR_END_TAG,
-      false,
-    );
     this._authsLeft = [];
   }
 
@@ -181,19 +174,23 @@ export class SSHSession extends Session {
 
         s.on("data", (data) => {
           fileContents += data.toString();
-        }).on("close", (code) => {
-          const rc: number = code;
+        })
+          .on("close", (code) => {
+            const rc: number = code;
 
-          if (rc === 0) {
-            //Make sure that the html has a valid body
-            //TODO #185: should this be refactored into a shared location?
-            if (fileContents.search('<*id="IDX*.+">') !== -1) {
-              runResult.html5 = fileContents;
-              runResult.title = l10n.t("Result");
+            if (rc === 0) {
+              //Make sure that the html has a valid body
+              //TODO #185: should this be refactored into a shared location?
+              if (fileContents.search('<*id="IDX*.+">') !== -1) {
+                runResult.html5 = fileContents;
+                runResult.title = l10n.t("Result");
+              }
             }
-          }
-          this._resolve?.(runResult);
-        });
+            this._resolve?.(runResult);
+          })
+          .on("error", (err) => {
+            console.log(err);
+          });
       },
     );
   };
@@ -203,22 +200,15 @@ export class SSHSession extends Session {
     updateStatusBarItem(false);
   };
 
-  private fetchWorkDirectory = (line: string): string => {
-    const foundWorkDirectory = this._workDirectoryParser.processLine(line);
-    // We don't want to output any of the captured lines
-    if (this._workDirectoryParser.isCapturingLine()) {
-      return;
-    }
-
-    return foundWorkDirectory || "";
-  };
-
   private resolveSystemVars = (): void => {
-    const code = `%let workDir = %sysfunc(pathname(work));
-    %put ${WORK_DIR_START_TAG}&workDir${WORK_DIR_END_TAG};
-    %let rc = %sysfunc(dlgcdir("&workDir"));
-    run;
-    `;
+    const code = `%let wd = %sysfunc(pathname(work));
+  %let rc = %sysfunc(dlgcdir("&wd"));
+  data _null_; length x $ 4096;
+    file STDERR;
+    x = resolve('&wd');  put '${WORK_DIR_START_TAG}' x '${WORK_DIR_END_TAG}';
+  run;
+
+  `;
     this._stream.write(code);
   };
 
@@ -231,6 +221,15 @@ export class SSHSession extends Session {
       this.resolveSystemVars();
       updateStatusBarItem(true);
       return;
+    }
+
+    if (this._sessionReady && !this._workDirectory) {
+      const match = output.match(
+        `${WORK_DIR_START_TAG}(/[\\s\\S]*?)${WORK_DIR_END_TAG}`,
+      );
+      if (match && match.length > 1) {
+        this._workDirectory = match[1].trimEnd().replace(/(\r\n|\n|\r)/gm, "");
+      }
     }
 
     const outputLines = output.split(/\n|\r\n/);
@@ -249,14 +248,6 @@ export class SSHSession extends Session {
           this._html5FileName,
         );
         this._onExecutionLogFn?.([{ type: "normal", line }]);
-      }
-
-      if (this._sessionReady && !this._workDirectory) {
-        const foundWorkDir = this.fetchWorkDirectory(line);
-        if (foundWorkDir) {
-          const match = foundWorkDir.match(/\/[^\s\r]+/);
-          this._workDirectory = match ? match[0] : "";
-        }
       }
     });
   };
