@@ -1,8 +1,11 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { FoldingRange } from "vscode-languageserver";
+import {
+  DocumentSymbol,
+  FoldingRange,
+  SymbolKind,
+} from "vscode-languageserver";
 import { Range, TextDocument } from "vscode-languageserver-textdocument";
-import { DocumentSymbol, SymbolKind } from "vscode-languageserver-types";
 
 import { CodeZoneManager } from "./CodeZoneManager";
 import { CompletionProvider } from "./CompletionProvider";
@@ -52,8 +55,8 @@ const SymbolKinds = [
 ];
 
 export class LanguageServiceProvider {
-  private model;
-  private syntaxProvider;
+  public model;
+  public syntaxProvider;
   public completionProvider;
   public formatOnTypeProvider;
   public formatter;

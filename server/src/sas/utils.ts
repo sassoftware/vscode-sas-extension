@@ -103,3 +103,11 @@ export function getText(key: string, arg?: string): string {
   }
   return result;
 }
+
+export const isCustomRegionStartComment = (commmentText?: string) => {
+  return /^\s*[%/]?\*\s*region\b/i.test(commmentText ?? "");
+};
+
+export const isCustomRegionEndComment = (commmentText?: string) => {
+  return /^\s*[%/]?\*\s*endregion\b/i.test(commmentText ?? "");
+};
