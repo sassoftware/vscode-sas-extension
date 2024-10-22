@@ -7,6 +7,9 @@ import {
   CallHierarchyOutgoingCallsParams,
   CallHierarchyPrepareParams,
   CancellationToken,
+  CodeAction,
+  CodeActionParams,
+  Command,
   CompletionItem,
   CompletionList,
   CompletionParams,
@@ -260,6 +263,13 @@ export class PyrightLanguageProviderBrowser extends PyrightServer {
     reporter: WorkDoneProgressReporter,
   ) {
     return await super.onExecuteCommand(params, token, reporter);
+  }
+
+  public async executeCodeAction(
+    params: CodeActionParams,
+    token: CancellationToken,
+  ): Promise<(Command | CodeAction)[] | undefined | null> {
+    return await super.executeCodeAction(params, token);
   }
 
   public async onShutdown(token: CancellationToken): Promise<void> {

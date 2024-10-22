@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import {
   CancellationToken,
+  CodeActionKind,
   CompletionItemKind,
   CompletionTriggerKind,
   Connection,
@@ -59,10 +60,6 @@ export const runServer = (
 
   _pyrightLanguageProvider.setSasLspProvider(getLanguageService);
 
-  setInterval(() => {
-    console.log("I'm alive! " + new Date().getTime());
-  }, 1000);
-
   connection.onInitialize((params) => {
     if (
       params.initializationOptions &&
@@ -108,6 +105,12 @@ export const runServer = (
             supported: true,
             changeNotifications: true,
           },
+        },
+        codeActionProvider: {
+          codeActionKinds: [
+            CodeActionKind.QuickFix,
+            CodeActionKind.SourceOrganizeImports,
+          ],
         },
       },
     };
@@ -542,6 +545,17 @@ export const runServer = (
     return await _pyrightLanguageProvider.onCallHierarchyOutgoingCalls(
       params,
       token,
+    );
+  });
+
+  connection.onCodeAction(async (params, token) => {
+    return await dispatch(
+      { textDocument: params.textDocument, position: params.range.start },
+      {
+        async python(pyrightLanguageService) {
+          return await pyrightLanguageService.executeCodeAction(params, token);
+        },
+      },
     );
   });
 
