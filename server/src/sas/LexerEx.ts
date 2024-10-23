@@ -3050,7 +3050,6 @@ export class LexerEx {
               });
               break;
             } // not break
-          // eslint-disable-next-line no-fallthrough
           default: {
             this.tryToHandleSectionEnd_(token);
             let generalProcStmt = true;
@@ -3292,7 +3291,6 @@ export class LexerEx {
               });
               break;
             } // attention: not break here
-          // eslint-disable-next-line no-fallthrough
           default:
             if (Lexer.isCards[word]) {
               this.cardsState = this.CARDS_STATE.IN_CMD;

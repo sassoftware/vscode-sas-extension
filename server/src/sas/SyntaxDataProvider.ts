@@ -1,8 +1,7 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types,
-@typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any,@typescript-eslint/dot-notation */
+/* eslint-disable @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any,@typescript-eslint/dot-notation */
 import { ResLoader } from "../node/ResLoader";
 import { arrayToMap } from "./utils";
 
@@ -861,7 +860,6 @@ function _setKeywords(type: string, keywords: any) {
 }
 
 function _loadKeywords(type: string, cb: any) {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const url = _resolveURL(type)!;
   ResLoader.get(
     url,
@@ -2623,7 +2621,6 @@ export class SyntaxDataProvider {
       }
       if (obj[ID_HAS_OPT_DELIMITER] === undefined) {
         obj[ID_HAS_OPT_DELIMITER] = /Syntax:(.|\n)*\/(.|\n)*;/i.test(
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           help.data!,
         );
       }
@@ -2740,7 +2737,6 @@ export class SyntaxDataProvider {
     return /\bC\b/.test(type) || type.toLowerCase() === "color";
   }
   isInteractiveProc(name: string) {
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     _tryToLoadProceduresFromPubs(null, function () {});
     const data = _keywordObj("proc", name);
     return data && data[ID_ATTR] === "InteractivePROC";

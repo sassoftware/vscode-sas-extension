@@ -53,6 +53,7 @@ export class ContentModel {
     let data;
     try {
       data = (await this.contentAdapter.getContentOfUri(uri)).toString();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       throw new Error(Messages.FileOpenError);
     }
@@ -71,6 +72,7 @@ export class ContentModel {
       const data = await this.contentAdapter.getContentOfItem(item);
 
       return Buffer.from(data, "binary");
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       throw new Error(Messages.FileDownloadError);
     }

@@ -167,7 +167,6 @@ class LibraryDataProvider
 
   public watch(): Disposable {
     // ignore, fires for all changes...
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     return new Disposable(() => {});
   }
 

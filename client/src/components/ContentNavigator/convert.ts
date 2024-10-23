@@ -392,6 +392,7 @@ export class NotebookToFlowConverter {
     try {
       const result = await createStudioSession(this.connection);
       this.studioSessionId = result;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       this.studioSessionId = "";
     }
