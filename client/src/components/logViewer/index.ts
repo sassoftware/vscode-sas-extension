@@ -110,7 +110,11 @@ useRunStore.subscribe(
     } else if (isExecuting && !prevIsExecuting) {
       setProducedExecutionLogOutput(false);
 
-      if (clearLogOnExecutionStart() && outputChannel) {
+      if (
+        clearLogOnExecutionStart() &&
+        outputChannel &&
+        useRunStore.getState().isUserExecuting
+      ) {
         outputChannel.dispose();
         outputChannel = undefined;
         data = [];
