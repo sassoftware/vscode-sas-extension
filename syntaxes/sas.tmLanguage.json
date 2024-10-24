@@ -142,9 +142,9 @@
       "end": "'|(?=\\n)"
     },
     "sas-macro-quotes": {
-      "begin": "(?i)%(?:bquote|superq|nrbquote|nrquote|nrstr|str)",
+      "begin": "(?i)%(?:quote|bquote|superq|nrbquote|nrquote|nrstr|str)",
       "end": "\\)|(?=\\n)",
-      "name": "sas.string.quoted.macro",
+      "name": "sas.quoted.macro",
       "patterns": [
         {
           "include": "#sas-macro-quotes"
