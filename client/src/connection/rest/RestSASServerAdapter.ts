@@ -128,13 +128,17 @@ class RestSASServerAdapter implements ContentAdapter {
     parentItem: ContentItem,
     folderName: string,
   ): Promise<ContentItem | undefined> {
-    const response = await this.fileSystemApi.createFileOrDirectory({
-      sessionId: this.sessionId,
-      fileOrDirectoryPath: this.trimComputePrefix(parentItem.uri),
-      fileProperties: { name: folderName, isDirectory: true },
-    });
+    try {
+      const response = await this.fileSystemApi.createFileOrDirectory({
+        sessionId: this.sessionId,
+        fileOrDirectoryPath: this.trimComputePrefix(parentItem.uri),
+        fileProperties: { name: folderName, isDirectory: true },
+      });
 
-    return this.filePropertiesToContentItem(response.data);
+      return this.filePropertiesToContentItem(response.data);
+    } catch (error) {
+      return;
+    }
   }
 
   public async createNewItem(
@@ -469,9 +473,15 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 
   private trimComputePrefix(uri: string): string {
-    return decodeURI(
-      uri.replace(/\/compute\/sessions\/[a-zA-Z0-9-]*\/files\//, ""),
+    const uriWithoutPrefix = uri.replace(
+      /\/compute\/sessions\/[a-zA-Z0-9-]*\/files\//,
+      "",
     );
+    try {
+      return decodeURIComponent(uriWithoutPrefix);
+    } catch (e) {
+      return uriWithoutPrefix;
+    }
   }
 
   private updateFileMetadata(id: string, { headers }: AxiosResponse) {
