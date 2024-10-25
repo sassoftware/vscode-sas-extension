@@ -386,6 +386,9 @@ class ContentNavigator implements SubscriptionProvider {
           if (event.affectsConfiguration("SAS.connectionProfiles")) {
             const endpoint = this.viyaEndpoint();
             this.collapseAllContent();
+            this.contentDataProvider.useModel(
+              new ContentModel(this.contentAdapterForConnectionType()),
+            );
             if (endpoint) {
               await this.contentDataProvider.connect(endpoint);
             } else {

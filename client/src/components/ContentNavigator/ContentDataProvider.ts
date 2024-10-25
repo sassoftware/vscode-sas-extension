@@ -71,7 +71,7 @@ class ContentDataProvider
   private _onDidChange: EventEmitter<Uri>;
   private _treeView: TreeView<ContentItem>;
   private _dropEditProvider: Disposable;
-  private readonly model: ContentModel;
+  private model: ContentModel;
   private extensionUri: Uri;
   private mimeType: string;
 
@@ -115,6 +115,10 @@ class ContentDataProvider
         await this.connect(activeProfile.endpoint);
       }
     });
+  }
+
+  public useModel(contentModel: ContentModel) {
+    this.model = contentModel;
   }
 
   public async handleDrop(
