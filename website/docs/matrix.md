@@ -9,6 +9,7 @@ sidebar_position: 2
 | [SAS Options settings](./Configurations/Profiles/additional.md#sas-options-settings-examples) | :heavy_check_mark: |             :heavy_check_mark:\*             |   :heavy_check_mark:   | \*Startup options not supported for SAS 9.4 (local) and (remote-IOM) |
 | [SAS Autoexec settings](./Configurations/Profiles/additional.md#sas-autoexec-settings)        | :heavy_check_mark: |                     :x:                      |          :x:           |
 | [Access SAS Content](./Features/accessContent.md)                                             | :heavy_check_mark: |                     :x:                      |          :x:           |
+| [Access SAS Server](./Features/accessServer.md)                                               | :heavy_check_mark: |                     :x:                      |          :x:           | SAS 9.4 and SSH support to be added in a future release              |
 | [Access connected libraries](./Features/accessLibraries.md)                                   | :heavy_check_mark: |              :heavy_check_mark:              |          :x:           |
 | [Table viewer](./Features/accessLibraries.md)                                                 | :heavy_check_mark: |              :heavy_check_mark:              |          :x:           |
 | [SAS Notebooks](./Features/sasNotebook.md)                                                    | :heavy_check_mark: |              :heavy_check_mark:              |   :heavy_check_mark:   |
