@@ -271,7 +271,7 @@ class ContentNavigator implements SubscriptionProvider {
       ),
       commands.registerCommand(
         `${SAS}.collapseAllContent`,
-        this.collapseAllContent,
+        this.collapseAllContent.bind(this),
       ),
       commands.registerCommand(
         `${SAS}.convertNotebookToFlow`,
