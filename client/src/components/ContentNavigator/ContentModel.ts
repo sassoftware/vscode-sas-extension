@@ -1,6 +1,8 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri } from "vscode";
+import { Uri, l10n } from "vscode";
+
+import { extname } from "path";
 
 import { ALL_ROOT_FOLDERS, Messages } from "./const";
 import { ContentAdapter, ContentItem } from "./types";
@@ -90,6 +92,43 @@ export class ContentModel {
       fileName,
       buffer,
     );
+  }
+
+  public async createUniqueFileOfPrefix(
+    parentItem: ContentItem,
+    fileName: string,
+    buffer?: ArrayBufferLike,
+  ) {
+    const itemsInFolder = await this.getChildren(parentItem);
+    const uniqueFileName = getUniqueFileName();
+
+    return await this.createFile(parentItem, uniqueFileName, buffer);
+
+    function getUniqueFileName(): string {
+      const ext = extname(fileName);
+      const basename = fileName.replace(ext, "");
+      const usedFlowNames = itemsInFolder.reduce((carry, item) => {
+        if (item.name.endsWith(ext)) {
+          return { ...carry, [item.name]: true };
+        }
+        return carry;
+      }, {});
+
+      if (!usedFlowNames[fileName]) {
+        return fileName;
+      }
+
+      let number = 1;
+      let newFileName;
+      do {
+        newFileName = l10n.t("{basename}_Copy{number}.flw", {
+          basename,
+          number: number++,
+        });
+      } while (usedFlowNames[newFileName]);
+
+      return newFileName || fileName;
+    }
   }
 
   public async createFolder(

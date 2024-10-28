@@ -146,22 +146,26 @@ class RestSASServerAdapter implements ContentAdapter {
     fileName: string,
     buffer?: ArrayBufferLike,
   ): Promise<ContentItem | undefined> {
-    const response = await this.fileSystemApi.createFileOrDirectory({
-      sessionId: this.sessionId,
-      fileOrDirectoryPath: this.trimComputePrefix(parentItem.uri),
-      fileProperties: { name: fileName, isDirectory: false },
-    });
+    try {
+      const response = await this.fileSystemApi.createFileOrDirectory({
+        sessionId: this.sessionId,
+        fileOrDirectoryPath: this.trimComputePrefix(parentItem.uri),
+        fileProperties: { name: fileName, isDirectory: false },
+      });
 
-    const contentItem = this.filePropertiesToContentItem(response.data);
+      const contentItem = this.filePropertiesToContentItem(response.data);
 
-    if (buffer) {
-      await this.updateContentOfItemAtPath(
-        this.trimComputePrefix(contentItem.uri),
-        new TextDecoder().decode(buffer),
-      );
+      if (buffer) {
+        await this.updateContentOfItemAtPath(
+          this.trimComputePrefix(contentItem.uri),
+          new TextDecoder().decode(buffer),
+        );
+      }
+
+      return contentItem;
+    } catch (error) {
+      return;
     }
-
-    return contentItem;
   }
 
   public async deleteItem(item: ContentItem): Promise<boolean> {

@@ -411,7 +411,7 @@ export class NotebookToFlowConverter {
     }
 
     const parentItem = await this.parent();
-    const newItem = await this.contentModel.createFile(
+    const newItem = await this.contentModel.createUniqueFileOfPrefix(
       parentItem,
       outputName,
       flowDataUint8Array,
