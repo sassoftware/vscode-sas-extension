@@ -47,8 +47,19 @@ const flowFileValidator = (value: string): string | null => {
   return res;
 };
 
-const folderValidator = (value: string): string | null =>
-  value.length <= 100 ? null : Messages.FolderValidationError;
+const folderValidator = (
+  value: string,
+  sourceType: ContentSourceType,
+): string | null => {
+  const regex =
+    sourceType === ContentSourceType.SASServer
+      ? new RegExp(/[:/?\\*"|<>]/g)
+      : new RegExp(/[/;\\{}<>]/g);
+
+  return value.length <= 100 && !regex.test(value)
+    ? null
+    : Messages.FolderValidationError;
+};
 
 class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
@@ -187,7 +198,8 @@ class ContentNavigator implements SubscriptionProvider {
           const folderName = await window.showInputBox({
             prompt: Messages.NewFolderPrompt,
             title: Messages.NewFolderTitle,
-            validateInput: folderValidator,
+            validateInput: (folderName) =>
+              folderValidator(folderName, this.sourceType),
           });
           if (!folderName) {
             return;

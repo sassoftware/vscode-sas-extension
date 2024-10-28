@@ -103,7 +103,6 @@
   "Task is complete.": "任务完成。",
   "The SAS session has closed.": "SAS会话已关闭。",
   "The file type is unsupported.": "不支持该文件类型。",
-  "The folder name cannot contain more than 100 characters.": "文件夹名称不能超过100个字符。",
   "The item could not be added to My Favorites.": "该项目无法添加到我的收藏夹。",
   "The item could not be removed from My Favorites.": "无法从我的收藏夹中删除该项目。",
   "The notebook file does not contain any code to convert.": "笔记本文件不包含任何要转换的代码。",

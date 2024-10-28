@@ -103,7 +103,6 @@
   "Task is complete.": "작업이 완료되었습니다.",
   "The SAS session has closed.": "SAS 세션이 종료되었습니다.",
   "The file type is unsupported.": "지원되지 않는 파일 형식입니다.",
-  "The folder name cannot contain more than 100 characters.": "폴더 이름은 100자를 초과할 수 없습니다.",
   "The item could not be added to My Favorites.": "항목을 즐겨찾기에 추가할 수 없습니다.",
   "The item could not be removed from My Favorites.": "항목을 즐겨찾기에서 제거할 수 없습니다.",
   "The notebook file does not contain any code to convert.": "노트북 파일에 변환할 코드가 포함되어 있지 않습니다.",

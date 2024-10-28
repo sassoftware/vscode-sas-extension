@@ -81,7 +81,7 @@ export const Messages = {
   FolderDeletionError: l10n.t("Unable to delete folder."),
   FolderRestoreError: l10n.t("Unable to restore folder."),
   FolderValidationError: l10n.t(
-    "The folder name cannot contain more than 100 characters.",
+    "The folder name cannot contain more than 100 characters or have invalid characters.",
   ),
   NewFileCreationError: l10n.t('Unable to create file "{name}".'),
   NewFilePrompt: l10n.t("Enter a file name."),
