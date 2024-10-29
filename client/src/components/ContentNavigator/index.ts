@@ -227,7 +227,9 @@ class ContentNavigator implements SubscriptionProvider {
               ? Messages.RenameFolderTitle
               : Messages.RenameFileTitle,
             value: resource.name,
-            validateInput: isContainer ? folderValidator : fileValidator,
+            validateInput: isContainer
+              ? (value) => folderValidator(value, this.sourceType)
+              : fileValidator,
           });
           if (!name || name === resource.name) {
             return;
