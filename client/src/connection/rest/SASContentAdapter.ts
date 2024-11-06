@@ -174,6 +174,7 @@ class SASContentAdapter implements ContentAdapter {
           currentContentItem.parentFolderUri,
         );
         currentContentItem = parentData;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (e) {
         return "";
       }
@@ -192,6 +193,7 @@ class SASContentAdapter implements ContentAdapter {
     const updateLink = getLink(item.links, "PUT", "update");
     try {
       await this.connection.put(updateLink.uri, newItemData);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return false;
     }
@@ -330,6 +332,7 @@ class SASContentAdapter implements ContentAdapter {
         { name: folderName },
       );
       return this.enrichWithDataProviderProperties(createFolderResponse.data);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return;
     }
@@ -414,6 +417,7 @@ class SASContentAdapter implements ContentAdapter {
       }
 
       return this.enrichWithDataProviderProperties(patchResponse.data);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return;
     }
@@ -439,6 +443,7 @@ class SASContentAdapter implements ContentAdapter {
         },
       );
       createdResource = fileCreationResponse.data;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return;
     }
@@ -474,6 +479,7 @@ class SASContentAdapter implements ContentAdapter {
         type: "CHILD",
         ...properties,
       });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return false;
     }
@@ -509,6 +515,7 @@ class SASContentAdapter implements ContentAdapter {
     // If we're attempting to open a favorite, open the underlying file instead.
     try {
       return (await this.getItemOfId(item.uri)).vscUri;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return item.vscUri;
     }
@@ -542,6 +549,7 @@ class SASContentAdapter implements ContentAdapter {
 
     try {
       await this.connection.delete(deleteFavoriteUri);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return false;
     }
@@ -640,6 +648,7 @@ class SASContentAdapter implements ContentAdapter {
       const deleteLink =
         deleteRecursivelyLink ?? `${deleteResourceLink}?recursive=true`;
       await this.connection.delete(deleteLink);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return false;
     }
@@ -657,6 +666,7 @@ class SASContentAdapter implements ContentAdapter {
     }
     try {
       await this.connection.delete(deleteResourceLink);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return false;
     }
@@ -681,6 +691,7 @@ class SASContentAdapter implements ContentAdapter {
         "/deploymentData/cadenceVersion",
       );
       return data.cadenceVersion;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       console.error("fail to retrieve the viya cadence");
     }

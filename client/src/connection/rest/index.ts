@@ -255,6 +255,7 @@ class RestSession extends Session {
 
       try {
         session = await computeServer.getSession(sessionId);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         console.log(
           `Attempt to reconnect to session ${sessionId} failed. A new session will be started`,
@@ -268,6 +269,7 @@ class RestSession extends Session {
         const mySession = (await sessions.getSession({ sessionId: sessionId }))
           .data;
         session = ComputeSession.fromInterface(mySession);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         console.log(
           `Attempt to reconnect to session ${sessionId} failed. A new session will be started`,

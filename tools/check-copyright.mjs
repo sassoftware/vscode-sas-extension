@@ -7,7 +7,7 @@ const filesToIgnore = [
   "**/node_modules/**",
   "**/out/**",
   "**/test/**",
-  "*.config.js",
+  "*.config.*js",
   "*.test.tsx?",
   "tools/**",
   "website/**",

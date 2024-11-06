@@ -514,6 +514,7 @@ export class ITCSession extends Session {
     const globalStorageUri = getGlobalStorageUri();
     try {
       await workspace.fs.readDirectory(globalStorageUri);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       await workspace.fs.createDirectory(globalStorageUri);
     }
