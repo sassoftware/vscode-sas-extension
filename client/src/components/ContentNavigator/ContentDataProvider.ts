@@ -14,6 +14,8 @@ import {
   FileType,
   Position,
   ProviderResult,
+  TabInputNotebook,
+  TabInputText,
   TextDocument,
   TextDocumentContentProvider,
   ThemeIcon,
@@ -52,7 +54,7 @@ import {
   FileManipulationEvent,
 } from "./types";
 import {
-  getEditorTabForItem,
+  getEditorTabsForItem,
   getFileStatement,
   isContainer as getIsContainer,
 } from "./utils";
@@ -285,23 +287,62 @@ class ContentDataProvider
     name: string,
   ): Promise<Uri | undefined> {
     const closing = closeFileIfOpen(item);
-    if (!(await closing)) {
+    const removedTabUris = await closing;
+    if (!removedTabUris) {
       return;
     }
 
     const newItem = await this.model.renameResource(item, name);
-    if (newItem) {
-      const newUri = newItem.vscUri;
-      if (closing !== true) {
-        // File was open before rename, so re-open it
-        commands.executeCommand("vscode.open", newUri);
-      }
+    if (!newItem) {
+      return;
+    }
+
+    const newUri = newItem.vscUri;
+    const oldUriToNewUriMap = [[item.vscUri, newUri]];
+    const newItemIsContainer = getIsContainer(newItem);
+    if (closing !== true && !newItemIsContainer) {
+      commands.executeCommand("vscode.open", newUri);
+    }
+    const urisToOpen = getPreviouslyOpenedChildItems(
+      await this.getChildren(newItem),
+    );
+    urisToOpen.forEach(([, newUri]) =>
+      commands.executeCommand("vscode.open", newUri),
+    );
+    oldUriToNewUriMap.push(...urisToOpen);
+    oldUriToNewUriMap.forEach(([uri, newUri]) =>
       this._onDidManipulateFile.fire({
         type: "rename",
-        uri: item.vscUri,
+        uri,
         newUri,
-      });
-      return newUri;
+      }),
+    );
+    return newUri;
+
+    function getPreviouslyOpenedChildItems(childItems: ContentItem[]) {
+      const loadChildItems = closing !== true && newItemIsContainer;
+      if (!Array.isArray(removedTabUris) || !loadChildItems) {
+        return [];
+      }
+      // Here's where things get a little weird. When we rename folders in
+      // sas content, we _don't_ close those files. It doesn't matter since
+      // their path isn't hierarchical. In sas file system, the path is hierarchical,
+      // thus we need to re-open all the closed files. This does that by getting
+      // children and comparing the removedTabUris
+      const filteredChildItems = childItems
+        .map((childItem) => {
+          const matchingUri = removedTabUris.find((uri) =>
+            uri.path.endsWith(childItem.name),
+          );
+          if (!matchingUri) {
+            return;
+          }
+
+          return [matchingUri, childItem.vscUri];
+        })
+        .filter((exists) => exists);
+
+      return filteredChildItems;
     }
   }
 
@@ -697,10 +738,26 @@ class ContentDataProvider
 
 export default ContentDataProvider;
 
-const closeFileIfOpen = (item: ContentItem) => {
-  const tab = getEditorTabForItem(item);
-  if (tab) {
-    return window.tabGroups.close(tab);
+const closeFileIfOpen = (item: ContentItem): Promise<Uri[]> | boolean => {
+  const tabs = getEditorTabsForItem(item);
+  if (tabs.length > 0) {
+    return new Promise((resolve, reject) => {
+      Promise.all(tabs.map((tab) => window.tabGroups.close(tab)))
+        .then(() =>
+          resolve(
+            tabs
+              .map(
+                (tab) =>
+                  (tab.input instanceof TabInputText ||
+                    tab.input instanceof TabInputNotebook) &&
+                  tab.input.uri,
+              )
+              .filter((exists) => exists),
+          ),
+        )
+        .catch(reject);
+    });
   }
+
   return true;
 };

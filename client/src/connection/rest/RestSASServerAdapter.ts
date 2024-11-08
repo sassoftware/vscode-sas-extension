@@ -154,6 +154,10 @@ class RestSASServerAdapter implements ContentAdapter {
       });
 
       const contentItem = this.filePropertiesToContentItem(response.data);
+      this.updateFileMetadata(
+        this.trimComputePrefix(contentItem.uri),
+        response,
+      );
 
       if (buffer) {
         await this.updateContentOfItemAtPath(
@@ -249,6 +253,7 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 
   private async getContentOfItemAtPath(path: string) {
+    await this.setup();
     const response = await this.fileSystemApi.getFileContentFromSystem(
       {
         sessionId: this.sessionId,

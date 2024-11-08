@@ -84,13 +84,13 @@ export const createStaticFolder = (
   ],
 });
 
-export const getEditorTabForItem = (item: ContentItem) => {
+export const getEditorTabsForItem = (item: ContentItem) => {
   const fileUri = item.vscUri;
   const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
-  return tabs.find(
+  return tabs.filter(
     (tab) =>
       (tab.input instanceof TabInputText ||
         tab.input instanceof TabInputNotebook) &&
-      tab.input.uri.query === fileUri.query, // compare the file id
+      tab.input.uri.query.includes(fileUri.query), // compare the file id
   );
 };

@@ -63,16 +63,16 @@ const folderValidator = (
 
 class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
-  private contentModel: ContentModel;
   private sourceType: ContentNavigatorConfig["sourceType"];
   private treeIdentifier: ContentNavigatorConfig["treeIdentifier"];
+
+  get contentModel() {
+    return new ContentModel(this.contentAdapterForConnectionType());
+  }
 
   constructor(context: ExtensionContext, config: ContentNavigatorConfig) {
     this.sourceType = config.sourceType;
     this.treeIdentifier = config.treeIdentifier;
-    this.contentModel = new ContentModel(
-      this.contentAdapterForConnectionType(),
-    );
     this.contentDataProvider = new ContentDataProvider(
       this.contentModel,
       context.extensionUri,
@@ -400,9 +400,7 @@ class ContentNavigator implements SubscriptionProvider {
           if (event.affectsConfiguration("SAS.connectionProfiles")) {
             const endpoint = this.viyaEndpoint();
             this.collapseAllContent();
-            this.contentDataProvider.useModel(
-              new ContentModel(this.contentAdapterForConnectionType()),
-            );
+            this.contentDataProvider.useModel(this.contentModel);
             if (endpoint) {
               await this.contentDataProvider.connect(endpoint);
             } else {
