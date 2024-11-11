@@ -141,6 +141,7 @@ export class ITCSession extends Session {
         `$runner.Setup($profileHost,$username,$password,$port,$protocol,$serverName,$displayLang)\n`,
         this.onWriteComplete,
       );
+      this._workDirectoryParser.reset();
       this._shellProcess.stdin.write(
         "$runner.ResolveSystemVars()\n",
         this.onWriteComplete,
