@@ -121,9 +121,10 @@ export class ContentModel {
       let number = 1;
       let newFileName;
       do {
-        newFileName = l10n.t("{basename}_Copy{number}.flw", {
+        newFileName = l10n.t("{basename}_Copy{number}{ext}", {
           basename,
           number: number++,
+          ext,
         });
       } while (usedFlowNames[newFileName]);
 

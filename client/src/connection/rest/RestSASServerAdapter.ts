@@ -81,6 +81,7 @@ class RestSASServerAdapter implements ContentAdapter {
             apply: async function (target, _this, argList) {
               try {
                 return await target(...argList);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
               } catch (error) {
                 // If we get any error, lets reconnect and try again. If we fail a second time,
                 // then we can assume it's a "real" error
@@ -136,6 +137,7 @@ class RestSASServerAdapter implements ContentAdapter {
       });
 
       return this.filePropertiesToContentItem(response.data);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return;
     }
@@ -167,6 +169,7 @@ class RestSASServerAdapter implements ContentAdapter {
       }
 
       return contentItem;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return;
     }
@@ -182,7 +185,8 @@ class RestSASServerAdapter implements ContentAdapter {
       });
       delete this.fileMetadataMap[filePath];
       return true;
-    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
       return false;
     }
   }
@@ -253,7 +257,6 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 
   private async getContentOfItemAtPath(path: string) {
-    await this.setup();
     const response = await this.fileSystemApi.getFileContentFromSystem(
       {
         sessionId: this.sessionId,
@@ -488,7 +491,8 @@ class RestSASServerAdapter implements ContentAdapter {
     );
     try {
       return decodeURIComponent(uriWithoutPrefix);
-    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
       return uriWithoutPrefix;
     }
   }
@@ -513,7 +517,8 @@ class RestSASServerAdapter implements ContentAdapter {
         fileOrDirectoryPath: path,
       });
       return this.updateFileMetadata(path, response);
-    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
       // Intentionally blank
     }
 

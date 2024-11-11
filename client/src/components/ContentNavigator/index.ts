@@ -63,16 +63,16 @@ const folderValidator = (
 
 class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
+  private contentModel: ContentModel;
   private sourceType: ContentNavigatorConfig["sourceType"];
   private treeIdentifier: ContentNavigatorConfig["treeIdentifier"];
-
-  get contentModel() {
-    return new ContentModel(this.contentAdapterForConnectionType());
-  }
 
   constructor(context: ExtensionContext, config: ContentNavigatorConfig) {
     this.sourceType = config.sourceType;
     this.treeIdentifier = config.treeIdentifier;
+    this.contentModel = new ContentModel(
+      this.contentAdapterForConnectionType(),
+    );
     this.contentDataProvider = new ContentDataProvider(
       this.contentModel,
       context.extensionUri,
@@ -290,6 +290,7 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.convertNotebookToFlow`,
         async (resource: ContentItem | Uri) => {
+          await this.contentModel.connect(this.viyaEndpoint());
           const notebookToFlowConverter = new NotebookToFlowConverter(
             resource,
             this.contentModel,
@@ -400,7 +401,11 @@ class ContentNavigator implements SubscriptionProvider {
           if (event.affectsConfiguration("SAS.connectionProfiles")) {
             const endpoint = this.viyaEndpoint();
             this.collapseAllContent();
-            this.contentDataProvider.useModel(this.contentModel);
+            const contentModel = new ContentModel(
+              this.contentAdapterForConnectionType(),
+            );
+            this.contentDataProvider.useModel(contentModel);
+            this.contentModel = contentModel;
             if (endpoint) {
               await this.contentDataProvider.connect(endpoint);
             } else {
@@ -412,10 +417,14 @@ class ContentNavigator implements SubscriptionProvider {
     ];
   }
 
-  private collapseAllContent() {
-    commands.executeCommand(
-      `workbench.actions.treeView.${this.treeIdentifier}.collapseAll`,
+  private async collapseAllContent() {
+    const collapeAllCmd = `workbench.actions.treeView.${this.treeIdentifier}.collapseAll`;
+    const commandExists = (await commands.getCommands()).find(
+      (c) => c === collapeAllCmd,
     );
+    if (commandExists) {
+      commands.executeCommand(collapeAllCmd);
+    }
   }
 
   private async uploadResource(
