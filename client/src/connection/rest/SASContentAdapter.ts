@@ -112,6 +112,7 @@ class SASContentAdapter implements ContentAdapter {
     const { data: result } = await this.connection.get(
       await this.generatedMembersUrlForParentItem(parentItem),
     );
+
     if (!result.items) {
       return Promise.reject();
     }

@@ -451,6 +451,16 @@ describe("ContentDataProvider", async function () {
           status: 409,
         },
       });
+    axiosInstance.get
+      .withArgs(
+        "uri://myFavorites/members?limit=1000000&filter=in(contentType,'file','dataFlow','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
+      )
+      .resolves({ data: { items: [] } });
+    axiosInstance.get
+      .withArgs(
+        "uri://test/members?limit=1000000&filter=in(contentType,'file','dataFlow','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
+      )
+      .resolves({ data: [] });
 
     const dataProvider = createDataProvider();
 
@@ -483,6 +493,16 @@ describe("ContentDataProvider", async function () {
       data: { ...origItem, name: "new-file.sas" },
       headers: { etag: "1234", "last-modified": "5678" },
     });
+    axiosInstance.get
+      .withArgs(
+        "uri://myFavorites/members?limit=1000000&filter=in(contentType,'file','dataFlow','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
+      )
+      .resolves({ data: { items: [] } });
+    axiosInstance.get
+      .withArgs(
+        "uri://rename/members?limit=1000000&filter=in(contentType,'file','dataFlow','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
+      )
+      .resolves({ data: { items: [] } });
 
     const dataProvider = createDataProvider();
 
@@ -521,6 +541,16 @@ describe("ContentDataProvider", async function () {
       data: referencedFile,
       headers: { etag: "1234", "last-modified": "5678" },
     });
+    axiosInstance.get
+      .withArgs(
+        "uri://myFavorites/members?limit=1000000&filter=in(contentType,'file','dataFlow','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
+      )
+      .resolves({ data: { items: [] } });
+    axiosInstance.get
+      .withArgs(
+        "uri://test/members?limit=1000000&filter=in(contentType,'file','dataFlow','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
+      )
+      .resolves({ data: { items: [] } });
 
     await dataProvider.connect("http://test.io");
     const uri: Uri = await dataProvider.renameResource(
