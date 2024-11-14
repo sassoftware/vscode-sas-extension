@@ -298,6 +298,10 @@ export class CompletionProvider {
           position.character,
         );
         return new Promise((resolve) => {
+          if (keyword.trim() === "") {
+            resolve(undefined);
+            return;
+          }
           this._loadHelp({
             keyword: keyword,
             type: "hint",
