@@ -49,6 +49,7 @@
   "configuration.SAS.connectionProfiles.profiles.sasOptions": "SAS 연결 SAS 옵션",
   "configuration.SAS.connectionProfiles.profiles.ssh.host": "SAS SSH 연결 SSH 호스트",
   "configuration.SAS.connectionProfiles.profiles.ssh.port": "SAS SSH 연결 포트",
+  "configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath": "SAS SSH Connection private key file path",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "SAS SSH 연결 실행 파일 경로",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "SAS SSH 연결 사용자 이름",
   "configuration.SAS.flowConversionMode": "노트북의 변환 모드 선택",
@@ -71,7 +72,9 @@
   "themes.SAS.dark": "SAS 다크",
   "themes.SAS.highContrast": "SAS 고대비",
   "themes.SAS.light": "SAS 라이트",
+  "views.SAS.explorer": "SAS Content",
   "views.SAS.libraries": "라이브러리",
+  "views.SAS.serverExplorer": "SAS Server",
   "views.SAS.signIn": "로그인",
   "views.SAS.unsupportedConnection": "귀하의 연결은 SAS Extension for Visual Studio Code 내에서 SAS 콘텐츠 탐색을 지원하지 않습니다. 탐색기 뷰를 사용하여야 파일을 방문할 수 있습니다.",
   "views.SAS.welcome": "SAS Extension for Visual Studio Code를 사용하려면 SAS에 로그인해야 합니다.\n[로그인](command:SAS.authorize)"

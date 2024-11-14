@@ -49,6 +49,7 @@
   "configuration.SAS.connectionProfiles.profiles.sasOptions": "SAS 连接 SAS 选项",
   "configuration.SAS.connectionProfiles.profiles.ssh.host": "SAS SSH 连接 SSH 主机",
   "configuration.SAS.connectionProfiles.profiles.ssh.port": "SAS SSH 连接端口",
+  "configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath": "SAS SSH Connection private key file path",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "SAS SSH 连接可执行路径",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "SAS SSH 连接用户名",
   "configuration.SAS.flowConversionMode": "选择笔记本的转换模式",
@@ -71,7 +72,9 @@
   "themes.SAS.dark": "SAS 深色",
   "themes.SAS.highContrast": "SAS 高对比度",
   "themes.SAS.light": "SAS 浅色",
+  "views.SAS.explorer": "SAS Content",
   "views.SAS.libraries": "库",
+  "views.SAS.serverExplorer": "SAS Server",
   "views.SAS.signIn": "登录",
   "views.SAS.unsupportedConnection": "您的连接不支持 SAS Extension for Visual Studio Code 中的 SAS 内容导航。您只能使用资源管理器视图访问文件。",
   "views.SAS.welcome": "要使用 SAS Extension for Visual Studio Code，您必须登录 SAS。\n[登录](command:SAS.authorize)"
