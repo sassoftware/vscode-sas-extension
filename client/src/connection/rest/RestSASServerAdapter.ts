@@ -383,16 +383,21 @@ class RestSASServerAdapter implements ContentAdapter {
     parsedFilePath.pop();
     const path = parsedFilePath.join("/");
 
-    const response = await this.fileSystemApi.updateFileOrDirectoryOnSystem({
-      sessionId: this.sessionId,
-      fileOrDirectoryPath: filePath,
-      ifMatch: "",
-      fileProperties: { name: newName, path },
-    });
+    try {
+      const response = await this.fileSystemApi.updateFileOrDirectoryOnSystem({
+        sessionId: this.sessionId,
+        fileOrDirectoryPath: filePath,
+        ifMatch: "",
+        fileProperties: { name: newName, path },
+      });
 
-    this.updateFileMetadata(filePath, response);
+      this.updateFileMetadata(filePath, response);
 
-    return this.filePropertiesToContentItem(response.data);
+      return this.filePropertiesToContentItem(response.data);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      return;
+    }
   }
 
   public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
