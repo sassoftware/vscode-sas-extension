@@ -361,7 +361,10 @@ class RestSASServerAdapter implements ContentAdapter {
       ifMatch: etag,
       fileProperties: {
         name: item.name,
-        path: newFilePath.split(SAS_FILE_SEPARATOR).join("/"),
+        path: newFilePath
+          .split(SAS_FILE_SEPARATOR)
+          .join("/")
+          .replace(/~sc~/g, ";"),
       },
     };
 
