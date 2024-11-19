@@ -49,7 +49,7 @@
   "configuration.SAS.connectionProfiles.profiles.sasOptions": "Options pour la connexion SAS",
   "configuration.SAS.connectionProfiles.profiles.ssh.host": "Hôte SSH de la connexion SAS",
   "configuration.SAS.connectionProfiles.profiles.ssh.port": "Port SSH de la connexion SAS",
-  "configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath": "SAS SSH Connection private key file path",
+  "configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath": "Chemin du fichier de clé privée pour la connexion SSH SAS",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "Chemin exécutable de la connexion SAS SSH",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "Nom d'utilisateur de la connexion SAS SSH",
   "configuration.SAS.flowConversionMode": "Choisissez le mode de conversion pour les notebooks SAS",
@@ -74,7 +74,7 @@
   "themes.SAS.light": "SAS Light",
   "views.SAS.explorer": "SAS Content",
   "views.SAS.libraries": "Bibliothèques",
-  "views.SAS.serverExplorer": "SAS Server",
+  "views.SAS.serverExplorer": "Explorateur",
   "views.SAS.signIn": "Se connecter",
   "views.SAS.unsupportedConnection": "Cette connexion ne prend pas en charge la navigation dans le contenu SAS via l'extension Visual Studio Code. Vous ne pouvez accéder aux fichiers qu'à travers l'Explorateur.",
   "views.SAS.welcome": "Pour utiliser SAS Extension for Visual Studio Code, vous devez vous connecter à SAS.\n[Se connecter](command:SAS.authorize)"
