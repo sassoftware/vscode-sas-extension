@@ -1,3 +1,7 @@
+---
+sidebar_position: 8
+---
+
 # SAS Notebook
 
 SAS Notebook is an interactive notebook file that includes markdown code, executable code snippets, and corresponding rich output cells.

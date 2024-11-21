@@ -71,7 +71,6 @@
   "themes.SAS.dark": "SAS Dunkel",
   "themes.SAS.highContrast": "SAS Hoher Kontrast",
   "themes.SAS.light": "SAS Hell",
-  "views.SAS.explorer": "Explorer",
   "views.SAS.libraries": "Bibliotheken",
   "views.SAS.signIn": "Anmelden",
   "views.SAS.unsupportedConnection": "Ihre Verbindung unterstützt nicht die Navigation in SAS-Inhalten innerhalb der SAS Extension for Visual Studio Code. Sie können nur über die Explorer-Ansicht auf Dateien zugreifen.",

@@ -14,7 +14,6 @@ import {
   FileType,
   Position,
   ProviderResult,
-  Tab,
   TabInputNotebook,
   TabInputText,
   TextDocument,
@@ -45,6 +44,8 @@ import {
   FAVORITES_FOLDER_TYPE,
   Messages,
   ROOT_FOLDER_TYPE,
+  SERVER_HOME_FOLDER_TYPE,
+  SERVER_ROOT_FOLDER_TYPE,
   TRASH_FOLDER_TYPE,
 } from "./const";
 import {
@@ -52,7 +53,11 @@ import {
   ContentNavigatorConfig,
   FileManipulationEvent,
 } from "./types";
-import { getFileStatement, isContainer as getIsContainer } from "./utils";
+import {
+  getEditorTabsForItem,
+  getFileStatement,
+  isContainer as getIsContainer,
+} from "./utils";
 
 class ContentDataProvider
   implements
@@ -68,7 +73,7 @@ class ContentDataProvider
   private _onDidChange: EventEmitter<Uri>;
   private _treeView: TreeView<ContentItem>;
   private _dropEditProvider: Disposable;
-  private readonly model: ContentModel;
+  private model: ContentModel;
   private extensionUri: Uri;
   private mimeType: string;
 
@@ -112,6 +117,10 @@ class ContentDataProvider
         await this.connect(activeProfile.endpoint);
       }
     });
+  }
+
+  public useModel(contentModel: ContentModel) {
+    this.model = contentModel;
   }
 
   public async handleDrop(
@@ -278,23 +287,68 @@ class ContentDataProvider
     name: string,
   ): Promise<Uri | undefined> {
     const closing = closeFileIfOpen(item);
-    if (!(await closing)) {
+    const removedTabUris = await closing;
+    if (!removedTabUris) {
       return;
     }
 
     const newItem = await this.model.renameResource(item, name);
-    if (newItem) {
-      const newUri = newItem.vscUri;
-      if (closing !== true) {
-        // File was open before rename, so re-open it
-        commands.executeCommand("vscode.open", newUri);
+    if (!newItem) {
+      return;
+    }
+
+    const newUri = newItem.vscUri;
+    const oldUriToNewUriMap = [[item.vscUri, newUri]];
+    const newItemIsContainer = getIsContainer(newItem);
+    if (closing !== true && !newItemIsContainer) {
+      await commands.executeCommand("vscode.openWith", newUri, "default", {
+        preview: false,
+      });
+    }
+    if (closing !== true && newItemIsContainer) {
+      const urisToOpen = getPreviouslyOpenedChildItems(
+        await this.getChildren(newItem),
+      );
+      for (const [, newUri] of urisToOpen) {
+        await commands.executeCommand("vscode.openWith", newUri, "default", {
+          preview: false,
+        });
       }
+      oldUriToNewUriMap.push(...urisToOpen);
+    }
+    oldUriToNewUriMap.forEach(([uri, newUri]) =>
       this._onDidManipulateFile.fire({
         type: "rename",
-        uri: item.vscUri,
+        uri,
         newUri,
-      });
-      return newUri;
+      }),
+    );
+    return newUri;
+
+    function getPreviouslyOpenedChildItems(childItems: ContentItem[]) {
+      const loadChildItems = closing !== true && newItemIsContainer;
+      if (!Array.isArray(removedTabUris) || !loadChildItems) {
+        return [];
+      }
+      // Here's where things get a little weird. When we rename folders in
+      // sas content, we _don't_ close those files. It doesn't matter since
+      // their path isn't hierarchical. In sas file system, the path is hierarchical,
+      // thus we need to re-open all the closed files. This does that by getting
+      // children and comparing the removedTabUris
+      const filteredChildItems = childItems
+        .map((childItem) => {
+          const matchingUri = removedTabUris.find((uri) =>
+            uri.path.endsWith(childItem.name),
+          );
+          if (!matchingUri) {
+            return;
+          }
+
+          return [matchingUri, childItem.vscUri];
+        })
+        .filter((exists) => exists);
+
+      return filteredChildItems;
     }
   }
 
@@ -312,6 +366,10 @@ class ContentDataProvider
       this._onDidManipulateFile.fire({ type: "delete", uri: item.vscUri });
     }
     return success;
+  }
+
+  public canRecycleResource(item: ContentItem): boolean {
+    return this.model.canRecycleResource(item);
   }
 
   public async recycleResource(item: ContentItem): Promise<boolean> {
@@ -495,13 +553,34 @@ class ContentDataProvider
     return this.getChildren(selection);
   }
 
+  private async moveItem(
+    item: ContentItem,
+    targetUri: string,
+  ): Promise<boolean> {
+    if (!targetUri) {
+      return false;
+    }
+
+    const closing = closeFileIfOpen(item);
+    if (!(await closing)) {
+      return false;
+    }
+
+    const newUri = await this.model.moveTo(item, targetUri);
+    if (closing !== true) {
+      commands.executeCommand("vscode.open", newUri);
+    }
+
+    return !!newUri;
+  }
+
   private async handleContentItemDrop(
     target: ContentItem,
     item: ContentItem,
   ): Promise<void> {
     let success = false;
     let message = Messages.FileDropError;
-    if (item.flags.isInRecycleBin) {
+    if (item.flags?.isInRecycleBin) {
       message = Messages.FileDragFromTrashError;
     } else if (item.isReference) {
       message = Messages.FileDragFromFavorites;
@@ -511,10 +590,7 @@ class ContentDataProvider
       success = await this.addToMyFavorites(item);
     } else {
       const targetUri = target.resourceId;
-      if (targetUri) {
-        success = await this.model.moveTo(item, targetUri);
-      }
-
+      success = await this.moveItem(item, targetUri);
       if (success) {
         this.refresh();
       }
@@ -637,6 +713,12 @@ class ContentDataProvider
         case FAVORITES_FOLDER_TYPE:
           icon = "favoritesFolder";
           break;
+        case SERVER_HOME_FOLDER_TYPE:
+          icon = "userWorkspace";
+          break;
+        case SERVER_ROOT_FOLDER_TYPE:
+          icon = "server";
+          break;
         default:
           icon = "folder";
           break;
@@ -647,6 +729,7 @@ class ContentDataProvider
         icon = "sasProgramFile";
       }
     }
+
     return icon !== ""
       ? {
           dark: Uri.joinPath(this.extensionUri, `icons/dark/${icon}Dark.svg`),
@@ -661,17 +744,26 @@ class ContentDataProvider
 
 export default ContentDataProvider;
 
-const closeFileIfOpen = (item: ContentItem) => {
-  const fileUri = item.vscUri;
-  const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
-  const tab = tabs.find(
-    (tab) =>
-      (tab.input instanceof TabInputText ||
-        tab.input instanceof TabInputNotebook) &&
-      tab.input.uri.query === fileUri.query, // compare the file id
-  );
-  if (tab) {
-    return window.tabGroups.close(tab);
+const closeFileIfOpen = (item: ContentItem): Promise<Uri[]> | boolean => {
+  const tabs = getEditorTabsForItem(item);
+  if (tabs.length > 0) {
+    return new Promise((resolve, reject) => {
+      Promise.all(tabs.map((tab) => window.tabGroups.close(tab)))
+        .then(() =>
+          resolve(
+            tabs
+              .map(
+                (tab) =>
+                  (tab.input instanceof TabInputText ||
+                    tab.input instanceof TabInputNotebook) &&
+                  tab.input.uri,
+              )
+              .filter((exists) => exists),
+          ),
+        )
+        .catch(reject);
+    });
   }
+
   return true;
 };

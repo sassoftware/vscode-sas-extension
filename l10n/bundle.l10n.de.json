@@ -103,7 +103,6 @@
   "Task is complete.": "Der Task ist erledigt.",
   "The SAS session has closed.": "Die SAS Session wurde beendet.",
   "The file type is unsupported.": "Der Dateityp wird nicht unterstützt",
-  "The folder name cannot contain more than 100 characters.": "Der Ordnername kann nicht mehr als 100 Zeichen lang sein.",
   "The item could not be added to My Favorites.": "Der Inhalt konnte nicht zu Meinen Favoriten hinzugefügt werden.",
   "The item could not be removed from My Favorites.": "Der Inhalt konnte nicht aus Meinen Favoriten entfernt werden.",
   "The notebook file does not contain any code to convert.": "Das Notebook enthält keinen zu konvertierenden Code.",

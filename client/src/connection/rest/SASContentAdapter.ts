@@ -15,7 +15,7 @@ import {
   FILE_TYPES,
   FOLDER_TYPES,
   ROOT_FOLDER,
-  ROOT_FOLDERS,
+  SAS_CONTENT_ROOT_FOLDERS,
   TRASH_FOLDER_TYPE,
 } from "../../components/ContentNavigator/const";
 import {
@@ -37,8 +37,8 @@ import {
   getPermission,
   getResourceId,
   getResourceIdFromItem,
+  getSasContentUri,
   getTypeName,
-  getUri,
   resourceType,
 } from "./util";
 
@@ -112,6 +112,7 @@ class SASContentAdapter implements ContentAdapter {
     const { data: result } = await this.connection.get(
       await this.generatedMembersUrlForParentItem(parentItem),
     );
+
     if (!result.items) {
       return Promise.reject();
     }
@@ -188,16 +189,16 @@ class SASContentAdapter implements ContentAdapter {
   public async moveItem(
     item: ContentItem,
     parentFolderUri: string,
-  ): Promise<boolean> {
+  ): Promise<Uri | undefined> {
     const newItemData = { ...item, parentFolderUri };
     const updateLink = getLink(item.links, "PUT", "update");
     try {
-      await this.connection.put(updateLink.uri, newItemData);
+      const response = await this.connection.put(updateLink.uri, newItemData);
+      return this.enrichWithDataProviderProperties(response.data).vscUri;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      return false;
+      return;
     }
-    return true;
   }
 
   private async generatedMembersUrlForParentItem(
@@ -272,8 +273,8 @@ class SASContentAdapter implements ContentAdapter {
   }
 
   public async getRootItems(): Promise<RootFolderMap> {
-    for (let index = 0; index < ROOT_FOLDERS.length; ++index) {
-      const delegateFolderName = ROOT_FOLDERS[index];
+    for (let index = 0; index < SAS_CONTENT_ROOT_FOLDERS.length; ++index) {
+      const delegateFolderName = SAS_CONTENT_ROOT_FOLDERS[index];
       const result =
         delegateFolderName === "@sasRoot"
           ? { data: ROOT_FOLDER }
@@ -343,9 +344,9 @@ class SASContentAdapter implements ContentAdapter {
     flags?: ContentItem["flags"],
   ): ContentItem {
     item.flags = flags;
+    item.permission = getPermission(item);
     return {
       ...item,
-      permission: getPermission(item),
       contextValue: resourceType(item),
       fileStat: {
         ctime: item.creationTimeStamp,
@@ -355,7 +356,7 @@ class SASContentAdapter implements ContentAdapter {
       },
       isReference: isReference(item),
       resourceId: getResourceIdFromItem(item),
-      vscUri: getUri(item, flags?.isInRecycleBin || false),
+      vscUri: getSasContentUri(item, flags?.isInRecycleBin || false),
       typeName: getTypeName(item),
     };
 
@@ -570,7 +571,7 @@ class SASContentAdapter implements ContentAdapter {
     }
 
     const success = await this.moveItem(item, recycleBinUri);
-    return recycleItemResponse(success);
+    return recycleItemResponse(!!success);
 
     function recycleItemResponse(success: boolean) {
       if (!success) {
@@ -578,8 +579,8 @@ class SASContentAdapter implements ContentAdapter {
       }
 
       return {
-        newUri: getUri(item, true),
-        oldUri: getUri(item),
+        newUri: getSasContentUri(item, true),
+        oldUri: getSasContentUri(item),
       };
     }
   }
@@ -589,7 +590,7 @@ class SASContentAdapter implements ContentAdapter {
     if (!previousParentUri) {
       return false;
     }
-    return await this.moveItem(item, previousParentUri);
+    return !!(await this.moveItem(item, previousParentUri));
   }
 
   private async updateAccessToken(): Promise<void> {

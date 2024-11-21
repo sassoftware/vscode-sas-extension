@@ -1,18 +1,19 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri, l10n, workspace } from "vscode";
+import { Uri, authentication, l10n, workspace } from "vscode";
 
+import axios, { AxiosInstance } from "axios";
 import { basename } from "path";
 import { v4 } from "uuid";
 
-import SASContentAdapter from "../../connection/rest/SASContentAdapter";
 import {
   associateFlowObject,
   createStudioSession,
 } from "../../connection/studio";
+import { SASAuthProvider } from "../AuthProvider";
 import { ContentModel } from "./ContentModel";
 import { MYFOLDER_TYPE, Messages } from "./const";
-import { ContentItem } from "./types";
+import { ContentItem, ContentSourceType } from "./types";
 import { isContentItem } from "./utils";
 
 const stepRef: Record<string, string> = {
@@ -339,23 +340,19 @@ export function convertNotebookToFlow(
 
 export class NotebookToFlowConverter {
   protected studioSessionId: string;
+  protected connection: AxiosInstance;
+
   public constructor(
     protected readonly resource: ContentItem | Uri,
     protected readonly contentModel: ContentModel,
     protected readonly viyaEndpoint: string,
+    protected readonly sourceType: ContentSourceType,
   ) {}
 
   public get inputName() {
     return isContentItem(this.resource)
       ? this.resource.name
       : basename(this.resource.fsPath);
-  }
-
-  private get connection() {
-    return (
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      (this.contentModel.getAdapter() as SASContentAdapter).getConnection()
-    );
   }
 
   private async parent() {
@@ -385,9 +382,11 @@ export class NotebookToFlowConverter {
   }
 
   public async establishConnection() {
-    if (!this.contentModel.connected()) {
-      await this.contentModel.connect(this.viyaEndpoint);
-    }
+    this.connection = axios.create({ baseURL: this.viyaEndpoint });
+    const session = await authentication.getSession(SASAuthProvider.id, [], {
+      createIfNone: true,
+    });
+    this.connection.defaults.headers.common.Authorization = `Bearer ${session.accessToken}`;
 
     try {
       const result = await createStudioSession(this.connection);
@@ -412,7 +411,7 @@ export class NotebookToFlowConverter {
     }
 
     const parentItem = await this.parent();
-    const newItem = await this.contentModel.createFile(
+    const newItem = await this.contentModel.createUniqueFileOfPrefix(
       parentItem,
       outputName,
       flowDataUint8Array,
@@ -421,6 +420,14 @@ export class NotebookToFlowConverter {
       throw new Error(
         l10n.t(Messages.NewFileCreationError, { name: this.inputName }),
       );
+    }
+
+    // We don't need to associate the flow object if it's stored in sas server
+    if (this.sourceType === ContentSourceType.SASServer) {
+      return {
+        parentItem,
+        folderName: parentItem.uri.split("/").pop().replace(/~fs~/g, "/"),
+      };
     }
 
     // associate the new .flw file with SAS Studio
