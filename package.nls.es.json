@@ -49,6 +49,7 @@
   "configuration.SAS.connectionProfiles.profiles.sasOptions": "Opciones SAS de conexión SAS",
   "configuration.SAS.connectionProfiles.profiles.ssh.host": "Host SSH de conexión SSH SAS",
   "configuration.SAS.connectionProfiles.profiles.ssh.port": "Puerto de conexión SSH SAS",
+  "configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath": "Ruta del archivo de clave privada de la conexión SAS SSH",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "Ruta ejecutable de conexión SSH SAS",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "Nombre de usuario de conexión SSH SAS",
   "configuration.SAS.flowConversionMode": "Elegir el modo de conversión para blocs de notas",
@@ -71,7 +72,9 @@
   "themes.SAS.dark": "SAS Dark",
   "themes.SAS.highContrast": "SAS High Contrast",
   "themes.SAS.light": "SAS Light",
+  "views.SAS.explorer": "Contenido SAS",
   "views.SAS.libraries": "Librerías",
+  "views.SAS.serverExplorer": "Servidor SAS",
   "views.SAS.signIn": "Conexión",
   "views.SAS.unsupportedConnection": "La conexión no permite la navegación de contenido SAS dentro de SAS Extension for Visual Studio Code. Sólo puede acceder a los archivos utilizando la vista del explorador.",
   "views.SAS.welcome": "Para utilizar SAS Extension for Visual Studio Code, debe estar conectado a SAS.\n[Conexión](command:SAS.authorize)"
