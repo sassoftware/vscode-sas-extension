@@ -370,13 +370,8 @@ export class CodeZoneManager {
           }
         }
       }
-      // get the text and type
-      if (context.syntaxIdx < 0 || i < 0) {
-        //this line is special, no normal end mark,
-        col = 0;
-        type = syntax[0].style;
-        text = line.substring(0, lineLen);
-      } else {
+
+      if (i >= 0) {
         col = syntax[i].start;
         type = syntax[i].style;
         text = line.substring(
@@ -384,13 +379,14 @@ export class CodeZoneManager {
           syntax[i + 1] ? syntax[i + 1].start : lineLen,
         );
       }
+
       // adjust pointer
-      if (i < 1) {
-        context.col = -1;
-        context.syntaxIdx = -1;
-      } else {
+      if (i >= 1) {
         context.col = syntax[i - 1].start;
         context.syntaxIdx = i - 1;
+      } else {
+        context.col = -1;
+        context.syntaxIdx = -1;
       }
     } while (/^\s*$/.test(text));
 
@@ -696,9 +692,6 @@ export class CodeZoneManager {
     let token = null,
       len = 0;
     const tokens = [];
-
-    const initLine = context.line;
-    const initCol = context.col;
 
     context.syntaxIdx = -1;
     context.tokens = null;
