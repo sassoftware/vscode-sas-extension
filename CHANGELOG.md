@@ -4,11 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
-## [Unreleased]
+## [v1.12.0] - 2024-11-25
 
 ### Added
 
+- Added username and password support for SSH connection type ([#1126](https://github.com/sassoftware/vscode-sas-extension/pull/1126))
 - Added support for SAS server for viya connections ([#1203](https://github.com/sassoftware/vscode-sas-extension/pull/1203))
+- Enable find in result pane ([#714](https://github.com/sassoftware/vscode-sas-extension/pull/714))
+
+### Fixed
+
+- Formatting should allow statements between proc python and submit ([#1226](https://github.com/sassoftware/vscode-sas-extension/issues/1226))
+- SAS Log isn't shown ([#1243](https://github.com/sassoftware/vscode-sas-extension/issues/1243))
+- Bracket matching in macro quote ([#1213](https://github.com/sassoftware/vscode-sas-extension/issues/1213))
+- Failed to run code the second time with IOM ([#1266](https://github.com/sassoftware/vscode-sas-extension/issues/1266))
+- Should not show hover help on whitespaces ([#1267](https://github.com/sassoftware/vscode-sas-extension/issues/1267))
 
 ## [v1.11.0] - 2024-10-09
 
