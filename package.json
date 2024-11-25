@@ -321,6 +321,11 @@
                             "description": "%configuration.SAS.connectionProfiles.profiles.ssh.port%",
                             "exclusiveMinimum": 1,
                             "exclusiveMaximum": 65535
+                          },
+                          "privateKeyFilePath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath%"
                           }
                         }
                       }
@@ -608,16 +613,113 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "SAS.refreshLibraries",
+        "command": "SAS.content.collapseAllContent",
+        "title": "%commands.SAS.collapseAll%",
+        "category": "SAS",
+        "icon": "$(collapse-all)"
+      },
+      {
+        "command": "SAS.content.downloadResource",
+        "title": "%commands.SAS.download%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.uploadResource",
+        "title": "%commands.SAS.upload%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.uploadFileResource",
+        "title": "%commands.SAS.uploadFiles%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.content.uploadFolderResource",
+        "title": "%commands.SAS.uploadFolders%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.deleteResource",
+        "title": "%commands.SAS.deleteResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.addFileResource",
+        "title": "%commands.SAS.addFileResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.addFolderResource",
+        "title": "%commands.SAS.addFolderResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.renameResource",
+        "title": "%commands.SAS.renameResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.restoreResource",
+        "title": "%commands.SAS.restoreResource%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.emptyRecycleBin",
+        "title": "%commands.SAS.emptyRecycleBin%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.addToFavorites",
+        "title": "%commands.SAS.addToFavorites%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.convertNotebookToFlow",
+        "title": "%commands.SAS.convertNotebookToFlow%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.removeFromFavorites",
+        "title": "%commands.SAS.removeFromFavorites%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.refreshContent",
         "title": "%commands.SAS.refresh%",
         "category": "SAS",
         "icon": "$(refresh)"
       },
       {
-        "command": "SAS.content.collapseAllContent",
+        "command": "SAS.server.collapseAllContent",
         "title": "%commands.SAS.collapseAll%",
         "category": "SAS",
         "icon": "$(collapse-all)"
+      },
+      {
+        "command": "SAS.server.downloadResource",
+        "title": "%commands.SAS.download%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.uploadResource",
+        "title": "%commands.SAS.upload%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.uploadFileResource",
+        "title": "%commands.SAS.uploadFiles%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.uploadFolderResource",
+        "title": "%commands.SAS.uploadFolders%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.refreshLibraries",
+        "title": "%commands.SAS.refresh%",
+        "category": "SAS",
+        "icon": "$(refresh)"
       },
       {
         "command": "SAS.collapseAllLibraries",
@@ -650,26 +752,6 @@
         "command": "SAS.file.new",
         "shortTitle": "%commands.SAS.file.new.short%",
         "title": "%commands.SAS.file.new%",
-        "category": "SAS"
-      },
-      {
-        "command": "SAS.content.downloadResource",
-        "title": "%commands.SAS.download%",
-        "category": "SAS"
-      },
-      {
-        "command": "SAS.content.uploadResource",
-        "title": "%commands.SAS.upload%",
-        "category": "SAS"
-      },
-      {
-        "command": "SAS.content.uploadFileResource",
-        "title": "%commands.SAS.uploadFiles%",
-        "category": "SAS"
-      },
-      {
-        "command": "SAS.content.uploadFolderResource",
-        "title": "%commands.SAS.uploadFolders%",
         "category": "SAS"
       },
       {
@@ -706,6 +788,16 @@
         {
           "command": "SAS.content.collapseAllContent",
           "when": "view == contentdataprovider",
+          "group": "navigation@1"
+        },
+        {
+          "command": "SAS.server.refreshContent",
+          "when": "view == serverdataprovider",
+          "group": "navigation@0"
+        },
+        {
+          "command": "SAS.server.collapseAllContent",
+          "when": "view == serverdataprovider",
           "group": "navigation@1"
         },
         {
@@ -800,6 +892,71 @@
         {
           "command": "SAS.content.uploadFolderResource",
           "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && !listMultiSelection && workspacePlatform != mac",
+          "group": "uploaddownloadgroup@1"
+        },
+        {
+          "command": "SAS.server.addFolderResource",
+          "when": "viewItem =~ /createChild/ && view == serverdataprovider",
+          "group": "addgroup@0"
+        },
+        {
+          "command": "SAS.server.addFileResource",
+          "when": "viewItem =~ /createChild/ && view == serverdataprovider",
+          "group": "addgroup@1"
+        },
+        {
+          "command": "SAS.server.addToFavorites",
+          "when": "viewItem =~ /addToFavorites/ && view == serverdataprovider",
+          "group": "favoritesgroup@0"
+        },
+        {
+          "command": "SAS.server.removeFromFavorites",
+          "when": "viewItem =~ /removeFromFavorites/ && view == serverdataprovider",
+          "group": "favoritesgroup@1"
+        },
+        {
+          "command": "SAS.server.renameResource",
+          "when": "viewItem =~ /update/ && view == serverdataprovider && !listMultiSelection",
+          "group": "delrenamegroup@0"
+        },
+        {
+          "command": "SAS.server.deleteResource",
+          "when": "viewItem =~ /delete/ && view == serverdataprovider",
+          "group": "delrenamegroup@1"
+        },
+        {
+          "command": "SAS.server.convertNotebookToFlow",
+          "when": "viewItem =~ /convertNotebookToFlow/ && view == serverdataprovider",
+          "group": "actionsgroup@0"
+        },
+        {
+          "command": "SAS.server.restoreResource",
+          "when": "viewItem =~ /restore/ && view == serverdataprovider",
+          "group": "restoregroup@0"
+        },
+        {
+          "command": "SAS.server.emptyRecycleBin",
+          "when": "viewItem =~ /empty/ && view == serverdataprovider",
+          "group": "emptygroup@0"
+        },
+        {
+          "command": "SAS.server.downloadResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == serverdataprovider",
+          "group": "uploaddownloadgroup@0"
+        },
+        {
+          "command": "SAS.server.uploadResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == serverdataprovider && !listMultiSelection && workspacePlatform == mac",
+          "group": "uploaddownloadgroup@1"
+        },
+        {
+          "command": "SAS.server.uploadFileResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == serverdataprovider && !listMultiSelection && workspacePlatform != mac",
+          "group": "uploaddownloadgroup@1"
+        },
+        {
+          "command": "SAS.server.uploadFolderResource",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == serverdataprovider && !listMultiSelection && workspacePlatform != mac",
           "group": "uploaddownloadgroup@1"
         }
       ],
@@ -1019,6 +1176,11 @@
           "when": "SAS.authorized && SAS.connectionType == rest"
         },
         {
+          "id": "serverdataprovider",
+          "name": "%views.SAS.serverExplorer%",
+          "when": "SAS.authorized && SAS.connectionType == rest"
+        },
+        {
           "id": "librarydataprovider",
           "name": "%views.SAS.libraries%",
           "when": "((SAS.authorized || SAS.librariesDisplayed) && SAS.librariesEnabled) || SAS.connection.direct"
@@ -1104,22 +1266,24 @@
     "locale": "npx @vscode/l10n-dev export -o ./l10n ./client/src && node ./tools/locale.mjs"
   },
   "devDependencies": {
+    "@eslint/compat": "1.2.2",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.7",
-    "@types/node": "^20.14.10",
+    "@types/node": "^22.9.0",
     "@types/sinon": "^17.0.3",
-    "@typescript-eslint/eslint-plugin": "^7.15.0",
-    "@typescript-eslint/parser": "^7.16.0",
+    "@typescript-eslint/eslint-plugin": "^8.13.0",
+    "@typescript-eslint/parser": "^8.13.0",
     "@vscode/l10n-dev": "^0.0.35",
     "buffer": "6.0.3",
     "chai": "^4.4.1",
     "concurrently": "^9.0.1",
     "esbuild": "^0.24.0",
     "cross-env": "^7.0.3",
-    "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.35.0",
-    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint": "^9.14.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "glob": "^7.2.0",
     "mocha": "^10.7.3",
     "nock": "^13.5.5",
     "papaparse": "^5.4.1",
@@ -1130,7 +1294,7 @@
     "ts-node": "^10.9.2",
     "ts-sinon": "^2.0.2",
     "typescript": "^5.5.3",
-    "webpack": "^5.94.0",
+    "webpack": "^5.96.1",
     "webpack-cli": "^5.1.4"
   }
 }

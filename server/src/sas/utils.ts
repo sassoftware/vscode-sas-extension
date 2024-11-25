@@ -66,7 +66,7 @@ const supportedLanguages = [
 export function getText(key: string, arg?: string): string {
   if (!bundle) {
     bundle = {};
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require("../../messagebundle.properties")
       .split("\n")
       .forEach((pair: string) => {

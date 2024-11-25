@@ -29,7 +29,7 @@ import {
   ContentSourceType,
   FileManipulationEvent,
 } from "./types";
-import { isContainer as getIsContainer, isItemInRecycleBin } from "./utils";
+import { isContainer as getIsContainer } from "./utils";
 
 const fileValidator = (value: string): string | null =>
   /^([^/<>;\\{}?#]+)\.\w+$/.test(
@@ -47,15 +47,29 @@ const flowFileValidator = (value: string): string | null => {
   return res;
 };
 
-const folderValidator = (value: string): string | null =>
-  value.length <= 100 ? null : Messages.FolderValidationError;
+const folderValidator = (
+  value: string,
+  sourceType: ContentSourceType,
+): string | null => {
+  const regex =
+    sourceType === ContentSourceType.SASServer
+      ? new RegExp(/[:/?\\*"|<>]/g)
+      : new RegExp(/[/;\\{}<>]/g);
+
+  return value.length <= 100 && !regex.test(value)
+    ? null
+    : Messages.FolderValidationError;
+};
 
 class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
   private contentModel: ContentModel;
   private sourceType: ContentNavigatorConfig["sourceType"];
+  private treeIdentifier: ContentNavigatorConfig["treeIdentifier"];
 
   constructor(context: ExtensionContext, config: ContentNavigatorConfig) {
+    this.sourceType = config.sourceType;
+    this.treeIdentifier = config.treeIdentifier;
     this.contentModel = new ContentModel(
       this.contentAdapterForConnectionType(),
     );
@@ -64,7 +78,6 @@ class ContentNavigator implements SubscriptionProvider {
       context.extensionUri,
       config,
     );
-    this.sourceType = config.sourceType;
 
     workspace.registerFileSystemProvider(
       config.sourceType,
@@ -91,7 +104,7 @@ class ContentNavigator implements SubscriptionProvider {
             async (resource: ContentItem) => {
               const isContainer = getIsContainer(resource);
               const moveToRecycleBin =
-                !isItemInRecycleBin(resource) && resource.permission.write;
+                this.contentDataProvider.canRecycleResource(resource);
               if (
                 !moveToRecycleBin &&
                 !(await window.showWarningMessage(
@@ -185,7 +198,8 @@ class ContentNavigator implements SubscriptionProvider {
           const folderName = await window.showInputBox({
             prompt: Messages.NewFolderPrompt,
             title: Messages.NewFolderTitle,
-            validateInput: folderValidator,
+            validateInput: (folderName) =>
+              folderValidator(folderName, this.sourceType),
           });
           if (!folderName) {
             return;
@@ -213,7 +227,9 @@ class ContentNavigator implements SubscriptionProvider {
               ? Messages.RenameFolderTitle
               : Messages.RenameFileTitle,
             value: resource.name,
-            validateInput: isContainer ? folderValidator : fileValidator,
+            validateInput: isContainer
+              ? (value) => folderValidator(value, this.sourceType)
+              : fileValidator,
           });
           if (!name || name === resource.name) {
             return;
@@ -267,18 +283,19 @@ class ContentNavigator implements SubscriptionProvider {
           );
         },
       ),
-      commands.registerCommand(`${SAS}.collapseAllContent`, () => {
-        commands.executeCommand(
-          "workbench.actions.treeView.contentdataprovider.collapseAll",
-        );
-      }),
+      commands.registerCommand(
+        `${SAS}.collapseAllContent`,
+        this.collapseAllContent.bind(this),
+      ),
       commands.registerCommand(
         `${SAS}.convertNotebookToFlow`,
         async (resource: ContentItem | Uri) => {
+          await this.contentModel.connect(this.viyaEndpoint());
           const notebookToFlowConverter = new NotebookToFlowConverter(
             resource,
             this.contentModel,
             this.viyaEndpoint(),
+            this.sourceType,
           );
 
           const inputName = notebookToFlowConverter.inputName;
@@ -383,13 +400,31 @@ class ContentNavigator implements SubscriptionProvider {
         async (event: ConfigurationChangeEvent) => {
           if (event.affectsConfiguration("SAS.connectionProfiles")) {
             const endpoint = this.viyaEndpoint();
+            this.collapseAllContent();
+            const contentModel = new ContentModel(
+              this.contentAdapterForConnectionType(),
+            );
+            this.contentDataProvider.useModel(contentModel);
+            this.contentModel = contentModel;
             if (endpoint) {
               await this.contentDataProvider.connect(endpoint);
+            } else {
+              await this.contentDataProvider.refresh();
             }
           }
         },
       ),
     ];
+  }
+
+  private async collapseAllContent() {
+    const collapeAllCmd = `workbench.actions.treeView.${this.treeIdentifier}.collapseAll`;
+    const commandExists = (await commands.getCommands()).find(
+      (c) => c === collapeAllCmd,
+    );
+    if (commandExists) {
+      commands.executeCommand(collapeAllCmd);
+    }
   }
 
   private async uploadResource(

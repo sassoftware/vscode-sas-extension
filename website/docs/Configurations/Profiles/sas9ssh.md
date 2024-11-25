@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # SAS 9.4 (remote - SSH) Connection Profile
 
-For a secure connection to SAS 9.4 (remote - SSH) server, a public / private SSH key pair is required. The socket defined in the environment variable `SSH_AUTH_SOCK` is used to communicate with ssh-agent to authenticate the SSH session. The private key must be registered with the ssh-agent. The steps for configuring SSH follow.
+This connection method uses SSH to authenticate to a SAS Server and run SAS Code using [Interactive Line Mode](https://go.documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/hostunx/n16ui9f6dacn8pn1t0y2hgxgi7wa.htm). A number of methods are available to create a secure connection to the SAS 9.4 server.
 
 :::note
 
@@ -18,18 +18,29 @@ A SAS 9.4 (remote – SSH) connection profile includes the following parameters:
 
 `"connectionType": "ssh"`
 
-| Name       | Description                          | Additional Notes                                                           |
-| ---------- | ------------------------------------ | -------------------------------------------------------------------------- |
-| `host`     | SSH Server Host                      | Appears when hovering over the status bar.                                 |
-| `username` | SSH Server Username                  | The username to establish the SSH connection to the server.                |
-| `port`     | SSH Server Port                      | The SSH port of the SSH server. The default value is 22.                   |
-| `saspath`  | Path to SAS Executable on the server | Must be a fully qualified path on the SSH server to a SAS executable file. |
+| Name                 | Description                          | Additional Notes                                                              |
+| -------------------- | ------------------------------------ | ----------------------------------------------------------------------------- |
+| `host`               | SSH Server Host                      | Appears when hovering over the status bar.                                    |
+| `username`           | SSH Server Username                  | The username to establish the SSH connection to the server.                   |
+| `port`               | SSH Server Port                      | The SSH port of the SSH server. The default value is 22.                      |
+| `saspath`            | Path to SAS Executable on the server | Must be a fully qualified path on the SSH server to a SAS executable file.    |
+| `privateKeyFilePath` | SSH Private Key File (optional)      | Must be a fully qualified path on the same machine that VSCode is running on. |
 
-## Required setup for connection to SAS 9.4 (remote - SSH)
+## Authenticating to a SAS Server
 
-In order to configure the connection between VS Code and SAS 9, you must configure OpenSSH. Follow the steps below to complete the setup.
+The extension will attempt to authenticate to the SAS Server over ssh using the auth methods specified in the SSH Server configuration defined on the SAS Server. The extension currently supports using the SSH auth methods listed below:
 
-### Windows
+- [Publickey](#publickey)
+- [Password](#password)
+- [Keyboard Interactive](#keyboard-interactive)
+
+### Publickey
+
+#### SSH Agent
+
+When using publickey SSH authentication, The extension can be configured to use keys defined in the SSH Agent. The socket defined in the environment variable `SSH_AUTH_SOCK` is used to communicate with ssh-agent to authenticate the SSH session. The private key must be registered with the ssh-agent when using this method. The steps for configuring SSH follow. Follow the steps below to complete the setup.
+
+##### Windows
 
 1. Enable OpenSSH for Windows using these [instructions](https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse?tabs=gui).
 
@@ -80,7 +91,7 @@ Note: the default path to the SAS executable (saspath) is /opt/sasinside/SASHome
 
 9. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
 
-### Mac
+##### Mac
 
 1. Start ssh-agent in the background:
 
@@ -118,3 +129,26 @@ Host host.machine.name
 ```
 
 6. Add the public part of the keypair to the SAS server. Add the contents of the key file to the ~/.ssh/authorized_keys file.
+
+#### Private Key File Path
+
+A private key can optionally be specified in the `privateKeyFilePath` field in the connection profile for SAS 9.4 (remote - SSH). This is useful for auth setups where the SSH Agent cannot be used. If a private key file contains a passphrase, the user will be prompted to enter it during each Session creation for which it is used.
+
+```json
+"ssh_test": {
+    "connectionType": "ssh",
+    "host": "host.machine.name",
+    "saspath": "/path/to/sas/executable",
+    "username": "username",
+    "port": 22,
+    "privateKeyFilePath": "/path/to/privatekey/file"
+}
+```
+
+### Password
+
+Enter the password using the secure input prompt during each Session creation. To authenticate without using a password, configure the extension using one of the Publickey setups.
+
+### Keyboard Interactive
+
+Enter the response to each question using the secure input prompts during each Session creation.

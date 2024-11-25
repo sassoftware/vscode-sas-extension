@@ -166,6 +166,7 @@ class RestLibraryAdapter implements LibraryAdapter {
             tableName: item.name,
           }),
       );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       throw new Error("Cannot delete table");
     }

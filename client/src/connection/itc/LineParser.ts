@@ -37,4 +37,9 @@ export class LineParser {
   public isCapturingLine(): boolean {
     return this.capturingLine;
   }
+
+  public reset() {
+    this.capturingLine = false;
+    this.processedLines = [];
+  }
 }

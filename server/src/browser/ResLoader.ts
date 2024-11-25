@@ -7,17 +7,18 @@ export const ResLoader = {
     // have to explicitly write path for webpack to bundle
     const index = url.indexOf("/data/");
     if (index > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       cb(require(`../../data/${url.slice(index + 6)}`));
     } else {
       const index = url.indexOf("/pubsdata/");
       if (index > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         cb(require(`../../pubsdata/${url.slice(index + 10)}`));
       }
     }
   },
   getBundle: function (locale: string): string {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require(`../../messagebundle_${locale}.properties`);
   },
 };

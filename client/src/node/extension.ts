@@ -117,12 +117,22 @@ export function activate(context: ExtensionContext): void {
     sourceType: ContentSourceType.SASContent,
     treeIdentifier: "contentdataprovider",
   });
-  // TODO #889 Create/use this
-  // const sasServerNavigator = new ContentNavigator(context, {
-  //   mimeType: "application/vnd.code.tree.serverdataprovider",
-  //   sourceType: "sasServer",
-  //   treeIdentifier: "serverdataprovider",
-  // });
+  const sasServerNavigator = new ContentNavigator(context, {
+    mimeType: "application/vnd.code.tree.serverdataprovider",
+    sourceType: ContentSourceType.SASServer,
+    treeIdentifier: "serverdataprovider",
+  });
+  const handleFileUpdated = (e) => {
+    switch (e.type) {
+      case "rename":
+        sasDiagnostic.updateDiagnosticUri(e.uri, e.newUri);
+        break;
+      case "recycle":
+      case "delete":
+        sasDiagnostic.ignoreAll(e.uri);
+        break;
+    }
+  };
 
   const resultPanelSubscriptionProvider = new ResultPanelSubscriptionProvider();
 
@@ -169,18 +179,10 @@ export function activate(context: ExtensionContext): void {
     getStatusBarItem(),
     ...libraryNavigator.getSubscriptions(),
     ...sasContentNavigator.getSubscriptions(),
+    ...sasServerNavigator.getSubscriptions(),
     ...resultPanelSubscriptionProvider.getSubscriptions(),
-    sasContentNavigator.onDidManipulateFile((e) => {
-      switch (e.type) {
-        case "rename":
-          sasDiagnostic.updateDiagnosticUri(e.uri, e.newUri);
-          break;
-        case "recycle":
-        case "delete":
-          sasDiagnostic.ignoreAll(e.uri);
-          break;
-      }
-    }),
+    sasContentNavigator.onDidManipulateFile(handleFileUpdated),
+    sasServerNavigator.onDidManipulateFile(handleFileUpdated),
     // If configFile setting is changed, update watcher to watch new configuration file
     workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
       if (event.affectsConfiguration("SAS.connectionProfiles")) {

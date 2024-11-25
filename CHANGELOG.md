@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Required VS Code version 1.89 at minimum
 
+### Added
+
+- Added support for SAS server for viya connections ([#1203](https://github.com/sassoftware/vscode-sas-extension/pull/1203))
+
+
 ## [v1.11.0] - 2024-10-09
 
 ### Added
