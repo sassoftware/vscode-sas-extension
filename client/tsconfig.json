@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
     "esModuleInterop": true,
-    "jsx": "react",
-    "jsxFactory": "createElement",
+    "jsx": "react-jsx",
     "lib": ["ES2019", "DOM"],
     "module": "commonjs",
     "outDir": "out",

@@ -25,6 +25,7 @@ export default [
       "plugin:@typescript-eslint/recommended",
       "plugin:react/recommended",
       "plugin:react-hooks/recommended",
+      "plugin:react/jsx-runtime",
     ),
   ),
   {
@@ -58,7 +59,6 @@ export default [
 
     settings: {
       react: {
-        pragma: "createElement",
         version: "detect",
       },
     },
