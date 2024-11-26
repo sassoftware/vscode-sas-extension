@@ -1203,8 +1203,7 @@ export class CompletionProvider {
           "datastep",
           context.stmtName,
           keyword,
-          cb,
-        );
+        ); // always sync
         if (help) {
           _notify(cb, help);
         } else {
@@ -1219,7 +1218,8 @@ export class CompletionProvider {
               "DATA",
               context.stmtName,
               keyword,
-            ); // always sync
+              cb,
+            );
           }
         }
         break;
