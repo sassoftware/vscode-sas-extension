@@ -45,7 +45,12 @@ export const print: Printer<SASAST>["print"] = (path, options, print) => {
     );
     if (node.type === "region") {
       const region = printRegion(children);
-      return !path.isFirst && node.block ? [hardline, ...region] : region;
+      return !(
+        path.isFirst ||
+        (path.index === 1 && path.parent?.type === "region")
+      ) && node.block
+        ? [hardline, ...region]
+        : region;
     }
     return [...join(line, children), literalline];
   }
