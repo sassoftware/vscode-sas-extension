@@ -16,7 +16,7 @@ prettier.config.js
 contributing.md
 ContributorAgreement.txt
 .travis.yml
-.eslintignore
 .nvmrc
+eslint.config.mjs
 pull_request_template.md
 l10n/bundle.l10n.json

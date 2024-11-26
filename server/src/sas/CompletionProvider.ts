@@ -1,7 +1,7 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-/* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/no-unused-vars, @typescript-eslint/consistent-type-assertions */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 import {
   CompletionItem,
   CompletionItemKind,
@@ -162,7 +162,6 @@ function _cleanUpKeyword(keyword: string) {
   }
   keyword = keyword.replace(/(^\s+|\s+$)/g, "");
   if (/^(TITLE|FOOTNOTE|AXIS|LEGEND|PATTERN|SYMBOL)\d{0,}$/i.test(keyword)) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const results = keyword.match(
       /^(TITLE|FOOTNOTE|AXIS|LEGEND|PATTERN|SYMBOL)|\d{0,}$/gi,
     )!;
@@ -299,6 +298,10 @@ export class CompletionProvider {
           position.character,
         );
         return new Promise((resolve) => {
+          if (keyword.trim() === "") {
+            resolve(undefined);
+            return;
+          }
           this._loadHelp({
             keyword: keyword,
             type: "hint",

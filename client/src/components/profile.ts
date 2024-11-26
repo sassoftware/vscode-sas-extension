@@ -91,6 +91,7 @@ export interface SSHProfile extends BaseProfile {
   saspath: string;
   port: number;
   username: string;
+  privateKeyFilePath?: string;
 }
 
 export interface SASPYProfile extends BaseProfile {
@@ -603,6 +604,15 @@ export class ProfileConfig {
         return;
       }
 
+      const keyPath = await createInputTextBox(
+        ProfilePromptType.PrivateKeyFilePath,
+        profileClone.privateKeyFilePath,
+      );
+
+      if (keyPath) {
+        profileClone.privateKeyFilePath = keyPath;
+      }
+
       await this.upsertProfile(name, profileClone);
     } else if (profileClone.connectionType === ConnectionType.SASPY) {
       profileClone.cfgname = "";
@@ -684,6 +694,7 @@ export enum ProfilePromptType {
   SASPath,
   Port,
   Username,
+  PrivateKeyFilePath,
   Cfgname,
   PYTHONpath,
 }
@@ -823,6 +834,11 @@ const input: ProfilePromptInput = {
     placeholder: l10n.t("Enter your username"),
     description: l10n.t("Enter your SAS server username."),
   },
+  [ProfilePromptType.PrivateKeyFilePath]: {
+    title: l10n.t("Private Key File Path (optional)"),
+    placeholder: l10n.t("Enter the local private key file path"),
+    description: l10n.t("To use the SSH Agent or a password, leave blank."),
+  },
   [ProfilePromptType.Cfgname]: {
     title: l10n.t("SAS Server Cfgname"),
     placeholder: l10n.t("Enter your cfgname"),
@@ -832,7 +848,6 @@ const input: ProfilePromptInput = {
     title: l10n.t("Server Path"),
     placeholder: l10n.t("Enter the server path"),
     description: l10n.t("Enter the server path of the PYTHON Executable."),
-  },
 };
 
 /**

@@ -1,8 +1,7 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion,
-@typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any, @typescript-eslint/dot-notation, @typescript-eslint/consistent-type-assertions */
+/* eslint-disable @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any, @typescript-eslint/dot-notation, @typescript-eslint/consistent-type-assertions */
 import { Lexer, Token } from "./Lexer";
 import { LexerEx } from "./LexerEx";
 import { Model } from "./Model";
@@ -698,7 +697,6 @@ export class CodeZoneManager {
 
     context.syntaxIdx = -1;
     context.tokens = null;
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       token = this._getPrev(context);
       tokens.push(token);
@@ -2536,7 +2534,6 @@ export class CodeZoneManager {
   getSubOptionName(): string {
     return this._subOptName;
   }
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   getCurrentZone(line: number, col: number) {
     try {
       return this._currentZone(line, col);

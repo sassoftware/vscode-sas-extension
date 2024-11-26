@@ -1,9 +1,12 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri } from "vscode";
+import { Uri, l10n } from "vscode";
 
-import { Messages, ROOT_FOLDERS } from "./const";
+import { extname } from "path";
+
+import { ALL_ROOT_FOLDERS, Messages } from "./const";
 import { ContentAdapter, ContentItem } from "./types";
+import { isItemInRecycleBin } from "./utils";
 
 export class ContentModel {
   private contentAdapter: ContentAdapter;
@@ -33,7 +36,8 @@ export class ContentModel {
       return Object.entries(await this.contentAdapter.getRootItems())
         .sort(
           // sort the delegate folders as the order in the supportedDelegateFolders
-          (a, b) => ROOT_FOLDERS.indexOf(a[0]) - ROOT_FOLDERS.indexOf(b[0]),
+          (a, b) =>
+            ALL_ROOT_FOLDERS.indexOf(a[0]) - ALL_ROOT_FOLDERS.indexOf(b[0]),
         )
         .map((entry) => entry[1]);
     }
@@ -53,6 +57,7 @@ export class ContentModel {
     let data;
     try {
       data = (await this.contentAdapter.getContentOfUri(uri)).toString();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       throw new Error(Messages.FileOpenError);
     }
@@ -71,6 +76,7 @@ export class ContentModel {
       const data = await this.contentAdapter.getContentOfItem(item);
 
       return Buffer.from(data, "binary");
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       throw new Error(Messages.FileDownloadError);
     }
@@ -86,6 +92,44 @@ export class ContentModel {
       fileName,
       buffer,
     );
+  }
+
+  public async createUniqueFileOfPrefix(
+    parentItem: ContentItem,
+    fileName: string,
+    buffer?: ArrayBufferLike,
+  ) {
+    const itemsInFolder = await this.getChildren(parentItem);
+    const uniqueFileName = getUniqueFileName();
+
+    return await this.createFile(parentItem, uniqueFileName, buffer);
+
+    function getUniqueFileName(): string {
+      const ext = extname(fileName);
+      const basename = fileName.replace(ext, "");
+      const usedFlowNames = itemsInFolder.reduce((carry, item) => {
+        if (item.name.endsWith(ext)) {
+          return { ...carry, [item.name]: true };
+        }
+        return carry;
+      }, {});
+
+      if (!usedFlowNames[fileName]) {
+        return fileName;
+      }
+
+      let number = 1;
+      let newFileName;
+      do {
+        newFileName = l10n.t("{basename}_Copy{number}{ext}", {
+          basename,
+          number: number++,
+          ext,
+        });
+      } while (usedFlowNames[newFileName]);
+
+      return newFileName || fileName;
+    }
   }
 
   public async createFolder(
@@ -125,7 +169,7 @@ export class ContentModel {
   public async moveTo(
     item: ContentItem,
     targetParentFolderUri: string,
-  ): Promise<boolean> {
+  ): Promise<boolean | Uri> {
     return await this.contentAdapter.moveItem(item, targetParentFolderUri);
   }
 
@@ -137,11 +181,20 @@ export class ContentModel {
     return await this.contentAdapter.getFolderPathForItem(contentItem);
   }
 
+  public canRecycleResource(item: ContentItem): boolean {
+    return (
+      this.contentAdapter.recycleItem &&
+      this.contentAdapter.restoreItem &&
+      !isItemInRecycleBin(item) &&
+      item.permission.write
+    );
+  }
+
   public async recycleResource(item: ContentItem) {
-    return await this.contentAdapter.recycleItem(item);
+    return await this.contentAdapter?.recycleItem(item);
   }
 
   public async restoreResource(item: ContentItem) {
-    return await this.contentAdapter.restoreItem(item);
+    return await this.contentAdapter?.restoreItem(item);
   }
 }

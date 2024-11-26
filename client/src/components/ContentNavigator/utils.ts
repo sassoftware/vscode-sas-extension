@@ -1,6 +1,13 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { FileType, SnippetString } from "vscode";
+import {
+  FileType,
+  SnippetString,
+  Tab,
+  TabInputNotebook,
+  TabInputText,
+  window,
+} from "vscode";
 
 import { DEFAULT_FILE_CONTENT_TYPE } from "./const";
 import mimeTypes from "./mime-types";
@@ -47,3 +54,43 @@ export const getFileStatement = (
 export const getFileContentType = (fileName: string) =>
   mimeTypes[fileName.split(".").pop().toLowerCase()] ||
   DEFAULT_FILE_CONTENT_TYPE;
+
+export const createStaticFolder = (
+  folderId: string,
+  name: string,
+  type: string,
+  membersUri: string,
+  membersRel: string = "members",
+) => ({
+  id: folderId,
+  name,
+  type: type,
+  uri: folderId,
+  links: [
+    {
+      method: "GET",
+      rel: membersRel,
+      href: membersUri,
+      uri: membersUri,
+      type: "GET",
+    },
+    {
+      method: "GET",
+      rel: "self",
+      href: folderId,
+      uri: folderId,
+      type: "GET",
+    },
+  ],
+});
+
+export const getEditorTabsForItem = (item: ContentItem) => {
+  const fileUri = item.vscUri;
+  const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
+  return tabs.filter(
+    (tab) =>
+      (tab.input instanceof TabInputText ||
+        tab.input instanceof TabInputNotebook) &&
+      tab.input.uri.query.includes(fileUri.query), // compare the file id
+  );
+};
