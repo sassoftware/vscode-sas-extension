@@ -6,7 +6,12 @@ import { Lexer, Token } from "./Lexer";
 import { Model } from "./Model";
 import { SyntaxDataProvider } from "./SyntaxDataProvider";
 import { Change } from "./SyntaxProvider";
-import { TextPosition, arrayToMap } from "./utils";
+import {
+  TextPosition,
+  arrayToMap,
+  isCustomRegionEndComment,
+  isCustomRegionStartComment,
+} from "./utils";
 
 /**
  * LexerEx to handle basic semantic related problems.
@@ -1700,14 +1705,14 @@ export class LexerEx {
   }
 
   private isCustomBlockStart_(token: Token): boolean {
-    if (token && /^\s*[%/]?\*\s*region\b/i.test(token.text)) {
+    if (token && isCustomRegionStartComment(token.text)) {
       return true;
     }
     return false;
   }
 
   private isCustomBlockEnd_(token: Token): boolean {
-    if (token && /^\s*[%/]?\*\s*endregion\b/i.test(token.text)) {
+    if (token && isCustomRegionEndComment(token.text)) {
       return true;
     }
     return false;
@@ -3095,7 +3100,7 @@ export class LexerEx {
                 generalProcStmt = false;
               }
             } else if (procName === "LUA" || procName === "PYTHON") {
-              if (["SUBMIT", "INTERACTIVE"].includes(word)) {
+              if (["SUBMIT", "INTERACTIVE", "I"].includes(word)) {
                 const next = this.prefetch_({ pos: 1 });
                 if (next && next.text === ";" && next.type === "sep") {
                   this.stack.push({

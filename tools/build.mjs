@@ -1,5 +1,7 @@
 import concurrently from "concurrently";
 import esbuild from "esbuild";
+import fs from "fs";
+import path from "path";
 
 console.log("start");
 const dev = process.argv[2];
@@ -79,7 +81,22 @@ if (process.env.npm_config_webviews || process.env.npm_config_client) {
   ]);
 
   await result.then(
-    () => {},
+    () => {
+      const foldersToCopy = [
+        {
+          src: "./server/node_modules/jsonc-parser/lib/umd/impl",
+          dest: "./server/dist/node/impl",
+        },
+        {
+          src: "./server/node_modules/pyright-internal-node/dist/packages/pyright-internal/typeshed-fallback",
+          dest: "./server/dist/node/typeshed-fallback",
+        },
+      ];
+      for (const item of foldersToCopy) {
+        fs.cpSync(item.src, item.dest, { recursive: true });
+        console.log(`${item.src} was copied to ${item.dest}`);
+      }
+    },
     () => console.error("Assets failed to build successfully"),
   );
 }

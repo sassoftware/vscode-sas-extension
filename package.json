@@ -13,7 +13,7 @@
   "license": "Apache-2.0",
   "icon": "icons/sas.png",
   "engines": {
-    "vscode": "^1.82.0"
+    "vscode": "^1.89.0"
   },
   "activationEvents": [
     "onWebviewPanel:SASResultPanel",
@@ -1275,6 +1275,7 @@
     "@typescript-eslint/eslint-plugin": "^8.13.0",
     "@typescript-eslint/parser": "^8.13.0",
     "@vscode/l10n-dev": "^0.0.35",
+    "buffer": "6.0.3",
     "chai": "^4.4.1",
     "concurrently": "^9.0.1",
     "esbuild": "^0.24.0",

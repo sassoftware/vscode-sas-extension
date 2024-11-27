@@ -304,7 +304,7 @@ export class Lexer {
         }
         if (
           token.type === "text" &&
-          ["SUBMIT", "INTERACTIVE"].includes(token.text)
+          ["SUBMIT", "INTERACTIVE", "I"].includes(token.text)
         ) {
           this.context.embeddedLangState =
             EmbeddedLangState.PROC_PYTHON_SUBMIT_OR_INTERACTIVE;
@@ -318,7 +318,7 @@ export class Lexer {
         }
         if (
           token.type === "text" &&
-          ["SUBMIT", "INTERACTIVE"].includes(token.text)
+          ["SUBMIT", "INTERACTIVE", "I"].includes(token.text)
         ) {
           this.context.embeddedLangState =
             EmbeddedLangState.PROC_LUA_SUBMIT_OR_INTERACTIVE;
@@ -358,7 +358,7 @@ export class Lexer {
               const stringReg = /'''|"""|("[^"]*?("|$))|('[^']*?('|$))/;
               const commentReg = /#.*$/;
               const secReg =
-                /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$)/;
+                /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;))/;
               match = new RegExp(
                 `${stringReg.source}|${commentReg.source}|${secReg.source}`,
                 "m",
@@ -376,7 +376,7 @@ export class Lexer {
                 } else {
                   token = this._foundEmbeddedCodeToken(this.curr, {
                     line: line,
-                    column: match.index,
+                    column: pos + match.index,
                   });
                   break SWITCH;
                 }
@@ -429,7 +429,7 @@ export class Lexer {
               const stringReg = /("[^"]*("|$))|('[^']*('|$))|\[\[/;
               const commentReg = /--[^[].*$|--\[\[|\/\*/;
               const secReg =
-                /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;)(\s+|\/\*.*?\*\/)*$)/;
+                /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;))/;
               const reg = new RegExp(
                 `${stringReg.source}|${commentReg.source}|${secReg.source}`,
                 "m",
@@ -452,7 +452,7 @@ export class Lexer {
                 } else {
                   token = this._foundEmbeddedCodeToken(this.curr, {
                     line: line,
-                    column: match.index,
+                    column: pos + match.index,
                   });
                   break SWITCH;
                 }
@@ -987,6 +987,7 @@ export class Lexer {
     this.curr.line = line;
     this.curr.column = col;
     this.context.lastNoncommentToken = null;
+    this.context.embeddedLangState = EmbeddedLangState.NONE;
     this.quoting = -1;
     this.bquoting = -1;
     this.ignoreFormat = false;
