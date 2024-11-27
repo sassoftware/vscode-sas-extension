@@ -848,6 +848,7 @@ const input: ProfilePromptInput = {
     title: l10n.t("Server Path"),
     placeholder: l10n.t("Enter the server path"),
     description: l10n.t("Enter the server path of the PYTHON Executable."),
+  }
 };
 
 /**

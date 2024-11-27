@@ -181,6 +181,8 @@ print("${LineCodes.SessionCreatedCode}")
 
       //               `, this.onWriteComplete);
 
+      this._workDirectoryParser.reset();
+        
       if (this._config.sasOptions?.length > 0) {
         const sasOptsInput = `$sasOpts=${this.formatSASOptions(
           this._config.sasOptions,
@@ -368,6 +370,7 @@ else:
       // If the line is the put statement, we don't need to log that
       return;
     }
+    // const foundWorkDirectory = this._workDirectoryParser.processLine(line);
     // We don't want to output any of the captured lines
     if (this._workDirectoryParser.isCapturingLine()) {
       return;
@@ -496,6 +499,7 @@ else:
     const globalStorageUri = getGlobalStorageUri();
     try {
       await workspace.fs.readDirectory(globalStorageUri);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       await workspace.fs.createDirectory(globalStorageUri);
     }
