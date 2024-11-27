@@ -1277,7 +1277,7 @@
     "@vscode/l10n-dev": "^0.0.35",
     "buffer": "6.0.3",
     "chai": "^4.4.1",
-    "concurrently": "^9.0.1",
+    "concurrently": "^9.1.0",
     "esbuild": "^0.24.0",
     "cross-env": "^7.0.3",
     "eslint": "^9.14.0",
