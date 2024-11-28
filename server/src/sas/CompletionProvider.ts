@@ -1507,6 +1507,10 @@ export class CompletionProvider {
         contextText = getText("ce_ac_data_step_txt");
         linkTail = "%22DATA+STEP%22+%22" + keyword + "+" + "STATEMENT%22";
         break;
+      case ZONE_TYPE.DATA_STEP_STMT_OPT:
+        contextText = getText("ce_ac_statement.fmt", context.stmtName);
+        linkTail = "%22" + context.stmtName + "+STATEMENT%22+" + keyword;
+        break;
       case ZONE_TYPE.DATA_STEP_OPT_NAME:
       case ZONE_TYPE.DATA_STEP_DEF_OPT:
         contextText = getText("ce_ac_data_step_txt");
