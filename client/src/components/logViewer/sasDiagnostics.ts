@@ -22,6 +22,8 @@ import { DiagnosticCodeActionProvider } from "./DiagnosticCodeActionProvider";
 import { Problem } from "./ProblemProcessor";
 import { parseLog } from "./logParser";
 
+export const diagnosticSource = "sas log";
+
 let diagnosticCollection: DiagnosticCollection;
 
 enum DiagnosticCommands {
@@ -120,7 +122,7 @@ function constructDiagnostics(problems: Problem[]): Diagnostic[] {
       message,
       type === "error" ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
     );
-    diagnostic.source = "sas log";
+    diagnostic.source = diagnosticSource;
     return diagnostic;
   });
 

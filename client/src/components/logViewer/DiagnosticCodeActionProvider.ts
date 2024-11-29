@@ -6,6 +6,7 @@ import {
   CodeActionKind,
   CodeActionProvider,
   Command,
+  Diagnostic,
   DiagnosticSeverity,
   ProviderResult,
   Range,
@@ -14,7 +15,7 @@ import {
   l10n,
 } from "vscode";
 
-import { sasDiagnostic } from "./sasDiagnostics";
+import { diagnosticSource, sasDiagnostic } from "./sasDiagnostics";
 
 export class DiagnosticCodeActionProvider implements CodeActionProvider {
   public static readonly providedCodeActionKinds = [CodeActionKind.QuickFix];
@@ -23,29 +24,32 @@ export class DiagnosticCodeActionProvider implements CodeActionProvider {
     _range: Range | Selection,
     context: CodeActionContext,
   ): ProviderResult<(CodeAction | Command)[]> {
-    if (context.diagnostics.length === 0) {
+    const diagnostics = context.diagnostics.filter(
+      (diagnostic) => diagnostic.source === diagnosticSource,
+    );
+    if (diagnostics.length === 0) {
       return [];
     }
 
     return [
       this.createCodeAction(
         document,
-        context,
+        diagnostics,
         sasDiagnostic.DiagnosticCommands.IgnoreCommand,
       ),
       this.createCodeAction(
         document,
-        context,
+        diagnostics,
         sasDiagnostic.DiagnosticCommands.IgnoreAllWarningCommand,
       ),
       this.createCodeAction(
         document,
-        context,
+        diagnostics,
         sasDiagnostic.DiagnosticCommands.IgnoreAllErrorCommand,
       ),
       this.createCodeAction(
         document,
-        context,
+        diagnostics,
         sasDiagnostic.DiagnosticCommands.IgnoreAllCommand,
       ),
     ];
@@ -53,7 +57,7 @@ export class DiagnosticCodeActionProvider implements CodeActionProvider {
 
   private createCodeAction(
     document: TextDocument,
-    context: CodeActionContext,
+    diagnostics: Diagnostic[],
     command: string,
   ): CodeAction {
     const action = new CodeAction("", CodeActionKind.QuickFix);
@@ -64,7 +68,7 @@ export class DiagnosticCodeActionProvider implements CodeActionProvider {
         action.command = {
           command: command,
           title: l10n.t("Ignore: current position"),
-          arguments: [context.diagnostics, document.uri],
+          arguments: [diagnostics, document.uri],
         };
         break;
       case sasDiagnostic.DiagnosticCommands.IgnoreAllWarningCommand:
