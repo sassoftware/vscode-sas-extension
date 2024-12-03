@@ -301,18 +301,14 @@ class ContentDataProvider
     const oldUriToNewUriMap = [[item.vscUri, newUri]];
     const newItemIsContainer = getIsContainer(newItem);
     if (closing !== true && !newItemIsContainer) {
-      await commands.executeCommand("vscode.openWith", newUri, "default", {
-        preview: false,
-      });
+      await commands.executeCommand("vscode.open", newUri);
     }
     if (closing !== true && newItemIsContainer) {
       const urisToOpen = getPreviouslyOpenedChildItems(
         await this.getChildren(newItem),
       );
       for (const [, newUri] of urisToOpen) {
-        await commands.executeCommand("vscode.openWith", newUri, "default", {
-          preview: false,
-        });
+        await commands.executeCommand("vscode.open", newUri);
       }
       oldUriToNewUriMap.push(...urisToOpen);
     }
