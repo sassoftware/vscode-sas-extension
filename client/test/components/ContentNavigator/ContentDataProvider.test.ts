@@ -3,7 +3,6 @@ import {
   DataTransferItem,
   FileStat,
   FileType,
-  ThemeIcon,
   TreeItem,
   Uri,
   authentication,
@@ -175,7 +174,6 @@ describe("ContentDataProvider", async function () {
     const treeItem = await dataProvider.getTreeItem(contentItem);
     const uri = contentItem.vscUri;
     const expectedTreeItem: TreeItem = {
-      iconPath: ThemeIcon.File,
       id: "unique-id",
       label: "testFile",
       command: {
@@ -183,6 +181,7 @@ describe("ContentDataProvider", async function () {
         arguments: [uri],
         title: "Open SAS File",
       },
+      resourceUri: uri,
     };
 
     expect(treeItem).to.deep.include(expectedTreeItem);

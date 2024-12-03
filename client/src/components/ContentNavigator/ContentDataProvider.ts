@@ -18,7 +18,6 @@ import {
   TabInputText,
   TextDocument,
   TextDocumentContentProvider,
-  ThemeIcon,
   TreeDataProvider,
   TreeDragAndDropController,
   TreeItem,
@@ -230,6 +229,7 @@ class ContentDataProvider
       iconPath: this.iconPathForItem(item),
       id: item.uid,
       label: item.name,
+      resourceUri: uri,
     };
   }
 
@@ -698,7 +698,7 @@ class ContentDataProvider
 
   private iconPathForItem(
     item: ContentItem,
-  ): ThemeIcon | { light: Uri; dark: Uri } {
+  ): undefined | { light: Uri; dark: Uri } {
     const isContainer = getIsContainer(item);
     let icon = "";
     if (isContainer) {
@@ -723,11 +723,6 @@ class ContentDataProvider
           icon = "folder";
           break;
       }
-    } else {
-      const extension = item.name.split(".").pop().toLowerCase();
-      if (extension === "sas") {
-        icon = "sasProgramFile";
-      }
     }
 
     return icon !== ""
@@ -738,7 +733,7 @@ class ContentDataProvider
             `icons/light/${icon}Light.svg`,
           ),
         }
-      : ThemeIcon.File;
+      : undefined;
   }
 }
 
