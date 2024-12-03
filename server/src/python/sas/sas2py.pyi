@@ -1,7 +1,7 @@
 # Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-class SAS:
+class SAS2py:
    """
    This module provides the interface from the Python process to Proc Python in
    the SAS process. It provides user callable methods for interacting with the
@@ -131,13 +131,13 @@ class SAS:
 
       """
 
-   def sasdata2dataframe(self, dataset, rowsep: str = '\x01', colsep: str = '\x02',
+   def sasdata2dataframe(self, dataset: str, rowsep: str = '\x01', colsep: str = '\x02',
                                         rowrep: str = ' ',    colrep: str = ' ', **kwargs):
       """
       See the doc for sd2df(). This is just an alias for that method
       """
 
-   def sd2df(self, dataset, rowsep: str = '\x01', colsep: str = '\x02',
+   def sd2df(self, dataset: str, rowsep: str = '\x01', colsep: str = '\x02',
                             rowrep: str = ' ',    colrep: str = ' ', **kwargs):
       """
       This method exports the SAS Data Set to a Pandas DataFrame, returning the DataFrame object.
@@ -158,7 +158,7 @@ class SAS:
       :return: Pandas DataFrame
       """
 
-   def dataframe2sasdata(self, df, dataset,
+   def dataframe2sasdata(self, df, dataset: str,
                          LF: str = '\x01', CR: str = '\x02',
                          colsep: str = '\x03', colrep: str = ' ',
                          datetimes: dict={}, outfmts: dict={},
@@ -198,7 +198,7 @@ class SAS:
       :return: int
       """
 
-   def sasfnc(*arg) -> str:
+   def sasfnc(self, *arg) -> str:
       """
       This method executes the SAS or FCMP function you provide, returning the results.
       The parameters vary based upon the function being called. But the first parameter
