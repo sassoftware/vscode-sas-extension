@@ -91,6 +91,10 @@ if (process.env.npm_config_webviews || process.env.npm_config_client) {
           src: "./server/node_modules/pyright-internal-node/dist/packages/pyright-internal/typeshed-fallback",
           dest: "./server/dist/node/typeshed-fallback",
         },
+        {
+          src: "./server/src/python/sas",
+          dest: "./server/dist/node/typeshed-fallback/stubs/sas",
+        },
       ];
       for (const item of foldersToCopy) {
         fs.cpSync(item.src, item.dest, { recursive: true });

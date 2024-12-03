@@ -12,7 +12,10 @@ export const extractPythonCodes = (
   languageService: LanguageServiceProvider,
 ): string => {
   const codeZoneManager = languageService.getCodeZoneManager();
-  const pythonDocLines = [];
+  const pythonDocLines = [
+    "import sas2py #type: ignore",
+    "SAS = sas2py.SAS2py()",
+  ];
   const symbols: DocumentSymbol[] = languageService.getDocumentSymbols();
   for (let i = 0; i < symbols.length; i++) {
     const symbol = symbols[i];
