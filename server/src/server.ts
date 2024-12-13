@@ -321,7 +321,7 @@ export const runServer = (
         );
       },
       async python(pyrightLanguageService) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         return (await pyrightLanguageService.onSignatureHelp(
           params,
           token,
@@ -648,9 +648,7 @@ export const runServer = (
 
   const isRangeIncluded = (a: Range, b: Range) => {
     if (
-      (b.start.line > a.start.line ||
-        (b.start.line === a.start.line &&
-          b.start.character >= a.start.character)) &&
+      b.start.line > a.start.line &&
       (b.end.line < a.end.line ||
         (b.end.line === a.end.line && b.end.character <= a.end.character))
     ) {
