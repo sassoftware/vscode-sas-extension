@@ -74,6 +74,7 @@ export const extractPythonCodes = (
       pythonCodeLines.shift();
     }
     pythonDocLines = pythonDocLines.concat(pythonCodeLines);
+    pythonDocLines.push("pass");
   }
   const pythonDoc = pythonDocLines.join("\n");
   return pythonDoc;
