@@ -2,7 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useCallback, useEffect, useState } from "react";
 
-import { ColDef, GridReadyEvent, IGetRowsParams } from "ag-grid-community";
+import {
+  AllCommunityModule,
+  ColDef,
+  GridReadyEvent,
+  IGetRowsParams,
+  ModuleRegistry,
+} from "ag-grid-community";
 import { v4 } from "uuid";
 
 import { TableData } from "../components/LibraryNavigator/types";
@@ -11,6 +17,8 @@ import columnHeaderTemplate from "./columnHeaderTemplate";
 
 declare const acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
+
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 const contextMenuHandler = (e) => {
   e.stopImmediatePropagation();

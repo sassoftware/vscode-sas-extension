@@ -52,6 +52,7 @@ const DataViewer = () => {
         maxBlocksInCache={10}
         onGridReady={onGridReady}
         rowModelType="infinite"
+        theme="legacy"
       />
     </div>
   );
