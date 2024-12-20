@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
-## [Unreleased] - TBD
+## [v1.13.0] - 2024-12-23
 
 ### Changed
 
@@ -13,6 +13,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Python language features inside proc python ([#991](https://github.com/sassoftware/vscode-sas-extension/pull/991))
+- Inherit VS Code file icons in SAS Content and Server ([#1310](https://github.com/sassoftware/vscode-sas-extension/pull/1310))
+- Display macro name in outline pane ([#1326](https://github.com/sassoftware/vscode-sas-extension/pull/1326))
+
+### Fixed
+
+- Display global option help in data step ([#1282](https://github.com/sassoftware/vscode-sas-extension/issues/1282))
+- Unnecessary empty line added by formatter ([#1288](https://github.com/sassoftware/vscode-sas-extension/issues/1288))
+- Display context in hover help for data step statement option ([#1306](https://github.com/sassoftware/vscode-sas-extension/issues/1306))
+- SAS log code action should not impact others ([#1302](https://github.com/sassoftware/vscode-sas-extension/issues/1302))
+- The notebook file is opened incorrectly after renaming ([#1289](https://github.com/sassoftware/vscode-sas-extension/issues/1289))
+- Resolve breaking changes by AG Grid 33 ([#1334](https://github.com/sassoftware/vscode-sas-extension/issues/1334))
 
 ## [v1.12.0] - 2024-11-25
 
