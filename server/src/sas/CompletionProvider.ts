@@ -612,9 +612,7 @@ export class CompletionProvider {
     });
   }
 
-  getCompleteItems(
-    position: Position,
-  ): Promise<CompletionItem[] | CompletionList | undefined> {
+  getCompleteItems(position: Position): Promise<CompletionList | undefined> {
     return new Promise((resolve) => {
       this._getZone(position);
       const prefix = this.popupContext.prefix;
@@ -686,20 +684,36 @@ export class CompletionProvider {
 
   getCompleteItemHelp(item: CompletionItem): Promise<CompletionItem> {
     return new Promise((resolve) => {
-      this._loadHelp({
-        keyword: item.label,
-        type: "tooltip",
-        ...this.popupContext,
-        cb: (data) => {
-          if (data && data.data) {
-            item.documentation = {
-              kind: MarkupKind.Markdown,
-              value: this._addLinkContext(this.popupContext.zone, data),
-            };
-          }
-          resolve(item);
-        },
-      });
+      if (["endsubmit", "endinteractive"].includes(item.label?.toLowerCase())) {
+        this.loader.getProcedureStatementHelp(
+          "PYTHON",
+          item.label.toUpperCase(),
+          (data) => {
+            if (data && data.data) {
+              item.documentation = {
+                kind: MarkupKind.Markdown,
+                value: this._addLinkContext(515, data),
+              };
+            }
+            resolve(item);
+          },
+        );
+      } else {
+        this._loadHelp({
+          keyword: item.label,
+          type: "tooltip",
+          ...this.popupContext,
+          cb: (data) => {
+            if (data && data.data) {
+              item.documentation = {
+                kind: MarkupKind.Markdown,
+                value: this._addLinkContext(this.popupContext.zone, data),
+              };
+            }
+            resolve(item);
+          },
+        });
+      }
     });
   }
 
@@ -1492,6 +1506,10 @@ export class CompletionProvider {
       case ZONE_TYPE.DATA_STEP_STMT:
         contextText = getText("ce_ac_data_step_txt");
         linkTail = "%22DATA+STEP%22+%22" + keyword + "+" + "STATEMENT%22";
+        break;
+      case ZONE_TYPE.DATA_STEP_STMT_OPT:
+        contextText = getText("ce_ac_statement.fmt", context.stmtName);
+        linkTail = "%22" + context.stmtName + "+STATEMENT%22+" + keyword;
         break;
       case ZONE_TYPE.DATA_STEP_OPT_NAME:
       case ZONE_TYPE.DATA_STEP_DEF_OPT:

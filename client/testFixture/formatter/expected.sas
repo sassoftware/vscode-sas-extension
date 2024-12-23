@@ -88,13 +88,11 @@ quit;
 
 %macro reportit(request);
   %if %upcase(&request)=STAT %then %do;
-
     proc means;
       title "Summary of All Numeric Variables";
     run;
   %end;
   %else %if %upcase(&request)=PRINTIT %then %do;
-
     proc print;
       title "Listing of Data";
     run;
@@ -105,7 +103,6 @@ quit;
 
 *region;
 %macro;
-
   *region;
   data _null_;
     *region;

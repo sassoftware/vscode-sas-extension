@@ -1,8 +1,11 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { FoldingRange } from "vscode-languageserver";
+import {
+  DocumentSymbol,
+  FoldingRange,
+  SymbolKind,
+} from "vscode-languageserver";
 import { Range, TextDocument } from "vscode-languageserver-textdocument";
-import { DocumentSymbol, SymbolKind } from "vscode-languageserver-types";
 
 import { CodeZoneManager } from "./CodeZoneManager";
 import { CompletionProvider } from "./CompletionProvider";
@@ -52,8 +55,8 @@ const SymbolKinds = [
 ];
 
 export class LanguageServiceProvider {
-  private model;
-  private syntaxProvider;
+  public model;
+  public syntaxProvider;
   public completionProvider;
   public formatOnTypeProvider;
   public formatter;
@@ -167,7 +170,7 @@ export class LanguageServiceProvider {
       end: { line: block.endFoldingLine, character: block.endFoldingCol },
     };
     const docSymbol: DocumentSymbol = {
-      name: block.type === 1 ? this._getProcName(block.startLine) : block.name,
+      name: this._getSymbolName(block),
       kind: SymbolKinds[block.type],
       range,
       selectionRange: range,
@@ -244,26 +247,31 @@ export class LanguageServiceProvider {
     return this.syntaxProvider.lexer.syntaxDb.setLibService(fn);
   }
 
-  private _getProcName(line: number) {
+  private _getSymbolName(block: FoldingBlock) {
+    const line = block.startLine;
     const tokens = this.syntaxProvider.getSyntax(line);
-    for (let i = 0; i < tokens.length; i++) {
+    for (let i = 2; i < tokens.length; i++) {
       const token = tokens[i];
-      if (token.style === "proc-name") {
+      if (token.start <= block.startCol) {
+        continue;
+      }
+      if (token.style === "proc-name" || token.style === "text") {
         const end =
           i === tokens.length - 1
             ? this.model.getColumnCount(line)
             : tokens[i + 1].start;
-        return (
-          "PROC " +
-          this.model
-            .getText({
-              start: { line, column: token.start },
-              end: { line, column: end },
-            })
-            .toUpperCase()
-        );
+        const tokenText = this.model.getText({
+          start: { line, column: token.start },
+          end: { line, column: end },
+        });
+        if (tokenText.trim() === "") {
+          continue;
+        }
+        return `${block.name} ${
+          token.style === "proc-name" ? tokenText.toUpperCase() : tokenText
+        }`;
       }
     }
-    return "";
+    return block.name;
   }
 }
