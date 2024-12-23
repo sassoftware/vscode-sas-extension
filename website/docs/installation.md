@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Installation
 
-Install the latest version of Visual Studio Code (version 1.82 or later).
+Install the latest version of Visual Studio Code (version 1.89 or later).
 
 To install the SAS extension:
 
