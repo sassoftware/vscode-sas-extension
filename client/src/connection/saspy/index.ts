@@ -209,7 +209,10 @@ print("${LineCodes.SessionCreatedCode}")
    * @param onLog A callback handler responsible for marshalling log lines back to the higher level extension API.
    * @returns A promise that eventually resolves to contain the given {@link RunResult} for the input code execution.
    */
-  public run = async (code: string): Promise<RunResult> => {
+  public run = async (
+    code: string,
+    skipPageHeaders?: boolean,
+  ): Promise<RunResult> => {
     const runPromise = new Promise<RunResult>((resolve, reject) => {
       this._runResolve = resolve;
       this._runReject = reject;
@@ -218,7 +221,7 @@ print("${LineCodes.SessionCreatedCode}")
     //write ODS output to work so that the session cleans up after itself
     const codeWithODSPath = code.replace(
       /\bods html5\(id=vscode\)([^;]*;)/i,
-      `ods html5(id=vscode) path="${this._workDirectory}"$1`,
+      `ods html5(id=vscode) path="${this._workDirectory}" $1`,
     );
     // Remove ods close code from SASPy
     const codeWithODSPath2 = codeWithODSPath.replace(/\bods _all_ close;/i, ``);
@@ -245,10 +248,11 @@ else:
 
 `,
       async (error) => {
-        await this.fetchLog();
         if (error) {
           this._runReject(error);
         }
+
+        await this.fetchLog(skipPageHeaders);
       },
     );
 
@@ -307,7 +311,7 @@ else:
    * Flushes the SAS log in chunks of [chunkSize] length,
    * writing each chunk to stdout.
    */
-  private fetchLog = async (): Promise<void> => {
+  private fetchLog = async (skipPageHeaders?: boolean): Promise<void> => {
     // Below SASPy V5.14.0, we can't get the log line type
     // this._shellProcess.stdin.write(`print(ll['LOG'])\n`, this.onWriteComplete);
     // from SASPy V5.14.0, it provides an option to get line type in log
@@ -317,6 +321,7 @@ else:
     // directory
     // - update unsubscribe, or
     // - delay the parsing log of code for working directory
+    const skipPageHeadersValue = skipPageHeaders ? "True" : "False";
     this._shellProcess.stdin.write(
       `
 if ll_init is not None:
@@ -325,7 +330,11 @@ if ll_init is not None:
 
 if enable_diagnostic:
     for lln in ll["LOG"]:
-        print("${LineCodes.LogLineStarter}=", lln["type"], ":LINE=", lln["line"], sep="", end='\\n')
+        if ${skipPageHeadersValue}:
+            if lln["type"] != "Title":
+                print("${LineCodes.LogLineStarter}=", lln["type"], ":LINE=", lln["line"], sep="", end='\\n')
+        else:
+            print("${LineCodes.LogLineStarter}=", lln["type"], ":LINE=", lln["line"], sep="", end='\\n')
 else:
     print(ll['LOG'])
 

@@ -55,7 +55,7 @@ async function _runCode(
     session.onExecutionLogFn = addLine;
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    await (session as SASPYSession).run(code)
+    await (session as SASPYSession).run(code, true)
 
     const logOutput = outputLines.filter((line) => line.trim()).join("");
 
