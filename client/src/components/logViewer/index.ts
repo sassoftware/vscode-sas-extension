@@ -80,8 +80,13 @@ const appendLogLines: OnLogFn = (logs) => {
     outputChannel = window.createOutputChannel(name, "sas-log");
   }
   for (const line of logs) {
-    appendLogToken(line.type);
-    outputChannel.appendLine(line.line.trimEnd());
+    line.line
+      .trimEnd()
+      .split("\n")
+      .forEach((text) => {
+        appendLogToken(line.type);
+        outputChannel.appendLine(text);
+      });
   }
 };
 
