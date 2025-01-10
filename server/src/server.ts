@@ -148,12 +148,12 @@ export const runServer = (
         ) {
           return undefined;
         }
-        const complitionList =
+        const completionList =
           await languageService.completionProvider.getCompleteItems(
             params.position,
           );
-        if (complitionList) {
-          for (const item of complitionList.items) {
+        if (completionList) {
+          for (const item of completionList.items) {
             if (!item.data) {
               item.data = {};
             }
@@ -161,67 +161,68 @@ export const runServer = (
             item.data._uri = params.textDocument.uri;
           }
         }
-        return complitionList;
+        return completionList;
       },
       async python(pyrightLanguageService) {
-        const complitionList = await pyrightLanguageService.onCompletion(
+        const completionList = await pyrightLanguageService.onCompletion(
           params,
           token,
         );
-        if (complitionList) {
-          if (
-            params.context?.triggerKind === CompletionTriggerKind.Invoked ||
-            params.context?.triggerKind ===
-              CompletionTriggerKind.TriggerForIncompleteCompletions
-          ) {
-            if (
-              complitionList.items.findIndex(
-                (item) => item.label === "endsubmit",
-              ) === -1
-            ) {
-              const endsubmitItem = {
-                insertText: undefined,
-                kind: CompletionItemKind.Keyword,
-                label: "endsubmit",
-              };
-              complitionList.items.push(endsubmitItem);
-            }
-            if (
-              complitionList.items.findIndex(
-                (item) => item.label === "endinteractive",
-              ) === -1
-            ) {
-              const endinteractiveItem = {
-                insertText: undefined,
-                kind: CompletionItemKind.Keyword,
-                label: "endinteractive",
-              };
-              complitionList.items.push(endinteractiveItem);
-            }
-          }
-          for (const item of complitionList.items) {
+        if (completionList) {
+          for (const item of completionList.items) {
             if (!item.data) {
               item.data = {};
             }
             item.data._languageService = "python";
             item.data._uri = params.textDocument.uri;
           }
+
+          if (
+            params.context?.triggerKind === CompletionTriggerKind.Invoked ||
+            params.context?.triggerKind ===
+              CompletionTriggerKind.TriggerForIncompleteCompletions
+          ) {
+            const doc = documentPool[params.textDocument.uri].document;
+            const line = doc.getText({
+              start: {
+                line: params.position.line,
+                character: 0,
+              },
+              end: params.position,
+            });
+            if (!/\W/.test(line.trimStart())) {
+              const item = {
+                kind: CompletionItemKind.Keyword,
+                data: {
+                  _languageService: "sas",
+                  _uri: params.textDocument.uri,
+                },
+              };
+              if (
+                completionList.items.findIndex(
+                  (item) => item.label === "endsubmit",
+                ) === -1
+              ) {
+                completionList.items.push({ ...item, label: "endsubmit" });
+              }
+              if (
+                completionList.items.findIndex(
+                  (item) => item.label === "endinteractive",
+                ) === -1
+              ) {
+                completionList.items.push({ ...item, label: "endinteractive" });
+              }
+            }
+          }
         }
-        return complitionList;
+        return completionList;
       },
     });
   });
 
   connection.onCompletionResolve(async (completionItem, token) => {
     const lang = completionItem.data._languageService;
-    const label = completionItem.label;
-    const kind = completionItem.kind;
-    if (
-      lang === "sas" ||
-      (lang === "python" &&
-        kind === CompletionItemKind.Keyword &&
-        ["endsubmit", "endinteractive"].includes(label?.toLowerCase()))
-    ) {
+    if (lang === "sas") {
       const languageService = getLanguageService(completionItem.data._uri);
       return await languageService.completionProvider.getCompleteItemHelp(
         completionItem,
@@ -231,9 +232,8 @@ export const runServer = (
         completionItem,
         token,
       );
-    } else {
-      return completionItem;
     }
+    return completionItem;
   });
 
   connection.onDocumentSymbol(async (params, token) => {
