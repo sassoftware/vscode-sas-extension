@@ -18,7 +18,6 @@ import {
   TabInputText,
   TextDocument,
   TextDocumentContentProvider,
-  ThemeIcon,
   TreeDataProvider,
   TreeDragAndDropController,
   TreeItem,
@@ -230,6 +229,7 @@ class ContentDataProvider
       iconPath: this.iconPathForItem(item),
       id: item.uid,
       label: item.name,
+      resourceUri: uri,
     };
   }
 
@@ -301,18 +301,14 @@ class ContentDataProvider
     const oldUriToNewUriMap = [[item.vscUri, newUri]];
     const newItemIsContainer = getIsContainer(newItem);
     if (closing !== true && !newItemIsContainer) {
-      await commands.executeCommand("vscode.openWith", newUri, "default", {
-        preview: false,
-      });
+      await commands.executeCommand("vscode.open", newUri);
     }
     if (closing !== true && newItemIsContainer) {
       const urisToOpen = getPreviouslyOpenedChildItems(
         await this.getChildren(newItem),
       );
       for (const [, newUri] of urisToOpen) {
-        await commands.executeCommand("vscode.openWith", newUri, "default", {
-          preview: false,
-        });
+        await commands.executeCommand("vscode.open", newUri);
       }
       oldUriToNewUriMap.push(...urisToOpen);
     }
@@ -698,7 +694,7 @@ class ContentDataProvider
 
   private iconPathForItem(
     item: ContentItem,
-  ): ThemeIcon | { light: Uri; dark: Uri } {
+  ): undefined | { light: Uri; dark: Uri } {
     const isContainer = getIsContainer(item);
     let icon = "";
     if (isContainer) {
@@ -723,11 +719,6 @@ class ContentDataProvider
           icon = "folder";
           break;
       }
-    } else {
-      const extension = item.name.split(".").pop().toLowerCase();
-      if (extension === "sas") {
-        icon = "sasProgramFile";
-      }
     }
 
     return icon !== ""
@@ -738,7 +729,7 @@ class ContentDataProvider
             `icons/light/${icon}Light.svg`,
           ),
         }
-      : ThemeIcon.File;
+      : undefined;
   }
 }
 

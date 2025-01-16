@@ -9,7 +9,7 @@
 const fs = require("fs/promises");
 const path = require("path");
 
-const dirs = ["stdlib"];
+const dirs = ["stdlib", "stubs/sas"];
 const result = [];
 
 async function* walk(dir) {
@@ -29,7 +29,7 @@ async function loader() {
   for (const dir of dirs) {
     const entry = path.resolve(
       __dirname,
-      "../../../../node_modules/pyright-internal-node/dist/packages/pyright-internal/typeshed-fallback",
+      "../../../../dist/node/typeshed-fallback",
       dir,
     );
     const prefixLength = entry.indexOf("typeshed-fallback") - 1;

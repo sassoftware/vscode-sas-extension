@@ -12,10 +12,7 @@ export const extractPythonCodes = (
   languageService: LanguageServiceProvider,
 ): string => {
   const codeZoneManager = languageService.getCodeZoneManager();
-  const pythonDocLines = [
-    "import sas2py #type: ignore",
-    "SAS = sas2py.SAS2py()",
-  ];
+  let pythonDocLines = ["import sas2py;SAS = sas2py.SAS2py() #type: ignore"];
   const symbols: DocumentSymbol[] = languageService.getDocumentSymbols();
   for (let i = 0; i < symbols.length; i++) {
     const symbol = symbols[i];
@@ -69,70 +66,15 @@ export const extractPythonCodes = (
         end: pythonCodeEnd ?? symbol.range.end,
       })
       .split("\n");
-
-    let startingEmptyLineCount = 0;
-    let firstNotEmptyLine: string | undefined = undefined;
-    for (const line of pythonCodeLines) {
-      if (line.trim().length > 0 && !line.trim().startsWith("#")) {
-        firstNotEmptyLine = line;
-        break;
-      } else {
-        startingEmptyLineCount++;
-      }
-    }
-    if (startingEmptyLineCount > 0) {
-      pythonCodeLines.splice(0, startingEmptyLineCount);
-      pythonCodeStart.line += startingEmptyLineCount;
-      pythonCodeStart.character = 0;
-    }
-
-    let tailingEmptyLineCount = 0;
-    for (let i = pythonCodeLines.length - 1; i >= 0; i--) {
-      if (
-        pythonCodeLines[i].trim().length === 0 ||
-        pythonCodeLines[i].trim().startsWith("#")
-      ) {
-        tailingEmptyLineCount++;
-      } else {
-        break;
-      }
-    }
-    if (tailingEmptyLineCount > 0) {
-      pythonCodeLines.splice(pythonCodeLines.length - tailingEmptyLineCount);
-      if (pythonCodeEnd) {
-        pythonCodeEnd.line -= startingEmptyLineCount;
-        pythonCodeEnd.character =
-          pythonCodeLines[pythonCodeLines.length - 1].length;
-      }
-    }
-
-    const shouldAddDummyBlock: boolean =
-      !!firstNotEmptyLine && [" ", "\t"].includes(firstNotEmptyLine[0]);
     const lineGap = pythonCodeStart.line - pythonDocLines.length;
-    // must be: proc python;submit;<python code>
-    if (lineGap === 0) {
-      let line = "if True:";
-      line += " ".repeat(pythonCodeStart.character - line.length);
-      line += pythonCodeLines[0];
-      if (firstNotEmptyLine) {
-        line += ";pass";
-      }
-      pythonDocLines.push(line);
-    } else {
-      for (let i = 0; i < lineGap; i++) {
-        if (shouldAddDummyBlock && i === lineGap - 1) {
-          pythonDocLines.push("if True:");
-        } else {
-          pythonDocLines.push("");
-        }
-      }
-      for (const line of pythonCodeLines) {
-        pythonDocLines.push(line);
-      }
-      if (firstNotEmptyLine) {
-        pythonDocLines.push("pass");
-      }
+    if (lineGap > 0) {
+      pythonDocLines = pythonDocLines.concat(Array(lineGap).fill(""));
+    } else if (lineGap === -1 && pythonCodeLines[0] === "") {
+      // head in one line: proc python; submit;
+      pythonCodeLines.shift();
     }
+    pythonDocLines = pythonDocLines.concat(pythonCodeLines);
+    pythonDocLines.push("pass");
   }
   const pythonDoc = pythonDocLines.join("\n");
   return pythonDoc;
