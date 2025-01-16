@@ -52,7 +52,7 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath": "Percorso del file della chiave privata della connessione SSH SAS",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "Percorso dell'eseguibile della connessione SAS SSH",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "Nome utente della connessione SAS SSH",
-  "configuration.SAS.flowConversionMode": "Scegli la modalità  di conversione per i notebook",
+  "configuration.SAS.flowConversionMode": "Scegli la modalità di conversione per i notebook",
   "configuration.SAS.flowConversionModeNode": "Converti ogni cella del notebook in un nodo",
   "configuration.SAS.flowConversionModeSwimlane": "Converti ogni cella del notebook in una swimlane",
   "configuration.SAS.log.clearOnExecutionStart": "Cancella il log SAS all'avvio dell'esecuzione",
