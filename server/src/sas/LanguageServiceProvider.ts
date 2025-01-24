@@ -170,7 +170,7 @@ export class LanguageServiceProvider {
       end: { line: block.endFoldingLine, character: block.endFoldingCol },
     };
     const docSymbol: DocumentSymbol = {
-      name: this._getSymbolName(block),
+      name: this.syntaxProvider.getSymbolName(block),
       kind: SymbolKinds[block.type],
       range,
       selectionRange: range,
@@ -245,33 +245,5 @@ export class LanguageServiceProvider {
 
   setLibService(fn: LibService): void {
     return this.syntaxProvider.lexer.syntaxDb.setLibService(fn);
-  }
-
-  private _getSymbolName(block: FoldingBlock) {
-    const line = block.startLine;
-    const tokens = this.syntaxProvider.getSyntax(line);
-    for (let i = 2; i < tokens.length; i++) {
-      const token = tokens[i];
-      if (token.start <= block.startCol) {
-        continue;
-      }
-      if (token.style === "proc-name" || token.style === "text") {
-        const end =
-          i === tokens.length - 1
-            ? this.model.getColumnCount(line)
-            : tokens[i + 1].start;
-        const tokenText = this.model.getText({
-          start: { line, column: token.start },
-          end: { line, column: end },
-        });
-        if (tokenText.trim() === "") {
-          continue;
-        }
-        return `${block.name} ${
-          token.style === "proc-name" ? tokenText.toUpperCase() : tokenText
-        }`;
-      }
-    }
-    return block.name;
   }
 }
