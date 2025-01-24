@@ -352,6 +352,32 @@ export class FormatOnTypeProvider {
           curToken.style === Lexer.TOKEN_TYPES.MSKEYWORD
         ) {
           if (
+            curToken.style === Lexer.TOKEN_TYPES.KEYWORD &&
+            curTokenText.toUpperCase() === "SUBMIT"
+          ) {
+            const block = this.syntaxProvider.getFoldingBlock(
+              curLine,
+              curIndex,
+              true,
+              true,
+              true,
+            );
+            if (block) {
+              const tokens = this.syntaxProvider.getSyntax(block.startLine);
+              const procName = this.model.getText({
+                start: { line: block.startLine, column: tokens[2].start },
+                end: { line: block.startLine, column: tokens[3].start },
+              });
+              if (
+                tokens[2].style === Lexer.TOKEN_TYPES.PROCNAME &&
+                procName.toUpperCase() === "PYTHON"
+              ) {
+                // python code must start from the first column
+                return -curIndent;
+              }
+            }
+          }
+          if (
             curTokenText.toUpperCase() === "DATA" ||
             curTokenText.toUpperCase() === "PROC" ||
             curTokenText.toUpperCase() === "%MACRO"
