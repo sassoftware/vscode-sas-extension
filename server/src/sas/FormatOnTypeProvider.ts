@@ -352,6 +352,25 @@ export class FormatOnTypeProvider {
           curToken.style === Lexer.TOKEN_TYPES.MSKEYWORD
         ) {
           if (
+            curToken.style === Lexer.TOKEN_TYPES.KEYWORD &&
+            /^(submit|interactive|i)$/i.test(curTokenText)
+          ) {
+            const block = this.syntaxProvider.getFoldingBlock(
+              curLine,
+              curIndex,
+              true,
+              true,
+              true,
+            );
+            if (
+              block &&
+              block.type === LexerEx.SEC_TYPE.PROC &&
+              this.syntaxProvider.getSymbolName(block) === "PROC PYTHON"
+            ) {
+              return -curIndent;
+            }
+          }
+          if (
             curTokenText.toUpperCase() === "DATA" ||
             curTokenText.toUpperCase() === "PROC" ||
             curTokenText.toUpperCase() === "%MACRO"

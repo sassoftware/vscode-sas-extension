@@ -397,4 +397,31 @@ export class SyntaxProvider {
   setTokenCallback(cb: ((token: Token) => void) | undefined): void {
     this._tokenCallback = cb;
   }
+  getSymbolName(block: FoldingBlock) {
+    const line = block.startLine;
+    const tokens = this.getSyntax(line);
+    for (let i = 2; i < tokens.length; i++) {
+      const token = tokens[i];
+      if (token.start <= block.startCol) {
+        continue;
+      }
+      if (token.style === "proc-name" || token.style === "text") {
+        const end =
+          i === tokens.length - 1
+            ? this.model.getColumnCount(line)
+            : tokens[i + 1].start;
+        const tokenText = this.model.getText({
+          start: { line, column: token.start },
+          end: { line, column: end },
+        });
+        if (tokenText.trim() === "") {
+          continue;
+        }
+        return `${block.name} ${
+          token.style === "proc-name" ? tokenText.toUpperCase() : tokenText
+        }`;
+      }
+    }
+    return block.name;
+  }
 }
