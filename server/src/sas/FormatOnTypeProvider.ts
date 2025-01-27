@@ -353,7 +353,7 @@ export class FormatOnTypeProvider {
         ) {
           if (
             curToken.style === Lexer.TOKEN_TYPES.KEYWORD &&
-            curTokenText.toUpperCase() === "SUBMIT"
+            /^(submit|interactive|i)$/i.test(curTokenText)
           ) {
             const block = this.syntaxProvider.getFoldingBlock(
               curLine,
