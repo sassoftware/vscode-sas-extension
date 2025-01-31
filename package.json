@@ -1200,7 +1200,7 @@
         {
           "id": "serverdataprovider",
           "name": "%views.SAS.serverExplorer%",
-          "when": "SAS.authorized && SAS.connectionType == rest"
+          "when": "SAS.authorized && (SAS.connectionType == rest || SAS.connectionType == iom || SAS.connectionType == com)"
         },
         {
           "id": "librarydataprovider",
