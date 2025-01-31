@@ -21,14 +21,25 @@ class SASRunner{
       Write-Error "${ERROR_START_TAG}Setup error: $_${ERROR_END_TAG}"
     }
   }
+
+  [void]ResolveLibraries() {
+    ### NEED TO MAKE THIS A BIT MORE FLEXIBLE AND HAVE FALLBACKS FOR CASES WHERE
+    ### WE CANT LOOK THIS UP FROM REGISTRY
+    $interopDir = (Get-ItemProperty -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
+    Add-Type -Path "$interopDir\\SASInterop.dll"
+    Add-Type -Path "$interopDir\\SASOManInterop.dll"
+  }
+
   [void]Setup([string]$profileHost, [string]$username, [string]$password, [int]$port, [int]$protocol, [string]$serverName, [string]$displayLang) {
     try {
+        $this.ResolveLibraries()
         # Set Encoding for input and output
         $OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding
 
         # create the Integration Technologies objects
-        $objFactory = New-Object -ComObject SASObjectManager.ObjectFactoryMulti2
-        $objServerDef = New-Object -ComObject SASObjectManager.ServerDef
+        $objFactory = New-Object -TypeName SASObjectManager.ObjectFactoryMulti2Class
+        $objFactory.ApplicationName = "SAS Extension for VSCode"
+        $objServerDef = New-Object -TypeName SASObjectManager.ServerDefClass
         $objServerDef.MachineDNSName = $profileHost # SAS Workspace node
         $objServerDef.Port = $port # workspace server port
         $objServerDef.Protocol = $protocol # 0 = COM protocol
