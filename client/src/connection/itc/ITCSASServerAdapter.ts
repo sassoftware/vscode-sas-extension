@@ -1,8 +1,12 @@
 import { FileType, Uri } from "vscode";
 
+import { ITCSession } from ".";
+import { getSession } from "..";
 import {
   SAS_SERVER_ROOT_FOLDER,
   SAS_SERVER_ROOT_FOLDERS,
+  SERVER_FOLDER_ID,
+  SERVER_HOME_FOLDER_TYPE,
 } from "../../components/ContentNavigator/const";
 import {
   AddChildItemProperties,
@@ -10,8 +14,12 @@ import {
   ContentItem,
   RootFolderMap,
 } from "../../components/ContentNavigator/types";
+import { createStaticFolder } from "../../components/ContentNavigator/utils";
+import { SAS_SERVER_HOME_DIRECTORY } from "../rest/RestSASServerAdapter";
 import { FileProperties } from "../rest/api/compute";
 import { getLink, resourceType } from "../rest/util";
+import { executeCode } from "./CodeRunner";
+import { escapePowershellString } from "./util";
 
 class ITCSASServerAdapter implements ContentAdapter {
   protected sessionId: string;
@@ -19,6 +27,10 @@ class ITCSASServerAdapter implements ContentAdapter {
   private fileMetadataMap: {
     [id: string]: { etag: string; lastModified?: string; contentType?: string };
   };
+
+  public constructor() {
+    this.rootFolders = {};
+  }
 
   public async addChildItem(
     childItemUri: string | undefined,
@@ -44,7 +56,11 @@ class ITCSASServerAdapter implements ContentAdapter {
     parentItem: ContentItem,
     folderName: string,
   ): Promise<ContentItem | undefined> {
-    throw new Error("createNewFolder not implemented");
+    const d = await this.execute(
+      `$runner.CreateDirectory("${escapePowershellString(parentItem.uri)}", "${escapePowershellString(folderName)}")`,
+    );
+    console.log(d);
+    return;
   }
 
   public async createNewItem(
@@ -52,15 +68,127 @@ class ITCSASServerAdapter implements ContentAdapter {
     fileName: string,
     buffer?: ArrayBufferLike,
   ): Promise<ContentItem | undefined> {
-    throw new Error("createNewItem not implemented");
+    const d = await this.execute(
+      `$runner.CreateFile("${escapePowershellString(parentItem.uri)}", "${escapePowershellString(fileName)}")`,
+    );
+    console.log(d);
+    return;
   }
 
   public async deleteItem(item: ContentItem): Promise<boolean> {
-    throw new Error("deleteItem not implemented");
+    await this.execute(
+      `$runner.DeleteFile("${escapePowershellString(item.uri)}")`,
+    );
   }
 
   public async getChildItems(parentItem: ContentItem): Promise<ContentItem[]> {
-    throw new Error("getChildItems not implemented");
+    // If the user is fetching child items of the root folder, give them the
+    // "home" directory
+    if (parentItem.id === SERVER_FOLDER_ID) {
+      const items = await this.execute(`$runner.GetChildItems("/")`);
+      const uri = items[0].parentFolderUri;
+      const homeDirectory: ContentItem = {
+        creationTimeStamp: 0,
+        id: uri,
+        links: [
+          { method: "GET", rel: "self", href: uri, uri, type: "GET" },
+          {
+            method: "GET",
+            rel: "getDirectoryMembers",
+            href: "/",
+            uri,
+            type: "GET",
+          },
+        ],
+        modifiedTimeStamp: 0,
+        name: "Home",
+        uri,
+        permission: {
+          write: true,
+          delete: false,
+          addMember: true,
+        },
+        type: SERVER_HOME_FOLDER_TYPE,
+        fileStat: {
+          ctime: 0,
+          mtime: 0,
+          size: 0,
+          type: FileType.Directory,
+        },
+      };
+      homeDirectory.contextValue = resourceType(homeDirectory);
+      return [homeDirectory];
+    }
+
+    const folderPath = getLink(
+      parentItem.links,
+      "GET",
+      "getDirectoryMembers",
+    ).uri;
+    const items = await this.execute(
+      `$runner.GetChildItems("${escapePowershellString(folderPath)}")`,
+    );
+    const childItems = items.map(this.convertPowershellResponseToContentItem);
+    return childItems;
+  }
+
+  private convertPowershellResponseToContentItem(response: any): ContentItem {
+    // response.category can be 0, 1, or 2. 0 is directory, 1 is "sas" type, 2 is other file types
+    const type = response.category === 0 ? FileType.Directory : FileType.File;
+
+    const uri = buildUri(response.parentFolderUri, response.name);
+    const links = [
+      type === FileType.Directory && {
+        method: "GET",
+        rel: "getDirectoryMembers",
+        href: uri,
+        uri: uri,
+        type: "GET",
+      },
+      { method: "GET", rel: "self", href: uri, uri: uri, type: "GET" },
+    ].filter((link) => link);
+
+    const item = {
+      id: uri,
+      uri,
+      name: response.name,
+      creationTimeStamp: 0,
+      modifiedTimeStamp: response.modifiedTimeStamp.replace(/[^0-9]/g, ""),
+      links,
+      permission: {
+        write: true,
+        delete: true,
+        addMember: type === FileType.Directory,
+      },
+      type: "",
+      parentFolderUri: response.parentFolderUri,
+      fileStat: {
+        ctime: 0,
+        mtime: response.modifiedTimeStamp.replace(/[^0-9]/g, ""),
+        size: response.size,
+        type,
+      },
+    };
+
+    return {
+      ...item,
+      contextValue: resourceType(item),
+      // isReference: isReference(item),
+      // resourceId: getResourceIdFromItem(item),
+      // vscUri: getSasServerUri(item, flags?.isInRecycleBin || false),
+      // typeName: getTypeName(item),
+    };
+
+    function buildUri(parentPath: string, name: string): string {
+      return `${parentPath}\\${name}`;
+    }
+  }
+
+  private async execute(code: string) {
+    const session = getSession();
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const output = await (session as ITCSession).execute(code);
+    return JSON.parse(output);
   }
 
   public async getContentOfItem(item: ContentItem): Promise<string> {
@@ -111,7 +239,7 @@ class ITCSASServerAdapter implements ContentAdapter {
     item: ContentItem,
     readOnly: boolean,
   ): Promise<Uri> {
-    throw new Error("getUriOfItem not implemented");
+    return item.vscUri;
   }
 
   public async moveItem(
