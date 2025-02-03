@@ -5,6 +5,7 @@ import { commands } from "vscode";
 import { ITCSession } from ".";
 import { LogLine, getSession } from "..";
 import { useRunStore } from "../../store";
+import { extractTextBetweenTags } from "../util";
 
 let wait: Promise<string> | undefined;
 
@@ -58,17 +59,7 @@ async function _runCode(
     await (session as ITCSession).run(code, true);
 
     const logOutput = outputLines.filter((line) => line.trim()).join("");
-
-    logText =
-      startTag && endTag
-        ? logOutput
-            .slice(
-              logOutput.lastIndexOf(startTag),
-              logOutput.lastIndexOf(endTag),
-            )
-            .replace(startTag, "")
-            .replace(endTag, "")
-        : logOutput;
+    logText = extractTextBetweenTags(logOutput, startTag, endTag);
   } finally {
     unsubscribe && unsubscribe();
     // Lets update our session to write to the log
