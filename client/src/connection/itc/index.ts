@@ -19,7 +19,7 @@ import {
 } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
-import { extractOutputHtmlFileName } from "../util";
+import { extractOutputHtmlFileName, extractTextBetweenTags } from "../util";
 import { LineParser } from "./LineParser";
 import {
   ERROR_END_TAG,
@@ -244,6 +244,86 @@ export class ITCSession extends Session {
     });
 
     return runPromise;
+  };
+
+  public execute = async (code: string): Promise<string> => {
+    let listeningForData = false;
+    let executeResolve = null;
+    let executeReject = null;
+    let allData = "";
+    const executePromise = new Promise<RunResult>((resolve, reject) => {
+      executeResolve = resolve;
+      executeReject = reject;
+    });
+    const handleError = (error) => {
+      if (error) {
+        console.log(error);
+      }
+    };
+    const shellProcess = spawn(
+      "chcp 65001 >NUL & powershell.exe -NonInteractive -NoProfile -Command -",
+      {
+        shell: true,
+        env: process.env,
+      },
+    );
+    shellProcess.stdout.on("data", (data) => {
+      allData += data.toString();
+      if (data.toString().includes("--end-execution--")) {
+        shellProcess.kill();
+        executeResolve(
+          extractTextBetweenTags(
+            allData,
+            "--begin-execution--",
+            "--end-execution--",
+          ),
+        );
+      }
+    });
+    shellProcess.stderr.on("data", (error) => {
+      if (error) {
+        executeReject(error);
+      }
+    });
+    shellProcess.stdin.write(scriptContent + "\n", handleError);
+    shellProcess.stdin.write(
+      "$runner = New-Object -TypeName SASRunner\n",
+      handleError,
+    );
+
+    const { host, port, protocol, username } = this._config;
+    shellProcess.stdin.write(`$profileHost = "${host}"\n`);
+    shellProcess.stdin.write(`$port = ${port}\n`);
+    shellProcess.stdin.write(`$protocol = ${protocol}\n`);
+    shellProcess.stdin.write(
+      `$username = "${escapePowershellString(username)}"\n`,
+    );
+    const password = await this.fetchPassword();
+    shellProcess.stdin.write(
+      `$password = "${escapePowershellString(password)}"\n`,
+    );
+    shellProcess.stdin.write(
+      `$serverName = "${
+        protocol === ITCProtocol.COM ? "ITC Local" : "ITC IOM Bridge"
+      }"\n`,
+    );
+    shellProcess.stdin.write(`$displayLang = "${env.language}"\n`);
+    shellProcess.stdin.write(
+      `$runner.Setup($profileHost,$username,$password,$port,$protocol,$serverName,$displayLang)\n`,
+      handleError,
+    );
+    shellProcess.stdin.write("$runner.ResolveSystemVars()\n", handleError);
+
+    // Maybe write start and end execute then parse things between?
+    shellProcess.stdin.write('Write-Host "--begin-execution--"\n');
+    shellProcess.stdin.write(`${code}\n`);
+    shellProcess.stdin.write('Write-Host "--end-execution--"\n');
+
+    // free objects in the scripting env
+    process.on("exit", async () => {
+      close();
+    });
+    return executePromise;
   };
 
   /**

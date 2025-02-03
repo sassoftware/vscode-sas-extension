@@ -9,6 +9,12 @@ import {
 import { LineCodes } from "./types";
 
 export const scriptContent = `
+### NEED TO MAKE THIS A BIT MORE FLEXIBLE AND HAVE FALLBACKS FOR CASES WHERE
+### WE CANT LOOK THIS UP FROM REGISTRY
+$interopDir = (Get-ItemProperty -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
+Add-Type -Path "$interopDir\\SASInterop.dll"
+Add-Type -Path "$interopDir\\SASOManInterop.dll"
+    
 class SASRunner{
   [System.__ComObject] $objSAS
 
@@ -223,6 +229,76 @@ class SASRunner{
     }
 
     Write-Host "${LineCodes.ResultsFetchedCode}"
+  }
+  
+  [void]DeleteFile([string]$filePath) {
+    $this.objSAS.FileService.DeleteFile($filePath)
+    write-Host ("done" | ConvertTo-Json)
+  }
+
+  [void]CreateDirectory([string]$folderPath, [string]$folderName) {
+    $this.objSAS.FileService.MakeDirectory($folderPath, $folderName)
+    write-Host ("done" | ConvertTo-Json)
+  }
+
+  [void]CreateFile([string]$folderPath, [string]$fileName) {
+    $fileRefName = ""
+    $objFile = $this.objSAS.FileService.AssignFileref("", "DISK", $folderPath, "", [ref] $fileRefName)
+    $assignedName = ""
+    $outFile = $objFile.AssignMember("", $fileName, "DISK", "", [ref] $assignedName)
+    $objStream = $outFile.OpenBinaryStream([SAS.StreamOpenMode]::StreamOpenModeForWriting);
+    # $objStream.write("h", 0, 1);
+
+    $objStream.Close()
+    $this.objSAS.FileService.DeassignFileref($outFile.FilerefName)
+    $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
+
+    write-Host ("done" | ConvertTo-Json)
+  }
+
+  [void]GetChildItems([string]$folderPath) {
+    $fieldInclusionMask = [boolean[]]@()
+    # Out data
+    $listedPath = ""
+    $names = [string[]]@()
+    $typeNames = [string[]]@()
+    $typeCategories = [SAS.FileRefTypeCategory[]]@()
+    $sizes = [int[]]@()
+    $modTimes = [DateTime[]]@()
+    $engines = [string[]]@()
+
+    $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath
+    if ($folderPath -eq "/") {
+      $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModeUser
+    }
+
+    $this.objSAS.FileService.ListFiles(
+        $folderPath, 
+        $mode,
+        $fieldInclusionMask,
+        [ref]$listedPath,
+        [ref]$names,
+        [ref]$typeNames,
+        [ref]$typeCategories,
+        [ref]$sizes,
+        [ref]$modTimes,
+        [ref]$engines
+    )
+
+    $output = [object[]]::new($names.Length)
+    for($i = 0; $i -lt $names.Count; $i++) {
+      $output[$i] = @{
+        name=$names[$i];
+        type=$typeNames[$i];
+        category=$typeCategories[$i];
+        size=$sizes[$i];
+        modifiedTimeStamp=$modTimes[$i];
+        engine=$engines[$i];
+        parentFolderUri=$listedPath
+      }
+    }
+    
+    Write-Host ($output | ConvertTo-Json)
   }
 }
 `;
