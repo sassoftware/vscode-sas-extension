@@ -86,6 +86,10 @@ export const createStaticFolder = (
 
 export const getEditorTabsForItem = (item: ContentItem) => {
   const fileUri = item.vscUri;
+  // TODO FIX ME
+  if (!item.vscUri) {
+    return [];
+  }
   const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
   return tabs.filter(
     (tab) =>
