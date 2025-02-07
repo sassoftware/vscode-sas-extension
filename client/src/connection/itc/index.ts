@@ -245,8 +245,30 @@ export class ITCSession extends Session {
     return runPromise;
   };
 
+  public execute2 = async (code: string): Promise<RunResult> => {
+    const runPromise = new Promise<RunResult>((resolve, reject) => {
+      this._runResolve = resolve;
+      this._runReject = reject;
+    });
+
+    this._html5FileName = "";
+    this._pollingForLogResults = true;
+    this._shellProcess.stdin.write(
+      `${code}\n%put ${LineCodes.RunEndCode};`,
+      async (error) => {
+        if (error) {
+          this._runReject(error);
+        }
+
+        await this.fetchLog();
+      },
+    );
+
+    return runPromise;
+  };
+
   public execute = async (code: string): Promise<string> => {
-    let listeningForData = false;
+    const listeningForData = false;
     let executeResolve = null;
     let executeReject = null;
     let allData = "";

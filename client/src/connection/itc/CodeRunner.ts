@@ -2,26 +2,53 @@
 // SPDX-License-Identifier: Apache-2.0
 import { commands } from "vscode";
 
+import { v4 } from "uuid";
+
 import { ITCSession } from ".";
 import { LogLine, getSession } from "..";
 import { useRunStore } from "../../store";
+import { Session } from "../session";
 import { extractTextBetweenTags } from "../util";
 
 let wait: Promise<string> | undefined;
+
+export async function executeRawCode(code: string): Promise<string> {
+  const randomId = v4();
+  const startTag = `<${randomId}>`;
+  const endTag = `</${randomId}>`;
+  const task = () =>
+    _runCode(
+      async (session) => {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        await (session as ITCSession).execute2(code);
+      },
+      startTag,
+      endTag,
+    );
+
+  wait = wait ? wait.then(task) : task();
+  return wait;
+}
 
 export async function runCode(
   code: string,
   startTag: string = "",
   endTag: string = "",
 ): Promise<string> {
-  const task = () => _runCode(code, startTag, endTag);
+  const task = () =>
+    _runCode(
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      async (session) => await (session as ITCSession).run(code, true),
+      startTag,
+      endTag,
+    );
 
   wait = wait ? wait.then(task) : task();
   return wait;
 }
 
 async function _runCode(
-  code: string,
+  runCallback: (session: Session) => void,
   startTag: string = "",
   endTag: string = "",
 ): Promise<string> {
@@ -55,8 +82,7 @@ async function _runCode(
     // Lets capture output to use it on
     session.onExecutionLogFn = addLine;
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    await (session as ITCSession).run(code, true);
+    await runCallback(session);
 
     const logOutput = outputLines.filter((line) => line.trim()).join("");
     logText = extractTextBetweenTags(logOutput, startTag, endTag);
