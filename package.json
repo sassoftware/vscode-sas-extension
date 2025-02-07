@@ -948,7 +948,7 @@
         },
         {
           "command": "SAS.server.convertNotebookToFlow",
-          "when": "viewItem =~ /convertNotebookToFlow/ && view == serverdataprovider",
+          "when": "viewItem =~ /convertNotebookToFlow/ && view == serverdataprovider && SAS.connectionType != iom && SAS.connectionType != com ",
           "group": "actionsgroup@0"
         },
         {
