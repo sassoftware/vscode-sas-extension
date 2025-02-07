@@ -75,6 +75,7 @@ export interface ContentAdapter {
     parentItem: ContentItem,
     fileName: string,
     buffer?: ArrayBufferLike,
+    localFilePath?: string,
   ) => Promise<ContentItem | undefined>;
   deleteItem: (item: ContentItem) => Promise<boolean>;
   getChildItems: (parentItem: ContentItem) => Promise<ContentItem[]>;

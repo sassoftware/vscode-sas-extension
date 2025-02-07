@@ -86,11 +86,13 @@ export class ContentModel {
     parentItem: ContentItem,
     fileName: string,
     buffer?: ArrayBufferLike,
+    localFilePath?: string,
   ): Promise<ContentItem | undefined> {
     return await this.contentAdapter.createNewItem(
       parentItem,
       fileName,
       buffer,
+      localFilePath,
     );
   }
 

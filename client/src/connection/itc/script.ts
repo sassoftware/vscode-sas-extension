@@ -211,7 +211,7 @@ class SASRunner{
     $objStream = $objFile.OpenBinaryStream(1);
     [Byte[]] $bytes = 0x0
 
-    $endOfFile = $false
+    $endOfFile = $false 
     $byteCount = 0
     $outStream = New-Object System.IO.FileStream($outputFile, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write)
     try {
@@ -231,32 +231,100 @@ class SASRunner{
     Write-Host "${LineCodes.ResultsFetchedCode}"
   }
   
-  [void]DeleteFile([string]$filePath) {
-    $this.objSAS.FileService.DeleteFile($filePath)
+  [void]DeleteItemAtPath([string]$filePath,[bool]$recursive) {
+    if ($recursive) {
+      $items = $this.GetItemsAtPath($filePath);
+      for($i = 0; $i -lt $items.Count; $i++) {
+        if ($items[$i].category -eq 0) {
+          $this.DeleteItemAtPath($items[$i].uri, $true);
+        } else {
+          $this.DeleteItemAtPath($items[$i].uri, $false);
+        }
+      }
+      $this.objSAS.FileService.DeleteFile($filePath)
+    } else {
+      $this.objSAS.FileService.DeleteFile($filePath)
+    }
+  }
+
+  [void]DeleteFile([string]$filePath,[bool]$recursive) {
+    $this.DeleteItemAtPath($filePath, $recursive)
     write-Host ("done" | ConvertTo-Json)
   }
 
   [void]CreateDirectory([string]$folderPath, [string]$folderName) {
-    $this.objSAS.FileService.MakeDirectory($folderPath, $folderName)
-    write-Host ("done" | ConvertTo-Json)
+    $uri = $this.objSAS.FileService.MakeDirectory($folderPath, $folderName)
+    write-Host (@{uri=$uri} | ConvertTo-Json)
   }
 
-  [void]CreateFile([string]$folderPath, [string]$fileName) {
+  [void]CreateFile([string]$folderPath, [string]$fileName, [string]$localFilePath) {
     $fileRefName = ""
     $objFile = $this.objSAS.FileService.AssignFileref("", "DISK", $folderPath, "", [ref] $fileRefName)
     $assignedName = ""
     $outFile = $objFile.AssignMember("", $fileName, "DISK", "", [ref] $assignedName)
     $objStream = $outFile.OpenBinaryStream([SAS.StreamOpenMode]::StreamOpenModeForWriting);
-    # $objStream.write("h", 0, 1);
+    if ($localFilePath) {
+      #$fileStream = New-Object System.IO.FileStream($localFilePath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
+      $fileContent = (Get-Content -Path $localFilePath -Raw)
+      $objStream.Write($fileContent)
+    }
 
     $objStream.Close()
     $this.objSAS.FileService.DeassignFileref($outFile.FilerefName)
     $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
 
-    write-Host ("done" | ConvertTo-Json)
+    Write-Host ("done" | ConvertTo-Json)
   }
 
-  [void]GetChildItems([string]$folderPath) {
+  [void]UpdateFile([string]$filePath, [string]$content) {
+    $fileRefName = ""
+    $objFile = $this.objSAS.FileService.AssignFileref("", "DISK", $filePath, "", [ref] $fileRefName)
+    $objStream = $objFile.OpenTextStream([SAS.StreamOpenMode]::StreamOpenModeForWriting, 27994);
+    $objStream.Write($content);
+
+    $objStream.Close()
+    $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
+
+    Write-Host ("done" | ConvertTo-Json)
+  }
+
+  [void]RenameFile([string]$oldPath,[string]$newPath,[string]$newName) {
+    $this.objSAS.FileService.RenameFile($oldPath,$newPath+"\\"+$newName);
+    $items = $this.GetItemsAtPath($newPath);
+    for($i = 0; $i -lt $items.Count; $i++) {
+      if ($items[$i].name -eq $newName) {
+        Write-Host (ConvertTo-Json -InputObject @($items[$i]))
+        break
+      }
+    }
+    Write-Host ""
+  }
+
+  [void]FetchFileContent([string]$filePath, [string]$outputFile) {
+    $fileRef = ""
+    $objFile = $this.objSAS.FileService.AssignFileref("", "DISK", $filePath, "", [ref] $fileRef)
+    $objStream = $objFile.OpenBinaryStream(1);
+    [Byte[]] $bytes = 0x0
+
+    $endOfFile = $false
+    $byteCount = 0
+    $outStream = New-Object System.IO.FileStream($outputFile, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write)
+    try {
+      do
+      {
+        $objStream.Read(8192, [ref] $bytes)
+        $outStream.Write($bytes, 0, $bytes.length)
+        $endOfFile = $bytes.Length -lt 8192
+        $byteCount = $byteCount + $bytes.Length
+      } while (-not $endOfFile)
+    } finally {
+      $objStream.Close()
+      $outStream.Close()
+      $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
+    }
+  }
+
+  [object[]] GetItemsAtPath([string]$folderPath) {
     $fieldInclusionMask = [boolean[]]@()
     # Out data
     $listedPath = ""
@@ -288,6 +356,7 @@ class SASRunner{
     $output = [object[]]::new($names.Length)
     for($i = 0; $i -lt $names.Count; $i++) {
       $output[$i] = @{
+        uri=$listedPath + "\\" + $names[$i]
         name=$names[$i];
         type=$typeNames[$i];
         category=$typeCategories[$i];
@@ -297,8 +366,13 @@ class SASRunner{
         parentFolderUri=$listedPath
       }
     }
-    
-    Write-Host ($output | ConvertTo-Json)
+
+    return $output
+  }
+
+  [void]GetChildItems([string]$folderPath) {
+    $output = $this.GetItemsAtPath($folderPath)
+    Write-Host (ConvertTo-Json -InputObject @($output))
   }
 }
 `;

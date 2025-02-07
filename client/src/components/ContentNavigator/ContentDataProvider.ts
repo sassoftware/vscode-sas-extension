@@ -274,8 +274,14 @@ class ContentDataProvider
     item: ContentItem,
     fileName: string,
     buffer?: ArrayBufferLike,
+    localFilePath?: string,
   ): Promise<Uri | undefined> {
-    const newItem = await this.model.createFile(item, fileName, buffer);
+    const newItem = await this.model.createFile(
+      item,
+      fileName,
+      buffer,
+      localFilePath,
+    );
     if (newItem) {
       this.refresh();
       return newItem.vscUri;
@@ -491,7 +497,12 @@ class ContentDataProvider
         !success && failedUploads.push(fileName);
       } else {
         const file = await workspace.fs.readFile(uri);
-        const newUri = await this.createFile(target, fileName, file);
+        const newUri = await this.createFile(
+          target,
+          fileName,
+          file,
+          uri.fsPath,
+        );
         !newUri && failedUploads.push(fileName);
       }
     }
@@ -585,7 +596,7 @@ class ContentDataProvider
     } else if (target.type === FAVORITES_FOLDER_TYPE) {
       success = await this.addToMyFavorites(item);
     } else {
-      const targetUri = target.resourceId;
+      const targetUri = target.resourceId ?? target.uri;
       success = await this.moveItem(item, targetUri);
       if (success) {
         this.refresh();
@@ -635,6 +646,7 @@ class ContentDataProvider
             folder,
             name,
             await promisify(readFile)(fileOrFolder),
+            fileOrFolder,
           );
           if (!fileCreated) {
             success = false;
@@ -679,6 +691,7 @@ class ContentDataProvider
           target,
           name,
           await promisify(readFile)(itemUri.fsPath),
+          itemUri.fsPath,
         );
 
         if (!fileCreated) {
