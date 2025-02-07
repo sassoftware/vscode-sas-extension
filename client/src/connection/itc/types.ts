@@ -10,6 +10,16 @@ export enum LineCodes {
   LogLineType = "--vscode-sas-extension-log-line-type--",
 }
 
+export enum ScriptActions {
+  GetChildItems = `$runner.GetChildItems("$path")`,
+  CreateDirectory = `$runner.CreateDirectory("$folderPath", "$folderName")`,
+  CreateFile = `$runner.CreateFile("$folderPath", "$fileName","$localFilePath")`,
+  UpdateFile = `$runner.UpdateFile("$filePath", "$content")`,
+  FetchFileContent = `$runner.FetchFileContent("$filePath", "$outputFile")`,
+  DeleteFile = `$runner.DeleteFile("$filePath", $recursive)`,
+  RenameFile = `$runner.RenameFile("$oldPath","$newPath","$newName")`,
+}
+
 export enum ITCProtocol {
   COM = 0,
   IOMBridge = 2,
