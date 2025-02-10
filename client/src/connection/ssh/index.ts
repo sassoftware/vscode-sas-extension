@@ -112,7 +112,7 @@ export class SSHSession extends Session {
     });
   };
 
-  public run = (code: string): Promise<RunResult> => {
+  protected _run = (code: string): Promise<RunResult> => {
     this._html5FileName = "";
 
     return new Promise((_resolve, _reject) => {
@@ -124,7 +124,7 @@ export class SSHSession extends Session {
     });
   };
 
-  public close = (): void | Promise<void> => {
+  protected _close = (): void | Promise<void> => {
     if (!this._stream) {
       this.disposeResources();
       return;

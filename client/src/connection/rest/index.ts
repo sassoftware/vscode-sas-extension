@@ -138,7 +138,7 @@ class RestSession extends Session {
     updateStatusBarItem(true);
   };
 
-  public run = async (code: string) => {
+  protected _run = async (code: string) => {
     if (!this._computeSession?.sessionId) {
       throw new Error();
     }
@@ -189,7 +189,7 @@ class RestSession extends Session {
     return res;
   };
 
-  public close = async () => {
+  protected _close = async () => {
     if (this.sessionId()) {
       this._computeSession.delete();
       this._computeSession = undefined;
