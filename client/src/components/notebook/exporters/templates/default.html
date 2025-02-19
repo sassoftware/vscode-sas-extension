@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+      }
+      .markdown-cell table td,
+      .markdown-cell table th {
+        border: 1px solid var(--border-color);
+      }
+      .markdown-cell code {
+        padding: 0 .4em;
+        border-radius: 4px;
+        background-color: var(--highlight-background-color);
+      }
+      .code-cell {
+        position: relative;
+        font-size: 14px;
+      }
+      .code-cell pre code {
+        font-family: Consolas, monospace;
+      }
+      pre code.hljs {
+        display: block;
+        overflow-x: auto;
+        padding: 1em;
+        border: 1px solid var(--border-color);
+      }
+      .code-cell .languageId {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        text-transform: uppercase;
+        padding: .1em .5em;
+        background-color: var(--highlight-background-color);
+      }
+      .log-line {
+        font-family: Consolas, monospace;
+        font-size: 14px;
+        white-space: pre-wrap;
+        margin-inline-start: 1em;
+      }
+      ${theme}
+    </style>
+  </head>
+  <body>
+    ${content}
+  </body>
+</html>
