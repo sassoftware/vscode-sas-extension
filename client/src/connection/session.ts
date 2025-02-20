@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 import { ProgressLocation, l10n, window } from "vscode";
 
-import { OnLogFn, RunResult } from ".";
+import type { OnLogFn, RunResult } from ".";
 
 export abstract class Session {
+  protected _rejectRun: (reason?: unknown) => void | undefined;
+
   protected _onSessionLogFn: OnLogFn | undefined;
   public set onSessionLogFn(value: OnLogFn) {
     this._onSessionLogFn = value;
@@ -30,8 +32,27 @@ export abstract class Session {
   }
 
   protected abstract establishConnection(): Promise<void>;
-  abstract run(code: string): Promise<RunResult>;
+
+  run(code: string, ...args): Promise<RunResult> {
+    return new Promise((resolve, reject) => {
+      this._rejectRun = reject;
+      this._run(code, ...args)
+        .then(resolve, reject)
+        .finally(() => (this._rejectRun = undefined));
+    });
+  }
+  protected abstract _run(code: string, ...args): Promise<RunResult>;
+
   cancel?(): Promise<void>;
-  abstract close(): Promise<void> | void;
+
+  close(): Promise<void> | void {
+    if (this._rejectRun) {
+      this._rejectRun({ message: l10n.t("The SAS session has closed.") });
+      this._rejectRun = undefined;
+    }
+    return this._close();
+  }
+  protected abstract _close(): Promise<void> | void;
+
   abstract sessionId?(): string | undefined;
 }
