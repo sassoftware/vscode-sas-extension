@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Added application name to ITC-based (IOM/COM) connections ([#762](https://github.com/sassoftware/vscode-sas-extension/issues/762))
+- Add application name to ITC-based (IOM/COM) connections ([#762](https://github.com/sassoftware/vscode-sas-extension/issues/762))
 
 ## [v1.13.1] - 2025-03-04
 
