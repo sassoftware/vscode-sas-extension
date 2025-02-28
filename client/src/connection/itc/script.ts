@@ -11,15 +11,24 @@ import { LineCodes } from "./types";
 export const scriptContent = `
 class SASRunner{
   [System.__ComObject] $objSAS
-  [bool] $dllsLoaded
 
-  SASRunner() {
-    $interopDir = $this.GetInteropDirectory()
-    Add-Type -Path "$interopDir\\SASInterop.dll"
-    Add-Type -Path "$interopDir\\SASOManInterop.dll" 
+  SASRunner([string]$interopPath) {
+    try {
+      $interopDir = $this.GetInteropDirectory($interopPath)
+      Add-Type -Path "$interopDir\\SASInterop.dll"
+      Add-Type -Path "$interopDir\\SASOManInterop.dll" 
+    } catch {
+      Write-Error "${ERROR_START_TAG}Init error${ERROR_END_TAG}"
+    }
   }
 
-  [string] GetInteropDirectory() {
+  [string] GetInteropDirectory([string]$defaultInteropPath) {
+    if ($defaultInteropPath) {
+      if (Test-Path -Path $defaultInteropPath) {
+        return $defaultInteropPath
+      }
+    }
+
     # try to load path from registry first
     try {
       $pathFromRegistry = (Get-ItemProperty -ErrorAction Stop -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
@@ -32,7 +41,6 @@ class SASRunner{
     # try to load path from integration technologies
     $itcPath = "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
     if (Test-Path -Path $itcPath) {
-    Write-Host "We tried to looooad this"
       return $itcPath
     }
 
