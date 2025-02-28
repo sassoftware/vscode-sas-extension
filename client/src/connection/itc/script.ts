@@ -16,7 +16,7 @@ class SASRunner{
     try {
       $interopDir = $this.GetInteropDirectory($interopPath)
       Add-Type -Path "$interopDir\\SASInterop.dll"
-      Add-Type -Path "$interopDir\\SASOManInterop.dll" 
+      Add-Type -Path "$interopDir\\SASOManInterop.dll"
     } catch {
       Write-Error "${ERROR_START_TAG}Init error${ERROR_END_TAG}"
     }
@@ -43,12 +43,6 @@ class SASRunner{
     $itcPath = "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
     if (Test-Path -Path $itcPath) {
       return $itcPath
-    }
-
-    # try to load dlls from enterprise guide
-    $egPath = "C:\\Program Files\\SASHome\\SASEnterpriseGuide\\8"
-    if (Test-Path -Path $egPath) {
-      return $egPath
     }
 
     return ""
