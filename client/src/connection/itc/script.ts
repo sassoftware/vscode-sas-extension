@@ -11,6 +11,39 @@ import { LineCodes } from "./types";
 export const scriptContent = `
 class SASRunner{
   [System.__ComObject] $objSAS
+  [bool] $dllsLoaded
+
+  SASRunner() {
+    $interopDir = $this.GetInteropDirectory()
+    Add-Type -Path "$interopDir\\SASInterop.dll"
+    Add-Type -Path "$interopDir\\SASOManInterop.dll" 
+  }
+
+  [string] GetInteropDirectory() {
+    # try to load path from registry first
+    try {
+      $pathFromRegistry = (Get-ItemProperty -ErrorAction Stop -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
+      if (Test-Path -Path $pathFromRegistry) {
+        return $pathFromRegistry
+      }
+    } catch {
+    }
+
+    # try to load path from integration technologies
+    $itcPath = "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
+    if (Test-Path -Path $itcPath) {
+    Write-Host "We tried to looooad this"
+      return $itcPath
+    }
+
+    # try to load dlls from enterprise guide
+    $egPath = "C:\\Program Files\\SASHome\\SASEnterpriseGuide\\8"
+    if (Test-Path -Path $egPath) {
+      return $egPath
+    }
+
+    return ""
+  }
 
   [void]ResolveSystemVars(){
     try {
@@ -21,14 +54,16 @@ class SASRunner{
       Write-Error "${ERROR_START_TAG}Setup error: $_${ERROR_END_TAG}"
     }
   }
+
   [void]Setup([string]$profileHost, [string]$username, [string]$password, [int]$port, [int]$protocol, [string]$serverName, [string]$displayLang) {
     try {
         # Set Encoding for input and output
         $OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding
 
         # create the Integration Technologies objects
-        $objFactory = New-Object -ComObject SASObjectManager.ObjectFactoryMulti2
-        $objServerDef = New-Object -ComObject SASObjectManager.ServerDef
+        $objFactory = New-Object -TypeName SASObjectManager.ObjectFactoryMulti2Class
+        $objFactory.ApplicationName = "SAS Extension for Visual Studio Code"
+        $objServerDef = New-Object -TypeName SASObjectManager.ServerDefClass
         $objServerDef.MachineDNSName = $profileHost # SAS Workspace node
         $objServerDef.Port = $port # workspace server port
         $objServerDef.Protocol = $protocol # 0 = COM protocol
