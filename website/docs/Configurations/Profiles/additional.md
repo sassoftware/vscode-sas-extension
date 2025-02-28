@@ -28,7 +28,8 @@ SAS system options can be set for each connection profile. Changes to the SAS sy
         "username": "username",
         "port": 8591,
         "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"],
-        "ConnectionType": "iom"
+        "ConnectionType": "iom",
+        "interopLibraryFolderPath": "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
       }
     }
   }
@@ -42,7 +43,8 @@ SAS system options can be set for each connection profile. Changes to the SAS sy
       "sas9COM": {
         "host": "localhost",
         "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"],
-        "ConnectionType": "com"
+        "ConnectionType": "com",
+        "interopLibraryFolderPath": "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
       }
     }
   }

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [Unreleased]
+
+### Added
+
+- Added application name to ITC-based (IOM/COM) connections ([#762](https://github.com/sassoftware/vscode-sas-extension/issues/762))
+
 ## [v1.13.1] - 2025-03-04
 
 ### Fixed

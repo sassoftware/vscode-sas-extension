@@ -23,13 +23,14 @@ class SASRunner{
   }
 
   [string] GetInteropDirectory([string]$defaultInteropPath) {
+    # try to load from user specified path first
     if ($defaultInteropPath) {
       if (Test-Path -Path $defaultInteropPath) {
         return $defaultInteropPath
       }
     }
 
-    # try to load path from registry first
+    # try to load path from registry
     try {
       $pathFromRegistry = (Get-ItemProperty -ErrorAction Stop -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
       if (Test-Path -Path $pathFromRegistry) {
