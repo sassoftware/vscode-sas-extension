@@ -98,10 +98,12 @@ export class NotebookController {
         ]),
       ]);
       execution.end(false, Date.now());
+      if (!this._interrupted) {
+        this._interrupted = deferred();
+      }
     }
     if (this._interrupted) {
       this._interrupted.resolve();
-      this._interrupted = undefined;
     }
   }
 

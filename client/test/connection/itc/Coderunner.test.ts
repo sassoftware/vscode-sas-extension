@@ -26,7 +26,7 @@ export class MockSession extends Session {
     return;
   }
 
-  public async run(codeString: string): Promise<connection.RunResult> {
+  protected async _run(codeString: string): Promise<connection.RunResult> {
     if (this._runMap) {
       const [, result] = Object.entries(this._runMap).find(([code]) =>
         codeString.includes(code),
@@ -45,7 +45,7 @@ export class MockSession extends Session {
     return {};
   }
 
-  public close(): void | Promise<void> {}
+  protected _close(): void | Promise<void> {}
 
   public sessionId?(): string {
     return "";
