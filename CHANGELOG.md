@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [v1.13.1] - 2025-03-04
+
+### Fixed
+
+- SAS log color issue ([#1325](https://github.com/sassoftware/vscode-sas-extension/issues/1325))
+- Remove unexpected endsubmit autocomplete ([#1357](https://github.com/sassoftware/vscode-sas-extension/issues/1357))
+- Proc Python auto-indent issue ([#1376](https://github.com/sassoftware/vscode-sas-extension/issues/1376))
+- Better error display for Rest session creation errors ([#1367](https://github.com/sassoftware/vscode-sas-extension/issues/1367))
+- Stop running when close session ([#1390](https://github.com/sassoftware/vscode-sas-extension/pull/1390))
+
 ## [v1.13.0] - 2024-12-23
 
 ### Changed
