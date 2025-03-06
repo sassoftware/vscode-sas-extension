@@ -208,7 +208,7 @@ export class ITCSession extends Session {
    * @param onLog A callback handler responsible for marshalling log lines back to the higher level extension API.
    * @returns A promise that eventually resolves to contain the given {@link RunResult} for the input code execution.
    */
-  public run = async (
+  protected _run = async (
     code: string,
     skipPageHeaders?: boolean,
   ): Promise<RunResult> => {
@@ -249,7 +249,7 @@ export class ITCSession extends Session {
    * Cleans up resources for the given SAS session.
    * @returns void promise.
    */
-  public close = async (): Promise<void> => {
+  protected _close = async (): Promise<void> => {
     return new Promise((resolve) => {
       if (this._shellProcess) {
         this._shellProcess.stdin.write(

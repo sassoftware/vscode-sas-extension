@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
-  "version": "1.13.0",
+  "version": "1.13.1",
   "categories": [
     "Programming Languages",
     "Data Science",
@@ -30,6 +30,12 @@
     "virtualWorkspaces": true
   },
   "contributes": {
+    "authentication": [
+      {
+        "id": "SAS",
+        "label": "SAS"
+      }
+    ],
     "taskDefinitions": [
       {
         "type": "sas",
@@ -1269,20 +1275,20 @@
     "@eslint/compat": "1.2.2",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/chai": "^4.3.11",
-    "@types/mocha": "^10.0.9",
-    "@types/node": "^22.10.2",
-    "@types/sinon": "^17.0.3",
-    "@typescript-eslint/eslint-plugin": "^8.18.0",
-    "@typescript-eslint/parser": "^8.18.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.13.8",
+    "@types/sinon": "^17.0.4",
+    "@typescript-eslint/eslint-plugin": "^8.25.0",
+    "@typescript-eslint/parser": "^8.25.0",
     "@vscode/l10n-dev": "^0.0.35",
     "buffer": "6.0.3",
     "chai": "^4.4.1",
     "concurrently": "^9.1.0",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.25.0",
     "cross-env": "^7.0.3",
-    "eslint": "^9.17.0",
-    "eslint-plugin-react": "^7.37.2",
-    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint": "^9.21.0",
+    "eslint-plugin-react": "^7.37.4",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "glob": "^7.2.0",
     "mocha": "^11.0.1",
     "nock": "^13.5.5",
@@ -1290,11 +1296,11 @@
     "path-browserify": "^1.0.1",
     "prettier": "^3.3.3",
     "sinon": "^19.0.2",
-    "ts-loader": "^9.5.1",
+    "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "ts-sinon": "^2.0.2",
     "typescript": "^5.5.3",
-    "webpack": "^5.96.1",
-    "webpack-cli": "^5.1.4"
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1"
   }
 }

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { l10n } from "vscode";
 
-import axios, { AxiosResponse } from "axios";
+import { AxiosResponse } from "axios";
 
 import { Link, Server, ServersApi, SessionRequest } from "./api/compute";
 import { BaseCompute, Compute, getApiConfig, stateOptions } from "./common";
@@ -94,14 +94,7 @@ export class ComputeServer extends Compute {
       },
     };
 
-    let resp: AxiosResponse;
-    try {
-      resp = await this.requestLink(link, { data: body });
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(error.message);
-      }
-    }
+    const resp = await this.requestLink(link, { data: body });
 
     //Create the session from the http resposne
     const session = ComputeSession.fromResponse(resp);
