@@ -95,6 +95,10 @@ if (process.env.npm_config_webviews || process.env.npm_config_client) {
           src: "./server/src/python/sas",
           dest: "./server/dist/node/typeshed-fallback/stubs/sas",
         },
+        {
+          src: "./client/src/components/notebook/exporters/templates",
+          dest: "./client/dist/notebook/exporters/templates",
+        },
       ];
       for (const item of foldersToCopy) {
         fs.cpSync(item.src, item.dest, { recursive: true });

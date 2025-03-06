@@ -58,6 +58,7 @@
   "configuration.SAS.log.clearOnExecutionStart": "Clear SAS Log when code execution starts",
   "configuration.SAS.log.showOnExecutionFinish": "Show SAS Log when code execution is finished",
   "configuration.SAS.log.showOnExecutionStart": "Show SAS Log when code execution starts",
+  "configuration.SAS.notebook.export.includeLog": "Include SAS log in exported notebook",
   "configuration.SAS.problems.log.enabled": "Show problems from SAS log",
   "configuration.SAS.results.html.enabled": "Enable/disable ODS HTML5 output",
   "configuration.SAS.results.html.style": "Specifies the style for ODS HTML5 results.",
