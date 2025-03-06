@@ -17,6 +17,7 @@ import {
   LogLine as ComputeLogLine,
   LogLineTypeEnum as ComputeLogLineTypeEnum,
 } from "./rest/api/compute";
+import { getSession as getSASPYSession } from "./saspy";
 import { Session } from "./session";
 import { getSession as getSSHSession } from "./ssh";
 
@@ -54,6 +55,8 @@ export function getSession(): Session {
       return getRestSession(toRestConfig(validProfile.profile));
     case ConnectionType.SSH:
       return getSSHSession(validProfile.profile);
+    case ConnectionType.SASPY:
+      return getSASPYSession(validProfile.profile);
     case ConnectionType.COM:
       return getITCSession(validProfile.profile, ITCProtocol.COM);
     case ConnectionType.IOM:
