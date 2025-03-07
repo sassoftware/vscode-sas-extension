@@ -28,8 +28,7 @@ SAS system options can be set for each connection profile. Changes to the SAS sy
         "username": "username",
         "port": 8591,
         "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"],
-        "ConnectionType": "iom",
-        "interopLibraryFolderPath": "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
+        "ConnectionType": "iom"
       }
     }
   }
@@ -43,8 +42,7 @@ SAS system options can be set for each connection profile. Changes to the SAS sy
       "sas9COM": {
         "host": "localhost",
         "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"],
-        "ConnectionType": "com",
-        "interopLibraryFolderPath": "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
+        "ConnectionType": "com"
       }
     }
   }
@@ -130,6 +128,46 @@ For SAS Viya connection profiles, you can set up autoexec code that executes eac
             "filePath": "/my/local/autoexec.sas"
           }
         ]
+      }
+    }
+  }
+  ```
+
+## SAS Interop Library Settings
+
+SAS Interop library settings can be configured for ITC-based connections ("remote - IOM" and "local" connection types). ITC-based connections have a dependency on `SASInterop.dll` and `SASOManInterop.dll`. The extension tries to load these libraries from the following locations (ordered by priority):
+
+1. The path specified in `interopLibraryFolderPath`. This should be an absolute path to the folder containing the files listed above.
+2. If `interopLibraryFolderPath` is empty or invalid, the extension will attempt to resolve the path from Windows registry
+3. If steps 1 and 2 fail, the extension will attempt to load libraries from the default Integration Technologies Client folder (`C:\Program Files\SASHome\x86\Integration Technologies`)
+
+The following demonstrates how to setup `interopLibraryFolderPath` in user settings:
+
+- SAS 9.4 (remote - IOM):
+
+  ```json
+  {
+    "profiles": {
+      "sas9IOM": {
+        "host": "host",
+        "username": "username",
+        "port": 8591,
+        "ConnectionType": "iom",
+        "interopLibraryFolderPath": "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
+      }
+    }
+  }
+  ```
+
+- SAS 9.4 (local):
+
+  ```json
+  {
+    "profiles": {
+      "sas9COM": {
+        "host": "localhost",
+        "ConnectionType": "com",
+        "interopLibraryFolderPath": "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
       }
     }
   }
