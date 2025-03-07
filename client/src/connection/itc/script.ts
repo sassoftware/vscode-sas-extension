@@ -18,7 +18,7 @@ class SASRunner{
       Add-Type -Path "$interopDir\\SASInterop.dll"
       Add-Type -Path "$interopDir\\SASOManInterop.dll"
     } catch {
-      Write-Error "${ERROR_START_TAG}Init error${ERROR_END_TAG}"
+      Write-Error "${ERROR_START_TAG}LoadingInterop error: $_${ERROR_END_TAG}"
     }
   }
 

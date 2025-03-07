@@ -334,7 +334,11 @@ export class ITCSession extends Session {
     );
 
     // If we encountered an error in setup, we need to go through everything again
-    const fatalErrors = [/Setup error/, /powershell\.exe/, /Init error/];
+    const fatalErrors = [
+      /Setup error/,
+      /powershell\.exe/,
+      /LoadingInterop error/,
+    ];
     if (fatalErrors.find((regex) => regex.test(errorMessage))) {
       // If we can't even run the shell script (i.e. powershell.exe not found),
       // we'll also need to dismiss the password prompt
@@ -369,7 +373,7 @@ export class ITCSession extends Session {
       return l10n.t("This platform does not support this connection type.");
     }
 
-    if (/Init error/.test(msg)) {
+    if (/LoadingInterop error/.test(msg)) {
       return l10n.t("Unable to load required libraries.");
     }
 
