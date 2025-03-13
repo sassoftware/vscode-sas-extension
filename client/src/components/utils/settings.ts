@@ -33,3 +33,7 @@ export function clearLogOnExecutionStart(): boolean {
 export function isShowProblemsFromSASLogEnabled(): boolean {
   return workspace.getConfiguration("SAS").get("problems.log.enabled");
 }
+
+export function includeLogInNotebookExport(): boolean {
+  return workspace.getConfiguration("SAS").get("notebook.export.includeLog");
+}

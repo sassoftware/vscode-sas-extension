@@ -12,3 +12,17 @@ SAS Notebook is an interactive notebook file that includes markdown code, execut
 - You can use the `File` menu to save your SAS Notebook to a `.sasnb` file, share the notebook with others, and open the notebook in another VS Code window.
 
 ![SAS Notebook](/images/sasNotebook.png)
+
+## Export
+
+To export your SAS Notebook to other formats, click the **More Actions** (`...`) button on the notebook toolbar at top, and select `Export`. The following formats are supported.
+
+### SAS
+
+PYTHON and SQL code cells will be wrapped with PROC PYTHON/SQL respectively to be executed on SAS. Markdown cells will be converted to block comments.
+
+### HTML
+
+The exported HTML will be in Light or Dark theme depending on your VS Code theme kind.
+
+By default it doesn't include SAS log into the exported HTML file. To include log, check the `SAS.notebook.export.includeLog` setting.

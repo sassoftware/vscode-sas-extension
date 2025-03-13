@@ -1,0 +1,114 @@
+body {
+  background-color: #03233a;
+  color: #cccccc;
+  --border-color: #b0b7bb;
+  --highlight-background-color: #9fb6c633;
+}
+.markdown-cell a:link {
+  color: #3794ff;
+}
+.hljs {
+  background: #021727;
+  color: #dddfe4;
+}
+
+/* Syntax highlighting */
+.hljs-operator,
+.hljs-punctuation {
+  color: #dddfe4;
+}
+
+.hljs-keyword {
+  color: #4398f9;
+}
+
+.hljs-comment {
+  color: #97c03f;
+}
+
+.hljs-string {
+  color: #f17e70;
+}
+
+.hljs-number {
+  color: #54b6a4;
+}
+
+.hljs-title {
+  color: #92c3fc;
+  font-weight: bold;
+}
+
+.hljs-built_in {
+  color: #faaa6b;
+}
+
+/* SAS Syntax */
+.sas-syntax-sep {
+  color: #dddfe4;
+}
+
+.sas-syntax-keyword,
+.sas-syntax-macro-keyword {
+  color: #4398f9;
+}
+
+.sas-syntax-sec-keyword,
+.sas-syntax-proc-name {
+  color: #92c3fc;
+  font-weight: bold;
+}
+
+.sas-syntax-comment,
+.sas-syntax-macro-comment {
+  color: #97c03f;
+}
+
+.sas-syntax-macro-ref,
+.sas-syntax-macro-sec-keyword {
+  color: #dddfe4;
+  font-weight: bold;
+}
+
+.sas-syntax-cards-data {
+  color: #faaa6b;
+}
+
+.sas-syntax-string {
+  color: #f17e70;
+}
+
+.sas-syntax-date,
+.sas-syntax-time,
+.sas-syntax-dt,
+.sas-syntax-bitmask {
+  color: #54b6a4;
+  font-weight: bold;
+}
+
+.sas-syntax-namelit {
+  color: #f17e70;
+  font-weight: bold;
+}
+
+.sas-syntax-hex,
+.sas-syntax-numeric {
+  color: #54b6a4;
+  font-weight: bold;
+}
+
+.sas-syntax-format {
+  color: #54b6a4;
+}
+
+.log-line.sas-log-error {
+  color: #ff4d4d;
+}
+
+.log-line.sas-log-warning {
+  color: #ffb829;
+}
+
+.log-line.sas-log-note {
+  color: #2fa8fe;
+}
