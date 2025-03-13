@@ -23,4 +23,5 @@ export interface Config extends BaseConfig {
   port: number;
   username: string;
   protocol: ITCProtocol;
+  interopLibraryFolderPath?: string;
 }
