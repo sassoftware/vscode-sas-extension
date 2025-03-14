@@ -19,7 +19,7 @@ import {
 } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
-import { extractOutputHtmlFileName } from "../util";
+import { extractOutputHtmlFileName, extractTextBetweenTags } from "../util";
 import { LineParser } from "./LineParser";
 import {
   ERROR_END_TAG,
@@ -240,6 +240,24 @@ export class ITCSession extends Session {
       }
 
       await this.fetchLog(skipPageHeaders);
+    });
+
+    return runPromise;
+  };
+
+  public execute2 = async (code: string): Promise<RunResult> => {
+    const runPromise = new Promise<RunResult>((resolve, reject) => {
+      this._runResolve = resolve;
+      this._runReject = reject;
+    });
+
+    this._html5FileName = "";
+    this._pollingForLogResults = true;
+    const codeToExecute = `${code}\nWrite-Host "${LineCodes.RunEndCode}"\n`;
+    this._shellProcess.stdin.write(codeToExecute, async (error) => {
+      if (error) {
+        this._runReject(error);
+      }
     });
 
     return runPromise;

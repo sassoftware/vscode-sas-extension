@@ -9,6 +9,12 @@ import {
 import { LineCodes } from "./types";
 
 export const scriptContent = `
+### NEED TO MAKE THIS A BIT MORE FLEXIBLE AND HAVE FALLBACKS FOR CASES WHERE
+### WE CANT LOOK THIS UP FROM REGISTRY
+$interopDir = (Get-ItemProperty -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
+Add-Type -Path "$interopDir\\SASInterop.dll"
+Add-Type -Path "$interopDir\\SASOManInterop.dll"
+    
 class SASRunner{
   [System.__ComObject] $objSAS
 
@@ -21,14 +27,16 @@ class SASRunner{
       Write-Error "${ERROR_START_TAG}Setup error: $_${ERROR_END_TAG}"
     }
   }
+
   [void]Setup([string]$profileHost, [string]$username, [string]$password, [int]$port, [int]$protocol, [string]$serverName, [string]$displayLang) {
     try {
         # Set Encoding for input and output
         $OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding
 
         # create the Integration Technologies objects
-        $objFactory = New-Object -ComObject SASObjectManager.ObjectFactoryMulti2
-        $objServerDef = New-Object -ComObject SASObjectManager.ServerDef
+        $objFactory = New-Object -TypeName SASObjectManager.ObjectFactoryMulti2Class
+        $objFactory.ApplicationName = "SAS Extension for VSCode"
+        $objServerDef = New-Object -TypeName SASObjectManager.ServerDefClass
         $objServerDef.MachineDNSName = $profileHost # SAS Workspace node
         $objServerDef.Port = $port # workspace server port
         $objServerDef.Protocol = $protocol # 0 = COM protocol
@@ -167,7 +175,7 @@ class SASRunner{
     $objStream = $objFile.OpenBinaryStream(1);
     [Byte[]] $bytes = 0x0
 
-    $endOfFile = $false
+    $endOfFile = $false 
     $byteCount = 0
     $outStream = New-Object System.IO.FileStream($outputFile, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write)
     try {
@@ -185,6 +193,150 @@ class SASRunner{
     }
 
     Write-Host "${LineCodes.ResultsFetchedCode}"
+  }
+  
+  [void]DeleteItemAtPath([string]$filePath,[bool]$recursive) {
+    if ($recursive) {
+      $items = $this.GetItemsAtPath($filePath);
+      for($i = 0; $i -lt $items.Count; $i++) {
+        if ($items[$i].category -eq 0) {
+          $this.DeleteItemAtPath($items[$i].uri, $true);
+        } else {
+          $this.DeleteItemAtPath($items[$i].uri, $false);
+        }
+      }
+      $this.objSAS.FileService.DeleteFile($filePath)
+    } else {
+      $this.objSAS.FileService.DeleteFile($filePath)
+    }
+  }
+
+  [void]DeleteFile([string]$filePath,[bool]$recursive) {
+    $this.DeleteItemAtPath($filePath, $recursive)
+    write-Host ("done" | ConvertTo-Json)
+  }
+
+  [void]CreateDirectory([string]$folderPath, [string]$folderName) {
+    $uri = $this.objSAS.FileService.MakeDirectory($folderPath, $folderName)
+    write-Host (@{uri=$uri} | ConvertTo-Json)
+  }
+
+  [void]CreateFile([string]$folderPath, [string]$fileName, [string]$localFilePath) {
+    $fileRefName = ""
+    $objFile = $this.objSAS.FileService.AssignFileref("", "DISK", $folderPath, "", [ref] $fileRefName)
+    $assignedName = ""
+    $outFile = $objFile.AssignMember("", $fileName, "DISK", "", [ref] $assignedName)
+    $objStream = $outFile.OpenBinaryStream([SAS.StreamOpenMode]::StreamOpenModeForWriting);
+    if ($localFilePath) {
+      #$fileStream = New-Object System.IO.FileStream($localFilePath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
+      $fileContent = (Get-Content -Path $localFilePath -Raw)
+      $objStream.Write($fileContent)
+    }
+
+    $objStream.Close()
+    $this.objSAS.FileService.DeassignFileref($outFile.FilerefName)
+    $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
+
+    Write-Host ("done" | ConvertTo-Json)
+  }
+
+  [void]UpdateFile([string]$filePath, [string]$content) {
+    $fileRefName = ""
+    $objFile = $this.objSAS.FileService.AssignFileref("", "DISK", $filePath, "", [ref] $fileRefName)
+    $objStream = $objFile.OpenTextStream([SAS.StreamOpenMode]::StreamOpenModeForWriting, 27994);
+    $objStream.Write($content);
+
+    $objStream.Close()
+    $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
+
+    Write-Host ("done" | ConvertTo-Json)
+  }
+
+  [void]RenameFile([string]$oldPath,[string]$newPath,[string]$newName) {
+    $this.objSAS.FileService.RenameFile($oldPath,$newPath+"\\"+$newName);
+    $items = $this.GetItemsAtPath($newPath);
+    for($i = 0; $i -lt $items.Count; $i++) {
+      if ($items[$i].name -eq $newName) {
+        Write-Host (ConvertTo-Json -InputObject @($items[$i]))
+        break
+      }
+    }
+    Write-Host ""
+  }
+
+  [void]FetchFileContent([string]$filePath, [string]$outputFile) {
+    $fileRef = ""
+    $objFile = $this.objSAS.FileService.AssignFileref("", "DISK", $filePath, "", [ref] $fileRef)
+    $objStream = $objFile.OpenBinaryStream(1);
+    [Byte[]] $bytes = 0x0
+
+    $endOfFile = $false
+    $byteCount = 0
+    $outStream = New-Object System.IO.FileStream($outputFile, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write)
+    try {
+      do
+      {
+        $objStream.Read(8192, [ref] $bytes)
+        $outStream.Write($bytes, 0, $bytes.length)
+        $endOfFile = $bytes.Length -lt 8192
+        $byteCount = $byteCount + $bytes.Length
+      } while (-not $endOfFile)
+    } finally {
+      $objStream.Close()
+      $outStream.Close()
+      $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
+    }
+  }
+
+  [object[]] GetItemsAtPath([string]$folderPath) {
+    $fieldInclusionMask = [boolean[]]@()
+    # Out data
+    $listedPath = ""
+    $names = [string[]]@()
+    $typeNames = [string[]]@()
+    $typeCategories = [SAS.FileRefTypeCategory[]]@()
+    $sizes = [int[]]@()
+    $modTimes = [DateTime[]]@()
+    $engines = [string[]]@()
+
+    $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath
+    if ($folderPath -eq "/") {
+      $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModeUser
+    }
+
+    $this.objSAS.FileService.ListFiles(
+        $folderPath, 
+        $mode,
+        $fieldInclusionMask,
+        [ref]$listedPath,
+        [ref]$names,
+        [ref]$typeNames,
+        [ref]$typeCategories,
+        [ref]$sizes,
+        [ref]$modTimes,
+        [ref]$engines
+    )
+
+    $output = [object[]]::new($names.Length)
+    for($i = 0; $i -lt $names.Count; $i++) {
+      $output[$i] = @{
+        uri=$listedPath + "\\" + $names[$i]
+        name=$names[$i];
+        type=$typeNames[$i];
+        category=$typeCategories[$i];
+        size=$sizes[$i];
+        modifiedTimeStamp=$modTimes[$i];
+        engine=$engines[$i];
+        parentFolderUri=$listedPath
+      }
+    }
+
+    return $output
+  }
+
+  [void]GetChildItems([string]$folderPath) {
+    $output = $this.GetItemsAtPath($folderPath)
+    Write-Host (ConvertTo-Json -InputObject @($output))
   }
 }
 `;
