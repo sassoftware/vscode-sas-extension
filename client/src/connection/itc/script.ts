@@ -9,12 +9,10 @@ import {
 import { LineCodes } from "./types";
 
 export const scriptContent = `
-### NEED TO MAKE THIS A BIT MORE FLEXIBLE AND HAVE FALLBACKS FOR CASES WHERE
-### WE CANT LOOK THIS UP FROM REGISTRY
 $interopDir = (Get-ItemProperty -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
 Add-Type -Path "$interopDir\\SASInterop.dll"
 Add-Type -Path "$interopDir\\SASOManInterop.dll"
-    
+
 class SASRunner{
   [System.__ComObject] $objSAS
 
@@ -211,7 +209,7 @@ class SASRunner{
     $objStream = $objFile.OpenBinaryStream(1);
     [Byte[]] $bytes = 0x0
 
-    $endOfFile = $false 
+    $endOfFile = $false
     $byteCount = 0
     $outStream = New-Object System.IO.FileStream($outputFile, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write)
     try {
@@ -230,7 +228,7 @@ class SASRunner{
 
     Write-Host "${LineCodes.ResultsFetchedCode}"
   }
-  
+
   [void]DeleteItemAtPath([string]$filePath,[bool]$recursive) {
     if ($recursive) {
       $items = $this.GetItemsAtPath($filePath);
@@ -264,11 +262,9 @@ class SASRunner{
     $outFile = $objFile.AssignMember("", $fileName, "DISK", "", [ref] $assignedName)
     $objStream = $outFile.OpenBinaryStream([SAS.StreamOpenMode]::StreamOpenModeForWriting);
     if ($localFilePath) {
-      #$fileStream = New-Object System.IO.FileStream($localFilePath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
       $fileContent = (Get-Content -Path $localFilePath -Raw)
       $objStream.Write($fileContent)
     }
-
     $objStream.Close()
     $this.objSAS.FileService.DeassignFileref($outFile.FilerefName)
     $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
@@ -341,7 +337,7 @@ class SASRunner{
     }
 
     $this.objSAS.FileService.ListFiles(
-        $folderPath, 
+        $folderPath,
         $mode,
         $fieldInclusionMask,
         [ref]$listedPath,
