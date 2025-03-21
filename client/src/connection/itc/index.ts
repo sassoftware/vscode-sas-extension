@@ -245,6 +245,24 @@ export class ITCSession extends Session {
     return runPromise;
   };
 
+  public execute = async (code: string): Promise<RunResult> => {
+    const runPromise = new Promise<RunResult>((resolve, reject) => {
+      this._runResolve = resolve;
+      this._runReject = reject;
+    });
+
+    this._html5FileName = "";
+    this._pollingForLogResults = true;
+    const codeToExecute = `${code}\nWrite-Host "${LineCodes.RunEndCode}"\n`;
+    this._shellProcess.stdin.write(codeToExecute, async (error) => {
+      if (error) {
+        this._runReject(error);
+      }
+    });
+
+    return runPromise;
+  };
+
   /**
    * Cleans up resources for the given SAS session.
    * @returns void promise.
