@@ -11,13 +11,13 @@ export enum LineCodes {
 }
 
 export enum ScriptActions {
-  GetChildItems = `$runner.GetChildItems("$path")`,
   CreateDirectory = `$runner.CreateDirectory("$folderPath", "$folderName")`,
   CreateFile = `$runner.CreateFile("$folderPath", "$fileName","$localFilePath")`,
-  UpdateFile = `$runner.UpdateFile("$filePath", "$content")`,
-  FetchFileContent = `$runner.FetchFileContent("$filePath", "$outputFile")`,
   DeleteFile = `$runner.DeleteFile("$filePath", $recursive)`,
+  FetchFileContent = `$runner.FetchFileContent("$filePath", "$outputFile")`,
+  GetChildItems = `$runner.GetChildItems("$path")`,
   RenameFile = `$runner.RenameFile("$oldPath","$newPath","$newName")`,
+  UpdateFile = `$runner.UpdateFile("$filePath", "$content")`,
 }
 
 export enum ITCProtocol {
@@ -35,3 +35,13 @@ export interface Config extends BaseConfig {
   protocol: ITCProtocol;
   interopLibraryFolderPath?: string;
 }
+
+export type PowershellResponse = {
+  category: number;
+  creationTimeStamp?: string;
+  modifiedTimeStamp: string;
+  name: string;
+  parentFolderUri: string;
+  size: number;
+  uri: string;
+};

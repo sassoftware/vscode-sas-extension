@@ -19,7 +19,7 @@ import {
 } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
-import { extractOutputHtmlFileName, extractTextBetweenTags } from "../util";
+import { extractOutputHtmlFileName } from "../util";
 import { LineParser } from "./LineParser";
 import {
   ERROR_END_TAG,
@@ -246,7 +246,7 @@ export class ITCSession extends Session {
     return runPromise;
   };
 
-  public execute2 = async (code: string): Promise<RunResult> => {
+  public execute = async (code: string): Promise<RunResult> => {
     const runPromise = new Promise<RunResult>((resolve, reject) => {
       this._runResolve = resolve;
       this._runReject = reject;

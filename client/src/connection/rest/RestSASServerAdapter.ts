@@ -34,7 +34,6 @@ import {
   resourceType,
 } from "./util";
 
-// TODO(filesystem) RECONSIDER THIS
 export const SAS_SERVER_HOME_DIRECTORY = "SAS_SERVER_HOME_DIRECTORY";
 const SAS_FILE_SEPARATOR = "~fs~";
 

@@ -1,9 +1,9 @@
+// Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 import { FileType, Uri, workspace } from "vscode";
 
 import { v4 } from "uuid";
 
-import { ITCSession } from ".";
-import { getSession } from "..";
 import {
   SAS_SERVER_ROOT_FOLDER,
   SAS_SERVER_ROOT_FOLDERS,
@@ -11,46 +11,55 @@ import {
   SERVER_HOME_FOLDER_TYPE,
 } from "../../components/ContentNavigator/const";
 import {
-  AddChildItemProperties,
   ContentAdapter,
   ContentItem,
   RootFolderMap,
 } from "../../components/ContentNavigator/types";
-import { createStaticFolder } from "../../components/ContentNavigator/utils";
+import {
+  convertStaticFolderToContentItem,
+  createStaticFolder,
+} from "../../components/ContentNavigator/utils";
 import { getGlobalStorageUri } from "../../components/ExtensionContext";
-import { SAS_SERVER_HOME_DIRECTORY } from "../rest/RestSASServerAdapter";
-import { FileProperties } from "../rest/api/compute";
 import {
   getLink,
   getResourceId,
   getSasServerUri,
   resourceType,
 } from "../rest/util";
-import { executeCode, executeRawCode } from "./CodeRunner";
-import { ScriptActions } from "./types";
+import { executeRawCode } from "./CodeRunner";
+import { PowershellResponse, ScriptActions } from "./types";
 import { escapePowershellString } from "./util";
 
 class ITCSASServerAdapter implements ContentAdapter {
   protected sessionId: string;
   private rootFolders: RootFolderMap;
-  private fileMetadataMap: {
-    [id: string]: { etag: string; lastModified?: string; contentType?: string };
-  };
 
   public constructor() {
     this.rootFolders = {};
   }
 
+  /* The following methods are needed for favorites, which are not applicable to sas server */
   public async addChildItem(): Promise<boolean> {
     throw new Error("Method not implemented");
   }
-
   public async addItemToFavorites(): Promise<boolean> {
     throw new Error("Method not implemented");
   }
-
   public removeItemFromFavorites(): Promise<boolean> {
     throw new Error("Method not implemented");
+  }
+  public getRootFolder(): ContentItem | undefined {
+    return undefined;
+  }
+
+  /* The following is needed for creating a flow, which isn't supported on sas server */
+  public async getParentOfItem(): Promise<ContentItem | undefined> {
+    return undefined;
+  }
+
+  /* The following is needed for creating a filename statement, which isn't supported on sas server */
+  public async getFolderPathForItem(): Promise<string> {
+    return "";
   }
 
   public async connect(): Promise<void> {
@@ -58,7 +67,6 @@ class ITCSASServerAdapter implements ContentAdapter {
   }
 
   public connected(): boolean {
-    // @TODO FIX ME
     return true;
   }
 
@@ -94,7 +102,7 @@ class ITCSASServerAdapter implements ContentAdapter {
   public async createNewItem(
     parentItem: ContentItem,
     fileName: string,
-    buffer?: ArrayBufferLike,
+    _buffer?: ArrayBufferLike,
     localFilePath?: string,
   ): Promise<ContentItem | undefined> {
     try {
@@ -132,37 +140,22 @@ class ITCSASServerAdapter implements ContentAdapter {
         path: "/",
       });
       const uri = items[0].parentFolderUri;
-      const homeDirectory: ContentItem = {
-        creationTimeStamp: 0,
-        id: uri,
-        links: [
-          { method: "GET", rel: "self", href: uri, uri, type: "GET" },
-          {
-            method: "GET",
-            rel: "getDirectoryMembers",
-            href: "/",
+      return [
+        convertStaticFolderToContentItem(
+          createStaticFolder(
             uri,
-            type: "GET",
+            "Home",
+            SERVER_HOME_FOLDER_TYPE,
+            "/",
+            "getDirectoryMembers",
+          ),
+          {
+            write: true,
+            delete: false,
+            addMember: true,
           },
-        ],
-        modifiedTimeStamp: 0,
-        name: "Home",
-        uri,
-        permission: {
-          write: true,
-          delete: false,
-          addMember: true,
-        },
-        type: SERVER_HOME_FOLDER_TYPE,
-        fileStat: {
-          ctime: 0,
-          mtime: 0,
-          size: 0,
-          type: FileType.Directory,
-        },
-      };
-      homeDirectory.contextValue = resourceType(homeDirectory);
-      return [homeDirectory];
+        ),
+      ];
     }
 
     const response = await this.execute(ScriptActions.GetChildItems, {
@@ -174,73 +167,6 @@ class ITCSASServerAdapter implements ContentAdapter {
     const childItems = items.map(this.convertPowershellResponseToContentItem);
 
     return childItems;
-  }
-
-  private convertPowershellResponseToContentItem(response: any): ContentItem {
-    // response.category can be 0, 1, or 2. 0 is directory, 1 is "sas" type, 2 is other file types
-    const type = response.category === 0 ? FileType.Directory : FileType.File;
-    const uri = response.uri;
-    const links = [
-      type === FileType.Directory && {
-        method: "GET",
-        rel: "getDirectoryMembers",
-        href: uri,
-        uri: uri,
-        type: "GET",
-      },
-      { method: "GET", rel: "self", href: uri, uri: uri, type: "GET" },
-    ].filter((link) => link);
-
-    const item = {
-      id: uri,
-      uri,
-      name: response.name,
-      creationTimeStamp: 0,
-      modifiedTimeStamp: response.modifiedTimeStamp.replace(/[^0-9]/g, ""),
-      links,
-      permission: {
-        write: true,
-        delete: true,
-        addMember: type === FileType.Directory,
-      },
-      type: "",
-      parentFolderUri: response.parentFolderUri,
-      fileStat: {
-        ctime: 0,
-        mtime: response.modifiedTimeStamp.replace(/[^0-9]/g, ""),
-        size: response.size,
-        type,
-      },
-    };
-
-    return {
-      ...item,
-      contextValue: resourceType(item),
-      vscUri: getSasServerUri(item, false),
-    };
-  }
-
-  private async execute(
-    incomingCode: string,
-    params: Record<string, string | boolean>,
-    processedParams?: Record<string, string>,
-  ) {
-    let code = incomingCode;
-    Object.keys(params).forEach((key: string) => {
-      const replacement =
-        typeof params[key] === "string"
-          ? escapePowershellString(params[key])
-          : params[key]
-            ? "$true"
-            : "$false";
-      code = code.replace(`$${key}`, replacement);
-    });
-    Object.keys(processedParams || {}).forEach((key: string) => {
-      code = code.replace(`$${key}`, processedParams[key]);
-    });
-
-    const output = await executeRawCode(code);
-    return output ? JSON.parse(output) : "";
   }
 
   public async getContentOfItem(item: ContentItem): Promise<string> {
@@ -263,13 +189,13 @@ class ITCSASServerAdapter implements ContentAdapter {
       });
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      // TODO WE SHOULD REALLY FIGURE OUT HOW TO RESOLVE THIS BECAUSE WE
-      // STILL SEE THE ERROR ALTHOUGH WE SHOULDN'T
       return "";
     }
 
     const file = await workspace.fs.readFile(outputFile);
-    return (file || "").toString();
+    const fileContents = (file || "").toString();
+    await workspace.fs.delete(outputFile);
+    return fileContents;
   }
 
   public async getContentOfUri(uri: Uri): Promise<string> {
@@ -277,58 +203,20 @@ class ITCSASServerAdapter implements ContentAdapter {
     return await this.getContentOfItem(item);
   }
 
-  public async getFolderPathForItem(): Promise<string> {
-    // This is for creating a filename statement which won't work as expected for
-    // file system files.
-    return "";
-  }
-
-  protected async getItemAtPathWithName(
-    path: string,
-    name: string,
-  ): Promise<ContentItem> {
-    const response = await this.execute(ScriptActions.GetChildItems, {
-      path,
-    });
-    const items = Array.isArray(response) ? response : [response];
-    const foundItem = items.find((item) => item.name === name);
-    return this.convertPowershellResponseToContentItem(foundItem);
-  }
-
-  protected async getItemAtPath(path: string): Promise<ContentItem> {
-    // TODO We may need to handle this differently
-    const pathPieces = path.split("\\");
-    const name = pathPieces.pop();
-
-    return await this.getItemAtPathWithName(pathPieces.join("\\"), name);
-  }
-
   public async getItemOfUri(uri: Uri): Promise<ContentItem> {
     return this.getItemAtPath(getResourceId(uri));
-  }
-
-  public async getParentOfItem(): Promise<ContentItem | undefined> {
-    // This is required for creating a flow, which isn't available for sas9
-    return undefined;
-  }
-
-  public getRootFolder(): ContentItem | undefined {
-    // This is required for favorites, which aren't available for sas9
-    return undefined;
   }
 
   public async getRootItems(): Promise<RootFolderMap> {
     for (let index = 0; index < SAS_SERVER_ROOT_FOLDERS.length; ++index) {
       const delegateFolderName = SAS_SERVER_ROOT_FOLDERS[index];
-      const result =
-        delegateFolderName === "@sasServerRoot"
-          ? { data: SAS_SERVER_ROOT_FOLDER }
-          : { data: {} };
-
       this.rootFolders[delegateFolderName] = {
-        ...result.data,
         uid: `${index}`,
-        ...this.filePropertiesToContentItem(result.data),
+        ...convertStaticFolderToContentItem(SAS_SERVER_ROOT_FOLDER, {
+          write: false,
+          delete: false,
+          addMember: false,
+        }),
       };
     }
 
@@ -388,51 +276,95 @@ class ITCSASServerAdapter implements ContentAdapter {
     });
   }
 
-  private filePropertiesToContentItem(
-    fileProperties: FileProperties & { type?: string },
-    flags?: ContentItem["flags"],
+  protected async getItemAtPathWithName(
+    path: string,
+    name: string,
+  ): Promise<ContentItem> {
+    const response = await this.execute(ScriptActions.GetChildItems, {
+      path,
+    });
+    const items = Array.isArray(response) ? response : [response];
+    const foundItem = items.find((item) => item.name === name);
+    return this.convertPowershellResponseToContentItem(foundItem);
+  }
+
+  protected async getItemAtPath(path: string): Promise<ContentItem> {
+    const pathPieces = path.split("\\");
+    const name = pathPieces.pop();
+
+    return await this.getItemAtPathWithName(pathPieces.join("\\"), name);
+  }
+
+  private convertPowershellResponseToContentItem(
+    response: PowershellResponse,
   ): ContentItem {
-    const links = fileProperties.links.map((link) => ({
-      method: link.method,
-      rel: link.rel,
-      href: link.href,
-      type: link.type,
-      uri: link.uri,
-    }));
+    // response.category can be 0, 1, or 2. 0 is directory, 1 is "sas" type, 2 is other file types
+    const type = response.category === 0 ? FileType.Directory : FileType.File;
+    const uri = response.uri;
+    const links = [
+      type === FileType.Directory && {
+        method: "GET",
+        rel: "getDirectoryMembers",
+        href: uri,
+        uri: uri,
+        type: "GET",
+      },
+      { method: "GET", rel: "self", href: uri, uri: uri, type: "GET" },
+    ].filter((link) => link);
 
-    const id = getLink(links, "GET", "self").uri;
-
-    const item = {
-      id,
-      uri: id,
-      name: fileProperties.name,
-      creationTimeStamp: 0,
-      modifiedTimeStamp: 0,
+    const modifiedTimeStamp = new Date(
+      response.modifiedTimeStamp.replace(/[^0-9]/g, ""),
+    ).getTime();
+    const item: ContentItem = {
+      id: uri,
+      uri,
+      name: response.name,
+      creationTimeStamp: new Date(response.creationTimeStamp).getTime() ?? 0,
+      modifiedTimeStamp,
       links,
       permission: {
-        write: false,
-        delete: false,
-        addMember: false,
+        write: true,
+        delete: true,
+        addMember: type === FileType.Directory,
       },
-      flags,
-      type: fileProperties.type || "",
-      parentFolderUri: "",
+      type: "",
+      parentFolderUri: response.parentFolderUri,
+      fileStat: {
+        ctime: 0,
+        mtime: modifiedTimeStamp,
+        size: response.size,
+        type,
+      },
     };
 
     return {
       ...item,
       contextValue: resourceType(item),
-      fileStat: {
-        ctime: item.creationTimeStamp,
-        mtime: item.modifiedTimeStamp,
-        size: 0,
-        type: FileType.Directory,
-      },
-      // isReference: isReference(item),
-      // resourceId: getResourceIdFromItem(item),
-      // vscUri: getSasServerUri(item, flags?.isInRecycleBin || false),
-      // typeName: getTypeName(item),
+      vscUri: getSasServerUri(item, false),
     };
+  }
+
+  private async execute(
+    incomingCode: string,
+    params: Record<string, string | boolean>,
+    processedParams?: Record<string, string>,
+  ) {
+    let code = incomingCode;
+    Object.keys(params).forEach((key: string) => {
+      const replacement =
+        typeof params[key] === "string"
+          ? escapePowershellString(params[key])
+          : params[key]
+            ? "$true"
+            : "$false";
+      code = code.replace(`$${key}`, replacement);
+    });
+    Object.keys(processedParams || {}).forEach((key: string) => {
+      code = code.replace(`$${key}`, processedParams[key]);
+    });
+
+    const output = await executeRawCode(code);
+    return output ? JSON.parse(output) : "";
   }
 }
 
