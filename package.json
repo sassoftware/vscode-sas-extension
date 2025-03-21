@@ -367,6 +367,11 @@
                             "description": "%configuration.SAS.connectionProfiles.profiles.iom.port%",
                             "exclusiveMinimum": 1,
                             "exclusiveMaximum": 65535
+                          },
+                          "interopLibraryFolderPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.interopLibraryFolderPath%"
                           }
                         }
                       }
@@ -388,6 +393,11 @@
                             "type": "string",
                             "default": "",
                             "description": "%configuration.SAS.connectionProfiles.profiles.com.host%"
+                          },
+                          "interopLibraryFolderPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.com.interopLibraryFolderPath%"
                           }
                         }
                       }
