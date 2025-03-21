@@ -11,7 +11,6 @@ import {
 } from "./types";
 
 class ContentAdapterFactory {
-  // TODO #889 Update this to return ITCSASServerAdapter
   public create(
     connectionType: ConnectionType,
     sourceType: ContentNavigatorConfig["sourceType"],

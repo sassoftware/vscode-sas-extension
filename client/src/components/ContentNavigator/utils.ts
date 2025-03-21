@@ -9,9 +9,10 @@ import {
   window,
 } from "vscode";
 
+import { resourceType } from "../../connection/rest/util";
 import { DEFAULT_FILE_CONTENT_TYPE } from "./const";
 import mimeTypes from "./mime-types";
-import { ContentItem } from "./types";
+import { ContentItem, Permission } from "./types";
 
 export const isContainer = (item: ContentItem): boolean =>
   item.fileStat.type === FileType.Directory;
@@ -84,12 +85,28 @@ export const createStaticFolder = (
   ],
 });
 
+export const convertStaticFolderToContentItem = (
+  staticFolder: ReturnType<typeof createStaticFolder>,
+  permission: Permission,
+): ContentItem => {
+  const item: ContentItem = {
+    ...staticFolder,
+    creationTimeStamp: 0,
+    modifiedTimeStamp: 0,
+    permission,
+    fileStat: {
+      ctime: 0,
+      mtime: 0,
+      size: 0,
+      type: FileType.Directory,
+    },
+  };
+  item.contextValue = resourceType(item);
+  return item;
+};
+
 export const getEditorTabsForItem = (item: ContentItem) => {
   const fileUri = item.vscUri;
-  // TODO FIX ME
-  if (!item.vscUri) {
-    return [];
-  }
   const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
   return tabs.filter(
     (tab) =>

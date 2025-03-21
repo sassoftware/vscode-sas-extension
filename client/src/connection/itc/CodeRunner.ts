@@ -20,7 +20,7 @@ export async function executeRawCode(code: string): Promise<string> {
     _runCode(
       async (session) => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        await (session as ITCSession).execute2(
+        await (session as ITCSession).execute(
           `Write-Host "${startTag}"\n${code}\nWrite-Host "${endTag}"\n`,
         );
       },
