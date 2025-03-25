@@ -47,7 +47,8 @@ async function getSelectedRegions(
       "sas/getFoldingBlock",
       {
         textDocument: { uri: window.activeTextEditor.document.uri.toString() },
-        position: { line, col },
+        line,
+        col,
       },
     );
     if (block) {
