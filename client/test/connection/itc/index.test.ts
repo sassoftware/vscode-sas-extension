@@ -103,7 +103,7 @@ describe("ITC connection", () => {
       //using args here allows use of deep equal, that generates a concise diff in the test output on failures
       expect(stdinStub.args[0][0]).to.deep.equal(scriptContent + "\n");
       expect(stdinStub.args[1][0]).to.deep.equal(
-        "$runner = New-Object -TypeName SASRunner\n",
+        '$runner = New-Object -TypeName SASRunner -ArgumentList ""\n',
       );
 
       expect(stdinStub.args[2][0]).to.deep.equal(

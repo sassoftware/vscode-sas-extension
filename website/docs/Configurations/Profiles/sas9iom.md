@@ -22,11 +22,12 @@ A SAS 9.4 (remote – IOM) connection profile includes the following parameters:
 
 `"connectionType": "iom"`
 
-| Name       | Description         | Additional Notes                                            |
-| ---------- | ------------------- | ----------------------------------------------------------- |
-| `host`     | IOM Server Host     | Appears when hovering over the status bar.                  |
-| `username` | IOM Server Username | The username to establish the IOM connection to the server. |
-| `port`     | IOM Server Port     | The port of the IOM server. Default value is 8591.          |
+| Name                       | Description              | Additional Notes                                                                                       |
+| -------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `host`                     | IOM Server Host          | Appears when hovering over the status bar.                                                             |
+| `username`                 | IOM Server Username      | The username to establish the IOM connection to the server.                                            |
+| `port`                     | IOM Server Port          | The port of the IOM server. Default value is 8591.                                                     |
+| `interopLibraryFolderPath` | IOM interop library path | A custom path to a folder containing SAS interop libraries (`SASInterop.dll` and `SASOManInterop.dll`) |
 
 ## Steps to install ITCLIENT
 
