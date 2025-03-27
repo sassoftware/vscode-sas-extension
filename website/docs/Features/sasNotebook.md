@@ -13,6 +13,12 @@ SAS Notebook is an interactive notebook file that includes markdown code, execut
 
 ![SAS Notebook](/images/sasNotebook.png)
 
+:::note
+
+Starting with Visual Studio Code version 1.93, [the language for SQL files has been renamed](https://code.visualstudio.com/updates/v1_93#_renamed-sql-to-ms-sql) from 'SQL' to 'MS SQL'. As a result, the SQL cell in SAS Notebook is now labeled 'MS SQL'. The SAS Extension for Visual Studio Code does not control the label of the SQL cell in SAS Notebook. The functionality of the SQL cell has not changed, however. Valid PROC SQL code continues to work in the MS SQL cell.
+
+:::
+
 ## Export
 
 To export your SAS Notebook to other formats, click the **More Actions** (`...`) button on the notebook toolbar at top, and select `Export`. The following formats are supported.
