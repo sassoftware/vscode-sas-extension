@@ -11,13 +11,13 @@ export enum LineCodes {
 }
 
 export enum ScriptActions {
-  CreateDirectory = `$runner.CreateDirectory("$folderPath", "$folderName")`,
-  CreateFile = `$runner.CreateFile("$folderPath", "$fileName","$localFilePath")`,
-  DeleteFile = `$runner.DeleteFile("$filePath", $recursive)`,
-  FetchFileContent = `$runner.FetchFileContent("$filePath", "$outputFile")`,
-  GetChildItems = `$runner.GetChildItems("$path")`,
-  RenameFile = `$runner.RenameFile("$oldPath","$newPath","$newName")`,
-  UpdateFile = `$runner.UpdateFile("$filePath", "$content")`,
+  CreateDirectory = `$runner.CreateDirectory($folderPath, $folderName)`,
+  CreateFile = `$runner.CreateFile($folderPath, $fileName,$localFilePath)`,
+  DeleteFile = `$runner.DeleteFile($filePath)`,
+  FetchFileContent = `$runner.FetchFileContent($filePath, $outputFile)`,
+  GetChildItems = `$runner.GetChildItems($path)`,
+  RenameFile = `$runner.RenameFile($oldPath,$newPath,$newName)`,
+  UpdateFile = `$runner.UpdateFile($filePath, $content)`,
 }
 
 export enum ITCProtocol {

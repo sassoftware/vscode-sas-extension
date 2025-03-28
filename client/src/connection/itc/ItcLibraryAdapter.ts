@@ -272,7 +272,6 @@ class ItcLibraryAdapter implements LibraryAdapter {
       return await runCode(code, startTag, endTag);
     } catch (e) {
       onRunError(e);
-      commands.executeCommand("setContext", "SAS.librariesDisplayed", false);
       return "";
     }
   }

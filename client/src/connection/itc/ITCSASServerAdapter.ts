@@ -1,9 +1,10 @@
 // Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { FileType, Uri, workspace } from "vscode";
+import { FileType, Uri, commands, workspace } from "vscode";
 
 import { v4 } from "uuid";
 
+import { onRunError } from "../../commands/run";
 import {
   SAS_SERVER_ROOT_FOLDER,
   SAS_SERVER_ROOT_FOLDERS,
@@ -18,6 +19,7 @@ import {
 import {
   convertStaticFolderToContentItem,
   createStaticFolder,
+  sortedContentItems,
 } from "../../components/ContentNavigator/utils";
 import { getGlobalStorageUri } from "../../components/ExtensionContext";
 import {
@@ -28,7 +30,6 @@ import {
 } from "../rest/util";
 import { executeRawCode } from "./CodeRunner";
 import { PowershellResponse, ScriptActions } from "./types";
-import { escapePowershellString } from "./util";
 
 class ITCSASServerAdapter implements ContentAdapter {
   protected sessionId: string;
@@ -75,24 +76,19 @@ class ITCSASServerAdapter implements ContentAdapter {
     folderName: string,
   ): Promise<ContentItem | undefined> {
     try {
-      const { uri } = await this.execute(ScriptActions.CreateDirectory, {
-        folderPath: parentItem.uri,
-        folderName,
-      });
+      const { success, data } = await this.execute(
+        ScriptActions.CreateDirectory,
+        {
+          folderPath: parentItem.uri,
+          folderName,
+        },
+      );
 
-      if (!uri) {
+      if (!success) {
         return;
       }
 
-      return this.convertPowershellResponseToContentItem({
-        uri,
-        name: folderName,
-        creationTimeStamp: new Date().getTime().toString(),
-        modifiedTimeStamp: new Date().getTime().toString(),
-        category: 0,
-        parentFolderUri: parentItem.uri,
-        size: 0,
-      });
+      return this.convertPowershellResponseToContentItem(data);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return;
@@ -106,13 +102,17 @@ class ITCSASServerAdapter implements ContentAdapter {
     localFilePath?: string,
   ): Promise<ContentItem | undefined> {
     try {
-      await this.execute(ScriptActions.CreateFile, {
+      const { success, data } = await this.execute(ScriptActions.CreateFile, {
         folderPath: parentItem.uri,
         fileName,
         localFilePath: localFilePath || "",
       });
 
-      return await this.getItemAtPathWithName(parentItem.uri, fileName);
+      if (!success) {
+        return;
+      }
+
+      return this.convertPowershellResponseToContentItem(data);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return;
@@ -121,11 +121,10 @@ class ITCSASServerAdapter implements ContentAdapter {
 
   public async deleteItem(item: ContentItem): Promise<boolean> {
     try {
-      await this.execute(ScriptActions.DeleteFile, {
-        filePath: escapePowershellString(item.uri),
-        recursive: item.fileStat.type === FileType.Directory,
+      const { success } = await this.execute(ScriptActions.DeleteFile, {
+        filePath: item.uri,
       });
-      return true;
+      return success;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return false;
@@ -136,9 +135,15 @@ class ITCSASServerAdapter implements ContentAdapter {
     // If the user is fetching child items of the root folder, give them the
     // "home" directory
     if (parentItem.id === SERVER_FOLDER_ID) {
-      const items = await this.execute(ScriptActions.GetChildItems, {
-        path: "/",
-      });
+      const { success, data: items } = await this.execute(
+        ScriptActions.GetChildItems,
+        {
+          path: "/",
+        },
+      );
+      if (!success) {
+        return [];
+      }
       const uri = items[0].parentFolderUri;
       return [
         convertStaticFolderToContentItem(
@@ -158,19 +163,22 @@ class ITCSASServerAdapter implements ContentAdapter {
       ];
     }
 
-    const response = await this.execute(ScriptActions.GetChildItems, {
-      path: getLink(parentItem.links, "GET", "getDirectoryMembers").uri,
-    });
-    // Even though we specify a response array in powershell, if there is
-    // only 1 item it returns _just_ the item
-    const items = Array.isArray(response) ? response : [response];
+    const { success, data: items } = await this.execute(
+      ScriptActions.GetChildItems,
+      {
+        path: getLink(parentItem.links, "GET", "getDirectoryMembers").uri,
+      },
+    );
+    if (!success) {
+      return [];
+    }
+
     const childItems = items.map(this.convertPowershellResponseToContentItem);
 
-    return childItems;
+    return sortedContentItems(childItems);
   }
 
-  public async getContentOfItem(item: ContentItem): Promise<string> {
-    const filePath = item.uri;
+  private async getTempFile() {
     const tempFile = v4();
     const globalStorageUri = getGlobalStorageUri();
     try {
@@ -181,12 +189,21 @@ class ITCSASServerAdapter implements ContentAdapter {
     }
 
     const outputFile = Uri.joinPath(globalStorageUri, tempFile);
+    return outputFile;
+  }
+
+  public async getContentOfItem(item: ContentItem): Promise<string> {
+    const filePath = item.uri;
+    const outputFile = await this.getTempFile();
 
     try {
-      await this.execute(ScriptActions.FetchFileContent, {
+      const { success } = await this.execute(ScriptActions.FetchFileContent, {
         filePath,
         outputFile: outputFile.fsPath,
       });
+      if (!success) {
+        return "";
+      }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return "";
@@ -232,15 +249,15 @@ class ITCSASServerAdapter implements ContentAdapter {
     targetParentFolderUri: string,
   ): Promise<Uri | undefined> {
     try {
-      const response = await this.execute(ScriptActions.RenameFile, {
+      const { success, data } = await this.execute(ScriptActions.RenameFile, {
         oldPath: item.uri,
         newPath: targetParentFolderUri,
         newName: item.name,
       });
-      if (response.length === 0) {
+      if (!success) {
         return undefined;
       }
-      return this.convertPowershellResponseToContentItem(response[0]).vscUri;
+      return this.convertPowershellResponseToContentItem(data).vscUri;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return undefined;
@@ -252,15 +269,15 @@ class ITCSASServerAdapter implements ContentAdapter {
     newName: string,
   ): Promise<ContentItem | undefined> {
     try {
-      const response = await this.execute(ScriptActions.RenameFile, {
+      const { success, data } = await this.execute(ScriptActions.RenameFile, {
         oldPath: item.uri,
         newPath: item.parentFolderUri,
         newName,
       });
-      if (response.length === 0) {
+      if (!success) {
         return undefined;
       }
-      return this.convertPowershellResponseToContentItem(response[0]);
+      return this.convertPowershellResponseToContentItem(data);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return undefined;
@@ -268,22 +285,26 @@ class ITCSASServerAdapter implements ContentAdapter {
   }
 
   public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
-    const item = await this.getItemAtPath(getResourceId(uri));
-
-    await this.execute(ScriptActions.UpdateFile, {
-      filePath: item.uri,
-      content,
-    });
+    try {
+      const item = await this.getItemAtPath(getResourceId(uri));
+      await this.execute(ScriptActions.UpdateFile, {
+        filePath: item.uri,
+        content,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      return;
+    }
   }
 
   protected async getItemAtPathWithName(
     path: string,
     name: string,
   ): Promise<ContentItem> {
-    const response = await this.execute(ScriptActions.GetChildItems, {
+    const { data: items } = await this.execute(ScriptActions.GetChildItems, {
       path,
     });
-    const items = Array.isArray(response) ? response : [response];
+
     const foundItem = items.find((item) => item.name === name);
     return this.convertPowershellResponseToContentItem(foundItem);
   }
@@ -344,27 +365,25 @@ class ITCSASServerAdapter implements ContentAdapter {
     };
   }
 
-  private async execute(
-    incomingCode: string,
-    params: Record<string, string | boolean>,
-    processedParams?: Record<string, string>,
-  ) {
+  private async execute(incomingCode: string, params: Record<string, string>) {
     let code = incomingCode;
+
     Object.keys(params).forEach((key: string) => {
-      const replacement =
-        typeof params[key] === "string"
-          ? escapePowershellString(params[key])
-          : params[key]
-            ? "$true"
-            : "$false";
-      code = code.replace(`$${key}`, replacement);
-    });
-    Object.keys(processedParams || {}).forEach((key: string) => {
-      code = code.replace(`$${key}`, processedParams[key]);
+      // This is a little confusing. Basically, we can pass in any kind of string. Some of those
+      // strings break powershell (ex. NewFile+!@$%^&*.txt). Thus, we create one level of indirection
+      // where we wrap these unprocessed strings in the powershell "heredoc" syntax before passing things
+      // along
+      const codeToPrefix = `$processed_${key}=\n@'\n${params[key]}\n'@\n`;
+      code = codeToPrefix + code.replace(`$${key}`, `$processed_${key}`);
     });
 
-    const output = await executeRawCode(code);
-    return output ? JSON.parse(output) : "";
+    try {
+      const output = await executeRawCode(code);
+      return output ? JSON.parse(output) : "";
+    } catch (e) {
+      onRunError(e);
+      return "";
+    }
   }
 }
 

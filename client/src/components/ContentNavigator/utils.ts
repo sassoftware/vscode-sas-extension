@@ -91,6 +91,7 @@ export const convertStaticFolderToContentItem = (
 ): ContentItem => {
   const item: ContentItem = {
     ...staticFolder,
+    uid: staticFolder.id,
     creationTimeStamp: 0,
     modifiedTimeStamp: 0,
     permission,
@@ -115,3 +116,16 @@ export const getEditorTabsForItem = (item: ContentItem) => {
       tab.input.uri.query.includes(fileUri.query), // compare the file id
   );
 };
+
+export const sortedContentItems = (items: ContentItem[]) =>
+  items.sort((a, b) => {
+    const aIsDirectory = a.fileStat?.type === FileType.Directory;
+    const bIsDirectory = b.fileStat?.type === FileType.Directory;
+    if (aIsDirectory && !bIsDirectory) {
+      return -1;
+    } else if (!aIsDirectory && bIsDirectory) {
+      return 1;
+    } else {
+      return a.name.localeCompare(b.name);
+    }
+  });
