@@ -21,6 +21,7 @@ import {
 import {
   createStaticFolder,
   isReference,
+  sortedContentItems,
 } from "../../components/ContentNavigator/utils";
 import { appendSessionLogFn } from "../../components/logViewer";
 import { FileProperties, FileSystemApi } from "./api/compute";
@@ -233,17 +234,7 @@ class RestSASServerAdapter implements ContentAdapter {
       start += limit;
     } while (start < totalItemCount);
 
-    return allItems.sort((a, b) => {
-      const aIsDirectory = a.fileStat?.type === FileType.Directory;
-      const bIsDirectory = b.fileStat?.type === FileType.Directory;
-      if (aIsDirectory && !bIsDirectory) {
-        return -1;
-      } else if (!aIsDirectory && bIsDirectory) {
-        return 1;
-      } else {
-        return a.name.localeCompare(b.name);
-      }
-    });
+    return sortedContentItems(allItems);
   }
 
   public async getContentOfItem(item: ContentItem): Promise<string> {
