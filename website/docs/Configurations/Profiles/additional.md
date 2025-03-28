@@ -65,6 +65,20 @@ SAS system options can be set for each connection profile. Changes to the SAS sy
   }
   ```
 
+- SAS 9.4 (SASPy):
+
+  ```json
+  {
+    "profiles": {
+      "sas9SASPY": {
+        "cfgname": "winlocal",
+        "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"],
+        "ConnectionType": "saspy"
+      }
+    }
+  }
+  ```
+
 ## SAS Autoexec Settings
 
 For SAS Viya connection profiles, you can set up autoexec code that executes each time you start a new session. Changes to the autoexec code do not take effect until you close and restart your SAS session. The Autoexec option supports different modes for how to define the SAS lines that should run:
