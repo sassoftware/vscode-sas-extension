@@ -9,10 +9,6 @@ import {
 import { LineCodes } from "./types";
 
 export const scriptContent = `
-$interopDir = (Get-ItemProperty -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
-Add-Type -Path "$interopDir\\SASInterop.dll"
-Add-Type -Path "$interopDir\\SASOManInterop.dll"
-
 class SASRunner{
   [System.__ComObject] $objSAS
 
