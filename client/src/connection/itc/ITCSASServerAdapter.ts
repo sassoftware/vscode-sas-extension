@@ -1,6 +1,6 @@
 // Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { FileType, Uri, commands, workspace } from "vscode";
+import { FileType, Uri, workspace } from "vscode";
 
 import { v4 } from "uuid";
 
@@ -98,14 +98,13 @@ class ITCSASServerAdapter implements ContentAdapter {
   public async createNewItem(
     parentItem: ContentItem,
     fileName: string,
-    _buffer?: ArrayBufferLike,
-    localFilePath?: string,
+    buffer?: ArrayBufferLike,
   ): Promise<ContentItem | undefined> {
     try {
       const { success, data } = await this.execute(ScriptActions.CreateFile, {
         folderPath: parentItem.uri,
         fileName,
-        localFilePath: localFilePath || "",
+        content: new TextDecoder().decode(buffer) || "",
       });
 
       if (!success) {

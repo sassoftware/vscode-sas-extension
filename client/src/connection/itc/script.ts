@@ -279,7 +279,7 @@ class SASRunner{
     }
   }
 
-  [void]CreateFile([string]$folderPath, [string]$fileName, [string]$localFilePath) {
+  [void]CreateFile([string]$folderPath, [string]$fileName, [string]$content) {
     try {
       $currentItem = $this.GetItemAtPathWithName($folderPath, $fileName)
       if ($currentItem -ne $null) {
@@ -291,11 +291,8 @@ class SASRunner{
       $objFile = $this.objSAS.FileService.AssignFileref("", "DISK", $folderPath, "", [ref] $fileRefName)
       $assignedName = ""
       $outFile = $objFile.AssignMember("", $fileName, "DISK", "", [ref] $assignedName)
-      $objStream = $outFile.OpenBinaryStream([SAS.StreamOpenMode]::StreamOpenModeForWriting);
-      if ($localFilePath) {
-        $fileContent = (Get-Content -Path $localFilePath -Raw)
-        $objStream.Write($fileContent)
-      }
+      $objStream = $outFile.OpenTextStream([SAS.StreamOpenMode]::StreamOpenModeForWriting, 27994);
+      $objStream.Write($content)
       $objStream.Close()
       $this.objSAS.FileService.DeassignFileref($outFile.FilerefName)
       $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)

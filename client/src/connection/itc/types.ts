@@ -12,7 +12,7 @@ export enum LineCodes {
 
 export enum ScriptActions {
   CreateDirectory = `$runner.CreateDirectory($folderPath, $folderName)`,
-  CreateFile = `$runner.CreateFile($folderPath, $fileName,$localFilePath)`,
+  CreateFile = `$runner.CreateFile($folderPath, $fileName, $content)`,
   DeleteFile = `$runner.DeleteFile($filePath)`,
   FetchFileContent = `$runner.FetchFileContent($filePath, $outputFile)`,
   GetChildItems = `$runner.GetChildItems($path)`,

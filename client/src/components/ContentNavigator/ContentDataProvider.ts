@@ -274,14 +274,8 @@ class ContentDataProvider
     item: ContentItem,
     fileName: string,
     buffer?: ArrayBufferLike,
-    localFilePath?: string,
   ): Promise<Uri | undefined> {
-    const newItem = await this.model.createFile(
-      item,
-      fileName,
-      buffer,
-      localFilePath,
-    );
+    const newItem = await this.model.createFile(item, fileName, buffer);
     if (newItem) {
       this.refresh();
       return newItem.vscUri;
