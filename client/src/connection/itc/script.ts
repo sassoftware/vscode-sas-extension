@@ -363,7 +363,7 @@ class SASRunner{
       Write-Host (@{success=$false; message=$Error[0].Exception.Message} | ConvertTo-Json)
     }
   }
-  
+
   [object] GetItemAtPathWithName([string]$folderPath, [string]$name) {
     $items = $this.GetItemsAtPath($folderPath)
     for($i = 0; $i -lt $items.Count; $i++) {
@@ -423,7 +423,6 @@ class SASRunner{
   [void]GetChildItems([string]$folderPath) {
     try {
       $output = $this.GetItemsAtPath($folderPath)
-      # Write-Host (ConvertTo-Json -InputObject @($output))
       Write-Host (@{success=$true; data=$output} | ConvertTo-Json)
     } catch {
       Write-Host (@{success=$false; message=$Error[0].Exception.Message} | ConvertTo-Json)

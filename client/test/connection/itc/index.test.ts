@@ -101,7 +101,7 @@ describe("ITC connection", () => {
       ).to.be.true;
 
       //using args here allows use of deep equal, that generates a concise diff in the test output on failures
-      expect(stdinStub.args[0][0]).to.deep.equal(getScript() + "\n");
+      expect(stdinStub.args[0][0]).to.deep.equal(getScript({}) + "\n");
       expect(stdinStub.args[1][0]).to.deep.equal(
         "$runner = New-Object -TypeName SASRunner\n",
       );

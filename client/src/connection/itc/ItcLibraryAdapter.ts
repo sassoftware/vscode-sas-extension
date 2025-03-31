@@ -1,6 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { commands, l10n } from "vscode";
+import { l10n } from "vscode";
 
 import { ChildProcessWithoutNullStreams } from "child_process";
 

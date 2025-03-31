@@ -491,12 +491,7 @@ class ContentDataProvider
         !success && failedUploads.push(fileName);
       } else {
         const file = await workspace.fs.readFile(uri);
-        const newUri = await this.createFile(
-          target,
-          fileName,
-          file,
-          uri.fsPath,
-        );
+        const newUri = await this.createFile(target, fileName, file);
         !newUri && failedUploads.push(fileName);
       }
     }
@@ -640,7 +635,6 @@ class ContentDataProvider
             folder,
             name,
             await promisify(readFile)(fileOrFolder),
-            fileOrFolder,
           );
           if (!fileCreated) {
             success = false;
@@ -685,7 +679,6 @@ class ContentDataProvider
           target,
           name,
           await promisify(readFile)(itemUri.fsPath),
-          itemUri.fsPath,
         );
 
         if (!fileCreated) {

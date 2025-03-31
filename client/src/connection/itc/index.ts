@@ -112,8 +112,9 @@ export class ITCSession extends Session {
     this._shellProcess.stderr.on("data", this.onShellStdErr);
     this._shellProcess.stdin.write(
       getScript({
-        interopLibraryFolderPath:
-          escapePowershellString(interopLibraryFolderPath) || "",
+        interopLibraryFolderPath: escapePowershellString(
+          interopLibraryFolderPath || "",
+        ),
       }) + "\n",
       this.onWriteComplete,
     );
