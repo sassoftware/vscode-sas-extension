@@ -8,50 +8,49 @@ import {
 } from "./const";
 import { LineCodes } from "./types";
 
-export const scriptContent = `
-# TODO FIX ME: Evidently we need to add types before constructing the class or things break
-$pathFromRegistry = (Get-ItemProperty -ErrorAction Stop -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
-Add-Type -Path "$pathFromRegistry\\SASInterop.dll"
-Add-Type -Path "$pathFromRegistry\\SASOManInterop.dll"
+type ScriptProperties = {
+  interopLibraryFolderPath?: string;
+};
+
+export const getScript = ({
+  interopLibraryFolderPath = "",
+}: ScriptProperties) => `
+function GetInteropDirectory {
+  # try to load from user specified path first
+  if ("${interopLibraryFolderPath}") {
+    if (Test-Path -Path "${interopLibraryFolderPath}\\SASInterop.dll") {
+      return "${interopLibraryFolderPath}"
+    }
+  }
+
+  # try to load path from registry
+  try {
+    $pathFromRegistry = (Get-ItemProperty -ErrorAction Stop -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
+    if (Test-Path -Path "$pathFromRegistry\\SASInterop.dll") {
+      return $pathFromRegistry
+    }
+  } catch {
+  }
+
+  # try to load path from integration technologies
+  $itcPath = "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
+  if (Test-Path -Path "$itcPath\\SASInterop.dll") {
+    return $itcPath
+  }
+
+  return ""
+}
+
+try {
+  $interopDir = GetInteropDirectory
+  Add-Type -Path "$interopDir\\SASInterop.dll"
+  Add-Type -Path "$interopDir\\SASOManInterop.dll"
+} catch {
+  Write-Error "${ERROR_START_TAG}LoadingInterop error: $_${ERROR_END_TAG}"
+}
 
 class SASRunner{
   [System.__ComObject] $objSAS
-
-  SASRunner([string]$interopPath) {
-    try {
-      $interopDir = $this.GetInteropDirectory($interopPath)
-      Add-Type -Path "$interopDir\\SASInterop.dll"
-      Add-Type -Path "$interopDir\\SASOManInterop.dll"
-    } catch {
-      Write-Error "${ERROR_START_TAG}LoadingInterop error: $_${ERROR_END_TAG}"
-    }
-  }
-
-  [string] GetInteropDirectory([string]$defaultInteropPath) {
-    # try to load from user specified path first
-    if ($defaultInteropPath) {
-      if (Test-Path -Path "$defaultInteropPath\\SASInterop.dll") {
-        return $defaultInteropPath
-      }
-    }
-
-    # try to load path from registry
-    try {
-      $pathFromRegistry = (Get-ItemProperty -ErrorAction Stop -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
-      if (Test-Path -Path "$pathFromRegistry\\SASInterop.dll") {
-        return $pathFromRegistry
-      }
-    } catch {
-    }
-
-    # try to load path from integration technologies
-    $itcPath = "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
-    if (Test-Path -Path "$itcPath\\SASInterop.dll") {
-      return $itcPath
-    }
-
-    return ""
-  }
 
   [void]ResolveSystemVars(){
     try {

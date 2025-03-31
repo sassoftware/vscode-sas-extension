@@ -27,7 +27,7 @@ import {
   WORK_DIR_END_TAG,
   WORK_DIR_START_TAG,
 } from "./const";
-import { scriptContent } from "./script";
+import { getScript } from "./script";
 import { Config, ITCProtocol, LineCodes } from "./types";
 import { decodeEntities, escapePowershellString } from "./util";
 
@@ -110,9 +110,15 @@ export class ITCSession extends Session {
     );
     this._shellProcess.stdout.on("data", this.onShellStdOut);
     this._shellProcess.stderr.on("data", this.onShellStdErr);
-    this._shellProcess.stdin.write(scriptContent + "\n", this.onWriteComplete);
     this._shellProcess.stdin.write(
-      `$runner = New-Object -TypeName SASRunner -ArgumentList "${escapePowershellString(interopLibraryFolderPath || "")}"\n`,
+      getScript({
+        interopLibraryFolderPath:
+          escapePowershellString(interopLibraryFolderPath) || "",
+      }) + "\n",
+      this.onWriteComplete,
+    );
+    this._shellProcess.stdin.write(
+      `$runner = New-Object -TypeName SASRunner\n`,
       this.onWriteComplete,
     );
 
