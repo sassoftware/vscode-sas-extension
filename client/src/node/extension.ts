@@ -36,7 +36,7 @@ import { SASAuthProvider } from "../components/AuthProvider";
 import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
 import { ContentSourceType } from "../components/ContentNavigator/types";
-import { setContext } from "../components/ExtensionContext";
+import { getContextValue, setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
 import {
   ResultPanelSubscriptionProvider,
@@ -61,7 +61,7 @@ let client: LanguageClient;
 
 export let extensionContext: ExtensionContext | undefined;
 
-export function activate(context: ExtensionContext): void {
+export function activate(context: ExtensionContext) {
   // The server is implemented in node
   extensionContext = context;
   const serverModule = context.asAbsolutePath(
@@ -212,6 +212,12 @@ export function activate(context: ExtensionContext): void {
   profileConfig.migrateLegacyProfiles();
   triggerProfileUpdate();
   updateViewSettings();
+
+  return {
+    getSessionId() {
+      return getContextValue("SAS.sessionId");
+    },
+  };
 }
 
 function updateViewSettings(): void {
