@@ -378,7 +378,14 @@ class ITCSASServerAdapter implements ContentAdapter {
 
     try {
       const output = await executeRawCode(code);
-      return output ? JSON.parse(output) : "";
+      const decodedOutput = output ? JSON.parse(output) : "";
+
+      // If we do have an error message with more information, lets dump it to console
+      if (decodedOutput && !decodedOutput.success && decodedOutput.message) {
+        console.dir(decodedOutput.message);
+      }
+
+      return decodedOutput;
     } catch (e) {
       onRunError(e);
       return "";
