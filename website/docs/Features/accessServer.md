@@ -14,7 +14,7 @@ To access SAS Server:
 
 :::info note
 
-SAS Server requires a profile with a connection to a SAS Viya server.
+SAS Server requires a profile with one of the following connection types: SAS Viya, SAS 9.4 (remote - IOM), SAS 9.4 (local)
 
 :::
 
