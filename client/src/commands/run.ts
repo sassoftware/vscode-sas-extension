@@ -273,6 +273,8 @@ const isErrorRep = (err: unknown): err is ErrorRepresentation => {
 
 export const onRunError = (err) => {
   console.dir(err);
+  commands.executeCommand("setContext", "SAS.librariesDisplayed", false);
+  commands.executeCommand("setContext", "SAS.serverDisplayed", false);
 
   if (err.response) {
     // The request was made and we got a status code that falls out side of the 2xx range
