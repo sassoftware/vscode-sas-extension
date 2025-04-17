@@ -1,6 +1,9 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { ProblemLocation } from "../logViewer/ProblemProcessor";
+import {
+  ProblemLocation,
+  decomposeCodeLogLine,
+} from "../logViewer/ProblemProcessor";
 
 export interface SASCodeDocumentParameters {
   languageId: string;
@@ -48,9 +51,10 @@ export class SASCodeDocument {
 
   public getLocationInRawCode(
     locationFromLog: ProblemLocation,
+    codeLinesInLog: string[],
   ): ProblemLocation {
     if (this.offsetMap === undefined) {
-      this.constructOffsetMap();
+      this.constructOffsetMap(codeLinesInLog);
     }
 
     const {
@@ -61,20 +65,16 @@ export class SASCodeDocument {
 
     const offset = this.offsetMap.get(lineNumberInLog);
     if (offset) {
-      const { lineOffset, columnOffset } = offset;
+      const { lineOffset: lineNumberInRaw, columnOffset } = offset;
       return {
-        lineNumber: lineNumberInLog + lineOffset,
+        lineNumber: lineNumberInRaw,
         startColumn: startColumnInLog + columnOffset,
         endColumn: endColumnInLog + columnOffset,
       };
     }
 
-    const lineNumberInWrappedCode = Array.from(
-      this.offsetMap.keys(),
-      (key) => key,
-    );
-    const firstLineNumber = lineNumberInWrappedCode[0];
-    const lastLineNumber = lineNumberInWrappedCode[this.offsetMap.size - 1];
+    const firstLineNumber = this.offsetMap.keys().next().value;
+    const lastLineNumber = Array.from(this.offsetMap.keys()).pop() ?? 0;
 
     // if the problem occurs before the first raw code line,
     // then re-locate it at the first character in the first raw code line.
@@ -89,8 +89,8 @@ export class SASCodeDocument {
     // if the problem occurs after the last raw code line,
     // then re-located it at the last character in the last raw code line.
     if (lineNumberInLog > lastLineNumber) {
-      const codeList = this.getRawCode().split("\n");
-      const count = codeList[codeList.length - 1].length;
+      const codeLinesInRaw = this.getRawCode().split("\n");
+      const count = codeLinesInRaw[codeLinesInRaw.length - 1].length;
       let lastCharacterIndex = count === 0 ? 0 : count - 1;
 
       if (this.offsetMap.size === 1) {
@@ -98,8 +98,7 @@ export class SASCodeDocument {
       }
 
       return {
-        lineNumber:
-          lastLineNumber + this.offsetMap.get(lastLineNumber).lineOffset,
+        lineNumber: lastLineNumber,
         startColumn: lastCharacterIndex,
         endColumn: lastCharacterIndex + 1,
       };
@@ -203,29 +202,92 @@ ${code}`;
       .findIndex((line) => line.includes(FRONT_LOCATOR));
   }
 
-  private constructOffsetMap(): void {
-    const selections = this.parameters.selections;
+  // return selected code line array, which is in {lineNumber, column, code} format.
+  private constructCodeLinesInRaw(): {
+    lineNumber: LineNumber;
+    column: number;
+    code: string;
+  }[] {
+    const codeLines = this.getRawCode().split("\n");
+    let index = -1;
+    const codeLinesInRaw = [];
 
-    const wrappedCodeLineOffset = this.getRawCodeBeginLineNumberInWrappedCode();
-    let lineNumberInLog = wrappedCodeLineOffset;
-
-    this.offsetMap = new Map<LineNumber, Offset>();
-    selections.forEach((selection) => {
+    this.parameters.selections.forEach((selection) => {
       const { start, end } = selection;
 
-      for (
-        let lineNumberInRawCode = start.line;
-        lineNumberInRawCode <= end.line;
-        lineNumberInRawCode++
-      ) {
-        const offset = {
-          lineOffset: lineNumberInRawCode - lineNumberInLog,
-          columnOffset:
-            lineNumberInRawCode === start.line ? start.character : 0,
+      for (let lineNumber = start.line; lineNumber <= end.line; lineNumber++) {
+        index++;
+        codeLinesInRaw[index] = {
+          lineNumber,
+          column: lineNumber === start.line ? start.character : 0,
+          code: codeLines[index],
         };
-        this.offsetMap.set(lineNumberInLog++, offset);
       }
     });
+
+    return codeLinesInRaw;
+  }
+
+  private constructOffsetMap(codeLinesInLog: string[]): void {
+    const codeLinesInRaw = this.constructCodeLinesInRaw();
+    const beginIndexInLog = this.getRawCodeBeginLineNumberInWrappedCode();
+    let indexInRaw = 0;
+    let indexInLog = beginIndexInLog;
+    let previousLineNumberInLog =
+      decomposeCodeLogLine(codeLinesInLog[indexInLog]).lineNumber - 1;
+
+    this.offsetMap = new Map<LineNumber, Offset>();
+
+    while (
+      indexInRaw < codeLinesInRaw.length &&
+      indexInLog < codeLinesInLog.length
+    ) {
+      let {
+        code: codeLineInRaw,
+        lineNumber: lineNumberInRaw,
+        column: columnInRaw,
+      } = codeLinesInRaw[indexInRaw];
+
+      let { code: codeLineInLog, lineNumber: lineNumberInLog } =
+        decomposeCodeLogLine(codeLinesInLog[indexInLog]);
+
+      // The line numbers in the source code within the log should be continuous.
+      // but if encountering datasets following a datalines statement or %INC statement,
+      // the line numbers will not be continuous.
+      // for datalines-like statements, it will skip the number of dataset lines.
+      // for %INC-like statements, it will continue without skip
+      const delta2 = lineNumberInLog - previousLineNumberInLog;
+      if (
+        delta2 > 1 &&
+        // if the code line in log can be found in raw,
+        // think of the discontinuous line number is caused by %INC-like statements,
+        // otherwise it is from datalines-like statements and need to skip lines in raw.
+        !codeLineInRaw.trim().startsWith(codeLineInLog.trim())
+      ) {
+        indexInRaw += delta2 - 1;
+        ({
+          code: codeLineInRaw,
+          lineNumber: lineNumberInRaw,
+          column: columnInRaw,
+        } = codeLinesInRaw[indexInRaw]);
+      }
+
+      while (
+        !codeLineInRaw.trim().startsWith(codeLineInLog.trim()) &&
+        indexInLog < codeLinesInLog.length - 1
+      ) {
+        ({ code: codeLineInLog, lineNumber: lineNumberInLog } =
+          decomposeCodeLogLine(codeLinesInLog[++indexInLog]));
+      }
+
+      const offset = { lineOffset: lineNumberInRaw, columnOffset: columnInRaw };
+
+      this.offsetMap.set(lineNumberInLog, offset);
+      previousLineNumberInLog = lineNumberInLog;
+
+      indexInRaw++;
+      indexInLog++;
+    }
   }
 
   // priority return selected code, otherwise, return whole code.

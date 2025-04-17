@@ -24,22 +24,22 @@ const firstCodeLine = "/** LOG_START_INDICATOR **/";
 
 describe("parse log", () => {
   it("parse the log in which has 7 problems", () => {
-    const result = parseLog(logWith7Problems, firstCodeLine);
+    const [result] = parseLog(logWith7Problems, firstCodeLine);
     assert.equal(result.length, 7, "result should have 7 problems.");
   });
 
   it("parse the log in which has 13 problems", () => {
-    const result = parseLog(logWith13Problems, firstCodeLine);
+    const [result] = parseLog(logWith13Problems, firstCodeLine);
     assert.equal(result.length, 13, "result should have 13 problems.");
   });
 
   it("parse the log in which has 3 problems", () => {
-    const result = parseLog(logWith3Problems, firstCodeLine);
+    const [result] = parseLog(logWith3Problems, firstCodeLine);
     assert.equal(result.length, 3, "result should have 3 problems.");
   });
 
   it("parse the replayed log in which has 13 problems", () => {
-    const result = parseLog(replayedLogWith7Problems, firstCodeLine);
+    const [result] = parseLog(replayedLogWith7Problems, firstCodeLine);
     assert.equal(result.length, 13, "result should have 13 problems.");
   });
 
@@ -54,7 +54,7 @@ describe("parse log", () => {
 
   */
   it("parse the log in which has long source code and 3 problems", () => {
-    const result = parseLog(logWithLongSourceCode, firstCodeLine);
+    const [result] = parseLog(logWithLongSourceCode, firstCodeLine);
     assert.equal(result.length, 3, "result should have 3 problems.");
   });
 
@@ -79,7 +79,7 @@ describe("parse log", () => {
   
   */
   it("parse the log in which has 8 problems, 6 errors and 2 warning", () => {
-    const result = parseLog(logWithMultipleIndicatorInOneLine, firstCodeLine);
+    const [result] = parseLog(logWithMultipleIndicatorInOneLine, firstCodeLine);
     assert.equal(result.length, 8, "result should have 8 problems.");
 
     const errors = result.filter((problem) => problem.type === "error").length;
@@ -123,7 +123,7 @@ describe("parse log", () => {
 NOTE: PROC SQL set option NOEXEC and will continue to check the syntax of statements.
    */
   it("parse the log in which an problem message is shared", () => {
-    const result = parseLog(multipleSameProblemIndexAtOneLine, firstCodeLine);
+    const [result] = parseLog(multipleSameProblemIndexAtOneLine, firstCodeLine);
     assert.equal(result.length, 43, "result should have 43 problems.");
   });
 
@@ -138,7 +138,7 @@ NOTE: PROC SQL set option NOEXEC and will continue to check the syntax of statem
   89            length address $ 24 city $ 24 state $ 2;
   */
   it("parse the log in which same problem index occurs at different positions in different lines", () => {
-    const result = parseLog(case4, firstCodeLine);
+    const [result] = parseLog(case4, firstCodeLine);
     assert.equal(result.length, 20, "result should have 20 problems.");
   });
 
@@ -155,7 +155,7 @@ NOTE: PROC SQL set option NOEXEC and will continue to check the syntax of statem
   118      ! proc sgscatter data=sashelp.iris(=(species="Virginica"));
   */
   it("parse the log in which same problem index have different problem message", () => {
-    const result = parseLog(case5, firstCodeLine);
+    const [result] = parseLog(case5, firstCodeLine);
     assert.equal(result.length, 4, "result should have 4 problems.");
   });
 
@@ -173,7 +173,7 @@ NOTE: PROC SQL set option NOEXEC and will continue to check the syntax of statem
   */
 
   it("parse the log in which there is 1 indicator but 2 problem indexes", () => {
-    const result = parseLog(case6, firstCodeLine);
+    const [result] = parseLog(case6, firstCodeLine);
     assert.equal(result.length, 3, "result should have 3 problems.");
   });
 
@@ -196,7 +196,7 @@ NOTE: PROC SQL set option NOEXEC and will continue to check the syntax of statem
   ERROR 180-322: Statement is not valid or it is used out of proper order.
    */
   it("parse the long log", () => {
-    const result = parseLog(case7_8, firstCodeLine);
+    const [result] = parseLog(case7_8, firstCodeLine);
     assert.equal(result.length, 11, "result should have 11 problems.");
   });
 
@@ -204,7 +204,7 @@ NOTE: PROC SQL set option NOEXEC and will continue to check the syntax of statem
   problems occur before user's source code.
    */
   it("parse the log with case9", () => {
-    const result = parseLog(case9, firstCodeLine);
+    const [result] = parseLog(case9, firstCodeLine);
     assert.equal(result.length, 2, "result should have 2 problems.");
   });
 
@@ -232,7 +232,7 @@ NOTE: PROC SQL set option NOEXEC and will continue to check the syntax of statem
   24             scatter x=x y=x2 / group=y3 attrid=myid1;
   */
   it("parse the log with case10", () => {
-    const result = parseLog(case10, firstCodeLine);
+    const [result] = parseLog(case10, firstCodeLine);
     assert.equal(result.length, 11, "result should have 11 problems.");
   });
 
@@ -240,7 +240,7 @@ NOTE: PROC SQL set option NOEXEC and will continue to check the syntax of statem
   problems occur after user's source code
   */
   it("parse the log with case11", () => {
-    const result = parseLog(case11, firstCodeLine);
+    const [result] = parseLog(case11, firstCodeLine);
     assert.equal(result.length, 4, "result should have 4 problems.");
   });
 });

@@ -9,9 +9,12 @@ import {
   isSourceCodeLineAfterLineWrapping,
 } from "./ProblemProcessor";
 
-export function parseLog(logs: LogLine[], logStartFlag: string): Problem[] {
+export function parseLog(
+  logs: LogLine[],
+  logStartFlag: string,
+): [Problem[], string[]] {
   if (logs.length === 0 || logStartFlag.trim() === "") {
-    return [];
+    return [[], []];
   }
 
   // logs cleaning
@@ -21,6 +24,7 @@ export function parseLog(logs: LogLine[], logStartFlag: string): Problem[] {
   let problemProcessor: ProblemProcessor = new ProblemProcessor();
   let offset: LocationOffset;
   const problems: Problem[] = [];
+  const codeLines: string[] = [];
 
   problemRelatedLogs.forEach((logLine) => {
     if (isProblemTypeLog(logLine)) {
@@ -42,6 +46,8 @@ export function parseLog(logs: LogLine[], logStartFlag: string): Problem[] {
       problemProcessor.appendProblemLogLine(logLine);
       return;
     } else {
+      codeLines.push(logLine.line);
+
       if (!isValidSourceCodeLog(logLine)) {
         return;
       }
@@ -79,7 +85,7 @@ export function parseLog(logs: LogLine[], logStartFlag: string): Problem[] {
 
   problemProcessor = null;
 
-  return problems;
+  return [problems, cleanCodeLines(codeLines)];
 }
 
 function getTheLatestLogs(logs: LogLine[], firstCodeLine: string): LogLine[] {
@@ -183,4 +189,25 @@ function isValidSourceCodeLog(logLine: LogLine): boolean {
 
 function areSameLines(line1: string, line2: string) {
   return line1 === line2;
+}
+
+// keep each line number only once
+function cleanCodeLines(codeLines: string[]): string[] {
+  if (codeLines.length === 0) {
+    return codeLines;
+  }
+
+  let previousLineNumber = -1;
+  const result = [];
+  codeLines.forEach((line) => {
+    const lineNumber = decomposeCodeLogLine(line)?.lineNumber ?? -1;
+    if (lineNumber === previousLineNumber) {
+      return;
+    } else {
+      previousLineNumber = lineNumber;
+      result.push(line);
+    }
+  });
+
+  return result;
 }

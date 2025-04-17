@@ -210,7 +210,10 @@ cas; caslib _all_ assign;
         "WARNING: Data set WORK.UNIVOUT was not replaced because new file is incomplete.",
       type: "warning",
     };
-    const problemLocationInRawCode = sasCodeDoc.getLocationInRawCode(problem);
+    const problemLocationInRawCode = sasCodeDoc.getLocationInRawCode(
+      problem,
+      [],
+    );
     assert.equal(problemLocationInRawCode.lineNumber, 60);
   });
 });
