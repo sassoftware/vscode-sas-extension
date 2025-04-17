@@ -17,6 +17,7 @@ selected python code`,
       htmlStyle: "Illuminate",
       outputHtml: true,
       uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
+      checkKeyword: async () => false,
     };
 
     const sasCodeDoc = new SASCodeDocument(parameters);
@@ -45,6 +46,7 @@ run;
       htmlStyle: "Illuminate",
       outputHtml: true,
       uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
+      checkKeyword: async () => false,
     };
 
     const sasCodeDoc = new SASCodeDocument(parameters);
@@ -74,6 +76,7 @@ run;`,
       htmlStyle: "Illuminate",
       outputHtml: true,
       uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
+      checkKeyword: async () => false,
     };
 
     const sasCodeDoc = new SASCodeDocument(parameters);
@@ -102,6 +105,7 @@ run;
       htmlStyle: "Illuminate",
       outputHtml: true,
       uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
+      checkKeyword: async () => false,
     };
     const sasCodeDoc = new SASCodeDocument(parameters);
 
@@ -131,6 +135,7 @@ ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inl
       htmlStyle: "Illuminate",
       outputHtml: true,
       uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
+      checkKeyword: async () => false,
     };
 
     const sasCodeDoc = new SASCodeDocument(parameters);
@@ -164,6 +169,7 @@ ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inl
       htmlStyle: "Illuminate",
       outputHtml: true,
       uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
+      checkKeyword: async () => false,
     };
 
     const sasCodeDoc = new SASCodeDocument(parameters);
@@ -199,6 +205,7 @@ cas; caslib _all_ assign;
       selections: [
         { start: { line: 0, character: 0 }, end: { line: 72, character: 0 } },
       ],
+      checkKeyword: async () => false,
     };
 
     const sasCodeDoc = new SASCodeDocument(parameters);

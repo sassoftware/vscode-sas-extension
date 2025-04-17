@@ -4,7 +4,6 @@ import {
   ProblemLocation,
   decomposeCodeLogLine,
 } from "../logViewer/ProblemProcessor";
-import { includesInteractiveInstruction } from "./SASCodeDocumentHelper";
 
 export interface SASCodeDocumentParameters {
   languageId: string;
@@ -21,6 +20,7 @@ export interface SASCodeDocumentParameters {
   outputHtml?: boolean;
   htmlStyle?: string;
   uuid?: string;
+  checkKeyword: (LineNumber: number, ...keywords: string[]) => Promise<boolean>;
 }
 
 type LineNumber = number;
@@ -291,8 +291,9 @@ ${code}`;
         let lineInfo = codeLinesInRaw[++index];
 
         while (
-          !(await this.isInteractiveInstruction(
-            lineInfo.code,
+          !(await this.parameters.checkKeyword(
+            // this.parameters.uri,
+            // lineInfo.code,
             lineInfo.lineNumber,
             "endinteractive",
           )) &&
@@ -348,10 +349,6 @@ ${code}`;
           codeLinesInLog,
           indexInLog,
         );
-        // if (match === null) {
-        //   indexInRaw++;
-        //   continue;
-        // }
         lineNumberInLog = match.lineNumber;
         indexInLog = match.index;
       }
@@ -361,10 +358,12 @@ ${code}`;
       this.offsetMap.set(lineNumberInLog, offset);
       lastValidLineNumberInLog = lineNumberInLog;
 
-      inInteractiveBlock = await this.isInteractiveInstruction(
-        codeLineInRaw,
+      inInteractiveBlock = await this.parameters.checkKeyword(
+        // this.parameters.uri,
+        // codeLineInRaw,
         lineNumberInRaw,
         "interactive",
+        "i",
       );
 
       indexInRaw++;
@@ -400,26 +399,24 @@ ${code}`;
   }
 
   // check if the code line is an interactive/endinteractive instruction.
-  private async isInteractiveInstruction(
-    codeLine: string,
-    lineNumber: number,
-    instruction: string,
-  ): Promise<boolean> {
-    // const regExp = `^.*\\s*${instruction}\\s*;*\\s*$`;
-    // return new RegExp(regExp, "i").test(codeLine);
-    const regExp = new RegExp(`${instruction}`, "gi");
-    const matches = Array.from(codeLine.matchAll(regExp));
+  // private async isInteractiveInstruction(
+  //   codeLine: string,
+  //   lineNumber: number,
+  //   ...instructions: string[]
+  // ): Promise<boolean> {
+  //   const regExp = new RegExp(`\\b(${instructions.join("|")})\\b`, "gi");
+  //   const matches = Array.from(codeLine.matchAll(regExp));
 
-    if (matches.length === 0) {
-      return false;
-    }
+  //   if (matches.length === 0) {
+  //     return false;
+  //   }
 
-    return await includesInteractiveInstruction(
-      matches,
-      this.parameters.uri,
-      lineNumber,
-    );
-  }
+  //   return await includesInteractiveInstruction(
+  //     matches,
+  //     this.parameters.uri,
+  //     lineNumber,
+  //   );
+  // }
 }
 
 function isSameOrStartsWith(base: string, target: string): boolean {

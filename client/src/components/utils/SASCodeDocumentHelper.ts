@@ -6,7 +6,6 @@ import {
   Position,
   Selection,
   TextDocument,
-  Uri,
   commands,
   window,
 } from "vscode";
@@ -17,24 +16,6 @@ import { profileConfig } from "../../commands/profile";
 import { ConnectionType } from "../profile";
 import { SASCodeDocumentParameters } from "./SASCodeDocument";
 import { getHtmlStyle, isOutputHtmlEnabled } from "./settings";
-
-export async function includesInteractiveInstruction(
-  matches: RegExpExecArray[],
-  uri: string,
-  lineNumber: number,
-): Promise<boolean> {
-  for (const match of matches) {
-    const [actualHover]: Hover[] = await commands.executeCommand(
-      "vscode.executeHoverProvider",
-      Uri.parse(uri),
-      new Position(lineNumber, match.index),
-    );
-    if (actualHover !== undefined) {
-      return true;
-    }
-  }
-  return false;
-}
 
 export function getCodeDocumentConstructionParameters(
   textDocument: TextDocument,
@@ -61,6 +42,29 @@ export function getCodeDocumentConstructionParameters(
     htmlStyle: getHtmlStyleValue(),
     outputHtml: isOutputHtmlEnabled(),
     uuid,
+    checkKeyword: async (lineNumber: number, ...keywords: string[]) => {
+      const codeLines = textDocument.getText().split("\n");
+      const codeLine = codeLines[lineNumber];
+
+      const regExp = new RegExp(`\\b(${keywords.join("|")})\\b`, "gi");
+      const matches = Array.from(codeLine.matchAll(regExp));
+
+      if (matches.length === 0) {
+        return false;
+      }
+
+      for (const match of matches) {
+        const [actualHover]: Hover[] = await commands.executeCommand(
+          "vscode.executeHoverProvider",
+          textDocument.uri,
+          new Position(lineNumber, match.index),
+        );
+        if (actualHover !== undefined) {
+          return true;
+        }
+      }
+      return false;
+    },
   };
 }
 
