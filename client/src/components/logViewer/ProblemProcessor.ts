@@ -664,8 +664,7 @@ function processGeneralLocation(
     return null;
   }
 
-  const lineNumber =
-    decomposeCodeLogLine(sourceCodeLines[0]).lineNumber;
+  const lineNumber = decomposeCodeLogLine(sourceCodeLines[0]).lineNumber;
   const wholeLine = sourceCodeLines.reduce(
     (accumulator, line) => accumulator + line.substring(offset.columnOffset),
   );
