@@ -103,6 +103,20 @@ export class SASCodeDocument {
         endColumn: lastCharacterIndex + 1,
       };
     }
+
+    // the problem occurs in imported source code,
+    // re-locate it at the nearest previous raw code line.
+    const nearestPreviousLineNumberInLog = Array.from(this.offsetMap.keys())
+      .reverse()
+      .find((lineNumber) => lineNumberInLog > lineNumber);
+
+    const nearestOffset = this.offsetMap.get(nearestPreviousLineNumberInLog);
+
+    return {
+      lineNumber: nearestOffset.lineOffset,
+      startColumn: 0,
+      endColumn: 1,
+    };
   }
 
   private codeIsEmpty(code: string): boolean {
@@ -228,13 +242,36 @@ ${code}`;
     return codeLinesInRaw;
   }
 
+  private getNextValidCodeLineInLog(
+    codeLines: string[],
+    start: number,
+  ): { code: string; lineNumber: number; index: number } {
+    let index = start;
+    let { code, lineNumber } = decomposeCodeLogLine(codeLines[index]);
+
+    while (
+      index < codeLines.length &&
+      // code not included in the source file starts with "+" in the log.
+      code.trim().startsWith("+")
+    ) {
+      ({ code, lineNumber } = decomposeCodeLogLine(codeLines[++index]));
+    }
+    return { code, lineNumber, index };
+  }
+
   private constructOffsetMap(codeLinesInLog: string[]): void {
     const codeLinesInRaw = this.constructCodeLinesInRaw();
-    const beginIndexInLog = this.getRawCodeBeginLineNumberInWrappedCode();
     let indexInRaw = 0;
-    let indexInLog = beginIndexInLog;
-    let previousLineNumberInLog =
-      decomposeCodeLogLine(codeLinesInLog[indexInLog]).lineNumber - 1;
+    let codeLineInRaw: string;
+    let lineNumberInRaw: number;
+    let columnInRaw: number;
+
+    let indexInLog = this.getRawCodeBeginLineNumberInWrappedCode();
+    let codeLineInLog: string;
+    let lineNumberInLog: number;
+    let lastValidLineNumberInLog: number;
+
+    let inInteractiveBlock = false;
 
     this.offsetMap = new Map<LineNumber, Offset>();
 
@@ -242,29 +279,56 @@ ${code}`;
       indexInRaw < codeLinesInRaw.length &&
       indexInLog < codeLinesInLog.length
     ) {
-      let {
+      ({
         code: codeLineInRaw,
         lineNumber: lineNumberInRaw,
         column: columnInRaw,
-      } = codeLinesInRaw[indexInRaw];
+      } = codeLinesInRaw[indexInRaw]);
 
-      let { code: codeLineInLog, lineNumber: lineNumberInLog } =
-        decomposeCodeLogLine(codeLinesInLog[indexInLog]);
+      if (inInteractiveBlock) {
+        let index = indexInRaw;
+        let lineInfo = codeLinesInRaw[++index];
+        while (
+          !isInteractiveInstruction(lineInfo.code, "endinteractive") &&
+          index < codeLinesInRaw.length
+        ) {
+          lineInfo = codeLinesInRaw[++index];
+        }
+
+        if (index < codeLinesInRaw.length) {
+          ({
+            code: codeLineInRaw,
+            lineNumber: lineNumberInRaw,
+            column: columnInRaw,
+          } = codeLinesInRaw[++index]);
+          indexInRaw = index;
+          inInteractiveBlock = false;
+        }
+      }
+
+      ({
+        code: codeLineInLog,
+        lineNumber: lineNumberInLog,
+        index: indexInLog,
+      } = this.getNextValidCodeLineInLog(codeLinesInLog, indexInLog));
 
       // The line numbers in the source code within the log should be continuous.
       // but if encountering datasets following a datalines statement or %INC statement,
       // the line numbers will not be continuous.
       // for datalines-like statements, it will skip the number of dataset lines.
       // for %INC-like statements, it will continue without skip
-      const delta2 = lineNumberInLog - previousLineNumberInLog;
+      const delta =
+        lastValidLineNumberInLog === undefined
+          ? 1
+          : lineNumberInLog - lastValidLineNumberInLog;
       if (
-        delta2 > 1 &&
+        delta > 1 &&
         // if the code line in log can be found in raw,
         // think of the discontinuous line number is caused by %INC-like statements,
         // otherwise it is from datalines-like statements and need to skip lines in raw.
-        !codeLineInRaw.trim().startsWith(codeLineInLog.trim())
+        !isSameOrStartsWith(codeLineInRaw.trim(), codeLineInLog.trim())
       ) {
-        indexInRaw += delta2 - 1;
+        indexInRaw += delta - 1;
         ({
           code: codeLineInRaw,
           lineNumber: lineNumberInRaw,
@@ -272,22 +336,53 @@ ${code}`;
         } = codeLinesInRaw[indexInRaw]);
       }
 
-      while (
-        !codeLineInRaw.trim().startsWith(codeLineInLog.trim()) &&
-        indexInLog < codeLinesInLog.length - 1
-      ) {
-        ({ code: codeLineInLog, lineNumber: lineNumberInLog } =
-          decomposeCodeLogLine(codeLinesInLog[++indexInLog]));
+      if (!isSameOrStartsWith(codeLineInRaw.trim(), codeLineInLog.trim())) {
+        const match = this.getMatchedCodeLineInLog(
+          codeLineInRaw,
+          codeLinesInLog,
+          indexInLog,
+        );
+        // if (match === null) {
+        //   indexInRaw++;
+        //   continue;
+        // }
+        lineNumberInLog = match.lineNumber;
+        indexInLog = match.index;
       }
 
       const offset = { lineOffset: lineNumberInRaw, columnOffset: columnInRaw };
 
       this.offsetMap.set(lineNumberInLog, offset);
-      previousLineNumberInLog = lineNumberInLog;
+      lastValidLineNumberInLog = lineNumberInLog;
+
+      inInteractiveBlock = isInteractiveInstruction(
+        codeLineInRaw,
+        "interactive",
+      );
 
       indexInRaw++;
       indexInLog++;
     }
+  }
+
+  private getMatchedCodeLineInLog(
+    codeLineInRaw: string,
+    codeLinesInLog: string[],
+    start: number,
+  ): { code: string; lineNumber: number; index: number } | null {
+    let validCodeLine = { code: "", lineNumber: -1, index: start };
+    let indexInLog = start;
+    do {
+      validCodeLine = this.getNextValidCodeLineInLog(
+        codeLinesInLog,
+        indexInLog++,
+      );
+    } while (
+      !isSameOrStartsWith(codeLineInRaw.trim(), validCodeLine.code.trim()) &&
+      indexInLog < codeLinesInLog.length
+    );
+
+    return validCodeLine.index >= codeLinesInLog.length ? null : validCodeLine;
   }
 
   // priority return selected code, otherwise, return whole code.
@@ -296,4 +391,17 @@ ${code}`;
       ? this.parameters.code
       : this.parameters.selectedCode;
   }
+}
+
+function isSameOrStartsWith(base: string, target: string): boolean {
+  return target === "" ? base === target : base.startsWith(target);
+}
+
+// check if the code line is an interactive/endinteractive instruction.
+function isInteractiveInstruction(
+  codeLine: string,
+  instruction: string,
+): boolean {
+  const regExp = `^.*\\s*${instruction}\\s*;*\\s*$`;
+  return new RegExp(regExp, "i").test(codeLine);
 }
