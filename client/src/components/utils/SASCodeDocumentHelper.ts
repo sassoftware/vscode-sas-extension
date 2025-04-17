@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 import {
   ColorThemeKind,
+  Hover,
   Position,
   Selection,
   TextDocument,
+  Uri,
+  commands,
   window,
 } from "vscode";
 
@@ -14,6 +17,24 @@ import { profileConfig } from "../../commands/profile";
 import { ConnectionType } from "../profile";
 import { SASCodeDocumentParameters } from "./SASCodeDocument";
 import { getHtmlStyle, isOutputHtmlEnabled } from "./settings";
+
+export async function includesInteractiveInstruction(
+  matches: RegExpExecArray[],
+  uri: string,
+  lineNumber: number,
+): Promise<boolean> {
+  for (const match of matches) {
+    const [actualHover]: Hover[] = await commands.executeCommand(
+      "vscode.executeHoverProvider",
+      Uri.parse(uri),
+      new Position(lineNumber, match.index),
+    );
+    if (actualHover !== undefined) {
+      return true;
+    }
+  }
+  return false;
+}
 
 export function getCodeDocumentConstructionParameters(
   textDocument: TextDocument,

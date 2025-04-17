@@ -4,6 +4,7 @@ import {
   ProblemLocation,
   decomposeCodeLogLine,
 } from "../logViewer/ProblemProcessor";
+import { includesInteractiveInstruction } from "./SASCodeDocumentHelper";
 
 export interface SASCodeDocumentParameters {
   languageId: string;
@@ -49,12 +50,12 @@ export class SASCodeDocument {
     return this.getWrappedCode().split("\n")[lineNumber];
   }
 
-  public getLocationInRawCode(
+  public async getLocationInRawCode(
     locationFromLog: ProblemLocation,
     codeLinesInLog: string[],
-  ): ProblemLocation {
+  ): Promise<ProblemLocation> {
     if (this.offsetMap === undefined) {
-      this.constructOffsetMap(codeLinesInLog);
+      await this.constructOffsetMap(codeLinesInLog);
     }
 
     const {
@@ -259,7 +260,7 @@ ${code}`;
     return { code, lineNumber, index };
   }
 
-  private constructOffsetMap(codeLinesInLog: string[]): void {
+  private async constructOffsetMap(codeLinesInLog: string[]): Promise<void> {
     const codeLinesInRaw = this.constructCodeLinesInRaw();
     let indexInRaw = 0;
     let codeLineInRaw: string;
@@ -288,8 +289,13 @@ ${code}`;
       if (inInteractiveBlock) {
         let index = indexInRaw;
         let lineInfo = codeLinesInRaw[++index];
+
         while (
-          !isInteractiveInstruction(lineInfo.code, "endinteractive") &&
+          !(await this.isInteractiveInstruction(
+            lineInfo.code,
+            lineInfo.lineNumber,
+            "endinteractive",
+          )) &&
           index < codeLinesInRaw.length
         ) {
           lineInfo = codeLinesInRaw[++index];
@@ -355,8 +361,9 @@ ${code}`;
       this.offsetMap.set(lineNumberInLog, offset);
       lastValidLineNumberInLog = lineNumberInLog;
 
-      inInteractiveBlock = isInteractiveInstruction(
+      inInteractiveBlock = await this.isInteractiveInstruction(
         codeLineInRaw,
+        lineNumberInRaw,
         "interactive",
       );
 
@@ -391,17 +398,30 @@ ${code}`;
       ? this.parameters.code
       : this.parameters.selectedCode;
   }
+
+  // check if the code line is an interactive/endinteractive instruction.
+  private async isInteractiveInstruction(
+    codeLine: string,
+    lineNumber: number,
+    instruction: string,
+  ): Promise<boolean> {
+    // const regExp = `^.*\\s*${instruction}\\s*;*\\s*$`;
+    // return new RegExp(regExp, "i").test(codeLine);
+    const regExp = new RegExp(`${instruction}`, "gi");
+    const matches = Array.from(codeLine.matchAll(regExp));
+
+    if (matches.length === 0) {
+      return false;
+    }
+
+    return await includesInteractiveInstruction(
+      matches,
+      this.parameters.uri,
+      lineNumber,
+    );
+  }
 }
 
 function isSameOrStartsWith(base: string, target: string): boolean {
   return target === "" ? base === target : base.startsWith(target);
-}
-
-// check if the code line is an interactive/endinteractive instruction.
-function isInteractiveInstruction(
-  codeLine: string,
-  instruction: string,
-): boolean {
-  const regExp = `^.*\\s*${instruction}\\s*;*\\s*$`;
-  return new RegExp(regExp, "i").test(codeLine);
 }

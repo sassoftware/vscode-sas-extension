@@ -82,7 +82,7 @@ async function updateDiagnostics(
     codeDoc.wrappedCodeLineAt(0),
   );
 
-  updateProblemLocation(problems, codeDoc, codeLinesInLog);
+  await updateProblemLocation(problems, codeDoc, codeLinesInLog);
 
   const problemsWithValidLocation = problems.filter((problem) => {
     const { lineNumber, startColumn, endColumn } = problem;
@@ -97,18 +97,18 @@ async function updateDiagnostics(
   );
 }
 
-function updateProblemLocation(
+async function updateProblemLocation(
   problems: Problem[],
   codeDoc: SASCodeDocument,
   codeLinesInLog: string[],
 ) {
-  problems.forEach((problem) => {
+  for (const problem of problems) {
     const { lineNumber, startColumn, endColumn } = problem;
     const {
       lineNumber: actualLineNumber,
       startColumn: actualStartColumn,
       endColumn: actualEndColumn,
-    } = codeDoc.getLocationInRawCode(
+    } = await codeDoc.getLocationInRawCode(
       {
         lineNumber,
         startColumn,
@@ -120,7 +120,7 @@ function updateProblemLocation(
     problem.lineNumber = actualLineNumber;
     problem.startColumn = actualStartColumn;
     problem.endColumn = actualEndColumn;
-  });
+  }
 }
 
 function constructDiagnostics(problems: Problem[]): Diagnostic[] {

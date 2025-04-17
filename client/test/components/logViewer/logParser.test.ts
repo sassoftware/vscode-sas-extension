@@ -96,7 +96,7 @@ describe("parse log", () => {
       {
         startColumn: 14,
         endColumn: 21,
-        lineNumber: 13,
+        lineNumber: 49,
         type: "error",
         message:
           "ERROR 22-322: Syntax error, expecting one of the following: (, ;.",
