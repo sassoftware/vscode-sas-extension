@@ -89,6 +89,7 @@ Follow these steps to update a locale for the SAS Extension for VSCode:
 
 | Language                 | VSCode Language ID | Contributor                                       |
 | ------------------------ | ------------------ | ------------------------------------------------- |
+| **Chinese (Traditional)**| zh-tw              | William Huang                                     |
 | **Chinese (Simplified)** | zh-cn              | Wei Wu                                            |
 | **French**               | fr                 | Vincent Rejany                                    |
 | **German**               | de                 | David Weik                                        |
