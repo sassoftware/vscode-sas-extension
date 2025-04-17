@@ -98,8 +98,11 @@ export class SASCodeDocument {
         lastCharacterIndex = this.parameters.selections[0].end.character - 1;
       }
 
+      const lineNumberInRaw =
+        this.offsetMap.get(lastLineNumber)?.lineOffset ?? 0;
+
       return {
-        lineNumber: lastLineNumber,
+        lineNumber: lineNumberInRaw,
         startColumn: lastCharacterIndex,
         endColumn: lastCharacterIndex + 1,
       };
