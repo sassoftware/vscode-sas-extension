@@ -397,26 +397,6 @@ ${code}`;
       ? this.parameters.code
       : this.parameters.selectedCode;
   }
-
-  // check if the code line is an interactive/endinteractive instruction.
-  // private async isInteractiveInstruction(
-  //   codeLine: string,
-  //   lineNumber: number,
-  //   ...instructions: string[]
-  // ): Promise<boolean> {
-  //   const regExp = new RegExp(`\\b(${instructions.join("|")})\\b`, "gi");
-  //   const matches = Array.from(codeLine.matchAll(regExp));
-
-  //   if (matches.length === 0) {
-  //     return false;
-  //   }
-
-  //   return await includesInteractiveInstruction(
-  //     matches,
-  //     this.parameters.uri,
-  //     lineNumber,
-  //   );
-  // }
 }
 
 function isSameOrStartsWith(base: string, target: string): boolean {
