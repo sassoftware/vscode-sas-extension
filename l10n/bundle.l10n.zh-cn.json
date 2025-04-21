@@ -130,6 +130,7 @@
   "Unable to drag files from trash.": "无法从垃圾箱中拖动文件。",
   "Unable to drop item \"{name}\".": "无法投放项目\"{name}\"。",
   "Unable to empty the recycle bin.": "无法清空回收站。",
+  "Unable to load required libraries.": "Unable to load required libraries.",
   "Unable to rename \"{oldName}\" to \"{newName}\".": "无法将\"{oldName}\"重命名为\"{newName}\"。",
   "Unable to restore file.": "无法恢复文件。",
   "Unable to restore folder.": "无法恢复文件夹。",
