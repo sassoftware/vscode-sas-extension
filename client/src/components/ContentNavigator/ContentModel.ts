@@ -6,7 +6,7 @@ import { extname } from "path";
 
 import { ALL_ROOT_FOLDERS, Messages } from "./const";
 import { ContentAdapter, ContentItem } from "./types";
-import { isItemInRecycleBin } from "./utils";
+import { getUpdatedURI, isItemInRecycleBin } from "./utils";
 
 export class ContentModel {
   private contentAdapter: ContentAdapter;
@@ -50,13 +50,15 @@ export class ContentModel {
   }
 
   public async getResourceByUri(uri: Uri): Promise<ContentItem> {
-    return await this.contentAdapter.getItemOfUri(uri);
+    return await this.contentAdapter.getItemOfUri(getUpdatedURI(uri));
   }
 
   public async getContentByUri(uri: Uri): Promise<string> {
     let data;
     try {
-      data = (await this.contentAdapter.getContentOfUri(uri)).toString();
+      data = (
+        await this.contentAdapter.getContentOfUri(getUpdatedURI(uri))
+      ).toString();
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       throw new Error(Messages.FileOpenError);

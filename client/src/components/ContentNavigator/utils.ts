@@ -6,6 +6,7 @@ import {
   Tab,
   TabInputNotebook,
   TabInputText,
+  Uri,
   window,
 } from "vscode";
 
@@ -93,4 +94,8 @@ export const getEditorTabsForItem = (item: ContentItem) => {
         tab.input instanceof TabInputNotebook) &&
       tab.input.uri.query.includes(fileUri.query), // compare the file id
   );
+};
+
+export const getUpdatedURI = (uri: Uri) => {
+  return Uri.parse(uri.toString().replace("#", "%23").replace("%3F", "?"));
 };

@@ -32,8 +32,8 @@ import {
 import { isContainer as getIsContainer } from "./utils";
 
 const fileValidator = (value: string): string | null =>
-  /^([^/<>;\\{}?#]+)\.\w+$/.test(
-    // file service does not allow /, <, >, ;, \, {, } while vscode does not allow ? and #
+  /^([^/<>;\\{}?]+)\.\w+$/.test(
+    // file service does not allow /, <, >, ;, \, {, } while vscode does not allow ?
     value,
   )
     ? null
@@ -171,7 +171,7 @@ class ContentNavigator implements SubscriptionProvider {
           const fileName = await window.showInputBox({
             prompt: Messages.NewFilePrompt,
             title: Messages.NewFileTitle,
-            validateInput: fileValidator,
+            validateInput: fileValidator, //
           });
           if (!fileName) {
             return;
