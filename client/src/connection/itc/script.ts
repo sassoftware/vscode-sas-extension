@@ -319,6 +319,14 @@ class SASRunner{
     }
   }
 
+  [string]GetDirectorySeparator([string]$path) {
+    if ($path -Match "/") {
+      return "/"
+    }
+
+    return "\\"
+  }
+
   [void]RenameFile([string]$oldPath,[string]$newPath,[string]$newName) {
     try {
       $currentItem = $this.GetItemAtPathWithName($newPath, $newName)
@@ -327,7 +335,7 @@ class SASRunner{
         return;
       }
 
-      $this.objSAS.FileService.RenameFile($oldPath,$newPath+"\\"+$newName);
+      $this.objSAS.FileService.RenameFile($oldPath,$newPath+$this.GetDirectorySeparator($newPath)+$newName);
       $item = $this.GetItemAtPathWithName($newPath, $newName);
       Write-Host (@{success=$true; data=$item} | ConvertTo-Json)
     } catch {
@@ -406,7 +414,7 @@ class SASRunner{
     $output = [object[]]::new($names.Length)
     for($i = 0; $i -lt $names.Count; $i++) {
       $output[$i] = @{
-        uri=$listedPath + "\\" + $names[$i]
+        uri=$listedPath + $this.GetDirectorySeparator($listedPath) + $names[$i]
         name=$names[$i];
         type=$typeNames[$i];
         category=$typeCategories[$i];

@@ -30,6 +30,7 @@ import {
 } from "../rest/util";
 import { executeRawCode } from "./CodeRunner";
 import { PowershellResponse, ScriptActions } from "./types";
+import { getDirectorySeparator } from "./util";
 
 class ITCSASServerAdapter implements ContentAdapter {
   protected sessionId: string;
@@ -309,10 +310,11 @@ class ITCSASServerAdapter implements ContentAdapter {
   }
 
   protected async getItemAtPath(path: string): Promise<ContentItem> {
-    const pathPieces = path.split("\\");
+    const separator = getDirectorySeparator(path);
+    const pathPieces = path.split(separator);
     const name = pathPieces.pop();
 
-    return await this.getItemAtPathWithName(pathPieces.join("\\"), name);
+    return await this.getItemAtPathWithName(pathPieces.join(separator), name);
   }
 
   private convertPowershellResponseToContentItem(
