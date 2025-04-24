@@ -130,6 +130,7 @@
   "Unable to drag files from trash.": "Impossible de faire glisser les fichiers depuis la corbeille.",
   "Unable to drop item \"{name}\".": "Impossible de déposer l'élément \"{name}\".",
   "Unable to empty the recycle bin.": "Impossible de vider la corbeille.",
+  "Unable to load required libraries.": "Impossible de charger les bibliothèques requises.",
   "Unable to rename \"{oldName}\" to \"{newName}\".": "Impossible de renommer \"{oldName}\" en \"{newName}\".",
   "Unable to restore file.": "Impossible de restaurer le fichier.",
   "Unable to restore folder.": "Impossible de restaurer le dossier.",
