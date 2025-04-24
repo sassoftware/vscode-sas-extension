@@ -130,7 +130,7 @@
   "Unable to drag files from trash.": "Nicht imstande Dateien aus dem Papierkorb zu verschieben.",
   "Unable to drop item \"{name}\".": "Nicht imstande \"{name}\" einzufügen.",
   "Unable to empty the recycle bin.": "Nicht imstande den Papierkorb zu leeren.",
-  "Unable to load required libraries.": "Unable to load required libraries.",
+  "Unable to load required libraries.": "Erforderliche Bibliotheken können nicht geladen werden",
   "Unable to rename \"{oldName}\" to \"{newName}\".": "Nicht imstande \"{oldName}\" in \"{newName}\" umzubenennen.",
   "Unable to restore file.": "Nicht imstande die Datei wiederherzustellen",
   "Unable to restore folder.": "Nicht imstande den Ordner wiederherzustellen.",

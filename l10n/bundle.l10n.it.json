@@ -130,7 +130,7 @@
   "Unable to drag files from trash.": "Impossibile trascinare i file dal Cestino.",
   "Unable to drop item \"{name}\".": "Impossibile rilasciare l'elemento \"{name}\".",
   "Unable to empty the recycle bin.": "Impossibile svuotare il Cestino.",
-  "Unable to load required libraries.": "Unable to load required libraries.",
+  "Unable to load required libraries.": "Impossibile caricare le librerie obbligatorie.",
   "Unable to rename \"{oldName}\" to \"{newName}\".": "Impossibile rinominare \"{oldName}\" in \"{newName}\".",
   "Unable to restore file.": "Impossibile ripristinare il file.",
   "Unable to restore folder.": "Impossibile ripristinare la cartella.",
