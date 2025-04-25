@@ -290,8 +290,9 @@ class SASRunner{
       $objFile = $this.objSAS.FileService.AssignFileref("", "DISK", $folderPath, "", [ref] $fileRefName)
       $assignedName = ""
       $outFile = $objFile.AssignMember("", $fileName, "DISK", "", [ref] $assignedName)
-      $objStream = $outFile.OpenTextStream([SAS.StreamOpenMode]::StreamOpenModeForWriting, 27994);
-      $objStream.Write($content)
+      $objStream = $outFile.OpenBinaryStream([SAS.StreamOpenMode]::StreamOpenModeForWriting)
+      $encoding = [System.Text.Encoding]::UTF8
+      $objStream.Write($encoding.GetBytes($content));
       $objStream.Close()
       $this.objSAS.FileService.DeassignFileref($outFile.FilerefName)
       $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
@@ -307,8 +308,9 @@ class SASRunner{
     try {
       $fileRefName = ""
       $objFile = $this.objSAS.FileService.AssignFileref("", "DISK", $filePath, "", [ref] $fileRefName)
-      $objStream = $objFile.OpenTextStream([SAS.StreamOpenMode]::StreamOpenModeForWriting, 27994);
-      $objStream.Write($content);
+      $objStream = $objFile.OpenBinaryStream([SAS.StreamOpenMode]::StreamOpenModeForWriting);
+      $encoding = [System.Text.Encoding]::UTF8
+      $objStream.Write($encoding.GetBytes($content));
 
       $objStream.Close()
       $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
