@@ -55,11 +55,17 @@ class ITCSASServerAdapter implements ContentAdapter {
   }
 
   /* The following is needed for creating a flow, which isn't supported on sas server */
-  public async getParentOfItem(): Promise<ContentItem | undefined> {
-    return undefined;
+  public async getParentOfItem(
+    item: ContentItem,
+  ): Promise<ContentItem | undefined> {
+    const parent = await this.getItemAtPath(item.parentFolderUri);
+    if (!parent) {
+      return undefined;
+    }
+
+    return parent;
   }
 
-  /* The following is needed for creating a filename statement, which isn't supported on sas server */
   public async getFolderPathForItem(): Promise<string> {
     return "";
   }
