@@ -213,6 +213,7 @@ class ContentDataProvider
   public async getTreeItem(item: ContentItem): Promise<TreeItem> {
     const isContainer = getIsContainer(item);
     const uri = await this.model.getUri(item, false);
+
     return {
       collapsibleState: isContainer
         ? TreeItemCollapsibleState.Collapsed
