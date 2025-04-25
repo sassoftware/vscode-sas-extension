@@ -171,7 +171,7 @@ class ContentNavigator implements SubscriptionProvider {
           const fileName = await window.showInputBox({
             prompt: Messages.NewFilePrompt,
             title: Messages.NewFileTitle,
-            validateInput: fileValidator, //
+            validateInput: fileValidator,
           });
           if (!fileName) {
             return;

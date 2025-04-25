@@ -56,7 +56,6 @@ import {
   getEditorTabsForItem,
   getFileStatement,
   isContainer as getIsContainer,
-  getUpdatedURI,
 } from "./utils";
 
 class ContentDataProvider
@@ -213,7 +212,7 @@ class ContentDataProvider
 
   public async getTreeItem(item: ContentItem): Promise<TreeItem> {
     const isContainer = getIsContainer(item);
-    const uri = getUpdatedURI(await this.model.getUri(item, false));
+    const uri = await this.model.getUri(item, false);
     return {
       collapsibleState: isContainer
         ? TreeItemCollapsibleState.Collapsed

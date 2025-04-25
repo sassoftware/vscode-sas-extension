@@ -141,7 +141,13 @@ export const getItemContentType = (item: ContentItem): string | undefined => {
   return "application/vnd.sas.file+json";
 };
 
-export const getResourceId = (uri: Uri): string => uri.query.substring(3); // ?id=...
+export const getUpdatedURI = (uri: Uri) => {
+  return Uri.parse(uri.toString().replace("#", "%23").replace("%3F", "?"));
+};
+
+export const getResourceId = (uri: Uri): string => {
+  return getUpdatedURI(uri).query.substring(3);
+}; // ?id=...
 
 export const getTypeName = (item: ContentItem): string =>
   item.contentType || item.type;
