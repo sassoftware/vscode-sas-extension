@@ -137,7 +137,7 @@ class LibraryModel {
     return await this.getTables(item);
   }
 
-  private async getLibraries(): Promise<LibraryItem[]> {
+  public async getLibraries(): Promise<LibraryItem[]> {
     await this.libraryAdapter.setup();
 
     let offset = 0;
@@ -159,7 +159,7 @@ class LibraryModel {
     return this.processItems(items, "library", undefined);
   }
 
-  private async getTables(item: LibraryItem): Promise<LibraryItem[]> {
+  public async getTables(item: LibraryItem): Promise<LibraryItem[]> {
     await this.libraryAdapter.setup();
 
     let offset = 0;

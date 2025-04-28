@@ -24,6 +24,7 @@ import {
 
 import { Writable } from "stream";
 
+import { registerAPI } from "../APIProvider";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import LibraryModel from "./LibraryModel";
 import { Icons, Messages, WorkLibraryId } from "./const";
@@ -62,6 +63,9 @@ class LibraryDataProvider
       this.selector(),
       this,
     );
+    registerAPI("getColumns", model.fetchColumns.bind(model));
+    registerAPI("getTables", model.getTables.bind(model));
+    registerAPI("getLibraries", model.getLibraries.bind(model));
   }
 
   public getSubscriptions(): Disposable[] {
