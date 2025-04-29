@@ -25,7 +25,10 @@ import {
   ContentSourceType,
 } from "../../../src/components/ContentNavigator/types";
 import SASContentAdapter from "../../../src/connection/rest/SASContentAdapter";
-import { getSasContentUri as getUri } from "../../../src/connection/rest/util";
+import {
+  getUpdatedURI,
+  getSasContentUri as getUri,
+} from "../../../src/connection/rest/util";
 import { getUri as getTestUri } from "../../utils";
 
 let stub;
@@ -172,7 +175,7 @@ describe("ContentDataProvider", async function () {
     const dataProvider = createDataProvider();
 
     const treeItem = await dataProvider.getTreeItem(contentItem);
-    const uri = contentItem.vscUri;
+    const uri = getUpdatedURI(contentItem.vscUri);
     const expectedTreeItem: TreeItem = {
       id: "unique-id",
       label: "testFile",
