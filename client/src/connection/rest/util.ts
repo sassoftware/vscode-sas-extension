@@ -143,5 +143,6 @@ export const getItemContentType = (item: ContentItem): string | undefined => {
 };
 
 export const getResourceId = (uri: Uri): string => uri.query.substring(3); // ?id=...
+
 export const getTypeName = (item: ContentItem): string =>
   item.contentType || item.type;
