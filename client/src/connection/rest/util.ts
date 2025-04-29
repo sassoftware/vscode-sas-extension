@@ -97,9 +97,10 @@ export const resourceType = (item: ContentItem): string | undefined => {
 
 export const getSasContentUri = (item: ContentItem, readOnly?: boolean): Uri =>
   Uri.parse(
-    `${readOnly ? `${ContentSourceType.SASContent}ReadOnly` : ContentSourceType.SASContent}:/${
-      item.name
-    }?id=${getResourceIdFromItem(item)}`,
+    `${readOnly ? `${ContentSourceType.SASContent}ReadOnly` : ContentSourceType.SASContent}:/${item.name.replace(
+      "#",
+      "%23",
+    )}?id=${getResourceIdFromItem(item)}`,
   );
 
 export const getSasServerUri = (item: ContentItem, readOnly?: boolean): Uri =>
@@ -141,13 +142,6 @@ export const getItemContentType = (item: ContentItem): string | undefined => {
   return "application/vnd.sas.file+json";
 };
 
-export const getUpdatedURI = (uri: Uri) => {
-  return Uri.parse(uri.toString().replace("#", "%23").replace("%3F", "?"));
-};
-
-export const getResourceId = (uri: Uri): string => {
-  return getUpdatedURI(uri).query.substring(3);
-}; // ?id=...
-
+export const getResourceId = (uri: Uri): string => uri.query.substring(3); // ?id=...
 export const getTypeName = (item: ContentItem): string =>
   item.contentType || item.type;

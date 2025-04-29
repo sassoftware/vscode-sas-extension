@@ -39,7 +39,6 @@ import {
   getResourceIdFromItem,
   getSasContentUri,
   getTypeName,
-  getUpdatedURI,
   resourceType,
 } from "./util";
 
@@ -511,7 +510,7 @@ class SASContentAdapter implements ContentAdapter {
 
   public async getUriOfItem(item: ContentItem): Promise<Uri> {
     if (item.type !== "reference") {
-      return getUpdatedURI(item.vscUri);
+      return item.vscUri;
     }
 
     // If we're attempting to open a favorite, open the underlying file instead.
