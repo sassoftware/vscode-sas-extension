@@ -142,21 +142,11 @@ class RestSession extends Session {
     if (!this._computeSession?.sessionId) {
       throw new Error();
     }
-
     //Get the job
     const job = await this._computeSession.execute({ code: [code] });
-    let state = await job.getState();
-
-    const retLog = this.printJobLog(job);
-
-    //Wait until the job is complete
-    do {
-      state = await job.getState({ onChange: true, wait: 2 });
-    } while (await job.isDone(state));
 
     //Clear out the logs
-    await retLog;
-
+    await this.printJobLog(job);
     //Now get the results
     const results = await job.results();
 
@@ -290,7 +280,7 @@ class RestSession extends Session {
    * @param job a job id to print logs for.
    */
   private printJobLog = async (job: ComputeJob) => {
-    const logs = await job.getLogStream();
+    const logs = job.getLogStream();
     for await (const log of logs) {
       if (log?.length > 0) {
         this._onExecutionLogFn(log);

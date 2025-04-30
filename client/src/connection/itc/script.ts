@@ -12,6 +12,42 @@ export const scriptContent = `
 class SASRunner{
   [System.__ComObject] $objSAS
 
+  SASRunner([string]$interopPath) {
+    try {
+      $interopDir = $this.GetInteropDirectory($interopPath)
+      Add-Type -Path "$interopDir\\SASInterop.dll"
+      Add-Type -Path "$interopDir\\SASOManInterop.dll"
+    } catch {
+      Write-Error "${ERROR_START_TAG}LoadingInterop error: $_${ERROR_END_TAG}"
+    }
+  }
+
+  [string] GetInteropDirectory([string]$defaultInteropPath) {
+    # try to load from user specified path first
+    if ($defaultInteropPath) {
+      if (Test-Path -Path "$defaultInteropPath\\SASInterop.dll") {
+        return $defaultInteropPath
+      }
+    }
+
+    # try to load path from registry
+    try {
+      $pathFromRegistry = (Get-ItemProperty -ErrorAction Stop -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
+      if (Test-Path -Path "$pathFromRegistry\\SASInterop.dll") {
+        return $pathFromRegistry
+      }
+    } catch {
+    }
+
+    # try to load path from integration technologies
+    $itcPath = "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
+    if (Test-Path -Path "$itcPath\\SASInterop.dll") {
+      return $itcPath
+    }
+
+    return ""
+  }
+
   [void]ResolveSystemVars(){
     try {
       Write-Host "${WORK_DIR_START_TAG}"
@@ -21,14 +57,16 @@ class SASRunner{
       Write-Error "${ERROR_START_TAG}Setup error: $_${ERROR_END_TAG}"
     }
   }
+
   [void]Setup([string]$profileHost, [string]$username, [string]$password, [int]$port, [int]$protocol, [string]$serverName, [string]$displayLang) {
     try {
         # Set Encoding for input and output
         $OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding
 
         # create the Integration Technologies objects
-        $objFactory = New-Object -ComObject SASObjectManager.ObjectFactoryMulti2
-        $objServerDef = New-Object -ComObject SASObjectManager.ServerDef
+        $objFactory = New-Object -TypeName SASObjectManager.ObjectFactoryMulti2Class
+        $objFactory.ApplicationName = "SAS Extension for Visual Studio Code"
+        $objServerDef = New-Object -TypeName SASObjectManager.ServerDefClass
         $objServerDef.MachineDNSName = $profileHost # SAS Workspace node
         $objServerDef.Port = $port # workspace server port
         $objServerDef.Protocol = $protocol # 0 = COM protocol

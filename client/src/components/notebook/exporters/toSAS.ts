@@ -1,29 +1,12 @@
-// Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { NotebookCell, window, workspace } from "vscode";
+import { NotebookCell, NotebookDocument } from "vscode";
 
-export const exportNotebook = async () => {
-  const notebook = window.activeNotebookEditor?.notebook;
-
-  if (!notebook) {
-    return;
-  }
-
-  const uri = await window.showSaveDialog({
-    filters: { SAS: ["sas"] },
-  });
-
-  if (!uri) {
-    return;
-  }
-
-  const content = notebook
+export const exportToSAS = (notebook: NotebookDocument) =>
+  notebook
     .getCells()
     .map((cell) => exportCell(cell) + "\n")
     .join("\n");
-
-  workspace.fs.writeFile(uri, Buffer.from(content));
-};
 
 const exportCell = (cell: NotebookCell) => {
   const text = cell.document.getText();
@@ -48,10 +31,8 @@ ${code}
 quit;`;
 };
 
-const wrapPython = (code: string) => {
-  return `proc python;
+const wrapPython = (code: string) => `proc python;
 submit;
 ${code}
 endsubmit;
 run;`;
-};

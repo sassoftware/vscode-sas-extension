@@ -16,6 +16,7 @@ A local SAS 9.4 connection profile includes the following parameters:
 
 `"connectionType": "com"`
 
-| Name   | Description                      | Additional Notes                |
-| ------ | -------------------------------- | ------------------------------- |
-| `host` | Indicates SAS 9.4 local instance | Defaults to "localhost" for com |
+| Name                       | Description                      | Additional Notes                                                                                       |
+| -------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `host`                     | Indicates SAS 9.4 local instance | Defaults to "localhost" for com                                                                        |
+| `interopLibraryFolderPath` | COM interop library path         | A custom path to a folder containing SAS interop libraries (`SASInterop.dll` and `SASOManInterop.dll`) |

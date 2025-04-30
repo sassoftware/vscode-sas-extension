@@ -32,6 +32,7 @@ import {
   updateProfile,
 } from "../commands/profile";
 import { run, runRegion, runSelected } from "../commands/run";
+import { getRestAPIs } from "../components/APIProvider";
 import { SASAuthProvider } from "../components/AuthProvider";
 import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
@@ -51,8 +52,8 @@ import {
 import { LogTokensProvider, legend } from "../components/logViewer";
 import { sasDiagnostic } from "../components/logViewer/sasDiagnostics";
 import { NotebookController } from "../components/notebook/Controller";
-import { exportNotebook } from "../components/notebook/Exporter";
 import { NotebookSerializer } from "../components/notebook/Serializer";
+import { exportNotebook } from "../components/notebook/exporters";
 import { ConnectionType } from "../components/profile";
 import { SasTaskProvider } from "../components/tasks/SasTaskProvider";
 import { SAS_TASK_TYPE } from "../components/tasks/SasTasks";
@@ -61,7 +62,7 @@ let client: LanguageClient;
 
 export let extensionContext: ExtensionContext | undefined;
 
-export function activate(context: ExtensionContext): void {
+export function activate(context: ExtensionContext) {
   // The server is implemented in node
   extensionContext = context;
   const serverModule = context.asAbsolutePath(
@@ -197,7 +198,9 @@ export function activate(context: ExtensionContext): void {
     new NotebookController(),
     commands.registerCommand("SAS.notebook.new", newSASNotebook),
     commands.registerCommand("SAS.file.new", newSASFile),
-    commands.registerCommand("SAS.notebook.export", exportNotebook),
+    commands.registerCommand("SAS.notebook.export", () =>
+      exportNotebook(client),
+    ),
     tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
     ...sasDiagnostic.getSubscriptions(),
   );
@@ -210,6 +213,10 @@ export function activate(context: ExtensionContext): void {
   profileConfig.migrateLegacyProfiles();
   triggerProfileUpdate();
   updateViewSettings();
+
+  return {
+    getRestAPIs,
+  };
 }
 
 function updateViewSettings(): void {

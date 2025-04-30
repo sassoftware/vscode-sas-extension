@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
-  "version": "1.13.1",
+  "version": "1.14.0",
   "categories": [
     "Programming Languages",
     "Data Science",
@@ -367,6 +367,11 @@
                             "description": "%configuration.SAS.connectionProfiles.profiles.iom.port%",
                             "exclusiveMinimum": 1,
                             "exclusiveMaximum": 65535
+                          },
+                          "interopLibraryFolderPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.iom.interopLibraryFolderPath%"
                           }
                         }
                       }
@@ -388,6 +393,11 @@
                             "type": "string",
                             "default": "",
                             "description": "%configuration.SAS.connectionProfiles.profiles.com.host%"
+                          },
+                          "interopLibraryFolderPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.com.interopLibraryFolderPath%"
                           }
                         }
                       }
@@ -491,6 +501,12 @@
             "type": "boolean",
             "default": true,
             "description": "%configuration.SAS.log.clearOnExecutionStart%"
+          },
+          "SAS.notebook.export.includeLog": {
+            "order": 10,
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.SAS.notebook.export.includeLog%"
           }
         }
       }
@@ -1276,17 +1292,17 @@
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^22.13.8",
+    "@types/node": "^22.13.12",
     "@types/sinon": "^17.0.4",
-    "@typescript-eslint/eslint-plugin": "^8.25.0",
-    "@typescript-eslint/parser": "^8.25.0",
+    "@typescript-eslint/eslint-plugin": "^8.27.0",
+    "@typescript-eslint/parser": "^8.27.0",
     "@vscode/l10n-dev": "^0.0.35",
     "buffer": "6.0.3",
     "chai": "^4.4.1",
     "concurrently": "^9.1.0",
     "esbuild": "^0.25.0",
     "cross-env": "^7.0.3",
-    "eslint": "^9.21.0",
+    "eslint": "^9.23.0",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.2.0",
     "glob": "^7.2.0",

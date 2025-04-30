@@ -89,6 +89,8 @@ export class ITCSession extends Session {
    * @returns void promise.
    */
   protected establishConnection = async (): Promise<void> => {
+    const { host, port, protocol, username, interopLibraryFolderPath } =
+      this._config;
     const setupPromise = new Promise<void>((resolve, reject) => {
       this._runResolve = resolve;
       this._runReject = reject;
@@ -110,7 +112,7 @@ export class ITCSession extends Session {
     this._shellProcess.stderr.on("data", this.onShellStdErr);
     this._shellProcess.stdin.write(scriptContent + "\n", this.onWriteComplete);
     this._shellProcess.stdin.write(
-      "$runner = New-Object -TypeName SASRunner\n",
+      `$runner = New-Object -TypeName SASRunner -ArgumentList "${escapePowershellString(interopLibraryFolderPath || "")}"\n`,
       this.onWriteComplete,
     );
 
@@ -120,7 +122,6 @@ export class ITCSession extends Session {
      * will not exist. The work dir should only be deleted when close is invoked.
      */
     if (!this._workDirectory) {
-      const { host, port, protocol, username } = this._config;
       this._shellProcess.stdin.write(`$profileHost = "${host}"\n`);
       this._shellProcess.stdin.write(`$port = ${port}\n`);
       this._shellProcess.stdin.write(`$protocol = ${protocol}\n`);
@@ -333,7 +334,11 @@ export class ITCSession extends Session {
     );
 
     // If we encountered an error in setup, we need to go through everything again
-    const fatalErrors = [/Setup error/, /powershell\.exe/];
+    const fatalErrors = [
+      /Setup error/,
+      /powershell\.exe/,
+      /LoadingInterop error/,
+    ];
     if (fatalErrors.find((regex) => regex.test(errorMessage))) {
       // If we can't even run the shell script (i.e. powershell.exe not found),
       // we'll also need to dismiss the password prompt
@@ -366,6 +371,10 @@ export class ITCSession extends Session {
 
     if (/powershell\.exe/.test(msg)) {
       return l10n.t("This platform does not support this connection type.");
+    }
+
+    if (/LoadingInterop error/.test(msg)) {
+      return l10n.t("Unable to load required libraries.");
     }
 
     // Do we have SAS messages?

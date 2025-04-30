@@ -280,22 +280,19 @@ export const runServer = (
   });
 
   connection.onRequest("sas/getFoldingBlock", async (params) => {
-    return await dispatch(params, {
-      async default(languageServices) {
-        const block = languageServices.sasLanguageService.getFoldingBlock(
-          params.position.line,
-          params.position.col,
-          params.strict ?? true,
-          params.ignoreCustomBlock,
-          params.ignoreGlobalBlock,
-        );
-        if (!block) {
-          return undefined;
-        } else {
-          return { ...block, outerBlock: undefined, innerBlocks: undefined };
-        }
-      },
-    });
+    const languageService = getLanguageService(params.textDocument.uri);
+    const block = languageService.getFoldingBlock(
+      params.line,
+      params.col,
+      params.strict ?? true,
+      params.ignoreCustomBlock,
+      params.ignoreGlobalBlock,
+    );
+    if (!block) {
+      return undefined;
+    } else {
+      return { ...block, outerBlock: undefined, innerBlocks: undefined };
+    }
   });
 
   connection.onDocumentOnTypeFormatting(async (params) => {
