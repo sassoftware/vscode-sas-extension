@@ -182,7 +182,7 @@ print("${LineCodes.SessionCreatedCode}")
       //               `, this.onWriteComplete);
 
       this._workDirectoryParser.reset();
-        
+
       if (this._config.sasOptions?.length > 0) {
         const sasOptsInput = `$sasOpts=${this.formatSASOptions(
           this._config.sasOptions,
@@ -209,7 +209,7 @@ print("${LineCodes.SessionCreatedCode}")
    * @param onLog A callback handler responsible for marshalling log lines back to the higher level extension API.
    * @returns A promise that eventually resolves to contain the given {@link RunResult} for the input code execution.
    */
-  public run = async (
+  protected _run = async (
     code: string,
     skipPageHeaders?: boolean,
   ): Promise<RunResult> => {
@@ -263,7 +263,7 @@ else:
    * Cleans up resources for the given SAS session.
    * @returns void promise.
    */
-  public close = async (): Promise<void> => {
+  protected _close = async (): Promise<void> => {
     return new Promise((resolve) => {
       if (this._shellProcess) {
         this._shellProcess.stdin.write(
