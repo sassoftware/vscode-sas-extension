@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "../../components/LibraryNavigator/types";
 import { Column, ColumnCollection } from "../rest/api/compute";
-import { runCode } from "./CodeRunner";
+import { executeRawCode, runCode } from "./CodeRunner";
 import { Config } from "./types";
 
 class ItcLibraryAdapter implements LibraryAdapter {
@@ -213,48 +213,16 @@ class ItcLibraryAdapter implements LibraryAdapter {
     start: number,
     limit: number,
   ): Promise<{ rows: Array<string[]>; count: number }> {
-    const maxTableNameLength = 32;
-    const tempTable = `${item.name}${hms()}${start}`.substring(
-      0,
-      maxTableNameLength,
-    );
+    const fullTableName = `${item.library}.${item.name}`;
     const code = `
-      options nonotes nosource nodate nonumber;
-      %let COUNT;
-      proc sql;
-        SELECT COUNT(1) into: COUNT FROM  ${item.library}.${item.name};
-      quit;
-      data work.${tempTable};
-        set ${item.library}.${item.name};
-        if ${start + 1} <= _N_ <= ${start + limit} then output;
-      run;
-
-      filename out temp;
-      proc json nokeys out=out pretty; export work.${tempTable}; run;
-
-      %put <TABLEDATA>;
-      %put <Count>&COUNT</Count>;
-      data _null_; infile out; input; put _infile_; run;
-      %put </TABLEDATA>;
-      proc datasets library=work nolist nodetails; delete ${tempTable}; run;
-      options notes source date number;
+      $runner.GetDatasetRecords("${fullTableName}", ${start}, ${limit})
     `;
-
-    let output = await this.runCode(code, "<TABLEDATA>", "</TABLEDATA>");
-
-    // Extract result count
-    const countRegex = /<Count>(.*)<\/Count>/;
-    const countMatches = output.match(countRegex);
-    const count = parseInt(countMatches[1].replace(/\s|\n/gm, ""), 10);
-    output = output.replace(countRegex, "");
-
-    const rows = output.replace(/\n|\t/gm, "").slice(output.indexOf("{"));
+    const output = await executeRawCode(code);
     try {
-      const tableData = JSON.parse(rows);
-      return { rows: tableData[`SASTableData+${tempTable}`], count };
+      return JSON.parse(output);
     } catch (e) {
       console.warn("Failed to load table data with error", e);
-      console.warn("Raw output", rows);
+      console.warn("Raw output", output);
       throw new Error(
         l10n.t(
           "An error was encountered when loading table data. This usually happens when a table is too large or the data couldn't be processed. See console for more details.",
@@ -263,18 +231,28 @@ class ItcLibraryAdapter implements LibraryAdapter {
     }
   }
 
-  protected async runCode(
-    code: string,
-    startTag: string = "",
-    endTag: string = "",
+  protected async executionHandler(
+    callback: () => Promise<string>,
   ): Promise<string> {
     try {
-      return await runCode(code, startTag, endTag);
+      return await callback();
     } catch (e) {
       onRunError(e);
       commands.executeCommand("setContext", "SAS.librariesDisplayed", false);
       return "";
     }
+  }
+
+  protected async runCode(
+    code: string,
+    startTag: string = "",
+    endTag: string = "",
+  ): Promise<string> {
+    return this.executionHandler(() => runCode(code, startTag, endTag));
+  }
+
+  protected async executeRawCode(code: string): Promise<string> {
+    return this.executionHandler(() => executeRawCode(code));
   }
 }
 

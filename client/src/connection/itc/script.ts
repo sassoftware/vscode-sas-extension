@@ -15,6 +15,7 @@ type ScriptProperties = {
 export const getScript = ({
   interopLibraryFolderPath = "",
 }: ScriptProperties) => `
+using namespace System.Collections.Generic
 function GetInteropDirectory {
   # try to load from user specified path first
   if ("${interopLibraryFolderPath}") {
@@ -51,6 +52,8 @@ try {
 
 class SASRunner{
   [System.__ComObject] $objSAS
+  [System.__ComObject] $objKeeper
+  [System.__ComObject] $dataConnection
 
   [void]ResolveSystemVars(){
     try {
@@ -88,6 +91,20 @@ class SASRunner{
             $username,
             $password
         )
+
+        $this.objKeeper = New-Object -ComObject SASObjectManager.ObjectKeeper
+        $this.objKeeper.AddObject(1, "WorkspaceObject", $this.objSAS)
+
+        $this.dataConnection = New-Object -comobject ADODB.Connection
+        $this.dataConnection.Provider = "sas.IOMProvider"
+        $this.dataConnection.Properties("SAS Workspace ID") = $this.objSAS.UniqueIdentifier 
+        $this.dataConnection.Properties("Data Source") = "Data Source Name"
+        $this.dataConnection.Properties("SAS Port") = $port
+        $this.dataConnection.Properties("SAS Machine DNS Name") = $profileHost
+        $this.dataConnection.Properties("SAS Protocol") = $protocol
+        $this.dataConnection.Properties("User ID") = $username
+        $this.dataConnection.Properties("Password") = $password
+        $this.dataConnection.Open()
 
         Write-Host "${LineCodes.SessionCreatedCode}"
     } catch {
@@ -151,6 +168,8 @@ class SASRunner{
 
   [void]Close(){
   try{
+        $this.dataConnection.Close()
+        $this.objKeeper.RemoveObject($this.objSAS)
         $this.objSAS.Close()
     }catch{
       Write-Error "${ERROR_START_TAG}Close error: $_${ERROR_END_TAG}"
@@ -227,6 +246,47 @@ class SASRunner{
     }
 
     Write-Host "${LineCodes.ResultsFetchedCode}"
+  }
+  
+  [void]GetDatasetRecords([string]$tableName, [int]$start = 0, [int]$limit = 100) {
+    $objRecordSet = New-Object -comobject ADODB.Recordset
+    $objRecordSet.ActiveConnection = $this.dataConnection # This is needed to set the properties for sas formats.
+    $objRecordSet.Properties.Item("SAS Formats").Value = "_ALL_"
+
+    $objRecordSet.Open(
+      $tableName, 
+      [System.Reflection.Missing]::Value, # Use the active connection
+      2,  # adOpenDynamic
+      1,  # adLockReadOnly
+      512 # adCmdTableDirect
+    )
+
+    $records = [List[List[object]]]::new()
+    $fields = $objRecordSet.Fields.Count
+    $objRecordSet.AbsolutePosition = $start + 1
+
+    for ($j = 0; $j -lt $limit -and $objRecordSet.EOF -eq $False; $j++) {
+      $cell = [List[object]]::new()
+      for ($i = 0; $i -lt $fields; $i++) {
+        $cell.Add($objRecordSet.Fields.Item($i).Value)
+      }
+      $records.Add($cell)
+      $objRecordSet.MoveNext()
+    }
+    $objRecordSet.Close()
+
+    $objRecordSet.Open(
+      "SELECT COUNT(1) FROM $tableName", 
+      $this.dataConnection, 3, 1, 1
+    ) # adOpenStatic, adLockReadOnly, adCmdText
+    $count = $objRecordSet.Fields.Item(0).Value
+    $objRecordSet.Close()
+
+    $result = New-Object psobject
+    $result | Add-Member -MemberType NoteProperty -Name "rows" -Value $records
+    $result | Add-Member -MemberType NoteProperty -Name "count" -Value $count
+
+    Write-Host $($result | ConvertTo-Json -Depth 10)
   }
 }
 `;
