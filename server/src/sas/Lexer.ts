@@ -1,6 +1,5 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 /* eslint-disable @typescript-eslint/consistent-type-assertions*/
 import { Model } from "./Model";
 import { SyntaxDataProvider } from "./SyntaxDataProvider";
