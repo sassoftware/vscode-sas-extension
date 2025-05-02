@@ -9,18 +9,18 @@
     "vscode": "^1.89.0"
   },
   "dependencies": {
-    "ag-grid-community": "^33.1.1",
-    "ag-grid-react": "^33.1.1",
+    "ag-grid-community": "^33.2.4",
+    "ag-grid-react": "^33.2.4",
     "axios": "^1.8.4",
     "highlight.js": "^11.11.1",
-    "marked": "^15.0.7",
+    "marked": "^15.0.11",
     "media-typer": "^1.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "ssh2": "^1.16.0",
     "uuid": "^11.1.0",
     "vscode-languageclient": "^10.0.0-next.2",
-    "zustand": "^5.0.2"
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
     "@types/react": "^19.1.2",

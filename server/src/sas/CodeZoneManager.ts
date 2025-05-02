@@ -1,6 +1,5 @@
 // Copyright © 2022, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 /* eslint-disable @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any, @typescript-eslint/dot-notation, @typescript-eslint/consistent-type-assertions */
 import { Lexer, Token } from "./Lexer";
 import { LexerEx } from "./LexerEx";
