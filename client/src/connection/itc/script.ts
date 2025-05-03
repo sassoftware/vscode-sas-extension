@@ -263,6 +263,12 @@ class SASRunner{
 
     $records = [List[List[object]]]::new()
     $fields = $objRecordSet.Fields.Count
+
+    if ($objRecordSet.EOF) {
+      Write-Host '{"rows": [], "count": 0}'
+      return
+    }
+
     $objRecordSet.AbsolutePosition = $start + 1
 
     for ($j = 0; $j -lt $limit -and $objRecordSet.EOF -eq $False; $j++) {
@@ -287,6 +293,39 @@ class SASRunner{
     $result | Add-Member -MemberType NoteProperty -Name "count" -Value $count
 
     Write-Host $($result | ConvertTo-Json -Depth 10)
+  }
+
+  [void]GetColumns([string]$libname, [string]$memname) {
+    $objRecordSet = New-Object -comobject ADODB.Recordset
+    $objRecordSet.ActiveConnection = $this.dataConnection
+    $query = @"
+      select name, type, format 
+      from sashelp.vcolumn 
+      where libname='$libname' and memname='$memname';
+"@
+    $objRecordSet.Open(
+      $query,
+      [System.Reflection.Missing]::Value, # Use the active connection
+      2, # adOpenDynamic
+      1, # adLockReadOnly
+      1  # adCmdTableDirect
+    )
+    
+    $rows = $objRecordSet.GetRows()
+
+    $objRecordSet.Close()
+
+    $parsedRows = @()
+    for ($i = 0; $i -lt $rows.GetLength(1); $i++) {
+      $parsedRow = [PSCustomObject]@{
+        index = $i + 1
+        name  = $rows[0, $i]
+        type  = $rows[1, $i]
+        format = $rows[2, $i]
+      }
+      $parsedRows += $parsedRow
+    }
+    Write-Host $($parsedRows | ConvertTo-Json -Depth 10)
   }
 }
 `;

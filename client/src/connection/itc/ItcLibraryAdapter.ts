@@ -45,33 +45,12 @@ class ItcLibraryAdapter implements LibraryAdapter {
   }
 
   public async getColumns(item: LibraryItem): Promise<ColumnCollection> {
-    const sql = `
-      %let OUTPUT;
-      proc sql;
-        select catx(',', name, type, varnum) as column into: OUTPUT separated by '~'
-        from sashelp.vcolumn
-        where libname='${item.library}' and memname='${item.name}'
-        order by varnum;
-      quit;
-      %put <COLOUTPUT> &OUTPUT; %put </COLOUTPUT>;
+    const code = `
+      $runner.GetColumns("${item.library}", "${item.name}")
     `;
-
-    const columnLines = processQueryRows(
-      await this.runCode(sql, "<COLOUTPUT>", "</COLOUTPUT>"),
-    );
-
-    const columns = columnLines.map((lineText): Column => {
-      const [name, type, index] = lineText.split(",");
-
-      return {
-        name,
-        type,
-        index: parseInt(index, 10),
-      };
-    });
-
+    const output = await executeRawCode(code);
     return {
-      items: columns,
+      items: JSON.parse(output),
       count: -1,
     };
   }
