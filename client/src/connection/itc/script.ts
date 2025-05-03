@@ -292,7 +292,7 @@ class SASRunner{
     $result | Add-Member -MemberType NoteProperty -Name "rows" -Value $records
     $result | Add-Member -MemberType NoteProperty -Name "count" -Value $count
 
-    Write-Host $($result | ConvertTo-Json -Depth 10)
+    Write-Host $(ConvertTo-Json -Depth 10 -InputObject $result -Compress)
   }
 
   [void]GetColumns([string]$libname, [string]$memname) {
@@ -326,7 +326,7 @@ class SASRunner{
       $parsedRows += $parsedRow
     }
 
-    Write-Host $($parsedRows | ConvertTo-Json -Depth 10)
+    Write-Host $(ConvertTo-Json -Depth 10 -InputObject $parsedRows -Compress)
   }
 }
 `;
