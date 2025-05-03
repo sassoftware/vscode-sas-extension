@@ -4,11 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
-## [Unreleased]
+## [v1.14.0] - 2025-04-28
 
 ### Added
 
 - Add application name to ITC-based (IOM/COM) connections ([#762](https://github.com/sassoftware/vscode-sas-extension/issues/762))
+- Ability to export SAS Notebook to HTML file ([#1417](https://github.com/sassoftware/vscode-sas-extension/pull/1417))
+
+### Fixed
+
+- Reduce overhead time when running code to Viya ([#1447](https://github.com/sassoftware/vscode-sas-extension/issues/1447))
 
 ## [v1.13.1] - 2025-03-04
 

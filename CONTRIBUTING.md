@@ -87,16 +87,18 @@ Follow these steps to update a locale for the SAS Extension for VSCode:
 
 ### Locale contributors
 
-| Language                 | VSCode Language ID | Contributor                                       |
-| ------------------------ | ------------------ | ------------------------------------------------- |
-| **Chinese (Simplified)** | zh-cn              | Wei Wu                                            |
-| **French**               | fr                 | Vincent Rejany                                    |
-| **German**               | de                 | David Weik                                        |
-| **Italian**              | it                 | Lorenzo Roccato, Simone Spagnoli, Patrizia Omodei |
-| **Japanese**             | ja                 | Masayuki Iizuka                                   |
-| **Korean**               | ko                 | Meilan Ji                                         |
-| **Portuguese (Brazil)**  | pt-br              | Mark Jordan                                       |
-| **Spanish**              | es                 | Elyana Mastache, Raquel Nunez                     |
+| Language                  | VSCode Language ID | Contributor                                       |
+| ------------------------- | ------------------ | ------------------------------------------------- |
+| **Chinese (Simplified)**  | zh-cn              | Wei Wu, XiangYu Chen                              |
+| **Chinese (Traditional)** | zh-tw              | William Huang                                     |
+| **French**                | fr                 | Valerie Law, Vincent Rejany                       |
+| **German**                | de                 | Susan Hergenhahn, David Weik                      |
+| **Italian**               | it                 | Lorenzo Roccato, Simone Spagnoli, Patrizia Omodei |
+| **Japanese**              | ja                 | Miori Oiunuma                                     |
+| **Korean**                | ko                 | Meilan Ji, SoYoung Huh                            |
+| **Polish**                | pl                 | Magda Posnik-Wiech                                |
+| **Portuguese (Brazil)**   | pt-br              | Mark Jordan                                       |
+| **Spanish**               | es                 | Elyana Mastache, Raquel Nunez                     |
 
 ## Run single test file
 

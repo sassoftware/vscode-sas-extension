@@ -32,6 +32,7 @@ import {
   updateProfile,
 } from "../commands/profile";
 import { run, runRegion, runSelected } from "../commands/run";
+import { getRestAPIs } from "../components/APIProvider";
 import { SASAuthProvider } from "../components/AuthProvider";
 import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
@@ -61,7 +62,7 @@ let client: LanguageClient;
 
 export let extensionContext: ExtensionContext | undefined;
 
-export function activate(context: ExtensionContext): void {
+export function activate(context: ExtensionContext) {
   // The server is implemented in node
   extensionContext = context;
   const serverModule = context.asAbsolutePath(
@@ -212,6 +213,10 @@ export function activate(context: ExtensionContext): void {
   profileConfig.migrateLegacyProfiles();
   triggerProfileUpdate();
   updateViewSettings();
+
+  return {
+    getRestAPIs,
+  };
 }
 
 function updateViewSettings(): void {

@@ -130,6 +130,7 @@
   "Unable to drag files from trash.": "휴지통에서 파일을 드래그할 수 없습니다.",
   "Unable to drop item \"{name}\".": "\"{name}\" 항목을 놓을 수 없습니다.",
   "Unable to empty the recycle bin.": "휴지통을 비울 수 없습니다",
+  "Unable to load required libraries.": "필요한 라이브러리를 로드할 수 없습니다.",
   "Unable to rename \"{oldName}\" to \"{newName}\".": "\"{oldName}\"을(를) \"{newName}\" 이름으로 바꿀 수 없습니다.",
   "Unable to restore file.": "파일을 복원할 수 없습니다.",
   "Unable to restore folder.": "폴더를 복원할 수 없습니다.",

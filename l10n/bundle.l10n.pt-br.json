@@ -130,6 +130,7 @@
   "Unable to drag files from trash.": "Não foi possível arrastar arquivos do lixo.",
   "Unable to drop item \"{name}\".": "Não foi possível descartar o iten \"{name}\".",
   "Unable to empty the recycle bin.": "Não foi possível esvaziar a lixeira.",
+  "Unable to load required libraries.": "Não foi possível carregar as bibliotecas necessárias",
   "Unable to rename \"{oldName}\" to \"{newName}\".": "Não foi possível renomear \"{oldName}\" a \"{newName}\".",
   "Unable to restore file.": "Não foi possível recuperar o arquivo.",
   "Unable to restore folder.": "Não foi possível recuperar a pasta.",

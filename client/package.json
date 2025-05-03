@@ -9,23 +9,23 @@
     "vscode": "^1.89.0"
   },
   "dependencies": {
-    "ag-grid-community": "^33.1.1",
-    "ag-grid-react": "^33.1.1",
+    "ag-grid-community": "^33.2.4",
+    "ag-grid-react": "^33.2.4",
     "axios": "^1.8.4",
     "highlight.js": "^11.11.1",
-    "marked": "^15.0.7",
+    "marked": "^15.0.11",
     "media-typer": "^1.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "ssh2": "^1.16.0",
     "uuid": "^11.1.0",
     "vscode-languageclient": "^10.0.0-next.2",
-    "zustand": "^5.0.2"
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "@types/ssh2": "^1.15.3",
+    "@types/ssh2": "^1.15.5",
     "@types/uuid": "^10.0.0",
     "@types/vscode": "1.82.0",
     "@types/vscode-notebook-renderer": "^1.72.3",

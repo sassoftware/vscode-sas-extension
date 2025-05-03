@@ -130,6 +130,7 @@
   "Unable to drag files from trash.": "No es posible arrastrar archivos desde la papelera.",
   "Unable to drop item \"{name}\".": "No es posible arrastrar el elemento \"{name}\".",
   "Unable to empty the recycle bin.": "No es posible vaciar la papelera de reciclaje.",
+  "Unable to load required libraries.": "No es posible cargar las librerías requeridas",
   "Unable to rename \"{oldName}\" to \"{newName}\".": "No es posible renombrar \"{oldName}\" to \"{newName}\".",
   "Unable to restore file.": "No es posible restaurar el archivo.",
   "Unable to restore folder.": "No es posible restaurar la carpeta.",
