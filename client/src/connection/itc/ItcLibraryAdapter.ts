@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "../../components/LibraryNavigator/types";
 import { Column, ColumnCollection } from "../rest/api/compute";
+import { getColumnIconType } from "../util";
 import { executeRawCode, runCode } from "./CodeRunner";
 import { Config } from "./types";
 
@@ -49,8 +50,12 @@ class ItcLibraryAdapter implements LibraryAdapter {
       $runner.GetColumns("${item.library}", "${item.name}")
     `;
     const output = await executeRawCode(code);
+    const columns = JSON.parse(output).map((column) => ({
+      ...column,
+      type: getColumnIconType(column),
+    }));
     return {
-      items: JSON.parse(output),
+      items: columns,
       count: -1,
     };
   }
