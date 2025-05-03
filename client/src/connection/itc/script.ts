@@ -325,6 +325,7 @@ class SASRunner{
       }
       $parsedRows += $parsedRow
     }
+
     Write-Host $($parsedRows | ConvertTo-Json -Depth 10)
   }
 }
