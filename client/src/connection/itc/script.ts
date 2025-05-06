@@ -308,7 +308,7 @@ class SASRunner{
       [System.Reflection.Missing]::Value, # Use the active connection
       2, # adOpenDynamic
       1, # adLockReadOnly
-      1  # adCmdTableDirect
+      1  # adCmdText
     )
     
     $rows = $objRecordSet.GetRows()
