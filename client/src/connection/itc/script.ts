@@ -97,13 +97,9 @@ class SASRunner{
 
         $this.dataConnection = New-Object -comobject ADODB.Connection
         $this.dataConnection.Provider = "sas.IOMProvider"
-        $this.dataConnection.Properties("SAS Workspace ID") = $this.objSAS.UniqueIdentifier 
-        $this.dataConnection.Properties("Data Source") = "Data Source Name"
-        $this.dataConnection.Properties("SAS Port") = $port
-        $this.dataConnection.Properties("SAS Machine DNS Name") = $profileHost
-        $this.dataConnection.Properties("SAS Protocol") = $protocol
-        $this.dataConnection.Properties("User ID") = $username
-        $this.dataConnection.Properties("Password") = $password
+        $this.dataConnection.Properties("Data Source") = (
+          "iom-id://" + $this.objSAS.UniqueIdentifier
+        )
         $this.dataConnection.Open()
 
         Write-Host "${LineCodes.SessionCreatedCode}"
