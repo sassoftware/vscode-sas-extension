@@ -11,7 +11,7 @@
   "dependencies": {
     "ag-grid-community": "^33.2.4",
     "ag-grid-react": "^33.2.4",
-    "axios": "^1.8.4",
+    "axios": "^1.9.0",
     "highlight.js": "^11.11.1",
     "marked": "^15.0.11",
     "media-typer": "^1.1.0",
@@ -29,6 +29,6 @@
     "@types/uuid": "^10.0.0",
     "@types/vscode": "1.82.0",
     "@types/vscode-notebook-renderer": "^1.72.3",
-    "@vscode/test-electron": "^2.4.1"
+    "@vscode/test-electron": "^2.5.2"
   }
 }
