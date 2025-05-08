@@ -948,7 +948,7 @@
         },
         {
           "command": "SAS.server.convertNotebookToFlow",
-          "when": "viewItem =~ /convertNotebookToFlow/ && view == serverdataprovider",
+          "when": "viewItem =~ /convertNotebookToFlow/ && view == serverdataprovider && SAS.connectionType != iom && SAS.connectionType != com ",
           "group": "actionsgroup@0"
         },
         {
@@ -1200,7 +1200,7 @@
         {
           "id": "serverdataprovider",
           "name": "%views.SAS.serverExplorer%",
-          "when": "SAS.authorized && SAS.connectionType == rest"
+          "when": "(SAS.authorized || SAS.serverDisplayed) && SAS.serverEnabled"
         },
         {
           "id": "librarydataprovider",
@@ -1210,7 +1210,7 @@
         {
           "id": "sas-content-get-started",
           "name": "%views.SAS.signIn%",
-          "when": "(!(SAS.authorized || SAS.librariesDisplayed) && SAS.canSignIn) && !SAS.connection.direct"
+          "when": "(!(SAS.authorized || SAS.librariesDisplayed || SAS.serverDisplayed) && SAS.canSignIn) && !SAS.connection.direct"
         },
         {
           "id": "sas-content-invalid-connection",

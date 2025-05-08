@@ -230,9 +230,13 @@ function updateViewSettings(): void {
     librariesEnabled: false,
     contentEnabled: false,
     librariesDisplayed: false,
+    serverEnabled: false,
+    serverDisplayed: false,
   };
   if (activeProfile) {
     settings.librariesEnabled =
+      activeProfile.connectionType !== ConnectionType.SSH;
+    settings.serverEnabled =
       activeProfile.connectionType !== ConnectionType.SSH;
     settings.contentEnabled =
       activeProfile.connectionType === ConnectionType.Rest;

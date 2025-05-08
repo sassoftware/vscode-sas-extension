@@ -17,3 +17,6 @@ export const decodeEntities = (msg: string): string => {
 
 export const escapePowershellString = (unescapedString: string): string =>
   unescapedString.replace(/(`|"|'|\$|\(|\)|%|{|}|\[|\])/g, "`$1");
+
+export const getDirectorySeparator = (path: string): string =>
+  path.lastIndexOf("/") !== -1 ? "/" : "\\";

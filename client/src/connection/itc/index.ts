@@ -27,9 +27,13 @@ import {
   WORK_DIR_END_TAG,
   WORK_DIR_START_TAG,
 } from "./const";
-import { scriptContent } from "./script";
+import { getScript } from "./script";
 import { Config, ITCProtocol, LineCodes } from "./types";
-import { decodeEntities, escapePowershellString } from "./util";
+import {
+  decodeEntities,
+  escapePowershellString,
+  getDirectorySeparator,
+} from "./util";
 
 const LogLineTypes: LogLineTypeEnum[] = [
   "normal",
@@ -110,9 +114,16 @@ export class ITCSession extends Session {
     );
     this._shellProcess.stdout.on("data", this.onShellStdOut);
     this._shellProcess.stderr.on("data", this.onShellStdErr);
-    this._shellProcess.stdin.write(scriptContent + "\n", this.onWriteComplete);
     this._shellProcess.stdin.write(
-      `$runner = New-Object -TypeName SASRunner -ArgumentList "${escapePowershellString(interopLibraryFolderPath || "")}"\n`,
+      getScript({
+        interopLibraryFolderPath: escapePowershellString(
+          interopLibraryFolderPath || "",
+        ),
+      }) + "\n",
+      this.onWriteComplete,
+    );
+    this._shellProcess.stdin.write(
+      `$runner = New-Object -TypeName SASRunner\n`,
       this.onWriteComplete,
     );
 
@@ -241,6 +252,24 @@ export class ITCSession extends Session {
       }
 
       await this.fetchLog(skipPageHeaders);
+    });
+
+    return runPromise;
+  };
+
+  public execute = async (code: string): Promise<RunResult> => {
+    const runPromise = new Promise<RunResult>((resolve, reject) => {
+      this._runResolve = resolve;
+      this._runReject = reject;
+    });
+
+    this._html5FileName = "";
+    this._pollingForLogResults = true;
+    const codeToExecute = `${code}\nWrite-Host "${LineCodes.RunEndCode}"\n`;
+    this._shellProcess.stdin.write(codeToExecute, async (error) => {
+      if (error) {
+        this._runReject(error);
+      }
     });
 
     return runPromise;
@@ -534,8 +563,7 @@ export class ITCSession extends Session {
       globalStorageUri,
       `${this._html5FileName}.htm`,
     );
-    const directorySeparator =
-      this._workDirectory.lastIndexOf("/") !== -1 ? "/" : "\\";
+    const directorySeparator = getDirectorySeparator(this._workDirectory);
     const filePath =
       this._config.protocol === ITCProtocol.COM
         ? resolve(this._workDirectory, this._html5FileName + ".htm")
