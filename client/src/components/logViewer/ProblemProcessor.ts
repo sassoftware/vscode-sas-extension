@@ -537,7 +537,7 @@ function processRawLocationDesc(
   });
 
   locations.map((location) => {
-    location.lineNumber = lineNumber - offset.lineOffset;
+    location.lineNumber = lineNumber;
     location.startColumn =
       location.startColumn - offset.columnOffset + columnCorrection;
     location.endColumn =
@@ -664,8 +664,7 @@ function processGeneralLocation(
     return null;
   }
 
-  const lineNumber =
-    decomposeCodeLogLine(sourceCodeLines[0]).lineNumber - offset.lineOffset;
+  const lineNumber = decomposeCodeLogLine(sourceCodeLines[0]).lineNumber;
   const wholeLine = sourceCodeLines.reduce(
     (accumulator, line) => accumulator + line.substring(offset.columnOffset),
   );

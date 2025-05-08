@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 import {
   ColorThemeKind,
+  Hover,
   Position,
   Selection,
   TextDocument,
+  commands,
   window,
 } from "vscode";
 
@@ -40,6 +42,29 @@ export function getCodeDocumentConstructionParameters(
     htmlStyle: getHtmlStyleValue(),
     outputHtml: isOutputHtmlEnabled(),
     uuid,
+    checkKeyword: async (lineNumber: number, ...keywords: string[]) => {
+      const codeLines = textDocument.getText().split("\n");
+      const codeLine = codeLines[lineNumber];
+
+      const regExp = new RegExp(`\\b(${keywords.join("|")})\\b`, "gi");
+      const matches = Array.from(codeLine.matchAll(regExp));
+
+      if (matches.length === 0) {
+        return false;
+      }
+
+      for (const match of matches) {
+        const [actualHover]: Hover[] = await commands.executeCommand(
+          "vscode.executeHoverProvider",
+          textDocument.uri,
+          new Position(lineNumber, match.index),
+        );
+        if (actualHover !== undefined) {
+          return true;
+        }
+      }
+      return false;
+    },
   };
 }
 
