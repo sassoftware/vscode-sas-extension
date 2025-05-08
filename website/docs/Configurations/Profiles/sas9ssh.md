@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # SAS 9.4 (remote - SSH) Connection Profile
 
-This connection method uses SSH to authenticate to a SAS Server and run SAS Code using [Interactive Line Mode](https://go.documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/hostunx/n16ui9f6dacn8pn1t0y2hgxgi7wa.htm). A number of methods are available to create a secure connection to the SAS 9.4 server.
+To use a SAS 9.4 (remote - SSH) connection type, your SAS server must be running on Unix or Linux. The SSH connection method uses SSH to authenticate to a SAS server and runs SAS code using [Interactive Line Mode](https://go.documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/hostunx/n16ui9f6dacn8pn1t0y2hgxgi7wa.htm). Several authentication methods are available to create a secure connection to the SAS 9.4 server.
 
 :::note
 
