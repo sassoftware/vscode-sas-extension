@@ -6,24 +6,14 @@ import {
   TableData,
 } from "../../../src/components/LibraryNavigator/types";
 import * as connection from "../../../src/connection";
-import ItcLibraryAdapter from "../../../src/connection/itc/ItcLibraryAdapter";
 import { MockSession } from "./Coderunner.test";
 
-const mockOutput = (now) => ({
-  COLOUTPUT: `
-<COLOUTPUT>
-first,char,1~last,char,2
-</COLOUTPUT>`,
+const mockOutput = () => ({
   LIBOUTPUT: `
 <LIBOUTPUT>
 test1,yes~test2,no
 </LIBOUTPUT>
 `,
-  TABLEDATA: `
-<TABLEDATA>
-<Count>1234</Count>
-{"SASTableData+TEST${now.getHours()}${now.getMinutes()}${now.getSeconds()}0": [["Peter","Parker"],["Tony","Stark"]]}
-</TABLEDATA>`,
   "SELECT COUNT(1)": `<Count>1234</Count>`,
   TABLEOUTPUT: `
   <TABLEOUTPUT>
@@ -31,20 +21,52 @@ test1~test2
 </TABLEOUTPUT>`,
 });
 
+class DatasetMockSession extends MockSession {
+  private outputs: Array<string>;
+  private calls = 0;
+  public constructor(outputs: Array<string>) {
+    super();
+    this.outputs = outputs;
+  }
+  protected async execute(): Promise<void> {
+    const output = `<mocked-uuid>${this.outputs[this.calls]}</mocked-uuid>`;
+    this.calls += 1;
+    this._logFn(output.split("\n").map((line) => ({ line, type: "normal" })));
+  }
+}
+
+// I know this is not the best way to do it, but I don't know how to do it properly without migrating everything to jest.
+// For the tests to work, we need to mock the uuid library to return a predictable value.
+async function getPredictableAdaptor() {
+  delete require.cache[
+    require.resolve("../../../src/connection/itc/CodeRunner")
+  ];
+  // @ts-expect-error Mock
+  require.cache[require.resolve("uuid")] = {
+    exports: {
+      v4: () => "mocked-uuid",
+    },
+  };
+  const module = await import("../../../src/connection/itc/ItcLibraryAdapter");
+  return module.default;
+}
+
 describe("ItcLibraryAdapter tests", () => {
   let now;
   let clock;
   let sessionStub;
-  before(() => {
+  beforeEach(() => {
     now = new Date();
     clock = sinon.useFakeTimers(now.getTime());
     sessionStub = sinon.stub(connection, "getSession");
-    sessionStub.returns(new MockSession(mockOutput(now)));
+    sessionStub.returns(new MockSession(mockOutput()));
   });
 
-  after(() => {
+  afterEach(() => {
     clock.restore();
     sessionStub.restore();
+    // Cleaning up after getPredictableAdaptor
+    delete require.cache[require.resolve("uuid")];
   });
 
   it("fetches columns", async () => {
@@ -56,19 +78,29 @@ describe("ItcLibraryAdapter tests", () => {
       readOnly: true,
     };
 
+    const ItcLibraryAdapter = await getPredictableAdaptor();
     const libraryAdapter = new ItcLibraryAdapter();
     const expectedColumns = [
       {
         name: "first",
         type: "char",
+        format: "$8.",
         index: 1,
       },
       {
-        name: "last",
-        type: "char",
+        name: "date",
+        type: "date",
+        format: "YYMMDD10.",
         index: 2,
       },
     ];
+
+    const mockOutput = JSON.stringify([
+      { index: 1, name: "first", type: "char", format: "$8." },
+      { index: 2, name: "date", type: "num", format: "YYMMDD10." },
+    ]);
+
+    sessionStub.returns(new DatasetMockSession([mockOutput]));
 
     const response = await libraryAdapter.getColumns(item);
 
@@ -77,6 +109,7 @@ describe("ItcLibraryAdapter tests", () => {
   });
 
   it("loads libraries", async () => {
+    const ItcLibraryAdapter = await getPredictableAdaptor();
     const libraryAdapter = new ItcLibraryAdapter();
     const expectedLibraries: LibraryItem[] = [
       {
@@ -110,6 +143,17 @@ describe("ItcLibraryAdapter tests", () => {
       readOnly: true,
     };
 
+    const mockOutput = JSON.stringify({
+      rows: [
+        ["Peter", "Parker"],
+        ["Tony", "Stark"],
+      ],
+      count: 1234,
+    });
+
+    const ItcLibraryAdapter = await getPredictableAdaptor();
+    sessionStub.returns(new DatasetMockSession([mockOutput]));
+
     const libraryAdapter = new ItcLibraryAdapter();
     const expectedTableData: TableData = {
       rows: [
@@ -132,6 +176,24 @@ describe("ItcLibraryAdapter tests", () => {
       name: "TEST",
       readOnly: true,
     };
+
+    const mockOutputColumn = JSON.stringify([
+      { index: 1, name: "first", type: "char", format: "$8." },
+      { index: 2, name: "last", type: "num", format: "YYMMDD10." },
+    ]);
+
+    const mockOutputData = JSON.stringify({
+      rows: [
+        ["Peter", "Parker"],
+        ["Tony", "Stark"],
+      ],
+      count: 1234,
+    });
+
+    const ItcLibraryAdapter = await getPredictableAdaptor();
+    sessionStub.returns(
+      new DatasetMockSession([mockOutputColumn, mockOutputData]),
+    );
 
     const libraryAdapter = new ItcLibraryAdapter();
     const expectedTableData: TableData = {
@@ -156,7 +218,7 @@ describe("ItcLibraryAdapter tests", () => {
       name: "TEST",
       readOnly: true,
     };
-
+    const ItcLibraryAdapter = await getPredictableAdaptor();
     const libraryAdapter = new ItcLibraryAdapter();
 
     const response = await libraryAdapter.getTableRowCount(item);
@@ -171,6 +233,7 @@ describe("ItcLibraryAdapter tests", () => {
       type: "library",
       readOnly: true,
     };
+    const ItcLibraryAdapter = await getPredictableAdaptor();
     const libraryAdapter = new ItcLibraryAdapter();
     const expectedTables: LibraryItem[] = [
       {
