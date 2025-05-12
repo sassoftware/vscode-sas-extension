@@ -111,7 +111,7 @@ class ITCSASServerAdapter implements ContentAdapter {
       const { success, data } = await this.execute(ScriptActions.CreateFile, {
         folderPath: parentItem.uri,
         fileName,
-        content: new TextDecoder().decode(buffer) || "",
+        content: buffer ? Buffer.from(buffer).toString("base64") : "",
       });
 
       if (!success) {
@@ -216,14 +216,14 @@ class ITCSASServerAdapter implements ContentAdapter {
     }
 
     const file = await workspace.fs.readFile(outputFile);
-    const fileContents = (file || "").toString();
     await workspace.fs.delete(outputFile);
-    return fileContents;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return file as unknown as string;
   }
 
   public async getContentOfUri(uri: Uri): Promise<string> {
     const item = await this.getItemAtPath(getResourceId(uri));
-    return await this.getContentOfItem(item);
+    return ((await this.getContentOfItem(item)) || "").toString();
   }
 
   public async getItemOfUri(uri: Uri): Promise<ContentItem> {
