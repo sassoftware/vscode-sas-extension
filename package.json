@@ -1300,7 +1300,7 @@
     "buffer": "6.0.3",
     "chai": "^4.4.1",
     "concurrently": "^9.1.2",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.25.4",
     "cross-env": "^7.0.3",
     "eslint": "^9.26.0",
     "eslint-plugin-react": "^7.37.5",
