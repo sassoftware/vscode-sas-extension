@@ -103,6 +103,7 @@ export const convertStaticFolderToContentItem = (
     },
   };
   item.contextValue = resourceType(item);
+  item.typeName = staticFolder.type;
   return item;
 };
 
