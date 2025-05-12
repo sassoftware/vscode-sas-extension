@@ -1,5 +1,7 @@
 import { expect } from "chai";
+import proxyquire from "proxyquire";
 import sinon from "sinon";
+import * as uuid from "uuid";
 
 import {
   LibraryItem,
@@ -34,39 +36,36 @@ class DatasetMockSession extends MockSession {
     this._logFn(output.split("\n").map((line) => ({ line, type: "normal" })));
   }
 }
-
-// I know this is not the best way to do it, but I don't know how to do it properly without migrating everything to jest.
-// For the tests to work, we need to mock the uuid library to return a predictable value.
-async function getPredictableAdaptor() {
-  delete require.cache[
-    require.resolve("../../../src/connection/itc/CodeRunner")
-  ];
-  // @ts-expect-error Mock
-  require.cache[require.resolve("uuid")] = {
-    exports: {
-      v4: () => "mocked-uuid",
-    },
-  };
-  const module = await import("../../../src/connection/itc/ItcLibraryAdapter");
-  return module.default;
-}
-
 describe("ItcLibraryAdapter tests", () => {
   let now;
   let clock;
   let sessionStub;
+  let uuidStub: sinon.SinonStub;
+  let ItcLibraryAdapter;
   beforeEach(() => {
     now = new Date();
     clock = sinon.useFakeTimers(now.getTime());
     sessionStub = sinon.stub(connection, "getSession");
     sessionStub.returns(new MockSession(mockOutput()));
+    uuidStub = sinon.stub(uuid, "v4");
+    uuidStub.returns("mocked-uuid");
+    const codeRunner = proxyquire("../../../src/connection/itc/CodeRunner", {
+      uuid: {
+        v4: uuidStub,
+      },
+    });
+    ItcLibraryAdapter = proxyquire(
+      "../../../src/connection/itc/ItcLibraryAdapter",
+      {
+        "./CodeRunner": codeRunner,
+      },
+    ).default;
   });
 
   afterEach(() => {
     clock.restore();
     sessionStub.restore();
-    // Cleaning up after getPredictableAdaptor
-    delete require.cache[require.resolve("uuid")];
+    uuidStub.restore();
   });
 
   it("fetches columns", async () => {
@@ -78,7 +77,6 @@ describe("ItcLibraryAdapter tests", () => {
       readOnly: true,
     };
 
-    const ItcLibraryAdapter = await getPredictableAdaptor();
     const libraryAdapter = new ItcLibraryAdapter();
     const expectedColumns = [
       {
@@ -109,7 +107,6 @@ describe("ItcLibraryAdapter tests", () => {
   });
 
   it("loads libraries", async () => {
-    const ItcLibraryAdapter = await getPredictableAdaptor();
     const libraryAdapter = new ItcLibraryAdapter();
     const expectedLibraries: LibraryItem[] = [
       {
@@ -151,7 +148,6 @@ describe("ItcLibraryAdapter tests", () => {
       count: 1234,
     });
 
-    const ItcLibraryAdapter = await getPredictableAdaptor();
     sessionStub.returns(new DatasetMockSession([mockOutput]));
 
     const libraryAdapter = new ItcLibraryAdapter();
@@ -190,7 +186,6 @@ describe("ItcLibraryAdapter tests", () => {
       count: 1234,
     });
 
-    const ItcLibraryAdapter = await getPredictableAdaptor();
     sessionStub.returns(
       new DatasetMockSession([mockOutputColumn, mockOutputData]),
     );
@@ -218,7 +213,6 @@ describe("ItcLibraryAdapter tests", () => {
       name: "TEST",
       readOnly: true,
     };
-    const ItcLibraryAdapter = await getPredictableAdaptor();
     const libraryAdapter = new ItcLibraryAdapter();
 
     const response = await libraryAdapter.getTableRowCount(item);
@@ -233,7 +227,6 @@ describe("ItcLibraryAdapter tests", () => {
       type: "library",
       readOnly: true,
     };
-    const ItcLibraryAdapter = await getPredictableAdaptor();
     const libraryAdapter = new ItcLibraryAdapter();
     const expectedTables: LibraryItem[] = [
       {
