@@ -14,7 +14,7 @@ import {
   WORK_DIR_END_TAG,
   WORK_DIR_START_TAG,
 } from "../../../src/connection/itc/const";
-import { scriptContent } from "../../../src/connection/itc/script";
+import { getScript } from "../../../src/connection/itc/script";
 import { ITCProtocol, LineCodes } from "../../../src/connection/itc/types";
 import { Session } from "../../../src/connection/session";
 import { extensionContext } from "../../../src/node/extension";
@@ -101,9 +101,9 @@ describe("ITC connection", () => {
       ).to.be.true;
 
       //using args here allows use of deep equal, that generates a concise diff in the test output on failures
-      expect(stdinStub.args[0][0]).to.deep.equal(scriptContent + "\n");
+      expect(stdinStub.args[0][0]).to.deep.equal(getScript({}) + "\n");
       expect(stdinStub.args[1][0]).to.deep.equal(
-        '$runner = New-Object -TypeName SASRunner -ArgumentList ""\n',
+        "$runner = New-Object -TypeName SASRunner\n",
       );
 
       expect(stdinStub.args[2][0]).to.deep.equal(

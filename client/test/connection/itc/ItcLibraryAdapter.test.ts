@@ -1,29 +1,21 @@
 import { expect } from "chai";
+import proxyquire from "proxyquire";
 import sinon from "sinon";
+import * as uuid from "uuid";
 
 import {
   LibraryItem,
   TableData,
 } from "../../../src/components/LibraryNavigator/types";
 import * as connection from "../../../src/connection";
-import ItcLibraryAdapter from "../../../src/connection/itc/ItcLibraryAdapter";
 import { MockSession } from "./Coderunner.test";
 
-const mockOutput = (now) => ({
-  COLOUTPUT: `
-<COLOUTPUT>
-first,char,1~last,char,2
-</COLOUTPUT>`,
+const mockOutput = () => ({
   LIBOUTPUT: `
 <LIBOUTPUT>
 test1,yes~test2,no
 </LIBOUTPUT>
 `,
-  TABLEDATA: `
-<TABLEDATA>
-<Count>1234</Count>
-{"SASTableData+TEST${now.getHours()}${now.getMinutes()}${now.getSeconds()}0": [["Peter","Parker"],["Tony","Stark"]]}
-</TABLEDATA>`,
   "SELECT COUNT(1)": `<Count>1234</Count>`,
   TABLEOUTPUT: `
   <TABLEOUTPUT>
@@ -31,20 +23,49 @@ test1~test2
 </TABLEOUTPUT>`,
 });
 
+class DatasetMockSession extends MockSession {
+  private outputs: Array<string>;
+  private calls = 0;
+  public constructor(outputs: Array<string>) {
+    super();
+    this.outputs = outputs;
+  }
+  protected async execute(): Promise<void> {
+    const output = `<mocked-uuid>${this.outputs[this.calls]}</mocked-uuid>`;
+    this.calls += 1;
+    this._logFn(output.split("\n").map((line) => ({ line, type: "normal" })));
+  }
+}
 describe("ItcLibraryAdapter tests", () => {
   let now;
   let clock;
   let sessionStub;
-  before(() => {
+  let uuidStub: sinon.SinonStub;
+  let ItcLibraryAdapter;
+  beforeEach(() => {
     now = new Date();
     clock = sinon.useFakeTimers(now.getTime());
     sessionStub = sinon.stub(connection, "getSession");
-    sessionStub.returns(new MockSession(mockOutput(now)));
+    sessionStub.returns(new MockSession(mockOutput()));
+    uuidStub = sinon.stub(uuid, "v4");
+    uuidStub.returns("mocked-uuid");
+    const codeRunner = proxyquire("../../../src/connection/itc/CodeRunner", {
+      uuid: {
+        v4: uuidStub,
+      },
+    });
+    ItcLibraryAdapter = proxyquire(
+      "../../../src/connection/itc/ItcLibraryAdapter",
+      {
+        "./CodeRunner": codeRunner,
+      },
+    ).default;
   });
 
-  after(() => {
+  afterEach(() => {
     clock.restore();
     sessionStub.restore();
+    uuidStub.restore();
   });
 
   it("fetches columns", async () => {
@@ -61,14 +82,23 @@ describe("ItcLibraryAdapter tests", () => {
       {
         name: "first",
         type: "char",
+        format: "$8.",
         index: 1,
       },
       {
-        name: "last",
-        type: "char",
+        name: "date",
+        type: "date",
+        format: "YYMMDD10.",
         index: 2,
       },
     ];
+
+    const mockOutput = JSON.stringify([
+      { index: 1, name: "first", type: "char", format: "$8." },
+      { index: 2, name: "date", type: "num", format: "YYMMDD10." },
+    ]);
+
+    sessionStub.returns(new DatasetMockSession([mockOutput]));
 
     const response = await libraryAdapter.getColumns(item);
 
@@ -110,6 +140,16 @@ describe("ItcLibraryAdapter tests", () => {
       readOnly: true,
     };
 
+    const mockOutput = JSON.stringify({
+      rows: [
+        ["Peter", "Parker"],
+        ["Tony", "Stark"],
+      ],
+      count: 1234,
+    });
+
+    sessionStub.returns(new DatasetMockSession([mockOutput]));
+
     const libraryAdapter = new ItcLibraryAdapter();
     const expectedTableData: TableData = {
       rows: [
@@ -132,6 +172,23 @@ describe("ItcLibraryAdapter tests", () => {
       name: "TEST",
       readOnly: true,
     };
+
+    const mockOutputColumn = JSON.stringify([
+      { index: 1, name: "first", type: "char", format: "$8." },
+      { index: 2, name: "last", type: "num", format: "YYMMDD10." },
+    ]);
+
+    const mockOutputData = JSON.stringify({
+      rows: [
+        ["Peter", "Parker"],
+        ["Tony", "Stark"],
+      ],
+      count: 1234,
+    });
+
+    sessionStub.returns(
+      new DatasetMockSession([mockOutputColumn, mockOutputData]),
+    );
 
     const libraryAdapter = new ItcLibraryAdapter();
     const expectedTableData: TableData = {
@@ -156,7 +213,6 @@ describe("ItcLibraryAdapter tests", () => {
       name: "TEST",
       readOnly: true,
     };
-
     const libraryAdapter = new ItcLibraryAdapter();
 
     const response = await libraryAdapter.getTableRowCount(item);
