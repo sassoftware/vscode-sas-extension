@@ -11,7 +11,7 @@ import {
   TableData,
   TableRow,
 } from "../../components/LibraryNavigator/types";
-import { Column, ColumnCollection } from "../rest/api/compute";
+import { ColumnCollection } from "../rest/api/compute";
 import { getColumnIconType } from "../util";
 import { executeRawCode, runCode } from "./CodeRunner";
 import { Config } from "./types";
@@ -249,11 +249,6 @@ const processQueryRows = (response: string): string[] => {
   return processedResponse
     .split("~")
     .filter((value, index, array) => array.indexOf(value) === index);
-};
-
-const hms = () => {
-  const date = new Date();
-  return `${date.getHours()}${date.getMinutes()}${date.getSeconds()}`;
 };
 
 export default ItcLibraryAdapter;
