@@ -317,7 +317,7 @@ export class ProblemProcessor {
     const unclaimedLocations = [];
     locations.forEach((location) => {
       const problemNumber = location.problemNumber;
-      const lastFoundIndex = lastIndexMap.get(problemNumber) ?? 0;
+      const lastFoundIndex = lastIndexMap.get(problemNumber) ?? -1;
       let currentIndex = (lastFoundIndex + 1) % rawProblems.length;
       let foundIndex = undefined;
       let count = 0;
