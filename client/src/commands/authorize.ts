@@ -41,6 +41,7 @@ export const checkProfileAndAuthorize =
       case ConnectionType.IOM:
       case ConnectionType.COM:
         commands.executeCommand("setContext", "SAS.librariesDisplayed", true);
+        commands.executeCommand("setContext", "SAS.serverDisplayed", true);
         libraryNavigator.refresh();
         return finishAuthorization(profileConfig);
       default:

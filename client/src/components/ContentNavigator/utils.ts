@@ -9,9 +9,10 @@ import {
   window,
 } from "vscode";
 
+import { resourceType } from "../../connection/rest/util";
 import { DEFAULT_FILE_CONTENT_TYPE } from "./const";
 import mimeTypes from "./mime-types";
-import { ContentItem } from "./types";
+import { ContentItem, Permission } from "./types";
 
 export const isContainer = (item: ContentItem): boolean =>
   item.fileStat.type === FileType.Directory;
@@ -84,6 +85,28 @@ export const createStaticFolder = (
   ],
 });
 
+export const convertStaticFolderToContentItem = (
+  staticFolder: ReturnType<typeof createStaticFolder>,
+  permission: Permission,
+): ContentItem => {
+  const item: ContentItem = {
+    ...staticFolder,
+    uid: staticFolder.id,
+    creationTimeStamp: 0,
+    modifiedTimeStamp: 0,
+    permission,
+    fileStat: {
+      ctime: 0,
+      mtime: 0,
+      size: 0,
+      type: FileType.Directory,
+    },
+  };
+  item.contextValue = resourceType(item);
+  item.typeName = staticFolder.type;
+  return item;
+};
+
 export const getEditorTabsForItem = (item: ContentItem) => {
   const fileUri = item.vscUri;
   const tabs: Tab[] = window.tabGroups.all.map((tg) => tg.tabs).flat();
@@ -94,3 +117,16 @@ export const getEditorTabsForItem = (item: ContentItem) => {
       tab.input.uri.query.includes(fileUri.query), // compare the file id
   );
 };
+
+export const sortedContentItems = (items: ContentItem[]) =>
+  items.sort((a, b) => {
+    const aIsDirectory = a.fileStat?.type === FileType.Directory;
+    const bIsDirectory = b.fileStat?.type === FileType.Directory;
+    if (aIsDirectory && !bIsDirectory) {
+      return -1;
+    } else if (!aIsDirectory && bIsDirectory) {
+      return 1;
+    } else {
+      return a.name.localeCompare(b.name);
+    }
+  });

@@ -10,6 +10,16 @@ export enum LineCodes {
   LogLineType = "--vscode-sas-extension-log-line-type--",
 }
 
+export enum ScriptActions {
+  CreateDirectory = `$runner.CreateDirectory($folderPath, $folderName)`,
+  CreateFile = `$runner.CreateFile($folderPath, $fileName, $content)`,
+  DeleteFile = `$runner.DeleteFile($filePath)`,
+  FetchFileContent = `$runner.FetchFileContent($filePath, $outputFile)`,
+  GetChildItems = `$runner.GetChildItems($path)`,
+  RenameFile = `$runner.RenameFile($oldPath,$newPath,$newName)`,
+  UpdateFile = `$runner.UpdateFile($filePath, $content)`,
+}
+
 export enum ITCProtocol {
   COM = 0,
   IOMBridge = 2,
@@ -25,3 +35,13 @@ export interface Config extends BaseConfig {
   protocol: ITCProtocol;
   interopLibraryFolderPath?: string;
 }
+
+export type PowershellResponse = {
+  category: number;
+  creationTimeStamp?: string;
+  modifiedTimeStamp: string;
+  name: string;
+  parentFolderUri: string;
+  size: number;
+  uri: string;
+};
