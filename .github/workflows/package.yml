@@ -16,7 +16,7 @@ jobs:
           node-version-file: ".nvmrc"
           cache: "npm"
       - run: npm ci
-      - run: npx @vscode/vsce package
+      - run: npx @vscode/vsce package --allow-package-secrets privatekey
       - uses: actions/upload-artifact@v4
         with:
           path: ./*.vsix
