@@ -18,7 +18,7 @@ jobs:
       - run: npm run copyright:check
       - run: xvfb-run -a npm run test
         if: runner.os == 'Linux'
-      - run: npx @vscode/vsce package --allow-package-secrets privatekey
+      - run: npx @vscode/vsce package
       - uses: actions/upload-artifact@v4
         with:
           path: ./*.vsix
