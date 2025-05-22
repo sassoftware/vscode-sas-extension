@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Add sas file system support for ITC-based (IOM/COM) connections ([#1388](https://github.com/sassoftware/vscode-sas-extension/pull/1388))
+- Add Traditional Chinese and Polish translations ([#1453](https://github.com/sassoftware/vscode-sas-extension/pull/1453))
 
 ## [v1.14.0] - 2025-04-28
 
