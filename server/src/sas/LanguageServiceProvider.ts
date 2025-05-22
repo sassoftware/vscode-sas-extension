@@ -10,7 +10,7 @@ import { Range, TextDocument } from "vscode-languageserver-textdocument";
 import { CodeZoneManager } from "./CodeZoneManager";
 import { CompletionProvider } from "./CompletionProvider";
 import { FormatOnTypeProvider } from "./FormatOnTypeProvider";
-import { FoldingBlock } from "./LexerEx";
+import { FoldingBlock, LexerEx } from "./LexerEx";
 import { Model } from "./Model";
 import type { LibService } from "./SyntaxDataProvider";
 import { SyntaxProvider } from "./SyntaxProvider";
@@ -203,6 +203,7 @@ export class LanguageServiceProvider {
           result.push({
             startLine: block.startLine,
             endLine: block.endFoldingLine,
+            kind: block.type === LexerEx.SEC_TYPE.CUSTOM ? "region" : undefined,
           });
         }
         i = rootBlock.endFoldingLine;

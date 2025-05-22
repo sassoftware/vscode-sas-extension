@@ -144,14 +144,13 @@ export const runServer = (
       async sas(languageService) {
         if (
           params.context?.triggerCharacter &&
-          params.context.triggerCharacter !== " "
+          params.context.triggerCharacter !== " " &&
+          params.context.triggerCharacter !== "."
         ) {
           return undefined;
         }
         const completionList =
-          await languageService.completionProvider.getCompleteItems(
-            params.position,
-          );
+          await languageService.completionProvider.getCompleteItems(params);
         if (completionList) {
           for (const item of completionList.items) {
             if (!item.data) {

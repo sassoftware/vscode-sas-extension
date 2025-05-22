@@ -2559,9 +2559,10 @@ export class SyntaxDataProvider {
     return _getKeywords(/*'statisticsKeywords'*/ "stat-kw", cb);
   }
   getDSStatements(cb?: (data: string[]) => void) {
+    const globalProcStatements = this.getGlobalProcedureStatements();
     return _tryToLoadStatementsFromPubs("datastep", cb, function () {
       const data = _procStmtObj("datastep");
-      return data[ID_STMTS];
+      return data[ID_STMTS].concat(globalProcStatements);
     });
   }
   getDSOptions(cb?: (data: string[]) => void) {
