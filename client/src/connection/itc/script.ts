@@ -133,7 +133,7 @@ class SASRunner{
       if($errVals.Length -gt 0){
           throw $errVals
       }
-    } catch{
+    } catch {
         Write-Error "${ERROR_START_TAG}$Error[0].Exception.Message${ERROR_END_TAG}"
     }
   }
@@ -173,7 +173,7 @@ class SASRunner{
   }
 
   [void]Cancel(){
-  try{
+    try{
         $this.objSAS.LanguageService.Cancel()
         Write-Host "${LineCodes.RunCancelledCode}"
       }catch{

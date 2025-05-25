@@ -29,7 +29,11 @@ import {
 } from "./const";
 import { getScript } from "./script";
 import { Config, ITCProtocol, LineCodes } from "./types";
-import { decodeEntities, escapePowershellString } from "./util";
+import {
+  decodeEntities,
+  escapePowershellString,
+  getDirectorySeparator,
+} from "./util";
 
 const LogLineTypes: LogLineTypeEnum[] = [
   "normal",
@@ -559,8 +563,7 @@ export class ITCSession extends Session {
       globalStorageUri,
       `${this._html5FileName}.htm`,
     );
-    const directorySeparator =
-      this._workDirectory.lastIndexOf("/") !== -1 ? "/" : "\\";
+    const directorySeparator = getDirectorySeparator(this._workDirectory);
     const filePath =
       this._config.protocol === ITCProtocol.COM
         ? resolve(this._workDirectory, this._html5FileName + ".htm")

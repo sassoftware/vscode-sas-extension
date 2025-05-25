@@ -585,7 +585,7 @@ class ContentDataProvider
     } else if (target.type === FAVORITES_FOLDER_TYPE) {
       success = await this.addToMyFavorites(item);
     } else {
-      const targetUri = target.resourceId;
+      const targetUri = target.resourceId ?? target.uri;
       success = await this.moveItem(item, targetUri);
       if (success) {
         this.refresh();
