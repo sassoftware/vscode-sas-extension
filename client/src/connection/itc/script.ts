@@ -254,7 +254,7 @@ class SASRunner{
       [System.Reflection.Missing]::Value, # Use the active connection
       2,  # adOpenDynamic
       1,  # adLockReadOnly
-      512 # adCmdTableDirect 
+      512 # adCmdTableDirect
     )
 
     $records = [List[List[object]]]::new()
