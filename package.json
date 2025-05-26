@@ -1292,7 +1292,7 @@
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^22.15.19",
+    "@types/node": "^22.15.21",
     "@types/sinon": "^17.0.4",
     "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.32.1",
