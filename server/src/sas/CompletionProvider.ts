@@ -5,6 +5,7 @@ import {
   CompletionItem,
   CompletionItemKind,
   CompletionList,
+  CompletionParams,
   Hover,
   MarkupKind,
   SignatureHelp,
@@ -611,12 +612,25 @@ export class CompletionProvider {
     });
   }
 
-  getCompleteItems(position: Position): Promise<CompletionList | undefined> {
+  getCompleteItems(
+    params: CompletionParams,
+  ): Promise<CompletionList | undefined> {
     return new Promise((resolve) => {
-      this._getZone(position);
+      this._getZone(params.position);
       const prefix = this.popupContext.prefix;
 
       this._loadAutoCompleteItems(this.popupContext.zone, (data) => {
+        if (
+          params.context?.triggerCharacter === "." &&
+          data &&
+          data[0] &&
+          (typeof data[0] === "string" ||
+            (data[0].type !== "DATA" && data[0].type !== "VIEW"))
+        ) {
+          // only data list can be triggered by "."
+          resolve(undefined);
+          return;
+        }
         const items = data?.map((item) => ({
           label: processLabelCase(
             typeof item === "string" ? item : item.name,
