@@ -6,7 +6,7 @@ import { runCode } from "../../../src/connection/itc/CodeRunner";
 import { Session } from "../../../src/connection/session";
 
 export class MockSession extends Session {
-  private _logFn;
+  protected _logFn;
   private _runMap: Record<string, string> | undefined;
   public sasSystemLine = "The Sas System";
 
