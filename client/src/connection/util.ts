@@ -78,19 +78,21 @@ export const getColumnIconType = ({
       format.includes(f),
     );
 
-  if (type === "num") {
-    if (isDateFormat()) {
-      return "date";
-    }
-    if (isTimeFormat()) {
-      return "time";
-    }
-    if (isDateTimeFormat()) {
-      return "datetime";
-    }
-    if (isCurrencyFormat()) {
-      return "currency";
-    }
+  if (type !== "num") {
+    return type;
+  }
+
+  if (isDateFormat()) {
+    return "date";
+  }
+  if (isTimeFormat()) {
+    return "time";
+  }
+  if (isDateTimeFormat()) {
+    return "datetime";
+  }
+  if (isCurrencyFormat()) {
+    return "currency";
   }
 
   return type;
