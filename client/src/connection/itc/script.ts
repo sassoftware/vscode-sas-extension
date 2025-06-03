@@ -243,14 +243,14 @@ class SASRunner{
 
     Write-Host "${LineCodes.ResultsFetchedCode}"
   }
-  
+
   [void]GetDatasetRecords([string]$tableName, [int]$start = 0, [int]$limit = 100) {
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection # This is needed to set the properties for sas formats.
     $objRecordSet.Properties.Item("SAS Formats").Value = "_ALL_"
 
     $objRecordSet.Open(
-      $tableName, 
+      $tableName,
       [System.Reflection.Missing]::Value, # Use the active connection
       2,  # adOpenDynamic
       1,  # adLockReadOnly
@@ -278,7 +278,7 @@ class SASRunner{
     $objRecordSet.Close()
 
     $objRecordSet.Open(
-      "SELECT COUNT(1) FROM $tableName", 
+      "SELECT COUNT(1) FROM $tableName",
       $this.dataConnection, 3, 1, 1
     ) # adOpenStatic, adLockReadOnly, adCmdText
     $count = $objRecordSet.Fields.Item(0).Value
@@ -295,8 +295,8 @@ class SASRunner{
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection
     $query = @"
-      select name, type, format 
-      from sashelp.vcolumn 
+      select name, type, format
+      from sashelp.vcolumn
       where libname='$libname' and memname='$memname';
 "@
     $objRecordSet.Open(
@@ -306,7 +306,7 @@ class SASRunner{
       1, # adLockReadOnly
       1  # adCmdText
     )
-    
+
     $rows = $objRecordSet.GetRows()
 
     $objRecordSet.Close()
@@ -532,6 +532,71 @@ class SASRunner{
     } catch {
       Write-Host (@{success=$false; message=$Error[0].Exception.Message} | ConvertTo-Json)
     }
+  }
+
+  [void]GetLibraries() {
+    $objRecordSet = New-Object -comobject ADODB.Recordset
+    $objRecordSet.ActiveConnection = $this.dataConnection
+    $query = @"
+      select distinct libname, readonly
+      from sashelp.vlibnam
+      order by libname asc
+"@
+    $objRecordSet.Open(
+      $query,
+      [System.Reflection.Missing]::Value, # Use the active connection
+      2, # adOpenDynamic
+      1, # adLockReadOnly
+      1  # adCmdText
+    )
+
+    $records = [System.Collections.Generic.List[object[]]]::new()
+    while (-not $objRecordSet.EOF) {
+      $row = @()
+      for ($i = 0; $i -lt $objRecordSet.Fields.Count; $i++) {
+        $row += $objRecordSet.Fields.Item($i).Value
+      }
+      $records.Add($row)
+      $objRecordSet.MoveNext()
+    }
+    $objRecordSet.Close()
+
+    $result = New-Object psobject
+    $result | Add-Member -MemberType NoteProperty -Name "libraries" -Value $records
+    $result | Add-Member -MemberType NoteProperty -Name "count" -Value $records.Count
+
+    Write-Host $(ConvertTo-Json -Depth 10 -InputObject $result -Compress)
+  }
+
+  [void]GetTables([string]$libname) {
+    $objRecordSet = New-Object -comobject ADODB.Recordset
+    $objRecordSet.ActiveConnection = $this.dataConnection
+    $query = @"
+      select memname
+      from sashelp.vtable
+      where libname='$libname'
+      order by memname asc
+"@
+    $objRecordSet.Open(
+      $query,
+      [System.Reflection.Missing]::Value, # Use the active connection
+      2, # adOpenDynamic
+      1, # adLockReadOnly
+      1  # adCmdText
+    )
+
+    $records = @()
+    while (-not $objRecordSet.EOF) {
+      $records += $objRecordSet.Fields.Item(0).Value
+      $objRecordSet.MoveNext()
+    }
+    $objRecordSet.Close()
+
+    $result = New-Object psobject
+    $result | Add-Member -MemberType NoteProperty -Name "tables" -Value $records
+    $result | Add-Member -MemberType NoteProperty -Name "count" -Value $records.Count
+
+    Write-Host $(ConvertTo-Json -Depth 10 -InputObject $result -Compress)
   }
 }
 `;
