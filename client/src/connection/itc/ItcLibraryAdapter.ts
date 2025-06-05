@@ -11,8 +11,9 @@ import {
   TableData,
   TableRow,
 } from "../../components/LibraryNavigator/types";
-import { Column, ColumnCollection } from "../rest/api/compute";
-import { runCode } from "./CodeRunner";
+import { ColumnCollection } from "../rest/api/compute";
+import { getColumnIconType } from "../util";
+import { executeRawCode, runCode } from "./CodeRunner";
 import { Config } from "./types";
 
 class ItcLibraryAdapter implements LibraryAdapter {
@@ -45,57 +46,32 @@ class ItcLibraryAdapter implements LibraryAdapter {
   }
 
   public async getColumns(item: LibraryItem): Promise<ColumnCollection> {
-    const sql = `
-      %let OUTPUT;
-      proc sql;
-        select catx(',', name, type, varnum) as column into: OUTPUT separated by '~'
-        from sashelp.vcolumn
-        where libname='${item.library}' and memname='${item.name}'
-        order by varnum;
-      quit;
-      %put <COLOUTPUT> &OUTPUT; %put </COLOUTPUT>;
+    const code = `
+      $runner.GetColumns("${item.library}", "${item.name}")
     `;
-
-    const columnLines = processQueryRows(
-      await this.runCode(sql, "<COLOUTPUT>", "</COLOUTPUT>"),
-    );
-
-    const columns = columnLines.map((lineText): Column => {
-      const [name, type, index] = lineText.split(",");
-
-      return {
-        name,
-        type,
-        index: parseInt(index, 10),
-      };
-    });
-
+    const output = await executeRawCode(code);
+    const columns = JSON.parse(output).map((column) => ({
+      ...column,
+      type: getColumnIconType(column),
+    }));
     return {
       items: columns,
       count: -1,
     };
   }
-
   public async getLibraries(): Promise<{
     items: LibraryItem[];
     count: number;
   }> {
-    const sql = `
-      %let OUTPUT;
-      proc sql;
-        select catx(',', libname, readonly) as libname_target into: OUTPUT separated by '~'
-        from sashelp.vlibnam order by libname asc;
-      quit;
-      %put <LIBOUTPUT> &OUTPUT; %put </LIBOUTPUT>;
+    const code = `
+      $runner.GetLibraries()
     `;
 
-    const libNames = processQueryRows(
-      await this.runCode(sql, "<LIBOUTPUT>", "</LIBOUTPUT>"),
-    );
+    const output = await executeRawCode(code);
+    const rawLibraries = JSON.parse(output).libraries;
 
-    const libraries = libNames.map((lineText): LibraryItem => {
-      const [libName, readOnlyValue] = lineText.split(",");
-
+    const libraries = rawLibraries.map((row: string[]) => {
+      const [libName, readOnlyValue] = row;
       return {
         type: "library",
         uid: libName,
@@ -177,24 +153,14 @@ class ItcLibraryAdapter implements LibraryAdapter {
     items: LibraryItem[];
     count: number;
   }> {
-    const sql = `
-      %let OUTPUT;
-      proc sql;
-        select memname into: OUTPUT separated by '~'
-        from sashelp.vtable
-        where libname='${item.name!}'
-        order by memname asc;
-      quit;
-      %put <TABLEOUTPUT> &OUTPUT; %put </TABLEOUTPUT>;
+
+    const code = `
+      $runner.GetTables("${item.name}")
     `;
 
-    const tableNames = processQueryRows(
-      await this.runCode(sql, "<TABLEOUTPUT>", "</TABLEOUTPUT>"),
-    );
-
-    const tables = tableNames.map((lineText): LibraryItem => {
-      const [table] = lineText.split(",");
-
+    const output = await executeRawCode(code);
+    const rawTables = JSON.parse(output).tables;
+    const tables = rawTables.map((table: string): LibraryItem => {
       return {
         type: "table",
         uid: `${item.name!}.${table}`,
@@ -213,48 +179,16 @@ class ItcLibraryAdapter implements LibraryAdapter {
     start: number,
     limit: number,
   ): Promise<{ rows: Array<string[]>; count: number }> {
-    const maxTableNameLength = 32;
-    const tempTable = `${item.name}${hms()}${start}`.substring(
-      0,
-      maxTableNameLength,
-    );
+    const fullTableName = `${item.library}.${item.name}`;
     const code = `
-      options nonotes nosource nodate nonumber;
-      %let COUNT;
-      proc sql;
-        SELECT COUNT(1) into: COUNT FROM  ${item.library}.${item.name};
-      quit;
-      data work.${tempTable};
-        set ${item.library}.${item.name};
-        if ${start + 1} <= _N_ <= ${start + limit} then output;
-      run;
-
-      filename out temp;
-      proc json nokeys out=out pretty; export work.${tempTable}; run;
-
-      %put <TABLEDATA>;
-      %put <Count>&COUNT</Count>;
-      data _null_; infile out; input; put _infile_; run;
-      %put </TABLEDATA>;
-      proc datasets library=work nolist nodetails; delete ${tempTable}; run;
-      options notes source date number;
+      $runner.GetDatasetRecords("${fullTableName}", ${start}, ${limit})
     `;
-
-    let output = await this.runCode(code, "<TABLEDATA>", "</TABLEDATA>");
-
-    // Extract result count
-    const countRegex = /<Count>(.*)<\/Count>/;
-    const countMatches = output.match(countRegex);
-    const count = parseInt(countMatches[1].replace(/\s|\n/gm, ""), 10);
-    output = output.replace(countRegex, "");
-
-    const rows = output.replace(/\n|\t/gm, "").slice(output.indexOf("{"));
+    const output = await executeRawCode(code);
     try {
-      const tableData = JSON.parse(rows);
-      return { rows: tableData[`SASTableData+${tempTable}`], count };
+      return JSON.parse(output);
     } catch (e) {
       console.warn("Failed to load table data with error", e);
-      console.warn("Raw output", rows);
+      console.warn("Raw output", output);
       throw new Error(
         l10n.t(
           "An error was encountered when loading table data. This usually happens when a table is too large or the data couldn't be processed. See console for more details.",
@@ -263,17 +197,27 @@ class ItcLibraryAdapter implements LibraryAdapter {
     }
   }
 
+  protected async executionHandler(
+    callback: () => Promise<string>,
+  ): Promise<string> {
+    try {
+      return await callback();
+    } catch (e) {
+      onRunError(e);
+      return "";
+    }
+  }
+
   protected async runCode(
     code: string,
     startTag: string = "",
     endTag: string = "",
   ): Promise<string> {
-    try {
-      return await runCode(code, startTag, endTag);
-    } catch (e) {
-      onRunError(e);
-      return "";
-    }
+    return this.executionHandler(() => runCode(code, startTag, endTag));
+  }
+
+  protected async executeRawCode(code: string): Promise<string> {
+    return this.executionHandler(() => executeRawCode(code));
   }
 }
 
@@ -286,11 +230,6 @@ const processQueryRows = (response: string): string[] => {
   return processedResponse
     .split("~")
     .filter((value, index, array) => array.indexOf(value) === index);
-};
-
-const hms = () => {
-  const date = new Date();
-  return `${date.getHours()}${date.getMinutes()}${date.getSeconds()}`;
 };
 
 export default ItcLibraryAdapter;
