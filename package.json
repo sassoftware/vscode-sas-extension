@@ -1305,7 +1305,7 @@
     "eslint": "^9.28.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
-    "glob": "^7.2.0",
+    "glob": "^10.4.5",
     "mocha": "^11.5.0",
     "nock": "^13.5.5",
     "papaparse": "^5.5.2",
