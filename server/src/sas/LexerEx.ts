@@ -628,6 +628,9 @@ export class LexerEx {
       }
     }
     this._adjustBlockTreeFoldingEnd(block);
+    if (this.sections.length) {
+      this.adjustFoldingEnd_(this.sections[this.sections.length - 1], block);
+    }
     // add
     this.sections.push(block);
     this.tokens = [];
