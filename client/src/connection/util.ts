@@ -24,3 +24,76 @@ export const extractTextBetweenTags = (
         .replace(/\n$/, "")
     : text;
 };
+
+export const getColumnIconType = ({
+  type,
+  format,
+}: {
+  index: number;
+  type: string;
+  name: string;
+  format: string;
+}) => {
+  format = format.toUpperCase();
+
+  const isDateFormat = () =>
+    [
+      "DAT",
+      "MM",
+      "DD",
+      "YY",
+      "EURDF",
+      "JUL",
+      "YEAR",
+      "DAY",
+      "MONTH",
+      "MON",
+      "DOWNAME",
+    ].some((f) => format.includes(f)) &&
+    ![
+      "TIME",
+      "HH",
+      "SS",
+      "COMM",
+      "DATEAMPM",
+      "DATETIME",
+      "NLDATMTM",
+      "NLDATM",
+      "NLDATMAP",
+      "NLDATMW",
+    ].some((f) => format.includes(f));
+
+  const isTimeFormat = () =>
+    ["TIME", "TIMAP", "HOUR", "HH", "MM", "SS", "NLDATMTM"].some((f) =>
+      format.includes(f),
+    ) && !["DATEAMPM", "DATETIME", "COMMA"].some((f) => format.includes(f));
+
+  const isDateTimeFormat = () =>
+    ["DATEAMPM", "DATETIME", "NLDATM", "NLDATMAP", "NLDATMW"].some((f) =>
+      format.includes(f),
+    );
+
+  const isCurrencyFormat = () =>
+    ["NLMNI", "NLMNL", "NLMNY", "YEN", "DOLLAR", "EURO"].some((f) =>
+      format.includes(f),
+    );
+
+  if (type !== "num") {
+    return type;
+  }
+
+  if (isDateFormat()) {
+    return "date";
+  }
+  if (isTimeFormat()) {
+    return "time";
+  }
+  if (isDateTimeFormat()) {
+    return "datetime";
+  }
+  if (isCurrencyFormat()) {
+    return "currency";
+  }
+
+  return type;
+};
