@@ -4,12 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
-## [Unreleased]
+## [v1.15.0] - 2025-06-10
 
 ### Added
 
 - Add sas file system support for ITC-based (IOM/COM) connections ([#1388](https://github.com/sassoftware/vscode-sas-extension/pull/1388))
 - Add Traditional Chinese and Polish translations ([#1453](https://github.com/sassoftware/vscode-sas-extension/pull/1453))
+
+### Fixed
+
+- Show problems at corresponding line ([#1347](https://github.com/sassoftware/vscode-sas-extension/issues/1347)) ([#1378](https://github.com/sassoftware/vscode-sas-extension/issues/1378)) ([#1475](https://github.com/sassoftware/vscode-sas-extension/issues/1475))
+- Autocomplete in DATA step ([#1458](https://github.com/sassoftware/vscode-sas-extension/issues/1458))
+- `Fold All Regions` in Command Palette don't work ([#1486](https://github.com/sassoftware/vscode-sas-extension/issues/1486))
+- Table Viewer optimization in ITC ([#1466](https://github.com/sassoftware/vscode-sas-extension/pull/1466)) ([#1132](https://github.com/sassoftware/vscode-sas-extension/issues/1132))
 
 ## [v1.14.0] - 2025-04-28
 
