@@ -243,14 +243,14 @@ class SASRunner{
 
     Write-Host "${LineCodes.ResultsFetchedCode}"
   }
-  
+
   [void]GetDatasetRecords([string]$tableName, [int]$start = 0, [int]$limit = 100) {
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection # This is needed to set the properties for sas formats.
     $objRecordSet.Properties.Item("SAS Formats").Value = "_ALL_"
 
     $objRecordSet.Open(
-      $tableName, 
+      $tableName,
       [System.Reflection.Missing]::Value, # Use the active connection
       2,  # adOpenDynamic
       1,  # adLockReadOnly
@@ -278,7 +278,7 @@ class SASRunner{
     $objRecordSet.Close()
 
     $objRecordSet.Open(
-      "SELECT COUNT(1) FROM $tableName", 
+      "SELECT COUNT(1) FROM $tableName",
       $this.dataConnection, 3, 1, 1
     ) # adOpenStatic, adLockReadOnly, adCmdText
     $count = $objRecordSet.Fields.Item(0).Value
@@ -295,8 +295,8 @@ class SASRunner{
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection
     $query = @"
-      select name, type, format 
-      from sashelp.vcolumn 
+      select name, type, format
+      from sashelp.vcolumn
       where libname='$libname' and memname='$memname';
 "@
     $objRecordSet.Open(
@@ -306,7 +306,7 @@ class SASRunner{
       1, # adLockReadOnly
       1  # adCmdText
     )
-    
+
     $rows = $objRecordSet.GetRows()
 
     $objRecordSet.Close()
