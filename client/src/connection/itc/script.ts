@@ -540,7 +540,7 @@ class SASRunner{
     $query = @"
       select distinct libname, readonly
       from sashelp.vlibnam
-      order by libname asc
+      order by libname asc;
 "@
     $objRecordSet.Open(
       $query,
@@ -575,7 +575,7 @@ class SASRunner{
       select memname
       from sashelp.vtable
       where libname='$libname'
-      order by memname asc
+      order by memname asc;
 "@
     $objRecordSet.Open(
       $query,
