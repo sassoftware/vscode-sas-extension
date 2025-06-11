@@ -59,27 +59,19 @@ class ItcLibraryAdapter implements LibraryAdapter {
       count: -1,
     };
   }
-
   public async getLibraries(): Promise<{
     items: LibraryItem[];
     count: number;
   }> {
-    const sql = `
-      %let OUTPUT;
-      proc sql;
-        select catx(',', libname, readonly) as libname_target into: OUTPUT separated by '~'
-        from sashelp.vlibnam order by libname asc;
-      quit;
-      %put <LIBOUTPUT> &OUTPUT; %put </LIBOUTPUT>;
+    const code = `
+      $runner.GetLibraries()
     `;
 
-    const libNames = processQueryRows(
-      await this.runCode(sql, "<LIBOUTPUT>", "</LIBOUTPUT>"),
-    );
+    const output = await executeRawCode(code);
+    const rawLibraries = JSON.parse(output).libraries;
 
-    const libraries = libNames.map((lineText): LibraryItem => {
-      const [libName, readOnlyValue] = lineText.split(",");
-
+    const libraries = rawLibraries.map((row: string[]) => {
+      const [libName, readOnlyValue] = row;
       return {
         type: "library",
         uid: libName,
@@ -161,24 +153,13 @@ class ItcLibraryAdapter implements LibraryAdapter {
     items: LibraryItem[];
     count: number;
   }> {
-    const sql = `
-      %let OUTPUT;
-      proc sql;
-        select memname into: OUTPUT separated by '~'
-        from sashelp.vtable
-        where libname='${item.name!}'
-        order by memname asc;
-      quit;
-      %put <TABLEOUTPUT> &OUTPUT; %put </TABLEOUTPUT>;
+    const code = `
+      $runner.GetTables("${item.name}")
     `;
 
-    const tableNames = processQueryRows(
-      await this.runCode(sql, "<TABLEOUTPUT>", "</TABLEOUTPUT>"),
-    );
-
-    const tables = tableNames.map((lineText): LibraryItem => {
-      const [table] = lineText.split(",");
-
+    const output = await executeRawCode(code);
+    const rawTables = JSON.parse(output).tables;
+    const tables = rawTables.map((table: string): LibraryItem => {
       return {
         type: "table",
         uid: `${item.name!}.${table}`,
@@ -238,16 +219,5 @@ class ItcLibraryAdapter implements LibraryAdapter {
     return this.executionHandler(() => executeRawCode(code));
   }
 }
-
-const processQueryRows = (response: string): string[] => {
-  const processedResponse = response.trim().replace(/\n|\t/gm, "");
-  if (!processedResponse) {
-    return [];
-  }
-
-  return processedResponse
-    .split("~")
-    .filter((value, index, array) => array.indexOf(value) === index);
-};
 
 export default ItcLibraryAdapter;

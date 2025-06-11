@@ -11,16 +11,7 @@ import * as connection from "../../../src/connection";
 import { MockSession } from "./Coderunner.test";
 
 const mockOutput = () => ({
-  LIBOUTPUT: `
-<LIBOUTPUT>
-test1,yes~test2,no
-</LIBOUTPUT>
-`,
   "SELECT COUNT(1)": `<Count>1234</Count>`,
-  TABLEOUTPUT: `
-  <TABLEOUTPUT>
-test1~test2
-</TABLEOUTPUT>`,
 });
 
 class DatasetMockSession extends MockSession {
@@ -107,7 +98,6 @@ describe("ItcLibraryAdapter tests", () => {
   });
 
   it("loads libraries", async () => {
-    const libraryAdapter = new ItcLibraryAdapter();
     const expectedLibraries: LibraryItem[] = [
       {
         uid: "test1",
@@ -125,6 +115,17 @@ describe("ItcLibraryAdapter tests", () => {
       },
     ];
 
+    const mockOutput = JSON.stringify({
+      libraries: [
+        ["test1", "yes"],
+        ["test2", "no"],
+      ],
+      count: 2,
+    });
+
+    sessionStub.returns(new DatasetMockSession([mockOutput]));
+
+    const libraryAdapter = new ItcLibraryAdapter();
     const response = await libraryAdapter.getLibraries();
 
     expect(response.items).to.eql(expectedLibraries);
@@ -227,7 +228,14 @@ describe("ItcLibraryAdapter tests", () => {
       type: "library",
       readOnly: true,
     };
-    const libraryAdapter = new ItcLibraryAdapter();
+
+    const mockOutput = JSON.stringify({
+      tables: ["test1", "test2"],
+      count: 2,
+    });
+
+    sessionStub.returns(new DatasetMockSession([mockOutput]));
+
     const expectedTables: LibraryItem[] = [
       {
         library: "lib",
@@ -247,6 +255,7 @@ describe("ItcLibraryAdapter tests", () => {
       },
     ];
 
+    const libraryAdapter = new ItcLibraryAdapter();
     const response = await libraryAdapter.getTables(library);
 
     expect(response.items).to.eql(expectedTables);
