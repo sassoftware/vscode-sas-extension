@@ -32,6 +32,10 @@ import {
   updateProfile,
 } from "../commands/profile";
 import { run, runRegion, runSelected } from "../commands/run";
+import {
+  registerAddCommentCommand,
+  registerRemoveCommentCommand,
+} from "../commands/wrapLinesWithComment";
 import { getRestAPIs } from "../components/APIProvider";
 import { SASAuthProvider } from "../components/AuthProvider";
 import { installCAs } from "../components/CAHelper";
@@ -203,6 +207,8 @@ export function activate(context: ExtensionContext) {
     ),
     tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
     ...sasDiagnostic.getSubscriptions(),
+    registerAddCommentCommand(),
+    registerRemoveCommentCommand(),
   );
 
   // Reset first to set "No Active Profiles"
