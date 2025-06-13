@@ -1,5 +1,6 @@
 {
   "comments": {
+    // "lineComment": "*", //Can only add a beginning..
     "blockComment": ["/*", "*/"]
   },
   "brackets": [
