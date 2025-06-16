@@ -52,6 +52,9 @@ export const print: Printer<SASAST>["print"] = (path, options, print) => {
         ? [hardline, ...region]
         : region;
     }
+    children[children.length - 1] = utils.stripTrailingHardline(
+      children[children.length - 1],
+    );
     return [...join(line, children), literalline];
   }
   return "text" in node ? node.text : "";
