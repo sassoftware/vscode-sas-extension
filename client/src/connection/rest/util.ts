@@ -105,7 +105,7 @@ export const getSasContentUri = (item: ContentItem, readOnly?: boolean): Uri =>
 export const getSasServerUri = (item: ContentItem, readOnly?: boolean): Uri =>
   Uri.parse(
     `${readOnly ? `${ContentSourceType.SASServer}ReadOnly` : ContentSourceType.SASServer}:/${
-      item.name
+      item.name ? item.name.replace("#", "%23") : item.name
     }?id=${getResourceIdFromItem(item)}`,
   );
 
