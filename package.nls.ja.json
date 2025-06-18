@@ -29,6 +29,7 @@
   "commands.SAS.upload": "アップロード",
   "commands.SAS.uploadFiles": "ファイルのアップロード",
   "commands.SAS.uploadFolders": "フォルダーのアップロード",
+  "commands.SAS.toggleLineComment": "SAS 行コメントの切り替え",
   "configuration.SAS.connectionProfiles": "SAS Server に接続するための接続プロファイルを定義します。複数のプロファイルを定義する場合は、それらを切り替えることができます。",
   "configuration.SAS.connectionProfiles.activeProfile": "アクティブな SAS 接続プロファイル",
   "configuration.SAS.connectionProfiles.profiles": "SAS 接続プロファイル",

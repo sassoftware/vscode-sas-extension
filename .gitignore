@@ -6,3 +6,4 @@ node_modules
 *.node
 *.qps-ploc.json
 l10n/bundle.l10n.json
+.history

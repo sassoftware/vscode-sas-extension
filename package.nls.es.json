@@ -29,6 +29,7 @@
   "commands.SAS.upload": "Subir",
   "commands.SAS.uploadFiles": "Subir archivos",
   "commands.SAS.uploadFolders": "Subir carpetas",
+  "commands.SAS.toggleLineComment": "Alternar comentario de línea SAS",
   "configuration.SAS.connectionProfiles": "Defina los perfiles de conexión para conectarse a servidores SAS. Si define más de un perfil, puede cambiarlos.",
   "configuration.SAS.connectionProfiles.activeProfile": "Activar perfil de conexión",
   "configuration.SAS.connectionProfiles.profiles": "Perfiles de conexión SAS",
