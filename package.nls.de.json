@@ -29,7 +29,6 @@
   "commands.SAS.upload": "Hochladen",
   "commands.SAS.uploadFiles": "Dateien hochladen",
   "commands.SAS.uploadFolders": "Ordner hochladen",
-  "commands.SAS.toggleLineComment": "SAS-Zeilenkommentar umschalten",
   "configuration.SAS.connectionProfiles": "Definieren Sie das Verbindungsprofil für die Verbindung zum SAS-Server. Wenn Sie mehr als ein Profil definieren, können Sie zwischen ihnen wechseln.",
   "configuration.SAS.connectionProfiles.activeProfile": "Aktives SAS Verbindungs Profil",
   "configuration.SAS.connectionProfiles.profiles": "SAS Verbindungs Profile",

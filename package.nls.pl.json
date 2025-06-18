@@ -29,7 +29,6 @@
   "commands.SAS.upload": "Załaduj",
   "commands.SAS.uploadFiles": "Załaduj pliki",
   "commands.SAS.uploadFolders": "Załaduj foldery",
-  "commands.SAS.toggleLineComment": "Przełącz komentarz linii SAS",
   "configuration.SAS.connectionProfiles": "add translation here",
   "configuration.SAS.connectionProfiles.activeProfile": "Aktywny profil połączenia SAS-owego",
   "configuration.SAS.connectionProfiles.profiles": "Profile połączeń SAS-owych",

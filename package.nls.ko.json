@@ -29,7 +29,6 @@
   "commands.SAS.upload": "업로드",
   "commands.SAS.uploadFiles": "파일 업로드",
   "commands.SAS.uploadFolders": "폴더 업로드",
-  "commands.SAS.toggleLineComment": "SAS 행 주석 전환",
   "configuration.SAS.connectionProfiles": "SAS 서버에 연결하기 위한 연결 프로필을 정의합니다. 두 개 이상의 프로필을 정의하는 경우 서로 전환할 수 있습니다.",
   "configuration.SAS.connectionProfiles.activeProfile": "활성 SAS 연결 프로필",
   "configuration.SAS.connectionProfiles.profiles": "SAS 연결 프로필",

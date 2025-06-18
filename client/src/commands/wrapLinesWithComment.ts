@@ -1,4 +1,4 @@
-// Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// Copyright © 2022-2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import { TextEditor, commands } from "vscode";
 
@@ -125,7 +125,8 @@ function analyzeLines(
       shouldUncomment = false;
     }
     if (!isEmptyLine(lineText)) {
-      const indent = lineText.match(/^\s*/)?.[0].length ?? 0;
+      const indent =
+        document.lineAt(lineIndex).firstNonWhitespaceCharacterIndex;
       if (indent < minIndentColumn) {
         minIndentColumn = indent;
       }

@@ -29,7 +29,6 @@
   "commands.SAS.upload": "上傳",
   "commands.SAS.uploadFiles": "上傳檔案",
   "commands.SAS.uploadFolders": "上傳資料夾",
-  "commands.SAS.toggleLineComment": "切換 SAS 行注釋",
   "configuration.SAS.connectionProfiles": "定義連線設定檔以連線至 SAS 伺服器。如果您定義多個設定檔，則可以在設定檔之間進行切換。",
   "configuration.SAS.connectionProfiles.activeProfile": "使用中的 SAS 連線設定檔",
   "configuration.SAS.connectionProfiles.profiles": "SAS 連線設定檔",
