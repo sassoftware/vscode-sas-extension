@@ -411,7 +411,7 @@ export const getParser =
         context.startStatement(node.text);
         if (
           context.currentStatement &&
-          context.region?.children.length === 0 &&
+          context.region?.children.length === 1 &&
           context.prevStatement?.children.length === 1 &&
           context.prevToken &&
           isComment(context.prevToken)
