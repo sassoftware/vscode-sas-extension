@@ -29,6 +29,7 @@
   "commands.SAS.upload": "Upload",
   "commands.SAS.uploadFiles": "Upload Files",
   "commands.SAS.uploadFolders": "Upload Folders",
+  "commands.SAS.toggleLineComment": "Toggle SAS Code Comments by Line",
   "configuration.SAS.connectionProfiles": "Define the connection profiles to connect to SAS servers. If you define more than one profile, you can switch between them.",
   "configuration.SAS.connectionProfiles.activeProfile": "Active SAS Connection Profile",
   "configuration.SAS.connectionProfiles.profiles": "SAS Connection Profiles",

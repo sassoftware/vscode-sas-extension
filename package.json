@@ -780,6 +780,11 @@
         "command": "SAS.saveHTML",
         "title": "%commands.SAS.download%",
         "category": "SAS"
+      },
+      {
+        "command": "SAS.toggleLineComment",
+        "title": "%commands.SAS.toggleLineComment%",
+        "category": "SAS"
       }
     ],
     "keybindings": [
@@ -792,6 +797,12 @@
         "when": "editorLangId == sas && !SAS.hideRunMenuItem",
         "command": "SAS.runSelected",
         "key": "f3"
+      },
+      {
+        "key": "ctrl+/",
+        "mac": "cmd+/",
+        "command": "SAS.toggleLineComment",
+        "when": "editorTextFocus && editorLangId == 'sas'"
       }
     ],
     "menus": {
