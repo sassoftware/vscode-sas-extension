@@ -792,6 +792,11 @@
         "when": "editorLangId == sas && !SAS.hideRunMenuItem",
         "command": "SAS.runSelected",
         "key": "f3"
+      },
+      {
+        "when": "listFocus",
+        "command": "SAS.content.deleteResource",
+        "key": "delete"
       }
     ],
     "menus": {
