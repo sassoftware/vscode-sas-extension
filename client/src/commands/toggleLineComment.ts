@@ -1,4 +1,4 @@
-// Copyright © 2022-2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import { TextEditor, commands } from "vscode";
 
@@ -7,7 +7,7 @@ import { TextEditor, commands } from "vscode";
  * If the line is already commented, remove the comment
  * If the line is not commented, add comment
  */
-export function registerToggleCommentCommand() {
+export function registerToggleLineCommentCommand() {
   return commands.registerTextEditorCommand(
     "SAS.toggleLineComment",
     async (editor) => {

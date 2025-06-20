@@ -32,7 +32,7 @@ import {
   updateProfile,
 } from "../commands/profile";
 import { run, runRegion, runSelected } from "../commands/run";
-import { registerToggleCommentCommand } from "../commands/wrapLinesWithComment";
+import { registerToggleLineCommentCommand } from "../commands/toggleLineComment";
 import { getRestAPIs } from "../components/APIProvider";
 import { SASAuthProvider } from "../components/AuthProvider";
 import { installCAs } from "../components/CAHelper";
@@ -204,7 +204,7 @@ export function activate(context: ExtensionContext) {
     ),
     tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
     ...sasDiagnostic.getSubscriptions(),
-    registerToggleCommentCommand(),
+    registerToggleLineCommentCommand(),
   );
 
   // Reset first to set "No Active Profiles"
