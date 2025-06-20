@@ -33,7 +33,7 @@ import { isContainer as getIsContainer } from "./utils";
 
 const fileValidator = (value: string): string | null =>
   /^([^/<>;\\{}]+)\.\w+$/.test(
-    // file service does not allow /, <, >, ;, \, {, } while vscode does not allow ? and #
+    // file service does not allow /, <, >, ;, \, {, }
     value,
   )
     ? null
