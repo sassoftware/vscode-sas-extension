@@ -98,14 +98,18 @@ export const resourceType = (item: ContentItem): string | undefined => {
 export const getSasContentUri = (item: ContentItem, readOnly?: boolean): Uri =>
   Uri.parse(
     `${readOnly ? `${ContentSourceType.SASContent}ReadOnly` : ContentSourceType.SASContent}:/${
-      item.name ? item.name.replace("#", "%23") : item.name
+      item.name
+        ? item.name.replace(/#/g, "%23").replace(/\?/g, "%3F")
+        : item.name
     }?id=${getResourceIdFromItem(item)}`,
   );
 
 export const getSasServerUri = (item: ContentItem, readOnly?: boolean): Uri =>
   Uri.parse(
     `${readOnly ? `${ContentSourceType.SASServer}ReadOnly` : ContentSourceType.SASServer}:/${
-      item.name ? item.name.replace("#", "%23") : item.name
+      item.name
+        ? item.name.replace(/#/g, "%23").replace(/\?/g, "%3F")
+        : item.name
     }?id=${getResourceIdFromItem(item)}`,
   );
 
