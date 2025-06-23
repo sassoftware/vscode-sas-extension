@@ -100,11 +100,26 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
-          this.treeViewSelections(item).forEach(
+          const selectedItem = this.contentDataProvider.treeView.selection[0];
+          this.treeViewSelections(item ?? selectedItem).forEach(
             async (resource: ContentItem) => {
               const isContainer = getIsContainer(resource);
               const moveToRecycleBin =
                 this.contentDataProvider.canRecycleResource(resource);
+              // move to recycle bin
+              if (
+                moveToRecycleBin &&
+                !(await window.showWarningMessage(
+                  l10n.t(Messages.RecycleWarningMessage, {
+                    name: resource.name,
+                  }),
+                  { modal: true },
+                  Messages.RecycleButtonLabel,
+                ))
+              ) {
+                return;
+              }
+              // delete file
               if (
                 !moveToRecycleBin &&
                 !(await window.showWarningMessage(

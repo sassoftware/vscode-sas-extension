@@ -89,6 +89,8 @@ export const Messages = {
   NewFolderCreationError: l10n.t('Unable to create folder "{name}".'),
   NewFolderPrompt: l10n.t("Enter a folder name."),
   NewFolderTitle: l10n.t("New Folder"),
+  RecycleButtonLabel: l10n.t("Move to Recycle Bin"),
+  RecycleWarningMessage: l10n.t('Are you sure you want to delete "{name}"?'),
   RemoveFromFavoritesError: l10n.t(
     "The item could not be removed from My Favorites.",
   ),
