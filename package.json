@@ -794,8 +794,13 @@
         "key": "f3"
       },
       {
-        "when": "listFocus",
+        "when": "focusedView == contentdataprovider",
         "command": "SAS.content.deleteResource",
+        "key": "delete"
+      },
+      {
+        "when": "focusedView == serverdataprovider",
+        "command": "SAS.server.deleteResource",
         "key": "delete"
       }
     ],

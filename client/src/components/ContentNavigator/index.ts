@@ -100,9 +100,8 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
-          const item1 = this.contentDataProvider.treeView.selection[0];
-
-          this.treeViewSelections(item ?? item1).forEach(
+          const selectedItem = this.contentDataProvider.treeView.selection[0];
+          this.treeViewSelections(item ?? selectedItem).forEach(
             async (resource: ContentItem) => {
               const isContainer = getIsContainer(resource);
               const moveToRecycleBin =
@@ -111,12 +110,11 @@ class ContentNavigator implements SubscriptionProvider {
               if (
                 moveToRecycleBin &&
                 !(await window.showWarningMessage(
-                  // to do: a new message for recycle the file
-                  l10n.t(Messages.DeleteWarningMessage, {
+                  l10n.t(Messages.RecycleWarningMessage, {
                     name: resource.name,
                   }),
                   { modal: true },
-                  Messages.DeleteButtonLabel,
+                  Messages.RecycleButtonLabel,
                 ))
               ) {
                 return;
