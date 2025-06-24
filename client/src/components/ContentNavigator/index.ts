@@ -106,28 +106,29 @@ class ContentNavigator implements SubscriptionProvider {
               const moveToRecycleBin =
                 this.contentDataProvider.canRecycleResource(resource);
 
-              if (
-                resource.contextValue.includes("delete") &&
-                !moveToRecycleBin &&
-                !(await window.showWarningMessage(
-                  l10n.t(Messages.DeleteWarningMessage, {
-                    name: resource.name,
-                  }),
-                  { modal: true },
-                  Messages.DeleteButtonLabel,
-                ))
-              ) {
-                return;
-              }
-              const deleteResult = moveToRecycleBin
-                ? await this.contentDataProvider.recycleResource(resource)
-                : await this.contentDataProvider.deleteResource(resource);
-              if (!deleteResult) {
-                window.showErrorMessage(
-                  isContainer
-                    ? Messages.FolderDeletionError
-                    : Messages.FileDeletionError,
-                );
+              if (resource.contextValue.includes("delete")) {
+                if (
+                  !moveToRecycleBin &&
+                  !(await window.showWarningMessage(
+                    l10n.t(Messages.DeleteWarningMessage, {
+                      name: resource.name,
+                    }),
+                    { modal: true },
+                    Messages.DeleteButtonLabel,
+                  ))
+                ) {
+                  return;
+                }
+                const deleteResult = moveToRecycleBin
+                  ? await this.contentDataProvider.recycleResource(resource)
+                  : await this.contentDataProvider.deleteResource(resource);
+                if (!deleteResult) {
+                  window.showErrorMessage(
+                    isContainer
+                      ? Messages.FolderDeletionError
+                      : Messages.FileDeletionError,
+                  );
+                }
               }
             },
           );
