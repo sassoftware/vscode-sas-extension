@@ -100,36 +100,37 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
-          const selectedItem = this.contentDataProvider.treeView.selection[0];
-          this.treeViewSelections(
-            item ?? (selectedItem.permission.delete && selectedItem),
-          ).forEach(async (resource: ContentItem) => {
-            const isContainer = getIsContainer(resource);
-            const moveToRecycleBin =
-              this.contentDataProvider.canRecycleResource(resource);
-            if (
-              !moveToRecycleBin &&
-              !(await window.showWarningMessage(
-                l10n.t(Messages.DeleteWarningMessage, {
-                  name: resource.name,
-                }),
-                { modal: true },
-                Messages.DeleteButtonLabel,
-              ))
-            ) {
-              return;
-            }
-            const deleteResult = moveToRecycleBin
-              ? await this.contentDataProvider.recycleResource(resource)
-              : await this.contentDataProvider.deleteResource(resource);
-            if (!deleteResult) {
-              window.showErrorMessage(
-                isContainer
-                  ? Messages.FolderDeletionError
-                  : Messages.FileDeletionError,
-              );
-            }
-          });
+          this.treeViewSelections(item).forEach(
+            async (resource: ContentItem) => {
+              const isContainer = getIsContainer(resource);
+              const moveToRecycleBin =
+                this.contentDataProvider.canRecycleResource(resource);
+
+              if (
+                resource.contextValue.includes("delete") &&
+                !moveToRecycleBin &&
+                !(await window.showWarningMessage(
+                  l10n.t(Messages.DeleteWarningMessage, {
+                    name: resource.name,
+                  }),
+                  { modal: true },
+                  Messages.DeleteButtonLabel,
+                ))
+              ) {
+                return;
+              }
+              const deleteResult = moveToRecycleBin
+                ? await this.contentDataProvider.recycleResource(resource)
+                : await this.contentDataProvider.deleteResource(resource);
+              if (!deleteResult) {
+                window.showErrorMessage(
+                  isContainer
+                    ? Messages.FolderDeletionError
+                    : Messages.FileDeletionError,
+                );
+              }
+            },
+          );
         },
       ),
       commands.registerCommand(
@@ -466,9 +467,10 @@ class ContentNavigator implements SubscriptionProvider {
 
   private treeViewSelections(item: ContentItem): ContentItem[] {
     const items =
-      this.contentDataProvider.treeView.selection.length > 1
+      this.contentDataProvider.treeView.selection.length > 1 || !item
         ? this.contentDataProvider.treeView.selection
         : [item];
+
     const uris: string[] = items.map(({ uri }: ContentItem) => uri);
 
     // If we have a selection that is a child of something we've already selected,
