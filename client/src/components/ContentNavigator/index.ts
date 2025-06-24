@@ -101,49 +101,35 @@ class ContentNavigator implements SubscriptionProvider {
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
           const selectedItem = this.contentDataProvider.treeView.selection[0];
-          this.treeViewSelections(item ?? selectedItem).forEach(
-            async (resource: ContentItem) => {
-              const isContainer = getIsContainer(resource);
-              const moveToRecycleBin =
-                this.contentDataProvider.canRecycleResource(resource);
-              // move to recycle bin
-              if (
-                moveToRecycleBin &&
-                !(await window.showWarningMessage(
-                  l10n.t(Messages.RecycleWarningMessage, {
-                    name: resource.name,
-                  }),
-                  { modal: true },
-                  Messages.RecycleButtonLabel,
-                ))
-              ) {
-                return;
-              }
-              // delete file
-              if (
-                !moveToRecycleBin &&
-                !(await window.showWarningMessage(
-                  l10n.t(Messages.DeleteWarningMessage, {
-                    name: resource.name,
-                  }),
-                  { modal: true },
-                  Messages.DeleteButtonLabel,
-                ))
-              ) {
-                return;
-              }
-              const deleteResult = moveToRecycleBin
-                ? await this.contentDataProvider.recycleResource(resource)
-                : await this.contentDataProvider.deleteResource(resource);
-              if (!deleteResult) {
-                window.showErrorMessage(
-                  isContainer
-                    ? Messages.FolderDeletionError
-                    : Messages.FileDeletionError,
-                );
-              }
-            },
-          );
+          this.treeViewSelections(
+            item ?? (selectedItem.permission.delete && selectedItem),
+          ).forEach(async (resource: ContentItem) => {
+            const isContainer = getIsContainer(resource);
+            const moveToRecycleBin =
+              this.contentDataProvider.canRecycleResource(resource);
+            if (
+              !moveToRecycleBin &&
+              !(await window.showWarningMessage(
+                l10n.t(Messages.DeleteWarningMessage, {
+                  name: resource.name,
+                }),
+                { modal: true },
+                Messages.DeleteButtonLabel,
+              ))
+            ) {
+              return;
+            }
+            const deleteResult = moveToRecycleBin
+              ? await this.contentDataProvider.recycleResource(resource)
+              : await this.contentDataProvider.deleteResource(resource);
+            if (!deleteResult) {
+              window.showErrorMessage(
+                isContainer
+                  ? Messages.FolderDeletionError
+                  : Messages.FileDeletionError,
+              );
+            }
+          });
         },
       ),
       commands.registerCommand(
