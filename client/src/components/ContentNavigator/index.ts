@@ -105,27 +105,30 @@ class ContentNavigator implements SubscriptionProvider {
               const isContainer = getIsContainer(resource);
               const moveToRecycleBin =
                 this.contentDataProvider.canRecycleResource(resource);
-              if (
-                !moveToRecycleBin &&
-                !(await window.showWarningMessage(
-                  l10n.t(Messages.DeleteWarningMessage, {
-                    name: resource.name,
-                  }),
-                  { modal: true },
-                  Messages.DeleteButtonLabel,
-                ))
-              ) {
-                return;
-              }
-              const deleteResult = moveToRecycleBin
-                ? await this.contentDataProvider.recycleResource(resource)
-                : await this.contentDataProvider.deleteResource(resource);
-              if (!deleteResult) {
-                window.showErrorMessage(
-                  isContainer
-                    ? Messages.FolderDeletionError
-                    : Messages.FileDeletionError,
-                );
+
+              if (resource.contextValue.includes("delete")) {
+                if (
+                  !moveToRecycleBin &&
+                  !(await window.showWarningMessage(
+                    l10n.t(Messages.DeleteWarningMessage, {
+                      name: resource.name,
+                    }),
+                    { modal: true },
+                    Messages.DeleteButtonLabel,
+                  ))
+                ) {
+                  return;
+                }
+                const deleteResult = moveToRecycleBin
+                  ? await this.contentDataProvider.recycleResource(resource)
+                  : await this.contentDataProvider.deleteResource(resource);
+                if (!deleteResult) {
+                  window.showErrorMessage(
+                    isContainer
+                      ? Messages.FolderDeletionError
+                      : Messages.FileDeletionError,
+                  );
+                }
               }
             },
           );
@@ -465,9 +468,10 @@ class ContentNavigator implements SubscriptionProvider {
 
   private treeViewSelections(item: ContentItem): ContentItem[] {
     const items =
-      this.contentDataProvider.treeView.selection.length > 1
+      this.contentDataProvider.treeView.selection.length > 1 || !item
         ? this.contentDataProvider.treeView.selection
         : [item];
+
     const uris: string[] = items.map(({ uri }: ContentItem) => uri);
 
     // If we have a selection that is a child of something we've already selected,
