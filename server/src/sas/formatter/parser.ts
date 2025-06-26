@@ -34,8 +34,10 @@ export type SASAST = Program | Region | Statement | Token;
 export const isComment = (token: Token) =>
   token.type === "comment" || token.type === "macro-comment";
 
-const isAtBlockEnd = (block: FoldingBlock, token: Token) =>
-  block.endLine === token.end.line && block.endCol === token.end.column;
+const isAtBlockEnd = (block: FoldingBlock | undefined, token: Token) =>
+  block &&
+  block.endLine === token.end.line &&
+  block.endCol === token.end.column;
 
 const removePrevStatement = (parent: Program | Region) => {
   if (parent.children.length <= 1) {
@@ -171,6 +173,58 @@ const preserveProcs = (
   return current;
 };
 
+const preserveCustomRegion = (
+  current: number,
+  statement: Statement,
+  model: Model,
+  syntaxProvider: SyntaxProvider,
+) => {
+  const token = statement.children[statement.children.length - 1];
+  if (current === -1) {
+    if (isComment(token) && /\*\s*region\s+format-ignore\b/.test(token.text)) {
+      const block = syntaxProvider.getFoldingBlock(
+        token.start.line,
+        token.start.column,
+        true,
+        false,
+        true,
+      );
+      if (
+        block &&
+        block.type === LexerEx.SEC_TYPE.CUSTOM &&
+        block.startLine === token.start.line &&
+        block.startCol === token.start.column
+      ) {
+        current = 0;
+        const start = token.start;
+        const end = { line: block.endLine, column: block.endCol };
+        statement.children.pop();
+        statement.children.push({
+          type: "raw-data",
+          text: model.getText({ start, end }),
+          start,
+          end,
+        });
+      }
+    }
+  } else if (current === 0) {
+    statement.children.pop();
+    if (
+      statement &&
+      statement.children.length > 0 &&
+      isSamePosition(
+        token.end,
+        statement.children[statement.children.length - 1].end,
+      )
+    ) {
+      current = 1;
+    }
+  } else if (current === 1) {
+    return -1;
+  }
+  return current;
+};
+
 const preserveQuoting = (
   current: number,
   statement: Statement,
@@ -214,179 +268,46 @@ const preserveQuoting = (
   return current;
 };
 
-const preserveCustomRegion = (
-  token: Token,
-  context: ParserContext,
-  model: Model,
-  syntaxProvider: SyntaxProvider,
-) => {
-  let current = context.preserveCustom;
-  if (current === -1) {
-    if (isComment(token) && /\*\s*region\s+format-ignore\b/.test(token.text)) {
-      const block = syntaxProvider.getFoldingBlock(
-        token.start.line,
-        token.start.column,
-        true,
-        false,
-        true,
-      );
-      if (
-        block &&
-        block.type === LexerEx.SEC_TYPE.CUSTOM &&
-        block.startLine === token.start.line &&
-        block.startCol === token.start.column
-      ) {
-        current = 0;
-        const start = token.start;
-        const end = { line: block.endLine, column: block.endCol };
-        if (!context.currentStatement) {
-          context.startStatement(token.text);
-        }
-        context.currentStatement?.children.push({
-          type: "raw-data",
-          text: model.getText({ start, end }),
-          start,
-          end,
-        });
-      }
-    }
-  } else if (current === 0) {
-    const statement = context.currentStatement;
-    if (
-      statement &&
-      statement.children.length > 0 &&
-      isSamePosition(
-        token.end,
-        statement.children[statement.children.length - 1].end,
-      )
-    ) {
-      current = 1;
-      context.endStatement();
-    }
-  } else if (current === 1) {
-    return -1;
-  }
-  return current;
-};
-
-class ParserContext {
-  readonly root: Program = {
-    type: "program",
-    children: [],
-  };
-  readonly parents: Region[] = [];
-  region: Region | undefined = undefined;
-  currentStatement: Statement | undefined = undefined;
-  prevStatement: Statement | undefined = undefined;
-  quoting = -1;
-  preserveProc = -1;
-  preserveCustom = -1;
-
-  get parent() {
-    return this.parents.length
-      ? this.parents[this.parents.length - 1]
-      : this.root;
-  }
-  get prevToken() {
-    return this.prevStatement?.children[this.prevStatement.children.length - 1];
-  }
-
-  startRegion(block?: FoldingBlock) {
-    if (block) {
-      if (this.region && hasParent([...this.parents, this.region], block)) {
-        this.parents.push(this.region);
-      }
-      this.region = {
-        type: "region",
-        block,
-        children: [],
-      };
-      this.endStatement();
-    } else {
-      if (this.region) {
-        this.region.children.pop();
-        this.parents.push(this.region);
-      } else {
-        this.parent.children.pop();
-      }
-      this.region = {
-        type: "region",
-        children: [this.currentStatement!],
-      };
-    }
-    this.parent.children.push(this.region);
-  }
-
-  endRegion() {
-    this.region = this.parents.pop();
-  }
-
-  startStatement(name: string) {
-    this.currentStatement = {
-      type: "statement",
-      name,
-      children: [],
-    };
-    const parent = this.region ?? this.parent;
-    parent.children.push(this.currentStatement);
-  }
-
-  endStatement() {
-    if (this.currentStatement) {
-      this.prevStatement = this.currentStatement;
-      this.currentStatement = undefined;
-    }
-  }
-}
-
 export const getParser =
   (model: Model, tokens: Token[], syntaxProvider: SyntaxProvider) => () => {
-    const context = new ParserContext();
+    const root: Program = {
+      type: "program",
+      children: [],
+    };
+    const parents: Region[] = [];
+    let region: Region | undefined = undefined;
+    let currentStatement: Statement | undefined = undefined;
+    let prevStatement: Statement | undefined = undefined;
+    let quoting = -1;
+    let preserveProc = -1;
+    let preserveCustom = -1;
 
     for (let i = 0; i < tokens.length; i++) {
       const node = tokens[i];
+      let parent = parents.length ? parents[parents.length - 1] : root;
 
-      //#region --- preserve special regions ---
-      if (context.region && context.region.block) {
-        context.preserveProc = preserveProcs(
-          context.preserveProc,
-          context.region,
-          node,
-          model,
-        );
-        if (context.preserveProc === 0 && i === tokens.length - 1) {
+      //#region --- Preserve Python/Lua
+      if (region && region.block) {
+        preserveProc = preserveProcs(preserveProc, region, node, model);
+        if (preserveProc === 0 && i === tokens.length - 1) {
           // force finish at file end
           const fakeNode: Token = { ...node, text: ";", type: "sep" };
           if (node.text.endsWith("\n\n")) {
             // printer will add trailing new line
             fakeNode.end = { line: node.end.line - 1, column: 0 };
           }
-          context.preserveProc = preserveProcs(
-            1,
-            context.region,
-            fakeNode,
-            model,
-          );
+          preserveProc = preserveProcs(1, region, fakeNode, model);
         }
-        if (context.preserveProc >= 0) {
+        if (preserveProc >= 0) {
           continue;
         }
       }
       if (node.type === "embedded-code") {
         continue;
       }
-      context.preserveCustom = preserveCustomRegion(
-        node,
-        context,
-        model,
-        syntaxProvider,
-      );
-      if (context.preserveCustom >= 0) {
-        continue;
-      }
       //#endregion ---
 
-      //#region --- Check for block start: DATA, PROC, %MACRO ---
+      //#region --- Check for block start: DATA, PROC, %MACRO
       if (node.type === "sec-keyword" || node.type === "macro-sec-keyword") {
         const block = syntaxProvider.getFoldingBlock(
           node.start.line,
@@ -400,104 +321,131 @@ export const getParser =
           block.startLine === node.start.line &&
           block.startCol === node.start.column
         ) {
-          context.startRegion(block);
+          if (region && hasParent([...parents, region], block)) {
+            parents.push(region);
+            parent = region;
+          }
+          region = {
+            type: "region",
+            block: block,
+            children: [],
+          };
+          parent.children.push(region);
+          if (currentStatement) {
+            prevStatement = currentStatement;
+            currentStatement = undefined;
+          }
         }
       }
       //#endregion ---
 
-      //#region --- Check for statement start ---
-      const shouldStartStatement = !context.currentStatement;
-      if (shouldStartStatement) {
-        context.startStatement(node.text);
-        if (
-          context.currentStatement &&
-          context.region?.children.length === 1 &&
-          context.prevStatement?.children.length === 1 &&
-          context.prevToken &&
-          isComment(context.prevToken)
-        ) {
-          // leading comment will be printed together with current statement
-          context.currentStatement.leadingComment = context.prevToken;
-          // remove it from previous AST location
-          removePrevStatement(context.parent);
+      //#region --- Check for statement start
+      if (!currentStatement) {
+        currentStatement = {
+          type: "statement",
+          name: node.text,
+          children: [],
+        };
+        if (region) {
+          if (region.children.length === 0 && prevStatement) {
+            const prevToken =
+              prevStatement.children[prevStatement.children.length - 1];
+            if (prevStatement.children.length === 1 && isComment(prevToken)) {
+              // leading comment will be printed together with current statement
+              currentStatement.leadingComment = prevToken;
+              // remove it from previous AST location
+              removePrevStatement(parent);
+            }
+          }
+          region.children.push(currentStatement);
+        } else {
+          parent.children.push(currentStatement);
         }
       }
       //#endregion ---
 
-      if (!context.currentStatement) {
-        throw new Error();
-      }
-      context.currentStatement.children.push(node);
+      currentStatement.children.push(node);
 
-      context.quoting = preserveQuoting(
-        context.quoting,
-        context.currentStatement,
+      preserveCustom = preserveCustomRegion(
+        preserveCustom,
+        currentStatement,
         model,
+        syntaxProvider,
       );
-      if (context.quoting >= 0) {
+      if (preserveCustom >= 0) {
+        if (preserveCustom === 1) {
+          prevStatement = currentStatement;
+          currentStatement = undefined;
+        }
         continue;
       }
 
-      //#region --- Check for statement end ---
+      quoting = preserveQuoting(quoting, currentStatement, model);
+      if (quoting >= 0) {
+        continue;
+      }
+
+      //#region --- Check for statement end
       if (node.type === "sep" && node.text === ";") {
         if (
-          context.currentStatement.children[0].type === "cards-data" &&
+          currentStatement.children[0].type === "cards-data" &&
           /(cards|lines|datalines|parmcards)4/i.test(
-            (context.region && context.prevStatement?.name) ?? "",
+            (region && prevStatement?.name) ?? "",
           ) &&
-          context.currentStatement.children.length < 5
+          currentStatement.children.length < 5
         ) {
           // datalines4 requires ;;;; to end
           continue;
         }
         if (
           isStartingRegion(
-            context.region
-              ? [...context.parents, context.region]
-              : context.parents,
-            context.currentStatement,
+            region ? [...parents, region] : parents,
+            currentStatement,
           )
         ) {
-          context.startRegion();
+          if (region) {
+            region.children.pop();
+            parents.push(region);
+            parent = region;
+          } else {
+            parent.children.pop();
+          }
+          region = {
+            type: "region",
+            children: [currentStatement],
+          };
+          parent.children.push(region);
         } else if (
-          context.region &&
-          !context.region.block &&
-          context.currentStatement.children.length > 1 &&
+          region &&
+          !region.block &&
+          currentStatement.children.length > 1 &&
           /^(%?end|enddata|endpackage|endthread|endgraph|endlayout)$/i.test(
-            context.currentStatement.children[
-              context.currentStatement.children.length - 2
-            ].text,
+            currentStatement.children[currentStatement.children.length - 2]
+              .text,
           )
         ) {
           // region end
           // put `end` out of region children to outdent
-          context.parent.children.push(context.region.children.pop()!);
-          context.endRegion();
-        } else if (
-          context.region?.block &&
-          isAtBlockEnd(context.region.block, node)
-        ) {
+          parent.children.push(region.children.pop()!);
+          region = parents.pop();
+        } else if (region && isAtBlockEnd(region.block, node)) {
           // block end
-          if (
-            /^(run|quit|%mend)\b/i.test(
-              context.currentStatement.children[0].text,
-            )
-          ) {
+          if (/^(run|quit|%mend)\b/i.test(currentStatement.children[0].text)) {
             // put `run` out of section children to outdent
-            context.parent.children.push(context.region.children.pop()!);
+            parent.children.push(region.children.pop()!);
           }
-          context.endRegion();
+          region = parents.pop();
         }
         if (i < tokens.length - 1) {
           const nextToken = tokens[i + 1];
           if (isComment(nextToken) && nextToken.end.line === node.end.line) {
             // trailing comment
-            context.currentStatement.children.push(nextToken);
+            currentStatement.children.push(nextToken);
             ++i;
           }
           if (nextToken.start.line - node.end.line > 1) {
             // preserve user explicit empty line
-            context.currentStatement.children.push({
+            currentStatement.children.push({
               type: "raw-data",
               text: "\n",
               start: node.end,
@@ -505,31 +453,31 @@ export const getParser =
             });
           }
         }
-        context.endStatement();
-      } else if (
-        context.currentStatement.children.length === 1 &&
-        isComment(node)
-      ) {
+        prevStatement = currentStatement;
+        currentStatement = undefined;
+      } else if (currentStatement.children.length === 1 && isComment(node)) {
         // standalone comment, treat as a whole statement
-        context.endStatement();
-        if (context.region?.block && isAtBlockEnd(context.region.block, node)) {
-          context.endRegion();
+        prevStatement = currentStatement;
+        currentStatement = undefined;
+        if (isAtBlockEnd(region?.block, node)) {
+          region = parents.pop();
         }
       } else if (
-        context.currentStatement.children.length === 2 &&
+        currentStatement.children.length === 2 &&
         node.type === "sep" &&
         node.text === ":" &&
-        context.currentStatement.children[0].type === "text"
+        currentStatement.children[0].type === "text"
       ) {
         // label: treat as raw data
-        context.currentStatement.children[0] = {
-          ...context.currentStatement.children[0],
+        currentStatement.children[0] = {
+          ...currentStatement.children[0],
           type: "raw-data",
         };
-        context.endStatement();
+        prevStatement = currentStatement;
+        currentStatement = undefined;
       }
       //#endregion ---
     }
 
-    return context.root;
+    return root;
   };
