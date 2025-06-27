@@ -24,6 +24,7 @@ import {
   sortedContentItems,
 } from "../../components/ContentNavigator/utils";
 import { appendSessionLogFn } from "../../components/logViewer";
+import { ProfileWithFileRootOptions } from "../../components/profile";
 import { FileProperties, FileSystemApi } from "./api/compute";
 import { getApiConfig } from "./common";
 import {
@@ -38,7 +39,7 @@ import {
 export const SAS_SERVER_HOME_DIRECTORY = "SAS_SERVER_HOME_DIRECTORY";
 const SAS_FILE_SEPARATOR = "~fs~";
 
-class RestSASServerAdapter implements ContentAdapter {
+class RestServerAdapter implements ContentAdapter {
   protected baseUrl: string;
   protected fileSystemApi: ReturnType<typeof FileSystemApi>;
   protected sessionId: string;
@@ -47,10 +48,14 @@ class RestSASServerAdapter implements ContentAdapter {
     [id: string]: { etag: string; lastModified?: string; contentType?: string };
   };
 
-  public constructor() {
+  public constructor(
+    protected fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
+    protected fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
+  ) {
     this.rootFolders = {};
     this.fileMetadataMap = {};
   }
+
   addChildItem: (
     childItemUri: string | undefined,
     parentItemUri: string | undefined,
@@ -75,6 +80,7 @@ class RestSASServerAdapter implements ContentAdapter {
     const reconnect = async () => {
       return await this.establishConnection();
     };
+    // TODO (feat/root-nav-path) Make sure we're overriding config options with compute context data
     this.fileSystemApi = new Proxy(FileSystemApi(getApiConfig()), {
       get: function (target, property) {
         if (typeof target[property] === "function") {
@@ -192,6 +198,14 @@ class RestSASServerAdapter implements ContentAdapter {
     }
   }
 
+  private getNavigationRoot(): string {
+    if (this.fileNavigationRoot === "CUSTOM") {
+      const navPath = this.fileNavigationCustomRootPath.split("/").join("~fs~");
+      return `/compute/sessions/${this.sessionId}/files/${navPath}/members`;
+    }
+    return `/compute/sessions/${this.sessionId}/files/~fs~/members`;
+  }
+
   public async getChildItems(parentItem: ContentItem): Promise<ContentItem[]> {
     // If the user is fetching child items of the root folder, give them the
     // "home" directory
@@ -202,7 +216,7 @@ class RestSASServerAdapter implements ContentAdapter {
             SAS_SERVER_HOME_DIRECTORY,
             "Home",
             SERVER_HOME_FOLDER_TYPE,
-            `/compute/sessions/${this.sessionId}/files/~fs~/members`,
+            this.getNavigationRoot(),
             "getDirectoryMembers",
           ),
         ),
@@ -527,4 +541,4 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 }
 
-export default RestSASServerAdapter;
+export default RestServerAdapter;
