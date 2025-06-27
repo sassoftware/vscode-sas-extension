@@ -286,6 +286,21 @@
                             "type": "string",
                             "default": "",
                             "description": "%configuration.SAS.connectionProfiles.profiles.clientSecret%"
+                          },
+                          "fileNavigationCustomRootPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationCustomRootPath%"
+                          },
+                          "fileNavigationRoot": {
+                            "type": "string",
+                            "default": "USER",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationRoot%",
+                            "enum": [
+                              "CUSTOM",
+                              "USER",
+                              "ROOT"
+                            ]
                           }
                         }
                       }
@@ -372,6 +387,21 @@
                             "type": "string",
                             "default": "",
                             "description": "%configuration.SAS.connectionProfiles.profiles.iom.interopLibraryFolderPath%"
+                          },
+                          "fileNavigationCustomRootPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationCustomRootPath%"
+                          },
+                          "fileNavigationRoot": {
+                            "type": "string",
+                            "default": "USER",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationRoot%",
+                            "enum": [
+                              "CUSTOM",
+                              "USER",
+                              "ROOT"
+                            ]
                           }
                         }
                       }
@@ -398,6 +428,21 @@
                             "type": "string",
                             "default": "",
                             "description": "%configuration.SAS.connectionProfiles.profiles.com.interopLibraryFolderPath%"
+                          },
+                          "fileNavigationCustomRootPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.com.fileNavigationCustomRootPath%"
+                          },
+                          "fileNavigationRoot": {
+                            "type": "string",
+                            "default": "USER",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.com.fileNavigationRoot%",
+                            "enum": [
+                              "CUSTOM",
+                              "USER",
+                              "ROOT"
+                            ]
                           }
                         }
                       }
