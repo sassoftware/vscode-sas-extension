@@ -141,6 +141,13 @@ class ItcServerAdapter implements ContentAdapter {
     }
   }
 
+  private fileNavigationRootSettings() {
+    return {
+      fileNavigationCustomRootPath: this.fileNavigationCustomRootPath,
+      fileNavigationRoot: this.fileNavigationRoot || "USER",
+    };
+  }
+
   public async getChildItems(parentItem: ContentItem): Promise<ContentItem[]> {
     // If the user is fetching child items of the root folder, give them the
     // "home" directory
@@ -149,6 +156,7 @@ class ItcServerAdapter implements ContentAdapter {
         ScriptActions.GetChildItems,
         {
           path: "/",
+          ...this.fileNavigationRootSettings(),
         },
       );
       if (!success) {
@@ -177,6 +185,7 @@ class ItcServerAdapter implements ContentAdapter {
       ScriptActions.GetChildItems,
       {
         path: getLink(parentItem.links, "GET", "getDirectoryMembers").uri,
+        ...this.fileNavigationRootSettings(),
       },
     );
     if (!success) {
@@ -313,6 +322,7 @@ class ItcServerAdapter implements ContentAdapter {
   ): Promise<ContentItem> {
     const { data: items } = await this.execute(ScriptActions.GetChildItems, {
       path,
+      ...this.fileNavigationRootSettings(),
     });
 
     const foundItem = items.find((item) => item.name === name);

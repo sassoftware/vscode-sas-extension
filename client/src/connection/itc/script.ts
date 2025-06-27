@@ -479,7 +479,7 @@ class SASRunner{
     return $null;
   }
 
-  [object[]] GetItemsAtPath([string]$folderPath) {
+  [object[]] GetItemsAtPath([string]$folderPath,[string]$fileNavigationCustomRootPath,[string]$fileNavigationRoot) {
     $fieldInclusionMask = [boolean[]]@()
     # Out data
     $listedPath = ""
@@ -493,6 +493,10 @@ class SASRunner{
     $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath
     if ($folderPath -eq "/") {
       $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModeUser
+      if ($fileNavigationRoot -eq "ROOT") {
+        // TODO (feat/root-nav-path) Change me
+        $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModeUser
+      }
     }
 
     $this.objSAS.FileService.ListFiles(
@@ -525,9 +529,9 @@ class SASRunner{
     return $output
   }
 
-  [void]GetChildItems([string]$folderPath) {
+  [void]GetChildItems([string]$folderPath, [string]$fileNavigationCustomRootPath, [string]$fileNavigationRoot) {
     try {
-      $output = $this.GetItemsAtPath($folderPath)
+      $output = $this.GetItemsAtPath($folderPath, $fileNavigationCustomRootPath, $fileNavigationRoot)
       Write-Host (@{success=$true; data=$output} | ConvertTo-Json)
     } catch {
       Write-Host (@{success=$false; message=$Error[0].Exception.Message} | ConvertTo-Json)
