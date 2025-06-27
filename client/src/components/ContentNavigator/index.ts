@@ -102,33 +102,34 @@ class ContentNavigator implements SubscriptionProvider {
         async (item: ContentItem) => {
           this.treeViewSelections(item).forEach(
             async (resource: ContentItem) => {
+              if (!resource.contextValue.includes("delete")) {
+                return;
+              }
               const isContainer = getIsContainer(resource);
               const moveToRecycleBin =
                 this.contentDataProvider.canRecycleResource(resource);
 
-              if (resource.contextValue.includes("delete")) {
-                if (
-                  !moveToRecycleBin &&
-                  !(await window.showWarningMessage(
-                    l10n.t(Messages.DeleteWarningMessage, {
-                      name: resource.name,
-                    }),
-                    { modal: true },
-                    Messages.DeleteButtonLabel,
-                  ))
-                ) {
-                  return;
-                }
-                const deleteResult = moveToRecycleBin
-                  ? await this.contentDataProvider.recycleResource(resource)
-                  : await this.contentDataProvider.deleteResource(resource);
-                if (!deleteResult) {
-                  window.showErrorMessage(
-                    isContainer
-                      ? Messages.FolderDeletionError
-                      : Messages.FileDeletionError,
-                  );
-                }
+              if (
+                !moveToRecycleBin &&
+                !(await window.showWarningMessage(
+                  l10n.t(Messages.DeleteWarningMessage, {
+                    name: resource.name,
+                  }),
+                  { modal: true },
+                  Messages.DeleteButtonLabel,
+                ))
+              ) {
+                return;
+              }
+              const deleteResult = moveToRecycleBin
+                ? await this.contentDataProvider.recycleResource(resource)
+                : await this.contentDataProvider.deleteResource(resource);
+              if (!deleteResult) {
+                window.showErrorMessage(
+                  isContainer
+                    ? Messages.FolderDeletionError
+                    : Messages.FileDeletionError,
+                );
               }
             },
           );
