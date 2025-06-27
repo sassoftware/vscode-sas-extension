@@ -22,6 +22,7 @@ import {
   sortedContentItems,
 } from "../../components/ContentNavigator/utils";
 import { getGlobalStorageUri } from "../../components/ExtensionContext";
+import { ProfileWithFileRootOptions } from "../../components/profile";
 import {
   getLink,
   getResourceId,
@@ -32,11 +33,14 @@ import { executeRawCode } from "./CodeRunner";
 import { PowershellResponse, ScriptActions } from "./types";
 import { getDirectorySeparator } from "./util";
 
-class ITCSASServerAdapter implements ContentAdapter {
+class ItcServerAdapter implements ContentAdapter {
   protected sessionId: string;
   private rootFolders: RootFolderMap;
 
-  public constructor() {
+  public constructor(
+    protected readonly fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
+    protected readonly fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
+  ) {
     this.rootFolders = {};
   }
 
@@ -401,4 +405,4 @@ class ITCSASServerAdapter implements ContentAdapter {
   }
 }
 
-export default ITCSASServerAdapter;
+export default ItcServerAdapter;

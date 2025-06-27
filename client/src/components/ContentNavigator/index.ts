@@ -16,7 +16,7 @@ import {
 
 import { profileConfig } from "../../commands/profile";
 import { SubscriptionProvider } from "../SubscriptionProvider";
-import { ConnectionType } from "../profile";
+import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
 import ContentAdapterFactory from "./ContentAdapterFactory";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
@@ -491,10 +491,26 @@ class ContentNavigator implements SubscriptionProvider {
       return;
     }
 
+    const profileWithFileRootOptions = getProfileWithFileRootOptions();
     return new ContentAdapterFactory().create(
       activeProfile.connectionType,
+      profileWithFileRootOptions?.fileNavigationCustomRootPath,
+      profileWithFileRootOptions?.fileNavigationRoot,
       this.sourceType,
     );
+
+    function getProfileWithFileRootOptions():
+      | ProfileWithFileRootOptions
+      | undefined {
+      switch (activeProfile.connectionType) {
+        case ConnectionType.Rest:
+        case ConnectionType.IOM:
+        case ConnectionType.COM:
+          return activeProfile;
+        default:
+          return undefined;
+      }
+    }
   }
 }
 
