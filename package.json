@@ -1329,7 +1329,7 @@
     "glob": "^7.2.0",
     "mocha": "^11.5.0",
     "nock": "^13.5.5",
-    "papaparse": "^5.5.2",
+    "papaparse": "^5.5.3",
     "path-browserify": "^1.0.1",
     "prettier": "^3.5.3",
     "proxyquire": "^2.1.3",
