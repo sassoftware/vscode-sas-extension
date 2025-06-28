@@ -94,6 +94,24 @@ To format your code, open context menu and select `Format Document`.
 
 ![formatter](/images/formatter.gif)
 
+:::tip
+
+You can define custom regions as below to exclude code from being formatted.
+
+```sas
+proc format library=library;
+/* region format-ignore */
+  invalue evaluation 'O'=4
+                     'S'=3
+                     'E'=2
+                     'C'=1
+                     'N'=0;
+/* endregion */
+run;
+```
+
+:::
+
 ## Function Signature Help
 
 Signature help provides information for current parameter as you are writing function calls.
