@@ -9,8 +9,8 @@
     "vscode": "^1.89.0"
   },
   "dependencies": {
-    "ag-grid-community": "^33.3.2",
-    "ag-grid-react": "^33.3.2",
+    "ag-grid-community": "^34.0.0",
+    "ag-grid-react": "^34.0.0",
     "axios": "^1.10.0",
     "highlight.js": "^11.11.1",
     "marked": "^15.0.12",
