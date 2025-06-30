@@ -494,8 +494,11 @@ class SASRunner{
     if ($folderPath -eq "/") {
       $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModeUser
       if ($fileNavigationRoot -eq "ROOT") {
-        // TODO (feat/root-nav-path) Change me
-        $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModeUser
+        $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModeRoot
+      }
+      if ($fileNavigationRoot -eq "CUSTOM") {
+        $folderPath = $fileNavigationCustomRootPath
+        $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath
       }
     }
 
@@ -515,6 +518,8 @@ class SASRunner{
     $output = [object[]]::new($names.Length)
     for($i = 0; $i -lt $names.Count; $i++) {
       $output[$i] = @{
+        debug1=$folderPath
+        debug2=$fileNavigationRoot
         uri=$listedPath + $this.GetDirectorySeparator($listedPath) + $names[$i]
         name=$names[$i];
         type=$typeNames[$i];
