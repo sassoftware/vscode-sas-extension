@@ -166,3 +166,12 @@ print('hello')
 endinteractive;
 /* comment */
 run;
+proc format library=library;
+/* region format-ignore */
+  invalue evaluation 'O'=4
+                     'S'=3
+                     'E'=2
+                     'C'=1
+                     'N'=0;
+/* endregion */
+run;
