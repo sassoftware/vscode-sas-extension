@@ -6,15 +6,15 @@ import {
   ExtensionContext,
   Uri,
   commands,
+  env,
   window,
   workspace,
 } from "vscode";
 
 import { createWriteStream } from "fs";
-
 // fs data parsing imports
 // import * as fs from 'fs';
-import * as path from 'path';
+import * as path from "path";
 
 import { profileConfig } from "../../commands/profile";
 import { Column } from "../../connection/rest/api/compute";
@@ -74,11 +74,18 @@ class LibraryNavigator implements SubscriptionProvider {
         "SAS.downloadTable",
         async (item: LibraryItem) => {
           let dataFilePath: string = "";
-          if (workspace.workspaceFolders && workspace.workspaceFolders.length > 0) {
+          if (
+            env.remoteName !== undefined &&
+            workspace.workspaceFolders &&
+            workspace.workspaceFolders.length > 0
+          ) {
             // start from 'rootPath' workspace folder
             dataFilePath = workspace.workspaceFolders[0].uri.fsPath;
           }
-          dataFilePath = path.join(dataFilePath, `${item.library}.${item.name}.csv`.toLocaleLowerCase());
+          dataFilePath = path.join(
+            dataFilePath,
+            `${item.library}.${item.name}.csv`.toLocaleLowerCase(),
+          );
 
           // display save file dialog
           const uri = await window.showSaveDialog({
