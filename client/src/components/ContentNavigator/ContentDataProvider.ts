@@ -56,7 +56,26 @@ import {
   getEditorTabsForItem,
   getFileStatement,
   isContainer as getIsContainer,
-} from "./utils";
+} from "./utils"; // already imported
+
+async function getDirtyFilesInFolder(item: ContentItem, provider: ContentDataProvider): Promise<TextDocument[]> {
+  const dirtyDocs: TextDocument[] = [];
+  async function checkChildren(folder: ContentItem) {
+    const children = await provider.getChildren(folder);
+    for (const child of children) {
+      if (getIsContainer(child)) {
+        await checkChildren(child);
+      } else {
+        const doc = workspace.textDocuments.find(d => d.uri.toString() === child.vscUri.toString());
+        if (doc && doc.isDirty) {
+          dirtyDocs.push(doc);
+        }
+      }
+    }
+  }
+  await checkChildren(item);
+  return dirtyDocs;
+}
 
 class ContentDataProvider
   implements
@@ -353,6 +372,21 @@ class ContentDataProvider
   }
 
   public async deleteResource(item: ContentItem): Promise<boolean> {
+    if (getIsContainer(item)) {
+      const dirtyDocs = await getDirtyFilesInFolder(item, this);
+      if (dirtyDocs.length > 0) {
+        const confirm = await window.showWarningMessage(
+          l10n.t("There are unsaved files in this folder. Deleting it will discard unsaved changes. Do you want to continue?"),
+          { modal: true },
+          l10n.t("Delete Anyway"),
+          l10n.t("Cancel")
+        );
+        if (confirm !== l10n.t("Delete Anyway")) {
+          return false;
+        }
+      }
+    }
+
     if (!(await closeFileIfOpen(item))) {
       return false;
     }
