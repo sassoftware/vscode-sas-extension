@@ -12,8 +12,6 @@ import {
 } from "vscode";
 
 import { createWriteStream } from "fs";
-// fs data parsing imports
-// import * as fs from 'fs';
 import * as path from "path";
 
 import { profileConfig } from "../../commands/profile";
