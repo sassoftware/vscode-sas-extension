@@ -1161,7 +1161,7 @@ export class CodeZoneManager {
     } else if (zone.type === CodeZoneManager.ZONE_TYPE.OPT_VALUE) {
       type = CodeZoneManager.ZONE_TYPE.PROC_STMT_OPT_VALUE;
     } else if (zone.type === CodeZoneManager.ZONE_TYPE.SUB_OPT_NAME) {
-      const stmtWithDatasetOption = LexerEx.prototype.stmtWithDatasetOption_;
+      const stmtWithDatasetOption = LexerEx.stmtWithDatasetOption_;
       if (stmtWithDatasetOption[this._procName + "/" + stmt.text]) {
         type = CodeZoneManager.ZONE_TYPE.DATA_SET_OPT_NAME;
       } else if (

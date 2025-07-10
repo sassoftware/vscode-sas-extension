@@ -1834,7 +1834,7 @@ export class LexerEx {
     }
     return token;
   }
-  stmtWithDatasetOption_ = arrayToMap([
+  static readonly stmtWithDatasetOption_ = arrayToMap([
     //special
     "DATA/SET",
     "DATA/MERGE",
@@ -1897,7 +1897,7 @@ export class LexerEx {
             subOptName,
             pos,
           ).isKeyword ||
-          (this.stmtWithDatasetOption_[
+          (LexerEx.stmtWithDatasetOption_[
             this.curr.procName + "/" + this.curr.name
           ]
             ? this.syntaxDb.isDatasetKeyword(subOptName)
@@ -1950,7 +1950,7 @@ export class LexerEx {
           subOptName,
         );
         if (!isKeyword) {
-          if (this.stmtWithDatasetOption_["DATA/" + this.curr.name]) {
+          if (LexerEx.stmtWithDatasetOption_["DATA/" + this.curr.name]) {
             isKeyword = this.syntaxDb.isDatasetKeyword(subOptName);
           }
         }
