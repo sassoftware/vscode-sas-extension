@@ -381,7 +381,7 @@ class ItcServerAdapter implements ContentAdapter {
 
     return {
       ...item,
-      contextValue: resourceType(item),
+      contextValue: resourceType(item, ["copyPath"]),
       vscUri: getSasServerUri(item, false),
     };
   }

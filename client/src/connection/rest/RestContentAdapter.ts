@@ -162,6 +162,13 @@ class RestContentAdapter implements ContentAdapter {
   }
 
   public async getFolderPathForItem(item: ContentItem): Promise<string> {
+    return await this.getPathOfItem(item, true);
+  }
+
+  public async getPathOfItem(
+    item: ContentItem,
+    folderPathOnly?: boolean,
+  ): Promise<string> {
     if (!item) {
       return "";
     }
@@ -169,7 +176,13 @@ class RestContentAdapter implements ContentAdapter {
     const filePathParts = [];
     let currentContentItem: Pick<ContentItem, "parentFolderUri" | "name"> =
       item;
+    if (!folderPathOnly) {
+      filePathParts.push(currentContentItem.name);
+    }
     do {
+      if (!currentContentItem.parentFolderUri) {
+        break;
+      }
       try {
         const { data: parentData } = await this.connection.get(
           currentContentItem.parentFolderUri,
@@ -345,6 +358,7 @@ class RestContentAdapter implements ContentAdapter {
   ): ContentItem {
     item.flags = flags;
     item.permission = getPermission(item);
+
     return {
       ...item,
       contextValue: resourceType(item),

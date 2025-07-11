@@ -9,6 +9,7 @@ import {
   ProgressLocation,
   Uri,
   commands,
+  env,
   l10n,
   window,
   workspace,
@@ -399,6 +400,15 @@ class ContentNavigator implements SubscriptionProvider {
         `${SAS}.uploadFolderResource`,
         async (resource: ContentItem) =>
           this.uploadResource(resource, { canSelectFiles: false }),
+      ),
+      commands.registerCommand(
+        `${SAS}.copyPath`,
+        async (resource: ContentItem) => {
+          const path = await this.contentDataProvider.getPathOfItem(resource);
+          if (path) {
+            await env.clipboard.writeText(path);
+          }
+        },
       ),
       workspace.onDidChangeConfiguration(
         async (event: ConfigurationChangeEvent) => {

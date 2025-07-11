@@ -629,6 +629,11 @@
         "category": "SAS"
       },
       {
+        "command": "SAS.content.copyPath",
+        "title": "%commands.SAS.copyPath%",
+        "category": "SAS"
+      },
+      {
         "command": "SAS.content.deleteResource",
         "title": "%commands.SAS.deleteResource%",
         "category": "SAS"
@@ -703,6 +708,11 @@
       {
         "command": "SAS.content.uploadFolderResource",
         "title": "%commands.SAS.uploadFolders%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.copyPath",
+        "title": "%commands.SAS.copyPath%",
         "category": "SAS"
       },
       {
@@ -938,6 +948,11 @@
           "group": "favoritesgroup@1"
         },
         {
+          "command": "SAS.content.copyPath",
+          "when": "viewItem =~ /copyPath/ && view == contentdataprovider",
+          "group": "copypathgroup@0"
+        },
+        {
           "command": "SAS.content.renameResource",
           "when": "viewItem =~ /update/ && view == contentdataprovider && !listMultiSelection",
           "group": "delrenamegroup@0"
@@ -1001,6 +1016,11 @@
           "command": "SAS.server.removeFromFavorites",
           "when": "viewItem =~ /removeFromFavorites/ && view == serverdataprovider",
           "group": "favoritesgroup@1"
+        },
+        {
+          "command": "SAS.server.copyPath",
+          "when": "viewItem =~ /copyPath/ && view == serverdataprovider",
+          "group": "copypathgroup@0"
         },
         {
           "command": "SAS.server.renameResource",

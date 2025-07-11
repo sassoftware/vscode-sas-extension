@@ -7,6 +7,7 @@ import { AxiosResponse } from "axios";
 import { getSession } from "..";
 import {
   FOLDER_TYPES,
+  Messages,
   SAS_SERVER_ROOT_FOLDER,
   SAS_SERVER_ROOT_FOLDERS,
   SERVER_FOLDER_ID,
@@ -228,14 +229,28 @@ class RestServerAdapter implements ContentAdapter {
     let start = 0;
     let totalItemCount = 0;
     do {
-      const response = await this.fileSystemApi.getDirectoryMembers({
-        sessionId: this.sessionId,
-        directoryPath: this.trimComputePrefix(
-          getLink(parentItem.links, "GET", "getDirectoryMembers").uri,
-        ).replace("/members", ""),
-        limit,
-        start,
-      });
+      let response;
+      try {
+        response = await this.fileSystemApi.getDirectoryMembers({
+          sessionId: this.sessionId,
+          directoryPath: this.trimComputePrefix(
+            getLink(parentItem.links, "GET", "getDirectoryMembers").uri,
+          ).replace("/members", ""),
+          limit,
+          start,
+        });
+      } catch (error) {
+        // If this error is specifically related to file nav root settings, provide
+        // better feedback to the user
+        if (
+          error.status === 404 &&
+          parentItem.uri === SAS_SERVER_HOME_DIRECTORY &&
+          this.fileNavigationRoot === "CUSTOM"
+        ) {
+          throw new Error(Messages.FileNavigationRootError);
+        }
+        throw error;
+      }
       totalItemCount = response.data.count;
 
       allItems.push(
@@ -285,6 +300,16 @@ class RestServerAdapter implements ContentAdapter {
     // This is for creating a filename statement which won't work as expected for
     // file system files.
     return "";
+  }
+
+  public async getPathOfItem(item: ContentItem): Promise<string> {
+    const uri =
+      item.uri === SAS_SERVER_HOME_DIRECTORY
+        ? this.getNavigationRoot().replace("/members", "")
+        : item.uri;
+
+    const path = this.trimComputePrefix(uri);
+    return path.split(SAS_FILE_SEPARATOR).join("/").replace(/~sc~/g, ";");
   }
 
   public async getItemOfUri(uri: Uri): Promise<ContentItem> {
@@ -478,7 +503,12 @@ class RestServerAdapter implements ContentAdapter {
 
     return {
       ...item,
-      contextValue: resourceType(item),
+      contextValue: resourceType(
+        item,
+        // Lets add copy path support for the home directory where we
+        // can display the user defined root path if applicable.
+        id === SAS_SERVER_HOME_DIRECTORY ? ["copyPath"] : [],
+      ),
       fileStat: {
         ctime: item.creationTimeStamp,
         mtime: item.modifiedTimeStamp,
