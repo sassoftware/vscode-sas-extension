@@ -42,7 +42,7 @@ import {
   resourceType,
 } from "./util";
 
-class SASContentAdapter implements ContentAdapter {
+class RestContentAdapter implements ContentAdapter {
   private connection: AxiosInstance;
   private authorized: boolean;
   private viyaCadence: string;
@@ -162,6 +162,13 @@ class SASContentAdapter implements ContentAdapter {
   }
 
   public async getFolderPathForItem(item: ContentItem): Promise<string> {
+    return await this.getPathOfItem(item, true);
+  }
+
+  public async getPathOfItem(
+    item: ContentItem,
+    folderPathOnly?: boolean,
+  ): Promise<string> {
     if (!item) {
       return "";
     }
@@ -169,7 +176,13 @@ class SASContentAdapter implements ContentAdapter {
     const filePathParts = [];
     let currentContentItem: Pick<ContentItem, "parentFolderUri" | "name"> =
       item;
+    if (!folderPathOnly) {
+      filePathParts.push(currentContentItem.name);
+    }
     do {
+      if (!currentContentItem.parentFolderUri) {
+        break;
+      }
       try {
         const { data: parentData } = await this.connection.get(
           currentContentItem.parentFolderUri,
@@ -345,6 +358,7 @@ class SASContentAdapter implements ContentAdapter {
   ): ContentItem {
     item.flags = flags;
     item.permission = getPermission(item);
+
     return {
       ...item,
       contextValue: resourceType(item),
@@ -740,4 +754,4 @@ class SASContentAdapter implements ContentAdapter {
   }
 }
 
-export default SASContentAdapter;
+export default RestContentAdapter;

@@ -73,7 +73,7 @@ export enum ConnectionType {
  * value. Normally this option should not be set by the user since it is most likely
  * being set by an automated process.
  */
-export interface ViyaProfile extends BaseProfile {
+export interface ViyaProfile extends BaseProfile, ProfileWithFileRootOptions {
   connectionType: ConnectionType.Rest;
   endpoint: string;
   clientId?: string;
@@ -91,12 +91,12 @@ export interface SSHProfile extends BaseProfile {
   privateKeyFilePath?: string;
 }
 
-export interface COMProfile extends BaseProfile {
+export interface COMProfile extends BaseProfile, ProfileWithFileRootOptions {
   connectionType: ConnectionType.COM;
   host: string;
 }
 
-export interface IOMProfile extends BaseProfile {
+export interface IOMProfile extends BaseProfile, ProfileWithFileRootOptions {
   connectionType: ConnectionType.IOM;
   host: string;
   username: string;
@@ -125,6 +125,11 @@ export interface AutoExecFile {
 export interface BaseProfile {
   sasOptions?: string[];
   autoExec?: AutoExec[];
+}
+
+export interface ProfileWithFileRootOptions {
+  fileNavigationCustomRootPath?: string;
+  fileNavigationRoot?: "CUSTOM" | "ROOT" | "USER";
 }
 
 export const toAutoExecLines = (autoExec: AutoExec[]): string[] => {

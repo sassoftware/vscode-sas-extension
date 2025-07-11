@@ -74,6 +74,9 @@ export const Messages = {
   FileDragFromFavorites: l10n.t("Unable to drag files from my favorites."),
   FileDragFromTrashError: l10n.t("Unable to drag files from trash."),
   FileDropError: l10n.t('Unable to drop item "{name}".'),
+  FileNavigationRootError: l10n.t(
+    "Unable to load SAS Server files with provided fileNavigationRoot/fileNavigationCustomRootPath settings.",
+  ),
   FileOpenError: l10n.t("The file type is unsupported."),
   FileRestoreError: l10n.t("Unable to restore file."),
   FileUploadError: l10n.t("Unable to upload files."),

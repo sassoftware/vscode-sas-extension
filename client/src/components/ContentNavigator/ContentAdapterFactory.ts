@@ -1,9 +1,9 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import ITCSASServerAdapter from "../../connection/itc/ITCSASServerAdapter";
-import RestSASServerAdapter from "../../connection/rest/RestSASServerAdapter";
-import SASContentAdapter from "../../connection/rest/SASContentAdapter";
-import { ConnectionType } from "../profile";
+import ItcServerAdapter from "../../connection/itc/ItcServerAdapter";
+import RestContentAdapter from "../../connection/rest/RestContentAdapter";
+import RestServerAdapter from "../../connection/rest/RestServerAdapter";
+import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
 import {
   ContentAdapter,
   ContentNavigatorConfig,
@@ -13,18 +13,26 @@ import {
 class ContentAdapterFactory {
   public create(
     connectionType: ConnectionType,
+    fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
+    fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
     sourceType: ContentNavigatorConfig["sourceType"],
   ): ContentAdapter {
     const key = `${connectionType}.${sourceType}`;
     switch (key) {
       case `${ConnectionType.Rest}.${ContentSourceType.SASServer}`:
-        return new RestSASServerAdapter();
+        return new RestServerAdapter(
+          fileNavigationCustomRootPath,
+          fileNavigationRoot,
+        );
       case `${ConnectionType.IOM}.${ContentSourceType.SASServer}`:
       case `${ConnectionType.COM}.${ContentSourceType.SASServer}`:
-        return new ITCSASServerAdapter();
+        return new ItcServerAdapter(
+          fileNavigationCustomRootPath,
+          fileNavigationRoot,
+        );
       case `${ConnectionType.Rest}.${ContentSourceType.SASContent}`:
       default:
-        return new SASContentAdapter();
+        return new RestContentAdapter();
     }
   }
 }

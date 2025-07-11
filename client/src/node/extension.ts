@@ -111,9 +111,9 @@ export function activate(context: ExtensionContext) {
   // SAS Content and another to navigate SAS Server. Both of these will
   // also determine which adapter to use for processing. The options look
   // like this:
-  // - rest connection w/ sourceType="sasContent" uses a SASContentAdapter
-  // - rest connection w/ sourceType="sasServer" uses a RestSASServerAdapter
-  // - itc/iom connection w/ sourceType="sasServer" uses ITCSASServerAdapter
+  // - rest connection w/ sourceType="sasContent" uses a RestContentAdapter
+  // - rest connection w/ sourceType="sasServer" uses a RestServerAdapter
+  // - itc/iom connection w/ sourceType="sasServer" uses ItcServerAdapter
   const sasContentNavigator = new ContentNavigator(context, {
     mimeType: "application/vnd.code.tree.contentdataprovider",
     sourceType: ContentSourceType.SASContent,
