@@ -6,6 +6,7 @@ import { v4 } from "uuid";
 
 import { onRunError } from "../../commands/run";
 import {
+  Messages,
   SAS_SERVER_ROOT_FOLDER,
   SAS_SERVER_ROOT_FOLDERS,
   SERVER_FOLDER_ID,
@@ -160,6 +161,9 @@ class ItcServerAdapter implements ContentAdapter {
         },
       );
       if (!success) {
+        if (this.fileNavigationRoot === "CUSTOM") {
+          throw new Error(Messages.FileNavigationRootError);
+        }
         return [];
       }
       const uri = items[0].parentFolderUri;
@@ -173,7 +177,7 @@ class ItcServerAdapter implements ContentAdapter {
             "getDirectoryMembers",
           ),
           {
-            write: true,
+            write: false,
             delete: false,
             addMember: true,
           },
@@ -195,6 +199,10 @@ class ItcServerAdapter implements ContentAdapter {
     const childItems = items.map(this.convertPowershellResponseToContentItem);
 
     return sortedContentItems(childItems);
+  }
+
+  public async getPathOfItem(item: ContentItem): Promise<string> {
+    return item.uri;
   }
 
   private async getTempFile() {
@@ -381,7 +389,12 @@ class ItcServerAdapter implements ContentAdapter {
 
     return {
       ...item,
-      contextValue: resourceType(item, ["copyPath"]),
+      contextValue: resourceType(
+        item,
+        // Lets add copy path support for the home directory where we
+        // can display the user defined root path if applicable.
+        item.type === SERVER_HOME_FOLDER_TYPE ? ["copyPath"] : [],
+      ),
       vscUri: getSasServerUri(item, false),
     };
   }

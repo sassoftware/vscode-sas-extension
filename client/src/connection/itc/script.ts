@@ -327,7 +327,7 @@ class SASRunner{
 
   [void]DeleteItemAtPath([string]$filePath,[bool]$recursive) {
     if ($recursive) {
-      $items = $this.GetItemsAtPath($filePath);
+      $items = $this.GetItemsAtPath($filePath, [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath);
       for($i = 0; $i -lt $items.Count; $i++) {
         if ($items[$i].category -eq 0) {
           $this.DeleteItemAtPath($items[$i].uri, $true);
@@ -346,7 +346,7 @@ class SASRunner{
     try {
       # If we error out, that means we're trying to get items at a file path,
       # which isn't valid (thus, this isn't recursive)
-      $items = $this.GetItemsAtPath($filePath);
+      $items = $this.GetItemsAtPath($filePath, [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath);
     } catch {
       $recursive = $false
     }
@@ -470,7 +470,7 @@ class SASRunner{
   }
 
   [object] GetItemAtPathWithName([string]$folderPath, [string]$name) {
-    $items = $this.GetItemsAtPath($folderPath)
+    $items = $this.GetItemsAtPath($folderPath, [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath)
     for($i = 0; $i -lt $items.Count; $i++) {
       if ($items[$i].name -eq $name) {
         return $items[$i]
@@ -479,7 +479,7 @@ class SASRunner{
     return $null;
   }
 
-  [object[]] GetItemsAtPath([string]$folderPath,[string]$fileNavigationCustomRootPath,[string]$fileNavigationRoot) {
+  [object[]] GetItemsAtPath([string]$folderPath,[SAS.FileServiceListFilesMode] $mode) {
     $fieldInclusionMask = [boolean[]]@()
     # Out data
     $listedPath = ""
@@ -489,18 +489,6 @@ class SASRunner{
     $sizes = [int[]]@()
     $modTimes = [DateTime[]]@()
     $engines = [string[]]@()
-
-    $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath
-    if ($folderPath -eq "/") {
-      $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModeUser
-      if ($fileNavigationRoot -eq "ROOT") {
-        $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModeRoot
-      }
-      if ($fileNavigationRoot -eq "CUSTOM") {
-        $folderPath = $fileNavigationCustomRootPath
-        $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath
-      }
-    }
 
     $this.objSAS.FileService.ListFiles(
         $folderPath,
@@ -518,8 +506,6 @@ class SASRunner{
     $output = [object[]]::new($names.Length)
     for($i = 0; $i -lt $names.Count; $i++) {
       $output[$i] = @{
-        debug1=$folderPath
-        debug2=$fileNavigationRoot
         uri=$listedPath + $this.GetDirectorySeparator($listedPath) + $names[$i]
         name=$names[$i];
         type=$typeNames[$i];
@@ -536,7 +522,20 @@ class SASRunner{
 
   [void]GetChildItems([string]$folderPath, [string]$fileNavigationCustomRootPath, [string]$fileNavigationRoot) {
     try {
-      $output = $this.GetItemsAtPath($folderPath, $fileNavigationCustomRootPath, $fileNavigationRoot)
+      $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath
+      if ($folderPath -eq "/") {
+        if ($fileNavigationRoot -eq "USER") {
+          $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModeUser
+        }
+        if ($fileNavigationRoot -eq "ROOT") {
+          $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath
+        }
+        if ($fileNavigationRoot -eq "CUSTOM") {
+          $folderPath = $fileNavigationCustomRootPath
+          $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath
+        }
+      }
+      $output = $this.GetItemsAtPath($folderPath, $mode)
       Write-Host (@{success=$true; data=$output} | ConvertTo-Json)
     } catch {
       Write-Host (@{success=$false; message=$Error[0].Exception.Message} | ConvertTo-Json)
