@@ -432,12 +432,12 @@
                           "fileNavigationCustomRootPath": {
                             "type": "string",
                             "default": "",
-                            "description": "%configuration.SAS.connectionProfiles.profiles.com.fileNavigationCustomRootPath%"
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationCustomRootPath%"
                           },
                           "fileNavigationRoot": {
                             "type": "string",
                             "default": "USER",
-                            "description": "%configuration.SAS.connectionProfiles.profiles.com.fileNavigationRoot%",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationRoot%",
                             "enum": [
                               "CUSTOM",
                               "USER",
