@@ -527,7 +527,7 @@ class SASRunner{
         if ($fileNavigationRoot -eq "USER") {
           $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModeUser
         }
-        if ($fileNavigationRoot -eq "ROOT") {
+        if ($fileNavigationRoot -eq "SYSTEM") {
           $mode = [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath
         }
         if ($fileNavigationRoot -eq "CUSTOM") {

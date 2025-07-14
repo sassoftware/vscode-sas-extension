@@ -129,7 +129,7 @@ export interface BaseProfile {
 
 export interface ProfileWithFileRootOptions {
   fileNavigationCustomRootPath?: string;
-  fileNavigationRoot?: "CUSTOM" | "ROOT" | "USER";
+  fileNavigationRoot?: "CUSTOM" | "SYSTEM" | "USER";
 }
 
 export const toAutoExecLines = (autoExec: AutoExec[]): string[] => {
