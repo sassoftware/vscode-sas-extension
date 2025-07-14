@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Add support for `fileNavigationCustomRootPath`/`fileNavigationRoot` for rest & iom/com connections (!!!)
+- Add support for `fileNavigationCustomRootPath`/`fileNavigationRoot` for rest & iom/com connections ([#1557](https://github.com/sassoftware/vscode-sas-extension/pull/1557))
 
 ## [v1.15.0] - 2025-06-10
 

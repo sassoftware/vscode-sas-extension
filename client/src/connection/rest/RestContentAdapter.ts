@@ -180,9 +180,6 @@ class RestContentAdapter implements ContentAdapter {
       filePathParts.push(currentContentItem.name);
     }
     do {
-      if (!currentContentItem.parentFolderUri) {
-        break;
-      }
       try {
         const { data: parentData } = await this.connection.get(
           currentContentItem.parentFolderUri,
@@ -192,8 +189,9 @@ class RestContentAdapter implements ContentAdapter {
       } catch (e) {
         return "";
       }
-
-      filePathParts.push(currentContentItem.name);
+      if (currentContentItem.name) {
+        filePathParts.push(currentContentItem.name);
+      }
     } while (currentContentItem.parentFolderUri);
 
     return "/" + filePathParts.reverse().join("/");
