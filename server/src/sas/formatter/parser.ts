@@ -1,9 +1,10 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import { Lexer, Token as RealToken } from "../Lexer";
-import type { FoldingBlock } from "../LexerEx";
+import { type FoldingBlock, LexerEx } from "../LexerEx";
 import type { Model } from "../Model";
 import type { SyntaxProvider } from "../SyntaxProvider";
+import { isSamePosition } from "../utils";
 
 interface FakeToken extends Omit<RealToken, "type"> {
   type: "raw-data";
@@ -32,6 +33,11 @@ export type SASAST = Program | Region | Statement | Token;
 
 export const isComment = (token: Token) =>
   token.type === "comment" || token.type === "macro-comment";
+
+const isAtBlockEnd = (block: FoldingBlock | undefined, token: Token) =>
+  block &&
+  block.endLine === token.end.line &&
+  block.endCol === token.end.column;
 
 const removePrevStatement = (parent: Program | Region) => {
   if (parent.children.length <= 1) {
@@ -167,6 +173,58 @@ const preserveProcs = (
   return current;
 };
 
+const preserveCustomRegion = (
+  current: number,
+  statement: Statement,
+  model: Model,
+  syntaxProvider: SyntaxProvider,
+) => {
+  const token = statement.children[statement.children.length - 1];
+  if (current === -1) {
+    if (isComment(token) && /\*\s*region\s+format-ignore\b/.test(token.text)) {
+      const block = syntaxProvider.getFoldingBlock(
+        token.start.line,
+        token.start.column,
+        true,
+        false,
+        true,
+      );
+      if (
+        block &&
+        block.type === LexerEx.SEC_TYPE.CUSTOM &&
+        block.startLine === token.start.line &&
+        block.startCol === token.start.column
+      ) {
+        current = 0;
+        const start = token.start;
+        const end = { line: block.endLine, column: block.endCol };
+        statement.children.pop();
+        statement.children.push({
+          type: "raw-data",
+          text: model.getText({ start, end }),
+          start,
+          end,
+        });
+      }
+    }
+  } else if (current === 0) {
+    statement.children.pop();
+    if (
+      statement &&
+      statement.children.length > 0 &&
+      isSamePosition(
+        token.end,
+        statement.children[statement.children.length - 1].end,
+      )
+    ) {
+      current = 1;
+    }
+  } else if (current === 1) {
+    return -1;
+  }
+  return current;
+};
+
 const preserveQuoting = (
   current: number,
   statement: Statement,
@@ -222,11 +280,13 @@ export const getParser =
     let prevStatement: Statement | undefined = undefined;
     let quoting = -1;
     let preserveProc = -1;
+    let preserveCustom = -1;
 
     for (let i = 0; i < tokens.length; i++) {
       const node = tokens[i];
       let parent = parents.length ? parents[parents.length - 1] : root;
 
+      //#region --- Preserve Python/Lua
       if (region && region.block) {
         preserveProc = preserveProcs(preserveProc, region, node, model);
         if (preserveProc === 0 && i === tokens.length - 1) {
@@ -245,8 +305,9 @@ export const getParser =
       if (node.type === "embedded-code") {
         continue;
       }
+      //#endregion ---
 
-      // --- Check for block start: DATA, PROC, %MACRO ---
+      //#region --- Check for block start: DATA, PROC, %MACRO
       if (node.type === "sec-keyword" || node.type === "macro-sec-keyword") {
         const block = syntaxProvider.getFoldingBlock(
           node.start.line,
@@ -276,9 +337,9 @@ export const getParser =
           }
         }
       }
-      // --- ---
+      //#endregion ---
 
-      // --- Check for statement start ---
+      //#region --- Check for statement start
       if (!currentStatement) {
         currentStatement = {
           type: "statement",
@@ -301,16 +362,30 @@ export const getParser =
           parent.children.push(currentStatement);
         }
       }
-      // --- ---
+      //#endregion ---
 
       currentStatement.children.push(node);
+
+      preserveCustom = preserveCustomRegion(
+        preserveCustom,
+        currentStatement,
+        model,
+        syntaxProvider,
+      );
+      if (preserveCustom >= 0) {
+        if (preserveCustom === 1) {
+          prevStatement = currentStatement;
+          currentStatement = undefined;
+        }
+        continue;
+      }
 
       quoting = preserveQuoting(quoting, currentStatement, model);
       if (quoting >= 0) {
         continue;
       }
 
-      // --- Check for statement end ---
+      //#region --- Check for statement end
       if (node.type === "sep" && node.text === ";") {
         if (
           currentStatement.children[0].type === "cards-data" &&
@@ -353,12 +428,7 @@ export const getParser =
           // put `end` out of region children to outdent
           parent.children.push(region.children.pop()!);
           region = parents.pop();
-        } else if (
-          region &&
-          region.block &&
-          region.block.endLine === node.end.line &&
-          region.block.endCol === node.end.column
-        ) {
+        } else if (region && isAtBlockEnd(region.block, node)) {
           // block end
           if (/^(run|quit|%mend)\b/i.test(currentStatement.children[0].text)) {
             // put `run` out of section children to outdent
@@ -389,12 +459,7 @@ export const getParser =
         // standalone comment, treat as a whole statement
         prevStatement = currentStatement;
         currentStatement = undefined;
-        if (
-          region &&
-          region.block &&
-          region.block.endLine === node.end.line &&
-          region.block.endCol === node.end.column
-        ) {
+        if (isAtBlockEnd(region?.block, node)) {
           region = parents.pop();
         }
       } else if (
@@ -411,7 +476,7 @@ export const getParser =
         prevStatement = currentStatement;
         currentStatement = undefined;
       }
-      // --- ---
+      //#endregion ---
     }
 
     return root;
