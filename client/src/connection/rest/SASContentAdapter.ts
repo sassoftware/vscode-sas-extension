@@ -774,5 +774,4 @@ class SASContentAdapter implements ContentAdapter {
     return true;
   }
 }
-
 export default SASContentAdapter;
