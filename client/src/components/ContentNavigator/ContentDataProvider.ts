@@ -58,7 +58,6 @@ import {
   isContainer as getIsContainer,
 } from "./utils";
 
-
 class ContentDataProvider
   implements
     TreeDataProvider<ContentItem>,
