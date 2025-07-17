@@ -1,6 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { FileType, Uri } from "vscode";
+import { FileType, Uri, l10n } from "vscode";
 
 import { AxiosResponse } from "axios";
 
@@ -247,7 +247,11 @@ class RestServerAdapter implements ContentAdapter {
           parentItem.uri === SAS_SERVER_HOME_DIRECTORY &&
           this.fileNavigationRoot === "CUSTOM"
         ) {
-          throw new Error(Messages.FileNavigationRootError);
+          throw new Error(
+            l10n.t(Messages.FileNavigationRootError, {
+              path: this.fileNavigationCustomRootPath,
+            }),
+          );
         }
         throw error;
       }

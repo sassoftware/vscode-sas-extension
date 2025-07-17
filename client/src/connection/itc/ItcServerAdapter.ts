@@ -1,6 +1,6 @@
 // Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { FileType, Uri, workspace } from "vscode";
+import { FileType, Uri, l10n, workspace } from "vscode";
 
 import { v4 } from "uuid";
 
@@ -162,7 +162,11 @@ class ItcServerAdapter implements ContentAdapter {
       );
       if (!success) {
         if (this.fileNavigationRoot === "CUSTOM") {
-          throw new Error(Messages.FileNavigationRootError);
+          throw new Error(
+            l10n.t(Messages.FileNavigationRootError, {
+              path: this.fileNavigationCustomRootPath,
+            }),
+          );
         }
         return [];
       }

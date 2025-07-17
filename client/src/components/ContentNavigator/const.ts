@@ -75,7 +75,7 @@ export const Messages = {
   FileDragFromTrashError: l10n.t("Unable to drag files from trash."),
   FileDropError: l10n.t('Unable to drop item "{name}".'),
   FileNavigationRootError: l10n.t(
-    "Unable to load SAS Server files with provided fileNavigationRoot/fileNavigationCustomRootPath settings.",
+    'SAS Server files cannot be loaded with the specified path "fileNavigationCustomRootPath: {path}"',
   ),
   FileOpenError: l10n.t("The file type is unsupported."),
   FileRestoreError: l10n.t("Unable to restore file."),
