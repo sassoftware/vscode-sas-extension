@@ -9,8 +9,8 @@ import {
   setContextValue,
 } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
-import { Session } from "../session";
-import { ContextsApi, SessionsApi } from "./api/compute";
+import { Session, SessionContextAttributes } from "../session";
+import { Context, ContextsApi, SessionsApi } from "./api/compute";
 import { ComputeState, getApiConfig } from "./common";
 import { ComputeJob } from "./job";
 import { ComputeServer } from "./server";
@@ -37,6 +37,36 @@ class RestSession extends Session {
 
   public set config(value: Config) {
     this._config = value;
+  }
+
+  public async contextAttributes(): Promise<SessionContextAttributes> {
+    const context = await this.getContext();
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return context.attributes as SessionContextAttributes;
+  }
+
+  public async getContext() {
+    const contextsApi = ContextsApi(getApiConfig());
+    const contextName =
+      this._config.context || "SAS Job Execution compute context";
+    const context = (
+      await contextsApi.getContexts({
+        filter: `eq(name,'${contextName}')`,
+      })
+    ).data.items[0];
+    if (!context?.id) {
+      throw new Error(
+        l10n.t("Compute Context not found: {name}", { name: contextName }),
+      );
+    }
+
+    // Lets use the id to get context details
+    const contextResponse = await contextsApi.getContext({
+      contextId: context.id,
+    });
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return contextResponse.data || (context as Context);
   }
 
   protected establishConnection = async (): Promise<void> => {
@@ -99,21 +129,10 @@ class RestSession extends Session {
 
       //Maybe wait for session to be initialized?
     } else {
-      //Create session from context
       const contextsApi = ContextsApi(apiConfig);
-      const contextName =
-        this._config.context || "SAS Job Execution compute context";
-      const context = (
-        await contextsApi.getContexts({
-          filter: `eq(name,'${contextName}')`,
-        })
-      ).data.items[0];
-      if (!context?.id) {
-        throw new Error(
-          l10n.t("Compute Context not found: {name}", { name: contextName }),
-        );
-      }
+      const context = await this.getContext();
 
+      //Create session from context
       const sess = (
         await contextsApi.createSession(
           {

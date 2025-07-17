@@ -71,6 +71,19 @@ class RestServerAdapter implements ContentAdapter {
     await session.setup(true);
     this.sessionId = session?.sessionId();
 
+    // Overwrite file nav settings with data coming from the compute context
+    if (session.contextAttributes) {
+      const attributes = await session.contextAttributes();
+      if (
+        attributes.fileNavigationCustomRootPath ||
+        attributes.fileNavigationRoot
+      ) {
+        this.fileNavigationCustomRootPath =
+          attributes.fileNavigationCustomRootPath ?? "";
+        this.fileNavigationRoot = attributes.fileNavigationRoot ?? "USER";
+      }
+    }
+
     return this.sessionId;
   }
 
