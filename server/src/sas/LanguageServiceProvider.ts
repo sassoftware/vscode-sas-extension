@@ -5,7 +5,7 @@ import {
   FoldingRange,
   SymbolKind,
 } from "vscode-languageserver";
-import { Range, TextDocument } from "vscode-languageserver-textdocument";
+import type { Range, TextDocument } from "vscode-languageserver-textdocument";
 
 import { CodeZoneManager } from "./CodeZoneManager";
 import { CompletionProvider } from "./CompletionProvider";
@@ -242,6 +242,36 @@ export class LanguageServiceProvider {
       ignoreCustomBlock,
       ignoreGlobalBlock,
     );
+  }
+
+  toggleLineComment(range: Range) {
+    const token = this.syntaxProvider.getSyntax(range.start.line)[0];
+    if (token.style === "embedded-code") {
+      return null;
+    }
+    const lines = this.model
+      .getText({
+        start: {
+          line: range.start.line,
+          column: 0,
+        },
+        end: {
+          line: range.end.line,
+          column: range.end.character,
+        },
+      })
+      .split("\n");
+    const shouldAdd = lines.some(
+      (line) => line.trim() !== "" && !/^\s*\/\*.*\*\/\s*$/.test(line),
+    );
+    if (shouldAdd) {
+      return lines
+        .map((line) => (line.trim() !== "" ? `/* ${line} */` : line))
+        .join("\n");
+    }
+    return lines
+      .map((line) => line.replace(/^(\s*)\/\* ?| ?\*\/(\s*)$/g, "$1"))
+      .join("\n");
   }
 
   setLibService(fn: LibService): void {
