@@ -109,6 +109,7 @@
   "Task is complete.": "任務完成。",
   "The SAS session has closed.": "已結束 SAS 工作階段。",
   "The file type is unsupported.": "檔案類型不受支援。",
+  "The files cannot be accessed from the specified path.": "The files cannot be accessed from the specified path.",
   "The folder name cannot contain more than 100 characters or have invalid characters.": "資料夾名稱不能包含超過 100 個字元或包含無效字元。",
   "The item could not be added to My Favorites.": "無法將項目增加到我的最愛。",
   "The item could not be removed from My Favorites.": "無法將項目從我的最愛移除。",
