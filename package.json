@@ -1193,6 +1193,14 @@
         {
           "when": "false",
           "command": "SAS.notebook.export"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.copyPath"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.copyPath"
         }
       ],
       "file/newFile": [
