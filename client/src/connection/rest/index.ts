@@ -30,6 +30,7 @@ export interface Config extends BaseConfig {
 class RestSession extends Session {
   private _config: Config;
   private _computeSession: ComputeSession | undefined;
+  private _cachedContext: Context | undefined;
 
   constructor() {
     super();
@@ -46,9 +47,12 @@ class RestSession extends Session {
   }
 
   public async getContext() {
-    const contextsApi = ContextsApi(getApiConfig());
     const contextName =
       this._config.context || "SAS Job Execution compute context";
+    if (this._cachedContext && this._cachedContext.name === contextName) {
+      return this._cachedContext;
+    }
+    const contextsApi = ContextsApi(getApiConfig());
     const context = (
       await contextsApi.getContexts({
         filter: `eq(name,'${contextName}')`,
@@ -66,7 +70,9 @@ class RestSession extends Session {
     });
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return contextResponse.data || (context as Context);
+    this._cachedContext = contextResponse.data || (context as Context);
+
+    return this._cachedContext;
   }
 
   protected establishConnection = async (): Promise<void> => {
@@ -199,6 +205,7 @@ class RestSession extends Session {
   };
 
   protected _close = async () => {
+    this._cachedContext = undefined;
     if (this.sessionId()) {
       this._computeSession.delete();
       this._computeSession = undefined;
@@ -214,6 +221,7 @@ class RestSession extends Session {
   };
 
   public cancel = async (): Promise<void> => {
+    this._cachedContext = undefined;
     if (this._computeSession) {
       await this._computeSession.self();
       await this._computeSession.cancel();
