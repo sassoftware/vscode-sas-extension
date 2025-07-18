@@ -109,6 +109,7 @@
   "Task is complete.": "작업이 완료되었습니다.",
   "The SAS session has closed.": "SAS 세션이 종료되었습니다.",
   "The file type is unsupported.": "지원되지 않는 파일 형식입니다.",
+  "The files cannot be accessed from the path specified in the context definition for the SAS Compute Server. Contact your SAS administrator.": "The files cannot be accessed from the path specified in the context definition for the SAS Compute Server. Contact your SAS administrator.",
   "The files cannot be accessed from the specified path.": "The files cannot be accessed from the specified path.",
   "The folder name cannot contain more than 100 characters or have invalid characters.": "폴더 이름은 100자를 초과하거나 잘못된 문자를 포함할 수 없습니다.",
   "The item could not be added to My Favorites.": "항목을 즐겨찾기에 추가할 수 없습니다.",
