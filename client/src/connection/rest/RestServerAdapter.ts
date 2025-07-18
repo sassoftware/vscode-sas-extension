@@ -1,6 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { FileType, Uri, l10n } from "vscode";
+import { FileType, Uri } from "vscode";
 
 import { AxiosResponse } from "axios";
 
@@ -48,6 +48,7 @@ class RestServerAdapter implements ContentAdapter {
   private fileMetadataMap: {
     [id: string]: { etag: string; lastModified?: string; contentType?: string };
   };
+  private fileNavigationSetByAdmin: boolean;
 
   public constructor(
     protected fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
@@ -55,6 +56,7 @@ class RestServerAdapter implements ContentAdapter {
   ) {
     this.rootFolders = {};
     this.fileMetadataMap = {};
+    this.fileNavigationSetByAdmin = false;
   }
 
   addChildItem: (
@@ -75,9 +77,11 @@ class RestServerAdapter implements ContentAdapter {
     if (session.contextAttributes) {
       const attributes = await session.contextAttributes();
       if (
-        attributes.fileNavigationCustomRootPath ||
-        attributes.fileNavigationRoot
+        attributes &&
+        (attributes.fileNavigationCustomRootPath ||
+          attributes.fileNavigationRoot)
       ) {
+        this.fileNavigationSetByAdmin = true;
         this.fileNavigationCustomRootPath =
           attributes.fileNavigationCustomRootPath ?? "";
         this.fileNavigationRoot = attributes.fileNavigationRoot ?? "USER";
@@ -260,11 +264,11 @@ class RestServerAdapter implements ContentAdapter {
           parentItem.uri === SAS_SERVER_HOME_DIRECTORY &&
           this.fileNavigationRoot === "CUSTOM"
         ) {
-          throw new Error(
-            l10n.t(Messages.FileNavigationRootError, {
-              path: this.fileNavigationCustomRootPath,
-            }),
-          );
+          if (this.fileNavigationSetByAdmin) {
+            throw new Error(Messages.FileNavigationRootAdminError);
+          } else {
+            throw new Error(Messages.FileNavigationRootUserError);
+          }
         }
         throw error;
       }

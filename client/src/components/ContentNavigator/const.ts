@@ -74,7 +74,10 @@ export const Messages = {
   FileDragFromFavorites: l10n.t("Unable to drag files from my favorites."),
   FileDragFromTrashError: l10n.t("Unable to drag files from trash."),
   FileDropError: l10n.t('Unable to drop item "{name}".'),
-  FileNavigationRootError: l10n.t(
+  FileNavigationRootAdminError: l10n.t(
+    "The files cannot be accessed from the path specified in the context definition for the SAS Compute Server. Contact your SAS administrator.",
+  ),
+  FileNavigationRootUserError: l10n.t(
     "The files cannot be accessed from the specified path.",
   ),
   FileOpenError: l10n.t("The file type is unsupported."),
