@@ -172,3 +172,62 @@ The following demonstrates how to setup `interopLibraryFolderPath` in user setti
     }
   }
   ```
+
+## SAS Server File Navigation Root Settings
+
+SAS Server File Navigation Root Settings can be configured for ITC-based connections ("remote - IOM" and "local" connection types) and Viya connections. Two settings are available:
+
+- `fileNavigationRoot`: This can be set to USER (default), SYSTEM, or CUSTOM. When using a "CUSTOM" root, you'll need to specify `fileNavigationCustomRootPath`
+- `fileNavigationCustomRootPath`: The absolute path to the folder to use as your root directory.
+
+These user-defined settings can be overwritten in Viya environments by a SAS administrator. If the options above are specified in the context definition for the SAS Compute Server, they will be prioritized over user settings. The following screenshot provides an example context definition setup:
+![context definition setup for file navigation root settings](/images/context-definition.png)
+
+The following demonstrates how to setup `fileNavigationCustomRootPath`/`fileNavigationRoot` in user settings:
+
+- SAS Viya:
+
+  ```json
+  {
+    "profiles": {
+      "viya4": {
+        "endpoint": "https://example-endpoint.com",
+        "connectionType": "rest",
+        "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"],
+        "fileNavigationCustomRootPath": "/custom/file/path",
+        "fileNavigationRoot": "CUSTOM"
+      }
+    }
+  }
+  ```
+
+- SAS 9.4 (remote - IOM):
+
+  ```json
+  {
+    "profiles": {
+      "sas9IOM": {
+        "host": "host",
+        "username": "username",
+        "port": 8591,
+        "ConnectionType": "iom",
+        "fileNavigationRoot": "SYSTEM"
+      }
+    }
+  }
+  ```
+
+- SAS 9.4 (local):
+
+  ```json
+  {
+    "profiles": {
+      "sas9COM": {
+        "host": "localhost",
+        "ConnectionType": "com",
+        "fileNavigationCustomRootPath": "C:\\Users\\User\\Documents",
+        "fileNavigationRoot": "CUSTOM"
+      }
+    }
+  }
+  ```
