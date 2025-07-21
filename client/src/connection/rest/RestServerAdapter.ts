@@ -98,7 +98,6 @@ class RestServerAdapter implements ContentAdapter {
     const reconnect = async () => {
       return await this.establishConnection();
     };
-    // TODO (feat/root-nav-path) Make sure we're overriding config options with compute context data
     this.fileSystemApi = new Proxy(FileSystemApi(getApiConfig()), {
       get: function (target, property) {
         if (typeof target[property] === "function") {
