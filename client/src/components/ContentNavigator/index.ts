@@ -103,6 +103,9 @@ class ContentNavigator implements SubscriptionProvider {
           this.treeViewSelections(item).forEach(
             async (resource: ContentItem) => {
               const isContainer = getIsContainer(resource);
+              const hasUnsavedFiles = isContainer
+                ? this.contentDataProvider.checkFolderDirty(resource)
+                : isContainer;
               const moveToRecycleBin =
                 this.contentDataProvider.canRecycleResource(resource);
 
@@ -118,6 +121,18 @@ class ContentNavigator implements SubscriptionProvider {
                   ))
                 ) {
                   return;
+                } else if (moveToRecycleBin && isContainer && hasUnsavedFiles) {
+                  if (
+                    !(await window.showWarningMessage(
+                      l10n.t(Messages.RecycleDirtyFolderWarning, {
+                        name: resource.name,
+                      }),
+                      { modal: true },
+                      Messages.MoveToRecycleBinLabel,
+                    ))
+                  ) {
+                    return;
+                  }
                 }
                 const deleteResult = moveToRecycleBin
                   ? await this.contentDataProvider.recycleResource(resource)

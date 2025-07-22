@@ -1,6 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { FileType, Uri, authentication, window, workspace } from "vscode";
+import { FileType, Uri, authentication } from "vscode";
 
 import axios, {
   AxiosError,
@@ -560,10 +560,6 @@ class SASContentAdapter implements ContentAdapter {
   public async recycleItem(
     item: ContentItem,
   ): Promise<{ newUri?: Uri; oldUri?: Uri }> {
-    if (!(await this.checkForUnsavedFilesInFolder(item, "recycle"))) {
-      return {};
-    }
-
     const recycleBin = this.getRootFolder("@myRecycleBin");
     if (!recycleBin) {
       // fallback to delete
@@ -742,36 +738,6 @@ class SASContentAdapter implements ContentAdapter {
 
     return `${getResourceIdFromItem(myFavoritesFolder)}/members/${favoriteId}`;
   }
-
-  private async checkForUnsavedFilesInFolder(
-    item: ContentItem,
-    action: "delete" | "recycle",
-  ): Promise<boolean> {
-    if (!isContainer(item)) {
-      return true;
-    }
-    const children = await this.getChildItems(item);
-    const unsavedFiles = children.filter((child) => {
-      if (!child.vscUri) {
-        return false;
-      }
-      const doc = workspace.textDocuments.find(
-        (d) => d.uri.toString() === child.vscUri.toString(),
-      );
-      return doc?.isDirty;
-    });
-
-    if (unsavedFiles.length > 0) {
-      const actionText = action === "delete" ? "Delete Anyway" : "Move Anyway";
-      const message = `There are unsaved files in this folder. Do you want to continue?`;
-      const result = await window.showWarningMessage(
-        message,
-        { modal: true },
-        actionText,
-      );
-      return result === actionText;
-    }
-    return true;
-  }
 }
+
 export default SASContentAdapter;

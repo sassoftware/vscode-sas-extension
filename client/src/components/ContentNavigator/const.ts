@@ -62,8 +62,12 @@ export const Messages = {
   AddFileToMyFolderSuccess: l10n.t("File added to my folder."),
   AddToFavoritesError: l10n.t("The item could not be added to My Favorites."),
   DeleteButtonLabel: l10n.t("Delete"),
+  MoveToRecycleBinLabel: l10n.t("Move to recycle bin."),
   DeleteWarningMessage: l10n.t(
     'Are you sure you want to permanently delete the item "{name}"?',
+  ),
+  RecycleDirtyFolderWarning: l10n.t(
+    "This folder contains unsaved files, are you sure you want to delete?",
   ),
   EmptyRecycleBinError: l10n.t("Unable to empty the recycle bin."),
   EmptyRecycleBinWarningMessage: l10n.t(

@@ -32,6 +32,7 @@ import {
 } from "vscode";
 
 import { lstat, lstatSync, readFile, readdir } from "fs";
+import * as path from "path";
 import { basename, join } from "path";
 import { promisify } from "util";
 
@@ -503,6 +504,24 @@ class ContentDataProvider
         l10n.t(Messages.FileUploadError),
       );
     }
+  }
+
+  public async checkFolderDirty(resource: ContentItem): Promise<boolean> {
+    const uri = resource.vscUri;
+    if (!uri) {
+      return false;
+    }
+
+    let folderPath = uri.fsPath;
+    if (!folderPath.endsWith(path.sep)) {
+      folderPath += path.sep;
+    }
+
+    const anyDirty = workspace.textDocuments.some(
+      (doc) => doc.isDirty && doc.uri.fsPath.startsWith(folderPath),
+    );
+
+    return anyDirty;
   }
 
   public async downloadContentItems(
