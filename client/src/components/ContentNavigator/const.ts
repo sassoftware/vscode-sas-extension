@@ -62,7 +62,7 @@ export const Messages = {
   AddFileToMyFolderSuccess: l10n.t("File added to my folder."),
   AddToFavoritesError: l10n.t("The item could not be added to My Favorites."),
   DeleteButtonLabel: l10n.t("Delete"),
-  MoveToRecycleBinLabel: l10n.t("Move to recycle bin."),
+  MoveToRecycleBinLabel: l10n.t("Move to Recycle Bin"),
   DeleteWarningMessage: l10n.t(
     'Are you sure you want to permanently delete the item "{name}"?',
   ),

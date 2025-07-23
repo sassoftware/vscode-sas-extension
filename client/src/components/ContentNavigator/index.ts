@@ -104,7 +104,7 @@ class ContentNavigator implements SubscriptionProvider {
             async (resource: ContentItem) => {
               const isContainer = getIsContainer(resource);
               const hasUnsavedFiles = isContainer
-                ? this.contentDataProvider.checkFolderDirty(resource)
+                ? await this.contentDataProvider.checkFolderDirty(resource)
                 : isContainer;
               const moveToRecycleBin =
                 this.contentDataProvider.canRecycleResource(resource);

@@ -32,7 +32,6 @@ import {
 } from "vscode";
 
 import { lstat, lstatSync, readFile, readdir } from "fs";
-import * as path from "path";
 import { basename, join } from "path";
 import { promisify } from "util";
 
@@ -507,21 +506,43 @@ class ContentDataProvider
   }
 
   public async checkFolderDirty(resource: ContentItem): Promise<boolean> {
-    const uri = resource.vscUri;
-    if (!uri) {
+    if (!resource.vscUri) {
       return false;
     }
 
-    let folderPath = uri.fsPath;
-    if (!folderPath.endsWith(path.sep)) {
-      folderPath += path.sep;
+    const descendants: ContentItem[] = [];
+    async function recurse(item: ContentItem) {
+      const kids = await this.model.getChildren(item);
+      for (const kid of kids) {
+        descendants.push(kid);
+        if (getIsContainer(kid)) {
+          await recurse.call(this, kid);
+        }
+      }
+    }
+    await recurse.call(this, resource);
+
+    const dirtyIds = new Set<string>();
+    for (const doc of workspace.textDocuments) {
+      if (!doc.isDirty) {
+        continue;
+      }
+      const id = new URLSearchParams(doc.uri.query).get("id");
+      if (id) {
+        dirtyIds.add(id);
+      }
     }
 
-    const anyDirty = workspace.textDocuments.some(
-      (doc) => doc.isDirty && doc.uri.fsPath.startsWith(folderPath),
-    );
-
-    return anyDirty;
+    for (const child of descendants) {
+      if (!child.vscUri) {
+        continue;
+      }
+      const childId = new URLSearchParams(child.vscUri.query).get("id");
+      if (childId && dirtyIds.has(childId)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public async downloadContentItems(
