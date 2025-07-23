@@ -511,5 +511,4 @@ class ContentNavigator implements SubscriptionProvider {
     );
   }
 }
-
 export default ContentNavigator;
