@@ -4,11 +4,23 @@ sidebar_position: 2
 
 # SAS 9.4 (local) Connection Profile
 
-To use a SAS 9.4 (local) connection type, you need to have SAS Integration Technologies Client for Windows (ITCLIENT) installed on the client machine (the same machine VS Code is installed on).
+To use a SAS 9.4 (local) connection type, you need to install both SAS Integration Technologies Client for Windows (ITCLIENT) and the SAS Providers for OLE DB on the client machine where VS Code is installed. The order of installation does not matter.
 
-You can check the SASHOME location on your client machine to see if you already have ITCLIENT installed. For example, ITCLIENT is normally installed in the default path "C:\Program Files\SASHome\x86\Integration Technologies". If that path exists on your machine, you have ITCLIENT. ITCLIENT is automatically installed with some SAS software, such as SAS Enterprise Guide and SAS Add-in for Microsoft Office, so if you have one of those on your machine, you likely already have ITCLIENT as well.
+:::note
 
-If you do not already have ITCLIENT installed on the client machine, follow the [steps](./sas9iom.md#steps-to-install-itclient).
+You must install the SAS Providers for OLE DB if you are running the SAS Extension for Visual Studio Code v1.15 or later.
+
+:::
+
+SAS Integration Technologies Client and SAS Providers for OLE DB are automatically installed with some SAS software, such as SAS Enterprise Guide and SAS Add-in for Microsoft Office. You can check the SASHOME location on your client machine to see if SAS Integration Technologies Client and SAS Providers for OLE DB are installed in their default locations.
+
+If the following folders exist on your machine, then the software is installed:
+
+- SAS Integration Technologies Client - `C:\Program Files\SASHome\x86\Integration Technologies`
+
+- SAS Providers for OLE DB - `C:\Program Files\SASHome\x86\SASProvidersforOLEDB`
+
+If you do not already have SAS Integration Technologies Client and SAS Providers for OLE DB installed on the client machine, see [Installing SAS Integration Technologies Client and SAS Providers for OLE DB](./sas9iom.md#installing-sas-integration-technologies-client-and-sas-providers-for-ole-db).
 
 ## Profile Anatomy
 
