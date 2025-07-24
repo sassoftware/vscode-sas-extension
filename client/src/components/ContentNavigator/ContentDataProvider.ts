@@ -505,6 +505,54 @@ class ContentDataProvider
     }
   }
 
+  public async checkFolderDirty(resource: ContentItem): Promise<boolean> {
+    if (!resource.vscUri) {
+      return false;
+    }
+
+    const descendants: ContentItem[] = [];
+    const queue: ContentItem[] = [resource];
+
+    while (queue.length > 0) {
+      const currentBatch = queue.splice(0);
+      const childrenArrays = await Promise.all(
+        currentBatch.map((item) => this.model.getChildren(item)),
+      );
+
+      for (const children of childrenArrays) {
+        for (const child of children) {
+          descendants.push(child);
+          if (getIsContainer(child)) {
+            queue.push(child);
+          }
+        }
+      }
+    }
+
+    const dirtyIds = new Set<string>();
+    for (const doc of workspace.textDocuments) {
+      if (!doc.isDirty) {
+        continue;
+      }
+      const id = new URLSearchParams(doc.uri.query).get("id");
+      if (id) {
+        dirtyIds.add(id);
+      }
+    }
+
+    for (const child of descendants) {
+      if (!child.vscUri) {
+        continue;
+      }
+      const childId = new URLSearchParams(child.vscUri.query).get("id");
+      if (childId && dirtyIds.has(childId)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public async downloadContentItems(
     folderUri: Uri,
     selections: ContentItem[],
