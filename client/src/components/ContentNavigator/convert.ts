@@ -29,10 +29,16 @@ const stepTitle: Record<string, string> = {
 };
 
 const NODE_SPACING = 150;
+const STICKY_NOTE_SPACING = 200;
 
 interface Entry {
   language: string;
   code: string;
+}
+
+interface NotebookData {
+  codeEntries: Entry[];
+  markdownNotes: string[];
 }
 
 function getPropPort(idx: number, inputList: Entry[]): Record<string, string> {
@@ -179,7 +185,11 @@ const baseNode = {
   },
 };
 
-function generateFlowDataNode(inputList: Entry[], outputFile: string) {
+function generateFlowDataNode(
+  inputList: Entry[],
+  markdownNotes: string[],
+  outputFile: string,
+) {
   const now = new Date();
   const nowString = now.toISOString();
   const nowTimestamp = String(now.getTime());
@@ -250,10 +260,36 @@ function generateFlowDataNode(inputList: Entry[], outputFile: string) {
       flowData.connections.push(connection);
     }
   }
+
+  // Add sticky notes for markdown content
+  if (markdownNotes && markdownNotes.length > 0) {
+    for (let noteIdx = 0; noteIdx < markdownNotes.length; noteIdx++) {
+      const stickyNote = {
+        id: v4(),
+        name: `Note ${noteIdx + 1}`,
+        description: markdownNotes[noteIdx],
+        properties: {
+          UI_NOTE_PROP_HEIGHT: "200",
+          UI_NOTE_PROP_IS_EXPANDED: "true",
+          UI_NOTE_PROP_IS_STICKYNOTE: "true",
+          UI_NOTE_PROP_WIDTH: "300",
+          UI_PROP_XPOS: (50 + noteIdx * STICKY_NOTE_SPACING).toString(),
+          UI_PROP_YPOS: "300",
+        },
+        version: 1,
+      };
+      flowData.stickyNotes.push(stickyNote);
+    }
+  }
+
   return flowData;
 }
 
-function generateFlowDataSwimlane(inputList: Entry[], outputFile: string) {
+function generateFlowDataSwimlane(
+  inputList: Entry[],
+  markdownNotes: string[],
+  outputFile: string,
+) {
   const now = new Date();
   const nowString = now.toISOString();
 
@@ -279,46 +315,83 @@ function generateFlowDataSwimlane(inputList: Entry[], outputFile: string) {
       priority: idx + 1,
       dataFlowAndBindings: {
         ...baseSwimlane.dataFlowAndBindings,
-        dataFlow: generateFlowDataNode([inputList[idx]], null),
+        dataFlow: generateFlowDataNode(
+          [inputList[idx]],
+          [],
+          `${outputFile}-cell-${idx + 1}`,
+        ),
       },
     };
     flowData.nodes[idNode] = swimlane;
   }
+
+  // Add sticky notes for markdown content
+  if (markdownNotes && markdownNotes.length > 0) {
+    for (let noteIdx = 0; noteIdx < markdownNotes.length; noteIdx++) {
+      const stickyNote = {
+        id: v4(),
+        name: `Note ${noteIdx + 1}`,
+        description: markdownNotes[noteIdx],
+        properties: {
+          UI_NOTE_PROP_HEIGHT: "200",
+          UI_NOTE_PROP_IS_EXPANDED: "true",
+          UI_NOTE_PROP_IS_STICKYNOTE: "true",
+          UI_NOTE_PROP_WIDTH: "300",
+          UI_PROP_XPOS: (50 + noteIdx * STICKY_NOTE_SPACING).toString(),
+          UI_PROP_YPOS: "300",
+        },
+        version: 1,
+      };
+      flowData.stickyNotes.push(stickyNote);
+    }
+  }
+
   return flowData;
 }
 
-function generateFlowData(inputList: Entry[], outputFile: string) {
+function generateFlowData(
+  inputList: Entry[],
+  markdownNotes: string[],
+  outputFile: string,
+) {
   const flowConversionMode = workspace
     .getConfiguration("SAS")
     .get("flowConversionMode");
   if (flowConversionMode === "Node") {
-    return generateFlowDataNode(inputList, outputFile);
+    return generateFlowDataNode(inputList, markdownNotes, outputFile);
   }
-  return generateFlowDataSwimlane(inputList, outputFile);
+  return generateFlowDataSwimlane(inputList, markdownNotes, outputFile);
 }
 
-function generateCodeListFromSASNotebook(content: string): Entry[] {
+function generateNotebookDataFromSASNotebook(content: string): NotebookData {
   const codeList = [];
+  const markdownNotes = [];
   try {
-    const notebookContent = JSON.parse(content);
-    for (const cell of notebookContent) {
-      let code = cell.value;
-      if (code !== "") {
-        const language = cell.language;
-        if (["python", "sas", "sql"].includes(language)) {
-          if (language === "sql") {
-            code = `PROC SQL;
-${code};
+    // Parse JSON format
+    const notebookCells = JSON.parse(content);
+
+    for (let i = 0; i < notebookCells.length; i++) {
+      const cell = notebookCells[i];
+      const language = cell.language;
+      const cellContent = cell.value || "";
+
+      if (["python", "sas", "sql"].includes(language) && cellContent !== "") {
+        let code = cellContent;
+        if (language === "sql") {
+          code = `PROC SQL;
+${cellContent};
 QUIT;`;
-          }
-          codeList.push({ code, language });
         }
+        codeList.push({ code, language });
+      } else if (language === "markdown") {
+        // Include markdown cells even if they're empty
+        markdownNotes.push(cellContent || "");
       }
     }
   } catch (error) {
     console.error("Error reading or parsing the .sasnb file:", error);
   }
-  return codeList;
+  return { codeEntries: codeList, markdownNotes };
 }
 
 export function convertNotebookToFlow(
@@ -327,12 +400,15 @@ export function convertNotebookToFlow(
   outputName: string,
 ): string {
   let codeList = [];
+  let markdownNotes = [];
   if (inputName.endsWith(".sasnb")) {
-    codeList = generateCodeListFromSASNotebook(content);
+    const notebookData = generateNotebookDataFromSASNotebook(content);
+    codeList = notebookData.codeEntries;
+    markdownNotes = notebookData.markdownNotes;
   } else {
     console.error("Unsupported file type");
   }
-  const flowData = generateFlowData(codeList, outputName);
+  const flowData = generateFlowData(codeList, markdownNotes, outputName);
   // encode json to utf8 bytes without new lines and spaces
   const flowDataString = JSON.stringify(flowData, null, 0);
   return flowDataString;
