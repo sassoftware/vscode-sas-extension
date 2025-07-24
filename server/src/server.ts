@@ -294,6 +294,11 @@ export const runServer = (
     }
   });
 
+  connection.onRequest("sas/toggleLineComment", (params) => {
+    const languageService = getLanguageService(params.textDocument.uri);
+    return languageService.toggleLineComment(params.range);
+  });
+
   connection.onDocumentOnTypeFormatting(async (params) => {
     return await dispatch(params, {
       async sas(languageService) {
