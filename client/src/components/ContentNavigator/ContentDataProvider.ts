@@ -511,16 +511,23 @@ class ContentDataProvider
     }
 
     const descendants: ContentItem[] = [];
-    async function recurse(item: ContentItem) {
-      const kids = await this.model.getChildren(item);
-      for (const kid of kids) {
-        descendants.push(kid);
-        if (getIsContainer(kid)) {
-          await recurse.call(this, kid);
+    const queue: ContentItem[] = [resource];
+
+    while (queue.length > 0) {
+      const currentBatch = queue.splice(0);
+      const childrenArrays = await Promise.all(
+        currentBatch.map((item) => this.model.getChildren(item)),
+      );
+
+      for (const children of childrenArrays) {
+        for (const child of children) {
+          descendants.push(child);
+          if (getIsContainer(child)) {
+            queue.push(child);
+          }
         }
       }
     }
-    await recurse.call(this, resource);
 
     const dirtyIds = new Set<string>();
     for (const doc of workspace.textDocuments) {
@@ -542,6 +549,7 @@ class ContentDataProvider
         return true;
       }
     }
+
     return false;
   }
 
