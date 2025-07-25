@@ -4,6 +4,13 @@ import { ProgressLocation, l10n, window } from "vscode";
 
 import type { OnLogFn, RunResult } from ".";
 
+export type SessionContextAttributes =
+  | {
+      fileNavigationCustomRootPath: string | undefined;
+      fileNavigationRoot: "CUSTOM" | "SYSTEM" | "USER" | undefined;
+    }
+  | undefined;
+
 export abstract class Session {
   protected _rejectRun: (reason?: unknown) => void | undefined;
 
@@ -55,4 +62,6 @@ export abstract class Session {
   protected abstract _close(): Promise<void> | void;
 
   abstract sessionId?(): string | undefined;
+
+  contextAttributes?(): Promise<SessionContextAttributes>;
 }

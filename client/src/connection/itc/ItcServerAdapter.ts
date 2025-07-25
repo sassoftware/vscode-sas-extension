@@ -6,6 +6,7 @@ import { v4 } from "uuid";
 
 import { onRunError } from "../../commands/run";
 import {
+  Messages,
   SAS_SERVER_ROOT_FOLDER,
   SAS_SERVER_ROOT_FOLDERS,
   SERVER_FOLDER_ID,
@@ -19,9 +20,11 @@ import {
 import {
   convertStaticFolderToContentItem,
   createStaticFolder,
+  homeDirectoryName,
   sortedContentItems,
 } from "../../components/ContentNavigator/utils";
 import { getGlobalStorageUri } from "../../components/ExtensionContext";
+import { ProfileWithFileRootOptions } from "../../components/profile";
 import {
   getLink,
   getResourceId,
@@ -32,11 +35,14 @@ import { executeRawCode } from "./CodeRunner";
 import { PowershellResponse, ScriptActions } from "./types";
 import { getDirectorySeparator } from "./util";
 
-class ITCSASServerAdapter implements ContentAdapter {
+class ItcServerAdapter implements ContentAdapter {
   protected sessionId: string;
   private rootFolders: RootFolderMap;
 
-  public constructor() {
+  public constructor(
+    protected readonly fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
+    protected readonly fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
+  ) {
     this.rootFolders = {};
   }
 
@@ -137,6 +143,13 @@ class ITCSASServerAdapter implements ContentAdapter {
     }
   }
 
+  private fileNavigationRootSettings() {
+    return {
+      fileNavigationCustomRootPath: this.fileNavigationCustomRootPath,
+      fileNavigationRoot: this.fileNavigationRoot || "USER",
+    };
+  }
+
   public async getChildItems(parentItem: ContentItem): Promise<ContentItem[]> {
     // If the user is fetching child items of the root folder, give them the
     // "home" directory
@@ -145,9 +158,13 @@ class ITCSASServerAdapter implements ContentAdapter {
         ScriptActions.GetChildItems,
         {
           path: "/",
+          ...this.fileNavigationRootSettings(),
         },
       );
       if (!success) {
+        if (this.fileNavigationRoot === "CUSTOM") {
+          throw new Error(Messages.FileNavigationRootUserError);
+        }
         return [];
       }
       const uri = items[0].parentFolderUri;
@@ -155,13 +172,16 @@ class ITCSASServerAdapter implements ContentAdapter {
         convertStaticFolderToContentItem(
           createStaticFolder(
             uri,
-            "Home",
+            homeDirectoryName(
+              this.fileNavigationRoot,
+              this.fileNavigationCustomRootPath,
+            ),
             SERVER_HOME_FOLDER_TYPE,
             "/",
             "getDirectoryMembers",
           ),
           {
-            write: true,
+            write: false,
             delete: false,
             addMember: true,
           },
@@ -173,6 +193,7 @@ class ITCSASServerAdapter implements ContentAdapter {
       ScriptActions.GetChildItems,
       {
         path: getLink(parentItem.links, "GET", "getDirectoryMembers").uri,
+        ...this.fileNavigationRootSettings(),
       },
     );
     if (!success) {
@@ -182,6 +203,10 @@ class ITCSASServerAdapter implements ContentAdapter {
     const childItems = items.map(this.convertPowershellResponseToContentItem);
 
     return sortedContentItems(childItems);
+  }
+
+  public async getPathOfItem(item: ContentItem): Promise<string> {
+    return item.uri;
   }
 
   private async getTempFile() {
@@ -309,6 +334,7 @@ class ITCSASServerAdapter implements ContentAdapter {
   ): Promise<ContentItem> {
     const { data: items } = await this.execute(ScriptActions.GetChildItems, {
       path,
+      ...this.fileNavigationRootSettings(),
     });
 
     const foundItem = items.find((item) => item.name === name);
@@ -367,7 +393,12 @@ class ITCSASServerAdapter implements ContentAdapter {
 
     return {
       ...item,
-      contextValue: resourceType(item),
+      contextValue: resourceType(
+        item,
+        // Lets add copy path support for the home directory where we
+        // can display the user defined root path if applicable.
+        item.type === SERVER_HOME_FOLDER_TYPE ? ["copyPath"] : [],
+      ),
       vscUri: getSasServerUri(item, false),
     };
   }
@@ -401,4 +432,4 @@ class ITCSASServerAdapter implements ContentAdapter {
   }
 }
 
-export default ITCSASServerAdapter;
+export default ItcServerAdapter;

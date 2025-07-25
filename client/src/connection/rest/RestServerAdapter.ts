@@ -7,6 +7,7 @@ import { AxiosResponse } from "axios";
 import { getSession } from "..";
 import {
   FOLDER_TYPES,
+  Messages,
   SAS_SERVER_ROOT_FOLDER,
   SAS_SERVER_ROOT_FOLDERS,
   SERVER_FOLDER_ID,
@@ -20,10 +21,12 @@ import {
 } from "../../components/ContentNavigator/types";
 import {
   createStaticFolder,
+  homeDirectoryName,
   isReference,
   sortedContentItems,
 } from "../../components/ContentNavigator/utils";
 import { appendSessionLogFn } from "../../components/logViewer";
+import { ProfileWithFileRootOptions } from "../../components/profile";
 import { FileProperties, FileSystemApi } from "./api/compute";
 import { getApiConfig } from "./common";
 import {
@@ -38,7 +41,7 @@ import {
 export const SAS_SERVER_HOME_DIRECTORY = "SAS_SERVER_HOME_DIRECTORY";
 const SAS_FILE_SEPARATOR = "~fs~";
 
-class RestSASServerAdapter implements ContentAdapter {
+class RestServerAdapter implements ContentAdapter {
   protected baseUrl: string;
   protected fileSystemApi: ReturnType<typeof FileSystemApi>;
   protected sessionId: string;
@@ -46,11 +49,17 @@ class RestSASServerAdapter implements ContentAdapter {
   private fileMetadataMap: {
     [id: string]: { etag: string; lastModified?: string; contentType?: string };
   };
+  private fileNavigationSetByAdmin: boolean;
 
-  public constructor() {
+  public constructor(
+    protected fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
+    protected fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
+  ) {
     this.rootFolders = {};
     this.fileMetadataMap = {};
+    this.fileNavigationSetByAdmin = false;
   }
+
   addChildItem: (
     childItemUri: string | undefined,
     parentItemUri: string | undefined,
@@ -64,6 +73,21 @@ class RestSASServerAdapter implements ContentAdapter {
     session.onSessionLogFn = appendSessionLogFn;
     await session.setup(true);
     this.sessionId = session?.sessionId();
+
+    // Overwrite file nav settings with data coming from the compute context
+    if (session.contextAttributes) {
+      const attributes = await session.contextAttributes();
+      if (
+        attributes &&
+        (attributes.fileNavigationCustomRootPath ||
+          attributes.fileNavigationRoot)
+      ) {
+        this.fileNavigationSetByAdmin = true;
+        this.fileNavigationCustomRootPath =
+          attributes.fileNavigationCustomRootPath ?? "";
+        this.fileNavigationRoot = attributes.fileNavigationRoot ?? "USER";
+      }
+    }
 
     return this.sessionId;
   }
@@ -192,6 +216,14 @@ class RestSASServerAdapter implements ContentAdapter {
     }
   }
 
+  private getNavigationRoot(): string {
+    if (this.fileNavigationRoot === "CUSTOM") {
+      const navPath = this.fileNavigationCustomRootPath.split("/").join("~fs~");
+      return `/compute/sessions/${this.sessionId}/files/${navPath}/members`;
+    }
+    return `/compute/sessions/${this.sessionId}/files/~fs~/members`;
+  }
+
   public async getChildItems(parentItem: ContentItem): Promise<ContentItem[]> {
     // If the user is fetching child items of the root folder, give them the
     // "home" directory
@@ -200,9 +232,12 @@ class RestSASServerAdapter implements ContentAdapter {
         this.filePropertiesToContentItem(
           createStaticFolder(
             SAS_SERVER_HOME_DIRECTORY,
-            "Home",
+            homeDirectoryName(
+              this.fileNavigationRoot,
+              this.fileNavigationCustomRootPath,
+            ),
             SERVER_HOME_FOLDER_TYPE,
-            `/compute/sessions/${this.sessionId}/files/~fs~/members`,
+            this.getNavigationRoot(),
             "getDirectoryMembers",
           ),
         ),
@@ -214,14 +249,32 @@ class RestSASServerAdapter implements ContentAdapter {
     let start = 0;
     let totalItemCount = 0;
     do {
-      const response = await this.fileSystemApi.getDirectoryMembers({
-        sessionId: this.sessionId,
-        directoryPath: this.trimComputePrefix(
-          getLink(parentItem.links, "GET", "getDirectoryMembers").uri,
-        ).replace("/members", ""),
-        limit,
-        start,
-      });
+      let response;
+      try {
+        response = await this.fileSystemApi.getDirectoryMembers({
+          sessionId: this.sessionId,
+          directoryPath: this.trimComputePrefix(
+            getLink(parentItem.links, "GET", "getDirectoryMembers").uri,
+          ).replace("/members", ""),
+          limit,
+          start,
+        });
+      } catch (error) {
+        // If this error is specifically related to file nav root settings, provide
+        // better feedback to the user
+        if (
+          error.status === 404 &&
+          parentItem.uri === SAS_SERVER_HOME_DIRECTORY &&
+          this.fileNavigationRoot === "CUSTOM"
+        ) {
+          if (this.fileNavigationSetByAdmin) {
+            throw new Error(Messages.FileNavigationRootAdminError);
+          } else {
+            throw new Error(Messages.FileNavigationRootUserError);
+          }
+        }
+        throw error;
+      }
       totalItemCount = response.data.count;
 
       allItems.push(
@@ -271,6 +324,16 @@ class RestSASServerAdapter implements ContentAdapter {
     // This is for creating a filename statement which won't work as expected for
     // file system files.
     return "";
+  }
+
+  public async getPathOfItem(item: ContentItem): Promise<string> {
+    const uri =
+      item.uri === SAS_SERVER_HOME_DIRECTORY
+        ? this.getNavigationRoot().replace("/members", "")
+        : item.uri;
+
+    const path = this.trimComputePrefix(uri);
+    return path.split(SAS_FILE_SEPARATOR).join("/").replace(/~sc~/g, ";");
   }
 
   public async getItemOfUri(uri: Uri): Promise<ContentItem> {
@@ -464,7 +527,12 @@ class RestSASServerAdapter implements ContentAdapter {
 
     return {
       ...item,
-      contextValue: resourceType(item),
+      contextValue: resourceType(
+        item,
+        // Lets add copy path support for the home directory where we
+        // can display the user defined root path if applicable.
+        id === SAS_SERVER_HOME_DIRECTORY ? ["copyPath"] : [],
+      ),
       fileStat: {
         ctime: item.creationTimeStamp,
         mtime: item.modifiedTimeStamp,
@@ -527,4 +595,4 @@ class RestSASServerAdapter implements ContentAdapter {
   }
 }
 
-export default RestSASServerAdapter;
+export default RestServerAdapter;

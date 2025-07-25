@@ -51,7 +51,10 @@ export const getResourceIdFromItem = (item: ContentItem): string | null => {
   return getLink(item.links, "GET", "self")?.uri || null;
 };
 
-export const resourceType = (item: ContentItem): string | undefined => {
+export const resourceType = (
+  item: ContentItem,
+  additionalActions?: string[],
+): string | undefined => {
   if (!isValidItem(item)) {
     return;
   }
@@ -63,6 +66,10 @@ export const resourceType = (item: ContentItem): string | undefined => {
     del && !item.flags?.isInMyFavorites && "delete",
     write && (!isRecycled ? "update" : "restore"),
   ].filter((action) => !!action);
+
+  if (actions.includes("update") || actions.includes("createChild")) {
+    actions.push("copyPath");
+  }
 
   const type = getTypeName(item);
   if (type === TRASH_FOLDER_TYPE && item?.memberCount) {
@@ -86,6 +93,10 @@ export const resourceType = (item: ContentItem): string | undefined => {
 
   if (!isContainer(item)) {
     actions.push("allowDownload");
+  }
+
+  if (additionalActions) {
+    actions.push(...additionalActions);
   }
 
   if (actions.length === 0) {

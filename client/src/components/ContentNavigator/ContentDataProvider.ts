@@ -533,6 +533,10 @@ class ContentDataProvider
     }
   }
 
+  public async getPathOfItem(item: ContentItem) {
+    return await this.model.getPathOfItem(item);
+  }
+
   private async childrenSelections(
     selection: ContentItem,
     allSelections: readonly ContentItem[],
