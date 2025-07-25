@@ -505,8 +505,12 @@ class SASRunner{
 
     $output = [object[]]::new($names.Length)
     for($i = 0; $i -lt $names.Count; $i++) {
+      $uri = $listedPath + $this.GetDirectorySeparator($listedPath) + $names[$i];
+      if ($listedPath -eq "") {
+        $uri = $names[$i]
+      }
       $output[$i] = @{
-        uri=$listedPath + $this.GetDirectorySeparator($listedPath) + $names[$i]
+        uri=$uri;
         name=$names[$i];
         type=$typeNames[$i];
         category=$typeCategories[$i];
