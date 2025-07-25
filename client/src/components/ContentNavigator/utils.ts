@@ -10,6 +10,7 @@ import {
 } from "vscode";
 
 import { resourceType } from "../../connection/rest/util";
+import { ProfileWithFileRootOptions } from "../profile";
 import { DEFAULT_FILE_CONTENT_TYPE } from "./const";
 import mimeTypes from "./mime-types";
 import { ContentItem, Permission } from "./types";
@@ -130,3 +131,16 @@ export const sortedContentItems = (items: ContentItem[]) =>
       return a.name.localeCompare(b.name);
     }
   });
+
+export const homeDirectoryName = (
+  fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
+  fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
+): string => {
+  const defaultName = "Home";
+  if (fileNavigationRoot !== "CUSTOM" || !fileNavigationCustomRootPath) {
+    return defaultName;
+  }
+
+  const nameDerivedFromPath = fileNavigationCustomRootPath.split("/").pop();
+  return nameDerivedFromPath || defaultName;
+};

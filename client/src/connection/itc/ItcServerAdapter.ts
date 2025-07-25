@@ -20,6 +20,7 @@ import {
 import {
   convertStaticFolderToContentItem,
   createStaticFolder,
+  homeDirectoryName,
   sortedContentItems,
 } from "../../components/ContentNavigator/utils";
 import { getGlobalStorageUri } from "../../components/ExtensionContext";
@@ -171,7 +172,10 @@ class ItcServerAdapter implements ContentAdapter {
         convertStaticFolderToContentItem(
           createStaticFolder(
             uri,
-            "Home",
+            homeDirectoryName(
+              this.fileNavigationRoot,
+              this.fileNavigationCustomRootPath,
+            ),
             SERVER_HOME_FOLDER_TYPE,
             "/",
             "getDirectoryMembers",
