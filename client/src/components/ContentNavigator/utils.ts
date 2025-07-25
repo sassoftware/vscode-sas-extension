@@ -9,6 +9,8 @@ import {
   window,
 } from "vscode";
 
+import { basename } from "path";
+
 import { resourceType } from "../../connection/rest/util";
 import { ProfileWithFileRootOptions } from "../profile";
 import { DEFAULT_FILE_CONTENT_TYPE } from "./const";
@@ -141,6 +143,5 @@ export const homeDirectoryName = (
     return defaultName;
   }
 
-  const nameDerivedFromPath = fileNavigationCustomRootPath.split("/").pop();
-  return nameDerivedFromPath || defaultName;
+  return basename(fileNavigationCustomRootPath) || defaultName;
 };

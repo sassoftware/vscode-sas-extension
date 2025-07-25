@@ -505,7 +505,7 @@ class SASRunner{
 
     $output = [object[]]::new($names.Length)
     for($i = 0; $i -lt $names.Count; $i++) {
-      $uri = $listedPath + $this.GetDirectorySeparator($listedPath) + $names[$i];
+      $uri = $listedPath.Trim("\\") + $this.GetDirectorySeparator($listedPath) + $names[$i];
       if ($listedPath -eq "") {
         $uri = $names[$i]
       }
