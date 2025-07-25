@@ -109,6 +109,8 @@
   "Task is complete.": "Tarefa completado.",
   "The SAS session has closed.": "A sessão de SAS foi encerrada.",
   "The file type is unsupported.": "Este tipo de arquivo não é compatível.",
+  "The files cannot be accessed from the path specified in the context definition for the SAS Compute Server. Contact your SAS administrator.": "Os arquivos não podem ser acessados a partir da seleção do caminho de contexto do seu SAS Compute Server. Entre em contato com o administrador SAS.",
+  "The files cannot be accessed from the specified path.": "Os arquivos não podem ser acessados a partir do caminho especificado.",
   "The folder name cannot contain more than 100 characters or have invalid characters.": "O nome da pasta não pode incluir mais de 100 caracteres ou qualquer caracteres inválidos.",
   "The item could not be added to My Favorites.": "Não foi possível adicionar o iten a My Favorites.",
   "The item could not be removed from My Favorites.": "Não foi possível excluir o iten do My Favorites.",
