@@ -520,14 +520,12 @@ class ContentDataProvider
     const targetFolderUri = resource.uri;
     console.log(targetFolderUri);
 
-    // Get all dirty files in our content schemas
     const dirtyFiles = workspace.textDocuments
       .filter((doc) => {
         if (!doc.isDirty) {
           return false;
         }
 
-        // Check if the document belongs to our content schemas
         const scheme = doc.uri.scheme;
         return (
           scheme === "sasContent" ||
@@ -542,7 +540,6 @@ class ContentDataProvider
       return false;
     }
 
-    // Check each dirty file to see if it's a descendant of the target folder
     for (const dirtyFileUri of dirtyFiles) {
       if (await this.isDescendantOf(dirtyFileUri, targetFolderUri)) {
         return true;
