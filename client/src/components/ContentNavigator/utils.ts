@@ -13,7 +13,11 @@ import { basename } from "path";
 
 import { resourceType } from "../../connection/rest/util";
 import { ProfileWithFileRootOptions } from "../profile";
-import { DEFAULT_FILE_CONTENT_TYPE } from "./const";
+import {
+  DEFAULT_FILE_CONTENT_TYPE,
+  FOLDER_TYPE,
+  SERVER_HOME_FOLDER_TYPE,
+} from "./const";
 import mimeTypes from "./mime-types";
 import { ContentItem, Permission } from "./types";
 
@@ -144,4 +148,19 @@ export const homeDirectoryName = (
   }
 
   return basename(fileNavigationCustomRootPath) || defaultName;
+};
+
+export const homeDirectoryNameAndType = (
+  fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
+  fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
+): [string, string] => {
+  const directoryName = homeDirectoryName(
+    fileNavigationRoot,
+    fileNavigationCustomRootPath,
+  );
+  if (directoryName === "Home") {
+    return [directoryName, SERVER_HOME_FOLDER_TYPE];
+  }
+
+  return [directoryName, FOLDER_TYPE];
 };

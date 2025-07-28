@@ -11,7 +11,6 @@ import {
   SAS_SERVER_ROOT_FOLDER,
   SAS_SERVER_ROOT_FOLDERS,
   SERVER_FOLDER_ID,
-  SERVER_HOME_FOLDER_TYPE,
 } from "../../components/ContentNavigator/const";
 import {
   AddChildItemProperties,
@@ -21,7 +20,7 @@ import {
 } from "../../components/ContentNavigator/types";
 import {
   createStaticFolder,
-  homeDirectoryName,
+  homeDirectoryNameAndType,
   isReference,
   sortedContentItems,
 } from "../../components/ContentNavigator/utils";
@@ -232,11 +231,10 @@ class RestServerAdapter implements ContentAdapter {
         this.filePropertiesToContentItem(
           createStaticFolder(
             SAS_SERVER_HOME_DIRECTORY,
-            homeDirectoryName(
+            ...homeDirectoryNameAndType(
               this.fileNavigationRoot,
               this.fileNavigationCustomRootPath,
             ),
-            SERVER_HOME_FOLDER_TYPE,
             this.getNavigationRoot(),
             "getDirectoryMembers",
           ),
