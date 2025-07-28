@@ -170,7 +170,7 @@ class RestServerAdapter implements ContentAdapter {
     try {
       const response = await this.fileSystemApi.createFileOrDirectory({
         sessionId: this.sessionId,
-        fileOrDirectoryPath: this.trimComputePrefix(parentItem.uri),
+        fileOrDirectoryPath: this.getCreationPath(parentItem.uri),
         fileProperties: { name: folderName, isDirectory: true },
       });
 
@@ -189,7 +189,7 @@ class RestServerAdapter implements ContentAdapter {
     try {
       const response = await this.fileSystemApi.createFileOrDirectory({
         sessionId: this.sessionId,
-        fileOrDirectoryPath: this.trimComputePrefix(parentItem.uri),
+        fileOrDirectoryPath: this.getCreationPath(parentItem.uri),
         fileProperties: { name: fileName, isDirectory: false },
       });
 
@@ -211,6 +211,19 @@ class RestServerAdapter implements ContentAdapter {
     } catch (error) {
       return;
     }
+  }
+
+  private getCreationPath(uri: string) {
+    if (
+      uri === SAS_SERVER_HOME_DIRECTORY &&
+      this.fileNavigationRoot === "CUSTOM"
+    ) {
+      return (
+        this.fileNavigationCustomRootPath.replace(/\//g, SAS_FILE_SEPARATOR) ||
+        SAS_FILE_SEPARATOR
+      );
+    }
+    return this.trimComputePrefix(uri);
   }
 
   public async deleteItem(item: ContentItem): Promise<boolean> {
@@ -528,7 +541,8 @@ class RestServerAdapter implements ContentAdapter {
         delete: !isRootFolder && !fileProperties.readOnly,
         addMember:
           !!getLink(links, "POST", "makeDirectory") ||
-          !!getLink(links, "POST", "createFile"),
+          !!getLink(links, "POST", "createFile") ||
+          id === SAS_SERVER_HOME_DIRECTORY,
       },
       flags,
       type: fileProperties.type || "",
