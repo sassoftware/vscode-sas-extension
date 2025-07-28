@@ -121,7 +121,7 @@ class ContentNavigator implements SubscriptionProvider {
                   ))
                 ) {
                   return;
-                } else if (moveToRecycleBin && isContainer && hasUnsavedFiles) {
+                } else if (moveToRecycleBin && hasUnsavedFiles) {
                   if (
                     !(await window.showWarningMessage(
                       l10n.t(Messages.RecycleDirtyFolderWarning, {

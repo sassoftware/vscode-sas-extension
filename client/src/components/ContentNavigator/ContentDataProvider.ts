@@ -79,6 +79,8 @@ class ContentDataProvider
   public dropMimeTypes: string[];
   public dragMimeTypes: string[];
 
+  private uriToParentMap = new Map<string, string>();
+
   get treeView(): TreeView<ContentItem> {
     return this._treeView;
   }
@@ -213,6 +215,11 @@ class ContentDataProvider
   public async getTreeItem(item: ContentItem): Promise<TreeItem> {
     const isContainer = getIsContainer(item);
     const uri = await this.model.getUri(item, false);
+
+    // Cache the URI to parent mapping
+    if (item.parentFolderUri) {
+      this.uriToParentMap.set(uri.toString(), item.parentFolderUri);
+    }
 
     return {
       collapsibleState: isContainer
@@ -510,44 +517,93 @@ class ContentDataProvider
       return false;
     }
 
-    const descendants: ContentItem[] = [];
-    const queue: ContentItem[] = [resource];
+    const targetFolderUri = resource.uri;
+    console.log(targetFolderUri);
 
-    while (queue.length > 0) {
-      const currentBatch = queue.splice(0);
-      const childrenArrays = await Promise.all(
-        currentBatch.map((item) => this.model.getChildren(item)),
-      );
-
-      for (const children of childrenArrays) {
-        for (const child of children) {
-          descendants.push(child);
-          if (getIsContainer(child)) {
-            queue.push(child);
-          }
+    // Get all dirty files in our content schemas
+    const dirtyFiles = workspace.textDocuments
+      .filter((doc) => {
+        if (!doc.isDirty) {
+          return false;
         }
-      }
+
+        // Check if the document belongs to our content schemas
+        const scheme = doc.uri.scheme;
+        return (
+          scheme === "sasContent" ||
+          scheme === "sasServer" ||
+          scheme === "sasContentReadOnly" ||
+          scheme === "sasServerReadOnly"
+        );
+      })
+      .map((doc) => doc.uri.toString());
+
+    if (dirtyFiles.length === 0) {
+      return false;
     }
 
-    const dirtyIds = new Set<string>();
-    for (const doc of workspace.textDocuments) {
-      if (!doc.isDirty) {
-        continue;
-      }
-      const id = new URLSearchParams(doc.uri.query).get("id");
-      if (id) {
-        dirtyIds.add(id);
-      }
-    }
-
-    for (const child of descendants) {
-      if (!child.vscUri) {
-        continue;
-      }
-      const childId = new URLSearchParams(child.vscUri.query).get("id");
-      if (childId && dirtyIds.has(childId)) {
+    // Check each dirty file to see if it's a descendant of the target folder
+    for (const dirtyFileUri of dirtyFiles) {
+      if (await this.isDescendantOf(dirtyFileUri, targetFolderUri)) {
         return true;
       }
+    }
+
+    return false;
+  }
+
+  private async isDescendantOf(
+    fileUri: string,
+    ancestorFolderUri: string,
+  ): Promise<boolean> {
+    let currentParentUri = this.uriToParentMap.get(fileUri);
+
+    // If not cached, try to get the ContentItem and cache it
+    if (!currentParentUri) {
+      try {
+        const item = await this.model.getResourceByUri(Uri.parse(fileUri));
+        currentParentUri = item.parentFolderUri;
+        if (currentParentUri) {
+          this.uriToParentMap.set(fileUri, currentParentUri);
+        }
+      } catch (error) {
+        // If we can't get the item, assume it's not a descendant
+        console.log(error);
+        return false;
+      }
+    }
+
+    // Traverse upwards checking parents
+    let depth = 0;
+    while (currentParentUri || depth >= 10) {
+      if (currentParentUri === ancestorFolderUri) {
+        return true;
+      }
+
+      // Get the next parent URI - check cache first
+      const nextParentUri = this.uriToParentMap.get(currentParentUri);
+
+      if (nextParentUri) {
+        currentParentUri = nextParentUri;
+      } else {
+        // Not cached, try to get it from the model
+        try {
+          const parentItem = await this.model.getResourceByUri(
+            Uri.parse(currentParentUri),
+          );
+          currentParentUri = parentItem.parentFolderUri;
+          if (currentParentUri) {
+            this.uriToParentMap.set(
+              currentParentUri,
+              parentItem.parentFolderUri,
+            );
+          }
+        } catch (error) {
+          console.log(error);
+          break;
+        }
+      }
+      depth++;
     }
 
     return false;
