@@ -79,6 +79,8 @@ class ContentDataProvider
   public dropMimeTypes: string[];
   public dragMimeTypes: string[];
 
+  private uriToParentMap = new Map<string, string>();
+
   get treeView(): TreeView<ContentItem> {
     return this._treeView;
   }
@@ -213,6 +215,11 @@ class ContentDataProvider
   public async getTreeItem(item: ContentItem): Promise<TreeItem> {
     const isContainer = getIsContainer(item);
     const uri = await this.model.getUri(item, false);
+
+    // Cache the URI to parent mapping
+    if (item.parentFolderUri) {
+      this.uriToParentMap.set(uri.toString(), item.parentFolderUri);
+    }
 
     return {
       collapsibleState: isContainer
@@ -503,6 +510,95 @@ class ContentDataProvider
         l10n.t(Messages.FileUploadError),
       );
     }
+  }
+
+  public async checkFolderDirty(resource: ContentItem): Promise<boolean> {
+    if (!resource.vscUri) {
+      return false;
+    }
+
+    const targetFolderUri = resource.uri;
+    console.log(targetFolderUri);
+
+    const dirtyFiles = workspace.textDocuments
+      .filter((doc) => {
+        if (!doc.isDirty) {
+          return false;
+        }
+
+        const scheme = doc.uri.scheme;
+        return (
+          scheme === "sasContent" ||
+          scheme === "sasServer" ||
+          scheme === "sasContentReadOnly" ||
+          scheme === "sasServerReadOnly"
+        );
+      })
+      .map((doc) => doc.uri.toString());
+
+    if (dirtyFiles.length === 0) {
+      return false;
+    }
+
+    for (const dirtyFileUri of dirtyFiles) {
+      if (await this.isDescendantOf(dirtyFileUri, targetFolderUri)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private async isDescendantOf(
+    fileUri: string,
+    ancestorFolderUri: string,
+  ): Promise<boolean> {
+    let currentParentUri = this.uriToParentMap.get(fileUri);
+
+    if (!currentParentUri) {
+      try {
+        const item = await this.model.getResourceByUri(Uri.parse(fileUri));
+        currentParentUri = item.parentFolderUri;
+        if (currentParentUri) {
+          this.uriToParentMap.set(fileUri, currentParentUri);
+        }
+      } catch (error) {
+        console.log(error);
+        return false;
+      }
+    }
+
+    let depth = 0;
+    while (currentParentUri || depth >= 10) {
+      if (currentParentUri === ancestorFolderUri) {
+        return true;
+      }
+
+      const nextParentUri = this.uriToParentMap.get(currentParentUri);
+
+      if (nextParentUri) {
+        currentParentUri = nextParentUri;
+      } else {
+        try {
+          const parentItem = await this.model.getResourceByUri(
+            Uri.parse(currentParentUri),
+          );
+          currentParentUri = parentItem.parentFolderUri;
+          if (currentParentUri) {
+            this.uriToParentMap.set(
+              currentParentUri,
+              parentItem.parentFolderUri,
+            );
+          }
+        } catch (error) {
+          console.log(error);
+          break;
+        }
+      }
+      depth++;
+    }
+
+    return false;
   }
 
   public async downloadContentItems(
