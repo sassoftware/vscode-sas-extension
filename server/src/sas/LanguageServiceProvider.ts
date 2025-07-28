@@ -260,7 +260,7 @@ export class LanguageServiceProvider {
           column: range.end.character,
         },
       })
-      .split("\n");
+      .split(/\n|\r\n/);
     const shouldAdd = lines.some(
       (line) => line.trim() !== "" && !/^\s*\/\*.*\*\/\s*$/.test(line),
     );
