@@ -555,7 +555,6 @@ class ContentDataProvider
   ): Promise<boolean> {
     let currentParentUri = this.uriToParentMap.get(fileUri);
 
-    // If not cached, try to get the ContentItem and cache it
     if (!currentParentUri) {
       try {
         const item = await this.model.getResourceByUri(Uri.parse(fileUri));
@@ -564,26 +563,22 @@ class ContentDataProvider
           this.uriToParentMap.set(fileUri, currentParentUri);
         }
       } catch (error) {
-        // If we can't get the item, assume it's not a descendant
         console.log(error);
         return false;
       }
     }
 
-    // Traverse upwards checking parents
     let depth = 0;
     while (currentParentUri || depth >= 10) {
       if (currentParentUri === ancestorFolderUri) {
         return true;
       }
 
-      // Get the next parent URI - check cache first
       const nextParentUri = this.uriToParentMap.get(currentParentUri);
 
       if (nextParentUri) {
         currentParentUri = nextParentUri;
       } else {
-        // Not cached, try to get it from the model
         try {
           const parentItem = await this.model.getResourceByUri(
             Uri.parse(currentParentUri),
