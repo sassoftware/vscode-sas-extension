@@ -19,7 +19,9 @@ import {
   RootFolderMap,
 } from "../../components/ContentNavigator/types";
 import {
+  contextMenuActions,
   createStaticFolder,
+  getTypeName,
   homeDirectoryNameAndType,
   isReference,
   sortedContentItems,
@@ -33,8 +35,6 @@ import {
   getResourceId,
   getResourceIdFromItem,
   getSasServerUri,
-  getTypeName,
-  resourceType,
 } from "./util";
 
 export const SAS_SERVER_HOME_DIRECTORY = "SAS_SERVER_HOME_DIRECTORY";
@@ -525,7 +525,7 @@ class RestServerAdapter implements ContentAdapter {
 
     return {
       ...item,
-      contextValue: resourceType(
+      contextValue: contextMenuActions(
         item,
         // Lets add copy path support for the home directory where we
         // can display the user defined root path if applicable.

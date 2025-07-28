@@ -26,7 +26,9 @@ import {
   RootFolderMap,
 } from "../../components/ContentNavigator/types";
 import {
+  contextMenuActions,
   getFileContentType,
+  getTypeName,
   isContainer,
   isItemInRecycleBin,
   isReference,
@@ -38,8 +40,6 @@ import {
   getResourceId,
   getResourceIdFromItem,
   getSasContentUri,
-  getTypeName,
-  resourceType,
 } from "./util";
 
 class RestContentAdapter implements ContentAdapter {
@@ -359,7 +359,7 @@ class RestContentAdapter implements ContentAdapter {
 
     return {
       ...item,
-      contextValue: resourceType(item),
+      contextValue: contextMenuActions(item),
       fileStat: {
         ctime: item.creationTimeStamp,
         mtime: item.modifiedTimeStamp,

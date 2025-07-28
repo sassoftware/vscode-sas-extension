@@ -17,9 +17,9 @@ import {
   Permission,
 } from "../../components/ContentNavigator/types";
 import {
+  getTypeName,
   isItemInRecycleBin,
   isReference,
-  isValidItem,
 } from "../../components/ContentNavigator/utils";
 
 export const isContainer = (item: ContentItem, bStrict?: boolean): boolean => {
@@ -49,61 +49,6 @@ export const getResourceIdFromItem = (item: ContentItem): string | null => {
   }
 
   return getLink(item.links, "GET", "self")?.uri || null;
-};
-
-export const resourceType = (
-  item: ContentItem,
-  additionalActions?: string[],
-): string | undefined => {
-  if (!isValidItem(item)) {
-    return;
-  }
-
-  const { write, delete: del, addMember } = item.permission;
-  const isRecycled = isItemInRecycleBin(item);
-  const actions = [
-    addMember && !isRecycled && "createChild",
-    del && !item.flags?.isInMyFavorites && "delete",
-    write && (!isRecycled ? "update" : "restore"),
-  ].filter((action) => !!action);
-
-  if (actions.includes("update") || actions.includes("createChild")) {
-    actions.push("copyPath");
-  }
-
-  const type = getTypeName(item);
-  if (type === TRASH_FOLDER_TYPE && item?.memberCount) {
-    actions.push("empty");
-  }
-
-  if (item.flags?.isInMyFavorites) {
-    actions.push("removeFromFavorites");
-  } else if (
-    item.type !== "reference" &&
-    [FOLDER_TYPE, ...FILE_TYPES].includes(type) &&
-    !isRecycled
-  ) {
-    actions.push("addToFavorites");
-  }
-
-  // if item is a notebook file add action
-  if (item?.name?.endsWith(".sasnb")) {
-    actions.push("convertNotebookToFlow");
-  }
-
-  if (!isContainer(item)) {
-    actions.push("allowDownload");
-  }
-
-  if (additionalActions) {
-    actions.push(...additionalActions);
-  }
-
-  if (actions.length === 0) {
-    return;
-  }
-
-  return actions.sort().join("-");
 };
 
 export const getSasContentUri = (item: ContentItem, readOnly?: boolean): Uri =>
@@ -157,6 +102,3 @@ export const getItemContentType = (item: ContentItem): string | undefined => {
 };
 
 export const getResourceId = (uri: Uri): string => uri.query.substring(3); // ?id=...
-
-export const getTypeName = (item: ContentItem): string =>
-  item.contentType || item.type;

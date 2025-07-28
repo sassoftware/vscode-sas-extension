@@ -11,12 +11,13 @@ import {
 
 import { basename } from "path";
 
-import { resourceType } from "../../connection/rest/util";
 import { ProfileWithFileRootOptions } from "../profile";
 import {
   DEFAULT_FILE_CONTENT_TYPE,
+  FILE_TYPES,
   FOLDER_TYPE,
   SERVER_HOME_FOLDER_TYPE,
+  TRASH_FOLDER_TYPE,
 } from "./const";
 import mimeTypes from "./mime-types";
 import { ContentItem, Permission } from "./types";
@@ -109,7 +110,7 @@ export const convertStaticFolderToContentItem = (
       type: FileType.Directory,
     },
   };
-  item.contextValue = resourceType(item);
+  item.contextValue = contextMenuActions(item);
   item.typeName = staticFolder.type;
   return item;
 };
@@ -163,4 +164,73 @@ export const homeDirectoryNameAndType = (
   }
 
   return [directoryName, FOLDER_TYPE];
+};
+
+export const getTypeName = (item: ContentItem): string =>
+  item.contentType || item.type;
+
+export const contextMenuActions = (
+  item: ContentItem,
+  additionalActions?: string[],
+): string => {
+  // Valid context menu actions:
+  // - createChild: Create a new folder _under_ the current one
+  // - delete: The item can be deleted
+  // - update: The item can be update
+  // - copyPath: The item path can be copied
+  // - empty: Whether or not children can be deleted permanently (for the recycling bin)
+  // - addToFavorites: item can be added to favorites
+  // - removeFromFavorites: item can be removed from favorites
+  // - convertNotebookToFlow: Allows sasnb files to be converted to flows
+  // - allowDownload: allows downloading files / folders
+
+  if (!isValidItem(item)) {
+    return;
+  }
+
+  const { write, delete: canDelete, addMember } = item.permission;
+  const isRecycled = isItemInRecycleBin(item);
+  const type = getTypeName(item);
+
+  const actions = [];
+  if (addMember && !isRecycled) {
+    actions.push("createChild");
+  }
+  if (canDelete && !item.flags?.isInMyFavorites) {
+    actions.push("delete");
+  }
+  if (write) {
+    actions.push(!isRecycled ? "update" : "restore");
+  }
+  if (!isContainer(item)) {
+    actions.push("copyPath");
+  }
+  if (type === TRASH_FOLDER_TYPE && item?.memberCount) {
+    actions.push("empty");
+  }
+
+  if (item.flags?.isInMyFavorites) {
+    actions.push("removeFromFavorites");
+  } else if (
+    item.type !== "reference" &&
+    [FOLDER_TYPE, ...FILE_TYPES].includes(type) &&
+    !isRecycled
+  ) {
+    actions.push("addToFavorites");
+  }
+
+  // if item is a notebook file add action
+  if (item?.name?.endsWith(".sasnb")) {
+    actions.push("convertNotebookToFlow");
+  }
+
+  if (!isContainer(item)) {
+    actions.push("allowDownload");
+  }
+
+  if (additionalActions) {
+    actions.push(...additionalActions);
+  }
+
+  return actions.sort().join("-");
 };

@@ -18,6 +18,7 @@ import {
   RootFolderMap,
 } from "../../components/ContentNavigator/types";
 import {
+  contextMenuActions,
   convertStaticFolderToContentItem,
   createStaticFolder,
   homeDirectoryNameAndType,
@@ -25,12 +26,7 @@ import {
 } from "../../components/ContentNavigator/utils";
 import { getGlobalStorageUri } from "../../components/ExtensionContext";
 import { ProfileWithFileRootOptions } from "../../components/profile";
-import {
-  getLink,
-  getResourceId,
-  getSasServerUri,
-  resourceType,
-} from "../rest/util";
+import { getLink, getResourceId, getSasServerUri } from "../rest/util";
 import { executeRawCode } from "./CodeRunner";
 import { PowershellResponse, ScriptActions } from "./types";
 import { getDirectorySeparator } from "./util";
@@ -392,7 +388,7 @@ class ItcServerAdapter implements ContentAdapter {
 
     return {
       ...item,
-      contextValue: resourceType(
+      contextValue: contextMenuActions(
         item,
         // Lets add copy path support for the home directory where we
         // can display the user defined root path if applicable.
