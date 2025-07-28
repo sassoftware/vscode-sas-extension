@@ -7,7 +7,6 @@ import {
   FAVORITES_FOLDER_TYPE,
   FILE_TYPES,
   FOLDER_TYPE,
-  FOLDER_TYPES,
   TRASH_FOLDER_TYPE,
 } from "../../components/ContentNavigator/const";
 import {
@@ -18,20 +17,8 @@ import {
 } from "../../components/ContentNavigator/types";
 import {
   getTypeName,
-  isItemInRecycleBin,
-  isReference,
+  isRootFolder,
 } from "../../components/ContentNavigator/utils";
-
-export const isContainer = (item: ContentItem, bStrict?: boolean): boolean => {
-  const typeName = item.typeName;
-  if (!bStrict && isItemInRecycleBin(item) && isReference(item)) {
-    return false;
-  }
-  if (FOLDER_TYPES.indexOf(typeName) >= 0) {
-    return true;
-  }
-  return false;
-};
 
 export const getLink = (
   links: Array<Link>,
@@ -90,7 +77,7 @@ export const getPermission = (item: ContentItem): Permission => {
 
 export const getItemContentType = (item: ContentItem): string | undefined => {
   const itemIsReference = item.type === "reference";
-  if (itemIsReference || isContainer(item)) {
+  if (itemIsReference || isRootFolder(item)) {
     return undefined;
   }
 

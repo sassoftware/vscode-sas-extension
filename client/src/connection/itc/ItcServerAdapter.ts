@@ -10,7 +10,6 @@ import {
   SAS_SERVER_ROOT_FOLDER,
   SAS_SERVER_ROOT_FOLDERS,
   SERVER_FOLDER_ID,
-  SERVER_HOME_FOLDER_TYPE,
 } from "../../components/ContentNavigator/const";
 import {
   ContentAdapter,
@@ -18,7 +17,8 @@ import {
   RootFolderMap,
 } from "../../components/ContentNavigator/types";
 import {
-  contextMenuActions,
+  ContextMenuAction,
+  ContextMenuProvider,
   convertStaticFolderToContentItem,
   createStaticFolder,
   homeDirectoryNameAndType,
@@ -34,12 +34,25 @@ import { getDirectorySeparator } from "./util";
 class ItcServerAdapter implements ContentAdapter {
   protected sessionId: string;
   private rootFolders: RootFolderMap;
+  private contextMenuProvider: ContextMenuProvider;
 
   public constructor(
     protected readonly fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
     protected readonly fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
   ) {
     this.rootFolders = {};
+    this.contextMenuProvider = new ContextMenuProvider(
+      [
+        ContextMenuAction.CreateChild,
+        ContextMenuAction.Delete,
+        ContextMenuAction.Update,
+        ContextMenuAction.CopyPath,
+        ContextMenuAction.AllowDownload,
+      ],
+      {
+        [ContextMenuAction.CopyPath]: (item) => item.id !== SERVER_FOLDER_ID,
+      },
+    );
   }
 
   /* The following methods are needed for favorites, which are not applicable to sas server */
@@ -164,24 +177,25 @@ class ItcServerAdapter implements ContentAdapter {
         return [];
       }
       const uri = items[0].parentFolderUri;
-      return [
-        convertStaticFolderToContentItem(
-          createStaticFolder(
-            uri,
-            ...homeDirectoryNameAndType(
-              this.fileNavigationRoot,
-              this.fileNavigationCustomRootPath,
-            ),
-            "/",
-            "getDirectoryMembers",
+      const homeFolder = convertStaticFolderToContentItem(
+        createStaticFolder(
+          uri,
+          ...homeDirectoryNameAndType(
+            this.fileNavigationRoot,
+            this.fileNavigationCustomRootPath,
           ),
-          {
-            write: false,
-            delete: false,
-            addMember: true,
-          },
+          "/",
+          "getDirectoryMembers",
         ),
-      ];
+        {
+          write: false,
+          delete: false,
+          addMember: true,
+        },
+      );
+      homeFolder.contextValue =
+        this.contextMenuProvider.availableActions(homeFolder);
+      return [homeFolder];
     }
 
     const { success, data: items } = await this.execute(
@@ -195,7 +209,9 @@ class ItcServerAdapter implements ContentAdapter {
       return [];
     }
 
-    const childItems = items.map(this.convertPowershellResponseToContentItem);
+    const childItems = items.map(
+      this.convertPowershellResponseToContentItem.bind(this),
+    );
 
     return sortedContentItems(childItems);
   }
@@ -388,12 +404,7 @@ class ItcServerAdapter implements ContentAdapter {
 
     return {
       ...item,
-      contextValue: contextMenuActions(
-        item,
-        // Lets add copy path support for the home directory where we
-        // can display the user defined root path if applicable.
-        item.type === SERVER_HOME_FOLDER_TYPE ? ["copyPath"] : [],
-      ),
+      contextValue: this.contextMenuProvider.availableActions(item),
       vscUri: getSasServerUri(item, false),
     };
   }

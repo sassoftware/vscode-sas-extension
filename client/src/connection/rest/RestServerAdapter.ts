@@ -19,7 +19,8 @@ import {
   RootFolderMap,
 } from "../../components/ContentNavigator/types";
 import {
-  contextMenuActions,
+  ContextMenuAction,
+  ContextMenuProvider,
   createStaticFolder,
   getTypeName,
   homeDirectoryNameAndType,
@@ -49,6 +50,7 @@ class RestServerAdapter implements ContentAdapter {
     [id: string]: { etag: string; lastModified?: string; contentType?: string };
   };
   private fileNavigationSetByAdmin: boolean;
+  private contextMenuProvider: ContextMenuProvider;
 
   public constructor(
     protected fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
@@ -57,6 +59,18 @@ class RestServerAdapter implements ContentAdapter {
     this.rootFolders = {};
     this.fileMetadataMap = {};
     this.fileNavigationSetByAdmin = false;
+    this.contextMenuProvider = new ContextMenuProvider(
+      [
+        ContextMenuAction.CreateChild,
+        ContextMenuAction.Delete,
+        ContextMenuAction.Update,
+        ContextMenuAction.CopyPath,
+        ContextMenuAction.AllowDownload,
+      ],
+      {
+        [ContextMenuAction.CopyPath]: (item) => item.id !== SERVER_FOLDER_ID,
+      },
+    );
   }
 
   addChildItem: (
@@ -525,12 +539,7 @@ class RestServerAdapter implements ContentAdapter {
 
     return {
       ...item,
-      contextValue: contextMenuActions(
-        item,
-        // Lets add copy path support for the home directory where we
-        // can display the user defined root path if applicable.
-        id === SAS_SERVER_HOME_DIRECTORY ? ["copyPath"] : [],
-      ),
+      contextValue: this.contextMenuProvider.availableActions(item),
       fileStat: {
         ctime: item.creationTimeStamp,
         mtime: item.modifiedTimeStamp,

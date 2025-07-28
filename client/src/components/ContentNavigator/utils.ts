@@ -16,6 +16,7 @@ import {
   DEFAULT_FILE_CONTENT_TYPE,
   FILE_TYPES,
   FOLDER_TYPE,
+  FOLDER_TYPES,
   SERVER_HOME_FOLDER_TYPE,
   TRASH_FOLDER_TYPE,
 } from "./const";
@@ -110,7 +111,6 @@ export const convertStaticFolderToContentItem = (
       type: FileType.Directory,
     },
   };
-  item.contextValue = contextMenuActions(item);
   item.typeName = staticFolder.type;
   return item;
 };
@@ -169,68 +169,75 @@ export const homeDirectoryNameAndType = (
 export const getTypeName = (item: ContentItem): string =>
   item.contentType || item.type;
 
-export const contextMenuActions = (
-  item: ContentItem,
-  additionalActions?: string[],
-): string => {
-  // Valid context menu actions:
-  // - createChild: Create a new folder _under_ the current one
-  // - delete: The item can be deleted
-  // - update: The item can be update
-  // - copyPath: The item path can be copied
-  // - empty: Whether or not children can be deleted permanently (for the recycling bin)
-  // - addToFavorites: item can be added to favorites
-  // - removeFromFavorites: item can be removed from favorites
-  // - convertNotebookToFlow: Allows sasnb files to be converted to flows
-  // - allowDownload: allows downloading files / folders
-
-  if (!isValidItem(item)) {
-    return;
+export const isRootFolder = (item: ContentItem, bStrict?: boolean): boolean => {
+  const typeName = item.typeName;
+  if (!bStrict && isItemInRecycleBin(item) && isReference(item)) {
+    return false;
   }
-
-  const { write, delete: canDelete, addMember } = item.permission;
-  const isRecycled = isItemInRecycleBin(item);
-  const type = getTypeName(item);
-
-  const actions = [];
-  if (addMember && !isRecycled) {
-    actions.push("createChild");
+  if (FOLDER_TYPES.indexOf(typeName) >= 0) {
+    return true;
   }
-  if (canDelete && !item.flags?.isInMyFavorites) {
-    actions.push("delete");
-  }
-  if (write) {
-    actions.push(!isRecycled ? "update" : "restore");
-  }
-  if (!isContainer(item)) {
-    actions.push("copyPath");
-  }
-  if (type === TRASH_FOLDER_TYPE && item?.memberCount) {
-    actions.push("empty");
-  }
-
-  if (item.flags?.isInMyFavorites) {
-    actions.push("removeFromFavorites");
-  } else if (
-    item.type !== "reference" &&
-    [FOLDER_TYPE, ...FILE_TYPES].includes(type) &&
-    !isRecycled
-  ) {
-    actions.push("addToFavorites");
-  }
-
-  // if item is a notebook file add action
-  if (item?.name?.endsWith(".sasnb")) {
-    actions.push("convertNotebookToFlow");
-  }
-
-  if (!isContainer(item)) {
-    actions.push("allowDownload");
-  }
-
-  if (additionalActions) {
-    actions.push(...additionalActions);
-  }
-
-  return actions.sort().join("-");
+  return false;
 };
+
+export enum ContextMenuAction {
+  CreateChild = "createChild", // Create a new folder _under_ the current one
+  Delete = "delete", // The item can be deleted
+  Update = "update", // The item can be updated/edited/renamed
+  Restore = "restore", // The item can be restored
+  CopyPath = "copyPath", // The item path can be copied
+  Empty = "empty", // Whether or not children can be deleted permanently (for the recycling bin)
+  AddToFavorites = "addToFavorites", // Item can be added to favorites
+  RemoveFromFavorites = "removeFromFavorites", // Item can be removed from favorites
+  ConvertNotebookToFlow = "convertNotebookToFlow", // Allows sasnb files to be converted to flows
+  AllowDownload = "allowDownload", // Allows downloading files / folders
+}
+export class ContextMenuProvider {
+  constructor(
+    protected readonly validContextMenuActions: ContextMenuAction[],
+    protected readonly enablementOverrides: Partial<
+      Record<ContextMenuAction, (item: ContentItem) => boolean>
+    > = {},
+  ) {}
+
+  public availableActions(item: ContentItem): string {
+    if (!isValidItem(item)) {
+      return "";
+    }
+
+    const { write, delete: canDelete, addMember } = item.permission;
+    const isRecycled = isItemInRecycleBin(item);
+    const type = getTypeName(item);
+
+    const menuActionEnablement = {
+      [ContextMenuAction.CreateChild]: () => addMember && !isRecycled,
+      [ContextMenuAction.Delete]: () =>
+        canDelete && !item.flags?.isInMyFavorites,
+      [ContextMenuAction.Update]: () => write && !isRecycled,
+      [ContextMenuAction.Restore]: () => write && isRecycled,
+      [ContextMenuAction.CopyPath]: () => (addMember || write) && !isRecycled,
+      [ContextMenuAction.Empty]: () =>
+        type === TRASH_FOLDER_TYPE && !!item?.memberCount,
+      [ContextMenuAction.AddToFavorites]: () =>
+        !item.flags?.isInMyFavorites &&
+        item.type !== "reference" &&
+        [FOLDER_TYPE, ...FILE_TYPES].includes(type) &&
+        !isRecycled,
+      [ContextMenuAction.RemoveFromFavorites]: () =>
+        item.flags?.isInMyFavorites,
+      [ContextMenuAction.ConvertNotebookToFlow]: () =>
+        item?.name?.endsWith(".sasnb"),
+      [ContextMenuAction.AllowDownload]: () => !isRootFolder(item),
+      ...(this.enablementOverrides || {}),
+    };
+
+    const actions = Object.keys(menuActionEnablement)
+      .filter((key: ContextMenuAction) =>
+        this.validContextMenuActions.includes(key),
+      )
+      .filter((key) => menuActionEnablement[key](item))
+      .map((key) => key);
+
+    return actions.sort().join("-");
+  }
+}

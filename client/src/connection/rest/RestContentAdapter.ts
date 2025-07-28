@@ -26,7 +26,8 @@ import {
   RootFolderMap,
 } from "../../components/ContentNavigator/types";
 import {
-  contextMenuActions,
+  ContextMenuAction,
+  ContextMenuProvider,
   getFileContentType,
   getTypeName,
   isContainer,
@@ -50,10 +51,23 @@ class RestContentAdapter implements ContentAdapter {
   private fileMetadataMap: {
     [id: string]: { etag: string; lastModified: string; contentType: string };
   };
+  private contextMenuProvider: ContextMenuProvider;
 
   public constructor() {
     this.rootFolders = {};
     this.fileMetadataMap = {};
+    this.contextMenuProvider = new ContextMenuProvider([
+      ContextMenuAction.CreateChild,
+      ContextMenuAction.Delete,
+      ContextMenuAction.Update,
+      ContextMenuAction.Restore,
+      ContextMenuAction.CopyPath,
+      ContextMenuAction.Empty,
+      ContextMenuAction.AddToFavorites,
+      ContextMenuAction.RemoveFromFavorites,
+      ContextMenuAction.ConvertNotebookToFlow,
+      ContextMenuAction.AllowDownload,
+    ]);
   }
 
   public connected(): boolean {
@@ -359,7 +373,7 @@ class RestContentAdapter implements ContentAdapter {
 
     return {
       ...item,
-      contextValue: contextMenuActions(item),
+      contextValue: this.contextMenuProvider.availableActions(item),
       fileStat: {
         ctime: item.creationTimeStamp,
         mtime: item.modifiedTimeStamp,
