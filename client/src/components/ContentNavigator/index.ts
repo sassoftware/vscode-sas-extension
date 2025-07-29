@@ -9,6 +9,7 @@ import {
   ProgressLocation,
   Uri,
   commands,
+  env,
   l10n,
   window,
   workspace,
@@ -16,7 +17,7 @@ import {
 
 import { profileConfig } from "../../commands/profile";
 import { SubscriptionProvider } from "../SubscriptionProvider";
-import { ConnectionType } from "../profile";
+import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
 import ContentAdapterFactory from "./ContentAdapterFactory";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
@@ -102,33 +103,34 @@ class ContentNavigator implements SubscriptionProvider {
         async (item: ContentItem) => {
           this.treeViewSelections(item).forEach(
             async (resource: ContentItem) => {
+              if (!resource.contextValue.includes("delete")) {
+                return;
+              }
               const isContainer = getIsContainer(resource);
               const moveToRecycleBin =
                 this.contentDataProvider.canRecycleResource(resource);
 
-              if (resource.contextValue.includes("delete")) {
-                if (
-                  !moveToRecycleBin &&
-                  !(await window.showWarningMessage(
-                    l10n.t(Messages.DeleteWarningMessage, {
-                      name: resource.name,
-                    }),
-                    { modal: true },
-                    Messages.DeleteButtonLabel,
-                  ))
-                ) {
-                  return;
-                }
-                const deleteResult = moveToRecycleBin
-                  ? await this.contentDataProvider.recycleResource(resource)
-                  : await this.contentDataProvider.deleteResource(resource);
-                if (!deleteResult) {
-                  window.showErrorMessage(
-                    isContainer
-                      ? Messages.FolderDeletionError
-                      : Messages.FileDeletionError,
-                  );
-                }
+              if (
+                !moveToRecycleBin &&
+                !(await window.showWarningMessage(
+                  l10n.t(Messages.DeleteWarningMessage, {
+                    name: resource.name,
+                  }),
+                  { modal: true },
+                  Messages.DeleteButtonLabel,
+                ))
+              ) {
+                return;
+              }
+              const deleteResult = moveToRecycleBin
+                ? await this.contentDataProvider.recycleResource(resource)
+                : await this.contentDataProvider.deleteResource(resource);
+              if (!deleteResult) {
+                window.showErrorMessage(
+                  isContainer
+                    ? Messages.FolderDeletionError
+                    : Messages.FileDeletionError,
+                );
               }
             },
           );
@@ -399,6 +401,15 @@ class ContentNavigator implements SubscriptionProvider {
         async (resource: ContentItem) =>
           this.uploadResource(resource, { canSelectFiles: false }),
       ),
+      commands.registerCommand(
+        `${SAS}.copyPath`,
+        async (resource: ContentItem) => {
+          const path = await this.contentDataProvider.getPathOfItem(resource);
+          if (path) {
+            await env.clipboard.writeText(path);
+          }
+        },
+      ),
       workspace.onDidChangeConfiguration(
         async (event: ConfigurationChangeEvent) => {
           if (event.affectsConfiguration("SAS.connectionProfiles")) {
@@ -490,10 +501,26 @@ class ContentNavigator implements SubscriptionProvider {
       return;
     }
 
+    const profileWithFileRootOptions = getProfileWithFileRootOptions();
     return new ContentAdapterFactory().create(
       activeProfile.connectionType,
+      profileWithFileRootOptions?.fileNavigationCustomRootPath,
+      profileWithFileRootOptions?.fileNavigationRoot,
       this.sourceType,
     );
+
+    function getProfileWithFileRootOptions():
+      | ProfileWithFileRootOptions
+      | undefined {
+      switch (activeProfile.connectionType) {
+        case ConnectionType.Rest:
+        case ConnectionType.IOM:
+        case ConnectionType.COM:
+          return activeProfile;
+        default:
+          return undefined;
+      }
+    }
   }
 }
 

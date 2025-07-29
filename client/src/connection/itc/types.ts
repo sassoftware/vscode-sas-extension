@@ -15,7 +15,7 @@ export enum ScriptActions {
   CreateFile = `$runner.CreateFile($folderPath, $fileName, $content)`,
   DeleteFile = `$runner.DeleteFile($filePath)`,
   FetchFileContent = `$runner.FetchFileContent($filePath, $outputFile)`,
-  GetChildItems = `$runner.GetChildItems($path)`,
+  GetChildItems = `$runner.GetChildItems($path, $fileNavigationCustomRootPath, $fileNavigationRoot)`,
   RenameFile = `$runner.RenameFile($oldPath,$newPath,$newName)`,
   UpdateFile = `$runner.UpdateFile($filePath, $content)`,
 }

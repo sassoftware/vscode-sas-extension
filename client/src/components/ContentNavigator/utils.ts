@@ -9,8 +9,17 @@ import {
   window,
 } from "vscode";
 
-import { resourceType } from "../../connection/rest/util";
-import { DEFAULT_FILE_CONTENT_TYPE } from "./const";
+import { basename } from "path";
+
+import { ProfileWithFileRootOptions } from "../profile";
+import {
+  DEFAULT_FILE_CONTENT_TYPE,
+  FILE_TYPES,
+  FOLDER_TYPE,
+  FOLDER_TYPES,
+  SERVER_HOME_FOLDER_TYPE,
+  TRASH_FOLDER_TYPE,
+} from "./const";
 import mimeTypes from "./mime-types";
 import { ContentItem, Permission } from "./types";
 
@@ -102,7 +111,6 @@ export const convertStaticFolderToContentItem = (
       type: FileType.Directory,
     },
   };
-  item.contextValue = resourceType(item);
   item.typeName = staticFolder.type;
   return item;
 };
@@ -130,3 +138,106 @@ export const sortedContentItems = (items: ContentItem[]) =>
       return a.name.localeCompare(b.name);
     }
   });
+
+export const homeDirectoryName = (
+  fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
+  fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
+): string => {
+  const defaultName = "Home";
+  if (fileNavigationRoot !== "CUSTOM" || !fileNavigationCustomRootPath) {
+    return defaultName;
+  }
+
+  return basename(fileNavigationCustomRootPath) || defaultName;
+};
+
+export const homeDirectoryNameAndType = (
+  fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
+  fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
+): [string, string] => {
+  const directoryName = homeDirectoryName(
+    fileNavigationRoot,
+    fileNavigationCustomRootPath,
+  );
+  if (directoryName === "Home") {
+    return [directoryName, SERVER_HOME_FOLDER_TYPE];
+  }
+
+  return [directoryName, FOLDER_TYPE];
+};
+
+export const getTypeName = (item: ContentItem): string =>
+  item.contentType || item.type;
+
+export const isRootFolder = (item: ContentItem, bStrict?: boolean): boolean => {
+  const typeName = item.typeName;
+  if (!bStrict && isItemInRecycleBin(item) && isReference(item)) {
+    return false;
+  }
+  if (FOLDER_TYPES.indexOf(typeName) >= 0) {
+    return true;
+  }
+  return false;
+};
+
+export enum ContextMenuAction {
+  CreateChild = "createChild", // Create a new folder _under_ the current one
+  Delete = "delete", // The item can be deleted
+  Update = "update", // The item can be updated/edited/renamed
+  Restore = "restore", // The item can be restored
+  CopyPath = "copyPath", // The item path can be copied
+  Empty = "empty", // Whether or not children can be deleted permanently (for the recycling bin)
+  AddToFavorites = "addToFavorites", // Item can be added to favorites
+  RemoveFromFavorites = "removeFromFavorites", // Item can be removed from favorites
+  ConvertNotebookToFlow = "convertNotebookToFlow", // Allows sasnb files to be converted to flows
+  AllowDownload = "allowDownload", // Allows downloading files / folders
+}
+export class ContextMenuProvider {
+  constructor(
+    protected readonly validContextMenuActions: ContextMenuAction[],
+    protected readonly enablementOverrides: Partial<
+      Record<ContextMenuAction, (item: ContentItem) => boolean>
+    > = {},
+  ) {}
+
+  public availableActions(item: ContentItem): string {
+    if (!isValidItem(item)) {
+      return "";
+    }
+
+    const { write, delete: canDelete, addMember } = item.permission;
+    const isRecycled = isItemInRecycleBin(item);
+    const type = getTypeName(item);
+
+    const menuActionEnablement = {
+      [ContextMenuAction.CreateChild]: () => addMember && !isRecycled,
+      [ContextMenuAction.Delete]: () =>
+        canDelete && !item.flags?.isInMyFavorites,
+      [ContextMenuAction.Update]: () => write && !isRecycled,
+      [ContextMenuAction.Restore]: () => write && isRecycled,
+      [ContextMenuAction.CopyPath]: () => (addMember || write) && !isRecycled,
+      [ContextMenuAction.Empty]: () =>
+        type === TRASH_FOLDER_TYPE && !!item?.memberCount,
+      [ContextMenuAction.AddToFavorites]: () =>
+        !item.flags?.isInMyFavorites &&
+        item.type !== "reference" &&
+        [FOLDER_TYPE, ...FILE_TYPES].includes(type) &&
+        !isRecycled,
+      [ContextMenuAction.RemoveFromFavorites]: () =>
+        item.flags?.isInMyFavorites,
+      [ContextMenuAction.ConvertNotebookToFlow]: () =>
+        item?.name?.endsWith(".sasnb"),
+      [ContextMenuAction.AllowDownload]: () => !isRootFolder(item),
+      ...(this.enablementOverrides || {}),
+    };
+
+    const actions = Object.keys(menuActionEnablement)
+      .filter((key: ContextMenuAction) =>
+        this.validContextMenuActions.includes(key),
+      )
+      .filter((key) => menuActionEnablement[key](item))
+      .map((key) => key);
+
+    return actions.sort().join("-");
+  }
+}
