@@ -109,6 +109,8 @@
   "Task is complete.": "Der Task ist erledigt.",
   "The SAS session has closed.": "Die SAS Session wurde beendet.",
   "The file type is unsupported.": "Der Dateityp wird nicht unterstützt",
+  "The files cannot be accessed from the path specified in the context definition for the SAS Compute Server. Contact your SAS administrator.": "Auf die Dateien kann nicht über den in der Kontextdefinition für den SAS Compute Server angegebenen Pfad zugegriffen werden. Wenden Sie sich an Ihren SAS-Administrator.",
+  "The files cannot be accessed from the specified path.": "Auf die Dateien kann vom angegebenen Pfad aus nicht zugegriffen werden",
   "The folder name cannot contain more than 100 characters or have invalid characters.": "Der Ordnername darf nicht mehr als 100 Zeichen enthalten oder ungültige Zeichen aufweisen.",
   "The item could not be added to My Favorites.": "Der Inhalt konnte nicht zu Meinen Favoriten hinzugefügt werden.",
   "The item could not be removed from My Favorites.": "Der Inhalt konnte nicht aus Meinen Favoriten entfernt werden.",
