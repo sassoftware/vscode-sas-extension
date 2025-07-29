@@ -20,7 +20,7 @@ export async function toggleLineComment(
     const selection = selections[0];
     const endLine =
       // should not include the last line if it just selected the last return character
-      selection.end.character === 0
+      selection.end.line > 0 && selection.end.character === 0
         ? selection.end.line - 1
         : selection.end.line;
     const fullSelection = new Selection(
@@ -30,7 +30,7 @@ export async function toggleLineComment(
       document.lineAt(endLine).range.end.character,
     );
 
-    if (!selection.isSingleLine) {
+    if (!fullSelection.isSingleLine) {
       const result = await client.sendRequest<string | null>(
         "sas/toggleLineComment",
         {
