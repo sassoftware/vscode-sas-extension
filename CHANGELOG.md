@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [v1.15.0] - 2025-06-10
 
+### Changed
+
+- SAS Providers for OLE DB is now required for SAS 9.4 (local) and SAS 9.4 (remote – IOM) connection type.
+
 ### Added
 
 - Add sas file system support for ITC-based (IOM/COM) connections ([#1388](https://github.com/sassoftware/vscode-sas-extension/pull/1388))
