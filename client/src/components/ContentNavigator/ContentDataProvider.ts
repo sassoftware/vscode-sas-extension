@@ -518,7 +518,7 @@ class ContentDataProvider
     }
 
     const targetFolderUri = resource.uri;
-    console.log(targetFolderUri);
+    console.log("Target" + targetFolderUri);
 
     const dirtyFiles = workspace.textDocuments
       .filter((doc) => {
@@ -563,13 +563,14 @@ class ContentDataProvider
           this.uriToParentMap.set(fileUri, currentParentUri);
         }
       } catch (error) {
-        console.log(error);
+        console.log("Error1");
         return false;
       }
     }
 
     let depth = 0;
     while (currentParentUri || depth >= 10) {
+      console.log("Current Parent" + currentParentUri);
       if (currentParentUri === ancestorFolderUri) {
         return true;
       }
@@ -591,7 +592,7 @@ class ContentDataProvider
             );
           }
         } catch (error) {
-          console.log(error);
+          console.log("error2");
           break;
         }
       }
