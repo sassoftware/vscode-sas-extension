@@ -52,6 +52,31 @@ export const exportNotebookCell = async (client: LanguageClient) => {
     return;
   }
 
+  const exportChoice = await window.showQuickPick(
+    [
+      {
+        label: "HTML Output Only",
+        description: "Export only tables, charts, and visualizations",
+        detail: "Clean output without log messages",
+        includeLog: false,
+      },
+      {
+        label: "HTML Output + Log",
+        description: "Export output with execution log",
+        detail: "Includes notes, warnings, and execution details",
+        includeLog: true,
+      },
+    ],
+    {
+      placeHolder: "What would you like to include in the export?",
+      ignoreFocusOut: true,
+    },
+  );
+
+  if (!exportChoice) {
+    return;
+  }
+
   const uri = await window.showSaveDialog({
     filters: { HTML: ["html"] },
     defaultUri: Uri.parse(
@@ -63,7 +88,13 @@ export const exportNotebookCell = async (client: LanguageClient) => {
     return;
   }
 
-  const content = await exportToHTML(notebook, client, activeCell, true);
+  const content = await exportToHTML(
+    notebook,
+    client,
+    activeCell,
+    true,
+    exportChoice.includeLog,
+  );
 
   workspace.fs.writeFile(uri, Buffer.from(content));
 };

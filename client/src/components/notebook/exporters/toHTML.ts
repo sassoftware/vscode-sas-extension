@@ -34,6 +34,7 @@ export const exportToHTML = async (
   client: LanguageClient,
   cellIndex?: number,
   outputOnly?: boolean,
+  forceIncludeLog?: boolean,
 ) => {
   const cells =
     cellIndex !== undefined
@@ -52,7 +53,7 @@ export const exportToHTML = async (
   template = template.replace("${theme}", theme);
   template = template.replace(
     "${content}",
-    await exportCells(cells, client, outputOnly),
+    await exportCells(cells, client, outputOnly, forceIncludeLog),
   );
 
   return template;
@@ -62,6 +63,7 @@ const exportCells = async (
   cells: NotebookCell[],
   client: LanguageClient,
   outputOnly?: boolean,
+  forceIncludeLog?: boolean,
 ) => {
   let result = "";
 
@@ -74,7 +76,12 @@ const exportCells = async (
       }
       if (cell.outputs.length > 0) {
         for (const output of cell.outputs) {
-          if (includeLogInNotebookExport()) {
+          const shouldIncludeLog =
+            forceIncludeLog !== undefined
+              ? forceIncludeLog
+              : includeLogInNotebookExport();
+
+          if (shouldIncludeLog) {
             result += logToHTML(output) + "\n";
           }
           result += odsToHTML(output) + "\n";
