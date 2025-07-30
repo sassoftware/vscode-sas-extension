@@ -68,7 +68,6 @@ export class NotebookMagicLanguageSwitcher {
       return;
     }
 
-    // Determine cell kind based on language
     const cellKind =
       magicResult.language === "markdown"
         ? vscode.NotebookCellKind.Markup
