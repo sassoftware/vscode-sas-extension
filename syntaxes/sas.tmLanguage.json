@@ -35,7 +35,7 @@
           "include": "#strings-or-comments"
         },
         {
-          "begin": "(?i)(?<=submit|interactive|i)(\\s|/\\*.*?\\*/)*;",
+          "begin": "(?i)(?<=\\bsubmit|\\binteractive|\\bi)(\\s|/\\*.*?\\*/)*;",
           "end": "(?i)(endsubmit|endinteractive)(\\s|/\\*.*?\\*/)*;",
           "name": "source.lua",
           "beginCaptures": {
@@ -60,7 +60,7 @@
           "include": "#strings-or-comments"
         },
         {
-          "begin": "(?i)(?<=submit|interactive|i)(\\s|/\\*.*?\\*/)*;",
+          "begin": "(?i)(?<=\\bsubmit|\\binteractive|\\bi)(\\s|/\\*.*?\\*/)*;",
           "end": "(?i)(endsubmit|endinteractive)(\\s|/\\*.*?\\*/)*;",
           "name": "source.python",
           "beginCaptures": {
