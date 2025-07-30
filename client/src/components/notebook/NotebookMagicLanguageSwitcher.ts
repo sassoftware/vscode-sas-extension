@@ -93,26 +93,23 @@ export class NotebookMagicLanguageSwitcher {
         return;
       }
 
-      const edit = new vscode.WorkspaceEdit();
+      const newCellData = new vscode.NotebookCellData(
+        vscode.NotebookCellKind.Code,
+        newCode,
+        newLanguage,
+      );
 
-      const fullRange = new vscode.Range(0, 0, cell.document.lineCount, 0);
-      edit.replace(cell.document.uri, fullRange, newCode);
+      const edit = new vscode.WorkspaceEdit();
+      edit.set(notebook.uri, [
+        vscode.NotebookEdit.replaceCells(
+          new vscode.NotebookRange(cellIndex, cellIndex + 1),
+          [newCellData],
+        ),
+      ]);
 
       await vscode.workspace.applyEdit(edit);
-
-      // Then change the language using VS Code's command
-      await vscode.commands.executeCommand("notebook.cell.changeLanguage", {
-        notebookEditor: { notebookUri: notebook.uri },
-        cell,
-        language: newLanguage,
-      });
-
-      // Force a refresh to update the language indicator
-      await vscode.commands.executeCommand("notebook.cell.quitEdit");
-      await vscode.commands.executeCommand("notebook.focusNextEditor");
-      await vscode.commands.executeCommand("notebook.focusPreviousEditor");
     } catch (error) {
-      console.error("Failed to switch cell language:", error);
+      console.error("Cell lang change failed:", error);
     }
   }
 
