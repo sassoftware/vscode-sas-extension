@@ -68,22 +68,25 @@ export class NotebookMagicLanguageSwitcher {
       return;
     }
 
-    // Handle markdown separately since it requires cell level change.
-    if (magicResult.language === "markdown") {
-      await this._convertToMarkdownCell(cell, magicResult.code);
-    } else {
-      await this._switchCellLanguage(
-        cell,
-        magicResult.language,
-        magicResult.code,
-      );
-    }
+    // Determine cell kind based on language
+    const cellKind =
+      magicResult.language === "markdown"
+        ? vscode.NotebookCellKind.Markup
+        : vscode.NotebookCellKind.Code;
+
+    await this._replaceCell(
+      cell,
+      magicResult.language,
+      magicResult.code,
+      cellKind,
+    );
   }
 
-  private async _switchCellLanguage(
+  private async _replaceCell(
     cell: vscode.NotebookCell,
     newLanguage: string,
     newCode: string,
+    cellKind: vscode.NotebookCellKind,
   ): Promise<void> {
     try {
       const notebook = cell.notebook;
@@ -94,7 +97,7 @@ export class NotebookMagicLanguageSwitcher {
       }
 
       const newCellData = new vscode.NotebookCellData(
-        vscode.NotebookCellKind.Code,
+        cellKind,
         newCode,
         newLanguage,
       );
@@ -109,40 +112,7 @@ export class NotebookMagicLanguageSwitcher {
 
       await vscode.workspace.applyEdit(edit);
     } catch (error) {
-      console.error("Cell lang change failed:", error);
-    }
-  }
-
-  private async _convertToMarkdownCell(
-    cell: vscode.NotebookCell,
-    markdownContent: string,
-  ): Promise<void> {
-    try {
-      const notebook = cell.notebook;
-      const cellIndex = notebook.getCells().indexOf(cell);
-
-      if (cellIndex === -1) {
-        return;
-      }
-
-      const edit = new vscode.WorkspaceEdit();
-
-      const markdownCellData = new vscode.NotebookCellData(
-        vscode.NotebookCellKind.Markup,
-        markdownContent,
-        "markdown",
-      );
-
-      edit.set(notebook.uri, [
-        vscode.NotebookEdit.replaceCells(
-          new vscode.NotebookRange(cellIndex, cellIndex + 1),
-          [markdownCellData],
-        ),
-      ]);
-
-      await vscode.workspace.applyEdit(edit);
-    } catch (error) {
-      console.error("Failed to convert to markdown cell:", error);
+      console.error("Cell replacement failed:", error);
     }
   }
 }
