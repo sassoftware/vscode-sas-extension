@@ -33,6 +33,7 @@ export const exportToHTML = async (
   notebook: NotebookDocument,
   client: LanguageClient,
   cellIndex?: number,
+  outputOnly?: boolean,
 ) => {
   const cells =
     cellIndex !== undefined
@@ -49,19 +50,28 @@ export const exportToHTML = async (
   ).toString();
 
   template = template.replace("${theme}", theme);
-  template = template.replace("${content}", await exportCells(cells, client));
+  template = template.replace(
+    "${content}",
+    await exportCells(cells, client, outputOnly),
+  );
 
   return template;
 };
 
-const exportCells = async (cells: NotebookCell[], client: LanguageClient) => {
+const exportCells = async (
+  cells: NotebookCell[],
+  client: LanguageClient,
+  outputOnly?: boolean,
+) => {
   let result = "";
 
   for (const cell of cells) {
-    if (cell.kind === NotebookCellKind.Markup) {
+    if (cell.kind === NotebookCellKind.Markup && !outputOnly) {
       result += markdownToHTML(cell.document) + "\n";
-    } else {
-      result += (await codeToHTML(cell.document, client)) + "\n";
+    } else if (cell.kind === NotebookCellKind.Code) {
+      if (!outputOnly) {
+        result += (await codeToHTML(cell.document, client)) + "\n";
+      }
       if (cell.outputs.length > 0) {
         for (const output of cell.outputs) {
           if (includeLogInNotebookExport()) {

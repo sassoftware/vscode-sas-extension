@@ -1,6 +1,7 @@
 // Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import { Uri, window, workspace } from "vscode";
+import * as vscode from "vscode";
 import type { LanguageClient } from "vscode-languageclient/node";
 
 import path from "path";
@@ -44,8 +45,15 @@ export const exportNotebookCell = async (client: LanguageClient) => {
     return;
   }
 
+  if (cell.outputs.length === 0) {
+    window.showWarningMessage(
+      vscode.l10n.t("Selected cell has no output to export."),
+    );
+    return;
+  }
+
   const uri = await window.showSaveDialog({
-    filters: { SAS: ["sas"], HTML: ["html"] },
+    filters: { HTML: ["html"] },
     defaultUri: Uri.parse(
       `${path.basename(notebook.uri.path, ".sasnb")}_cell_${activeCell + 1}`,
     ),
@@ -55,9 +63,7 @@ export const exportNotebookCell = async (client: LanguageClient) => {
     return;
   }
 
-  const content = uri.path.endsWith(".html")
-    ? await exportToHTML(notebook, client, activeCell)
-    : exportToSAS(notebook, activeCell);
+  const content = await exportToHTML(notebook, client, activeCell, true);
 
   workspace.fs.writeFile(uri, Buffer.from(content));
 };
