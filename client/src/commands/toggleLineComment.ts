@@ -20,7 +20,7 @@ export async function toggleLineComment(
     const selection = selections[0];
     const endLine =
       // should not include the last line if it just selected the last return character
-      selection.end.line > 0 && selection.end.character === 0
+      selection.end.line > selection.start.line && selection.end.character === 0
         ? selection.end.line - 1
         : selection.end.line;
     const fullSelection = new Selection(
