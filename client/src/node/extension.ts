@@ -206,7 +206,7 @@ export function activate(context: ExtensionContext) {
       exportNotebook(client),
     ),
     commands.registerCommand("SAS.notebook.exportCell", () =>
-      exportNotebookCell(client),
+      exportNotebookCell(),
     ),
     tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
     ...sasDiagnostic.getSubscriptions(),

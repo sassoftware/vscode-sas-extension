@@ -32,7 +32,7 @@ export const exportNotebook = async (client: LanguageClient) => {
   workspace.fs.writeFile(uri, Buffer.from(content));
 };
 
-export const exportNotebookCell = async (client: LanguageClient) => {
+export const exportNotebookCell = async () => {
   const notebook = window.activeNotebookEditor?.notebook;
   const activeCell = window.activeNotebookEditor?.selection?.start;
 
@@ -47,54 +47,123 @@ export const exportNotebookCell = async (client: LanguageClient) => {
 
   if (cell.outputs.length === 0) {
     window.showWarningMessage(
-      vscode.l10n.t("Selected cell has no output to export."),
+      vscode.l10n.t("Selected cell has no output to download."),
     );
     return;
   }
 
-  const exportChoice = await window.showQuickPick(
-    [
-      {
-        label: "HTML Output Only",
-        description: "Export only tables, charts, and visualizations",
-        detail: "Clean output without log messages",
-        includeLog: false,
-      },
-      {
-        label: "HTML Output + Log",
-        description: "Export output with execution log",
-        detail: "Includes notes, warnings, and execution details",
-        includeLog: true,
-      },
-    ],
-    {
-      placeHolder: "What would you like to include in the export?",
-      ignoreFocusOut: true,
-    },
+  // Check what types of output are available
+  const hasOdsOutput = cell.outputs.some((output) =>
+    output.items.some((item) => item.mime === "application/vnd.sas.ods.html5"),
   );
+  const hasLogOutput = cell.outputs.some((output) =>
+    output.items.some(
+      (item) => item.mime === "application/vnd.sas.compute.log.lines",
+    ),
+  );
+
+  if (!hasOdsOutput && !hasLogOutput) {
+    window.showWarningMessage(
+      vscode.l10n.t("Selected cell has no SAS output to download."),
+    );
+    return;
+  }
+
+  // Build choices based on available output types
+  const choices: Array<{
+    label: string;
+    description: string;
+    detail: string;
+    outputType: "html" | "log";
+  }> = [];
+
+  if (hasOdsOutput) {
+    choices.push({
+      label: "Download as HTML",
+      description: "Save ODS HTML output",
+      detail: "Raw HTML file with tables, charts, and visualizations",
+      outputType: "html",
+    });
+  }
+
+  if (hasLogOutput) {
+    choices.push({
+      label: "Download as Log",
+      description: "Save execution log",
+      detail: "Text file with SAS log messages",
+      outputType: "log",
+    });
+  }
+
+  const exportChoice = await window.showQuickPick(choices, {
+    placeHolder: "Choose output type to download",
+    ignoreFocusOut: true,
+  });
 
   if (!exportChoice) {
     return;
   }
 
+  // Get the appropriate output data
+  let content = "";
+  let fileExtension = "";
+  let fileName = "";
+
+  if (exportChoice.outputType === "html") {
+    // Find and extract ODS HTML content
+    for (const output of cell.outputs) {
+      const odsItem = output.items.find(
+        (item) => item.mime === "application/vnd.sas.ods.html5",
+      );
+      if (odsItem) {
+        content = odsItem.data.toString();
+        break;
+      }
+    }
+    fileExtension = "html";
+    fileName = `${path.basename(notebook.uri.path, ".sasnb")}_cell_${
+      activeCell + 1
+    }_output.html`;
+  } else if (exportChoice.outputType === "log") {
+    // Find and extract log content
+    for (const output of cell.outputs) {
+      const logItem = output.items.find(
+        (item) => item.mime === "application/vnd.sas.compute.log.lines",
+      );
+      if (logItem) {
+        const logs: Array<{ line: string; type: string }> = JSON.parse(
+          logItem.data.toString(),
+        );
+        content = logs.map((log) => log.line).join("\n");
+        break;
+      }
+    }
+    fileExtension = "log";
+    fileName = `${path.basename(notebook.uri.path, ".sasnb")}_cell_${
+      activeCell + 1
+    }_output.log`;
+  }
+
+  if (!content) {
+    window.showErrorMessage(vscode.l10n.t("Failed to extract output content."));
+    return;
+  }
+
+  const filters: { [name: string]: string[] } = {};
+  filters[fileExtension.toUpperCase()] = [fileExtension];
+
   const uri = await window.showSaveDialog({
-    filters: { HTML: ["html"] },
-    defaultUri: Uri.parse(
-      `${path.basename(notebook.uri.path, ".sasnb")}_cell_${activeCell + 1}`,
-    ),
+    filters,
+    defaultUri: Uri.parse(fileName),
   });
 
   if (!uri) {
     return;
   }
 
-  const content = await exportToHTML(
-    notebook,
-    client,
-    activeCell,
-    true,
-    exportChoice.includeLog,
-  );
+  await workspace.fs.writeFile(uri, Buffer.from(content));
 
-  workspace.fs.writeFile(uri, Buffer.from(content));
+  window.showInformationMessage(
+    vscode.l10n.t("Output downloaded to {0}", uri.fsPath),
+  );
 };
