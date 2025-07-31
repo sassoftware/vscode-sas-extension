@@ -41,7 +41,7 @@ export class NotebookMagicLanguageSwitcher {
       return;
     }
 
-    // Debouncing so changes dont rapidly happen.
+    // Debouncing so changes don't rapidly happen.
     const cellId = cell.document.uri.toString();
     const existingTimeout = this._cellChangeMap.get(cellId);
     if (existingTimeout) {
