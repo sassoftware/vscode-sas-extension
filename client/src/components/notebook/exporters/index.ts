@@ -52,7 +52,6 @@ export const exportNotebookCell = async () => {
     return;
   }
 
-  // Check what types of output are available
   const hasOdsOutput = cell.outputs.some((output) =>
     output.items.some((item) => item.mime === "application/vnd.sas.ods.html5"),
   );
@@ -69,7 +68,6 @@ export const exportNotebookCell = async () => {
     return;
   }
 
-  // Build choices based on available output types
   const choices: Array<{
     label: string;
     description: string;
@@ -104,13 +102,11 @@ export const exportNotebookCell = async () => {
     return;
   }
 
-  // Get the appropriate output data
   let content = "";
   let fileExtension = "";
   let fileName = "";
 
   if (exportChoice.outputType === "html") {
-    // Find and extract ODS HTML content
     for (const output of cell.outputs) {
       const odsItem = output.items.find(
         (item) => item.mime === "application/vnd.sas.ods.html5",
@@ -125,7 +121,6 @@ export const exportNotebookCell = async () => {
       activeCell + 1
     }_output.html`;
   } else if (exportChoice.outputType === "log") {
-    // Find and extract log content
     for (const output of cell.outputs) {
       const logItem = output.items.find(
         (item) => item.mime === "application/vnd.sas.compute.log.lines",
