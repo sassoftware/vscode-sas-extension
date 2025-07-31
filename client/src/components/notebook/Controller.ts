@@ -6,14 +6,16 @@ import { getSession } from "../../connection";
 import { SASCodeDocument } from "../utils/SASCodeDocument";
 import { getCodeDocumentConstructionParameters } from "../utils/SASCodeDocumentHelper";
 import { Deferred, deferred } from "../utils/deferred";
+import { NotebookMagicLanguageSwitcher } from "./NotebookMagicLanguageSwitcher";
 
 export class NotebookController {
   readonly controllerId = "sas-notebook-controller-id";
   readonly notebookType = "sas-notebook";
   readonly label = "SAS Notebook";
-  readonly supportedLanguages = ["sas", "sql", "python"];
+  readonly supportedLanguages = ["sas", "sql", "python", "markdown"];
 
   private readonly _controller: vscode.NotebookController;
+  private readonly _magicLanguageSwitcher: NotebookMagicLanguageSwitcher;
   private _executionOrder = 0;
   private _interrupted: Deferred<void> | undefined;
 
@@ -28,10 +30,12 @@ export class NotebookController {
     this._controller.supportsExecutionOrder = true;
     this._controller.executeHandler = this._execute.bind(this);
     this._controller.interruptHandler = this._interrupt.bind(this);
+    this._magicLanguageSwitcher = new NotebookMagicLanguageSwitcher();
   }
 
   dispose(): void {
     this._controller.dispose();
+    this._magicLanguageSwitcher.dispose();
   }
 
   private async _execute(cells: vscode.NotebookCell[]): Promise<void> {
