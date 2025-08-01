@@ -246,7 +246,7 @@ export class LanguageServiceProvider {
 
   toggleLineComment(range: Range) {
     const token = this.syntaxProvider.getSyntax(range.start.line)[0];
-    if (token.style === "embedded-code") {
+    if (token?.style === "embedded-code") {
       return null;
     }
     const lines = this.model
