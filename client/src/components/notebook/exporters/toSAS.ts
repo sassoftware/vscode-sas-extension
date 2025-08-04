@@ -2,14 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { NotebookCell, NotebookDocument } from "vscode";
 
-export const exportToSAS = (notebook: NotebookDocument, cellIndex?: number) => {
-  if (cellIndex !== undefined) {
-    // Export single cell
-    const cell = notebook.cellAt(cellIndex);
-    return exportCell(cell) + "\n";
-  }
-
-  // Export all cells
+export const exportToSAS = (notebook: NotebookDocument) => {
   return notebook
     .getCells()
     .map((cell) => exportCell(cell) + "\n")

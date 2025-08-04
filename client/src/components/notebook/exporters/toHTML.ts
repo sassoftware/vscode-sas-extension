@@ -32,14 +32,8 @@ hljs.registerLanguage("sql", sql);
 export const exportToHTML = async (
   notebook: NotebookDocument,
   client: LanguageClient,
-  cellIndex?: number,
-  outputOnly?: boolean,
-  forceIncludeLog?: boolean,
 ) => {
-  const cells =
-    cellIndex !== undefined
-      ? [notebook.cellAt(cellIndex)]
-      : notebook.getCells();
+  const cells = notebook.getCells();
 
   let template = readFileSync(`${templatesDir}/default.html`).toString();
 
@@ -51,37 +45,22 @@ export const exportToHTML = async (
   ).toString();
 
   template = template.replace("${theme}", theme);
-  template = template.replace(
-    "${content}",
-    await exportCells(cells, client, outputOnly, forceIncludeLog),
-  );
+  template = template.replace("${content}", await exportCells(cells, client));
 
   return template;
 };
 
-const exportCells = async (
-  cells: NotebookCell[],
-  client: LanguageClient,
-  outputOnly?: boolean,
-  forceIncludeLog?: boolean,
-) => {
+const exportCells = async (cells: NotebookCell[], client: LanguageClient) => {
   let result = "";
 
   for (const cell of cells) {
-    if (cell.kind === NotebookCellKind.Markup && !outputOnly) {
+    if (cell.kind === NotebookCellKind.Markup) {
       result += markdownToHTML(cell.document) + "\n";
-    } else if (cell.kind === NotebookCellKind.Code) {
-      if (!outputOnly) {
-        result += (await codeToHTML(cell.document, client)) + "\n";
-      }
+    } else {
+      result += (await codeToHTML(cell.document, client)) + "\n";
       if (cell.outputs.length > 0) {
         for (const output of cell.outputs) {
-          const shouldIncludeLog =
-            forceIncludeLog !== undefined
-              ? forceIncludeLog
-              : includeLogInNotebookExport();
-
-          if (shouldIncludeLog) {
+          if (includeLogInNotebookExport()) {
             result += logToHTML(output) + "\n";
           }
           result += odsToHTML(output) + "\n";

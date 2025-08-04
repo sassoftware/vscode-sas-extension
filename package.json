@@ -826,8 +826,8 @@
         "category": "SAS Notebook"
       },
       {
-        "command": "SAS.notebook.exportCell",
-        "title": "%commands.SAS.notebook.exportCell%",
+        "command": "SAS.notebook.saveOutput",
+        "title": "%commands.SAS.notebook.saveOutput%",
         "category": "SAS Notebook",
         "icon": "$(export)"
       },
@@ -1103,21 +1103,7 @@
           "command": "SAS.notebook.export"
         }
       ],
-      "notebook/cell/execute": [
-        {
-          "command": "SAS.notebook.exportCell",
-          "when": "notebookType == 'sas-notebook'",
-          "group": "inline"
-        }
-      ],
       "notebook/cell/title": [
-        {
-          "command": "SAS.notebook.exportCell",
-          "when": "notebookType == 'sas-notebook'",
-          "group": "inline"
-        }
-      ],
-      "notebook/cell/output": [
         {
           "command": "SAS.notebook.exportCell",
           "when": "notebookType == 'sas-notebook'",
