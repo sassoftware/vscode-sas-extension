@@ -32,7 +32,7 @@ export const exportNotebook = async (client: LanguageClient) => {
   workspace.fs.writeFile(uri, Buffer.from(content));
 };
 
-export const exportNotebookCell = async () => {
+export const saveOutput = async () => {
   const notebook = window.activeNotebookEditor?.notebook;
   const activeCell = window.activeNotebookEditor?.selection?.start;
 
