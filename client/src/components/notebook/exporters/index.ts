@@ -73,7 +73,7 @@ export const saveOutput = async () => {
 
   if (odsItem) {
     choices.push({
-      label: l10n.t("Download as HTML"),
+      label: l10n.t("Download as ODS HTML"),
       description: "",
       detail: "",
       outputType: "html",
