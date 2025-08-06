@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 import { NotebookCell, NotebookDocument } from "vscode";
 
-export const exportToSAS = (notebook: NotebookDocument) => {
-  return notebook
+export const exportToSAS = (notebook: NotebookDocument) =>
+  notebook
     .getCells()
     .map((cell) => exportCell(cell) + "\n")
     .join("\n");
-};
 
 const exportCell = (cell: NotebookCell) => {
   const text = cell.document.getText();

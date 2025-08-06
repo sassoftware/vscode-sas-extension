@@ -828,8 +828,7 @@
       {
         "command": "SAS.notebook.saveOutput",
         "title": "%commands.SAS.notebook.saveOutput%",
-        "category": "SAS Notebook",
-        "icon": "$(export)"
+        "category": "SAS Notebook"
       },
       {
         "command": "SAS.file.new",
@@ -1106,8 +1105,7 @@
       "notebook/cell/title": [
         {
           "command": "SAS.notebook.saveOutput",
-          "when": "notebookType == 'sas-notebook'",
-          "group": "inline"
+          "when": "notebookType == 'sas-notebook' && notebookCellHasOutputs"
         }
       ],
       "commandPalette": [

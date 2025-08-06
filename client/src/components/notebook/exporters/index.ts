@@ -1,7 +1,6 @@
 // Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri, window, workspace } from "vscode";
-import * as vscode from "vscode";
+import { Uri, l10n, window, workspace } from "vscode";
 import type { LanguageClient } from "vscode-languageclient/node";
 
 import path from "path";
@@ -45,27 +44,24 @@ export const saveOutput = async () => {
     return;
   }
 
-  if (cell.outputs.length === 0) {
-    window.showWarningMessage(
-      vscode.l10n.t("Selected cell has no output to download."),
-    );
-    return;
-  }
+  let odsItem = null;
+  let logItem = null;
 
-  const hasOdsOutput = cell.outputs.some((output) =>
-    output.items.some((item) => item.mime === "application/vnd.sas.ods.html5"),
-  );
-  const hasLogOutput = cell.outputs.some((output) =>
-    output.items.some(
-      (item) => item.mime === "application/vnd.sas.compute.log.lines",
-    ),
-  );
+  for (const output of cell.outputs) {
+    if (!odsItem) {
+      odsItem = output.items.find(
+        (item) => item.mime === "application/vnd.sas.ods.html5",
+      );
+    }
+    if (!logItem) {
+      logItem = output.items.find(
+        (item) => item.mime === "application/vnd.sas.compute.log.lines",
+      );
+    }
 
-  if (!hasOdsOutput && !hasLogOutput) {
-    window.showWarningMessage(
-      vscode.l10n.t("Selected cell has no SAS output to download."),
-    );
-    return;
+    if (odsItem && logItem) {
+      break;
+    }
   }
 
   const choices: Array<{
@@ -75,26 +71,26 @@ export const saveOutput = async () => {
     outputType: "html" | "log";
   }> = [];
 
-  if (hasOdsOutput) {
+  if (odsItem) {
     choices.push({
-      label: "Download as HTML",
-      description: "Save ODS HTML output",
-      detail: "Raw HTML file with tables, charts, and visualizations",
+      label: l10n.t("Download as HTML"),
+      description: "",
+      detail: "",
       outputType: "html",
     });
   }
 
-  if (hasLogOutput) {
+  if (logItem) {
     choices.push({
-      label: "Download as Log",
-      description: "Save execution log",
-      detail: "Text file with SAS log messages",
+      label: l10n.t("Download as Log"),
+      description: "",
+      detail: "",
       outputType: "log",
     });
   }
 
   const exportChoice = await window.showQuickPick(choices, {
-    placeHolder: "Choose output type to download",
+    placeHolder: l10n.t("Choose output type to save"),
     ignoreFocusOut: true,
   });
 
@@ -105,42 +101,27 @@ export const saveOutput = async () => {
   let content = "";
   let fileExtension = "";
   let fileName = "";
-
-  if (exportChoice.outputType === "html") {
-    for (const output of cell.outputs) {
-      const odsItem = output.items.find(
-        (item) => item.mime === "application/vnd.sas.ods.html5",
+  try {
+    if (exportChoice.outputType === "html" && odsItem) {
+      content = odsItem.data.toString();
+      fileExtension = "html";
+      fileName = `${path.basename(notebook.uri.path, ".sasnb")}_${l10n.t("output")}_${
+        activeCell + 1
+      }.html`;
+    } else if (exportChoice.outputType === "log" && logItem) {
+      const logs: Array<{ line: string; type: string }> = JSON.parse(
+        logItem.data.toString(),
       );
-      if (odsItem) {
-        content = odsItem.data.toString();
-        break;
-      }
+      content = logs.map((log) => log.line).join("\n");
+      fileExtension = "log";
+      fileName = `${path.basename(notebook.uri.path, ".sasnb")}_${l10n.t("output")}_${
+        activeCell + 1
+      }.log`;
     }
-    fileExtension = "html";
-    fileName = `${path.basename(notebook.uri.path, ".sasnb")}_cell_${
-      activeCell + 1
-    }_output.html`;
-  } else if (exportChoice.outputType === "log") {
-    for (const output of cell.outputs) {
-      const logItem = output.items.find(
-        (item) => item.mime === "application/vnd.sas.compute.log.lines",
-      );
-      if (logItem) {
-        const logs: Array<{ line: string; type: string }> = JSON.parse(
-          logItem.data.toString(),
-        );
-        content = logs.map((log) => log.line).join("\n");
-        break;
-      }
-    }
-    fileExtension = "log";
-    fileName = `${path.basename(notebook.uri.path, ".sasnb")}_cell_${
-      activeCell + 1
-    }_output.log`;
-  }
-
-  if (!content) {
-    window.showErrorMessage(vscode.l10n.t("Failed to extract output content."));
+  } catch (error) {
+    window.showErrorMessage(
+      l10n.t("Failed to extract output content." + error),
+    );
     return;
   }
 
@@ -158,7 +139,5 @@ export const saveOutput = async () => {
 
   await workspace.fs.writeFile(uri, Buffer.from(content));
 
-  window.showInformationMessage(
-    vscode.l10n.t("Output downloaded to {0}", uri.fsPath),
-  );
+  window.showInformationMessage(l10n.t("Saved downloaded to {0}", uri.fsPath));
 };

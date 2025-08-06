@@ -202,7 +202,7 @@ export function activate(context: ExtensionContext) {
     commands.registerCommand("SAS.notebook.export", () =>
       exportNotebook(client),
     ),
-    commands.registerCommand("SAS.notebook.saveOutput", () => saveOutput()),
+    commands.registerCommand("SAS.notebook.saveOutput", saveOutput),
     tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
     ...sasDiagnostic.getSubscriptions(),
     registerToggleLineCommentCommand(),
