@@ -139,5 +139,5 @@ export const saveOutput = async () => {
 
   await workspace.fs.writeFile(uri, Buffer.from(content));
 
-  window.showInformationMessage(l10n.t("Saved downloaded to {0}", uri.fsPath));
+  window.showInformationMessage(l10n.t("Saved to {0}", uri.fsPath));
 };
