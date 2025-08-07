@@ -7,6 +7,7 @@ import {
   Uri,
   commands,
   env,
+  l10n,
   window,
   workspace,
 } from "vscode";
@@ -24,6 +25,7 @@ import LibraryAdapterFactory from "./LibraryAdapterFactory";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
 import PaginatedResultSet from "./PaginatedResultSet";
+import { Messages } from "./const";
 import { LibraryAdapter, LibraryItem, TableData } from "./types";
 
 class LibraryNavigator implements SubscriptionProvider {
@@ -63,8 +65,34 @@ class LibraryNavigator implements SubscriptionProvider {
       ),
       commands.registerCommand("SAS.refreshLibraries", () => this.refresh()),
       commands.registerCommand("SAS.deleteTable", async (item: LibraryItem) => {
+        const selectedItems = this.treeViewSelections(item);
+
+        if (selectedItems.length === 0) {
+          return;
+        }
+
         try {
-          await this.libraryDataProvider.deleteTable(item);
+          if (selectedItems.length === 1) {
+            await this.libraryDataProvider.deleteTable(selectedItems[0]);
+          } else {
+            const tableNames = selectedItems
+              .map((table) => `${table.library}.${table.name}`)
+              .join(", ");
+
+            const result = await window.showWarningMessage(
+              l10n.t(Messages.TablesDeletionWarning, {
+                tableNames: tableNames,
+              }),
+              { modal: true },
+              "Delete",
+            );
+
+            if (result !== "Delete") {
+              return;
+            }
+
+            await this.libraryDataProvider.deleteTables(selectedItems);
+          }
         } catch (error) {
           window.showErrorMessage(error.message);
         }
@@ -141,6 +169,15 @@ class LibraryNavigator implements SubscriptionProvider {
 
   public async refresh(): Promise<void> {
     this.libraryDataProvider.useAdapter(this.libraryAdapterForConnectionType());
+  }
+
+  private treeViewSelections(item: LibraryItem): LibraryItem[] {
+    const items =
+      this.libraryDataProvider.treeView.selection.length > 1 || !item
+        ? this.libraryDataProvider.treeView.selection
+        : [item];
+
+    return items.filter(Boolean);
   }
 
   private libraryAdapterForConnectionType(): LibraryAdapter | undefined {

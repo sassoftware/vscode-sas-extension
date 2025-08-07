@@ -126,6 +126,28 @@ class LibraryModel {
     }
   }
 
+  public async deleteTables(items: LibraryItem[]) {
+    const failures: string[] = [];
+
+    for (const item of items) {
+      try {
+        await this.libraryAdapter.deleteTable(item);
+      } catch {
+        failures.push(item.uid);
+      }
+    }
+
+    if (failures.length > 0) {
+      throw new Error(
+        //TODO: look at what warning message dialog is being used throughout the codebase
+        l10n.t(Messages.TablesDeletionWarning, {
+          tableNames: failures.join(", "),
+          count: failures.length,
+        }),
+      );
+    }
+  }
+
   public async getTableInfo(item: LibraryItem) {
     if (this.libraryAdapter.getTableInfo) {
       await this.libraryAdapter.setup();
