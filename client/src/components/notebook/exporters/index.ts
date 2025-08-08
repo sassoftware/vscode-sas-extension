@@ -66,25 +66,19 @@ export const saveOutput = async () => {
 
   const choices: Array<{
     label: string;
-    description: string;
-    detail: string;
     outputType: "html" | "log";
   }> = [];
 
   if (odsItem) {
     choices.push({
-      label: l10n.t("Download as ODS HTML"),
-      description: "",
-      detail: "",
+      label: l10n.t("Save as ODS HTML"),
       outputType: "html",
     });
   }
 
   if (logItem) {
     choices.push({
-      label: l10n.t("Download as Log"),
-      description: "",
-      detail: "",
+      label: l10n.t("Save as Log"),
       outputType: "log",
     });
   }
