@@ -71,14 +71,14 @@ export const saveOutput = async () => {
 
   if (odsItem) {
     choices.push({
-      label: l10n.t("Save as ODS HTML"),
+      label: l10n.t("Save ODS HTML"),
       outputType: "html",
     });
   }
 
   if (logItem) {
     choices.push({
-      label: l10n.t("Save as Log"),
+      label: l10n.t("Save Log"),
       outputType: "log",
     });
   }
