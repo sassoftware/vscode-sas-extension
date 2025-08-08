@@ -32,8 +32,12 @@ hljs.registerLanguage("sql", sql);
 export const exportToHTML = async (
   notebook: NotebookDocument,
   client: LanguageClient,
+  cellIndex?: number,
 ) => {
-  const cells = notebook.getCells();
+  const cells =
+    cellIndex !== undefined
+      ? [notebook.cellAt(cellIndex)]
+      : notebook.getCells();
 
   let template = readFileSync(`${templatesDir}/default.html`).toString();
 
