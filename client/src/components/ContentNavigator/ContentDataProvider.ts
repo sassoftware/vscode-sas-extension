@@ -851,6 +851,5 @@ const closeFileIfOpen = (item: ContentItem): Promise<Uri[]> | boolean => {
         .catch(reject);
     });
   }
-
   return true;
 };
