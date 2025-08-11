@@ -541,7 +541,7 @@ class ContentDataProvider
     }
 
     for (const dirtyFileUri of dirtyFiles) {
-      if (await this.isDescendantOf(dirtyFileUri, targetFolderUri)) {
+      if (await this.isDescendantOf(getResourceId(dirtyFileUri), targetFolderUri)) {
         return true;
       }
     }
