@@ -218,7 +218,7 @@ class ContentDataProvider
 
     // Cache the URI to parent mapping
     if (item.parentFolderUri) {
-      this.uriToParentMap.set(uri.toString(), item.parentFolderUri);
+      this.uriToParentMap.set(item.uri, item.parentFolderUri);
     }
 
     return {
