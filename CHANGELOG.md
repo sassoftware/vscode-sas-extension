@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [v1.16.0] - 2025-07-31
+
+### Added
+
+- Add support for `fileNavigationCustomRootPath`/`fileNavigationRoot` for rest & iom/com connections ([#1557](https://github.com/sassoftware/vscode-sas-extension/pull/1557))
+- Toggle SAS code comment by line ([#1521](https://github.com/sassoftware/vscode-sas-extension/pull/1521))
+- Be able to ignore region from format ([#1534](https://github.com/sassoftware/vscode-sas-extension/pull/1534))
+- Set default CSV save location to workspace root for remote workspace ([#1550](https://github.com/sassoftware/vscode-sas-extension/pull/1550))
+
+### Fixed
+
+- Folding does not work in certain case ([#1462](https://github.com/sassoftware/vscode-sas-extension/issues/1462))
+- Library viewer optimization for ITC ([#1520](https://github.com/sassoftware/vscode-sas-extension/pull/1520))
+- Remove redundant line break at end when format ([#1522](https://github.com/sassoftware/vscode-sas-extension/issues/1522))
+- Failed to open a file having character '#' in its name ([#1272](https://github.com/sassoftware/vscode-sas-extension/issues/1272))
+- Failed to create and open a file having character "?" in its name ([#1532](https://github.com/sassoftware/vscode-sas-extension/issues/1532))
+- Cannot delete a file or folder by keyboard on SAS Explorer pane ([#789](https://github.com/sassoftware/vscode-sas-extension/issues/789))
+- Auto-complete for sub-options ([#1555](https://github.com/sassoftware/vscode-sas-extension/issues/1555))
+- Toggle line comment in Proc Python ([#1554](https://github.com/sassoftware/vscode-sas-extension/issues/1554))
+
 ## [v1.15.0] - 2025-06-10
 
 ### Changed

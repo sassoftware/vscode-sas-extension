@@ -80,9 +80,13 @@ export interface ContentAdapter {
   getChildItems: (parentItem: ContentItem) => Promise<ContentItem[]>;
   getContentOfItem: (item: ContentItem) => Promise<string>;
   getContentOfUri: (uri: Uri) => Promise<string>;
-  getFolderPathForItem: (item: ContentItem) => Promise<string>;
+  getFolderPathForItem: (item: ContentItem) => Promise<string> | string;
   getItemOfUri: (uri: Uri) => Promise<ContentItem>;
   getParentOfItem: (item: ContentItem) => Promise<ContentItem | undefined>;
+  getPathOfItem?: (
+    item: ContentItem,
+    folderPathOnly?: boolean,
+  ) => Promise<string>;
   getRootFolder: (name: string) => ContentItem | undefined;
   getRootItems: () => Promise<RootFolderMap>;
   getUriOfItem: (item: ContentItem, readOnly: boolean) => Promise<Uri>;

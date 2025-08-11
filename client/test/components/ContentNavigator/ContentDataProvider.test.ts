@@ -24,7 +24,7 @@ import {
   ContentItem,
   ContentSourceType,
 } from "../../../src/components/ContentNavigator/types";
-import SASContentAdapter from "../../../src/connection/rest/SASContentAdapter";
+import RestContentAdapter from "../../../src/connection/rest/RestContentAdapter";
 import { getSasContentUri as getUri } from "../../../src/connection/rest/util";
 import { getUri as getTestUri } from "../../utils";
 
@@ -82,7 +82,7 @@ const mockContentItem = (
 };
 
 const createDataProvider = () => {
-  const adapter = new SASContentAdapter();
+  const adapter = new RestContentAdapter();
   const mockGetRootFolder = sinon.stub(adapter, "getRootFolder");
   mockGetRootFolder.withArgs("@myRecycleBin").returns(
     mockContentItem({
@@ -736,7 +736,7 @@ describe("ContentDataProvider", async function () {
     const uri = getTestUri("SampleCode.sas").toString();
     const item = mockContentItem();
 
-    const model = new ContentModel(new SASContentAdapter());
+    const model = new ContentModel(new RestContentAdapter());
     const stub: sinon.SinonStub = sinon.stub(model, "createFile");
 
     const dataProvider = new ContentDataProvider(
@@ -770,7 +770,7 @@ describe("ContentDataProvider", async function () {
     const uri = uriObject.toString();
     const item = mockContentItem();
 
-    const model = new ContentModel(new SASContentAdapter());
+    const model = new ContentModel(new RestContentAdapter());
     const createFileStub: sinon.SinonStub = sinon.stub(model, "createFile");
     const createFolderStub: sinon.SinonStub = sinon.stub(model, "createFolder");
 
@@ -806,7 +806,7 @@ describe("ContentDataProvider", async function () {
     });
     const item = mockContentItem();
 
-    const model = new ContentModel(new SASContentAdapter());
+    const model = new ContentModel(new RestContentAdapter());
     const stub: sinon.SinonStub = sinon.stub(model, "moveTo");
     stub.returns(new Promise((resolve) => resolve(true)));
 
@@ -855,7 +855,7 @@ describe("ContentDataProvider", async function () {
       ],
     });
 
-    const adapter = new SASContentAdapter();
+    const adapter = new RestContentAdapter();
     const model = new ContentModel(adapter);
     const stub: sinon.SinonStub = sinon.stub(adapter, "addChildItem");
     stub.returns(new Promise((resolve) => resolve(true)));
@@ -896,7 +896,7 @@ describe("ContentDataProvider", async function () {
     });
     const item = mockContentItem();
 
-    const adapter = new SASContentAdapter();
+    const adapter = new RestContentAdapter();
     const model = new ContentModel(adapter);
     const stub: sinon.SinonStub = sinon.stub(model, "recycleResource");
     stub.returns(
@@ -929,7 +929,7 @@ describe("ContentDataProvider", async function () {
       name: "folder",
     });
 
-    const model = new ContentModel(new SASContentAdapter());
+    const model = new ContentModel(new RestContentAdapter());
     const dataProvider = new ContentDataProvider(
       model,
       Uri.from({ scheme: "http" }),
@@ -965,7 +965,7 @@ describe("ContentDataProvider", async function () {
       parentFolderUri: "/id/parent",
     });
 
-    const model = new ContentModel(new SASContentAdapter());
+    const model = new ContentModel(new RestContentAdapter());
     const dataProvider = new ContentDataProvider(
       model,
       Uri.from({ scheme: "http" }),
