@@ -826,6 +826,11 @@
         "category": "SAS Notebook"
       },
       {
+        "command": "SAS.notebook.saveOutput",
+        "title": "%commands.SAS.notebook.saveOutput%",
+        "category": "SAS Notebook"
+      },
+      {
         "command": "SAS.file.new",
         "shortTitle": "%commands.SAS.file.new.short%",
         "title": "%commands.SAS.file.new%",
@@ -1095,6 +1100,12 @@
         {
           "when": "notebookType == 'sas-notebook'",
           "command": "SAS.notebook.export"
+        }
+      ],
+      "notebook/cell/title": [
+        {
+          "command": "SAS.notebook.saveOutput",
+          "when": "notebookType == 'sas-notebook' && notebookCellHasOutputs"
         }
       ],
       "commandPalette": [
