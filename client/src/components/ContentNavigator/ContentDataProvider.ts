@@ -534,7 +534,7 @@ class ContentDataProvider
           scheme === "sasServerReadOnly"
         );
       })
-      .map((doc) => doc.uri.toString());
+      .map((doc) => doc.uri);
 
     if (dirtyFiles.length === 0) {
       return false;
