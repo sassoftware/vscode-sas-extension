@@ -36,6 +36,7 @@ import { basename, join } from "path";
 import { promisify } from "util";
 
 import { profileConfig } from "../../commands/profile";
+import { getResourceId } from "../../connection/rest/util";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ViyaProfile } from "../profile";
 import { ContentModel } from "./ContentModel";
@@ -518,7 +519,6 @@ class ContentDataProvider
     }
 
     const targetFolderUri = resource.uri;
-    console.log("Target" + targetFolderUri);
 
     const dirtyFiles = workspace.textDocuments
       .filter((doc) => {
@@ -541,7 +541,9 @@ class ContentDataProvider
     }
 
     for (const dirtyFileUri of dirtyFiles) {
-      if (await this.isDescendantOf(getResourceId(dirtyFileUri), targetFolderUri)) {
+      if (
+        await this.isDescendantOf(getResourceId(dirtyFileUri), targetFolderUri)
+      ) {
         return true;
       }
     }
@@ -562,15 +564,13 @@ class ContentDataProvider
         if (currentParentUri) {
           this.uriToParentMap.set(fileUri, currentParentUri);
         }
-      } catch (error) {
-        console.log("Error1");
+      } catch {
         return false;
       }
     }
 
     let depth = 0;
     while (currentParentUri || depth >= 10) {
-      console.log("Current Parent" + currentParentUri);
       if (currentParentUri === ancestorFolderUri) {
         return true;
       }
@@ -591,8 +591,7 @@ class ContentDataProvider
               parentItem.parentFolderUri,
             );
           }
-        } catch (error) {
-          console.log("error2");
+        } catch {
           break;
         }
       }
