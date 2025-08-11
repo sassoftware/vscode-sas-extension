@@ -113,7 +113,6 @@ class ContentNavigator implements SubscriptionProvider {
               const moveToRecycleBin =
                 this.contentDataProvider.canRecycleResource(resource);
 
-
               if (resource.contextValue.includes("delete")) {
                 if (
                   !moveToRecycleBin &&
