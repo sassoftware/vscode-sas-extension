@@ -1,7 +1,6 @@
 import concurrently from "concurrently";
 import esbuild from "esbuild";
 import fs from "fs";
-import path from "path";
 
 console.log("start");
 const dev = process.argv[2];
@@ -57,11 +56,41 @@ const browserBuildOptions = {
   },
 };
 
+const foldersToCopy = [
+  {
+    src: "./server/node_modules/jsonc-parser/lib/umd/impl",
+    dest: "./server/dist/node/impl",
+  },
+  {
+    src: "./server/node_modules/pyright-internal-node/dist/packages/pyright-internal/typeshed-fallback",
+    dest: "./server/dist/node/typeshed-fallback",
+  },
+  {
+    src: "./server/src/python/sas",
+    dest: "./server/dist/node/typeshed-fallback/stubs/sas",
+  },
+  {
+    src: "./client/src/components/notebook/exporters/templates",
+    dest: "./client/dist/notebook/exporters/templates",
+  },
+];
+
+const copyFiles = () =>
+  foldersToCopy
+    .filter((item) => !fs.existsSync(item.dest))
+    .forEach((item) => fs.cpSync(item.src, item.dest, { recursive: true }));
+
+const cleanupFiles = () => {
+  foldersToCopy
+    .filter((item) => fs.existsSync(item.dest))
+    .forEach((item) => fs.unlinkSync(item.dest));
+};
+
 if (process.env.npm_config_webviews || process.env.npm_config_client) {
   const ctx = await esbuild.context(
     process.env.npm_config_webviews ? browserBuildOptions : nodeBuildOptions,
   );
-  await ctx.rebuild();
+  await ctx.rebuild().then(copyFiles);
 
   if (dev) {
     await ctx.watch();
@@ -69,7 +98,8 @@ if (process.env.npm_config_webviews || process.env.npm_config_client) {
     await ctx.dispose();
   }
 } else {
-  const { result } = concurrently([
+  cleanupFiles();
+  concurrently([
     {
       command: `npm run ${process.env.npm_lifecycle_event} --webviews`,
       name: "browser",
@@ -79,32 +109,4 @@ if (process.env.npm_config_webviews || process.env.npm_config_client) {
       name: "node",
     },
   ]);
-
-  await result.then(
-    () => {
-      const foldersToCopy = [
-        {
-          src: "./server/node_modules/jsonc-parser/lib/umd/impl",
-          dest: "./server/dist/node/impl",
-        },
-        {
-          src: "./server/node_modules/pyright-internal-node/dist/packages/pyright-internal/typeshed-fallback",
-          dest: "./server/dist/node/typeshed-fallback",
-        },
-        {
-          src: "./server/src/python/sas",
-          dest: "./server/dist/node/typeshed-fallback/stubs/sas",
-        },
-        {
-          src: "./client/src/components/notebook/exporters/templates",
-          dest: "./client/dist/notebook/exporters/templates",
-        },
-      ];
-      for (const item of foldersToCopy) {
-        fs.cpSync(item.src, item.dest, { recursive: true });
-        console.log(`${item.src} was copied to ${item.dest}`);
-      }
-    },
-    () => console.error("Assets failed to build successfully"),
-  );
 }
