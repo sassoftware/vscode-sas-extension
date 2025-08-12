@@ -54,7 +54,7 @@ import { LogTokensProvider, legend } from "../components/logViewer";
 import { sasDiagnostic } from "../components/logViewer/sasDiagnostics";
 import { NotebookController } from "../components/notebook/Controller";
 import { NotebookSerializer } from "../components/notebook/Serializer";
-import { exportNotebook } from "../components/notebook/exporters";
+import { exportNotebook, saveOutput } from "../components/notebook/exporters";
 import { ConnectionType } from "../components/profile";
 import { SasTaskProvider } from "../components/tasks/SasTaskProvider";
 import { SAS_TASK_TYPE } from "../components/tasks/SasTasks";
@@ -202,6 +202,7 @@ export function activate(context: ExtensionContext) {
     commands.registerCommand("SAS.notebook.export", () =>
       exportNotebook(client),
     ),
+    commands.registerCommand("SAS.notebook.saveOutput", saveOutput),
     tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
     ...sasDiagnostic.getSubscriptions(),
     commands.registerTextEditorCommand("SAS.toggleLineComment", (editor) => {
