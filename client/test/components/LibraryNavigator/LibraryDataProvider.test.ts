@@ -65,8 +65,8 @@ describe("LibraryDataProvider", async function () {
     };
 
     const api = dataAccessApi();
-    sinon
-      .stub(api, "getTables")
+    const getTablesStub = sinon.stub(api, "getTables");
+    getTablesStub
       .withArgs({
         sessionId: "1234",
         libref: library.id,
@@ -96,12 +96,13 @@ describe("LibraryDataProvider", async function () {
       type: "table",
       readOnly: library.readOnly,
     });
+    getTablesStub.restore();
   });
 
   it("getChildren - returns libraries without content item", async () => {
     const api = dataAccessApi();
     // One call to get libraries
-    sinon.stub(api, "getLibraries").resolves({
+    const getLibrariesStub = sinon.stub(api, "getLibraries").resolves({
       data: {
         items: [
           {
@@ -114,11 +115,13 @@ describe("LibraryDataProvider", async function () {
     } as AxiosResponse);
 
     // One to get library summary
-    sinon.stub(api, "getLibrarySummary").resolves({
-      data: {
-        readOnly: true,
-      },
-    } as AxiosResponse);
+    const getLibrarySummaryStub = sinon
+      .stub(api, "getLibrarySummary")
+      .resolves({
+        data: {
+          readOnly: true,
+        },
+      } as AxiosResponse);
 
     const provider = libraryDataProvider(api);
     const children = await provider.getChildren();
@@ -131,6 +134,9 @@ describe("LibraryDataProvider", async function () {
       type: "library",
       readOnly: true,
     });
+
+    getLibrariesStub.restore();
+    getLibrarySummaryStub.restore();
   });
 
   it("getTreeItem - returns table tree item", async () => {
@@ -235,6 +241,7 @@ describe("LibraryDataProvider", async function () {
     const provider = libraryDataProvider(api);
     await provider.deleteTable(item);
     expect(deleteTableStub.calledOnce).to.equal(true);
+    deleteTableStub.restore();
   });
 
   it("deleteTable - fails with error message", async () => {
@@ -260,5 +267,7 @@ describe("LibraryDataProvider", async function () {
           .message,
       );
     }
+
+    deleteTableStub.restore();
   });
 });
