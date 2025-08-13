@@ -1,11 +1,13 @@
 import { TreeItemCollapsibleState, Uri, l10n } from "vscode";
 
+import { AxiosResponse } from "axios";
 import { expect } from "chai";
-import nock from "nock";
+import * as sinon from "sinon";
 
 import LibraryDataProvider from "../../../src/components/LibraryNavigator/LibraryDataProvider";
 import LibraryModel from "../../../src/components/LibraryNavigator/LibraryModel";
 import {
+  DefaultRecordLimit,
   Icons,
   Messages,
 } from "../../../src/components/LibraryNavigator/const";
@@ -15,23 +17,32 @@ import { DataAccessApi } from "../../../src/connection/rest/api/compute";
 import { getApiConfig } from "../../../src/connection/rest/common";
 
 class MockRestLibraryAdapter extends RestLibraryAdapter {
-  constructor() {
+  constructor(api: ReturnType<typeof DataAccessApi>) {
     super();
-    const apiConfig = getApiConfig();
-    apiConfig.baseOptions.baseURL = "http://test.local";
-    this.dataAccessApi = DataAccessApi(apiConfig);
+    this.dataAccessApi = api;
     this.sessionId = "1234";
   }
 }
 
 class MockLibraryModel extends LibraryModel {
-  constructor() {
-    super(new MockRestLibraryAdapter());
+  constructor(api: ReturnType<typeof DataAccessApi>) {
+    super(new MockRestLibraryAdapter(api));
   }
 }
 
-const libraryDataProvider = () =>
-  new LibraryDataProvider(new MockLibraryModel(), Uri.from({ scheme: "file" }));
+const dataAccessApi = () => {
+  const apiConfig = getApiConfig();
+  apiConfig.baseOptions.baseURL = "https://test.local";
+  return DataAccessApi(apiConfig);
+};
+
+const libraryDataProvider = (
+  api: ReturnType<typeof DataAccessApi> = dataAccessApi(),
+) =>
+  new LibraryDataProvider(
+    new MockLibraryModel(api),
+    Uri.from({ scheme: "file" }),
+  );
 
 describe("LibraryDataProvider", async function () {
   it("getChildren - returns an empty array when no adapter is specified", async () => {
@@ -53,19 +64,28 @@ describe("LibraryDataProvider", async function () {
       readOnly: false,
     };
 
-    nock("http://test.local")
-      .get("/sessions/1234/data/lib?start=0&limit=100")
-      .reply(200, {
-        items: [
-          {
-            id: "table",
-            name: "table",
-          },
-        ],
-        count: 0,
-      });
+    const api = dataAccessApi();
+    sinon
+      .stub(api, "getTables")
+      .withArgs({
+        sessionId: "1234",
+        libref: library.id,
+        limit: DefaultRecordLimit,
+        start: 0,
+      })
+      .resolves({
+        data: {
+          items: [
+            {
+              id: "table",
+              name: "table",
+            },
+          ],
+          count: 0,
+        },
+      } as AxiosResponse);
 
-    const provider = libraryDataProvider();
+    const provider = libraryDataProvider(api);
     const children = await provider.getChildren(library);
 
     expect(children[0]).to.deep.equal({
@@ -79,10 +99,10 @@ describe("LibraryDataProvider", async function () {
   });
 
   it("getChildren - returns libraries without content item", async () => {
+    const api = dataAccessApi();
     // One call to get libraries
-    nock("http://test.local")
-      .get("/sessions/1234/data?start=0&limit=100")
-      .reply(200, {
+    sinon.stub(api, "getLibraries").resolves({
+      data: {
         items: [
           {
             id: "library",
@@ -90,14 +110,17 @@ describe("LibraryDataProvider", async function () {
           },
         ],
         count: 0,
-      });
+      },
+    } as AxiosResponse);
 
-    // One to get
-    nock("http://test.local").get("/sessions/1234/data/library").reply(200, {
-      readOnly: true,
-    });
+    // One to get library summary
+    sinon.stub(api, "getLibrarySummary").resolves({
+      data: {
+        readOnly: true,
+      },
+    } as AxiosResponse);
 
-    const provider = libraryDataProvider();
+    const provider = libraryDataProvider(api);
     const children = await provider.getChildren();
 
     expect(children[0]).to.deep.equal({
@@ -206,10 +229,12 @@ describe("LibraryDataProvider", async function () {
       library: "lib",
     };
 
-    nock("http://test.local").delete("/sessions/1234/data/lib/test").reply(200);
+    const api = dataAccessApi();
+    const deleteTableStub = sinon.stub(api, "deleteTable");
 
-    const provider = libraryDataProvider();
+    const provider = libraryDataProvider(api);
     await provider.deleteTable(item);
+    expect(deleteTableStub.calledOnce).to.equal(true);
   });
 
   it("deleteTable - fails with error message", async () => {
@@ -222,9 +247,11 @@ describe("LibraryDataProvider", async function () {
       library: "lib",
     };
 
-    nock("http://test.local").delete("/sessions/1234/data/lib/test").reply(500);
+    const api = dataAccessApi();
+    const deleteTableStub = sinon.stub(api, "deleteTable");
+    deleteTableStub.throwsException(new Error());
 
-    const provider = libraryDataProvider();
+    const provider = libraryDataProvider(api);
     try {
       await provider.deleteTable(item);
     } catch (error) {
