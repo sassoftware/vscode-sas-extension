@@ -58,7 +58,6 @@ ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519 -C "youremail@company.com"
 ```
 
 5. You are prompted to enter additional information. If you did not enter a path, a default path is provided for you. You can also specify a passphrase. If you do not specify a passphrase, your key is not password-protected. Press Enter to accept the default value for each prompt.
-
    - Enter a file in which to save the key (/c/Users/you/.ssh/id_ed25519):[Press enter]
    - Enter passphrase (empty for no passphrase): [Type a passphrase]
    - Enter same passphrase again: [Type passphrase again]
