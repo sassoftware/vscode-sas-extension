@@ -52,7 +52,7 @@ export class MockSession extends Session {
   }
 }
 
-describe.skip("CodeRunner tests", () => {
+describe("CodeRunner tests", () => {
   let sessionStub;
   before(() => {
     sessionStub = sinon.stub(connection, "getSession");

@@ -27,7 +27,7 @@ class DatasetMockSession extends MockSession {
     this._logFn(output.split("\n").map((line) => ({ line, type: "normal" })));
   }
 }
-describe.skip("ItcLibraryAdapter tests", () => {
+describe("ItcLibraryAdapter tests", () => {
   let now;
   let clock;
   let sessionStub;
