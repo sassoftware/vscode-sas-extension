@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 
 import { expect } from "chai";
 import proc from "child_process";
-import { writeFileSync } from "fs";
+import { unlinkSync, writeFileSync } from "fs";
 import { join } from "path";
 import { SinonSandbox, SinonStub, createSandbox } from "sinon";
 import { stubInterface } from "ts-sinon";
@@ -141,11 +141,11 @@ describe("ITC connection", () => {
       onDataCallback(Buffer.from(`${WORK_DIR_START_TAG}`));
       onDataCallback(Buffer.from(`/work/dir`));
       onDataCallback(Buffer.from(`${WORK_DIR_END_TAG}`));
-      // await setupPromise;
+      await setupPromise;
     });
     afterEach(() => {
       try {
-        // unlinkSync(tempHtmlPath);
+        unlinkSync(tempHtmlPath);
       } catch (e) {
         // Intentionally blank
       }
