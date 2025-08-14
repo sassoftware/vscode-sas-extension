@@ -761,7 +761,6 @@ class ContentDataProvider
 
     if (!this.parentPathCache.has(parentUri)) {
       try {
-        console.log("ServerCall");
         const fullPath = await this.model.getPathOfItem(item);
         if (fullPath) {
           const parentPath =
