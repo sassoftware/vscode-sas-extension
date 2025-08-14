@@ -3,11 +3,11 @@
     "esModuleInterop": true,
     "jsx": "react-jsx",
     "lib": ["ES2019", "DOM"],
-    "module": "commonjs",
     "outDir": "out",
     "rootDir": ".",
     "sourceMap": true,
-    "target": "es2019"
+    "target": "es2019",
+    "moduleResolution": "bundler"
   },
   "include": ["src", "test"],
   "exclude": ["node_modules", ".vscode-test"]
