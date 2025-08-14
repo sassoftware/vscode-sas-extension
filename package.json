@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "categories": [
     "Programming Languages",
     "Data Science",
@@ -286,6 +286,21 @@
                             "type": "string",
                             "default": "",
                             "description": "%configuration.SAS.connectionProfiles.profiles.clientSecret%"
+                          },
+                          "fileNavigationCustomRootPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationCustomRootPath%"
+                          },
+                          "fileNavigationRoot": {
+                            "type": "string",
+                            "default": "USER",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationRoot%",
+                            "enum": [
+                              "CUSTOM",
+                              "USER",
+                              "SYSTEM"
+                            ]
                           }
                         }
                       }
@@ -372,6 +387,21 @@
                             "type": "string",
                             "default": "",
                             "description": "%configuration.SAS.connectionProfiles.profiles.iom.interopLibraryFolderPath%"
+                          },
+                          "fileNavigationCustomRootPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationCustomRootPath%"
+                          },
+                          "fileNavigationRoot": {
+                            "type": "string",
+                            "default": "USER",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationRoot%",
+                            "enum": [
+                              "CUSTOM",
+                              "USER",
+                              "SYSTEM"
+                            ]
                           }
                         }
                       }
@@ -398,6 +428,21 @@
                             "type": "string",
                             "default": "",
                             "description": "%configuration.SAS.connectionProfiles.profiles.com.interopLibraryFolderPath%"
+                          },
+                          "fileNavigationCustomRootPath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationCustomRootPath%"
+                          },
+                          "fileNavigationRoot": {
+                            "type": "string",
+                            "default": "USER",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationRoot%",
+                            "enum": [
+                              "CUSTOM",
+                              "USER",
+                              "SYSTEM"
+                            ]
                           }
                         }
                       }
@@ -584,6 +629,11 @@
         "category": "SAS"
       },
       {
+        "command": "SAS.content.copyPath",
+        "title": "%commands.SAS.copyPath%",
+        "category": "SAS"
+      },
+      {
         "command": "SAS.content.deleteResource",
         "title": "%commands.SAS.deleteResource%",
         "category": "SAS"
@@ -658,6 +708,11 @@
       {
         "command": "SAS.content.uploadFolderResource",
         "title": "%commands.SAS.uploadFolders%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.server.copyPath",
+        "title": "%commands.SAS.copyPath%",
         "category": "SAS"
       },
       {
@@ -768,6 +823,11 @@
       {
         "command": "SAS.notebook.export",
         "title": "%commands.SAS.notebook.export%",
+        "category": "SAS Notebook"
+      },
+      {
+        "command": "SAS.notebook.saveOutput",
+        "title": "%commands.SAS.notebook.saveOutput%",
         "category": "SAS Notebook"
       },
       {
@@ -893,6 +953,11 @@
           "group": "favoritesgroup@1"
         },
         {
+          "command": "SAS.content.copyPath",
+          "when": "viewItem =~ /copyPath/ && view == contentdataprovider",
+          "group": "copypathgroup@0"
+        },
+        {
           "command": "SAS.content.renameResource",
           "when": "viewItem =~ /update/ && view == contentdataprovider && !listMultiSelection",
           "group": "delrenamegroup@0"
@@ -956,6 +1021,11 @@
           "command": "SAS.server.removeFromFavorites",
           "when": "viewItem =~ /removeFromFavorites/ && view == serverdataprovider",
           "group": "favoritesgroup@1"
+        },
+        {
+          "command": "SAS.server.copyPath",
+          "when": "viewItem =~ /copyPath/ && view == serverdataprovider",
+          "group": "copypathgroup@0"
         },
         {
           "command": "SAS.server.renameResource",
@@ -1030,6 +1100,12 @@
         {
           "when": "notebookType == 'sas-notebook'",
           "command": "SAS.notebook.export"
+        }
+      ],
+      "notebook/cell/title": [
+        {
+          "command": "SAS.notebook.saveOutput",
+          "when": "notebookType == 'sas-notebook' && notebookCellHasOutputs"
         }
       ],
       "commandPalette": [
@@ -1128,6 +1204,14 @@
         {
           "when": "false",
           "command": "SAS.notebook.export"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.copyPath"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.copyPath"
         }
       ],
       "file/newFile": [
@@ -1313,9 +1397,9 @@
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^24.0.7",
+    "@types/node": "^24.2.1",
     "@types/sinon": "^17.0.4",
-    "@typescript-eslint/eslint-plugin": "^8.35.0",
+    "@typescript-eslint/eslint-plugin": "^8.39.0",
     "@typescript-eslint/parser": "^8.32.1",
     "@vscode/l10n-dev": "^0.0.35",
     "buffer": "6.0.3",
@@ -1323,12 +1407,11 @@
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
     "esbuild": "^0.25.4",
-    "eslint": "^9.30.0",
+    "eslint": "^9.33.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "glob": "^7.2.0",
     "mocha": "^11.5.0",
-    "nock": "^13.5.5",
     "papaparse": "^5.5.3",
     "path-browserify": "^1.0.1",
     "prettier": "^3.6.2",

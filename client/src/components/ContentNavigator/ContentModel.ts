@@ -197,4 +197,8 @@ export class ContentModel {
   public async restoreResource(item: ContentItem) {
     return await this.contentAdapter?.restoreItem(item);
   }
+
+  public async getPathOfItem(item: ContentItem): Promise<string> {
+    return await this.contentAdapter.getPathOfItem(item);
+  }
 }

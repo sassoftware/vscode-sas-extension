@@ -225,7 +225,7 @@ class ContentDataProvider
             arguments: [uri],
             title: "Open SAS File",
           },
-      contextValue: item.contextValue,
+      contextValue: item.contextValue || undefined,
       iconPath: this.iconPathForItem(item),
       id: item.uid,
       label: item.name,
@@ -531,6 +531,10 @@ class ContentDataProvider
         );
       }
     }
+  }
+
+  public async getPathOfItem(item: ContentItem) {
+    return await this.model.getPathOfItem(item);
   }
 
   private async childrenSelections(

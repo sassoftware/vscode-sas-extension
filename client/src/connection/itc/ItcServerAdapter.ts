@@ -6,10 +6,10 @@ import { v4 } from "uuid";
 
 import { onRunError } from "../../commands/run";
 import {
+  Messages,
   SAS_SERVER_ROOT_FOLDER,
   SAS_SERVER_ROOT_FOLDERS,
   SERVER_FOLDER_ID,
-  SERVER_HOME_FOLDER_TYPE,
 } from "../../components/ContentNavigator/const";
 import {
   ContentAdapter,
@@ -17,27 +17,42 @@ import {
   RootFolderMap,
 } from "../../components/ContentNavigator/types";
 import {
+  ContextMenuAction,
+  ContextMenuProvider,
   convertStaticFolderToContentItem,
   createStaticFolder,
+  homeDirectoryNameAndType,
   sortedContentItems,
 } from "../../components/ContentNavigator/utils";
 import { getGlobalStorageUri } from "../../components/ExtensionContext";
-import {
-  getLink,
-  getResourceId,
-  getSasServerUri,
-  resourceType,
-} from "../rest/util";
+import { ProfileWithFileRootOptions } from "../../components/profile";
+import { getLink, getResourceId, getSasServerUri } from "../rest/util";
 import { executeRawCode } from "./CodeRunner";
 import { PowershellResponse, ScriptActions } from "./types";
 import { getDirectorySeparator } from "./util";
 
-class ITCSASServerAdapter implements ContentAdapter {
+class ItcServerAdapter implements ContentAdapter {
   protected sessionId: string;
   private rootFolders: RootFolderMap;
+  private contextMenuProvider: ContextMenuProvider;
 
-  public constructor() {
+  public constructor(
+    protected readonly fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
+    protected readonly fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
+  ) {
     this.rootFolders = {};
+    this.contextMenuProvider = new ContextMenuProvider(
+      [
+        ContextMenuAction.CreateChild,
+        ContextMenuAction.Delete,
+        ContextMenuAction.Update,
+        ContextMenuAction.CopyPath,
+        ContextMenuAction.AllowDownload,
+      ],
+      {
+        [ContextMenuAction.CopyPath]: (item) => item.id !== SERVER_FOLDER_ID,
+      },
+    );
   }
 
   /* The following methods are needed for favorites, which are not applicable to sas server */
@@ -137,6 +152,13 @@ class ITCSASServerAdapter implements ContentAdapter {
     }
   }
 
+  private fileNavigationRootSettings() {
+    return {
+      fileNavigationCustomRootPath: this.fileNavigationCustomRootPath,
+      fileNavigationRoot: this.fileNavigationRoot || "USER",
+    };
+  }
+
   public async getChildItems(parentItem: ContentItem): Promise<ContentItem[]> {
     // If the user is fetching child items of the root folder, give them the
     // "home" directory
@@ -145,43 +167,57 @@ class ITCSASServerAdapter implements ContentAdapter {
         ScriptActions.GetChildItems,
         {
           path: "/",
+          ...this.fileNavigationRootSettings(),
         },
       );
       if (!success) {
+        if (this.fileNavigationRoot === "CUSTOM") {
+          throw new Error(Messages.FileNavigationRootUserError);
+        }
         return [];
       }
       const uri = items[0].parentFolderUri;
-      return [
-        convertStaticFolderToContentItem(
-          createStaticFolder(
-            uri,
-            "Home",
-            SERVER_HOME_FOLDER_TYPE,
-            "/",
-            "getDirectoryMembers",
+      const homeFolder = convertStaticFolderToContentItem(
+        createStaticFolder(
+          uri,
+          ...homeDirectoryNameAndType(
+            this.fileNavigationRoot,
+            this.fileNavigationCustomRootPath,
           ),
-          {
-            write: true,
-            delete: false,
-            addMember: true,
-          },
+          "/",
+          "getDirectoryMembers",
         ),
-      ];
+        {
+          write: false,
+          delete: false,
+          addMember: true,
+        },
+      );
+      homeFolder.contextValue =
+        this.contextMenuProvider.availableActions(homeFolder);
+      return [homeFolder];
     }
 
     const { success, data: items } = await this.execute(
       ScriptActions.GetChildItems,
       {
         path: getLink(parentItem.links, "GET", "getDirectoryMembers").uri,
+        ...this.fileNavigationRootSettings(),
       },
     );
     if (!success) {
       return [];
     }
 
-    const childItems = items.map(this.convertPowershellResponseToContentItem);
+    const childItems = items.map(
+      this.convertPowershellResponseToContentItem.bind(this),
+    );
 
     return sortedContentItems(childItems);
+  }
+
+  public async getPathOfItem(item: ContentItem): Promise<string> {
+    return item.uri;
   }
 
   private async getTempFile() {
@@ -309,6 +345,7 @@ class ITCSASServerAdapter implements ContentAdapter {
   ): Promise<ContentItem> {
     const { data: items } = await this.execute(ScriptActions.GetChildItems, {
       path,
+      ...this.fileNavigationRootSettings(),
     });
 
     const foundItem = items.find((item) => item.name === name);
@@ -367,7 +404,7 @@ class ITCSASServerAdapter implements ContentAdapter {
 
     return {
       ...item,
-      contextValue: resourceType(item),
+      contextValue: this.contextMenuProvider.availableActions(item),
       vscUri: getSasServerUri(item, false),
     };
   }
@@ -401,4 +438,4 @@ class ITCSASServerAdapter implements ContentAdapter {
   }
 }
 
-export default ITCSASServerAdapter;
+export default ItcServerAdapter;

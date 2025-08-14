@@ -26,7 +26,10 @@ import {
   RootFolderMap,
 } from "../../components/ContentNavigator/types";
 import {
+  ContextMenuAction,
+  ContextMenuProvider,
   getFileContentType,
+  getTypeName,
   isContainer,
   isItemInRecycleBin,
   isReference,
@@ -38,11 +41,9 @@ import {
   getResourceId,
   getResourceIdFromItem,
   getSasContentUri,
-  getTypeName,
-  resourceType,
 } from "./util";
 
-class SASContentAdapter implements ContentAdapter {
+class RestContentAdapter implements ContentAdapter {
   private connection: AxiosInstance;
   private authorized: boolean;
   private viyaCadence: string;
@@ -50,10 +51,23 @@ class SASContentAdapter implements ContentAdapter {
   private fileMetadataMap: {
     [id: string]: { etag: string; lastModified: string; contentType: string };
   };
+  private contextMenuProvider: ContextMenuProvider;
 
   public constructor() {
     this.rootFolders = {};
     this.fileMetadataMap = {};
+    this.contextMenuProvider = new ContextMenuProvider([
+      ContextMenuAction.CreateChild,
+      ContextMenuAction.Delete,
+      ContextMenuAction.Update,
+      ContextMenuAction.Restore,
+      ContextMenuAction.CopyPath,
+      ContextMenuAction.Empty,
+      ContextMenuAction.AddToFavorites,
+      ContextMenuAction.RemoveFromFavorites,
+      ContextMenuAction.ConvertNotebookToFlow,
+      ContextMenuAction.AllowDownload,
+    ]);
   }
 
   public connected(): boolean {
@@ -162,6 +176,13 @@ class SASContentAdapter implements ContentAdapter {
   }
 
   public async getFolderPathForItem(item: ContentItem): Promise<string> {
+    return await this.getPathOfItem(item, true);
+  }
+
+  public async getPathOfItem(
+    item: ContentItem,
+    folderPathOnly?: boolean,
+  ): Promise<string> {
     if (!item) {
       return "";
     }
@@ -169,6 +190,9 @@ class SASContentAdapter implements ContentAdapter {
     const filePathParts = [];
     let currentContentItem: Pick<ContentItem, "parentFolderUri" | "name"> =
       item;
+    if (!folderPathOnly) {
+      filePathParts.push(currentContentItem.name);
+    }
     do {
       try {
         const { data: parentData } = await this.connection.get(
@@ -179,8 +203,9 @@ class SASContentAdapter implements ContentAdapter {
       } catch (e) {
         return "";
       }
-
-      filePathParts.push(currentContentItem.name);
+      if (currentContentItem.name) {
+        filePathParts.push(currentContentItem.name);
+      }
     } while (currentContentItem.parentFolderUri);
 
     return "/" + filePathParts.reverse().join("/");
@@ -345,9 +370,10 @@ class SASContentAdapter implements ContentAdapter {
   ): ContentItem {
     item.flags = flags;
     item.permission = getPermission(item);
+
     return {
       ...item,
-      contextValue: resourceType(item),
+      contextValue: this.contextMenuProvider.availableActions(item),
       fileStat: {
         ctime: item.creationTimeStamp,
         mtime: item.modifiedTimeStamp,
@@ -740,4 +766,4 @@ class SASContentAdapter implements ContentAdapter {
   }
 }
 
-export default SASContentAdapter;
+export default RestContentAdapter;
