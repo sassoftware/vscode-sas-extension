@@ -36,6 +36,7 @@ import { basename, join } from "path";
 import { promisify } from "util";
 
 import { profileConfig } from "../../commands/profile";
+import { getResourceId } from "../../connection/rest/util";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ViyaProfile } from "../profile";
 import { ContentModel } from "./ContentModel";
@@ -78,6 +79,8 @@ class ContentDataProvider
 
   public dropMimeTypes: string[];
   public dragMimeTypes: string[];
+
+  private uriToParentMap = new Map<string, string>();
 
   get treeView(): TreeView<ContentItem> {
     return this._treeView;
@@ -213,6 +216,11 @@ class ContentDataProvider
   public async getTreeItem(item: ContentItem): Promise<TreeItem> {
     const isContainer = getIsContainer(item);
     const uri = await this.model.getUri(item, false);
+
+    // Cache the URI to parent mapping
+    if (item.parentFolderUri) {
+      this.uriToParentMap.set(item.uri, item.parentFolderUri);
+    }
 
     return {
       collapsibleState: isContainer
@@ -505,6 +513,94 @@ class ContentDataProvider
     }
   }
 
+  public async checkFolderDirty(resource: ContentItem): Promise<boolean> {
+    if (!resource.vscUri) {
+      return false;
+    }
+
+    const targetFolderUri = resource.uri;
+
+    const dirtyFiles = workspace.textDocuments
+      .filter((doc) => {
+        if (!doc.isDirty) {
+          return false;
+        }
+
+        const scheme = doc.uri.scheme;
+        return (
+          scheme === "sasContent" ||
+          scheme === "sasServer" ||
+          scheme === "sasContentReadOnly" ||
+          scheme === "sasServerReadOnly"
+        );
+      })
+      .map((doc) => doc.uri);
+
+    if (dirtyFiles.length === 0) {
+      return false;
+    }
+
+    for (const dirtyFileUri of dirtyFiles) {
+      if (
+        await this.isDescendantOf(getResourceId(dirtyFileUri), targetFolderUri)
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private async isDescendantOf(
+    fileUri: string,
+    ancestorFolderUri: string,
+  ): Promise<boolean> {
+    let currentParentUri = this.uriToParentMap.get(fileUri);
+
+    if (!currentParentUri) {
+      try {
+        const item = await this.model.getResourceByUri(Uri.parse(fileUri));
+        currentParentUri = item.parentFolderUri;
+        if (currentParentUri) {
+          this.uriToParentMap.set(fileUri, currentParentUri);
+        }
+      } catch {
+        return false;
+      }
+    }
+
+    let depth = 0;
+    while (currentParentUri || depth >= 10) {
+      if (currentParentUri === ancestorFolderUri) {
+        return true;
+      }
+
+      const nextParentUri = this.uriToParentMap.get(currentParentUri);
+
+      if (nextParentUri) {
+        currentParentUri = nextParentUri;
+      } else {
+        try {
+          const parentItem = await this.model.getResourceByUri(
+            Uri.parse(currentParentUri),
+          );
+          currentParentUri = parentItem.parentFolderUri;
+          if (currentParentUri) {
+            this.uriToParentMap.set(
+              currentParentUri,
+              parentItem.parentFolderUri,
+            );
+          }
+        } catch {
+          break;
+        }
+      }
+      depth++;
+    }
+
+    return false;
+  }
+
   public async downloadContentItems(
     folderUri: Uri,
     selections: ContentItem[],
@@ -759,6 +855,5 @@ const closeFileIfOpen = (item: ContentItem): Promise<Uri[]> | boolean => {
         .catch(reject);
     });
   }
-
   return true;
 };
