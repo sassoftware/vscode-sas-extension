@@ -221,7 +221,7 @@ class ContentDataProvider
 
     if (canCopyPath) {
       try {
-        const parentPath = await this.getCachedParentPath(item);
+        const parentPath = await this.getItemTooltip(item);
         if (parentPath) {
           tooltip = parentPath + "/" + item.name;
         }
@@ -753,7 +753,7 @@ class ContentDataProvider
       : undefined;
   }
 
-  private async getCachedParentPath(item: ContentItem): Promise<string> {
+  private async getItemTooltip(item: ContentItem): Promise<string> {
     const parentUri = item.parentFolderUri;
     if (!parentUri) {
       return "";
