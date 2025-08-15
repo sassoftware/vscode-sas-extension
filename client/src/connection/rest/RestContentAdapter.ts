@@ -52,6 +52,8 @@ class RestContentAdapter implements ContentAdapter {
     [id: string]: { etag: string; lastModified: string; contentType: string };
   };
   private contextMenuProvider: ContextMenuProvider;
+  private pathCache: Map<string, string> = new Map();
+  private pathPromiseCache: Map<string, Promise<string>> = new Map();
 
   public constructor() {
     this.rootFolders = {};
@@ -118,7 +120,13 @@ class RestContentAdapter implements ContentAdapter {
     }
     const { data } = await this.connection.get(ancestorsLink.uri);
     if (data && data.length > 0) {
-      return this.enrichWithDataProviderProperties(data[0]);
+      const enrichedItem = this.enrichWithDataProviderProperties(data[0]);
+
+      if (enrichedItem.contextValue?.includes("copyPath")) {
+        await this.updateUriWithFullPath(enrichedItem);
+      }
+
+      return enrichedItem;
     }
   }
 
@@ -142,19 +150,27 @@ class RestContentAdapter implements ContentAdapter {
       ? []
       : await this.getChildItems(myFavoritesFolder);
 
-    const items = result.items.map(
-      (childItem: ContentItem, index): ContentItem => {
-        const favoriteUri = fetchFavoriteUri(childItem);
-        return {
-          ...childItem,
-          uid: `${parentItem.uid}/${index}`,
-          ...this.enrichWithDataProviderProperties(childItem, {
-            isInRecycleBin,
-            isInMyFavorites: parentIdIsFavoritesFolder || !!favoriteUri,
-            favoriteUri,
-          }),
-        };
-      },
+    const items = await Promise.all(
+      result.items.map(
+        async (childItem: ContentItem, index): Promise<ContentItem> => {
+          const favoriteUri = fetchFavoriteUri(childItem);
+          const enrichedItem = {
+            ...childItem,
+            uid: `${parentItem.uid}/${index}`,
+            ...this.enrichWithDataProviderProperties(childItem, {
+              isInRecycleBin,
+              isInMyFavorites: parentIdIsFavoritesFolder || !!favoriteUri,
+              favoriteUri,
+            }),
+          };
+
+          if (enrichedItem.contextValue?.includes("copyPath")) {
+            await this.updateUriWithFullPath(enrichedItem);
+          }
+
+          return enrichedItem;
+        },
+      ),
     );
 
     return items;
@@ -186,21 +202,59 @@ class RestContentAdapter implements ContentAdapter {
     if (!item) {
       return "";
     }
+    const baseKey = item.uri || item.id || item.name;
+    const cacheKey = `${baseKey}_${folderPathOnly || false}`;
 
+    if (this.pathCache.has(cacheKey)) {
+      return this.pathCache.get(cacheKey)!;
+    }
+
+    if (this.pathPromiseCache.has(cacheKey)) {
+      return this.pathPromiseCache.get(cacheKey)!;
+    }
+
+    const pathPromise = this.calculatePathOfItem(item, folderPathOnly);
+    this.pathPromiseCache.set(cacheKey, pathPromise);
+
+    try {
+      const path = await pathPromise;
+      this.pathCache.set(cacheKey, path);
+      this.pathPromiseCache.delete(cacheKey);
+
+      if (!folderPathOnly && path.includes("/")) {
+        const parentPath = path.substring(0, path.lastIndexOf("/")) || "/";
+        const parentKey = `${item.parentFolderUri}_true`;
+        if (!this.pathCache.has(parentKey)) {
+          this.pathCache.set(parentKey, parentPath);
+        }
+      }
+
+      return path;
+    } catch {
+      this.pathPromiseCache.delete(cacheKey);
+      this.pathCache.set(cacheKey, "");
+      return "";
+    }
+  }
+
+  private async calculatePathOfItem(
+    item: ContentItem,
+    folderPathOnly?: boolean,
+  ): Promise<string> {
     const filePathParts = [];
     let currentContentItem: Pick<ContentItem, "parentFolderUri" | "name"> =
       item;
     if (!folderPathOnly) {
       filePathParts.push(currentContentItem.name);
     }
+
     do {
       try {
         const { data: parentData } = await this.connection.get(
           currentContentItem.parentFolderUri,
         );
         currentContentItem = parentData;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (e) {
+      } catch {
         return "";
       }
       if (currentContentItem.name) {
@@ -319,7 +373,13 @@ class RestContentAdapter implements ContentAdapter {
     const response = await this.connection.get(id);
     this.updateFileMetadata(id, response);
 
-    return this.enrichWithDataProviderProperties(response.data);
+    const enrichedItem = this.enrichWithDataProviderProperties(response.data);
+
+    if (enrichedItem.contextValue?.includes("copyPath")) {
+      await this.updateUriWithFullPath(enrichedItem);
+    }
+
+    return enrichedItem;
   }
 
   public async getItemOfUri(uri: Uri): Promise<ContentItem> {
@@ -357,7 +417,15 @@ class RestContentAdapter implements ContentAdapter {
         `/folders/folders?parentFolderUri=${parentFolderUri}`,
         { name: folderName },
       );
-      return this.enrichWithDataProviderProperties(createFolderResponse.data);
+      const enrichedItem = this.enrichWithDataProviderProperties(
+        createFolderResponse.data,
+      );
+
+      if (enrichedItem.contextValue?.includes("copyPath")) {
+        await this.updateUriWithFullPath(enrichedItem);
+      }
+
+      return enrichedItem;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return;
@@ -371,9 +439,11 @@ class RestContentAdapter implements ContentAdapter {
     item.flags = flags;
     item.permission = getPermission(item);
 
+    const contextValue = this.contextMenuProvider.availableActions(item);
+
     return {
       ...item,
-      contextValue: this.contextMenuProvider.availableActions(item),
+      contextValue,
       fileStat: {
         ctime: item.creationTimeStamp,
         mtime: item.modifiedTimeStamp,
@@ -395,6 +465,27 @@ class RestContentAdapter implements ContentAdapter {
         return true;
       }
       return false;
+    }
+  }
+
+  private async updateUriWithFullPath(item: ContentItem): Promise<void> {
+    try {
+      const typeName = getTypeName(item);
+      if (typeName === TRASH_FOLDER_TYPE || !item.parentFolderUri) {
+        return;
+      }
+
+      const fullPath = await this.getPathOfItem(item);
+      if (fullPath && fullPath !== item.name) {
+        item.vscUri = getSasContentUri(
+          item,
+          item.flags?.isInRecycleBin || false,
+          fullPath,
+        );
+      }
+    } catch {
+      // If path retrieval fails, keep the original URI
+      return;
     }
   }
 
@@ -443,7 +534,15 @@ class RestContentAdapter implements ContentAdapter {
         return await this.getItemOfId(item.uri);
       }
 
-      return this.enrichWithDataProviderProperties(patchResponse.data);
+      const enrichedItem = this.enrichWithDataProviderProperties(
+        patchResponse.data,
+      );
+
+      if (enrichedItem.contextValue?.includes("copyPath")) {
+        await this.updateUriWithFullPath(enrichedItem);
+      }
+
+      return enrichedItem;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return;
@@ -488,7 +587,13 @@ class RestContentAdapter implements ContentAdapter {
       return;
     }
 
-    return this.enrichWithDataProviderProperties(createdResource);
+    const enrichedItem = this.enrichWithDataProviderProperties(createdResource);
+
+    if (enrichedItem.contextValue?.includes("copyPath")) {
+      await this.updateUriWithFullPath(enrichedItem);
+    }
+
+    return enrichedItem;
   }
 
   public async addChildItem(
