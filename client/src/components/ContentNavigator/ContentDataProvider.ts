@@ -216,31 +216,12 @@ class ContentDataProvider
     let tooltip = item.name;
     const canCopyPath = item.contextValue?.includes("copyPath");
 
-    if (canCopyPath) {
-      // Try to extract full path from URI first (new approach)
-      if (uri.path && uri.path !== `/${item.name}`) {
-        const fullPath = uri.path.startsWith("/")
-          ? uri.path.substring(1)
-          : uri.path;
-        // Only use if it looks like a proper path with more than just the filename
-        if (fullPath.includes("/")) {
-          tooltip = fullPath;
-        }
-      }
-      
-      // Fallback: if URI-based approach didn't work, try getting path directly
-      if (tooltip === item.name) {
-        try {
-          const fullPath = await this.model.getPathOfItem(item);
-          if (fullPath && fullPath !== `/${item.name}` && fullPath.includes("/")) {
-            tooltip = fullPath;
-          }
-        } catch {
-          // If path retrieval fails, tooltip remains as item.name
-        }
-      }
+    if (canCopyPath && uri.path && uri.path !== `/${item.name}`) {
+      const fullPath = uri.path.startsWith("/")
+        ? uri.path.substring(1)
+        : uri.path;
+      tooltip = fullPath;
     }
-
     return {
       collapsibleState: isContainer
         ? TreeItemCollapsibleState.Collapsed
