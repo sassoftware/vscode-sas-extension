@@ -93,7 +93,8 @@ export class SSHSession extends Session {
         keepaliveInterval: KEEPALIVE_INTERVAL,
         keepaliveCountMax: KEEPALIVE_UNANSWERED_THRESHOLD,
         authHandler: (methodsLeft, partialSuccess, callback) => (
-          authHandlerFn(methodsLeft, partialSuccess, callback), undefined
+          authHandlerFn(methodsLeft, partialSuccess, callback),
+          undefined
         ),
       };
 
