@@ -79,8 +79,6 @@ class ContentDataProvider
   public dropMimeTypes: string[];
   public dragMimeTypes: string[];
 
-  private parentPathCache = new Map<string, string>();
-
   get treeView(): TreeView<ContentItem> {
     return this._treeView;
   }
@@ -216,17 +214,30 @@ class ContentDataProvider
     const isContainer = getIsContainer(item);
     const uri = await this.model.getUri(item, false);
     let tooltip = item.name;
-
     const canCopyPath = item.contextValue?.includes("copyPath");
 
     if (canCopyPath) {
-      try {
-        const parentPath = await this.getItemTooltip(item);
-        if (parentPath) {
-          tooltip = parentPath + "/" + item.name;
+      // Try to extract full path from URI first (new approach)
+      if (uri.path && uri.path !== `/${item.name}`) {
+        const fullPath = uri.path.startsWith("/")
+          ? uri.path.substring(1)
+          : uri.path;
+        // Only use if it looks like a proper path with more than just the filename
+        if (fullPath.includes("/")) {
+          tooltip = fullPath;
         }
-      } catch {
-        // If getting parent path fails, tooltip will remain as item.name
+      }
+      
+      // Fallback: if URI-based approach didn't work, try getting path directly
+      if (tooltip === item.name) {
+        try {
+          const fullPath = await this.model.getPathOfItem(item);
+          if (fullPath && fullPath !== `/${item.name}` && fullPath.includes("/")) {
+            tooltip = fullPath;
+          }
+        } catch {
+          // If path retrieval fails, tooltip remains as item.name
+        }
       }
     }
 
@@ -751,30 +762,6 @@ class ContentDataProvider
           ),
         }
       : undefined;
-  }
-
-  private async getItemTooltip(item: ContentItem): Promise<string> {
-    const parentUri = item.parentFolderUri;
-    if (!parentUri) {
-      return "";
-    }
-
-    if (!this.parentPathCache.has(parentUri)) {
-      try {
-        const fullPath = await this.model.getPathOfItem(item);
-        if (fullPath) {
-          const parentPath =
-            fullPath.substring(0, fullPath.lastIndexOf("/")) || "/";
-          this.parentPathCache.set(parentUri, parentPath);
-        } else {
-          this.parentPathCache.set(parentUri, "");
-        }
-      } catch {
-        this.parentPathCache.set(parentUri, "");
-      }
-    }
-
-    return this.parentPathCache.get(parentUri) || "";
   }
 }
 
