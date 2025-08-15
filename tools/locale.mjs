@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from "fs";
-import glob from "glob";
+import { glob } from "glob";
 import csv from "papaparse";
 import { dirname, isAbsolute, join } from "path";
 import { fileURLToPath } from "url";
