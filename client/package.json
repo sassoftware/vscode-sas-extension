@@ -13,7 +13,7 @@
     "ag-grid-react": "^34.1.1",
     "axios": "^1.11.0",
     "highlight.js": "^11.11.1",
-    "marked": "^16.1.2",
+    "marked": "^16.2.0",
     "media-typer": "^1.1.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
