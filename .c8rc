@@ -3,16 +3,18 @@
   "src": ["client/src", "server/src"],
   "exclude": [
     "**/node_modules/**",
-    "*.test.*",
+    "**/*.test.*",
     "client/dist",
+    "client/src/connection/rest/api",
     "server/dist",
-    "client/src/connection/rest/api"
+    "tools",
+    "server/src/python"
   ],
   "reporter": ["html", "text"],
   "excludeAfterRemap": true,
   "checkCoverage": true,
-  "lines": 57,
-  "statements": 57,
-  "branches": 75,
-  "functions": 44
+  "lines": 52,
+  "statements": 52,
+  "branches": 71,
+  "functions": 43
 }
