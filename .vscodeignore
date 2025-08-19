@@ -20,3 +20,6 @@ ContributorAgreement.txt
 eslint.config.mjs
 pull_request_template.md
 l10n/bundle.l10n.json
+.eslintrc.js
+.c8rc
+coverage/
