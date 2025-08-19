@@ -26,6 +26,7 @@ export const SAS_SERVER_ROOT_FOLDER = createStaticFolder(
   "getDirectoryMembers",
 );
 
+export const STOP_SIGN = "__STOP_SIGN__";
 export const FILE_TYPE = "file";
 export const DATAFLOW_TYPE = "dataFlow";
 export const FILE_TYPES = [FILE_TYPE, DATAFLOW_TYPE];

@@ -113,41 +113,39 @@ class ContentNavigator implements SubscriptionProvider {
               const moveToRecycleBin =
                 this.contentDataProvider.canRecycleResource(resource);
 
-              if (resource.contextValue.includes("delete")) {
+              if (
+                !moveToRecycleBin &&
+                !(await window.showWarningMessage(
+                  l10n.t(Messages.DeleteWarningMessage, {
+                    name: resource.name,
+                  }),
+                  { modal: true },
+                  Messages.DeleteButtonLabel,
+                ))
+              ) {
+                return;
+              } else if (moveToRecycleBin && hasUnsavedFiles) {
                 if (
-                  !moveToRecycleBin &&
                   !(await window.showWarningMessage(
-                    l10n.t(Messages.DeleteWarningMessage, {
+                    l10n.t(Messages.RecycleDirtyFolderWarning, {
                       name: resource.name,
                     }),
                     { modal: true },
-                    Messages.DeleteButtonLabel,
+                    Messages.MoveToRecycleBinLabel,
                   ))
                 ) {
                   return;
-                } else if (moveToRecycleBin && hasUnsavedFiles) {
-                  if (
-                    !(await window.showWarningMessage(
-                      l10n.t(Messages.RecycleDirtyFolderWarning, {
-                        name: resource.name,
-                      }),
-                      { modal: true },
-                      Messages.MoveToRecycleBinLabel,
-                    ))
-                  ) {
-                    return;
-                  }
                 }
-                const deleteResult = moveToRecycleBin
-                  ? await this.contentDataProvider.recycleResource(resource)
-                  : await this.contentDataProvider.deleteResource(resource);
-                if (!deleteResult) {
-                  window.showErrorMessage(
-                    isContainer
-                      ? Messages.FolderDeletionError
-                      : Messages.FileDeletionError,
-                  );
-                }
+              }
+              const deleteResult = moveToRecycleBin
+                ? await this.contentDataProvider.recycleResource(resource)
+                : await this.contentDataProvider.deleteResource(resource);
+              if (!deleteResult) {
+                window.showErrorMessage(
+                  isContainer
+                    ? Messages.FolderDeletionError
+                    : Messages.FileDeletionError,
+                );
               }
             },
           );
@@ -540,4 +538,5 @@ class ContentNavigator implements SubscriptionProvider {
     }
   }
 }
+
 export default ContentNavigator;

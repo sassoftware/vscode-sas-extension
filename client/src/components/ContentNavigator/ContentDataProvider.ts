@@ -46,6 +46,7 @@ import {
   ROOT_FOLDER_TYPE,
   SERVER_HOME_FOLDER_TYPE,
   SERVER_ROOT_FOLDER_TYPE,
+  STOP_SIGN,
   TRASH_FOLDER_TYPE,
 } from "./const";
 import {
@@ -218,9 +219,7 @@ class ContentDataProvider
     const uri = await this.model.getUri(item, false);
 
     // Cache the URI to parent mapping
-    if (item.parentFolderUri) {
-      this.uriToParentMap.set(item.uri, item.parentFolderUri);
-    }
+    this.uriToParentMap.set(item.uri, item.parentFolderUri ?? STOP_SIGN);
 
     return {
       collapsibleState: isContainer
@@ -452,6 +451,7 @@ class ContentDataProvider
 
   public refresh(): void {
     this._onDidChangeTreeData.fire(undefined);
+    this.uriToParentMap.clear();
   }
 
   public async getParent(
@@ -573,6 +573,10 @@ class ContentDataProvider
     while (currentParentUri || depth >= 10) {
       if (currentParentUri === ancestorFolderUri) {
         return true;
+      }
+
+      if (currentParentUri === STOP_SIGN) {
+        return false;
       }
 
       const nextParentUri = this.uriToParentMap.get(currentParentUri);
