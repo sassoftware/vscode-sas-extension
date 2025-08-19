@@ -17,6 +17,7 @@ import * as path from "path";
 import { profileConfig } from "../../commands/profile";
 import { Column } from "../../connection/rest/api/compute";
 import DataViewer from "../../panels/DataViewer";
+import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import LibraryAdapterFactory from "./LibraryAdapterFactory";
@@ -99,6 +100,54 @@ class LibraryNavigator implements SubscriptionProvider {
             stream,
             item,
           );
+        },
+      ),
+      commands.registerCommand(
+        "SAS.showTableProperties",
+        async (item: LibraryItem) => {
+          try {
+            const tableInfo = await this.libraryDataProvider.getTableInfo(item);
+            const columns = await this.libraryDataProvider.fetchColumns(item);
+
+            this.webviewManager.render(
+              new TablePropertiesViewer(
+                this.extensionUri,
+                item.uid,
+                tableInfo,
+                columns,
+                false, // Show properties tab
+              ),
+              `properties-${item.uid}`,
+            );
+          } catch (error) {
+            window.showErrorMessage(
+              `Failed to load table properties: ${error.message}`,
+            );
+          }
+        },
+      ),
+      commands.registerCommand(
+        "SAS.showTableColumns",
+        async (item: LibraryItem) => {
+          try {
+            const tableInfo = await this.libraryDataProvider.getTableInfo(item);
+            const columns = await this.libraryDataProvider.fetchColumns(item);
+
+            this.webviewManager.render(
+              new TablePropertiesViewer(
+                this.extensionUri,
+                item.uid,
+                tableInfo,
+                columns,
+                true, // Show columns tab
+              ),
+              `columns-${item.uid}`,
+            );
+          } catch (error) {
+            window.showErrorMessage(
+              `Failed to load table columns: ${error.message}`,
+            );
+          }
         },
       ),
       commands.registerCommand("SAS.collapseAllLibraries", () => {
