@@ -1,0 +1,20 @@
+{
+  "all": true,
+  "src": ["client/src", "server/src"],
+  "exclude": [
+    "**/node_modules/**",
+    "**/*.test.*",
+    "client/dist",
+    "client/src/connection/rest/api",
+    "server/dist",
+    "tools",
+    "server/src/python"
+  ],
+  "reporter": ["html", "text"],
+  "excludeAfterRemap": true,
+  "checkCoverage": true,
+  "lines": 52,
+  "statements": 52,
+  "branches": 71,
+  "functions": 43
+}
