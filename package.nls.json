@@ -13,7 +13,6 @@
   "commands.SAS.deleteTable": "Delete",
   "commands.SAS.download": "Download",
   "commands.SAS.showTableProperties": "Properties",
-  "commands.SAS.showTableColumns": "Columns",
   "commands.SAS.emptyRecycleBin": "Empty Recycle Bin",
   "commands.SAS.file.new": "New SAS File",
   "commands.SAS.file.new.short": "SAS File",
