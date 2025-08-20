@@ -131,7 +131,9 @@ class LibraryModel {
     if (this.libraryAdapter.getTableInfo) {
       return await this.libraryAdapter.getTableInfo(item);
     }
-    throw new Error("Table properties not supported for this connection type");
+    throw new Error(
+      "Table properties are only supported for SAS Viya connections",
+    );
   }
 
   public async getChildren(item?: LibraryItem): Promise<LibraryItem[]> {

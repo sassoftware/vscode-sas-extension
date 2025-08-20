@@ -11,7 +11,7 @@ import {
   TableData,
   TableRow,
 } from "../../components/LibraryNavigator/types";
-import { ColumnCollection, TableInfo } from "../rest/api/compute";
+import { ColumnCollection } from "../rest/api/compute";
 import { getColumnIconType } from "../util";
 import { executeRawCode, runCode } from "./CodeRunner";
 import { Config } from "./types";
@@ -195,29 +195,6 @@ class ItcLibraryAdapter implements LibraryAdapter {
       );
     }
   }
-
-  public async getTableInfo(item: LibraryItem): Promise<TableInfo> {
-    const code = `
-      $runner.GetTableInfo("${item.library}", "${item.name}")
-    `;
-    const output = await executeRawCode(code);
-    const tableInfo = JSON.parse(output);
-
-    return {
-      name: tableInfo.name,
-      type: tableInfo.type,
-      creationTimeStamp: tableInfo.creationTimeStamp,
-      modifiedTimeStamp: tableInfo.modifiedTimeStamp,
-      rowCount: tableInfo.rowCount,
-      columnCount: tableInfo.columnCount,
-      compressionRoutine: tableInfo.compressionRoutine,
-      label: tableInfo.label,
-      engine: tableInfo.engine,
-      extendedType: tableInfo.extendedType,
-      libref: tableInfo.libref,
-    };
-  }
-
   protected async executionHandler(
     callback: () => Promise<string>,
   ): Promise<string> {
