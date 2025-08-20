@@ -219,7 +219,10 @@ class ContentDataProvider
     const uri = await this.model.getUri(item, false);
 
     // Cache the URI to parent mapping
-    this.uriToParentMap.set(item.uri, item.parentFolderUri ?? STOP_SIGN);
+    this.uriToParentMap.set(
+      item.uri,
+      item.parentFolderUri ? item.parentFolderUri : STOP_SIGN,
+    );
 
     return {
       collapsibleState: isContainer
