@@ -53,7 +53,6 @@ class RestContentAdapter implements ContentAdapter {
   };
   private contextMenuProvider: ContextMenuProvider;
   private pathCache: Map<string, string> = new Map();
-  private pathPromiseCache: Map<string, Promise<string>> = new Map();
 
   public constructor() {
     this.rootFolders = {};
@@ -120,12 +119,7 @@ class RestContentAdapter implements ContentAdapter {
     }
     const { data } = await this.connection.get(ancestorsLink.uri);
     if (data && data.length > 0) {
-      const enrichedItem = this.enrichWithDataProviderProperties(data[0]);
-
-      if (enrichedItem.contextValue?.includes("copyPath")) {
-        await this.updateUriWithFullPath(enrichedItem);
-      }
-
+      const enrichedItem = await this.enrichWithDataProviderProperties(data[0]);
       return enrichedItem;
     }
   }
@@ -154,20 +148,16 @@ class RestContentAdapter implements ContentAdapter {
       result.items.map(
         async (childItem: ContentItem, index): Promise<ContentItem> => {
           const favoriteUri = fetchFavoriteUri(childItem);
-          const enrichedItem = {
-            ...childItem,
-            uid: `${parentItem.uid}/${index}`,
-            ...this.enrichWithDataProviderProperties(childItem, {
+          const enrichedItem = await this.enrichWithDataProviderProperties(
+            childItem,
+            {
               isInRecycleBin,
               isInMyFavorites: parentIdIsFavoritesFolder || !!favoriteUri,
               favoriteUri,
-            }),
-          };
+            },
+          );
 
-          if (enrichedItem.contextValue?.includes("copyPath")) {
-            await this.updateUriWithFullPath(enrichedItem);
-          }
-
+          enrichedItem.uid = `${parentItem.uid}/${index}`;
           return enrichedItem;
         },
       ),
@@ -202,37 +192,16 @@ class RestContentAdapter implements ContentAdapter {
     if (!item) {
       return "";
     }
-    const baseKey = item.uri || item.id || item.name;
-    const cacheKey = `${baseKey}_${folderPathOnly || false}`;
 
-    if (this.pathCache.has(cacheKey)) {
-      return this.pathCache.get(cacheKey)!;
+    if (this.pathCache.has(item.id)) {
+      return this.pathCache.get(item.id)!;
     }
-
-    if (this.pathPromiseCache.has(cacheKey)) {
-      return this.pathPromiseCache.get(cacheKey)!;
-    }
-
-    const pathPromise = this.calculatePathOfItem(item, folderPathOnly);
-    this.pathPromiseCache.set(cacheKey, pathPromise);
 
     try {
-      const path = await pathPromise;
-      this.pathCache.set(cacheKey, path);
-      this.pathPromiseCache.delete(cacheKey);
-
-      if (!folderPathOnly && path.includes("/")) {
-        const parentPath = path.substring(0, path.lastIndexOf("/")) || "/";
-        const parentKey = `${item.parentFolderUri}_true`;
-        if (!this.pathCache.has(parentKey)) {
-          this.pathCache.set(parentKey, parentPath);
-        }
-      }
-
+      const path = await this.calculatePathOfItem(item, folderPathOnly);
+      this.pathCache.set(item.id, path);
       return path;
     } catch {
-      this.pathPromiseCache.delete(cacheKey);
-      this.pathCache.set(cacheKey, "");
       return "";
     }
   }
@@ -273,7 +242,17 @@ class RestContentAdapter implements ContentAdapter {
     const updateLink = getLink(item.links, "PUT", "update");
     try {
       const response = await this.connection.put(updateLink.uri, newItemData);
-      return this.enrichWithDataProviderProperties(response.data).vscUri;
+      const enrichedItem = await this.enrichWithDataProviderProperties(
+        response.data,
+      );
+
+      // Clear cache for moved item and all its children since their paths changed
+      await this.clearCacheForItemAndChildren(item);
+
+      // Update cache with new path since item was moved
+      this.pathCache.set(item.id, await this.calculatePathOfItem(enrichedItem));
+
+      return enrichedItem.vscUri;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return;
@@ -359,11 +338,11 @@ class RestContentAdapter implements ContentAdapter {
           ? { data: ROOT_FOLDER }
           : await this.connection.get(`/folders/folders/${delegateFolderName}`);
 
-      this.rootFolders[delegateFolderName] = {
-        ...result.data,
-        uid: `${index}`,
-        ...this.enrichWithDataProviderProperties(result.data),
-      };
+      const enrichedItem = await this.enrichWithDataProviderProperties(
+        result.data,
+      );
+      enrichedItem.uid = `${index}`;
+      this.rootFolders[delegateFolderName] = enrichedItem;
     }
 
     return this.rootFolders;
@@ -373,12 +352,9 @@ class RestContentAdapter implements ContentAdapter {
     const response = await this.connection.get(id);
     this.updateFileMetadata(id, response);
 
-    const enrichedItem = this.enrichWithDataProviderProperties(response.data);
-
-    if (enrichedItem.contextValue?.includes("copyPath")) {
-      await this.updateUriWithFullPath(enrichedItem);
-    }
-
+    const enrichedItem = await this.enrichWithDataProviderProperties(
+      response.data,
+    );
     return enrichedItem;
   }
 
@@ -417,14 +393,9 @@ class RestContentAdapter implements ContentAdapter {
         `/folders/folders?parentFolderUri=${parentFolderUri}`,
         { name: folderName },
       );
-      const enrichedItem = this.enrichWithDataProviderProperties(
+      const enrichedItem = await this.enrichWithDataProviderProperties(
         createFolderResponse.data,
       );
-
-      if (enrichedItem.contextValue?.includes("copyPath")) {
-        await this.updateUriWithFullPath(enrichedItem);
-      }
-
       return enrichedItem;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
@@ -432,16 +403,16 @@ class RestContentAdapter implements ContentAdapter {
     }
   }
 
-  private enrichWithDataProviderProperties(
+  private async enrichWithDataProviderProperties(
     item: ContentItem,
     flags?: ContentItem["flags"],
-  ): ContentItem {
+  ): Promise<ContentItem> {
     item.flags = flags;
     item.permission = getPermission(item);
 
     const contextValue = this.contextMenuProvider.availableActions(item);
 
-    return {
+    const enrichedItem = {
       ...item,
       contextValue,
       fileStat: {
@@ -455,6 +426,13 @@ class RestContentAdapter implements ContentAdapter {
       vscUri: getSasContentUri(item, flags?.isInRecycleBin || false),
       typeName: getTypeName(item),
     };
+
+    // Update URI with full path if the item supports copyPath context action
+    if (enrichedItem.contextValue?.includes("copyPath")) {
+      await this.updateUriWithFullPath(enrichedItem);
+    }
+
+    return enrichedItem;
 
     function getIsContainer(item: ContentItem): boolean {
       const typeName = getTypeName(item);
@@ -534,13 +512,15 @@ class RestContentAdapter implements ContentAdapter {
         return await this.getItemOfId(item.uri);
       }
 
-      const enrichedItem = this.enrichWithDataProviderProperties(
+      const enrichedItem = await this.enrichWithDataProviderProperties(
         patchResponse.data,
       );
 
-      if (enrichedItem.contextValue?.includes("copyPath")) {
-        await this.updateUriWithFullPath(enrichedItem);
-      }
+      // Clear cache for renamed item and all its children since their paths changed
+      await this.clearCacheForItemAndChildren(item);
+
+      // Update cache with new path since item was renamed
+      this.pathCache.set(item.id, await this.calculatePathOfItem(enrichedItem));
 
       return enrichedItem;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -587,12 +567,8 @@ class RestContentAdapter implements ContentAdapter {
       return;
     }
 
-    const enrichedItem = this.enrichWithDataProviderProperties(createdResource);
-
-    if (enrichedItem.contextValue?.includes("copyPath")) {
-      await this.updateUriWithFullPath(enrichedItem);
-    }
-
+    const enrichedItem =
+      await this.enrichWithDataProviderProperties(createdResource);
     return enrichedItem;
   }
 
@@ -656,11 +632,17 @@ class RestContentAdapter implements ContentAdapter {
   public async deleteItem(item: ContentItem): Promise<boolean> {
     // folder service will return 409 error if the deleting folder has non-folder item even if add recursive parameter
     // delete the resource or move item to recycle bin will automatically delete the favorites as well.
-    return await (isContainer(item)
+    const success = await (isContainer(item)
       ? this.deleteFolder(item)
       : this.deleteResource(item));
-  }
 
+    // Clear cache since item was deleted
+    if (success) {
+      await this.clearCacheForItemAndChildren(item);
+    }
+
+    return success;
+  }
   public async addItemToFavorites(item: ContentItem): Promise<boolean> {
     return await this.addChildItem(
       getResourceIdFromItem(item),
@@ -702,8 +684,14 @@ class RestContentAdapter implements ContentAdapter {
     }
 
     const success = await this.moveItem(item, recycleBinUri);
-    return recycleItemResponse(!!success);
 
+    // Clear cache since item path changed when moved to recycle bin
+    // Note: moveItem already clears cache, but being explicit here
+    if (success) {
+      await this.clearCacheForItemAndChildren(item);
+    }
+
+    return recycleItemResponse(!!success);
     function recycleItemResponse(success: boolean) {
       if (!success) {
         return {};
@@ -721,9 +709,17 @@ class RestContentAdapter implements ContentAdapter {
     if (!previousParentUri) {
       return false;
     }
-    return !!(await this.moveItem(item, previousParentUri));
-  }
 
+    const success = !!(await this.moveItem(item, previousParentUri));
+
+    // Clear cache since item path changed when restored
+    // Note: moveItem already clears cache, but being explicit here
+    if (success) {
+      await this.clearCacheForItemAndChildren(item);
+    }
+
+    return success;
+  }
   private async updateAccessToken(): Promise<void> {
     const session = await authentication.getSession(SASAuthProvider.id, [], {
       createIfNone: true,
@@ -764,6 +760,7 @@ class RestContentAdapter implements ContentAdapter {
     try {
       const children = await this.getChildItems(item);
       await Promise.all(children.map((child) => this.deleteItem(child)));
+
       const deleteRecursivelyLink = getLink(
         item.links,
         "DELETE",
@@ -868,6 +865,23 @@ class RestContentAdapter implements ContentAdapter {
     }
 
     return `${getResourceIdFromItem(myFavoritesFolder)}/members/${favoriteId}`;
+  }
+
+  private async clearCacheForItemAndChildren(item: ContentItem): Promise<void> {
+    // Clear cache for the item itself
+    this.pathCache.delete(item.id);
+
+    // If it's a container, clear cache for all children too
+    if (isContainer(item)) {
+      try {
+        const children = await this.getChildItems(item);
+        for (const child of children) {
+          await this.clearCacheForItemAndChildren(child);
+        }
+      } catch {
+        // If we can't get children, just continue - the cache entries will be stale but not incorrect
+      }
+    }
   }
 }
 
