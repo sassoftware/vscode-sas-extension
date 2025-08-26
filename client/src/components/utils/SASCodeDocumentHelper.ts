@@ -104,37 +104,34 @@ function selectionsAreNotEmpty(
 
 function getHtmlStyleValue(): string {
   const htmlStyleSetting = getHtmlStyle();
-  const isValidStyle = (style: string) => /^[a-zA-Z0-9_]+$/.test(style);
-
   let styleValue = "";
   if (htmlStyleSetting === "(auto)") {
     // get the styleMapping object from user settings
     const styleMapping: {
-      illuminate?: string;
-      ignite?: string;
+      light?: string;
+      dark?: string;
       highContrast?: string;
+      highContrastLight?: string;
     } =
-      window.activeColorTheme &&
-      typeof window.activeColorTheme.kind === "number"
-        ? workspace.getConfiguration("SAS").get<{
-            illuminate?: string;
-            ignite?: string;
-            highContrast?: string;
-          }>("results.html.styleMapping") || {}
-        : {};
+      workspace.getConfiguration("SAS").get<{
+        illuminate?: string;
+        ignite?: string;
+        highContrast?: string;
+        highContrastLight?: string;
+      }>("results.html.styleMapping") || {};
 
     switch (window.activeColorTheme.kind) {
       case ColorThemeKind.Light:
-        styleValue = styleMapping.illuminate || "Illuminate";
+        styleValue = styleMapping.light || "Illuminate";
         break;
       case ColorThemeKind.Dark:
-        styleValue = styleMapping.ignite || "Ignite";
+        styleValue = styleMapping.dark || "Ignite";
         break;
       case ColorThemeKind.HighContrast:
         styleValue = styleMapping.highContrast || "HighContrast";
         break;
       case ColorThemeKind.HighContrastLight:
-        styleValue = styleMapping.illuminate || "Illuminate";
+        styleValue = styleMapping.highContrastLight || "Illuminate";
         break;
       default:
         styleValue = "";
@@ -143,14 +140,6 @@ function getHtmlStyleValue(): string {
     styleValue = "";
   } else {
     styleValue = htmlStyleSetting;
-  }
-
-  // Validate style value
-  if (styleValue && !isValidStyle(styleValue)) {
-    console.warn(
-      `Invalid ODS style name: ${styleValue}. Only a-z, A-Z, 0-9, and _ are allowed.`,
-    );
-    return "";
   }
   return styleValue;
 }
