@@ -523,7 +523,8 @@ class ContentDataProvider
 
     const targetFolderUri = resource.uri;
 
-    const dirtyFiles = workspace.textDocuments
+    // Check for dirty text documents
+    const dirtyTextFiles = workspace.textDocuments
       .filter((doc) => {
         if (!doc.isDirty) {
           return false;
@@ -539,11 +540,30 @@ class ContentDataProvider
       })
       .map((doc) => doc.uri);
 
-    if (dirtyFiles.length === 0) {
+    // Check for dirty notebook documents (SASNB files)
+    const dirtyNotebookFiles = workspace.notebookDocuments
+      .filter((notebook) => {
+        if (!notebook.isDirty) {
+          return false;
+        }
+
+        const scheme = notebook.uri.scheme;
+        return (
+          scheme === "sasContent" ||
+          scheme === "sasServer" ||
+          scheme === "sasContentReadOnly" ||
+          scheme === "sasServerReadOnly"
+        );
+      })
+      .map((notebook) => notebook.uri);
+
+    const allDirtyFiles = [...dirtyTextFiles, ...dirtyNotebookFiles];
+
+    if (allDirtyFiles.length === 0) {
       return false;
     }
 
-    for (const dirtyFileUri of dirtyFiles) {
+    for (const dirtyFileUri of allDirtyFiles) {
       if (
         await this.isDescendantOf(getResourceId(dirtyFileUri), targetFolderUri)
       ) {
