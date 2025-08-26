@@ -114,8 +114,8 @@ function getHtmlStyleValue(): string {
       highContrastLight?: string;
     } =
       workspace.getConfiguration("SAS").get<{
-        illuminate?: string;
-        ignite?: string;
+        light?: string;
+        dark?: string;
         highContrast?: string;
         highContrastLight?: string;
       }>("results.html.styleMapping") || {};

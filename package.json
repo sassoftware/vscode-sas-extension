@@ -515,17 +515,21 @@
             "default": {},
             "description": "%configuration.SAS.results.html.styleMapping%",
             "properties": {
-              "illuminate": {
+              "light": {
                 "type": "string",
-                "description": "Style to use for illuminate theme"
+                "description": "Style to use for light theme"
               },
-              "ignite": {
+              "dark": {
                 "type": "string",
-                "description": "Style to use for ignite theme"
+                "description": "Style to use for dark theme"
               },
               "highContrast": {
                 "type": "string",
                 "description": "Style to use for high contrast theme"
+              },
+              "highContrastLight": {
+                "type": "string",
+                "description": "Style to use for high contrast light theme"
               }
             }
           },
