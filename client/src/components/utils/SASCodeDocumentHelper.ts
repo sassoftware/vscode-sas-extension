@@ -8,6 +8,7 @@ import {
   TextDocument,
   commands,
   window,
+  workspace,
 } from "vscode";
 
 import { v4 } from "uuid";
@@ -103,26 +104,55 @@ function selectionsAreNotEmpty(
 
 function getHtmlStyleValue(): string {
   const htmlStyleSetting = getHtmlStyle();
+  const isValidStyle = (style: string) => /^[a-zA-Z0-9_]+$/.test(style);
 
-  switch (htmlStyleSetting) {
-    case "(auto)":
-      switch (window.activeColorTheme.kind) {
-        case ColorThemeKind.Light:
-          return "Illuminate";
-        case ColorThemeKind.Dark:
-          return "Ignite";
-        case ColorThemeKind.HighContrast:
-          return "HighContrast";
-        case ColorThemeKind.HighContrastLight:
-          return "Illuminate";
-        default:
-          return "";
-      }
-    case "(server default)":
-      return "";
-    default:
-      return htmlStyleSetting;
+  let styleValue = "";
+  if (htmlStyleSetting === "(auto)") {
+    // get the styleMapping object from user settings
+    const styleMapping: {
+      illuminate?: string;
+      ignite?: string;
+      highContrast?: string;
+    } =
+      window.activeColorTheme &&
+      typeof window.activeColorTheme.kind === "number"
+        ? workspace.getConfiguration("SAS").get<{
+            illuminate?: string;
+            ignite?: string;
+            highContrast?: string;
+          }>("results.html.styleMapping") || {}
+        : {};
+
+    switch (window.activeColorTheme.kind) {
+      case ColorThemeKind.Light:
+        styleValue = styleMapping.illuminate || "Illuminate";
+        break;
+      case ColorThemeKind.Dark:
+        styleValue = styleMapping.ignite || "Ignite";
+        break;
+      case ColorThemeKind.HighContrast:
+        styleValue = styleMapping.highContrast || "HighContrast";
+        break;
+      case ColorThemeKind.HighContrastLight:
+        styleValue = styleMapping.illuminate || "Illuminate";
+        break;
+      default:
+        styleValue = "";
+    }
+  } else if (htmlStyleSetting === "(server default)") {
+    styleValue = "";
+  } else {
+    styleValue = htmlStyleSetting;
   }
+
+  // Validate style value
+  if (styleValue && !isValidStyle(styleValue)) {
+    console.warn(
+      `Invalid ODS style name: ${styleValue}. Only a-z, A-Z, 0-9, and _ are allowed.`,
+    );
+    return "";
+  }
+  return styleValue;
 }
 
 // if no valid selection, return whole text as only selection

@@ -510,6 +510,25 @@
             ],
             "description": "%configuration.SAS.results.html.style%"
           },
+          "SAS.results.html.styleMapping": {
+            "type": "object",
+            "default": {},
+            "description": "%configuration.SAS.results.html.styleMapping%",
+            "properties": {
+              "illuminate": {
+                "type": "string",
+                "description": "Style to use for illuminate theme"
+              },
+              "ignite": {
+                "type": "string",
+                "description": "Style to use for ignite theme"
+              },
+              "highContrast": {
+                "type": "string",
+                "description": "Style to use for high contrast theme"
+              }
+            }
+          },
           "SAS.problems.log.enabled": {
             "type": "boolean",
             "default": true,
