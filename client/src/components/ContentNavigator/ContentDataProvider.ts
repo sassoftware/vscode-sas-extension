@@ -573,7 +573,7 @@ class ContentDataProvider
     }
 
     let depth = 0;
-    while (currentParentUri || depth >= 10) {
+    while (currentParentUri || depth <= 10) {
       if (currentParentUri === ancestorFolderUri) {
         return true;
       }
