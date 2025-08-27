@@ -194,6 +194,7 @@ class RestContentAdapter implements ContentAdapter {
     }
 
     if (this.pathCache.has(item.id)) {
+      console.log(this.pathCache);
       return this.pathCache.get(item.id)!;
     }
 
@@ -211,29 +212,55 @@ class RestContentAdapter implements ContentAdapter {
     folderPathOnly?: boolean,
   ): Promise<string> {
     const filePathParts = [];
-    let currentContentItem: Pick<ContentItem, "parentFolderUri" | "name"> =
-      item;
+    let currentContentItem: Pick<
+      ContentItem,
+      "parentFolderUri" | "name" | "id"
+    > = item;
     if (!folderPathOnly) {
       filePathParts.push(currentContentItem.name);
     }
 
     do {
+      if (currentContentItem.parentFolderUri) {
+        const cachedParentPath = this.pathCache.get(
+          currentContentItem.parentFolderUri,
+        );
+        if (cachedParentPath) {
+          const fullPath =
+            cachedParentPath + "/" + filePathParts.reverse().join("/");
+          return fullPath;
+        }
+      }
       try {
         const { data: parentData } = await this.connection.get(
           currentContentItem.parentFolderUri,
         );
         currentContentItem = parentData;
+
+        if (currentContentItem.name) {
+          filePathParts.push(currentContentItem.name);
+        }
       } catch {
         return "";
       }
-      if (currentContentItem.name) {
-        filePathParts.push(currentContentItem.name);
-      }
     } while (currentContentItem.parentFolderUri);
 
-    return "/" + filePathParts.reverse().join("/");
-  }
+    const fullPath = "/" + filePathParts.reverse().join("/");
 
+    // Cache intermediate parent paths for future efficiency
+    this.cacheIntermediatePaths(item, fullPath);
+
+    return fullPath;
+  }
+  private cacheIntermediatePaths(item: ContentItem, fullPath: string): void {
+    // Cache the parent folder URI with its path for sibling efficiency
+    if (item.parentFolderUri && fullPath.includes("/")) {
+      const parentPath = fullPath.substring(0, fullPath.lastIndexOf("/"));
+      if (parentPath && !this.pathCache.has(item.parentFolderUri)) {
+        this.pathCache.set(item.parentFolderUri, parentPath);
+      }
+    }
+  }
   public async moveItem(
     item: ContentItem,
     parentFolderUri: string,
