@@ -106,8 +106,8 @@ function getHtmlStyleValue(): string {
   const htmlStyleSetting = getHtmlStyle();
   let styleValue = "";
   if (htmlStyleSetting === "(auto)") {
-    // get the styleMapping object from user settings
-    const styleMapping: {
+    // get the results.html.custom.style object from user settings
+    const customStyle: {
       light?: string;
       dark?: string;
       highContrast?: string;
@@ -118,20 +118,20 @@ function getHtmlStyleValue(): string {
         dark?: string;
         highContrast?: string;
         highContrastLight?: string;
-      }>("results.html.styleMapping") || {};
+      }>("results.html.custom.style") || {};
 
     switch (window.activeColorTheme.kind) {
       case ColorThemeKind.Light:
-        styleValue = styleMapping.light || "Illuminate";
+        styleValue = customStyle.light || "Illuminate";
         break;
       case ColorThemeKind.Dark:
-        styleValue = styleMapping.dark || "Ignite";
+        styleValue = customStyle.dark || "Ignite";
         break;
       case ColorThemeKind.HighContrast:
-        styleValue = styleMapping.highContrast || "HighContrast";
+        styleValue = customStyle.highContrast || "HighContrast";
         break;
       case ColorThemeKind.HighContrastLight:
-        styleValue = styleMapping.highContrastLight || "Illuminate";
+        styleValue = customStyle.highContrastLight || "Illuminate";
         break;
       default:
         styleValue = "";

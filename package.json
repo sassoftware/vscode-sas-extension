@@ -510,10 +510,10 @@
             ],
             "description": "%configuration.SAS.results.html.style%"
           },
-          "SAS.results.html.styleMapping": {
+          "SAS.results.html.custom.style": {
             "type": "object",
             "default": {},
-            "description": "%configuration.SAS.results.html.styleMapping%",
+            "description": "%configuration.SAS.results.html.custom.style%",
             "properties": {
               "light": {
                 "type": "string",
