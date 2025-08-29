@@ -510,6 +510,29 @@
             ],
             "description": "%configuration.SAS.results.html.style%"
           },
+          "SAS.results.html.custom.style": {
+            "type": "object",
+            "default": {},
+            "description": "%configuration.SAS.results.html.custom.style%",
+            "properties": {
+              "light": {
+                "type": "string",
+                "description": "Style to use for light theme"
+              },
+              "dark": {
+                "type": "string",
+                "description": "Style to use for dark theme"
+              },
+              "highContrast": {
+                "type": "string",
+                "description": "Style to use for high contrast theme"
+              },
+              "highContrastLight": {
+                "type": "string",
+                "description": "Style to use for high contrast light theme"
+              }
+            }
+          },
           "SAS.problems.log.enabled": {
             "type": "boolean",
             "default": true,
