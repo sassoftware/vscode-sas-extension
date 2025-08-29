@@ -8,6 +8,7 @@ import {
   GridReadyEvent,
   IGetRowsParams,
   ModuleRegistry,
+  SortModelItem,
 } from "ag-grid-community";
 import { v4 } from "uuid";
 
@@ -34,12 +35,16 @@ const clearQueryTimeout = (): void => {
   clearTimeout(queryTableDataTimeoutId);
   queryTableDataTimeoutId = null;
 };
-const queryTableData = (start: number, end: number): Promise<TableData> => {
+const queryTableData = (
+  start: number,
+  end: number,
+  sortModel: SortModelItem[],
+): Promise<TableData> => {
   const requestKey = v4();
   vscode.postMessage({
     command: "request:loadData",
     key: requestKey,
-    data: { start, end },
+    data: { start, end, sortModel },
   });
 
   return new Promise((resolve, reject) => {
@@ -103,23 +108,25 @@ const useDataViewer = () => {
       const dataSource = {
         rowCount: undefined,
         getRows: async (params: IGetRowsParams) => {
-          await queryTableData(params.startRow, params.endRow).then(
-            ({ rows, count }: TableData) => {
-              const rowData = rows.map(({ cells }) => {
-                const row = cells.reduce(
-                  (carry, cell, index) => ({
-                    ...carry,
-                    [columns[index].field]: cell,
-                  }),
-                  {},
-                );
+          await queryTableData(
+            params.startRow,
+            params.endRow,
+            params.sortModel,
+          ).then(({ rows, count }: TableData) => {
+            const rowData = rows.map(({ cells }) => {
+              const row = cells.reduce(
+                (carry, cell, index) => ({
+                  ...carry,
+                  [columns[index].field]: cell,
+                }),
+                {},
+              );
 
-                return row;
-              });
+              return row;
+            });
 
-              params.successCallback(rowData, count);
-            },
-          );
+            params.successCallback(rowData, count);
+          });
         },
       };
 

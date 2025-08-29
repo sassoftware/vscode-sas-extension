@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import { Uri, window } from "vscode";
 
+import { SortModelItem } from "ag-grid-community";
+
 import PaginatedResultSet from "../components/LibraryNavigator/PaginatedResultSet";
 import { TableData } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
@@ -66,7 +68,7 @@ class DataViewer extends WebView {
     event: Event & {
       key: string;
       command: string;
-      data?: { start?: number; end?: number };
+      data?: { start?: number; end?: number; sortModel?: SortModelItem[] };
     },
   ): Promise<void> {
     switch (event.command) {
@@ -74,6 +76,7 @@ class DataViewer extends WebView {
         const { data, error } = await this._paginator.getData(
           event.data!.start!,
           event.data!.end!,
+          event.data!.sortModel!,
         );
         if (error) {
           await window.showErrorMessage(error.message);
