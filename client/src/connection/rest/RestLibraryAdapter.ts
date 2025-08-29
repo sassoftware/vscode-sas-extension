@@ -1,5 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { SortModelItem } from "ag-grid-community";
 import { AxiosResponse } from "axios";
 
 import { getSession } from "..";
@@ -44,6 +45,7 @@ class RestLibraryAdapter implements LibraryAdapter {
     item: LibraryItem,
     start: number,
     limit: number,
+    sortModel: SortModelItem[],
   ): Promise<TableData> {
     const { data } = await this.retryOnFail<RowCollection>(
       async () =>
