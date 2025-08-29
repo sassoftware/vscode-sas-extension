@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { l10n } from "vscode";
 
+import { SortModelItem } from "ag-grid-community";
 import { ChildProcessWithoutNullStreams } from "child_process";
 
 import { onRunError } from "../../commands/run";
@@ -92,6 +93,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     item: LibraryItem,
     start: number,
     limit: number,
+    sortModel: SortModelItem[],
   ): Promise<TableData> {
     const { rows: rawRowValues, count } = await this.getDatasetInformation(
       item,
