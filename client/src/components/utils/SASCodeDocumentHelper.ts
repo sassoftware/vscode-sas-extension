@@ -104,15 +104,9 @@ function selectionsAreNotEmpty(
 
 function getHtmlStyleValue(): string {
   const htmlStyleSetting = getHtmlStyle();
-  let styleValue = "";
   if (htmlStyleSetting === "(auto)") {
     // get the results.html.custom.style object from user settings
-    const customStyle: {
-      light?: string;
-      dark?: string;
-      highContrast?: string;
-      highContrastLight?: string;
-    } =
+    const customStyle =
       workspace.getConfiguration("SAS").get<{
         light?: string;
         dark?: string;
@@ -122,26 +116,21 @@ function getHtmlStyleValue(): string {
 
     switch (window.activeColorTheme.kind) {
       case ColorThemeKind.Light:
-        styleValue = customStyle.light || "Illuminate";
-        break;
+        return customStyle.light || "Illuminate";
       case ColorThemeKind.Dark:
-        styleValue = customStyle.dark || "Ignite";
-        break;
+        return customStyle.dark || "Ignite";
       case ColorThemeKind.HighContrast:
-        styleValue = customStyle.highContrast || "HighContrast";
-        break;
+        return customStyle.highContrast || "HighContrast";
       case ColorThemeKind.HighContrastLight:
-        styleValue = customStyle.highContrastLight || "Illuminate";
-        break;
+        return customStyle.highContrastLight || "Illuminate";
       default:
-        styleValue = "";
+        return "";
     }
   } else if (htmlStyleSetting === "(server default)") {
-    styleValue = "";
+    return "";
   } else {
-    styleValue = htmlStyleSetting;
+    return htmlStyleSetting;
   }
-  return styleValue;
 }
 
 // if no valid selection, return whole text as only selection

@@ -517,19 +517,19 @@
             "properties": {
               "light": {
                 "type": "string",
-                "description": "Style to use for light theme"
+                "description": "%configuration.SAS.results.html.custom.style.light%"
               },
               "dark": {
                 "type": "string",
-                "description": "Style to use for dark theme"
+                "description": "%configuration.SAS.results.html.custom.style.dark%"
               },
               "highContrast": {
                 "type": "string",
-                "description": "Style to use for high contrast theme"
+                "description": "%configuration.SAS.results.html.custom.style.highContrast%"
               },
               "highContrastLight": {
                 "type": "string",
-                "description": "Style to use for high contrast light theme"
+                "description": "%configuration.SAS.results.html.custom.style.highContrastLight%"
               }
             }
           },
