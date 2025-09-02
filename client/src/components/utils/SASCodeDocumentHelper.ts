@@ -8,6 +8,7 @@ import {
   TextDocument,
   commands,
   window,
+  workspace,
 } from "vscode";
 
 import { v4 } from "uuid";
@@ -103,25 +104,32 @@ function selectionsAreNotEmpty(
 
 function getHtmlStyleValue(): string {
   const htmlStyleSetting = getHtmlStyle();
+  if (htmlStyleSetting === "(auto)") {
+    // get the results.html.custom.style object from user settings
+    const customStyle =
+      workspace.getConfiguration("SAS").get<{
+        light?: string;
+        dark?: string;
+        highContrast?: string;
+        highContrastLight?: string;
+      }>("results.html.custom.style") || {};
 
-  switch (htmlStyleSetting) {
-    case "(auto)":
-      switch (window.activeColorTheme.kind) {
-        case ColorThemeKind.Light:
-          return "Illuminate";
-        case ColorThemeKind.Dark:
-          return "Ignite";
-        case ColorThemeKind.HighContrast:
-          return "HighContrast";
-        case ColorThemeKind.HighContrastLight:
-          return "Illuminate";
-        default:
-          return "";
-      }
-    case "(server default)":
-      return "";
-    default:
-      return htmlStyleSetting;
+    switch (window.activeColorTheme.kind) {
+      case ColorThemeKind.Light:
+        return customStyle.light || "Illuminate";
+      case ColorThemeKind.Dark:
+        return customStyle.dark || "Ignite";
+      case ColorThemeKind.HighContrast:
+        return customStyle.highContrast || "HighContrast";
+      case ColorThemeKind.HighContrastLight:
+        return customStyle.highContrastLight || "Illuminate";
+      default:
+        return "";
+    }
+  } else if (htmlStyleSetting === "(server default)") {
+    return "";
+  } else {
+    return htmlStyleSetting;
   }
 }
 

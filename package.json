@@ -510,6 +510,29 @@
             ],
             "description": "%configuration.SAS.results.html.style%"
           },
+          "SAS.results.html.custom.style": {
+            "type": "object",
+            "default": {},
+            "markdownDescription": "%configuration.SAS.results.html.custom.style%",
+            "properties": {
+              "light": {
+                "type": "string",
+                "description": "%configuration.SAS.results.html.custom.style.light%"
+              },
+              "dark": {
+                "type": "string",
+                "description": "%configuration.SAS.results.html.custom.style.dark%"
+              },
+              "highContrast": {
+                "type": "string",
+                "description": "%configuration.SAS.results.html.custom.style.highContrast%"
+              },
+              "highContrastLight": {
+                "type": "string",
+                "description": "%configuration.SAS.results.html.custom.style.highContrastLight%"
+              }
+            }
+          },
           "SAS.problems.log.enabled": {
             "type": "boolean",
             "default": true,
