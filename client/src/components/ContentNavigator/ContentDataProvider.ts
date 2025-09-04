@@ -580,16 +580,11 @@ class ContentDataProvider
   ): Promise<boolean> {
     let currentParentUri = this.uriToParentMap.get(fileUri);
 
+    // If the cache doesn't contain the uri, it's acceptable to not pop up
+    // This can happen when switching Viya profiles where the dirty file
+    // is from a different server context
     if (!currentParentUri) {
-      try {
-        const item = await this.model.getResourceByUri(Uri.parse(fileUri));
-        currentParentUri = item.parentFolderUri;
-        if (currentParentUri) {
-          this.uriToParentMap.set(fileUri, currentParentUri);
-        }
-      } catch {
-        return false;
-      }
+      return false;
     }
 
     let depth = 0;
@@ -607,20 +602,9 @@ class ContentDataProvider
       if (nextParentUri) {
         currentParentUri = nextParentUri;
       } else {
-        try {
-          const parentItem = await this.model.getResourceByUri(
-            Uri.parse(currentParentUri),
-          );
-          currentParentUri = parentItem.parentFolderUri;
-          if (currentParentUri) {
-            this.uriToParentMap.set(
-              currentParentUri,
-              parentItem.parentFolderUri,
-            );
-          }
-        } catch {
-          break;
-        }
+        // If the cache doesn't contain the parent uri, stop traversing
+        // rather than making a server call which could be for a different server
+        break;
       }
       depth++;
     }
