@@ -25,7 +25,7 @@ class MockSession extends Session {
   }
 }
 
-describe.only("Session test", () => {
+describe("Session test", () => {
   it("triggers establish connection only once", async () => {
     const mockConnectionFn = sinon.mock();
     const mockSession = new MockSession(mockConnectionFn);
