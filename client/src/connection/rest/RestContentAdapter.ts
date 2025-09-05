@@ -194,7 +194,6 @@ class RestContentAdapter implements ContentAdapter {
     }
 
     if (this.pathCache.has(item.id)) {
-      console.log(this.pathCache);
       return this.pathCache.get(item.id)!;
     }
 

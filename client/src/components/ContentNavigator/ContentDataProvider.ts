@@ -216,11 +216,17 @@ class ContentDataProvider
     let tooltip = item.name;
     const canCopyPath = item.contextValue?.includes("copyPath");
 
-    if (canCopyPath && uri.path && uri.path !== `/${item.name}`) {
-      const fullPath = uri.path.startsWith("/")
-        ? uri.path.substring(1)
-        : uri.path;
-      tooltip = fullPath;
+    if (canCopyPath) {
+      // Use the actual path that gets copied to clipboard, with error handling
+      try {
+        const fullPath = await this.getPathOfItem(item);
+        if (fullPath && fullPath !== item.name) {
+          tooltip = fullPath;
+        }
+      } catch {
+        // If getting the path fails, just use the item name
+        tooltip = item.name;
+      }
     }
     return {
       collapsibleState: isContainer
