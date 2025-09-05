@@ -13,6 +13,7 @@ export type SessionContextAttributes =
 
 export abstract class Session {
   protected _rejectRun: (reason?: unknown) => void | undefined;
+  protected _connectionPromise: Promise<void> | undefined;
 
   protected _onSessionLogFn: OnLogFn | undefined;
   public set onSessionLogFn(value: OnLogFn) {
@@ -25,8 +26,13 @@ export abstract class Session {
   }
 
   async setup(silent?: boolean): Promise<void> {
+    // If we already have a connection promise we're awaiting, lets use that.
+    // Otherwise, establish a new connection
+    this._connectionPromise ||= this.establishConnection();
     if (silent) {
-      return await this.establishConnection();
+      const resolvedData = await this._connectionPromise;
+      this._connectionPromise = undefined;
+      return resolvedData;
     }
 
     await window.withProgress(
@@ -34,7 +40,11 @@ export abstract class Session {
         location: ProgressLocation.Notification,
         title: l10n.t("Connecting to SAS session..."),
       },
-      this.establishConnection,
+      async () => {
+        const resolvedData = await this._connectionPromise;
+        this._connectionPromise = undefined;
+        return resolvedData;
+      },
     );
   }
 
@@ -57,6 +67,7 @@ export abstract class Session {
       this._rejectRun({ message: l10n.t("The SAS session has closed.") });
       this._rejectRun = undefined;
     }
+    this._connectionPromise = undefined;
     return this._close();
   }
   protected abstract _close(): Promise<void> | void;
