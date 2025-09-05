@@ -38,12 +38,18 @@ export const getResourceIdFromItem = (item: ContentItem): string | null => {
   return getLink(item.links, "GET", "self")?.uri || null;
 };
 
-export const getSasContentUri = (item: ContentItem, readOnly?: boolean): Uri =>
+export const getSasContentUri = (
+  item: ContentItem,
+  readOnly?: boolean,
+  fullPath?: string,
+): Uri =>
   Uri.parse(
     `${readOnly ? `${ContentSourceType.SASContent}ReadOnly` : ContentSourceType.SASContent}:/${
-      item.name
-        ? item.name.replace(/#/g, "%23").replace(/\?/g, "%3F")
+      fullPath
+        ? fullPath.replace(/#/g, "%23").replace(/\?/g, "%3F")
         : item.name
+          ? item.name.replace(/#/g, "%23").replace(/\?/g, "%3F")
+          : item.name
     }?id=${getResourceIdFromItem(item)}`,
   );
 
