@@ -42,25 +42,44 @@ export const getSasContentUri = (
   item: ContentItem,
   readOnly?: boolean,
   fullPath?: string,
-): Uri =>
-  Uri.parse(
-    `${readOnly ? `${ContentSourceType.SASContent}ReadOnly` : ContentSourceType.SASContent}:/${
-      fullPath
-        ? fullPath.replace(/#/g, "%23").replace(/\?/g, "%3F")
-        : item.name
-          ? item.name.replace(/#/g, "%23").replace(/\?/g, "%3F")
-          : item.name
-    }?id=${getResourceIdFromItem(item)}`,
-  );
+): Uri => {
+  let pathToUse = fullPath || item.name || "";
 
-export const getSasServerUri = (item: ContentItem, readOnly?: boolean): Uri =>
-  Uri.parse(
-    `${readOnly ? `${ContentSourceType.SASServer}ReadOnly` : ContentSourceType.SASServer}:/${
-      item.name
-        ? item.name.replace(/#/g, "%23").replace(/\?/g, "%3F")
-        : item.name
-    }?id=${getResourceIdFromItem(item)}`,
+  // Remove leading slash if present since we'll add one in the URI construction
+  if (pathToUse.startsWith("/")) {
+    pathToUse = pathToUse.substring(1);
+  }
+
+  // URL encode special characters
+  pathToUse = pathToUse.replace(/#/g, "%23").replace(/\?/g, "%3F");
+
+  return Uri.parse(
+    `${readOnly ? `${ContentSourceType.SASContent}ReadOnly` : ContentSourceType.SASContent}:/${pathToUse}?id=${getResourceIdFromItem(item)}`,
   );
+};
+
+export const getSasServerUri = (
+  item: ContentItem,
+  readOnly?: boolean,
+  fullPath?: string,
+): Uri => {
+  let pathToUse = fullPath || item.name || "";
+
+  // Decode SAS server path encoding (~fs~ represents /)
+  pathToUse = pathToUse.replace(/~fs~/g, "/");
+
+  // Remove leading slash if present since we'll add one in the URI construction
+  if (pathToUse.startsWith("/")) {
+    pathToUse = pathToUse.substring(1);
+  }
+
+  // URL encode special characters
+  pathToUse = pathToUse.replace(/#/g, "%23").replace(/\?/g, "%3F");
+
+  return Uri.parse(
+    `${readOnly ? `${ContentSourceType.SASServer}ReadOnly` : ContentSourceType.SASServer}:/${pathToUse}?id=${getResourceIdFromItem(item)}`,
+  );
+};
 
 export const getPermission = (item: ContentItem): Permission => {
   const itemType = getTypeName(item);

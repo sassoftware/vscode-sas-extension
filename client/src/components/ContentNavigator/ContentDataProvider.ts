@@ -213,21 +213,7 @@ class ContentDataProvider
   public async getTreeItem(item: ContentItem): Promise<TreeItem> {
     const isContainer = getIsContainer(item);
     const uri = await this.model.getUri(item, false);
-    let tooltip = item.name;
-    const canCopyPath = item.contextValue?.includes("copyPath");
 
-    if (canCopyPath) {
-      // Use the actual path that gets copied to clipboard, with error handling
-      try {
-        const fullPath = await this.getPathOfItem(item);
-        if (fullPath && fullPath !== item.name) {
-          tooltip = fullPath;
-        }
-      } catch {
-        // If getting the path fails, just use the item name
-        tooltip = item.name;
-      }
-    }
     return {
       collapsibleState: isContainer
         ? TreeItemCollapsibleState.Collapsed
@@ -244,7 +230,6 @@ class ContentDataProvider
       id: item.uid,
       label: item.name,
       resourceUri: uri,
-      tooltip: tooltip,
     };
   }
 

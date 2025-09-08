@@ -402,11 +402,21 @@ class ItcServerAdapter implements ContentAdapter {
       },
     };
 
-    return {
+    const enrichedItem = {
       ...item,
       contextValue: this.contextMenuProvider.availableActions(item),
       vscUri: getSasServerUri(item, false),
     };
+
+    // Update URI with full path if the item supports copyPath context action
+    if (enrichedItem.contextValue?.includes("copyPath")) {
+      const fullPath = enrichedItem.id; // For ITC server, the id is already the full path
+      if (fullPath && fullPath !== enrichedItem.name) {
+        enrichedItem.vscUri = getSasServerUri(enrichedItem, false, fullPath);
+      }
+    }
+
+    return enrichedItem;
   }
 
   private async execute(incomingCode: string, params: Record<string, string>) {
