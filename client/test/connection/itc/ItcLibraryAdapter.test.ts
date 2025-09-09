@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import proxyquire from "proxyquire";
 import sinon from "sinon";
-import * as uuid from "uuid";
 
 import {
   LibraryItem,
@@ -31,18 +30,15 @@ describe("ItcLibraryAdapter tests", () => {
   let now;
   let clock;
   let sessionStub;
-  let uuidStub: sinon.SinonStub;
   let ItcLibraryAdapter;
   beforeEach(() => {
     now = new Date();
     clock = sinon.useFakeTimers(now.getTime());
     sessionStub = sinon.stub(connection, "getSession");
     sessionStub.returns(new MockSession(mockOutput()));
-    uuidStub = sinon.stub(uuid, "v4");
-    uuidStub.returns("mocked-uuid");
     const codeRunner = proxyquire("../../../src/connection/itc/CodeRunner", {
       uuid: {
-        v4: uuidStub,
+        v4: () => "mocked-uuid",
       },
     });
     ItcLibraryAdapter = proxyquire(
@@ -56,7 +52,6 @@ describe("ItcLibraryAdapter tests", () => {
   afterEach(() => {
     clock.restore();
     sessionStub.restore();
-    uuidStub.restore();
   });
 
   it("fetches columns", async () => {
