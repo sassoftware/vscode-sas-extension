@@ -193,13 +193,16 @@ class RestContentAdapter implements ContentAdapter {
       return "";
     }
 
-    if (this.pathCache.has(item.id)) {
-      return this.pathCache.get(item.id)!;
+    // Use different cache keys for folder paths vs full paths
+    const cacheKey = folderPathOnly ? `${item.id}_folder` : item.id;
+
+    if (this.pathCache.has(cacheKey)) {
+      return this.pathCache.get(cacheKey)!;
     }
 
     try {
       const path = await this.calculatePathOfItem(item, folderPathOnly);
-      this.pathCache.set(item.id, path);
+      this.pathCache.set(cacheKey, path);
       return path;
     } catch {
       return "";
@@ -210,14 +213,34 @@ class RestContentAdapter implements ContentAdapter {
     item: ContentItem,
     folderPathOnly?: boolean,
   ): Promise<string> {
+    // If folderPathOnly=true, we want the path of the parent folder
+    if (folderPathOnly) {
+      if (!item.parentFolderUri) {
+        return "";
+      }
+
+      const cachedParentPath = this.pathCache.get(item.parentFolderUri);
+      if (cachedParentPath) {
+        return cachedParentPath;
+      }
+
+      try {
+        const { data: parentData } = await this.connection.get(
+          item.parentFolderUri,
+        );
+        const parentPath = await this.calculatePathOfItem(parentData, false); // Get parent's full path
+        this.pathCache.set(item.parentFolderUri, parentPath);
+        return parentPath;
+      } catch {
+        return "";
+      }
+    }
     const filePathParts = [];
     let currentContentItem: Pick<
       ContentItem,
       "parentFolderUri" | "name" | "id"
     > = item;
-    if (!folderPathOnly) {
-      filePathParts.push(currentContentItem.name);
-    }
+    filePathParts.push(currentContentItem.name);
 
     do {
       if (currentContentItem.parentFolderUri) {
