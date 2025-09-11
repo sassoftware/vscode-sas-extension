@@ -36,6 +36,7 @@ import { basename, join } from "path";
 import { promisify } from "util";
 
 import { profileConfig } from "../../commands/profile";
+import { getResourceId } from "../../connection/rest/util";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ViyaProfile } from "../profile";
 import { ContentModel } from "./ContentModel";
@@ -45,6 +46,7 @@ import {
   ROOT_FOLDER_TYPE,
   SERVER_HOME_FOLDER_TYPE,
   SERVER_ROOT_FOLDER_TYPE,
+  STOP_SIGN,
   TRASH_FOLDER_TYPE,
 } from "./const";
 import {
@@ -78,6 +80,8 @@ class ContentDataProvider
 
   public dropMimeTypes: string[];
   public dragMimeTypes: string[];
+
+  private uriToParentMap = new Map<string, string>();
 
   get treeView(): TreeView<ContentItem> {
     return this._treeView;
@@ -213,6 +217,12 @@ class ContentDataProvider
   public async getTreeItem(item: ContentItem): Promise<TreeItem> {
     const isContainer = getIsContainer(item);
     const uri = await this.model.getUri(item, false);
+
+    // Cache the URI to parent mapping
+    this.uriToParentMap.set(
+      item.uri,
+      item.parentFolderUri ? item.parentFolderUri : STOP_SIGN,
+    );
 
     return {
       collapsibleState: isContainer
@@ -444,6 +454,7 @@ class ContentDataProvider
 
   public refresh(): void {
     this._onDidChangeTreeData.fire(undefined);
+    this.uriToParentMap.clear();
   }
 
   public async getParent(
@@ -503,6 +514,102 @@ class ContentDataProvider
         l10n.t(Messages.FileUploadError),
       );
     }
+  }
+
+  public async checkFolderDirty(resource: ContentItem): Promise<boolean> {
+    if (!resource.vscUri) {
+      return false;
+    }
+
+    const targetFolderUri = resource.uri;
+
+    // Check for dirty text documents
+    const dirtyTextFiles = workspace.textDocuments
+      .filter((doc) => {
+        if (!doc.isDirty) {
+          return false;
+        }
+
+        const scheme = doc.uri.scheme;
+        return (
+          scheme === "sasContent" ||
+          scheme === "sasServer" ||
+          scheme === "sasContentReadOnly" ||
+          scheme === "sasServerReadOnly"
+        );
+      })
+      .map((doc) => doc.uri);
+
+    // Check for dirty notebook documents (SASNB files)
+    const dirtyNotebookFiles = workspace.notebookDocuments
+      .filter((notebook) => {
+        if (!notebook.isDirty) {
+          return false;
+        }
+
+        const scheme = notebook.uri.scheme;
+        return (
+          scheme === "sasContent" ||
+          scheme === "sasServer" ||
+          scheme === "sasContentReadOnly" ||
+          scheme === "sasServerReadOnly"
+        );
+      })
+      .map((notebook) => notebook.uri);
+
+    const allDirtyFiles = [...dirtyTextFiles, ...dirtyNotebookFiles];
+
+    if (allDirtyFiles.length === 0) {
+      return false;
+    }
+
+    for (const dirtyFileUri of allDirtyFiles) {
+      if (
+        await this.isDescendantOf(getResourceId(dirtyFileUri), targetFolderUri)
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private async isDescendantOf(
+    fileUri: string,
+    ancestorFolderUri: string,
+  ): Promise<boolean> {
+    let currentParentUri = this.uriToParentMap.get(fileUri);
+
+    // If the cache doesn't contain the uri, it's acceptable to not pop up
+    // This can happen when switching Viya profiles where the dirty file
+    // is from a different server context
+    if (!currentParentUri) {
+      return false;
+    }
+
+    let depth = 0;
+    while (currentParentUri || depth <= 10) {
+      if (currentParentUri === ancestorFolderUri) {
+        return true;
+      }
+
+      if (currentParentUri === STOP_SIGN) {
+        return false;
+      }
+
+      const nextParentUri = this.uriToParentMap.get(currentParentUri);
+
+      if (nextParentUri) {
+        currentParentUri = nextParentUri;
+      } else {
+        // If the cache doesn't contain the parent uri, stop traversing
+        // rather than making a server call which could be for a different server
+        break;
+      }
+      depth++;
+    }
+
+    return false;
   }
 
   public async downloadContentItems(
@@ -759,6 +866,5 @@ const closeFileIfOpen = (item: ContentItem): Promise<Uri[]> | boolean => {
         .catch(reject);
     });
   }
-
   return true;
 };
