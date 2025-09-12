@@ -9,7 +9,12 @@ import {
   TableData,
 } from "../../components/LibraryNavigator/types";
 import { appendSessionLogFn } from "../../components/logViewer";
-import { ColumnCollection, DataAccessApi, RowCollection } from "./api/compute";
+import {
+  ColumnCollection,
+  DataAccessApi,
+  RowCollection,
+  TableInfo,
+} from "./api/compute";
 import { getApiConfig } from "./common";
 
 const requestOptions = {
@@ -135,6 +140,23 @@ class RestLibraryAdapter implements LibraryAdapter {
     );
 
     return { rowCount: response.data.rowCount, maxNumberOfRowsToRead: 1000 };
+  }
+
+  public async getTableInfo(item: LibraryItem): Promise<TableInfo> {
+    await this.setup();
+    const response = await this.retryOnFail(
+      async () =>
+        await this.dataAccessApi.getTable(
+          {
+            sessionId: this.sessionId,
+            libref: item.library || "",
+            tableName: item.name,
+          },
+          { headers: { Accept: "application/json" } },
+        ),
+    );
+
+    return response.data;
   }
 
   private async retryOnFail<T>(

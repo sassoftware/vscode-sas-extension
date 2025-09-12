@@ -295,9 +295,10 @@ class SASRunner{
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection
     $query = @"
-      select name, type, format
+      select name, type, format, label, length, varnum
       from sashelp.vcolumn
-      where libname='$libname' and memname='$memname';
+      where libname='$libname' and memname='$memname'
+      order by varnum;
 "@
     $objRecordSet.Open(
       $query,
@@ -318,6 +319,9 @@ class SASRunner{
         name  = $rows[0, $i]
         type  = $rows[1, $i]
         format = $rows[2, $i]
+        label = $rows[3, $i]
+        length = $rows[4, $i]
+        varnum = $rows[5, $i]
       }
       $parsedRows += $parsedRow
     }
@@ -576,6 +580,43 @@ class SASRunner{
     $result = New-Object psobject
     $result | Add-Member -MemberType NoteProperty -Name "libraries" -Value $records
     $result | Add-Member -MemberType NoteProperty -Name "count" -Value $records.Count
+
+    Write-Host $(ConvertTo-Json -Depth 10 -InputObject $result -Compress)
+  }
+
+  [void]GetTableInfo([string]$libname, [string]$memname) {
+    $objRecordSet = New-Object -comobject ADODB.Recordset
+    $objRecordSet.ActiveConnection = $this.dataConnection
+    $query = @"
+      select memname, memtype, crdate, modate, nobs, nvar, compress, 
+             memlabel, typemem, filesize, delobs
+      from sashelp.vtable
+      where libname='$libname' and memname='$memname';
+"@
+    $objRecordSet.Open(
+      $query,
+      [System.Reflection.Missing]::Value, # Use the active connection
+      2, # adOpenDynamic
+      1, # adLockReadOnly
+      1  # adCmdText
+    )
+
+    $result = New-Object psobject
+    if (-not $objRecordSet.EOF) {
+      $result | Add-Member -MemberType NoteProperty -Name "name" -Value $objRecordSet.Fields.Item(0).Value
+      $result | Add-Member -MemberType NoteProperty -Name "type" -Value $objRecordSet.Fields.Item(1).Value
+      $result | Add-Member -MemberType NoteProperty -Name "creationTimeStamp" -Value $objRecordSet.Fields.Item(2).Value
+      $result | Add-Member -MemberType NoteProperty -Name "modifiedTimeStamp" -Value $objRecordSet.Fields.Item(3).Value
+      $result | Add-Member -MemberType NoteProperty -Name "rowCount" -Value $objRecordSet.Fields.Item(4).Value
+      $result | Add-Member -MemberType NoteProperty -Name "columnCount" -Value $objRecordSet.Fields.Item(5).Value
+      $result | Add-Member -MemberType NoteProperty -Name "compressionRoutine" -Value $objRecordSet.Fields.Item(6).Value
+      $result | Add-Member -MemberType NoteProperty -Name "label" -Value $objRecordSet.Fields.Item(7).Value
+      $result | Add-Member -MemberType NoteProperty -Name "extendedType" -Value $objRecordSet.Fields.Item(8).Value
+      $result | Add-Member -MemberType NoteProperty -Name "fileSize" -Value $objRecordSet.Fields.Item(9).Value
+      $result | Add-Member -MemberType NoteProperty -Name "deletedObs" -Value $objRecordSet.Fields.Item(10).Value
+      $result | Add-Member -MemberType NoteProperty -Name "libref" -Value $libname
+    }
+    $objRecordSet.Close()
 
     Write-Host $(ConvertTo-Json -Depth 10 -InputObject $result -Compress)
   }
