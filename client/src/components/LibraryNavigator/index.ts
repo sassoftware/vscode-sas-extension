@@ -126,30 +126,6 @@ class LibraryNavigator implements SubscriptionProvider {
           }
         },
       ),
-      commands.registerCommand(
-        "SAS.showTableColumns",
-        async (item: LibraryItem) => {
-          try {
-            const tableInfo = await this.libraryDataProvider.getTableInfo(item);
-            const columns = await this.libraryDataProvider.fetchColumns(item);
-
-            this.webviewManager.render(
-              new TablePropertiesViewer(
-                this.extensionUri,
-                item.uid,
-                tableInfo,
-                columns,
-                true, // Show columns tab
-              ),
-              `columns-${item.uid}`,
-            );
-          } catch (error) {
-            window.showErrorMessage(
-              `Failed to load table columns: ${error.message}`,
-            );
-          }
-        },
-      ),
       commands.registerCommand("SAS.collapseAllLibraries", () => {
         commands.executeCommand(
           "workbench.actions.treeView.librarydataprovider.collapseAll",

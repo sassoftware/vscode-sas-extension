@@ -50,7 +50,8 @@ class ItcLibraryAdapter implements LibraryAdapter {
       $runner.GetColumns("${item.library}", "${item.name}")
     `;
     const output = await executeRawCode(code);
-    const columns = JSON.parse(output).map((column) => ({
+    const rawColumns = JSON.parse(output);
+    const columns = rawColumns.map((column) => ({
       ...column,
       type: getColumnIconType(column),
     }));
@@ -114,19 +115,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     start: number,
     limit: number,
   ): Promise<TableData> {
-    // We only need the columns for the first page of results
-    const columns =
-      start === 0
-        ? {
-            columns: ["INDEX"].concat(
-              (await this.getColumns(item)).items.map((column) => column.name),
-            ),
-          }
-        : {};
-
     const { rows } = await this.getRows(item, start, limit);
-
-    rows.unshift(columns);
 
     // Fetching csv doesn't rely on count. Instead, we get the count
     // upfront via getTableRowCount
@@ -197,25 +186,54 @@ class ItcLibraryAdapter implements LibraryAdapter {
   }
 
   public async getTableInfo(item: LibraryItem): Promise<TableInfo> {
-    const code = `
-      $runner.GetTableInfo("${item.library}", "${item.name}")
-    `;
-    const output = await executeRawCode(code);
-    const tableInfo = JSON.parse(output);
+    try {
+      // Use the PowerShell GetTableInfo function which queries sashelp.vtable
+      const code = `
+        $runner.GetTableInfo("${item.library}", "${item.name}")
+      `;
+      const output = await executeRawCode(code);
+      const tableInfo = JSON.parse(output);
 
-    return {
-      name: tableInfo.name,
-      type: tableInfo.type,
-      creationTimeStamp: tableInfo.creationTimeStamp,
-      modifiedTimeStamp: tableInfo.modifiedTimeStamp,
-      rowCount: tableInfo.rowCount,
-      columnCount: tableInfo.columnCount,
-      compressionRoutine: tableInfo.compressionRoutine,
-      label: tableInfo.label,
-      engine: tableInfo.engine,
-      extendedType: tableInfo.extendedType,
-      libref: tableInfo.libref,
-    };
+      return {
+        name: tableInfo.name || item.name,
+        libref: tableInfo.libref || item.library,
+        type: tableInfo.type || "DATA",
+        label: tableInfo.label || "",
+        engine: "", // Not available in sashelp.vtable for SAS 9.4
+        extendedType: tableInfo.extendedType || "",
+        rowCount: tableInfo.rowCount || 0,
+        columnCount: tableInfo.columnCount || 0,
+        logicalRecordCount: tableInfo.rowCount || 0,
+        physicalRecordCount: tableInfo.rowCount || 0,
+        recordLength: 0, // Not available in vtable
+        bookmarkLength: 0, // Not available in vtable
+        compressionRoutine: tableInfo.compressionRoutine || "",
+        encoding: "", // Not available in vtable
+        creationTimeStamp: tableInfo.creationTimeStamp || "",
+        modifiedTimeStamp: tableInfo.modifiedTimeStamp || "",
+      };
+    } catch (error) {
+      console.warn("Failed to get table info:", error);
+      // If anything fails, return basic info
+      return {
+        name: item.name,
+        libref: item.library,
+        type: "DATA",
+        label: "",
+        engine: "",
+        extendedType: "",
+        rowCount: 0,
+        columnCount: 0,
+        logicalRecordCount: 0,
+        physicalRecordCount: 0,
+        recordLength: 0,
+        bookmarkLength: 0,
+        compressionRoutine: "",
+        encoding: "",
+        creationTimeStamp: "",
+        modifiedTimeStamp: "",
+      };
+    }
   }
 
   protected async executionHandler(

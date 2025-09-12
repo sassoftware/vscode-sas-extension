@@ -33,7 +33,7 @@ class TablePropertiesViewer extends WebView {
       <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Table ${this.showColumns ? "Columns" : "Properties"}</title>
+          <title>Table Properties</title>
           <style>
               body {
                   font-family: var(--vscode-font-family);
@@ -50,31 +50,35 @@ class TablePropertiesViewer extends WebView {
                   margin: 0 auto;
               }
               
-              .tab-container {
+              .tabs {
+                  display: flex;
                   border-bottom: 1px solid var(--vscode-panel-border);
                   margin-bottom: 16px;
               }
               
               .tab {
-                  display: inline-block;
-                  padding: 8px 16px;
-                  margin-right: 4px;
-                  background: var(--vscode-tab-inactiveBackground);
-                  border: 1px solid var(--vscode-panel-border);
-                  border-bottom: none;
+                  padding: 10px 20px;
                   cursor: pointer;
-                  color: var(--vscode-tab-inactiveForeground);
+                  border: none;
+                  background: none;
+                  color: var(--vscode-foreground);
+                  border-bottom: 2px solid transparent;
+                  font-family: inherit;
+                  font-size: inherit;
+              }
+              
+              .tab:hover {
+                  background-color: var(--vscode-list-hoverBackground);
               }
               
               .tab.active {
-                  background: var(--vscode-tab-activeBackground);
+                  border-bottom-color: var(--vscode-focusBorder);
                   color: var(--vscode-tab-activeForeground);
-                  border-bottom: 1px solid var(--vscode-tab-activeBackground);
-                  margin-bottom: -1px;
               }
               
               .tab-content {
                   display: none;
+                  padding: 20px 0;
               }
               
               .tab-content.active {
@@ -120,20 +124,16 @@ class TablePropertiesViewer extends WebView {
           <div class="container">
               <h1>Table: ${this.tableName}</h1>
               
-              <div class="tab-container">
-                  <div class="tab ${!this.showColumns ? "active" : ""}" onclick="showTab('properties')">
-                      General
-                  </div>
-                  <div class="tab ${this.showColumns ? "active" : ""}" onclick="showTab('columns')">
-                      Columns
-                  </div>
+              <div class="tabs">
+                  <button class="tab active" onclick="showTab('properties')">General</button>
+                  <button class="tab" onclick="showTab('columns')">Columns</button>
               </div>
               
-              <div id="properties" class="tab-content ${!this.showColumns ? "active" : ""}">
+              <div id="properties" class="tab-content active">
                   ${this.generatePropertiesContent()}
               </div>
               
-              <div id="columns" class="tab-content ${this.showColumns ? "active" : ""}">
+              <div id="columns" class="tab-content">
                   ${this.generateColumnsContent()}
               </div>
           </div>
@@ -141,17 +141,17 @@ class TablePropertiesViewer extends WebView {
           <script>
               function showTab(tabName) {
                   // Hide all tab contents
-                  const tabContents = document.querySelectorAll('.tab-content');
-                  tabContents.forEach(content => content.classList.remove('active'));
+                  const contents = document.querySelectorAll('.tab-content');
+                  contents.forEach(content => content.classList.remove('active'));
                   
                   // Remove active class from all tabs
                   const tabs = document.querySelectorAll('.tab');
                   tabs.forEach(tab => tab.classList.remove('active'));
                   
-                  // Show the selected tab content
+                  // Show selected tab content
                   document.getElementById(tabName).classList.add('active');
                   
-                  // Add active class to the clicked tab
+                  // Add active class to clicked tab
                   event.target.classList.add('active');
               }
           </script>
