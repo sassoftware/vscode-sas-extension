@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   AllCommunityModule,
@@ -14,7 +14,8 @@ import { v4 } from "uuid";
 
 import { TableData } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
-import columnHeaderTemplate from "./columnHeaderTemplate";
+import ColumnHeader from "./ColumnHeader";
+import { ColumnHeaderProps } from "./ColumnHeaderMenu";
 
 declare const acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
@@ -102,6 +103,12 @@ const fetchColumns = (): Promise<Column[]> => {
 
 const useDataViewer = () => {
   const [columns, setColumns] = useState<ColDef[]>([]);
+  const [columnMenu, setColumnMenu] = useState<ColumnHeaderProps | undefined>();
+
+  const columnMenuRef = useRef<ColumnHeaderProps | undefined>(columnMenu);
+  useEffect(() => {
+    columnMenuRef.current = columnMenu;
+  }, [columnMenu]);
 
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
@@ -143,14 +150,17 @@ const useDataViewer = () => {
     fetchColumns().then((columnsData) => {
       const columns: ColDef[] = columnsData.map((column) => ({
         field: column.name,
-        headerName: column.name,
+        headerComponent: ColumnHeader,
         headerComponentParams: {
-          template: columnHeaderTemplate(column.type),
+          columnType: column.type,
+          setColumnMenu,
+          currentColumn: () => columnMenuRef.current?.column,
         },
       }));
       columns.unshift({
         field: "#",
         suppressMovable: true,
+        sortable: false,
       });
 
       setColumns(columns);
@@ -165,7 +175,7 @@ const useDataViewer = () => {
     };
   }, []);
 
-  return { columns, onGridReady };
+  return { columns, onGridReady, columnMenu };
 };
 
 export default useDataViewer;
