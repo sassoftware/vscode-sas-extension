@@ -21,7 +21,6 @@ const gridStyles = {
 };
 
 const DataViewer = () => {
-  const { columns, onGridReady, columnMenu } = useDataViewer();
   const theme = useMemo(() => {
     const themeKind = document
       .querySelector("[data-vscode-theme-kind]")
@@ -36,6 +35,7 @@ const DataViewer = () => {
         return "ag-theme-alpine-dark";
     }
   }, []);
+  const { columns, onGridReady, columnMenu } = useDataViewer(theme);
 
   if (columns.length === 0) {
     return null;
@@ -43,7 +43,7 @@ const DataViewer = () => {
 
   return (
     <div className="data-viewer">
-      {columnMenu && <ColumnHeaderMenu {...columnMenu} />}
+      {columnMenu && <ColumnHeaderMenu theme={theme} {...columnMenu} />}
       <div className={`ag-grid-wrapper ${theme}`} style={gridStyles}>
         <AgGridReact
           cacheBlockSize={100}
