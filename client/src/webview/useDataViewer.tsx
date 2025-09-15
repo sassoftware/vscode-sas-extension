@@ -101,7 +101,7 @@ const fetchColumns = (): Promise<Column[]> => {
   });
 };
 
-const useDataViewer = () => {
+const useDataViewer = (theme: string) => {
   const [columns, setColumns] = useState<ColDef[]>([]);
   const [columnMenu, setColumnMenu] = useState<ColumnHeaderProps | undefined>();
 
@@ -155,6 +155,7 @@ const useDataViewer = () => {
           columnType: column.type,
           setColumnMenu,
           currentColumn: () => columnMenuRef.current?.column,
+          theme,
         },
       }));
       columns.unshift({

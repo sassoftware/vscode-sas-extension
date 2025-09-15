@@ -30,19 +30,20 @@ const ColumnHeader = ({
   currentColumn: getCurrentColumn,
   columnType,
   setColumnMenu,
+  theme,
 }: {
   api: GridApi;
   column: AgColumn;
   currentColumn: () => AgColumn | undefined;
   columnType: string;
   setColumnMenu: (props: ColumnHeaderProps) => void;
+  theme: string;
 }) => {
   const ref = useRef<HTMLButtonElement>(undefined!);
   const currentColumn = getCurrentColumn();
 
-  console.log({ currentColumn, column });
   return (
-    <div className="ag-cell-label-container" role="presentation">
+    <div className={`ag-cell-label-container ${theme}`} role="presentation">
       <div
         data-ref="eLabel"
         className="ag-header-cell-label"
@@ -52,16 +53,15 @@ const ColumnHeader = ({
           className={`header-icon ${getIconForColumnType(columnType)}`}
         ></span>
         <span className="ag-header-cell-text">{column.colId}</span>
-        <span
-          data-ref="eSortOrder"
-          className="ag-header-icon ag-header-label-icon ag-sort-order"
-          aria-hidden="true"
-        ></span>
         {column.sort === "asc" && (
-          <span className="ag-header-icon ag-header-label-icon ag-sort-ascending-icon"></span>
+          <span className="sort-icon-wrapper">
+            <span className="sort-icon ascending"></span>
+          </span>
         )}
         {column.sort === "desc" && (
-          <span className="ag-header-icon ag-header-label-icon ag-sort-descending-icon"></span>
+          <span className="sort-icon-wrapper">
+            <span className="sort-icon descending"></span>
+          </span>
         )}
         <div className="dropdown">
           <button
@@ -72,24 +72,17 @@ const ColumnHeader = ({
               if (currentColumn) {
                 return setColumnMenu(undefined);
               }
-              const { height, top, right } =
-                ref.current.getBoundingClientRect();
+              const { height, top, left } = ref.current.getBoundingClientRect();
               setColumnMenu({
-                left: right,
+                left,
                 top: top + height,
                 column,
+                theme,
                 sortColumn: (direction: "asc" | "desc" | null) => {
                   api.applyColumnState({
                     state: [{ colId: column.colId, sort: direction }],
                     defaultState: { sort: null },
                   });
-                  // console.log(props.api.getColumnState());
-                  // props.api.applyColumnState({
-                  //   state: [{}]
-                  // })
-                  // const currentSort = props.api.sort
-                  // console.log(direction);
-                  // console.log(props);
                 },
                 dismissMenu: () => setColumnMenu(undefined),
               });

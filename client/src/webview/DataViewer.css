@@ -179,3 +179,29 @@ button {
 .ag-header-cell-label button.active {
   display: block;
 }
+
+.sort-icon-wrapper .sort-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+}
+
+.sort-icon-wrapper .sort-icon.ascending {
+  background: url(../../../icons/light/arrow-up.svg);
+  background-size: 16px 16px;
+}
+
+.vscode-dark .sort-icon-wrapper .sort-icon.ascending {
+  background: url(../../../icons/dark/arrow-up.svg);
+  background-size: 16px 16px;
+}
+
+.sort-icon-wrapper .sort-icon.descending {
+  background: url(../../../icons/light/arrow-down.svg);
+  background-size: 16px 16px;
+}
+
+.vscode-dark .sort-icon-wrapper .sort-icon.descending {
+  background: url(../../../icons/dark/arrow-down.svg);
+  background-size: 16px 16px;
+}
