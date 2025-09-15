@@ -115,7 +115,19 @@ class ItcLibraryAdapter implements LibraryAdapter {
     start: number,
     limit: number,
   ): Promise<TableData> {
+    // We only need the columns for the first page of results
+    const columns =
+      start === 0
+        ? {
+            columns: ["INDEX"].concat(
+              (await this.getColumns(item)).items.map((column) => column.name),
+            ),
+          }
+        : {};
+
     const { rows } = await this.getRows(item, start, limit);
+
+    rows.unshift(columns);
 
     // Fetching csv doesn't rely on count. Instead, we get the count
     // upfront via getTableRowCount
