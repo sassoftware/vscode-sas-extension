@@ -551,7 +551,7 @@ class RestServerAdapter implements ContentAdapter {
 
     const typeName = getTypeName(item);
 
-    return {
+    const enrichedItem = {
       ...item,
       contextValue: this.contextMenuProvider.availableActions(item),
       fileStat: {
@@ -570,6 +570,21 @@ class RestServerAdapter implements ContentAdapter {
       vscUri: getSasServerUri(item, flags?.isInRecycleBin || false),
       typeName: getTypeName(item),
     };
+
+    // Update URI with full path if the item supports copyPath context action
+    // For server items, the path is just the trimmed compute prefix of the id
+    if (enrichedItem.contextValue?.includes("copyPath")) {
+      const fullPath = this.trimComputePrefix(enrichedItem.id);
+      if (fullPath && fullPath !== enrichedItem.name) {
+        enrichedItem.vscUri = getSasServerUri(
+          enrichedItem,
+          flags?.isInRecycleBin || false,
+          fullPath,
+        );
+      }
+    }
+
+    return enrichedItem;
   }
 
   private trimComputePrefix(uri: string): string {
