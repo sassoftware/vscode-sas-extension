@@ -188,6 +188,7 @@ export class LanguageServiceProvider {
   getFoldingRanges(): FoldingRange[] {
     const lineCount = this.model.getLineCount();
     const result: FoldingRange[] = [];
+    this.addCommentFolding(result);
 
     for (let i = 0; i < lineCount; i++) {
       const rootBlock = this.syntaxProvider.getFoldingBlock(
@@ -210,7 +211,64 @@ export class LanguageServiceProvider {
         continue;
       }
     }
+
     return result;
+  }
+
+  private addCommentFolding(result: FoldingRange[]) {
+    const lineCount = this.model.getLineCount();
+
+    // Method 1: Try token blocks (works for comments inside code blocks)
+    if (this.syntaxProvider.lexer.tknBlks) {
+      const tokenBlocks = this.syntaxProvider.lexer.tknBlks;
+      for (let i = 0; i < tokenBlocks.length; i++) {
+        const block = tokenBlocks[i];
+        const isComment =
+          block.blockComment === true || block.type === "comment";
+        if (isComment && block.endLine > block.startLine) {
+          result.push({
+            startLine: block.startLine,
+            endLine: block.endLine,
+            kind: "comment",
+          });
+        }
+      }
+    }
+
+    // Method 2: Scan for multiline comments using syntax tokens (for standalone comments)
+    let inBlockComment = false;
+    let commentStartLine = -1;
+
+    for (let lineNum = 0; lineNum < lineCount; lineNum++) {
+      const line = this.model.getLine(lineNum);
+
+      if (!inBlockComment && line.includes("/*")) {
+        const commentStart = line.indexOf("/*");
+        const commentEnd = line.indexOf("*/", commentStart + 2);
+
+        if (commentEnd === -1) {
+          inBlockComment = true;
+          commentStartLine = lineNum;
+        }
+      } else if (inBlockComment && line.includes("*/")) {
+        inBlockComment = false;
+        if (commentStartLine !== -1 && lineNum > commentStartLine) {
+          const isAlreadyCovered = result.some(
+            (range) =>
+              range.startLine === commentStartLine && range.endLine === lineNum,
+          );
+
+          if (!isAlreadyCovered) {
+            result.push({
+              startLine: commentStartLine,
+              endLine: lineNum,
+              kind: "comment",
+            });
+          }
+        }
+        commentStartLine = -1;
+      }
+    }
   }
 
   // DFS
