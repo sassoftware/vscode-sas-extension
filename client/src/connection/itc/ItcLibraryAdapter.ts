@@ -128,7 +128,6 @@ class ItcLibraryAdapter implements LibraryAdapter {
     const { rows } = await this.getRows(item, start, limit);
 
     rows.unshift(columns);
-
     // Fetching csv doesn't rely on count. Instead, we get the count
     // upfront via getTableRowCount
     return { rows, count: -1 };
