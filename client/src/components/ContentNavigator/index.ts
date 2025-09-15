@@ -107,6 +107,9 @@ class ContentNavigator implements SubscriptionProvider {
                 return;
               }
               const isContainer = getIsContainer(resource);
+              const hasUnsavedFiles = isContainer
+                ? await this.contentDataProvider.checkFolderDirty(resource)
+                : false;
               const moveToRecycleBin =
                 this.contentDataProvider.canRecycleResource(resource);
 
@@ -121,6 +124,18 @@ class ContentNavigator implements SubscriptionProvider {
                 ))
               ) {
                 return;
+              } else if (moveToRecycleBin && hasUnsavedFiles) {
+                if (
+                  !(await window.showWarningMessage(
+                    l10n.t(Messages.RecycleDirtyFolderWarning, {
+                      name: resource.name,
+                    }),
+                    { modal: true },
+                    Messages.MoveToRecycleBinLabel,
+                  ))
+                ) {
+                  return;
+                }
               }
               const deleteResult = moveToRecycleBin
                 ? await this.contentDataProvider.recycleResource(resource)

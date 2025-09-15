@@ -866,10 +866,12 @@ export class CompletionProvider {
         if (stmtName === "SET") {
           const pos = this.popupContext.position;
           const lineText = this.model.getLine(pos.line);
-          const firstOptForSET =
-            lineText
-              .slice(lineText.toUpperCase().indexOf("SET") + 3, pos.character)
-              .search(/\S/) === -1;
+          const firstOptForSET = /^\s+\S*$/.test(
+            lineText.slice(
+              lineText.toUpperCase().indexOf("SET") + 3,
+              pos.character,
+            ),
+          );
           const libref = this._findLibRef();
           if (firstOptForSET || libref) {
             this.loader.getLibraryList((data: OptionValues) => {
