@@ -423,4 +423,58 @@ export class SyntaxProvider {
     }
     return block.name;
   }
+  getTokenBlocks(): any[] {
+    return this.lexer.tknBlks || [];
+  }
+  getAllCommentRanges(): Array<{ startLine: number; endLine: number }> {
+    const ranges: Array<{ startLine: number; endLine: number }> = [];
+    const lineCount = this.model.getLineCount();
+
+    // First, get comment blocks from lexer token blocks
+    const tokenBlocks = this.getTokenBlocks();
+    for (const block of tokenBlocks) {
+      const isComment = block.blockComment === true || block.type === "comment";
+      if (isComment && block.endLine > block.startLine) {
+        ranges.push({
+          startLine: block.startLine,
+          endLine: block.endLine,
+        });
+      }
+    }
+
+    // Then scan for any multiline comment tokens that might not be in token blocks
+    for (let lineNum = 0; lineNum < lineCount; lineNum++) {
+      const tokens = this.getSyntax(lineNum);
+
+      for (const token of tokens) {
+        if (token.style === "comment" || token.style === "macro-comment") {
+          // Check if this token indicates a multiline span
+          if (
+            token.state &&
+            typeof token.state === "object" &&
+            token.state.line !== undefined
+          ) {
+            const endLine = token.state.line;
+            if (endLine > lineNum) {
+              // Check if this range is already covered
+              const isAlreadyCovered = ranges.some(
+                (range) =>
+                  range.startLine === lineNum && range.endLine === endLine,
+              );
+
+              if (!isAlreadyCovered) {
+                ranges.push({
+                  startLine: lineNum,
+                  endLine: endLine,
+                });
+              }
+            }
+          }
+          break; // Only need first comment token per line
+        }
+      }
+    }
+
+    return ranges;
+  }
 }

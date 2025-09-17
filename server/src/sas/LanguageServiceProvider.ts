@@ -216,62 +216,17 @@ export class LanguageServiceProvider {
   }
 
   private addCommentFolding(result: FoldingRange[]) {
-    const lineCount = this.model.getLineCount();
+    // Get all comment ranges from the lexer
+    const commentRanges = this.syntaxProvider.getAllCommentRanges();
 
-    // Method 1: Try token blocks (works for comments inside code blocks)
-    if (this.syntaxProvider.lexer.tknBlks) {
-      const tokenBlocks = this.syntaxProvider.lexer.tknBlks;
-      for (let i = 0; i < tokenBlocks.length; i++) {
-        const block = tokenBlocks[i];
-        const isComment =
-          block.blockComment === true || block.type === "comment";
-        if (isComment && block.endLine > block.startLine) {
-          result.push({
-            startLine: block.startLine,
-            endLine: block.endLine,
-            kind: "comment",
-          });
-        }
-      }
+    for (const range of commentRanges) {
+      result.push({
+        startLine: range.startLine,
+        endLine: range.endLine,
+        kind: "comment",
+      });
     }
-
-    // Method 2: Scan for multiline comments using syntax tokens (for standalone comments)
-    let inBlockComment = false;
-    let commentStartLine = -1;
-
-    for (let lineNum = 0; lineNum < lineCount; lineNum++) {
-      const line = this.model.getLine(lineNum);
-
-      if (!inBlockComment && line.includes("/*")) {
-        const commentStart = line.indexOf("/*");
-        const commentEnd = line.indexOf("*/", commentStart + 2);
-
-        if (commentEnd === -1) {
-          inBlockComment = true;
-          commentStartLine = lineNum;
-        }
-      } else if (inBlockComment && line.includes("*/")) {
-        inBlockComment = false;
-        if (commentStartLine !== -1 && lineNum > commentStartLine) {
-          const isAlreadyCovered = result.some(
-            (range) =>
-              range.startLine === commentStartLine && range.endLine === lineNum,
-          );
-
-          if (!isAlreadyCovered) {
-            result.push({
-              startLine: commentStartLine,
-              endLine: lineNum,
-              kind: "comment",
-            });
-          }
-        }
-        commentStartLine = -1;
-      }
-    }
-  }
-
-  // DFS
+  } // DFS
   private _flattenFoldingBlockTree(rootBlock: FoldingBlock): FoldingBlock[] {
     const stack: FoldingBlock[] = [rootBlock];
     const resultList: FoldingBlock[] = [];
