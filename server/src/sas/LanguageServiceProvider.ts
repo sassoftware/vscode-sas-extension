@@ -216,8 +216,8 @@ export class LanguageServiceProvider {
   }
 
   private addCommentFolding(result: FoldingRange[]) {
-    // Get all comment ranges from the lexer
-    const commentRanges = this.syntaxProvider.getAllCommentRanges();
+    // Get multiline comments directly from lexer token processing
+    const commentRanges = this.syntaxProvider.getMultilineComments();
 
     for (const range of commentRanges) {
       result.push({
