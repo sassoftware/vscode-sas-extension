@@ -6,4 +6,4 @@ How did you test this change?
 
 **TODOs:**
 
-- [ ] Update CHANGELOG and any supporting documentation
+- [ ] Add any supporting documentation and (optionally) update [CHANGELOG.md](CHANGELOG.md)
