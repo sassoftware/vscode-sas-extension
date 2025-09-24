@@ -214,7 +214,6 @@ export class LanguageServiceProvider {
 
     return result;
   }
-
   private addCommentFolding(result: FoldingRange[]) {
     // Get multiline comments directly from lexer token processing
     const commentRanges = this.syntaxProvider.getMultilineComments();
@@ -226,7 +225,8 @@ export class LanguageServiceProvider {
         kind: "comment",
       });
     }
-  } // DFS
+  }
+  // DFS
   private _flattenFoldingBlockTree(rootBlock: FoldingBlock): FoldingBlock[] {
     const stack: FoldingBlock[] = [rootBlock];
     const resultList: FoldingBlock[] = [];

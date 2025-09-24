@@ -437,10 +437,4 @@ export class SyntaxProvider {
     }
     return block.name;
   }
-  getTokenBlocks(): any[] {
-    return this.lexer.tknBlks || [];
-  }
-  getMultilineComments(): Array<{ startLine: number; endLine: number }> {
-    return this._multilineComments;
-  }
 }
