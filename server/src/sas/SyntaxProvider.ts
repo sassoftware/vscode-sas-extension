@@ -437,4 +437,7 @@ export class SyntaxProvider {
     }
     return block.name;
   }
+  getMultilineComments(): Array<{ startLine: number; endLine: number }> {
+    return this._multilineComments;
+  }
 }
