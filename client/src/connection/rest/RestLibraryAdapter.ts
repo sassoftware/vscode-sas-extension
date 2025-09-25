@@ -1,5 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { SortModelItem } from "ag-grid-community";
 import { AxiosResponse } from "axios";
 
 import { getSession } from "..";
@@ -41,10 +42,15 @@ class RestLibraryAdapter implements LibraryAdapter {
   }
 
   public async getRows(
-    item: LibraryItem,
+    item: Pick<LibraryItem, "name" | "library">,
     start: number,
     limit: number,
+    sortModel: SortModelItem[],
   ): Promise<TableData> {
+    if (sortModel.length > 0) {
+      return await this.getSortedRows(item, start, limit, sortModel);
+    }
+
     const { data } = await this.retryOnFail<RowCollection>(
       async () =>
         await this.dataAccessApi.getRows(
@@ -64,6 +70,43 @@ class RestLibraryAdapter implements LibraryAdapter {
       rows: data.items,
       count: data.count,
     };
+  }
+
+  private async getSortedRows(
+    item: Pick<LibraryItem, "name" | "library">,
+    start: number,
+    limit: number,
+    sortModel: SortModelItem[],
+  ): Promise<TableData> {
+    const { data: viewData } = await this.retryOnFail(
+      async () =>
+        await this.dataAccessApi.createView(
+          {
+            sessionId: this.sessionId,
+            libref: item.library || "",
+            tableName: item.name,
+            viewRequest: {
+              sortBy: sortModel.map((sortModelItem) => ({
+                key: sortModelItem.colId,
+                direction:
+                  sortModelItem.sort === "asc" ? "ascending" : "descending",
+              })),
+            },
+          },
+          requestOptions,
+        ),
+    );
+
+    const results = await this.getRows(
+      { library: viewData.libref, name: viewData.name },
+      start,
+      limit,
+      [],
+    );
+
+    await this.deleteTable({ library: viewData.libref, name: viewData.name });
+
+    return results;
   }
 
   public async getRowsAsCSV(
@@ -155,15 +198,18 @@ class RestLibraryAdapter implements LibraryAdapter {
     }
   }
 
-  public async deleteTable(item: LibraryItem): Promise<void> {
+  public async deleteTable({
+    library,
+    name,
+  }: Pick<LibraryItem, "library" | "name">): Promise<void> {
     await this.setup();
     try {
       await this.retryOnFail(
         async () =>
           await this.dataAccessApi.deleteTable({
             sessionId: this.sessionId,
-            libref: item.library,
-            tableName: item.name,
+            libref: library,
+            tableName: name,
           }),
       );
       // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   AllCommunityModule,
@@ -8,12 +8,14 @@ import {
   GridReadyEvent,
   IGetRowsParams,
   ModuleRegistry,
+  SortModelItem,
 } from "ag-grid-community";
 import { v4 } from "uuid";
 
 import { TableData } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
-import columnHeaderTemplate from "./columnHeaderTemplate";
+import ColumnHeader from "./ColumnHeader";
+import { ColumnHeaderProps } from "./ColumnHeaderMenu";
 
 declare const acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
@@ -34,12 +36,16 @@ const clearQueryTimeout = (): void => {
   clearTimeout(queryTableDataTimeoutId);
   queryTableDataTimeoutId = null;
 };
-const queryTableData = (start: number, end: number): Promise<TableData> => {
+const queryTableData = (
+  start: number,
+  end: number,
+  sortModel: SortModelItem[],
+): Promise<TableData> => {
   const requestKey = v4();
   vscode.postMessage({
     command: "request:loadData",
     key: requestKey,
-    data: { start, end },
+    data: { start, end, sortModel },
   });
 
   return new Promise((resolve, reject) => {
@@ -95,31 +101,39 @@ const fetchColumns = (): Promise<Column[]> => {
   });
 };
 
-const useDataViewer = () => {
+const useDataViewer = (theme: string) => {
   const [columns, setColumns] = useState<ColDef[]>([]);
+  const [columnMenu, setColumnMenu] = useState<ColumnHeaderProps | undefined>();
+
+  const columnMenuRef = useRef<ColumnHeaderProps | undefined>(columnMenu);
+  useEffect(() => {
+    columnMenuRef.current = columnMenu;
+  }, [columnMenu]);
 
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
       const dataSource = {
         rowCount: undefined,
         getRows: async (params: IGetRowsParams) => {
-          await queryTableData(params.startRow, params.endRow).then(
-            ({ rows, count }: TableData) => {
-              const rowData = rows.map(({ cells }) => {
-                const row = cells.reduce(
-                  (carry, cell, index) => ({
-                    ...carry,
-                    [columns[index].field]: cell,
-                  }),
-                  {},
-                );
+          await queryTableData(
+            params.startRow,
+            params.endRow,
+            params.sortModel,
+          ).then(({ rows, count }: TableData) => {
+            const rowData = rows.map(({ cells }) => {
+              const row = cells.reduce(
+                (carry, cell, index) => ({
+                  ...carry,
+                  [columns[index].field]: cell,
+                }),
+                {},
+              );
 
-                return row;
-              });
+              return row;
+            });
 
-              params.successCallback(rowData, count);
-            },
-          );
+            params.successCallback(rowData, count);
+          });
         },
       };
 
@@ -136,14 +150,18 @@ const useDataViewer = () => {
     fetchColumns().then((columnsData) => {
       const columns: ColDef[] = columnsData.map((column) => ({
         field: column.name,
-        headerName: column.name,
+        headerComponent: ColumnHeader,
         headerComponentParams: {
-          template: columnHeaderTemplate(column.type),
+          columnType: column.type,
+          setColumnMenu,
+          currentColumn: () => columnMenuRef.current?.column,
+          theme,
         },
       }));
       columns.unshift({
         field: "#",
         suppressMovable: true,
+        sortable: false,
       });
 
       setColumns(columns);
@@ -158,7 +176,7 @@ const useDataViewer = () => {
     };
   }, []);
 
-  return { columns, onGridReady };
+  return { columns, onGridReady, columnMenu };
 };
 
 export default useDataViewer;
