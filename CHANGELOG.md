@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
+## [v1.17.0] - 2025-09-26
+
+### Added
+
+- Added check for unsaved files in a folder upon deletion ([#1559](https://github.com/sassoftware/vscode-sas-extension/pull/1559))
+- Added ability to save cell output ([#1576](https://github.com/sassoftware/vscode-sas-extension/pull/1576))
+- Allow mapping VS Code color theme to custom ODS style ([#1619](https://github.com/sassoftware/vscode-sas-extension/pull/1619))
+
+### Fixed
+
+- First empty line condition for toggleLineComment ([#1583](https://github.com/sassoftware/vscode-sas-extension/issues/1583))
+- Enable filter library name in SET statement ([#1608](https://github.com/sassoftware/vscode-sas-extension/issues/1608))
+- Fix multiple establish connection calls ([#1621](https://github.com/sassoftware/vscode-sas-extension/issues/1621))
+
 ## [v1.16.0] - 2025-07-31
 
 ### Added
