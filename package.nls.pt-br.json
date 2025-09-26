@@ -67,7 +67,7 @@
   "configuration.SAS.log.showOnExecutionStart": "Mostrar log SAS quando a execução começa",
   "configuration.SAS.notebook.export.includeLog": "Incluir o log SAS no notebook exportado",
   "configuration.SAS.problems.log.enabled": "Mostre os problemas do log do SAS",
-  "configuration.SAS.results.html.custom.style": "Especifica qual estilo SAS usar para os temas claro, escuro, alto contraste ou alto contraste claro. Esta opção é aplicada quando \"\"#SAS.results.html.style#\"\" está definido como \"\"(auto)\"\".",
+  "configuration.SAS.results.html.custom.style": "Especifica qual estilo SAS usar para os temas claro, escuro, alto contraste ou alto contraste claro. Esta opção é aplicada quando `#SAS.results.html.style#` está definido como `(auto)`.",
   "configuration.SAS.results.html.custom.style.dark": "Estilo a ser usado para o tema escuro",
   "configuration.SAS.results.html.custom.style.highContrast": "Estilo a ser usado para o tema alto contraste",
   "configuration.SAS.results.html.custom.style.highContrastLight": "Estilo a ser usado para o tema alto contraste claro",
