@@ -838,6 +838,11 @@
         "category": "SAS"
       },
       {
+        "command": "SAS.showTableProperties",
+        "title": "%commands.SAS.showTableProperties%",
+        "category": "SAS"
+      },
+      {
         "command": "SAS.notebook.new",
         "shortTitle": "%commands.SAS.notebook.new.short%",
         "title": "%commands.SAS.notebook.new%",
@@ -954,6 +959,11 @@
           "command": "SAS.downloadTable",
           "when": "viewItem =~ /table-/ && view == librarydataprovider",
           "group": "download@0"
+        },
+        {
+          "command": "SAS.showTableProperties",
+          "when": "viewItem =~ /table-/ && view == librarydataprovider",
+          "group": "properties@0"
         },
         {
           "command": "SAS.content.addFolderResource",
@@ -1203,6 +1213,10 @@
         {
           "when": "false",
           "command": "SAS.downloadTable"
+        },
+        {
+          "when": "false",
+          "command": "SAS.showTableProperties"
         },
         {
           "when": "false",
