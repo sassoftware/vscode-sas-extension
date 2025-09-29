@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import { AgGridReact } from "ag-grid-react";
 
 import ".";
+import ColumnHeaderMenu from "./ColumnHeaderMenu";
 import useDataViewer from "./useDataViewer";
 
 import "./DataViewer.css";
@@ -20,7 +21,6 @@ const gridStyles = {
 };
 
 const DataViewer = () => {
-  const { columns, onGridReady } = useDataViewer();
   const theme = useMemo(() => {
     const themeKind = document
       .querySelector("[data-vscode-theme-kind]")
@@ -35,25 +35,29 @@ const DataViewer = () => {
         return "ag-theme-alpine-dark";
     }
   }, []);
+  const { columns, onGridReady, columnMenu } = useDataViewer(theme);
 
   if (columns.length === 0) {
     return null;
   }
 
   return (
-    <div className={`ag-grid-wrapper ${theme}`} style={gridStyles}>
-      <AgGridReact
-        cacheBlockSize={100}
-        columnDefs={columns}
-        defaultColDef={{
-          sortable: false,
-        }}
-        infiniteInitialRowCount={100}
-        maxBlocksInCache={10}
-        onGridReady={onGridReady}
-        rowModelType="infinite"
-        theme="legacy"
-      />
+    <div className="data-viewer">
+      {columnMenu && <ColumnHeaderMenu theme={theme} {...columnMenu} />}
+      <div className={`ag-grid-wrapper ${theme}`} style={gridStyles}>
+        <AgGridReact
+          cacheBlockSize={100}
+          columnDefs={columns}
+          defaultColDef={{
+            sortable: true,
+          }}
+          infiniteInitialRowCount={100}
+          maxBlocksInCache={10}
+          onGridReady={onGridReady}
+          rowModelType="infinite"
+          theme="legacy"
+        />
+      </div>
     </div>
   );
 };
