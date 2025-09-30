@@ -11,7 +11,7 @@ import {
   TableData,
   TableRow,
 } from "../../components/LibraryNavigator/types";
-import { ColumnCollection } from "../rest/api/compute";
+import type { ColumnCollection, TableInfo } from "../rest/api/compute";
 import { getColumnIconType } from "../util";
 import { executeRawCode, runCode } from "./CodeRunner";
 import { Config } from "./types";
@@ -50,7 +50,8 @@ class ItcLibraryAdapter implements LibraryAdapter {
       $runner.GetColumns("${item.library}", "${item.name}")
     `;
     const output = await executeRawCode(code);
-    const columns = JSON.parse(output).map((column) => ({
+    const rawColumns = JSON.parse(output);
+    const columns = rawColumns.map((column) => ({
       ...column,
       type: getColumnIconType(column),
     }));
@@ -127,7 +128,6 @@ class ItcLibraryAdapter implements LibraryAdapter {
     const { rows } = await this.getRows(item, start, limit);
 
     rows.unshift(columns);
-
     // Fetching csv doesn't rely on count. Instead, we get the count
     // upfront via getTableRowCount
     return { rows, count: -1 };
@@ -193,6 +193,57 @@ class ItcLibraryAdapter implements LibraryAdapter {
           "An error was encountered when loading table data. This usually happens when a table is too large or the data couldn't be processed. See console for more details.",
         ),
       );
+    }
+  }
+
+  public async getTableInfo(item: LibraryItem): Promise<TableInfo> {
+    try {
+      // Use the PowerShell GetTableInfo function which queries sashelp.vtable
+      const code = `
+        $runner.GetTableInfo("${item.library}", "${item.name}")
+      `;
+      const output = await executeRawCode(code);
+      const tableInfo = JSON.parse(output);
+
+      return {
+        name: tableInfo.name || item.name,
+        libref: tableInfo.libref || item.library,
+        type: tableInfo.type || "DATA",
+        label: tableInfo.label || "",
+        engine: "", // Not available in sashelp.vtable for SAS 9.4
+        extendedType: tableInfo.extendedType || "",
+        rowCount: tableInfo.rowCount || 0,
+        columnCount: tableInfo.columnCount || 0,
+        logicalRecordCount: tableInfo.rowCount || 0,
+        physicalRecordCount: tableInfo.rowCount || 0,
+        recordLength: 0, // Not available in vtable
+        bookmarkLength: 0, // Not available in vtable
+        compressionRoutine: tableInfo.compressionRoutine || "",
+        encoding: "", // Not available in vtable
+        creationTimeStamp: tableInfo.creationTimeStamp || "",
+        modifiedTimeStamp: tableInfo.modifiedTimeStamp || "",
+      };
+    } catch (error) {
+      console.warn("Failed to get table info:", error);
+      // If anything fails, return basic info
+      return {
+        name: item.name,
+        libref: item.library,
+        type: "DATA",
+        label: "",
+        engine: "",
+        extendedType: "",
+        rowCount: 0,
+        columnCount: 0,
+        logicalRecordCount: 0,
+        physicalRecordCount: 0,
+        recordLength: 0,
+        bookmarkLength: 0,
+        compressionRoutine: "",
+        encoding: "",
+        creationTimeStamp: "",
+        modifiedTimeStamp: "",
+      };
     }
   }
 

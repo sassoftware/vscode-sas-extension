@@ -66,6 +66,7 @@ class LibraryDataProvider
     registerAPI("getColumns", model.fetchColumns.bind(model));
     registerAPI("getTables", model.getTables.bind(model));
     registerAPI("getLibraries", model.getLibraries.bind(model));
+    registerAPI("getTableInfo", model.getTableInfo.bind(model));
   }
 
   public getSubscriptions(): Disposable[] {
@@ -177,6 +178,14 @@ class LibraryDataProvider
   public useAdapter(libraryAdapter: LibraryAdapter): void {
     this.model.useAdapter(libraryAdapter);
     this._onDidChangeTreeData.fire(undefined);
+  }
+
+  public async getTableInfo(item: LibraryItem) {
+    return await this.model.getTableInfo(item);
+  }
+
+  public async fetchColumns(item: LibraryItem) {
+    return await this.model.fetchColumns(item);
   }
 }
 
