@@ -29,6 +29,8 @@ export class SyntaxProvider {
   private tailUnchangedSyntaxTable: SyntaxToken[][] = [];
   private removedSyntaxTable: SyntaxToken[][] = [];
   private _tokenCallback: ((token: Token) => void) | undefined;
+  private _multilineComments: Array<{ startLine: number; endLine: number }> =
+    [];
 
   public blockComment = { start: "/*", end: "*/" };
   public lexer;
@@ -45,6 +47,7 @@ export class SyntaxProvider {
     let startLine = 0;
     this.currTokenIndex = 0;
     this.lastToken = null;
+    this._multilineComments = []; // Clear previous comments
     this.parsingState = 1; //LanguageService.ParsingState.STARTING;
     this.parsedRange = this.lexer.start(change);
 
@@ -345,6 +348,17 @@ export class SyntaxProvider {
         end: { line: token.end.line, column: token.end.column },
       });
     }
+
+    // Collect multiline comments as they're processed by the lexer
+    if (
+      (token.type === "comment" || token.type === "macro-comment") &&
+      token.end.line > token.start.line
+    ) {
+      this._multilineComments.push({
+        startLine: token.start.line,
+        endLine: token.end.line,
+      });
+    }
   }
 
   // public functions
@@ -422,5 +436,8 @@ export class SyntaxProvider {
       }
     }
     return block.name;
+  }
+  getMultilineComments(): Array<{ startLine: number; endLine: number }> {
+    return this._multilineComments;
   }
 }
