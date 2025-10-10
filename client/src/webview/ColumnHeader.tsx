@@ -41,6 +41,60 @@ const ColumnHeader = ({
 }) => {
   const ref = useRef<HTMLButtonElement>(undefined!);
   const currentColumn = getCurrentColumn();
+  const currentSortedColumns = api.getColumnState().filter((c) => c.sort);
+  const columnNumber = column.sort
+    ? currentSortedColumns.length > 1
+      ? currentSortedColumns.findIndex((c) => c.colId === column.colId) + 1
+      : ""
+    : "";
+
+  const displayColumnMenu = () => {
+    if (currentColumn) {
+      return setColumnMenu(undefined);
+    }
+    const { height, top, left } = ref.current.getBoundingClientRect();
+    setColumnMenu({
+      left,
+      top: top + height,
+      column,
+      theme,
+      hasSort: api.getColumnState().some((c) => c.sort),
+      sortColumn: (direction: "asc" | "desc" | null) => {
+        const newColumnState = api.getColumnState().filter((c) => c.sort);
+        const colIndex = newColumnState.findIndex(
+          (c) => c.colId === column.colId,
+        );
+        if (colIndex === -1) {
+          newColumnState.push({
+            colId: column.colId,
+            sort: direction,
+          });
+        } else {
+          newColumnState[colIndex].sort = direction;
+        }
+        api.applyColumnState({
+          state: newColumnState,
+          defaultState: { sort: null },
+        });
+      },
+      removeAllSorting: () =>
+        api.applyColumnState({
+          state: api
+            .getColumnState()
+            .filter((c) => c.sort)
+            .map((c) => ({ colId: c.colId, sort: null })),
+          defaultState: { sort: null },
+        }),
+      removeFromSort: () =>
+        api.applyColumnState({
+          state: api
+            .getColumnState()
+            .filter((c) => c.sort && c.colId !== column.colId),
+          defaultState: { sort: null },
+        }),
+      dismissMenu: () => setColumnMenu(undefined),
+    });
+  };
 
   return (
     <div className={`ag-cell-label-container ${theme}`} role="presentation">
@@ -53,41 +107,28 @@ const ColumnHeader = ({
           className={`header-icon ${getIconForColumnType(columnType)}`}
         ></span>
         <span className="ag-header-cell-text">{column.colId}</span>
-        {column.sort === "asc" && (
-          <span className="sort-icon-wrapper">
-            <span className="sort-icon ascending"></span>
-          </span>
-        )}
-        {column.sort === "desc" && (
-          <span className="sort-icon-wrapper">
-            <span className="sort-icon descending"></span>
-          </span>
-        )}
-        <div className="dropdown">
-          <button
-            ref={ref}
-            type="button"
-            className={currentColumn?.colId === column.colId ? "active" : ""}
-            onClick={() => {
-              if (currentColumn) {
-                return setColumnMenu(undefined);
-              }
-              const { height, top, left } = ref.current.getBoundingClientRect();
-              setColumnMenu({
-                left,
-                top: top + height,
-                column,
-                theme,
-                sortColumn: (direction: "asc" | "desc" | null) => {
-                  api.applyColumnState({
-                    state: [{ colId: column.colId, sort: direction }],
-                    defaultState: { sort: null },
-                  });
-                },
-                dismissMenu: () => setColumnMenu(undefined),
-              });
-            }}
-          >
+
+        <span className="sort-icon-wrapper">
+          {!!column.sort && (
+            <>
+              <span
+                className={`sort-icon ${column.sort === "asc" ? "ascending" : "descending"}`}
+              ></span>
+              {!!columnNumber && (
+                <span className="sort-number">{columnNumber}</span>
+              )}
+            </>
+          )}
+        </span>
+
+        <div
+          className={
+            currentColumn?.colId === column.colId
+              ? "active dropdown"
+              : "dropdown"
+          }
+        >
+          <button ref={ref} type="button" onClick={displayColumnMenu}>
             <span></span>
           </button>
         </div>

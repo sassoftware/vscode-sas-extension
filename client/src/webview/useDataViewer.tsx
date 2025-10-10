@@ -110,6 +110,23 @@ const useDataViewer = (theme: string) => {
     columnMenuRef.current = columnMenu;
   }, [columnMenu]);
 
+  const [messages, setMessages] = useState<
+    Record<string, string> | undefined
+  >();
+  useEffect(() => {
+    vscode.postMessage({ command: "request:loadMessages" });
+    const loadMessages = (event) => {
+      if (event.data.command === "response:loadMessages") {
+        window.removeEventListener("message", loadMessages);
+      }
+      setMessages(event.data.data);
+    };
+    window.addEventListener("message", loadMessages);
+    return () => {
+      window.removeEventListener("message", loadMessages);
+    };
+  }, []);
+
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
       const dataSource = {
@@ -176,7 +193,9 @@ const useDataViewer = (theme: string) => {
     };
   }, []);
 
-  return { columns, onGridReady, columnMenu };
+  const dismissMenu = () => setColumnMenu(undefined);
+
+  return { columns, onGridReady, columnMenu, messages, dismissMenu };
 };
 
 export default useDataViewer;
