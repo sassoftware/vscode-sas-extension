@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 import { AgColumn } from "ag-grid-community";
 
@@ -27,14 +27,16 @@ const GridMenu = ({
   menuItems,
   theme,
   top,
-  left,
+  left: incomingLeft,
   subMenu,
+  subtractWidthFromLeft,
 }: {
   menuItems: (MenuItem | string)[];
   theme: string;
   top: number;
   left: number;
   subMenu?: boolean;
+  subtractWidthFromLeft?: boolean;
 }) => {
   const menuRef = useRef<HTMLDivElement>(undefined);
   const [subMenuItems, setSubMenuItems] = useState<(MenuItem | string)[]>([]);
@@ -43,6 +45,20 @@ const GridMenu = ({
     : `ag-menu ag-column-menu ag-ltr ag-popup-child ag-popup-positioned-under ${theme}`;
   const [activeIndex, setActiveIndex] = useState(-1);
 
+  const [offset, setOffset] = useState(0);
+  const [left, setLeft] = useState(incomingLeft);
+  useEffect(() => {
+    const w = menuRef.current.getBoundingClientRect().width;
+    const cw = menuRef.current.closest("body").clientWidth;
+    if (subtractWidthFromLeft) {
+      setLeft(incomingLeft - w);
+      return;
+    }
+    if (left + w > cw) {
+      setOffset(left + w - cw + 15);
+    }
+  }, []);
+
   return (
     <Fragment>
       {subMenuItems.length > 0 && (
@@ -50,7 +66,12 @@ const GridMenu = ({
           menuItems={subMenuItems}
           theme={theme}
           top={top}
-          left={left + menuRef.current.getBoundingClientRect().width}
+          left={
+            offset === 0
+              ? left + menuRef.current.getBoundingClientRect().width
+              : left - offset
+          }
+          subtractWidthFromLeft={offset !== 0}
           subMenu
         />
       )}
@@ -58,7 +79,7 @@ const GridMenu = ({
         <div
           className={className}
           role="presentation"
-          style={{ top, left }}
+          style={{ top, left: left - offset }}
           ref={menuRef}
         >
           <div className="ag-menu-list ag-focus-managed" role="menu">
