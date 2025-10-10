@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { createRoot } from "react-dom/client";
 
 import { AgGridReact } from "ag-grid-react";
@@ -35,16 +35,39 @@ const DataViewer = () => {
         return "ag-theme-alpine-dark";
     }
   }, []);
-  const { columns, onGridReady, columnMenu } = useDataViewer(theme);
+  const { columns, onGridReady, columnMenu, messages, dismissMenu } =
+    useDataViewer(theme);
 
-  if (columns.length === 0) {
+  const handleKeydown = useCallback(
+    (event) => {
+      if (event.key === "Escape" && columnMenu) {
+        dismissMenu();
+      }
+    },
+    [columnMenu, dismissMenu],
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeydown);
+    return () => {
+      document.removeEventListener("keydown", handleKeydown);
+    };
+  }, [handleKeydown]);
+
+  if (columns.length === 0 || !messages) {
     return null;
   }
 
   return (
     <div className="data-viewer">
-      {columnMenu && <ColumnHeaderMenu theme={theme} {...columnMenu} />}
-      <div className={`ag-grid-wrapper ${theme}`} style={gridStyles}>
+      {columnMenu && (
+        <ColumnHeaderMenu theme={theme} messages={messages} {...columnMenu} />
+      )}
+      <div
+        className={`ag-grid-wrapper ${theme}`}
+        style={gridStyles}
+        onClick={() => columnMenu && dismissMenu()}
+      >
         <AgGridReact
           cacheBlockSize={100}
           columnDefs={columns}

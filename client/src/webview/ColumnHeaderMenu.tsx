@@ -3,12 +3,16 @@ import { Fragment, useRef, useState } from "react";
 import { AgColumn } from "ag-grid-community";
 
 export interface ColumnHeaderProps {
-  left: number;
-  top: number;
   column: AgColumn;
-  sortColumn: (direction: "asc" | "desc") => void;
   dismissMenu: () => void;
+  hasSort: boolean;
+  left: number;
+  messages?: Record<string, string>;
+  removeAllSorting: () => void;
+  removeFromSort: () => void;
+  sortColumn: (direction: "asc" | "desc") => void;
   theme: string;
+  top: number;
 }
 
 interface MenuItem {
@@ -16,6 +20,7 @@ interface MenuItem {
   checked?: boolean;
   onPress?: () => void;
   children?: (MenuItem | string)[];
+  disabled?: boolean;
 }
 
 const GridMenu = ({
@@ -36,6 +41,7 @@ const GridMenu = ({
   const className = subMenu
     ? `ag-menu ag-ltr ag-popup-child ${theme}`
     : `ag-menu ag-column-menu ag-ltr ag-popup-child ag-popup-positioned-under ${theme}`;
+  const [activeIndex, setActiveIndex] = useState(-1);
 
   return (
     <Fragment>
@@ -55,38 +61,58 @@ const GridMenu = ({
           style={{ top, left }}
           ref={menuRef}
         >
-          {menuItems.map((menuItem, index) => {
-            if (typeof menuItem === "string") {
+          <div className="ag-menu-list ag-focus-managed" role="menu">
+            <div
+              className="ag-tab-guard ag-tab-guard-top"
+              role="presentation"
+            ></div>
+            {menuItems.map((menuItem, index) => {
+              if (typeof menuItem === "string") {
+                return (
+                  <div
+                    className="ag-menu-separator"
+                    aria-hidden="true"
+                    key={index}
+                  >
+                    {" "}
+                    <div className="ag-menu-separator-part"></div>{" "}
+                    <div className="ag-menu-separator-part"></div>{" "}
+                    <div className="ag-menu-separator-part"></div>{" "}
+                    <div className="ag-menu-separator-part"></div>{" "}
+                  </div>
+                );
+              }
               return (
                 <div
-                  className="ag-menu-separator"
-                  aria-hidden="true"
-                  key={index}
-                >
-                  {" "}
-                  <div className="ag-menu-separator-part"></div>{" "}
-                  <div className="ag-menu-separator-part"></div>{" "}
-                  <div className="ag-menu-separator-part"></div>{" "}
-                  <div className="ag-menu-separator-part"></div>{" "}
-                </div>
-              );
-            }
-            return (
-              <div
-                className="ag-menu-list ag-focus-managed"
-                role="menu"
-                key={menuItem.name}
-              >
-                <div
-                  className="ag-tab-guard ag-tab-guard-top"
-                  role="presentation"
-                ></div>
-                <div
                   aria-expanded="false"
-                  className="ag-menu-option"
+                  className={`ag-menu-option ${index === activeIndex ? "ag-menu-option-active" : ""} ${menuItem.disabled ? "ag-menu-option-disabled" : ""}`}
                   role="menuitem"
                   aria-haspopup="menu"
                   tabIndex={-1}
+                  key={menuItem.name}
+                  onMouseEnter={() => {
+                    if (menuItem.disabled) {
+                      return;
+                    }
+                    setActiveIndex(index);
+                    if (menuItem.children) {
+                      setSubMenuItems(menuItem.children);
+                    } else {
+                      setSubMenuItems([]);
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (menuItem.disabled) {
+                      return;
+                    }
+                    setActiveIndex(-1);
+                    const targetInPopup = Array.from(
+                      document.querySelectorAll(".ag-popup"),
+                    ).some((t) => t.contains(e.target as HTMLElement));
+                    if (!targetInPopup) {
+                      setSubMenuItems([]);
+                    }
+                  }}
                 >
                   <span
                     className="ag-menu-option-part ag-menu-option-icon"
@@ -105,6 +131,9 @@ const GridMenu = ({
                     className="ag-menu-option-part ag-menu-option-text"
                     data-ref="eName"
                     onClick={() => {
+                      if (menuItem.disabled) {
+                        return;
+                      }
                       if (menuItem.onPress) {
                         return menuItem.onPress();
                       }
@@ -132,13 +161,13 @@ const GridMenu = ({
                     </span>
                   )}
                 </div>
-                <div
-                  className="ag-tab-guard ag-tab-guard-bottom"
-                  role="presentation"
-                ></div>
-              </div>
-            );
-          })}
+              );
+            })}
+            <div
+              className="ag-tab-guard ag-tab-guard-bottom"
+              role="presentation"
+            ></div>
+          </div>
         </div>
       </div>
     </Fragment>
@@ -146,84 +175,65 @@ const GridMenu = ({
 };
 
 const ColumnHeaderMenu = ({
-  left,
-  top,
   column,
-  sortColumn,
   dismissMenu,
+  hasSort,
+  left,
+  removeAllSorting,
+  removeFromSort,
+  sortColumn,
   theme,
+  top,
+  messages: t,
 }: ColumnHeaderProps) => {
   const menuItems = [
     {
-      name: "Sort",
+      name: t["Sort"],
       children: [
         {
-          name: "Ascending",
+          name:
+            hasSort && !column.sort
+              ? t["Ascending (add to sorting)"]
+              : t["Ascending"],
           checked: column.sort === "asc",
           onPress: () => {
-            sortColumn(column.sort === "asc" ? null : "asc");
+            sortColumn("asc");
             dismissMenu();
           },
         },
         {
-          name: "Descending",
+          name:
+            hasSort && !column.sort
+              ? t["Descending (add to sorting)"]
+              : t["Descending"],
           checked: column.sort === "desc",
           onPress: () => {
-            sortColumn(column.sort === "desc" ? null : "desc");
+            sortColumn("desc");
             dismissMenu();
           },
         },
         "separator",
         {
-          name: "Remove Sorting",
+          name: t["Remove sorting"],
+          onPress: () => {
+            removeFromSort();
+            dismissMenu();
+          },
+          disabled: !hasSort || !column.sort,
         },
         {
-          name: "Remove all sorting",
+          name: t["Remove all sorting"],
+          onPress: () => {
+            removeAllSorting();
+            dismissMenu();
+          },
+          disabled: !hasSort,
         },
       ],
     },
   ];
 
-  if (1 === 1) {
-    return (
-      <GridMenu menuItems={menuItems} top={top} left={left} theme={theme} />
-    );
-  }
-  return (
-    <div className="header-menu" style={{ left, top }}>
-      <ul>
-        <li>
-          <span>Sort</span>
-          <ul>
-            <li>
-              {column.sort === "asc" && <span>✓ </span>}
-              <button
-                type="button"
-                onClick={() => {
-                  sortColumn(column.sort === "asc" ? null : "asc");
-                  dismissMenu();
-                }}
-              >
-                Ascending
-              </button>
-            </li>
-            <li>
-              {column.sort === "desc" && <span>✓ </span>}
-              <button
-                type="button"
-                onClick={() => {
-                  sortColumn(column.sort === "desc" ? null : "desc");
-                  dismissMenu();
-                }}
-              >
-                Descending
-              </button>
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </div>
-  );
+  return <GridMenu menuItems={menuItems} top={top} left={left} theme={theme} />;
 };
 
 export default ColumnHeaderMenu;

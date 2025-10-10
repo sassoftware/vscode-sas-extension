@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri, window } from "vscode";
+import { Uri, l10n, window } from "vscode";
 
 import { SortModelItem } from "ag-grid-community";
 
@@ -93,6 +93,23 @@ class DataViewer extends WebView {
           key: event.key,
           command: "response:loadColumns",
           data: await this._fetchColumns(),
+        });
+        break;
+      case "request:loadMessages":
+        this.panel.webview.postMessage({
+          key: event.key,
+          command: "response:loadMessages",
+          data: {
+            "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
+            Ascending: l10n.t("Ascending"),
+            "Descending (add to sorting)": l10n.t(
+              "Descending (add to sorting)",
+            ),
+            Descending: l10n.t("Descending"),
+            "Remove all sorting": l10n.t("Remove all sorting"),
+            "Remove sorting": l10n.t("Remove sorting"),
+            Sort: l10n.t("Sort"),
+          },
         });
         break;
       default:

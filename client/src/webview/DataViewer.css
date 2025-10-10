@@ -75,115 +75,63 @@ body,
     no-repeat;
 }
 
-.header-menu {
-  position: absolute;
-  z-index: 999;
-}
-.header-menu > ul {
-  position: relative;
-  bottom: 0;
-  right: 100%;
-}
-.header-menu ul {
-  background: green;
-  background: var(--vscode-editorHoverWidget-background);
-  border: 1px solid var(--vscode-editorHoverWidget-border);
-  padding: 0;
-  margin: 0;
-  list-style-type: none;
-  min-width: 100px;
-  color: var(--vscode-editorWidget-foreground);
-  box-shadow: var(--vscode-widget-shadow);
-}
-
-.ag-header-cell-label button,
-.header-menu button {
+.ag-cell-label-container button {
   background: none;
   border: none;
   margin: 0;
   padding: 0;
 }
 
-.header-menu button {
-  color: var(--vscode-editorWidget-foreground);
-}
-
-.header-menu li {
-  padding: 0.5rem;
-  white-space: nowrap;
-}
-
-.header-menu li:hover {
-  background: var(--vscode-toolbar-hoverBackground);
-}
-
-.header-menu > ul > li {
+.ag-cell-label-container {
   position: relative;
 }
 
-.header-menu > ul > li > ul {
+.ag-cell-label-container .dropdown {
   display: none;
+  margin-left: 0.25rem;
 }
 
-.header-menu > ul > li:hover > ul {
-  display: block;
-  position: absolute;
-  left: 100%;
-  top: 0;
-}
-
-.header-menu li > span:has(+ ul) {
-  display: block;
-  background: url(../../../icons/light/chevron-right.svg) right center no-repeat;
-}
-
-.vscode-dark .header-menu li > span:has(+ ul) {
-  background: url(../../../icons/dark/chevron-right.svg) right center no-repeat;
-}
-
-.ag-header-cell-label {
-  position: relative;
-}
-
-.ag-header-cell-label .dropdown {
-  position: absolute;
-  right: 0;
-}
-
-button {
+button,
+.ag-menu-option:not(.ag-menu-option-disabled) {
   cursor: pointer;
 }
 
-.ag-header-cell-label button {
-  display: none;
+.dropdown button {
+  display: block;
   width: 16px;
   height: 16px;
 }
 
-.ag-header-cell-label button span {
+.dropdown button span {
   background: url(../../../icons/light/more.svg);
   background-size: 16px 16px;
 }
 
-.ag-header-cell-label button:hover,
-.ag-header-cell-label button.active {
+.dropdown button:hover,
+.dropdown.active button {
   background: var(--vscode-toolbar-hoverBackground);
 }
 
-.vscode-dark .ag-header-cell-label button {
+.vscode-dark .dropdown button {
   background: url(../../../icons/dark/more.svg);
   background-size: 16px 16px;
 }
 
-.ag-header-cell-label:hover button,
-.ag-header-cell-label button.active {
-  display: block;
+.ag-header-active .ag-cell-label-container .dropdown,
+.ag-cell-label-container .dropdown.active {
+  display: flex;
 }
 
-.sort-icon-wrapper .sort-icon {
+.sort-icon-wrapper {
+  margin-left: auto;
+}
+
+.sort-icon-wrapper .sort-icon,
+.sort-icon-wrapper .sort-number {
   width: 16px;
   height: 16px;
   display: inline-block;
+  vertical-align: middle;
 }
 
 .sort-icon-wrapper .sort-icon.ascending {
