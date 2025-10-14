@@ -44,6 +44,21 @@ export const saveOutput = async () => {
     return;
   }
 
+  // Show a message to clarify which cell's output will be saved
+  const proceed = await window.showInformationMessage(
+    l10n.t(
+      "This will save output from the selected cell (cell {0}). To save output from a different cell, please click on that cell first.",
+      cell.index + 1,
+    ),
+    { modal: false },
+    l10n.t("Continue"),
+    l10n.t("Cancel"),
+  );
+
+  if (proceed !== l10n.t("Continue")) {
+    return;
+  }
+
   let odsItem = null;
   let logItem = null;
 
@@ -100,7 +115,7 @@ export const saveOutput = async () => {
       content = odsItem.data.toString();
       fileExtension = "html";
       fileName = `${path.basename(notebook.uri.path, ".sasnb")}_${l10n.t("output")}_${
-        activeCell + 1
+        cell.index + 1
       }.html`;
     } else if (exportChoice.outputType === "log" && logItem) {
       const logs: Array<{ line: string; type: string }> = JSON.parse(
@@ -109,7 +124,7 @@ export const saveOutput = async () => {
       content = logs.map((log) => log.line).join("\n");
       fileExtension = "log";
       fileName = `${path.basename(notebook.uri.path, ".sasnb")}_${l10n.t("output")}_${
-        activeCell + 1
+        cell.index + 1
       }.log`;
     }
   } catch (error) {
