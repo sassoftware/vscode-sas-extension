@@ -188,6 +188,7 @@ export class LanguageServiceProvider {
   getFoldingRanges(): FoldingRange[] {
     const lineCount = this.model.getLineCount();
     const result: FoldingRange[] = [];
+    this.addCommentFolding(result);
 
     for (let i = 0; i < lineCount; i++) {
       const rootBlock = this.syntaxProvider.getFoldingBlock(
@@ -210,9 +211,21 @@ export class LanguageServiceProvider {
         continue;
       }
     }
+
     return result;
   }
+  private addCommentFolding(result: FoldingRange[]) {
+    // Get multiline comments directly from lexer token processing
+    const commentRanges = this.syntaxProvider.getMultilineComments();
 
+    for (const range of commentRanges) {
+      result.push({
+        startLine: range.startLine,
+        endLine: range.endLine,
+        kind: "comment",
+      });
+    }
+  }
   // DFS
   private _flattenFoldingBlockTree(rootBlock: FoldingBlock): FoldingBlock[] {
     const stack: FoldingBlock[] = [rootBlock];
