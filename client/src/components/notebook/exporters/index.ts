@@ -1,6 +1,6 @@
 // Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri, l10n, window, workspace } from "vscode";
+import { NotebookDocument, Uri, l10n, window, workspace } from "vscode";
 import type { LanguageClient } from "vscode-languageclient/node";
 
 import path from "path";
@@ -31,101 +31,32 @@ export const exportNotebook = async (client: LanguageClient) => {
   workspace.fs.writeFile(uri, Buffer.from(content));
 };
 
-export const saveOutput = async () => {
-  const notebook = window.activeNotebookEditor?.notebook;
-  const activeCell = window.activeNotebookEditor?.selection?.start;
+let timesOutputSaved = 0;
 
-  if (!notebook || activeCell === undefined) {
-    return;
-  }
-
-  const cell = notebook.cellAt(activeCell);
-  if (!cell) {
-    return;
-  }
-
-  // Show a message to clarify which cell's output will be saved
-  const proceed = await window.showInformationMessage(
-    l10n.t(
-      "This will save output from the selected cell (cell {0}). To save output from a different cell, please click on that cell first.",
-      cell.index + 1,
-    ),
-    { modal: false },
-    l10n.t("Continue"),
-    l10n.t("Cancel"),
-  );
-
-  if (proceed !== l10n.t("Continue")) {
-    return;
-  }
-
-  let odsItem = null;
-  let logItem = null;
-
-  for (const output of cell.outputs) {
-    if (!odsItem) {
-      odsItem = output.items.find(
-        (item) => item.mime === "application/vnd.sas.ods.html5",
-      );
-    }
-    if (!logItem) {
-      logItem = output.items.find(
-        (item) => item.mime === "application/vnd.sas.compute.log.lines",
-      );
-    }
-
-    if (odsItem && logItem) {
-      break;
-    }
-  }
-
-  const choices: Array<{
-    label: string;
+export const saveOutputFromRenderer = async (
+  message: {
     outputType: "html" | "log";
-  }> = [];
+    content: unknown;
+    mime: string;
+    cellIndex?: number;
+  },
+  notebook: NotebookDocument,
+) => {
+  const { outputType, content } = message;
 
-  if (odsItem) {
-    choices.push({
-      label: l10n.t("Save ODS HTML"),
-      outputType: "html",
-    });
-  }
-
-  if (logItem) {
-    choices.push({
-      label: l10n.t("Save Log"),
-      outputType: "log",
-    });
-  }
-
-  const exportChoice = await window.showQuickPick(choices, {
-    placeHolder: l10n.t("Choose output type to save"),
-    ignoreFocusOut: true,
-  });
-
-  if (!exportChoice) {
-    return;
-  }
-
-  let content = "";
+  let fileContent = "";
   let fileExtension = "";
   let fileName = "";
+
   try {
-    if (exportChoice.outputType === "html" && odsItem) {
-      content = odsItem.data.toString();
+    if (outputType === "html" && typeof content === "string") {
+      fileContent = content;
       fileExtension = "html";
-      fileName = `${path.basename(notebook.uri.path, ".sasnb")}_${l10n.t("output")}_${
-        cell.index + 1
-      }.html`;
-    } else if (exportChoice.outputType === "log" && logItem) {
-      const logs: Array<{ line: string; type: string }> = JSON.parse(
-        logItem.data.toString(),
-      );
-      content = logs.map((log) => log.line).join("\n");
+      fileName = `${path.basename(notebook.uri.path, ".sasnb")}_${l10n.t("output")}_${timesOutputSaved + 1}.html`;
+    } else if (outputType === "log" && Array.isArray(content)) {
+      fileContent = content.map((log: { line: string }) => log.line).join("\n");
       fileExtension = "log";
-      fileName = `${path.basename(notebook.uri.path, ".sasnb")}_${l10n.t("output")}_${
-        cell.index + 1
-      }.log`;
+      fileName = `${path.basename(notebook.uri.path, ".sasnb")}_${l10n.t("output")}_${timesOutputSaved + 1}.log`;
     }
   } catch (error) {
     window.showErrorMessage(
@@ -146,7 +77,8 @@ export const saveOutput = async () => {
     return;
   }
 
-  await workspace.fs.writeFile(uri, Buffer.from(content));
+  await workspace.fs.writeFile(uri, Buffer.from(fileContent));
+  timesOutputSaved++;
 
   window.showInformationMessage(l10n.t("Saved to {0}", uri.fsPath));
 };

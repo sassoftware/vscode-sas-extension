@@ -849,11 +849,6 @@
         "category": "SAS Notebook"
       },
       {
-        "command": "SAS.notebook.saveOutput",
-        "title": "%commands.SAS.notebook.saveOutput%",
-        "category": "SAS Notebook"
-      },
-      {
         "command": "SAS.file.new",
         "shortTitle": "%commands.SAS.file.new.short%",
         "title": "%commands.SAS.file.new%",
@@ -1125,12 +1120,6 @@
           "command": "SAS.notebook.export"
         }
       ],
-      "notebook/cell/title": [
-        {
-          "command": "SAS.notebook.saveOutput",
-          "when": "notebookType == 'sas-notebook' && notebookCellHasOutputs"
-        }
-      ],
       "commandPalette": [
         {
           "when": "editorLangId == sas && !SAS.hideRunMenuItem",
@@ -1376,7 +1365,8 @@
         "entrypoint": "./client/dist/notebook/LogRenderer.js",
         "mimeTypes": [
           "application/vnd.sas.compute.log.lines"
-        ]
+        ],
+        "requiresMessaging": "optional"
       },
       {
         "id": "sas-html-renderer",
@@ -1384,7 +1374,8 @@
         "entrypoint": "./client/dist/notebook/HTMLRenderer.js",
         "mimeTypes": [
           "application/vnd.sas.ods.html5"
-        ]
+        ],
+        "requiresMessaging": "optional"
       }
     ]
   },
