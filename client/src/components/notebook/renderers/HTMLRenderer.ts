@@ -27,11 +27,9 @@ export const activate: ActivationFunction = (context) => ({
       shadow = element.attachShadow({ mode: "open" });
     }
 
-    // Create a wrapper with a save button
     const wrapper = document.createElement("div");
     wrapper.style.position = "relative";
 
-    // Add save button if messaging is available
     if (context.postMessage) {
       const saveButton = document.createElement("button");
       saveButton.textContent = "Save Output";

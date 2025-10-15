@@ -15,7 +15,6 @@ export const activate: ActivationFunction = (context) => ({
     const wrapper = document.createElement("div");
     wrapper.style.position = "relative";
 
-    // Add save button if messaging is available
     if (context.postMessage) {
       const saveButton = document.createElement("button");
       saveButton.textContent = "Save Output";
@@ -52,7 +51,6 @@ export const activate: ActivationFunction = (context) => ({
       wrapper.appendChild(saveButton);
     }
 
-    // Add the log content
     const root = document.createElement("div");
     root.style.whiteSpace = "pre";
     root.style.fontFamily = "var(--vscode-editor-font-family)";
