@@ -29,14 +29,14 @@ const GridMenu = ({
   top,
   left: incomingLeft,
   subMenu,
-  subtractWidthFromLeft,
+  parentDimensions,
 }: {
   menuItems: (MenuItem | string)[];
   theme: string;
   top: number;
-  left: number;
+  left?: number;
   subMenu?: boolean;
-  subtractWidthFromLeft?: boolean;
+  parentDimensions?: { left: number; width: number };
 }) => {
   const menuRef = useRef<HTMLDivElement>(undefined);
   const [subMenuItems, setSubMenuItems] = useState<(MenuItem | string)[]>([]);
@@ -45,18 +45,27 @@ const GridMenu = ({
     : `ag-menu ag-column-menu ag-ltr ag-popup-child ag-popup-positioned-under ${theme}`;
   const [activeIndex, setActiveIndex] = useState(-1);
 
-  const [offset, setOffset] = useState(0);
-  const [left, setLeft] = useState(incomingLeft);
+  const [left, setLeft] = useState(parentDimensions?.left ?? incomingLeft);
+  const [displayed, setDisplayed] = useState(false);
   useEffect(() => {
-    const w = menuRef.current.getBoundingClientRect().width;
-    const cw = menuRef.current.closest("body").clientWidth;
-    if (subtractWidthFromLeft) {
-      setLeft(incomingLeft - w);
+    const clientWidth = menuRef.current.closest("body").clientWidth;
+    const width = menuRef.current.getBoundingClientRect().width;
+
+    if (parentDimensions) {
+      // First, lets put the child menu to the right
+      let adjustedLeft = parentDimensions.left + parentDimensions.width;
+      // If that's off screen, lets instead place it to the left
+      if (adjustedLeft + width > clientWidth) {
+        adjustedLeft = parentDimensions.left - width;
+      }
+      setLeft(adjustedLeft);
+      setDisplayed(true);
       return;
     }
-    if (left + w > cw) {
-      setOffset(left + w - cw + 15);
+    if (left + width > clientWidth) {
+      setLeft(left - (left + width - clientWidth + 15));
     }
+    setDisplayed(true);
   }, []);
 
   return (
@@ -66,20 +75,25 @@ const GridMenu = ({
           menuItems={subMenuItems}
           theme={theme}
           top={top}
-          left={
-            offset === 0
-              ? left + menuRef.current.getBoundingClientRect().width
-              : left - offset
-          }
-          subtractWidthFromLeft={offset !== 0}
+          parentDimensions={{
+            left,
+            width: menuRef.current.getBoundingClientRect().width,
+          }}
           subMenu
         />
       )}
-      <div className="ag-theme-sas ag-popup">
+      <div
+        className="ag-theme-sas ag-popup"
+        // We rely on the menu being displayed _first_ before being able to
+        // calculate it's correct left position. This prevents actually showing the
+        // menu to the user until we've figured that out. This prevents flashes of the
+        // menu in the wrong position.
+        style={{ visibility: displayed ? "visible" : "hidden" }}
+      >
         <div
           className={className}
           role="presentation"
-          style={{ top, left: left - offset }}
+          style={{ top, left }}
           ref={menuRef}
         >
           <div className="ag-menu-list ag-focus-managed" role="menu">
