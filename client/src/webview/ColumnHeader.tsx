@@ -42,11 +42,10 @@ const ColumnHeader = ({
   const ref = useRef<HTMLButtonElement>(undefined!);
   const currentColumn = getCurrentColumn();
   const currentSortedColumns = api.getColumnState().filter((c) => c.sort);
-  const columnNumber = column.sort
-    ? currentSortedColumns.length > 1
-      ? currentSortedColumns.findIndex((c) => c.colId === column.colId) + 1
-      : ""
-    : "";
+  const columnNumber =
+    column.sort && currentSortedColumns.length > 1
+      ? `${column.sortIndex + 1}`
+      : "";
 
   const displayColumnMenu = () => {
     if (currentColumn) {
@@ -68,6 +67,7 @@ const ColumnHeader = ({
           newColumnState.push({
             colId: column.colId,
             sort: direction,
+            sortIndex: newColumnState.length,
           });
         } else {
           newColumnState[colIndex].sort = direction;
@@ -89,7 +89,10 @@ const ColumnHeader = ({
         api.applyColumnState({
           state: api
             .getColumnState()
-            .filter((c) => c.sort && c.colId !== column.colId),
+            .sort((a, b) => a.sortIndex - b.sortIndex)
+            .filter((c) => c.sort && c.colId !== column.colId)
+            // After we remove the column, lets reindex what's left
+            .map((c, sortIndex) => ({ ...c, sortIndex })),
           defaultState: { sort: null },
         }),
       dismissMenu: () => setColumnMenu(undefined),
