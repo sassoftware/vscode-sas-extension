@@ -99,6 +99,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
       item,
       start,
       limit,
+      sortModel,
     );
 
     const rows = rawRowValues.map((line, idx: number): TableRow => {
@@ -179,10 +180,14 @@ class ItcLibraryAdapter implements LibraryAdapter {
     item: LibraryItem,
     start: number,
     limit: number,
+    sortModel: SortModelItem[],
   ): Promise<{ rows: Array<string[]>; count: number }> {
+    const sortString = sortModel
+      .map((col) => `${col.colId} ${col.sort}`)
+      .join(",");
     const fullTableName = `${item.library}.${item.name}`;
     const code = `
-      $runner.GetDatasetRecords("${fullTableName}", ${start}, ${limit})
+      $runner.GetDatasetRecords("${fullTableName}", ${start}, ${limit}, "${sortString}")
     `;
     const output = await executeRawCode(code);
     try {
