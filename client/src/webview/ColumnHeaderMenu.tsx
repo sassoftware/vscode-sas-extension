@@ -1,3 +1,6 @@
+// Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 import { Fragment, useEffect, useRef, useState } from "react";
 
 import { AgColumn } from "ag-grid-community";
