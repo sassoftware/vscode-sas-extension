@@ -244,17 +244,21 @@ class SASRunner{
     Write-Host "${LineCodes.ResultsFetchedCode}"
   }
 
-  [void]GetDatasetRecords([string]$tableName, [int]$start = 0, [int]$limit = 100) {
+  [void]GetDatasetRecords([string]$tableName, [int]$start = 0, [int]$limit = 100, [string]$sortCriteria = "") {
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection # This is needed to set the properties for sas formats.
     $objRecordSet.Properties.Item("SAS Formats").Value = "_ALL_"
 
+    $query = "SELECT * FROM $tableName"
+    if ($sortCriteria -ne "") {
+      $query = $query + " ORDER BY " + $sortCriteria
+    }
     $objRecordSet.Open(
-      $tableName,
-      [System.Reflection.Missing]::Value, # Use the active connection
-      2,  # adOpenDynamic
+      $query,
+      $this.dataConnection, # Use the active connection
+      3,  # adOpenStatic
       1,  # adLockReadOnly
-      512 # adCmdTableDirect
+      1 # adCmdTableDirect
     )
 
     $records = [List[List[object]]]::new()
