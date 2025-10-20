@@ -10,8 +10,6 @@ import { Column } from "../connection/rest/api/compute";
 import { WebView } from "./WebviewManager";
 
 class DataViewer extends WebView {
-  private _uid: string;
-  private _extensionUri: Uri;
   private _paginator: PaginatedResultSet<{ data: TableData; error?: Error }>;
   private _fetchColumns: () => Column[];
 
@@ -21,22 +19,13 @@ class DataViewer extends WebView {
     paginator: PaginatedResultSet<{ data: TableData; error?: Error }>,
     fetchColumns: () => Column[],
   ) {
-    super();
-    this._uid = uid;
-    this._extensionUri = extensionUri;
+    super(extensionUri, uid);
     this._paginator = paginator;
     this._fetchColumns = fetchColumns;
   }
 
-  public render(): WebView {
-    const policies = [
-      `default-src 'none';`,
-      `font-src ${this.panel.webview.cspSource} data:;`,
-      `img-src ${this.panel.webview.cspSource} data:;`,
-      `script-src ${this.panel.webview.cspSource};`,
-      `style-src ${this.panel.webview.cspSource};`,
-    ];
-    const messages = {
+  public l10nMessages() {
+    return {
       "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
       Ascending: l10n.t("Ascending"),
       "Descending (add to sorting)": l10n.t("Descending (add to sorting)"),
@@ -45,33 +34,18 @@ class DataViewer extends WebView {
       "Remove sorting": l10n.t("Remove sorting"),
       Sort: l10n.t("Sort"),
     };
-    this.panel.webview.html = `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="${policies.join(
-            " ",
-          )}" />
-          <link rel="stylesheet" href="${this.webviewUri(
-            this._extensionUri,
-            "DataViewer.css",
-          )}">
-          <title>${this._uid}</title>
-        </head>
-        <body>
-          <div class="data-viewer"></div>
-          <script type="module" src="${this.webviewUri(
-            this._extensionUri,
-            "DataViewer.js",
-          )}"></script>
-          <script type="application/json" id="l10n-messages">${JSON.stringify(messages)}</script>
-        </body>
-      </html>
-    `;
+  }
 
-    return this;
+  public styles() {
+    return ["DataViewer.css"];
+  }
+
+  public scripts() {
+    return ["DataViewer.js"];
+  }
+
+  public body() {
+    return `<div class="data-viewer"></div>`;
   }
 
   public async processMessage(
