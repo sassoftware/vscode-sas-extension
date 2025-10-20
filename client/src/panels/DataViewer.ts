@@ -36,6 +36,15 @@ class DataViewer extends WebView {
       `script-src ${this.panel.webview.cspSource};`,
       `style-src ${this.panel.webview.cspSource};`,
     ];
+    const messages = {
+      "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
+      Ascending: l10n.t("Ascending"),
+      "Descending (add to sorting)": l10n.t("Descending (add to sorting)"),
+      Descending: l10n.t("Descending"),
+      "Remove all sorting": l10n.t("Remove all sorting"),
+      "Remove sorting": l10n.t("Remove sorting"),
+      Sort: l10n.t("Sort"),
+    };
     this.panel.webview.html = `
       <!DOCTYPE html>
       <html lang="en">
@@ -57,6 +66,7 @@ class DataViewer extends WebView {
             this._extensionUri,
             "DataViewer.js",
           )}"></script>
+          <script type="application/json" id="l10n-messages">${JSON.stringify(messages)}</script>
         </body>
       </html>
     `;
@@ -93,23 +103,6 @@ class DataViewer extends WebView {
           key: event.key,
           command: "response:loadColumns",
           data: await this._fetchColumns(),
-        });
-        break;
-      case "request:loadMessages":
-        this.panel.webview.postMessage({
-          key: event.key,
-          command: "response:loadMessages",
-          data: {
-            "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
-            Ascending: l10n.t("Ascending"),
-            "Descending (add to sorting)": l10n.t(
-              "Descending (add to sorting)",
-            ),
-            Descending: l10n.t("Descending"),
-            "Remove all sorting": l10n.t("Remove all sorting"),
-            "Remove sorting": l10n.t("Remove sorting"),
-            Sort: l10n.t("Sort"),
-          },
         });
         break;
       default:
