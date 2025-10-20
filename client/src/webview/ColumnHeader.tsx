@@ -1,9 +1,8 @@
 // Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import { useRef } from "react";
 
-import { AgColumn, GridApi } from "ag-grid-community";
+import { AgColumn, ColumnState, GridApi } from "ag-grid-community";
 
 import { ColumnHeaderProps } from "./ColumnHeaderMenu";
 
@@ -50,6 +49,11 @@ const ColumnHeader = ({
       ? `${column.sortIndex + 1}`
       : "";
 
+  const applyColumnState = (state: ColumnState[]) => {
+    api.applyColumnState({ state, defaultState: { sort: null } });
+    api.ensureIndexVisible(0);
+  };
+
   const displayColumnMenu = () => {
     if (currentColumn) {
       return setColumnMenu(undefined);
@@ -75,29 +79,25 @@ const ColumnHeader = ({
         } else {
           newColumnState[colIndex].sort = direction;
         }
-        api.applyColumnState({
-          state: newColumnState,
-          defaultState: { sort: null },
-        });
+        applyColumnState(newColumnState);
       },
       removeAllSorting: () =>
-        api.applyColumnState({
-          state: api
+        applyColumnState(
+          api
             .getColumnState()
             .filter((c) => c.sort)
             .map((c) => ({ colId: c.colId, sort: null })),
-          defaultState: { sort: null },
-        }),
+        ),
       removeFromSort: () =>
-        api.applyColumnState({
-          state: api
+        applyColumnState(
+          api
             .getColumnState()
             .sort((a, b) => a.sortIndex - b.sortIndex)
             .filter((c) => c.sort && c.colId !== column.colId)
             // After we remove the column, lets reindex what's left
             .map((c, sortIndex) => ({ ...c, sortIndex })),
-          defaultState: { sort: null },
-        }),
+        ),
+
       dismissMenu: () => setColumnMenu(undefined),
     });
   };
