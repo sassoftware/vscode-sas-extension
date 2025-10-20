@@ -3,13 +3,13 @@
 import { AgColumn, ColumnState, GridApi } from "ag-grid-community";
 
 import GridMenu from "./GridMenu";
+import localize from "./localize";
 
 export interface ColumnMenuProps {
   column: AgColumn;
   dismissMenu: () => void;
   hasSort: boolean;
   left: number;
-  messages?: Record<string, string>;
   removeAllSorting: () => void;
   removeFromSort: () => void;
   sortColumn: (direction: "asc" | "desc") => void;
@@ -85,17 +85,16 @@ const ColumnMenu = ({
   sortColumn,
   theme,
   top,
-  messages: t,
 }: ColumnMenuProps) => {
   const menuItems = [
     {
-      name: t.Sort,
+      name: localize("Sort"),
       children: [
         {
           name:
             hasSort && !column.sort
-              ? t["Ascending (add to sorting)"]
-              : t.Ascending,
+              ? localize("Ascending (add to sorting)")
+              : localize("Ascending"),
           checked: column.sort === "asc",
           onPress: () => {
             sortColumn("asc");
@@ -105,8 +104,8 @@ const ColumnMenu = ({
         {
           name:
             hasSort && !column.sort
-              ? t["Descending (add to sorting)"]
-              : t.Descending,
+              ? localize("Descending (add to sorting)")
+              : localize("Descending"),
           checked: column.sort === "desc",
           onPress: () => {
             sortColumn("desc");
@@ -115,7 +114,7 @@ const ColumnMenu = ({
         },
         "separator",
         {
-          name: t["Remove sorting"],
+          name: localize("Remove sorting"),
           onPress: () => {
             removeFromSort();
             dismissMenu();
@@ -123,7 +122,7 @@ const ColumnMenu = ({
           disabled: !hasSort || !column.sort,
         },
         {
-          name: t["Remove all sorting"],
+          name: localize("Remove all sorting"),
           onPress: () => {
             removeAllSorting();
             dismissMenu();

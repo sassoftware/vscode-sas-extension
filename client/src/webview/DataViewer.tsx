@@ -35,7 +35,7 @@ const DataViewer = () => {
         return "ag-theme-alpine-dark";
     }
   }, []);
-  const { columns, onGridReady, columnMenu, messages, dismissMenu } =
+  const { columns, onGridReady, columnMenu, dismissMenu } =
     useDataViewer(theme);
 
   const handleKeydown = useCallback(
@@ -54,15 +54,13 @@ const DataViewer = () => {
     };
   }, [handleKeydown]);
 
-  if (columns.length === 0 || !messages) {
+  if (columns.length === 0) {
     return null;
   }
 
   return (
     <div className="data-viewer">
-      {columnMenu && (
-        <ColumnMenu theme={theme} messages={messages} {...columnMenu} />
-      )}
+      {columnMenu && <ColumnMenu {...columnMenu} />}
       <div
         className={`ag-grid-wrapper ${theme}`}
         style={gridStyles}
