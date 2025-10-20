@@ -19,10 +19,15 @@ function showTab(tabName: string, clickedTab?: HTMLElement): void {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+const eventListeners: Array<{
+  element: Element;
+  handler: EventListener;
+}> = [];
+
+function setupEventListeners(): void {
   const tabButtons = document.querySelectorAll(".tab");
   tabButtons.forEach((button) => {
-    button.addEventListener("click", (event) => {
+    const handler = (event: Event) => {
       const target = event.currentTarget;
       if (target instanceof HTMLElement) {
         const tabName = target.getAttribute("data-tab");
@@ -30,8 +35,20 @@ document.addEventListener("DOMContentLoaded", () => {
           showTab(tabName, target);
         }
       }
-    });
+    };
+    button.addEventListener("click", handler);
+    eventListeners.push({ element: button, handler });
   });
-});
+}
+
+function cleanupEventListeners(): void {
+  eventListeners.forEach(({ element, handler }) => {
+    element.removeEventListener("click", handler);
+  });
+  eventListeners.length = 0;
+}
+
+document.addEventListener("DOMContentLoaded", setupEventListeners);
+window.addEventListener("beforeunload", cleanupEventListeners);
 
 export {};

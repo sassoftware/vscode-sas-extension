@@ -197,6 +197,25 @@ class ItcLibraryAdapter implements LibraryAdapter {
   }
 
   public async getTableInfo(item: LibraryItem): Promise<TableInfo> {
+    const basicInfo: TableInfo = {
+      bookmarkLength: 0, // Not available in vtable
+      columnCount: 0,
+      compressionRoutine: "",
+      creationTimeStamp: "",
+      encoding: "", // Not available in vtable
+      engine: "", // Not available in sashelp.vtable for SAS 9.4
+      extendedType: "",
+      label: "",
+      libref: item.library,
+      logicalRecordCount: 0,
+      modifiedTimeStamp: "",
+      name: item.name,
+      physicalRecordCount: 0,
+      recordLength: 0, // Not available in vtable
+      rowCount: 0,
+      type: "DATA",
+    };
+
     try {
       // Use the PowerShell GetTableInfo function which queries sashelp.vtable
       const code = `
@@ -206,44 +225,28 @@ class ItcLibraryAdapter implements LibraryAdapter {
       const tableInfo = JSON.parse(output);
 
       return {
-        name: tableInfo.name || item.name,
-        libref: tableInfo.libref || item.library,
-        type: tableInfo.type || "DATA",
-        label: tableInfo.label || "",
-        engine: "", // Not available in sashelp.vtable for SAS 9.4
-        extendedType: tableInfo.extendedType || "",
-        rowCount: tableInfo.rowCount || 0,
-        columnCount: tableInfo.columnCount || 0,
-        logicalRecordCount: tableInfo.rowCount || 0,
-        physicalRecordCount: tableInfo.rowCount || 0,
-        recordLength: 0, // Not available in vtable
-        bookmarkLength: 0, // Not available in vtable
-        compressionRoutine: tableInfo.compressionRoutine || "",
-        encoding: "", // Not available in vtable
-        creationTimeStamp: tableInfo.creationTimeStamp || "",
-        modifiedTimeStamp: tableInfo.modifiedTimeStamp || "",
+        ...basicInfo,
+        columnCount: tableInfo.columnCount || basicInfo.columnCount,
+        compressionRoutine:
+          tableInfo.compressionRoutine || basicInfo.compressionRoutine,
+        creationTimeStamp:
+          tableInfo.creationTimeStamp || basicInfo.creationTimeStamp,
+        extendedType: tableInfo.extendedType || basicInfo.extendedType,
+        label: tableInfo.label || basicInfo.label,
+        libref: tableInfo.libref || basicInfo.libref,
+        logicalRecordCount: tableInfo.rowCount || basicInfo.logicalRecordCount,
+        modifiedTimeStamp:
+          tableInfo.modifiedTimeStamp || basicInfo.modifiedTimeStamp,
+        name: tableInfo.name || basicInfo.name,
+        physicalRecordCount:
+          tableInfo.rowCount || basicInfo.physicalRecordCount,
+        rowCount: tableInfo.rowCount || basicInfo.rowCount,
+        type: tableInfo.type || basicInfo.type,
       };
     } catch (error) {
       console.warn("Failed to get table info:", error);
       // If anything fails, return basic info
-      return {
-        name: item.name,
-        libref: item.library,
-        type: "DATA",
-        label: "",
-        engine: "",
-        extendedType: "",
-        rowCount: 0,
-        columnCount: 0,
-        logicalRecordCount: 0,
-        physicalRecordCount: 0,
-        recordLength: 0,
-        bookmarkLength: 0,
-        compressionRoutine: "",
-        encoding: "",
-        creationTimeStamp: "",
-        modifiedTimeStamp: "",
-      };
+      return basicInfo;
     }
   }
 
