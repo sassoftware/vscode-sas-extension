@@ -258,7 +258,7 @@ class SASRunner{
       $this.dataConnection, # Use the active connection
       3,  # adOpenStatic
       1,  # adLockReadOnly
-      1 # adCmdTableDirect
+      1   # adCmdText
     )
 
     $records = [List[List[object]]]::new()
