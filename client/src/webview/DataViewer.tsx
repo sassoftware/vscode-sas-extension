@@ -49,10 +49,12 @@ const DataViewer = () => {
 
   useEffect(() => {
     document.addEventListener("keydown", handleKeydown);
+    window.addEventListener("blur", dismissMenu);
     return () => {
       document.removeEventListener("keydown", handleKeydown);
+      window.removeEventListener("blur", dismissMenu);
     };
-  }, [handleKeydown]);
+  }, [handleKeydown, dismissMenu]);
 
   if (columns.length === 0) {
     return null;
