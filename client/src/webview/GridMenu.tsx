@@ -1,59 +1,52 @@
 // Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-import { Fragment, useEffect, useRef, useState } from "react";
-
-import { AgColumn } from "ag-grid-community";
-
-export interface ColumnHeaderProps {
-  column: AgColumn;
-  dismissMenu: () => void;
-  hasSort: boolean;
-  left: number;
-  messages?: Record<string, string>;
-  removeAllSorting: () => void;
-  removeFromSort: () => void;
-  sortColumn: (direction: "asc" | "desc") => void;
-  theme: string;
-  top: number;
-}
+import { useEffect, useRef, useState } from "react";
 
 interface MenuItem {
-  name: string;
   checked?: boolean;
-  onPress?: () => void;
   children?: (MenuItem | string)[];
   disabled?: boolean;
+  name: string;
+  onPress?: () => void;
 }
 
 const GridMenu = ({
+  left: incomingLeft,
   menuItems,
+  parentDimensions,
+  subMenu,
   theme,
   top,
-  left: incomingLeft,
-  subMenu,
-  parentDimensions,
 }: {
+  left?: number;
   menuItems: (MenuItem | string)[];
+  parentDimensions?: { left: number; width: number };
+  subMenu?: boolean;
   theme: string;
   top: number;
-  left?: number;
-  subMenu?: boolean;
-  parentDimensions?: { left: number; width: number };
 }) => {
   const menuRef = useRef<HTMLDivElement>(undefined);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [subMenuItems, setSubMenuItems] = useState<(MenuItem | string)[]>([]);
   const className = subMenu
     ? `ag-menu ag-ltr ag-popup-child ${theme}`
     : `ag-menu ag-column-menu ag-ltr ag-popup-child ag-popup-positioned-under ${theme}`;
-  const [activeIndex, setActiveIndex] = useState(-1);
 
+  // The following useEffect positions our column header menu. There are three general
+  // ways of laying things out.
+  // - option 1. If there is enough room for the parent menu and child menu to the right, the
+  //.  menus are displayed left to right.
+  // - option 2. If the parent menu has enough room, we don't shift it. If the child menu doesn't
+  //.  fit to the right, we move it to the left side.
+  // - option 3. The parent menu doesn't fit on the screen, so we shift it to the left and
+  //   put the child menu on the left side.
   const [left, setLeft] = useState(parentDimensions?.left ?? incomingLeft);
   const [displayed, setDisplayed] = useState(false);
   useEffect(() => {
     const clientWidth = menuRef.current.closest("body").clientWidth;
     const width = menuRef.current.getBoundingClientRect().width;
 
+    setDisplayed(true);
     if (parentDimensions) {
       // First, lets put the child menu to the right
       let adjustedLeft = parentDimensions.left + parentDimensions.width;
@@ -62,17 +55,15 @@ const GridMenu = ({
         adjustedLeft = parentDimensions.left - width;
       }
       setLeft(adjustedLeft);
-      setDisplayed(true);
       return;
     }
     if (left + width > clientWidth) {
       setLeft(left - (left + width - clientWidth + 15));
     }
-    setDisplayed(true);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <Fragment>
+    <>
       {subMenuItems.length > 0 && (
         <GridMenu
           menuItems={subMenuItems}
@@ -106,19 +97,7 @@ const GridMenu = ({
             ></div>
             {menuItems.map((menuItem, index) => {
               if (typeof menuItem === "string") {
-                return (
-                  <div
-                    className="ag-menu-separator"
-                    aria-hidden="true"
-                    key={index}
-                  >
-                    {" "}
-                    <div className="ag-menu-separator-part"></div>{" "}
-                    <div className="ag-menu-separator-part"></div>{" "}
-                    <div className="ag-menu-separator-part"></div>{" "}
-                    <div className="ag-menu-separator-part"></div>{" "}
-                  </div>
-                );
+                return <Separator key={index} />;
               }
               return (
                 <div
@@ -146,6 +125,7 @@ const GridMenu = ({
                     setActiveIndex(-1);
                     const targetInPopup = Array.from(
                       document.querySelectorAll(".ag-popup"),
+                      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                     ).some((t) => t.contains(e.target as HTMLElement));
                     if (!targetInPopup) {
                       setSubMenuItems([]);
@@ -154,20 +134,17 @@ const GridMenu = ({
                 >
                   <span
                     className="ag-menu-option-part ag-menu-option-icon"
-                    data-ref="eIcon"
                     role="presentation"
                   >
                     {menuItem.checked && (
                       <span
                         className="ag-icon ag-icon-tick"
                         role="presentation"
-                        unselectable="on"
-                      ></span>
+                      />
                     )}
                   </span>
                   <span
                     className="ag-menu-option-part ag-menu-option-text"
-                    data-ref="eName"
                     onClick={() => {
                       if (menuItem.disabled) {
                         return;
@@ -182,20 +159,13 @@ const GridMenu = ({
                   >
                     {menuItem.name}
                   </span>
-                  <span
-                    className="ag-menu-option-part ag-menu-option-shortcut"
-                    data-ref="eShortcut"
-                  ></span>
+                  <span className="ag-menu-option-part ag-menu-option-shortcut"></span>
                   {menuItem.children && menuItem.children.length > 0 && (
-                    <span
-                      className="ag-menu-option-part ag-menu-option-popup-pointer"
-                      data-ref="ePopupPointer"
-                    >
+                    <span className="ag-menu-option-part ag-menu-option-popup-pointer">
                       <span
                         className="ag-icon ag-icon-small-right"
                         role="presentation"
-                        unselectable="on"
-                      ></span>
+                      />
                     </span>
                   )}
                 </div>
@@ -204,74 +174,22 @@ const GridMenu = ({
             <div
               className="ag-tab-guard ag-tab-guard-bottom"
               role="presentation"
-            ></div>
+            />
           </div>
         </div>
       </div>
-    </Fragment>
+    </>
   );
 };
 
-const ColumnHeaderMenu = ({
-  column,
-  dismissMenu,
-  hasSort,
-  left,
-  removeAllSorting,
-  removeFromSort,
-  sortColumn,
-  theme,
-  top,
-  messages: t,
-}: ColumnHeaderProps) => {
-  const menuItems = [
-    {
-      name: t["Sort"],
-      children: [
-        {
-          name:
-            hasSort && !column.sort
-              ? t["Ascending (add to sorting)"]
-              : t["Ascending"],
-          checked: column.sort === "asc",
-          onPress: () => {
-            sortColumn("asc");
-            dismissMenu();
-          },
-        },
-        {
-          name:
-            hasSort && !column.sort
-              ? t["Descending (add to sorting)"]
-              : t["Descending"],
-          checked: column.sort === "desc",
-          onPress: () => {
-            sortColumn("desc");
-            dismissMenu();
-          },
-        },
-        "separator",
-        {
-          name: t["Remove sorting"],
-          onPress: () => {
-            removeFromSort();
-            dismissMenu();
-          },
-          disabled: !hasSort || !column.sort,
-        },
-        {
-          name: t["Remove all sorting"],
-          onPress: () => {
-            removeAllSorting();
-            dismissMenu();
-          },
-          disabled: !hasSort,
-        },
-      ],
-    },
-  ];
+const Separator = () => (
+  <div className="ag-menu-separator" aria-hidden="true">
+    {" "}
+    <div className="ag-menu-separator-part"></div>{" "}
+    <div className="ag-menu-separator-part"></div>{" "}
+    <div className="ag-menu-separator-part"></div>{" "}
+    <div className="ag-menu-separator-part"></div>{" "}
+  </div>
+);
 
-  return <GridMenu menuItems={menuItems} top={top} left={left} theme={theme} />;
-};
-
-export default ColumnHeaderMenu;
+export default GridMenu;
