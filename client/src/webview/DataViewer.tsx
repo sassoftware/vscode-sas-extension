@@ -6,7 +6,7 @@ import { createRoot } from "react-dom/client";
 import { AgGridReact } from "ag-grid-react";
 
 import ".";
-import ColumnHeaderMenu from "./ColumnHeaderMenu";
+import ColumnMenu from "./ColumnMenu";
 import useDataViewer from "./useDataViewer";
 
 import "./DataViewer.css";
@@ -61,7 +61,7 @@ const DataViewer = () => {
   return (
     <div className="data-viewer">
       {columnMenu && (
-        <ColumnHeaderMenu theme={theme} messages={messages} {...columnMenu} />
+        <ColumnMenu theme={theme} messages={messages} {...columnMenu} />
       )}
       <div
         className={`ag-grid-wrapper ${theme}`}

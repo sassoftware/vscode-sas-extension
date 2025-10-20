@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useRef } from "react";
 
-import { AgColumn, ColumnState, GridApi } from "ag-grid-community";
+import { AgColumn, GridApi } from "ag-grid-community";
 
-import { ColumnHeaderProps } from "./ColumnHeaderMenu";
+import { ColumnMenuProps, useColumnMenu } from "./ColumnMenu";
 
 const getIconForColumnType = (type: string) => {
   switch (type.toLocaleLowerCase()) {
@@ -38,7 +38,7 @@ const ColumnHeader = ({
   column: AgColumn;
   currentColumn: () => AgColumn | undefined;
   columnType: string;
-  setColumnMenu: (props: ColumnHeaderProps) => void;
+  setColumnMenu: (props: ColumnMenuProps) => void;
   theme: string;
 }) => {
   const ref = useRef<HTMLButtonElement>(undefined!);
@@ -48,94 +48,37 @@ const ColumnHeader = ({
     column.sort && currentSortedColumns.length > 1
       ? `${column.sortIndex + 1}`
       : "";
+  const dropdownClassname =
+    currentColumn?.colId === column.colId ? "active dropdown" : "dropdown";
 
-  const applyColumnState = (state: ColumnState[]) => {
-    api.applyColumnState({ state, defaultState: { sort: null } });
-    api.ensureIndexVisible(0);
-  };
-
+  const getColumnMenu = useColumnMenu({ api, theme });
   const displayColumnMenu = () => {
     if (currentColumn) {
       return setColumnMenu(undefined);
     }
-    const { height, top, left } = ref.current.getBoundingClientRect();
-    setColumnMenu({
-      left,
-      top: top + height,
-      column,
-      theme,
-      hasSort: api.getColumnState().some((c) => c.sort),
-      sortColumn: (direction: "asc" | "desc" | null) => {
-        const newColumnState = api.getColumnState().filter((c) => c.sort);
-        const colIndex = newColumnState.findIndex(
-          (c) => c.colId === column.colId,
-        );
-        if (colIndex === -1) {
-          newColumnState.push({
-            colId: column.colId,
-            sort: direction,
-            sortIndex: newColumnState.length,
-          });
-        } else {
-          newColumnState[colIndex].sort = direction;
-        }
-        applyColumnState(newColumnState);
-      },
-      removeAllSorting: () =>
-        applyColumnState(
-          api
-            .getColumnState()
-            .filter((c) => c.sort)
-            .map((c) => ({ colId: c.colId, sort: null })),
-        ),
-      removeFromSort: () =>
-        applyColumnState(
-          api
-            .getColumnState()
-            .sort((a, b) => a.sortIndex - b.sortIndex)
-            .filter((c) => c.sort && c.colId !== column.colId)
-            // After we remove the column, lets reindex what's left
-            .map((c, sortIndex) => ({ ...c, sortIndex })),
-        ),
-
-      dismissMenu: () => setColumnMenu(undefined),
-    });
+    setColumnMenu(
+      getColumnMenu(column, ref.current.getBoundingClientRect(), () =>
+        setColumnMenu(undefined),
+      ),
+    );
   };
 
   return (
     <div className={`ag-cell-label-container ${theme}`} role="presentation">
-      <div
-        data-ref="eLabel"
-        className="ag-header-cell-label"
-        role="presentation"
-      >
-        <span
-          className={`header-icon ${getIconForColumnType(columnType)}`}
-        ></span>
+      <div className="ag-header-cell-label" role="presentation">
+        <span className={`header-icon ${getIconForColumnType(columnType)}`} />
         <span className="ag-header-cell-text">{column.colId}</span>
-
         <span className="sort-icon-wrapper">
           {!!column.sort && (
             <>
-              <span
-                className={`sort-icon ${column.sort === "asc" ? "ascending" : "descending"}`}
-              ></span>
-              {!!columnNumber && (
-                <span className="sort-number">{columnNumber}</span>
-              )}
+              <span className={`icon ${column.sort}`}></span>
+              {!!columnNumber && <span className="number">{columnNumber}</span>}
             </>
           )}
         </span>
-
-        <div
-          className={
-            currentColumn?.colId === column.colId
-              ? "active dropdown"
-              : "dropdown"
-          }
-        >
+        <div className={dropdownClassname}>
           <button ref={ref} type="button" onClick={displayColumnMenu}>
-            <span></span>
+            <span />
           </button>
         </div>
       </div>

@@ -15,7 +15,7 @@ import { v4 } from "uuid";
 import { TableData } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
 import ColumnHeader from "./ColumnHeader";
-import { ColumnHeaderProps } from "./ColumnHeaderMenu";
+import { ColumnMenuProps } from "./ColumnMenu";
 
 declare const acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
@@ -103,9 +103,9 @@ const fetchColumns = (): Promise<Column[]> => {
 
 const useDataViewer = (theme: string) => {
   const [columns, setColumns] = useState<ColDef[]>([]);
-  const [columnMenu, setColumnMenu] = useState<ColumnHeaderProps | undefined>();
+  const [columnMenu, setColumnMenu] = useState<ColumnMenuProps | undefined>();
 
-  const columnMenuRef = useRef<ColumnHeaderProps | undefined>(columnMenu);
+  const columnMenuRef = useRef<ColumnMenuProps | undefined>(columnMenu);
   useEffect(() => {
     columnMenuRef.current = columnMenu;
   }, [columnMenu]);
@@ -183,7 +183,7 @@ const useDataViewer = (theme: string) => {
 
       setColumns(columns);
     });
-  }, [columns.length]);
+  }, [columns.length, theme]);
 
   useEffect(() => {
     window.addEventListener("contextmenu", contextMenuHandler, true);

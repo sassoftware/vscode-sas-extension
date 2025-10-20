@@ -126,30 +126,30 @@ button,
   margin-left: auto;
 }
 
-.sort-icon-wrapper .sort-icon,
-.sort-icon-wrapper .sort-number {
+.sort-icon-wrapper .icon,
+.sort-icon-wrapper .number {
   width: 16px;
   height: 16px;
   display: inline-block;
   vertical-align: middle;
 }
 
-.sort-icon-wrapper .sort-icon.ascending {
+.sort-icon-wrapper .icon.asc {
   background: url(../../../icons/light/arrow-up.svg);
   background-size: 16px 16px;
 }
 
-.vscode-dark .sort-icon-wrapper .sort-icon.ascending {
+.vscode-dark .sort-icon-wrapper .icon.asc {
   background: url(../../../icons/dark/arrow-up.svg);
   background-size: 16px 16px;
 }
 
-.sort-icon-wrapper .sort-icon.descending {
+.sort-icon-wrapper .icon.desc {
   background: url(../../../icons/light/arrow-down.svg);
   background-size: 16px 16px;
 }
 
-.vscode-dark .sort-icon-wrapper .sort-icon.descending {
+.vscode-dark .sort-icon-wrapper .icon.desc {
   background: url(../../../icons/dark/arrow-down.svg);
   background-size: 16px 16px;
 }
