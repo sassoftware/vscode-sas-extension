@@ -4,8 +4,6 @@ import { useRef } from "react";
 
 import { AgColumn, GridApi } from "ag-grid-community";
 
-import { ColumnMenuProps, useColumnMenu } from "./ColumnMenu";
-
 const getIconForColumnType = (type: string) => {
   switch (type.toLocaleLowerCase()) {
     case "float":
@@ -31,15 +29,15 @@ const ColumnHeader = ({
   column,
   currentColumn: getCurrentColumn,
   columnType,
-  setColumnMenu,
   theme,
+  displayMenuForColumn,
 }: {
   api: GridApi;
   column: AgColumn;
   currentColumn: () => AgColumn | undefined;
   columnType: string;
-  setColumnMenu: (props: ColumnMenuProps) => void;
   theme: string;
+  displayMenuForColumn: (api: GridApi, column: AgColumn, rect: DOMRect) => void;
 }) => {
   const ref = useRef<HTMLButtonElement>(undefined!);
   const currentColumn = getCurrentColumn();
@@ -51,17 +49,8 @@ const ColumnHeader = ({
   const dropdownClassname =
     currentColumn?.colId === column.colId ? "active dropdown" : "dropdown";
 
-  const getColumnMenu = useColumnMenu({ api, theme });
-  const displayColumnMenu = () => {
-    if (currentColumn) {
-      return setColumnMenu(undefined);
-    }
-    setColumnMenu(
-      getColumnMenu(column, ref.current.getBoundingClientRect(), () =>
-        setColumnMenu(undefined),
-      ),
-    );
-  };
+  const displayColumnMenu = () =>
+    displayMenuForColumn(api, column, ref.current.getBoundingClientRect());
 
   return (
     <div className={`ag-cell-label-container ${theme}`} role="presentation">
@@ -77,7 +66,12 @@ const ColumnHeader = ({
           )}
         </span>
         <div className={dropdownClassname}>
-          <button ref={ref} type="button" onClick={displayColumnMenu}>
+          <button
+            ref={ref}
+            type="button"
+            onClick={displayColumnMenu}
+            tabIndex={-1}
+          >
             <span />
           </button>
         </div>
