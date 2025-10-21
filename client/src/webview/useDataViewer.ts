@@ -3,19 +3,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
+  AgColumn,
   AllCommunityModule,
   ColDef,
+  GridApi,
   GridReadyEvent,
   IGetRowsParams,
   ModuleRegistry,
   SortModelItem,
+  SuppressHeaderKeyboardEventParams,
 } from "ag-grid-community";
 import { v4 } from "uuid";
 
 import { TableData } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
 import ColumnHeader from "./ColumnHeader";
-import { ColumnMenuProps } from "./ColumnMenu";
+import { ColumnMenuProps, getColumnMenu } from "./ColumnMenu";
 
 declare const acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
@@ -142,6 +145,18 @@ const useDataViewer = (theme: string) => {
     [columns],
   );
 
+  const displayMenuForColumn = useCallback(
+    (api: GridApi, column: AgColumn, rect: DOMRect) => {
+      if (columnMenuRef.current?.column) {
+        return setColumnMenu(undefined);
+      }
+      setColumnMenu(
+        getColumnMenu(api, theme, column, rect, () => setColumnMenu(undefined)),
+      );
+    },
+    [theme],
+  );
+
   useEffect(() => {
     if (columns.length > 0) {
       return;
@@ -153,11 +168,42 @@ const useDataViewer = (theme: string) => {
         headerComponent: ColumnHeader,
         headerComponentParams: {
           columnType: column.type,
-          setColumnMenu,
           currentColumn: () => columnMenuRef.current?.column,
+          displayMenuForColumn,
           theme,
         },
+        suppressHeaderKeyboardEvent: (
+          params: SuppressHeaderKeyboardEventParams,
+        ) => {
+          // If a user tabs to a different column, dismiss the column menu
+          if (params.event.key === "Tab") {
+            setColumnMenu(undefined);
+            return false;
+          }
+          if (
+            params.event.key === "Enter" ||
+            (params.event.key === "F10" && params.event.shiftKey)
+          ) {
+            const dropdownButton =
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              (params.event.target as HTMLElement).querySelector(
+                ".dropdown > button",
+              );
+            if (!dropdownButton) {
+              return true;
+            }
+            displayMenuForColumn(
+              params.api,
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              params.column as AgColumn,
+              dropdownButton.getBoundingClientRect(),
+            );
+            return true;
+          }
+          return false;
+        },
       }));
+
       columns.unshift({
         field: "#",
         suppressMovable: true,
@@ -166,7 +212,7 @@ const useDataViewer = (theme: string) => {
 
       setColumns(columns);
     });
-  }, [columns.length, theme]);
+  }, [columns.length, theme, displayMenuForColumn]);
 
   useEffect(() => {
     window.addEventListener("contextmenu", contextMenuHandler, true);

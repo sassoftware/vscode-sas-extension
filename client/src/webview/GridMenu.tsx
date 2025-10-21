@@ -105,7 +105,6 @@ const GridMenu = ({
                   className={`ag-menu-option ${index === activeIndex ? "ag-menu-option-active" : ""} ${menuItem.disabled ? "ag-menu-option-disabled" : ""}`}
                   role="menuitem"
                   aria-haspopup="menu"
-                  tabIndex={-1}
                   key={menuItem.name}
                   onMouseEnter={() => {
                     if (menuItem.disabled) {
