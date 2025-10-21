@@ -5,7 +5,7 @@
 // This expects for translations to be defined in a script block with an id of
 // `l10-messages`.
 let localizedTerms = null;
-const localize = (term: string) => {
+const localize = (term: string, replacments?: Record<string, string>) => {
   if (!localizedTerms) {
     try {
       localizedTerms = JSON.parse(
@@ -17,7 +17,15 @@ const localize = (term: string) => {
     }
   }
 
-  return localizedTerms[term] ?? term;
+  let translatedString = localizedTerms[term] ?? term;
+  if (replacments) {
+    Object.entries(replacments).forEach(
+      ([key, value]) =>
+        (translatedString = translatedString.replace(`{${key}}`, value)),
+    );
+  }
+
+  return translatedString;
 };
 
 export default localize;

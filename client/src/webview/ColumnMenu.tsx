@@ -17,63 +17,57 @@ export interface ColumnMenuProps {
   top: number;
 }
 
-export const useColumnMenu = ({
-  api,
-  theme,
-}: {
-  api: GridApi;
-  theme: ColumnMenuProps["theme"];
-}) => {
-  const applyColumnState = (state: ColumnState[]) => {
-    api.applyColumnState({ state, defaultState: { sort: null } });
-    api.ensureIndexVisible(0);
-  };
-
-  return (
-    column: AgColumn,
-    { height, top, left }: DOMRect,
-    dismissMenu: () => void,
-  ) => ({
-    column,
-    dismissMenu,
-    hasSort: api.getColumnState().some((c) => c.sort),
-    left,
-    theme,
-    top: top + height,
-    sortColumn: (direction: "asc" | "desc" | null) => {
-      const newColumnState = api.getColumnState().filter((c) => c.sort);
-      const colIndex = newColumnState.findIndex(
-        (c) => c.colId === column.colId,
-      );
-      if (colIndex === -1) {
-        newColumnState.push({
-          colId: column.colId,
-          sort: direction,
-          sortIndex: newColumnState.length,
-        });
-      } else {
-        newColumnState[colIndex].sort = direction;
-      }
-      applyColumnState(newColumnState);
-    },
-    removeAllSorting: () =>
-      applyColumnState(
-        api
-          .getColumnState()
-          .filter((c) => c.sort)
-          .map((c) => ({ colId: c.colId, sort: null })),
-      ),
-    removeFromSort: () =>
-      applyColumnState(
-        api
-          .getColumnState()
-          .sort((a, b) => a.sortIndex - b.sortIndex)
-          .filter((c) => c.sort && c.colId !== column.colId)
-          // After we remove the column, lets reindex what's left
-          .map((c, sortIndex) => ({ ...c, sortIndex })),
-      ),
-  });
+const applyColumnState = (api: GridApi, state: ColumnState[]) => {
+  api.applyColumnState({ state, defaultState: { sort: null } });
+  api.ensureIndexVisible(0);
 };
+
+export const getColumnMenu = (
+  api: GridApi,
+  theme: ColumnMenuProps["theme"],
+  column: AgColumn,
+  { height, top, left }: DOMRect,
+  dismissMenu: () => void,
+) => ({
+  column,
+  dismissMenu,
+  hasSort: api.getColumnState().some((c) => c.sort),
+  left,
+  theme,
+  top: top + height,
+  sortColumn: (direction: "asc" | "desc" | null) => {
+    const newColumnState = api.getColumnState().filter((c) => c.sort);
+    const colIndex = newColumnState.findIndex((c) => c.colId === column.colId);
+    if (colIndex === -1) {
+      newColumnState.push({
+        colId: column.colId,
+        sort: direction,
+        sortIndex: newColumnState.length,
+      });
+    } else {
+      newColumnState[colIndex].sort = direction;
+    }
+    applyColumnState(api, newColumnState);
+  },
+  removeAllSorting: () =>
+    applyColumnState(
+      api,
+      api
+        .getColumnState()
+        .filter((c) => c.sort)
+        .map((c) => ({ colId: c.colId, sort: null })),
+    ),
+  removeFromSort: () =>
+    applyColumnState(
+      api,
+      api
+        .getColumnState()
+        .sort((a, b) => a.sortIndex - b.sortIndex)
+        .filter((c) => c.sort && c.colId !== column.colId)
+        // After we remove the column, lets reindex what's left
+        .map((c, sortIndex) => ({ ...c, sortIndex })),
+    ),
+});
 
 const ColumnMenu = ({
   column,
