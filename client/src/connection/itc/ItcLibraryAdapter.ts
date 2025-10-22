@@ -11,7 +11,7 @@ import {
   TableData,
   TableRow,
 } from "../../components/LibraryNavigator/types";
-import type { ColumnCollection, TableInfo } from "../rest/api/compute";
+import { ColumnCollection, TableInfo } from "../rest/api/compute";
 import { getColumnIconType } from "../util";
 import { executeRawCode, runCode } from "./CodeRunner";
 import { Config } from "./types";
