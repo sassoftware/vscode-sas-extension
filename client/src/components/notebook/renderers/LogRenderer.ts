@@ -24,7 +24,8 @@ export const activate: ActivationFunction = (context) => ({
       const toolbar = document.createElement("div");
       toolbar.style.cssText = `
         position: absolute;
-        top: 4px;
+        top: -22px;
+        right: 8px;
         display: flex;
         gap: 4px;
         opacity: 0;
@@ -34,7 +35,6 @@ export const activate: ActivationFunction = (context) => ({
         border-radius: 4px;
         padding: 2px;
         z-index: 1000;
-        margin: 4px 4px 0 0;
       `;
 
       const saveButton = document.createElement("button");
@@ -42,7 +42,8 @@ export const activate: ActivationFunction = (context) => ({
       saveButton.setAttribute("aria-label", "Save Output");
       saveButton.innerHTML = `
         <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-          <path d="M13.5 1h-12l-.5.5v13l.5.5h13l.5-.5v-12l-.5-.5zM13 14H2V2h10v1H4v1h8v10zm-1-9H4V4h8v1z"/>
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M10.012 2H2.5l-.5.5v11l.5.5h11l.5-.5V5l-4-3h-.488zM3 13V3h6v2.5l.5.5h3v7H3zm7-9v2h2l-2-2z"/>
+          <path d="M5 7h6v1H5V7zm0 2h6v1H5V9z"/>
         </svg>
       `;
       saveButton.style.cssText = `
@@ -86,7 +87,6 @@ export const activate: ActivationFunction = (context) => ({
 
       container.appendChild(toolbar);
     }
-
     const root = document.createElement("div");
     root.style.whiteSpace = "pre";
     root.style.fontFamily = "var(--vscode-editor-font-family)";
