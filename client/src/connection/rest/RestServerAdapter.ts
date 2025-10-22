@@ -447,12 +447,17 @@ class RestServerAdapter implements ContentAdapter {
       },
     };
 
-    const response =
-      await this.fileSystemApi.updateFileOrDirectoryOnSystem(params);
-    delete this.fileMetadataMap[currentFilePath];
-    this.updateFileMetadata(newFilePath, response);
+    try {
+      const response =
+        await this.fileSystemApi.updateFileOrDirectoryOnSystem(params);
+      delete this.fileMetadataMap[currentFilePath];
+      this.updateFileMetadata(newFilePath, response);
 
-    return this.filePropertiesToContentItem(response.data).vscUri;
+      return this.filePropertiesToContentItem(response.data).vscUri;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      return;
+    }
   }
 
   public async renameItem(

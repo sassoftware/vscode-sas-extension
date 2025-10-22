@@ -681,21 +681,6 @@ class ContentDataProvider
     return !!newUri;
   }
 
-  private async checkIfItemExistsInTarget(
-    itemName: string,
-    target: ContentItem,
-  ): Promise<boolean> {
-    try {
-      const children = await this.getChildren(target);
-      return children.some((child) => child.name === itemName);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      // If we can't retrieve children, assume the item doesn't exist
-      // to avoid blocking the move operation unnecessarily
-      return false;
-    }
-  }
-
   private async handleContentItemDrop(
     target: ContentItem,
     item: ContentItem,
@@ -711,19 +696,10 @@ class ContentDataProvider
     } else if (target.type === FAVORITES_FOLDER_TYPE) {
       success = await this.addToMyFavorites(item);
     } else {
-      // Check if an item with the same name already exists in the target
-      const itemExists = await this.checkIfItemExistsInTarget(
-        item.name,
-        target,
-      );
-      if (itemExists) {
-        message = Messages.FileAlreadyExistsError;
-      } else {
-        const targetUri = target.resourceId ?? target.uri;
-        success = await this.moveItem(item, targetUri);
-        if (success) {
-          this.refresh();
-        }
+      const targetUri = target.resourceId ?? target.uri;
+      success = await this.moveItem(item, targetUri);
+      if (success) {
+        this.refresh();
       }
     }
 
@@ -742,20 +718,6 @@ class ContentDataProvider
     displayErrorMessages: boolean = true,
   ): Promise<boolean> {
     const folderName = basename(path);
-
-    // Check if a folder with the same name already exists in the target
-    const itemExists = await this.checkIfItemExistsInTarget(folderName, target);
-    if (itemExists) {
-      displayErrorMessages &&
-        window.showErrorMessage(
-          l10n.t(Messages.FileAlreadyExistsError, {
-            name: folderName,
-          }),
-        );
-
-      return false;
-    }
-
     const folder = await this.model.createFolder(target, folderName);
     let success = true;
     if (!folder) {
@@ -822,17 +784,6 @@ class ContentDataProvider
             this.refresh();
           }
 
-          return;
-        }
-
-        // Check if a file with the same name already exists in the target
-        const itemExists = await this.checkIfItemExistsInTarget(name, target);
-        if (itemExists) {
-          window.showErrorMessage(
-            l10n.t(Messages.FileAlreadyExistsError, {
-              name,
-            }),
-          );
           return;
         }
 
