@@ -1,0 +1,83 @@
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  font-weight: var(--vscode-font-weight);
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-editor-background);
+  margin: 0;
+  padding: 16px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  margin-bottom: 16px;
+}
+
+.tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--vscode-foreground);
+  border-bottom: 2px solid transparent;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.tab:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.tab.active {
+  border-bottom-color: var(--vscode-focusBorder);
+  color: var(--vscode-tab-activeForeground);
+}
+
+.tab-content {
+  display: none;
+  padding: 20px 0;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.properties-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+.properties-table th,
+.properties-table td {
+  border: 1px solid var(--vscode-panel-border);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.properties-table th {
+  background-color: var(--vscode-list-hoverBackground);
+  font-weight: bold;
+}
+
+.properties-table tr:nth-child(even) {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.property-label {
+  font-weight: bold;
+  min-width: 200px;
+}
+
+.section-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin: 20px 0 10px 0;
+  color: var(--vscode-foreground);
+}

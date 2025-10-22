@@ -11,7 +11,7 @@ import {
   TableData,
   TableRow,
 } from "../../components/LibraryNavigator/types";
-import { ColumnCollection } from "../rest/api/compute";
+import { ColumnCollection, TableInfo } from "../rest/api/compute";
 import { getColumnIconType } from "../util";
 import { executeRawCode, runCode } from "./CodeRunner";
 import { Config } from "./types";
@@ -50,7 +50,8 @@ class ItcLibraryAdapter implements LibraryAdapter {
       $runner.GetColumns("${item.library}", "${item.name}")
     `;
     const output = await executeRawCode(code);
-    const columns = JSON.parse(output).map((column) => ({
+    const rawColumns = JSON.parse(output);
+    const columns = rawColumns.map((column) => ({
       ...column,
       type: getColumnIconType(column),
     }));
@@ -127,7 +128,6 @@ class ItcLibraryAdapter implements LibraryAdapter {
     const { rows } = await this.getRows(item, start, limit);
 
     rows.unshift(columns);
-
     // Fetching csv doesn't rely on count. Instead, we get the count
     // upfront via getTableRowCount
     return { rows, count: -1 };
@@ -193,6 +193,60 @@ class ItcLibraryAdapter implements LibraryAdapter {
           "An error was encountered when loading table data. This usually happens when a table is too large or the data couldn't be processed. See console for more details.",
         ),
       );
+    }
+  }
+
+  public async getTableInfo(item: LibraryItem): Promise<TableInfo> {
+    const basicInfo: TableInfo = {
+      bookmarkLength: 0, // Not available in vtable
+      columnCount: 0,
+      compressionRoutine: "",
+      creationTimeStamp: "",
+      encoding: "", // Not available in vtable
+      engine: "", // Not available in sashelp.vtable for SAS 9.4
+      extendedType: "",
+      label: "",
+      libref: item.library,
+      logicalRecordCount: 0,
+      modifiedTimeStamp: "",
+      name: item.name,
+      physicalRecordCount: 0,
+      recordLength: 0, // Not available in vtable
+      rowCount: 0,
+      type: "DATA",
+    };
+
+    try {
+      // Use the PowerShell GetTableInfo function which queries sashelp.vtable
+      const code = `
+        $runner.GetTableInfo("${item.library}", "${item.name}")
+      `;
+      const output = await executeRawCode(code);
+      const tableInfo = JSON.parse(output);
+
+      return {
+        ...basicInfo,
+        columnCount: tableInfo.columnCount || basicInfo.columnCount,
+        compressionRoutine:
+          tableInfo.compressionRoutine || basicInfo.compressionRoutine,
+        creationTimeStamp:
+          tableInfo.creationTimeStamp || basicInfo.creationTimeStamp,
+        extendedType: tableInfo.extendedType || basicInfo.extendedType,
+        label: tableInfo.label || basicInfo.label,
+        libref: tableInfo.libref || basicInfo.libref,
+        logicalRecordCount: tableInfo.rowCount || basicInfo.logicalRecordCount,
+        modifiedTimeStamp:
+          tableInfo.modifiedTimeStamp || basicInfo.modifiedTimeStamp,
+        name: tableInfo.name || basicInfo.name,
+        physicalRecordCount:
+          tableInfo.rowCount || basicInfo.physicalRecordCount,
+        rowCount: tableInfo.rowCount || basicInfo.rowCount,
+        type: tableInfo.type || basicInfo.type,
+      };
+    } catch (error) {
+      console.warn("Failed to get table info:", error);
+      // If anything fails, return basic info
+      return basicInfo;
     }
   }
 
