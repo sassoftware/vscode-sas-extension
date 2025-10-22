@@ -24,7 +24,7 @@ export const activate: ActivationFunction = (context) => ({
       const toolbar = document.createElement("div");
       toolbar.style.cssText = `
         position: absolute;
-        top: -22px;
+        top: -10px;
         right: 8px;
         display: flex;
         gap: 4px;
