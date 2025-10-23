@@ -56,6 +56,9 @@ class LibraryNavigator implements SubscriptionProvider {
               item.uid,
               paginator,
               fetchColumns,
+              (columnName: string) => {
+                this.displayTableProperties(item, true, columnName);
+              },
             ),
             item.uid,
           );
@@ -105,25 +108,7 @@ class LibraryNavigator implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.showTableProperties",
         async (item: LibraryItem) => {
-          try {
-            const tableInfo = await this.libraryDataProvider.getTableInfo(item);
-            const columns = await this.libraryDataProvider.fetchColumns(item);
-
-            this.webviewManager.render(
-              new TablePropertiesViewer(
-                this.extensionUri,
-                item.uid,
-                tableInfo,
-                columns,
-                false, // Show properties tab
-              ),
-              `properties-${item.uid}`,
-            );
-          } catch (error) {
-            window.showErrorMessage(
-              `Failed to load table properties: ${error.message}`,
-            );
-          }
+          await this.displayTableProperties(item);
         },
       ),
       commands.registerCommand("SAS.collapseAllLibraries", () => {
@@ -141,6 +126,34 @@ class LibraryNavigator implements SubscriptionProvider {
 
   public async refresh(): Promise<void> {
     this.libraryDataProvider.useAdapter(this.libraryAdapterForConnectionType());
+  }
+
+  private async displayTableProperties(
+    item: LibraryItem,
+    showPropertiesTab: boolean = false,
+    focusedColumn?: string,
+  ) {
+    try {
+      const tableInfo = await this.libraryDataProvider.getTableInfo(item);
+      const columns = await this.libraryDataProvider.fetchColumns(item);
+
+      this.webviewManager.render(
+        new TablePropertiesViewer(
+          this.extensionUri,
+          item.uid,
+          tableInfo,
+          columns,
+          showPropertiesTab,
+          focusedColumn,
+        ),
+        `properties-${item.uid}`,
+        true,
+      );
+    } catch (error) {
+      window.showErrorMessage(
+        `Failed to load table properties: ${error.message}`,
+      );
+    }
   }
 
   private libraryAdapterForConnectionType(): LibraryAdapter | undefined {

@@ -10,18 +10,17 @@ import { Column } from "../connection/rest/api/compute";
 import { WebView } from "./WebviewManager";
 
 class DataViewer extends WebView {
-  private _paginator: PaginatedResultSet<{ data: TableData; error?: Error }>;
-  private _fetchColumns: () => Column[];
-
   public constructor(
     extensionUri: Uri,
     uid: string,
-    paginator: PaginatedResultSet<{ data: TableData; error?: Error }>,
-    fetchColumns: () => Column[],
+    protected readonly paginator: PaginatedResultSet<{
+      data: TableData;
+      error?: Error;
+    }>,
+    protected readonly fetchColumns: () => Column[],
+    protected readonly loadColumnProperties: (columnName: string) => void,
   ) {
     super(extensionUri, uid);
-    this._paginator = paginator;
-    this._fetchColumns = fetchColumns;
   }
 
   public l10nMessages() {
@@ -30,6 +29,7 @@ class DataViewer extends WebView {
       Ascending: l10n.t("Ascending"),
       "Descending (add to sorting)": l10n.t("Descending (add to sorting)"),
       Descending: l10n.t("Descending"),
+      Properties: l10n.t("Properties"),
       "Remove all sorting": l10n.t("Remove all sorting"),
       "Remove sorting": l10n.t("Remove sorting"),
       Sort: l10n.t("Sort"),
@@ -52,12 +52,17 @@ class DataViewer extends WebView {
     event: Event & {
       key: string;
       command: string;
-      data?: { start?: number; end?: number; sortModel?: SortModelItem[] };
+      data?: {
+        start?: number;
+        end?: number;
+        sortModel?: SortModelItem[];
+        columnName?: string;
+      };
     },
   ): Promise<void> {
     switch (event.command) {
       case "request:loadData": {
-        const { data, error } = await this._paginator.getData(
+        const { data, error } = await this.paginator.getData(
           event.data!.start!,
           event.data!.end!,
           event.data!.sortModel!,
@@ -76,8 +81,13 @@ class DataViewer extends WebView {
         this.panel.webview.postMessage({
           key: event.key,
           command: "response:loadColumns",
-          data: await this._fetchColumns(),
+          data: await this.fetchColumns(),
         });
+        break;
+      case "request:loadColumnProperties":
+        if (event.data.columnName) {
+          this.loadColumnProperties(event.data.columnName);
+        }
         break;
       default:
         break;
