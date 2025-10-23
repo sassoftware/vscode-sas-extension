@@ -6,11 +6,14 @@ import {
   WORK_DIR_END_TAG,
   WORK_DIR_START_TAG,
 } from "./const";
+import powershellScript from "./script.ps1";
 import { LineCodes } from "./types";
 
 type ScriptProperties = {
   interopLibraryFolderPath?: string;
 };
+
+console.log({ powershellScript });
 
 export const getScript = ({
   interopLibraryFolderPath = "",
@@ -588,7 +591,7 @@ class SASRunner{
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection
     $query = @"
-      select memname, memtype, crdate, modate, nobs, nvar, compress, 
+      select memname, memtype, crdate, modate, nobs, nvar, compress,
              memlabel, typemem, filesize, delobs
       from sashelp.vtable
       where libname='$libname' and memname='$memname';

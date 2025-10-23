@@ -8,7 +8,8 @@
     "outDir": "out",
     "rootDir": ".",
     "sourceMap": true,
-    "target": "es2019"
+    "target": "es2019",
+    "resol"
   },
   "include": ["src", "test"],
   "exclude": ["node_modules", ".vscode-test"]
