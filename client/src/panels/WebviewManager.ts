@@ -5,8 +5,13 @@ import { Disposable, Uri, ViewColumn, WebviewPanel, window } from "vscode";
 export class WebViewManager {
   public panels: Record<string, WebView> = {};
 
-  public render(webview: WebView, uid: string) {
+  public render(webview: WebView, uid: string, forceReRender: boolean = false) {
     if (this.panels[uid]) {
+      if (forceReRender) {
+        this.panels[uid] = webview
+          .withPanel(this.panels[uid].getPanel())
+          .render();
+      }
       this.panels[uid].display();
       return;
     }
@@ -98,6 +103,10 @@ export abstract class WebView {
     this.panel.webview.onDidReceiveMessage(this.processMessage.bind(this));
 
     return this;
+  }
+
+  public getPanel() {
+    return this.panel;
   }
 
   public dispose() {

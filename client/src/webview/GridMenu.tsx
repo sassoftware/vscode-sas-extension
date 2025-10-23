@@ -41,12 +41,11 @@ const GridMenu = ({
   // - option 3. The parent menu doesn't fit on the screen, so we shift it to the left and
   //   put the child menu on the left side.
   const [left, setLeft] = useState(parentDimensions?.left ?? incomingLeft);
-  const [displayed, setDisplayed] = useState(false);
+  const [width, setWidth] = useState(0);
   useEffect(() => {
     const clientWidth = menuRef.current.closest("body").clientWidth;
     const width = menuRef.current.getBoundingClientRect().width;
-
-    setDisplayed(true);
+    setWidth(width);
     if (parentDimensions) {
       // First, lets put the child menu to the right
       let adjustedLeft = parentDimensions.left + parentDimensions.width;
@@ -67,22 +66,19 @@ const GridMenu = ({
       {subMenuItems.length > 0 && (
         <GridMenu
           menuItems={subMenuItems}
+          parentDimensions={{ left, width }}
+          subMenu
           theme={theme}
           top={top}
-          parentDimensions={{
-            left,
-            width: menuRef.current.getBoundingClientRect().width,
-          }}
-          subMenu
         />
       )}
       <div
         className="ag-theme-sas ag-popup"
-        // We rely on the menu being displayed _first_ before being able to
+        // We rely on the menu being displayed/having width _first_ before being able to
         // calculate it's correct left position. This prevents actually showing the
         // menu to the user until we've figured that out. This prevents flashes of the
         // menu in the wrong position.
-        style={{ visibility: displayed ? "visible" : "hidden" }}
+        style={{ visibility: width ? "visible" : "hidden" }}
       >
         <div
           className={className}
@@ -159,14 +155,14 @@ const GridMenu = ({
                     {menuItem.name}
                   </span>
                   <span className="ag-menu-option-part ag-menu-option-shortcut"></span>
-                  {menuItem.children && menuItem.children.length > 0 && (
-                    <span className="ag-menu-option-part ag-menu-option-popup-pointer">
+                  <span className="ag-menu-option-part ag-menu-option-popup-pointer">
+                    {menuItem.children && menuItem.children.length > 0 && (
                       <span
                         className="ag-icon ag-icon-small-right"
                         role="presentation"
                       />
-                    </span>
-                  )}
+                    )}
+                  </span>
                 </div>
               );
             })}
