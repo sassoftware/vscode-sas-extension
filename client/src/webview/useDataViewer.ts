@@ -135,7 +135,14 @@ const useDataViewer = (theme: string) => {
               return row;
             });
 
-            params.successCallback(rowData, count);
+            params.successCallback(
+              rowData,
+              // If we've returned less than 100 rows, we can assume that's the last page
+              // of the data and stop searching.
+              rowData.length < 100 && count === undefined
+                ? rowData[rowData.length - 1]["#"]
+                : count,
+            );
           });
         },
       };
