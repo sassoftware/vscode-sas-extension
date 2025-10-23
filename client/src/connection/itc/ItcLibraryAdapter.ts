@@ -185,9 +185,8 @@ class ItcLibraryAdapter implements LibraryAdapter {
     const sortString = sortModel
       .map((col) => `${col.colId} ${col.sort}`)
       .join(",");
-    const fullTableName = `${item.library}.${item.name}`;
     const code = `
-      $runner.GetDatasetRecords("${fullTableName}", ${start}, ${limit}, "${sortString}")
+      $runner.GetDatasetRecords("${item.library}","${item.name}", ${start}, ${limit}, "${sortString}")
     `;
     const output = await executeRawCode(code);
     try {
