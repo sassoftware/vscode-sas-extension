@@ -10,6 +10,7 @@ export interface ColumnMenuProps {
   dismissMenu: () => void;
   hasSort: boolean;
   left: number;
+  loadColumnProperties: () => void;
   removeAllSorting: () => void;
   removeFromSort: () => void;
   sortColumn: (direction: "asc" | "desc") => void;
@@ -28,6 +29,7 @@ export const getColumnMenu = (
   column: AgColumn,
   { height, top, left }: DOMRect,
   dismissMenu: () => void,
+  loadColumnProperties: (columnName: string) => void,
 ) => ({
   column,
   dismissMenu,
@@ -67,6 +69,9 @@ export const getColumnMenu = (
         // After we remove the column, lets reindex what's left
         .map((c, sortIndex) => ({ ...c, sortIndex })),
     ),
+  loadColumnProperties: () => {
+    loadColumnProperties(column.colId);
+  },
 });
 
 const ColumnMenu = ({
@@ -74,6 +79,7 @@ const ColumnMenu = ({
   dismissMenu,
   hasSort,
   left,
+  loadColumnProperties,
   removeAllSorting,
   removeFromSort,
   sortColumn,
@@ -124,6 +130,11 @@ const ColumnMenu = ({
           disabled: !hasSort,
         },
       ],
+    },
+    "separator",
+    {
+      name: localize("Properties"),
+      onPress: loadColumnProperties,
     },
   ];
 

@@ -151,7 +151,19 @@ const useDataViewer = (theme: string) => {
         return setColumnMenu(undefined);
       }
       setColumnMenu(
-        getColumnMenu(api, theme, column, rect, () => setColumnMenu(undefined)),
+        getColumnMenu(
+          api,
+          theme,
+          column,
+          rect,
+          () => setColumnMenu(undefined),
+          (columnName: string) => {
+            vscode.postMessage({
+              command: "request:loadColumnProperties",
+              data: { columnName },
+            });
+          },
+        ),
       );
     },
     [theme],
