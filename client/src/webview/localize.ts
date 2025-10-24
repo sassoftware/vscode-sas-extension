@@ -9,7 +9,7 @@ const localize = (term: string, replacments?: Record<string, string>) => {
   if (!localizedTerms) {
     try {
       localizedTerms = JSON.parse(
-        document.querySelector("#l10n-messages").textContent,
+        document.body.getAttribute("data-l10n") || "{}",
       );
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
