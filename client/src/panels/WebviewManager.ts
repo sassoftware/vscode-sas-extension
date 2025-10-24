@@ -81,14 +81,9 @@ export abstract class WebView {
           ${styles}
           <title>${this.title}</title>
         </head>
-        <body>
+        <body data-l10n='${JSON.stringify(this.l10nMessages ? this.l10nMessages() : {})}'>
           ${this.body()}
           ${scripts}
-          ${
-            this?.l10nMessages
-              ? `<script type="application/json" id="l10n-messages">${JSON.stringify(this?.l10nMessages())}</script>`
-              : ""
-          }
         </body>
       </html>`;
 
