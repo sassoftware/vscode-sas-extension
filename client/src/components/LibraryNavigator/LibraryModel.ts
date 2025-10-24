@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { ProgressLocation, l10n, window } from "vscode";
 
-import { SortModelItem } from "ag-grid-community";
+import type { SortModelItem } from "ag-grid-community";
 import { Writable } from "stream";
 
 import PaginatedResultSet from "./PaginatedResultSet";
