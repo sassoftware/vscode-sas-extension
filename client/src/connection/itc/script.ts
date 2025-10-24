@@ -303,7 +303,7 @@ class SASRunner{
     Write-Host $(ConvertTo-Json -Depth 10 -InputObject $result -Compress)
   }
 
-  [object[]] GetColumnData([string]$libname, [string]$memname) {
+  [void]GetColumns([string]$libname, [string]$memname) {
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection
     $query = @"
@@ -337,12 +337,6 @@ class SASRunner{
       }
       $parsedRows += $parsedRow
     }
-
-    return $parsedRows
-  }
-
-  [void]GetColumns([string]$libname, [string]$memname) {
-    $parsedRows = $this.GetColumnData($libname, $memname)
 
     Write-Host $(ConvertTo-Json -Depth 10 -InputObject $parsedRows -Compress)
   }
@@ -606,7 +600,7 @@ class SASRunner{
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection
     $query = @"
-      select memname, memtype, crdate, modate, nobs, nvar, compress, 
+      select memname, memtype, crdate, modate, nobs, nvar, compress,
              memlabel, typemem, filesize, delobs
       from sashelp.vtable
       where libname='$libname' and memname='$memname';
