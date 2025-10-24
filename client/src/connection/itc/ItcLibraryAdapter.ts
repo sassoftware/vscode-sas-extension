@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { l10n } from "vscode";
 
-import { SortModelItem } from "ag-grid-community";
+import type { SortModelItem } from "ag-grid-community";
 import { ChildProcessWithoutNullStreams } from "child_process";
 
 import { onRunError } from "../../commands/run";
