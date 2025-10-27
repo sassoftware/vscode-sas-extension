@@ -38,12 +38,10 @@ export const getResourceIdFromItem = (item: ContentItem): string | null => {
   return getLink(item.links, "GET", "self")?.uri || null;
 };
 
-export const getSasContentUri = (
-  item: ContentItem,
-  readOnly?: boolean,
-  fullPath?: string,
-): Uri => {
-  let pathToUse = fullPath || item.name || "";
+const processPath = (path: string, replacement?: RegExp): string => {
+  let pathToUse = path;
+
+  pathToUse = replacement ? pathToUse.replace(replacement, "/") : pathToUse;
 
   // Remove leading slash if present since we'll add one in the URI construction
   if (pathToUse.startsWith("/")) {
@@ -52,6 +50,16 @@ export const getSasContentUri = (
 
   // URL encode special characters
   pathToUse = pathToUse.replace(/#/g, "%23").replace(/\?/g, "%3F");
+
+  return pathToUse;
+};
+
+export const getSasContentUri = (
+  item: ContentItem,
+  readOnly?: boolean,
+  fullPath?: string,
+): Uri => {
+  const pathToUse = processPath(fullPath || item.name || "");
 
   return Uri.parse(
     `${readOnly ? `${ContentSourceType.SASContent}ReadOnly` : ContentSourceType.SASContent}:/${pathToUse}?id=${getResourceIdFromItem(item)}`,
@@ -63,18 +71,7 @@ export const getSasServerUri = (
   readOnly?: boolean,
   fullPath?: string,
 ): Uri => {
-  let pathToUse = fullPath || item.name || "";
-
-  // Decode SAS server path encoding (~fs~ represents /)
-  pathToUse = pathToUse.replace(/~fs~/g, "/");
-
-  // Remove leading slash if present since we'll add one in the URI construction
-  if (pathToUse.startsWith("/")) {
-    pathToUse = pathToUse.substring(1);
-  }
-
-  // URL encode special characters
-  pathToUse = pathToUse.replace(/#/g, "%23").replace(/\?/g, "%3F");
+  const pathToUse = processPath(fullPath || item.name || "", /~fs~/g);
 
   return Uri.parse(
     `${readOnly ? `${ContentSourceType.SASServer}ReadOnly` : ContentSourceType.SASServer}:/${pathToUse}?id=${getResourceIdFromItem(item)}`,

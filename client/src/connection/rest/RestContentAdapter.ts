@@ -236,10 +236,7 @@ class RestContentAdapter implements ContentAdapter {
       }
     }
     const filePathParts = [];
-    let currentContentItem: Pick<
-      ContentItem,
-      "parentFolderUri" | "name" | "id"
-    > = item;
+    let currentContentItem: ContentItem = item;
     filePathParts.push(currentContentItem.name);
 
     do {
