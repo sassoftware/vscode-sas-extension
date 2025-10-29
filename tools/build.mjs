@@ -89,7 +89,7 @@ if (process.env.npm_config_webviews || process.env.npm_config_client) {
   await ctx.rebuild();
 
   if (dev) {
-    copyFiles();
+    process.env.npm_config_client && copyFiles();
     await ctx.watch();
   } else {
     await ctx.dispose();
