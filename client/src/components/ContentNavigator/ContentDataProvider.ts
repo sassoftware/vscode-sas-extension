@@ -717,13 +717,14 @@ class ContentDataProvider
     path: string,
     displayErrorMessages: boolean = true,
   ): Promise<boolean> {
-    const folder = await this.model.createFolder(target, basename(path));
+    const folderName = basename(path);
+    const folder = await this.model.createFolder(target, folderName);
     let success = true;
     if (!folder) {
       displayErrorMessages &&
         window.showErrorMessage(
           l10n.t(Messages.FileDropError, {
-            name: basename(path),
+            name: folderName,
           }),
         );
 
