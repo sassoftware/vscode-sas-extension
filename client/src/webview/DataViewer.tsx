@@ -74,6 +74,7 @@ const DataViewer = () => {
           defaultColDef={{
             sortable: true,
           }}
+          maintainColumnOrder
           infiniteInitialRowCount={100}
           maxBlocksInCache={10}
           onGridReady={onGridReady}
