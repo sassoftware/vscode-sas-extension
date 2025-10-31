@@ -4,6 +4,7 @@ import { AgColumn, ColumnState, GridApi } from "ag-grid-community";
 
 import GridMenu from "./GridMenu";
 import localize from "./localize";
+import { storeViewProperties } from "./useDataViewer";
 
 export interface ColumnMenuProps {
   column: AgColumn;
@@ -21,6 +22,7 @@ export interface ColumnMenuProps {
 const applyColumnState = (api: GridApi, state: ColumnState[]) => {
   api.applyColumnState({ state, defaultState: { sort: null } });
   api.ensureIndexVisible(0);
+  storeViewProperties({ columnState: state });
 };
 
 export const getColumnMenu = (

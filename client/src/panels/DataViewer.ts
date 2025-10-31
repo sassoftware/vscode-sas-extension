@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 import { Uri, l10n, window } from "vscode";
 
-import { SortModelItem } from "ag-grid-community";
+import type { ColumnState, SortModelItem } from "ag-grid-community";
 
 import PaginatedResultSet from "../components/LibraryNavigator/PaginatedResultSet";
 import { TableData } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
 import { WebView } from "./WebviewManager";
 
+export type ViewProperties = { columnState?: ColumnState[] };
+
 class DataViewer extends WebView {
+  protected viewProperties: ViewProperties = {};
   public constructor(
     extensionUri: Uri,
     uid: string,
@@ -57,6 +60,7 @@ class DataViewer extends WebView {
         end?: number;
         sortModel?: SortModelItem[];
         columnName?: string;
+        viewProperties?: Partial<ViewProperties>;
       };
     },
   ): Promise<void> {
@@ -81,12 +85,23 @@ class DataViewer extends WebView {
         this.panel.webview.postMessage({
           key: event.key,
           command: "response:loadColumns",
-          data: await this.fetchColumns(),
+          data: {
+            columns: await this.fetchColumns(),
+            viewProperties: this.viewProperties,
+          },
         });
         break;
       case "request:loadColumnProperties":
         if (event.data.columnName) {
           this.loadColumnProperties(event.data.columnName);
+        }
+        break;
+      case "request:storeViewProperties":
+        if (event.data.viewProperties) {
+          this.viewProperties = {
+            ...this.viewProperties,
+            ...event.data.viewProperties,
+          };
         }
         break;
       default:
