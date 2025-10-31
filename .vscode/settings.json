@@ -4,5 +4,8 @@
   "editor.insertSpaces": true,
   "editor.formatOnSave": true,
   "typescript.tsc.autoDetect": "off",
-  "typescript.preferences.quoteStyle": "single"
+  "typescript.preferences.quoteStyle": "single",
+  "[powershell]": {
+    "editor.defaultFormatter": "ms-vscode.powershell"
+  }
 }
