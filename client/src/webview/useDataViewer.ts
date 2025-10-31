@@ -146,7 +146,6 @@ const useDataViewer = (theme: string) => {
           });
         },
       };
-
       event.api.setGridOption("datasource", dataSource);
     },
     [columns],
@@ -203,14 +202,17 @@ const useDataViewer = (theme: string) => {
             params.event.key === "Enter" ||
             (params.event.key === "F10" && params.event.shiftKey)
           ) {
-            const dropdownButton =
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-              (params.event.target as HTMLElement).querySelector(
-                ".dropdown > button",
-              );
-            if (!dropdownButton) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            const dropdown = (params.event.target as HTMLElement).querySelector(
+              ".dropdown",
+            );
+            if (!dropdown) {
               return true;
             }
+            if (!dropdown.classList.contains("active")) {
+              dropdown.classList.add("active");
+            }
+            const dropdownButton = dropdown.querySelector("button");
             displayMenuForColumn(
               params.api,
               // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
