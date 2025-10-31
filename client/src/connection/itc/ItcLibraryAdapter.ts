@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { l10n } from "vscode";
 
+import type { SortModelItem } from "ag-grid-community";
 import { ChildProcessWithoutNullStreams } from "child_process";
 
 import { onRunError } from "../../commands/run";
@@ -92,11 +93,13 @@ class ItcLibraryAdapter implements LibraryAdapter {
     item: LibraryItem,
     start: number,
     limit: number,
+    sortModel: SortModelItem[],
   ): Promise<TableData> {
     const { rows: rawRowValues, count } = await this.getDatasetInformation(
       item,
       start,
       limit,
+      sortModel,
     );
 
     const rows = rawRowValues.map((line, idx: number): TableRow => {
@@ -125,7 +128,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
           }
         : {};
 
-    const { rows } = await this.getRows(item, start, limit);
+    const { rows } = await this.getRows(item, start, limit, []);
 
     rows.unshift(columns);
     // Fetching csv doesn't rely on count. Instead, we get the count
@@ -177,10 +180,13 @@ class ItcLibraryAdapter implements LibraryAdapter {
     item: LibraryItem,
     start: number,
     limit: number,
+    sortModel: SortModelItem[],
   ): Promise<{ rows: Array<string[]>; count: number }> {
-    const fullTableName = `${item.library}.${item.name}`;
+    const sortString = sortModel
+      .map((col) => `${col.colId} ${col.sort}`)
+      .join(",");
     const code = `
-      $runner.GetDatasetRecords("${fullTableName}", ${start}, ${limit})
+      $runner.GetDatasetRecords("${item.library}","${item.name}", ${start}, ${limit}, "${sortString}")
     `;
     const output = await executeRawCode(code);
     try {

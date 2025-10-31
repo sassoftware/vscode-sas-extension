@@ -1,19 +1,25 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
+  AgColumn,
   AllCommunityModule,
   ColDef,
+  GridApi,
   GridReadyEvent,
   IGetRowsParams,
   ModuleRegistry,
+  SortModelItem,
+  SuppressHeaderKeyboardEventParams,
 } from "ag-grid-community";
 import { v4 } from "uuid";
 
 import { TableData } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
-import columnHeaderTemplate from "./columnHeaderTemplate";
+import type { ViewProperties } from "../panels/DataViewer";
+import ColumnHeader from "./ColumnHeader";
+import { ColumnMenuProps, getColumnMenu } from "./ColumnMenu";
 
 declare const acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
@@ -34,12 +40,16 @@ const clearQueryTimeout = (): void => {
   clearTimeout(queryTableDataTimeoutId);
   queryTableDataTimeoutId = null;
 };
-const queryTableData = (start: number, end: number): Promise<TableData> => {
+const queryTableData = (
+  start: number,
+  end: number,
+  sortModel: SortModelItem[],
+): Promise<TableData> => {
   const requestKey = v4();
   vscode.postMessage({
     command: "request:loadData",
     key: requestKey,
-    data: { start, end },
+    data: { start, end, sortModel },
   });
 
   return new Promise((resolve, reject) => {
@@ -68,7 +78,10 @@ const queryTableData = (start: number, end: number): Promise<TableData> => {
 let fetchColumnsTimeoutId: ReturnType<typeof setTimeout> | null = null;
 const clearFetchColumnsTimeout = () =>
   fetchColumnsTimeoutId && clearTimeout(fetchColumnsTimeoutId);
-const fetchColumns = (): Promise<Column[]> => {
+const fetchColumns = (): Promise<{
+  columns: Column[];
+  viewProperties?: ViewProperties;
+}> => {
   const requestKey = v4();
   vscode.postMessage({ command: "request:loadColumns", key: requestKey });
 
@@ -95,37 +108,80 @@ const fetchColumns = (): Promise<Column[]> => {
   });
 };
 
-const useDataViewer = () => {
+export const storeViewProperties = (viewProperties: ViewProperties) =>
+  vscode.postMessage({
+    command: "request:storeViewProperties",
+    data: { viewProperties },
+  });
+
+const useDataViewer = (theme: string) => {
   const [columns, setColumns] = useState<ColDef[]>([]);
+  const [columnMenu, setColumnMenu] = useState<ColumnMenuProps | undefined>();
+  const columnMenuRef = useRef<ColumnMenuProps | undefined>(columnMenu);
+  useEffect(() => {
+    columnMenuRef.current = columnMenu;
+  }, [columnMenu]);
 
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
       const dataSource = {
         rowCount: undefined,
         getRows: async (params: IGetRowsParams) => {
-          await queryTableData(params.startRow, params.endRow).then(
-            ({ rows, count }: TableData) => {
-              const rowData = rows.map(({ cells }) => {
-                const row = cells.reduce(
-                  (carry, cell, index) => ({
-                    ...carry,
-                    [columns[index].field]: cell,
-                  }),
-                  {},
-                );
+          await queryTableData(
+            params.startRow,
+            params.endRow,
+            params.sortModel,
+          ).then(({ rows, count }: TableData) => {
+            const rowData = rows.map(({ cells }) => {
+              const row = cells.reduce(
+                (carry, cell, index) => ({
+                  ...carry,
+                  [columns[index].field]: cell,
+                }),
+                {},
+              );
 
-                return row;
-              });
+              return row;
+            });
 
-              params.successCallback(rowData, count);
-            },
-          );
+            params.successCallback(
+              rowData,
+              // If we've returned less than 100 rows, we can assume that's the last page
+              // of the data and stop searching.
+              rowData.length < 100 && count === undefined
+                ? rowData[rowData.length - 1]["#"]
+                : count,
+            );
+          });
         },
       };
-
       event.api.setGridOption("datasource", dataSource);
     },
     [columns],
+  );
+
+  const displayMenuForColumn = useCallback(
+    (api: GridApi, column: AgColumn, rect: DOMRect) => {
+      if (columnMenuRef.current?.column) {
+        return setColumnMenu(undefined);
+      }
+      setColumnMenu(
+        getColumnMenu(
+          api,
+          theme,
+          column,
+          rect,
+          () => setColumnMenu(undefined),
+          (columnName: string) => {
+            vscode.postMessage({
+              command: "request:loadColumnProperties",
+              data: { columnName },
+            });
+          },
+        ),
+      );
+    },
+    [theme],
   );
 
   useEffect(() => {
@@ -133,22 +189,65 @@ const useDataViewer = () => {
       return;
     }
 
-    fetchColumns().then((columnsData) => {
+    fetchColumns().then(({ columns: columnsData, viewProperties }) => {
+      const getColumnState = (name: string) =>
+        viewProperties.columnState
+          ? viewProperties.columnState.find(({ colId }) => colId === name)
+          : {};
       const columns: ColDef[] = columnsData.map((column) => ({
         field: column.name,
-        headerName: column.name,
+        headerComponent: ColumnHeader,
         headerComponentParams: {
-          template: columnHeaderTemplate(column.type),
+          columnType: column.type,
+          currentColumn: () => columnMenuRef.current?.column,
+          displayMenuForColumn,
+          theme,
+        },
+        ...getColumnState(column.name),
+        suppressHeaderKeyboardEvent: (
+          params: SuppressHeaderKeyboardEventParams,
+        ) => {
+          // If a user tabs to a different column, dismiss the column menu
+          if (params.event.key === "Tab") {
+            setColumnMenu(undefined);
+            return false;
+          }
+          if (
+            params.event.key === "Enter" ||
+            (params.event.key === "F10" && params.event.shiftKey)
+          ) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            const dropdown = (params.event.target as HTMLElement).querySelector(
+              ".dropdown",
+            );
+            if (!dropdown) {
+              return true;
+            }
+            if (!dropdown.classList.contains("active")) {
+              dropdown.classList.add("active");
+            }
+            const dropdownButton = dropdown.querySelector("button");
+            displayMenuForColumn(
+              params.api,
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              params.column as AgColumn,
+              dropdownButton.getBoundingClientRect(),
+            );
+            return true;
+          }
+          return false;
         },
       }));
+
       columns.unshift({
         field: "#",
         suppressMovable: true,
+        sortable: false,
       });
 
       setColumns(columns);
     });
-  }, [columns.length]);
+  }, [columns.length, theme, displayMenuForColumn]);
 
   useEffect(() => {
     window.addEventListener("contextmenu", contextMenuHandler, true);
@@ -158,7 +257,14 @@ const useDataViewer = () => {
     };
   }, []);
 
-  return { columns, onGridReady };
+  const dismissMenu = () => setColumnMenu(undefined);
+
+  return {
+    columns,
+    onGridReady,
+    columnMenu,
+    dismissMenu,
+  };
 };
 
 export default useDataViewer;
