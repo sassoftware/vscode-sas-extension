@@ -17,6 +17,7 @@ import { v4 } from "uuid";
 
 import { TableData } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
+import type { ViewProperties } from "../panels/DataViewer";
 import ColumnHeader from "./ColumnHeader";
 import { ColumnMenuProps, getColumnMenu } from "./ColumnMenu";
 
@@ -77,7 +78,10 @@ const queryTableData = (
 let fetchColumnsTimeoutId: ReturnType<typeof setTimeout> | null = null;
 const clearFetchColumnsTimeout = () =>
   fetchColumnsTimeoutId && clearTimeout(fetchColumnsTimeoutId);
-const fetchColumns = (): Promise<Column[]> => {
+const fetchColumns = (): Promise<{
+  columns: Column[];
+  viewProperties?: ViewProperties;
+}> => {
   const requestKey = v4();
   vscode.postMessage({ command: "request:loadColumns", key: requestKey });
 
@@ -104,10 +108,15 @@ const fetchColumns = (): Promise<Column[]> => {
   });
 };
 
+export const storeViewProperties = (viewProperties: ViewProperties) =>
+  vscode.postMessage({
+    command: "request:storeViewProperties",
+    data: { viewProperties },
+  });
+
 const useDataViewer = (theme: string) => {
   const [columns, setColumns] = useState<ColDef[]>([]);
   const [columnMenu, setColumnMenu] = useState<ColumnMenuProps | undefined>();
-
   const columnMenuRef = useRef<ColumnMenuProps | undefined>(columnMenu);
   useEffect(() => {
     columnMenuRef.current = columnMenu;
@@ -180,7 +189,11 @@ const useDataViewer = (theme: string) => {
       return;
     }
 
-    fetchColumns().then((columnsData) => {
+    fetchColumns().then(({ columns: columnsData, viewProperties }) => {
+      const getColumnState = (name: string) =>
+        viewProperties.columnState
+          ? viewProperties.columnState.find(({ colId }) => colId === name)
+          : {};
       const columns: ColDef[] = columnsData.map((column) => ({
         field: column.name,
         headerComponent: ColumnHeader,
@@ -190,6 +203,7 @@ const useDataViewer = (theme: string) => {
           displayMenuForColumn,
           theme,
         },
+        ...getColumnState(column.name),
         suppressHeaderKeyboardEvent: (
           params: SuppressHeaderKeyboardEventParams,
         ) => {
@@ -245,7 +259,12 @@ const useDataViewer = (theme: string) => {
 
   const dismissMenu = () => setColumnMenu(undefined);
 
-  return { columns, onGridReady, columnMenu, dismissMenu };
+  return {
+    columns,
+    onGridReady,
+    columnMenu,
+    dismissMenu,
+  };
 };
 
 export default useDataViewer;
