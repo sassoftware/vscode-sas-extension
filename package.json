@@ -1430,7 +1430,7 @@
     "locale": "npx @vscode/l10n-dev export -o ./l10n ./client/src && node ./tools/locale.mjs"
   },
   "devDependencies": {
-    "@eslint/compat": "1.4.0",
+    "@eslint/compat": "1.4.1",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.10",
