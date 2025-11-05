@@ -21,14 +21,9 @@ import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 import { extractOutputHtmlFileName } from "../util";
 import { LineParser } from "./LineParser";
-import {
-  ERROR_END_TAG,
-  ERROR_START_TAG,
-  WORK_DIR_END_TAG,
-  WORK_DIR_START_TAG,
-} from "./const";
+import { LineCodes, Tags } from "./env.json";
 import { getScript } from "./script";
-import { Config, ITCProtocol, LineCodes } from "./types";
+import { Config, ITCProtocol } from "./types";
 import {
   decodeEntities,
   escapePowershellString,
@@ -75,10 +70,14 @@ export class ITCSession extends Session {
     this._password = "";
     this._secretStorage = getSecretStorage(SECRET_STORAGE_NAMESPACE);
     this._pollingForLogResults = false;
-    this._errorParser = new LineParser(ERROR_START_TAG, ERROR_END_TAG, true);
+    this._errorParser = new LineParser(
+      Tags.ErrorStartTag,
+      Tags.ErrorEndTag,
+      true,
+    );
     this._workDirectoryParser = new LineParser(
-      WORK_DIR_START_TAG,
-      WORK_DIR_END_TAG,
+      Tags.WorkDirStartTag,
+      Tags.WorkDirEndTag,
       false,
     );
   }
