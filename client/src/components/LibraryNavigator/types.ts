@@ -1,5 +1,7 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import type { SortModelItem } from "ag-grid-community";
+
 import { ColumnCollection, TableInfo } from "../../connection/rest/api/compute";
 
 export const LibraryType = "library";
@@ -39,7 +41,12 @@ export interface LibraryAdapter {
     items: LibraryItem[];
     count: number;
   }>;
-  getRows(item: LibraryItem, start: number, limit: number): Promise<TableData>;
+  getRows(
+    item: LibraryItem,
+    start: number,
+    limit: number,
+    sortModel: SortModelItem[],
+  ): Promise<TableData>;
   getRowsAsCSV(
     item: LibraryItem,
     start: number,

@@ -70,6 +70,11 @@ body {
   background-color: var(--vscode-list-hoverBackground);
 }
 
+.properties-table tr.active {
+  color: var(--vscode-list-activeSelectionForeground);
+  background-color: var(--vscode-list-activeSelectionBackground);
+}
+
 .property-label {
   font-weight: bold;
   min-width: 200px;

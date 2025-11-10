@@ -1,11 +1,12 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { createRoot } from "react-dom/client";
 
 import { AgGridReact } from "ag-grid-react";
 
 import ".";
+import ColumnMenu from "./ColumnMenu";
 import useDataViewer from "./useDataViewer";
 
 import "./DataViewer.css";
@@ -20,7 +21,6 @@ const gridStyles = {
 };
 
 const DataViewer = () => {
-  const { columns, onGridReady } = useDataViewer();
   const theme = useMemo(() => {
     const themeKind = document
       .querySelector("[data-vscode-theme-kind]")
@@ -35,25 +35,53 @@ const DataViewer = () => {
         return "ag-theme-alpine-dark";
     }
   }, []);
+  const { columns, onGridReady, columnMenu, dismissMenu } =
+    useDataViewer(theme);
+
+  const handleKeydown = useCallback(
+    (event) => {
+      if (event.key === "Escape" && columnMenu) {
+        dismissMenu();
+      }
+    },
+    [columnMenu, dismissMenu],
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeydown);
+    window.addEventListener("blur", dismissMenu);
+    return () => {
+      document.removeEventListener("keydown", handleKeydown);
+      window.removeEventListener("blur", dismissMenu);
+    };
+  }, [handleKeydown, dismissMenu]);
 
   if (columns.length === 0) {
     return null;
   }
 
   return (
-    <div className={`ag-grid-wrapper ${theme}`} style={gridStyles}>
-      <AgGridReact
-        cacheBlockSize={100}
-        columnDefs={columns}
-        defaultColDef={{
-          sortable: false,
-        }}
-        infiniteInitialRowCount={100}
-        maxBlocksInCache={10}
-        onGridReady={onGridReady}
-        rowModelType="infinite"
-        theme="legacy"
-      />
+    <div className="data-viewer">
+      {columnMenu && <ColumnMenu {...columnMenu} />}
+      <div
+        className={`ag-grid-wrapper ${theme}`}
+        style={gridStyles}
+        onClick={() => columnMenu && dismissMenu()}
+      >
+        <AgGridReact
+          cacheBlockSize={100}
+          columnDefs={columns}
+          defaultColDef={{
+            sortable: true,
+          }}
+          maintainColumnOrder
+          infiniteInitialRowCount={100}
+          maxBlocksInCache={10}
+          onGridReady={onGridReady}
+          rowModelType="infinite"
+          theme="legacy"
+        />
+      </div>
     </div>
   );
 };

@@ -2,78 +2,51 @@
 // SPDX-License-Identifier: Apache-2.0
 import { Uri, l10n } from "vscode";
 
-import { Column } from "../connection/rest/api/compute";
-import { TableInfo } from "../connection/rest/api/compute";
+import { Column, TableInfo } from "../connection/rest/api/compute";
 import { WebView } from "./WebviewManager";
 
 class TablePropertiesViewer extends WebView {
+  l10nMessages = undefined;
+
   constructor(
-    private readonly extensionUri: Uri,
+    extensionUri: Uri,
     private readonly tableName: string,
     private readonly tableInfo: TableInfo,
     private readonly columns: Column[],
     private readonly showColumns: boolean = false,
+    private readonly focusedColumn: string = "",
   ) {
-    super();
+    super(extensionUri, l10n.t("Table Properties"));
   }
 
-  public render(): WebView {
-    const policies = [
-      `default-src 'none';`,
-      `font-src ${this.panel.webview.cspSource} data:;`,
-      `img-src ${this.panel.webview.cspSource} data:;`,
-      `script-src ${this.panel.webview.cspSource};`,
-      `style-src ${this.panel.webview.cspSource};`,
-    ];
-    this.panel.webview.html = this.getContent(policies);
-    return this;
+  public body(): string {
+    return `<div class="container">
+      <h1>${l10n.t("Table: {tableName}", { tableName: this.tableName })}</h1>
+
+      <div class="tabs">
+        <button class="tab ${this.showColumns ? "" : "active"}" data-tab="properties">${l10n.t("General")}</button>
+        <button class="tab ${this.showColumns ? "active" : ""}" data-tab="columns">${l10n.t("Columns")}</button>
+      </div>
+
+      <div id="properties" class="tab-content ${this.showColumns ? "" : "active"}">
+        ${this.generatePropertiesContent()}
+      </div>
+
+      <div id="columns" class="tab-content ${this.showColumns ? "active" : ""}">
+        ${this.generateColumnsContent()}
+      </div>
+    </div>`;
+  }
+
+  public scripts(): string[] {
+    return ["TablePropertiesViewer.js"];
+  }
+  public styles(): string[] {
+    return ["TablePropertiesViewer.css"];
   }
 
   public processMessage(): void {
     // No messages to process for this static viewer
-  }
-
-  public getContent(policies: string[]): string {
-    return `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <meta http-equiv="Content-Security-Policy" content="${policies.join(
-            " ",
-          )}" />
-          <link rel="stylesheet" href="${this.webviewUri(
-            this.extensionUri,
-            "TablePropertiesViewer.css",
-          )}">
-          <title>${l10n.t("Table Properties")}</title>
-      </head>
-      <body>
-          <div class="container">
-              <h1>${l10n.t("Table: {tableName}", { tableName: this.tableName })}</h1>
-              
-              <div class="tabs">
-                  <button class="tab active" data-tab="properties">${l10n.t("General")}</button>
-                  <button class="tab" data-tab="columns">${l10n.t("Columns")}</button>
-              </div>
-              
-              <div id="properties" class="tab-content active">
-                  ${this.generatePropertiesContent()}
-              </div>
-              
-              <div id="columns" class="tab-content">
-                  ${this.generateColumnsContent()}
-              </div>
-          </div>
-          
-          <script type="module" src="${this.webviewUri(
-            this.extensionUri,
-            "TablePropertiesViewer.js",
-          )}"></script>
-      </body>
-      </html>
-    `;
   }
 
   private generatePropertiesContent(): string {
@@ -188,7 +161,7 @@ class TablePropertiesViewer extends WebView {
     const columnsRows = this.columns
       .map(
         (column, index) => `
-          <tr>
+          <tr class="${column.name === this.focusedColumn ? "active" : ""}">
             <td>${index + 1}</td>
             <td>${formatValue(column.name)}</td>
             <td>${formatValue(column.type)}</td>
