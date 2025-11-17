@@ -26,6 +26,7 @@
   "commands.SAS.run": "すべて SAS コードを実行する",
   "commands.SAS.runRegion": "領域の実行",
   "commands.SAS.runSelected": "選択済みまたはすべての SAS コードを実行",
+  "commands.SAS.showTableProperties": "Properties",
   "commands.SAS.switchProfile": "現在の接続プロファイルを切り替える",
   "commands.SAS.toggleLineComment": "SAS コードのコメントを行単位で切り替える",
   "commands.SAS.updateProfile": "接続プロファイルの更新",

@@ -26,6 +26,7 @@
   "commands.SAS.run": "Execute o inteiro programa SAS",
   "commands.SAS.runRegion": "Execute o código da região",
   "commands.SAS.runSelected": "Execute o selecão ou o programa SAS inteiro",
+  "commands.SAS.showTableProperties": "Properties",
   "commands.SAS.switchProfile": "Troca o perfil de conexão atual",
   "commands.SAS.toggleLineComment": "Alternar comentários de código SAS por linha",
   "commands.SAS.updateProfile": "Atualiza o perfil de conexão",
