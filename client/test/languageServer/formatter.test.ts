@@ -5,16 +5,19 @@ import * as assert from "assert";
 import { getTestFixtureContent, getUri, openDoc } from "../utils";
 
 const expected = getTestFixtureContent("formatter/expected.sas").toString();
-describe("Formatter tests", () => {
+// Re-enable this test after https://github.com/microsoft/vscode/issues/277352 is deployed.
+describe.skip("Formatter tests", () => {
   it("formats sas code well", async () => {
     const docUri = getUri("formatter/unformatted.sas");
     await openDoc(docUri);
+
     // Executing the command `vscode.executeFormatDocumentProvider` to simulate triggering format
     const edits: vscode.TextEdit[] = await vscode.commands.executeCommand(
       "vscode.executeFormatDocumentProvider",
       docUri,
       {},
     );
+
     const edit = new vscode.WorkspaceEdit();
     edit.set(docUri, edits);
     await vscode.workspace.applyEdit(edit);
