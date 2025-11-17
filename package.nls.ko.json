@@ -26,6 +26,7 @@
   "commands.SAS.run": "모든 SAS 코드 실행",
   "commands.SAS.runRegion": "영역 실행",
   "commands.SAS.runSelected": "선택한 코드 또는 모든 SAS 코드 실행",
+  "commands.SAS.showTableProperties": "Properties",
   "commands.SAS.switchProfile": "현재 연결 프로필 전환",
   "commands.SAS.toggleLineComment": "행별 SAS 코드 주석 켜기/끄기",
   "commands.SAS.updateProfile": "연결 프로필 업데이트",

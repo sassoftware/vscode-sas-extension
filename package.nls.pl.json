@@ -26,6 +26,7 @@
   "commands.SAS.run": "Uruchom cały kod SAS-owy",
   "commands.SAS.runRegion": "Uruchom region",
   "commands.SAS.runSelected": "Uruchom wybrane lub cały kod SAS-owy",
+  "commands.SAS.showTableProperties": "Properties",
   "commands.SAS.switchProfile": "Przełącz bieżący profil SAS-owy",
   "commands.SAS.toggleLineComment": "Przełącz komentarze do kodu SAS-owego wg wiersza",
   "commands.SAS.updateProfile": "Zaktualizuj profil połączenia",
