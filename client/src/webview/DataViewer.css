@@ -102,14 +102,9 @@ button,
   height: 16px;
 }
 
-.dropdown button span {
+.dropdown button {
   background: url(../../../icons/light/more.svg);
   background-size: 16px 16px;
-}
-
-.dropdown button:hover,
-.dropdown.active button {
-  background: var(--vscode-toolbar-hoverBackground);
 }
 
 .vscode-dark .dropdown button {
