@@ -244,10 +244,19 @@ class SASRunner{
     Write-Host "${LineCodes.ResultsFetchedCode}"
   }
 
-  [void]GetDatasetRecords([string]$tableName, [int]$start = 0, [int]$limit = 100) {
+  [void]GetDatasetRecords([string]$library, [string]$table, [int]$start = 0, [int]$limit = 100, [string]$sortCriteria = "") {
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection # This is needed to set the properties for sas formats.
     $objRecordSet.Properties.Item("SAS Formats").Value = "_ALL_"
+
+    $tableName = $library + "." + $table
+    if ($sortCriteria -ne "") {
+      $epoch = [datetime]::FromFileTimeUtc(0)
+      $currentUtcTime = (Get-Date).ToUniversalTime()
+      $ts = [int64]($currentUtcTime - $epoch).TotalSeconds
+      $tableName = "WORK.temp_$ts"
+      $this.dataConnection.Execute("CREATE VIEW $tableName AS SELECT * FROM $library.$table ORDER BY $sortCriteria")
+    }
 
     $objRecordSet.Open(
       $tableName,
@@ -266,7 +275,6 @@ class SASRunner{
     }
 
     $objRecordSet.AbsolutePosition = $start + 1
-
     for ($j = 0; $j -lt $limit -and $objRecordSet.EOF -eq $False; $j++) {
       $cell = [List[object]]::new()
       for ($i = 0; $i -lt $fields; $i++) {
@@ -287,6 +295,10 @@ class SASRunner{
     $result = New-Object psobject
     $result | Add-Member -MemberType NoteProperty -Name "rows" -Value $records
     $result | Add-Member -MemberType NoteProperty -Name "count" -Value $count
+
+    if ($sortCriteria -ne "") {
+      $this.dataConnection.Execute("DROP VIEW $tableName")
+    }
 
     Write-Host $(ConvertTo-Json -Depth 10 -InputObject $result -Compress)
   }
@@ -588,7 +600,7 @@ class SASRunner{
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection
     $query = @"
-      select memname, memtype, crdate, modate, nobs, nvar, compress, 
+      select memname, memtype, crdate, modate, nobs, nvar, compress,
              memlabel, typemem, filesize, delobs
       from sashelp.vtable
       where libname='$libname' and memname='$memname';

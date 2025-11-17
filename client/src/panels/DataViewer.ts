@@ -1,79 +1,75 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri, window } from "vscode";
+import { Uri, l10n, window } from "vscode";
+
+import type { ColumnState, SortModelItem } from "ag-grid-community";
 
 import PaginatedResultSet from "../components/LibraryNavigator/PaginatedResultSet";
 import { TableData } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
 import { WebView } from "./WebviewManager";
 
-class DataViewer extends WebView {
-  private _uid: string;
-  private _extensionUri: Uri;
-  private _paginator: PaginatedResultSet<{ data: TableData; error?: Error }>;
-  private _fetchColumns: () => Column[];
+export type ViewProperties = { columnState?: ColumnState[] };
 
+class DataViewer extends WebView {
+  protected viewProperties: ViewProperties = {};
   public constructor(
     extensionUri: Uri,
     uid: string,
-    paginator: PaginatedResultSet<{ data: TableData; error?: Error }>,
-    fetchColumns: () => Column[],
+    protected readonly paginator: PaginatedResultSet<{
+      data: TableData;
+      error?: Error;
+    }>,
+    protected readonly fetchColumns: () => Column[],
+    protected readonly loadColumnProperties: (columnName: string) => void,
   ) {
-    super();
-    this._uid = uid;
-    this._extensionUri = extensionUri;
-    this._paginator = paginator;
-    this._fetchColumns = fetchColumns;
+    super(extensionUri, uid);
   }
 
-  public render(): WebView {
-    const policies = [
-      `default-src 'none';`,
-      `font-src ${this.panel.webview.cspSource} data:;`,
-      `img-src ${this.panel.webview.cspSource} data:;`,
-      `script-src ${this.panel.webview.cspSource};`,
-      `style-src ${this.panel.webview.cspSource};`,
-    ];
-    this.panel.webview.html = `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="${policies.join(
-            " ",
-          )}" />
-          <link rel="stylesheet" href="${this.webviewUri(
-            this._extensionUri,
-            "DataViewer.css",
-          )}">
-          <title>${this._uid}</title>
-        </head>
-        <body>
-          <div class="data-viewer"></div>
-          <script type="module" src="${this.webviewUri(
-            this._extensionUri,
-            "DataViewer.js",
-          )}"></script>
-        </body>
-      </html>
-    `;
+  public l10nMessages() {
+    return {
+      "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
+      Ascending: l10n.t("Ascending"),
+      "Descending (add to sorting)": l10n.t("Descending (add to sorting)"),
+      Descending: l10n.t("Descending"),
+      Properties: l10n.t("Properties"),
+      "Remove all sorting": l10n.t("Remove all sorting"),
+      "Remove sorting": l10n.t("Remove sorting"),
+      Sort: l10n.t("Sort"),
+    };
+  }
 
-    return this;
+  public styles() {
+    return ["DataViewer.css"];
+  }
+
+  public scripts() {
+    return ["DataViewer.js"];
+  }
+
+  public body() {
+    return `<div class="data-viewer"></div>`;
   }
 
   public async processMessage(
     event: Event & {
       key: string;
       command: string;
-      data?: { start?: number; end?: number };
+      data?: {
+        start?: number;
+        end?: number;
+        sortModel?: SortModelItem[];
+        columnName?: string;
+        viewProperties?: Partial<ViewProperties>;
+      };
     },
   ): Promise<void> {
     switch (event.command) {
       case "request:loadData": {
-        const { data, error } = await this._paginator.getData(
+        const { data, error } = await this.paginator.getData(
           event.data!.start!,
           event.data!.end!,
+          event.data!.sortModel!,
         );
         if (error) {
           await window.showErrorMessage(error.message);
@@ -89,8 +85,24 @@ class DataViewer extends WebView {
         this.panel.webview.postMessage({
           key: event.key,
           command: "response:loadColumns",
-          data: await this._fetchColumns(),
+          data: {
+            columns: await this.fetchColumns(),
+            viewProperties: this.viewProperties,
+          },
         });
+        break;
+      case "request:loadColumnProperties":
+        if (event.data.columnName) {
+          this.loadColumnProperties(event.data.columnName);
+        }
+        break;
+      case "request:storeViewProperties":
+        if (event.data.viewProperties) {
+          this.viewProperties = {
+            ...this.viewProperties,
+            ...event.data.viewProperties,
+          };
+        }
         break;
       default:
         break;
