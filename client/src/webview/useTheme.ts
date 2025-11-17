@@ -17,6 +17,7 @@ const useTheme = () => {
   useEffect(() => {
     const obs = new MutationObserver((record) =>
       setThemeKind(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         (record[0].target as HTMLElement).getAttribute(THEME_ATTRIBUTE),
       ),
     );
