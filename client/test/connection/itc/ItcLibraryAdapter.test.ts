@@ -155,7 +155,7 @@ describe("ItcLibraryAdapter tests", () => {
       count: 1234,
     };
 
-    const tableData = await libraryAdapter.getRows(item, 0, 100);
+    const tableData = await libraryAdapter.getRows(item, 0, 100, []);
 
     expect(tableData).to.eql(expectedTableData);
   });

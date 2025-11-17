@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { ProgressLocation, l10n, window } from "vscode";
 
+import type { SortModelItem } from "ag-grid-community";
 import { Writable } from "stream";
 
 import PaginatedResultSet from "./PaginatedResultSet";
@@ -27,12 +28,17 @@ class LibraryModel {
     item: LibraryItem,
   ): PaginatedResultSet<{ data: TableData; error?: Error }> {
     return new PaginatedResultSet<{ data: TableData; error?: Error }>(
-      async (start: number, end: number) => {
+      async (start: number, end: number, sortModel: SortModelItem[]) => {
         await this.libraryAdapter.setup();
         const limit = end - start + 1;
         try {
           return {
-            data: await this.libraryAdapter.getRows(item, start, limit),
+            data: await this.libraryAdapter.getRows(
+              item,
+              start,
+              limit,
+              sortModel,
+            ),
           };
         } catch (e) {
           return { error: e, data: { rows: [], count: 0 } };

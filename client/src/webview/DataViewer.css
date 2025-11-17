@@ -74,3 +74,77 @@ body,
   background: url(../../../icons/dark/tableHeaderCharacterTypeDark.svg) center
     no-repeat;
 }
+
+.ag-cell-label-container button {
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ag-cell-label-container {
+  position: relative;
+}
+
+.ag-cell-label-container .dropdown {
+  display: none;
+  margin-left: 0.25rem;
+}
+
+button,
+.ag-menu-option:not(.ag-menu-option-disabled) {
+  cursor: pointer;
+}
+
+.dropdown button {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.dropdown button {
+  background: url(../../../icons/light/more.svg);
+  background-size: 16px 16px;
+}
+
+.vscode-dark .dropdown button {
+  background: url(../../../icons/dark/more.svg);
+  background-size: 16px 16px;
+}
+
+.ag-header-active .ag-cell-label-container .dropdown,
+.ag-cell-label-container .dropdown.active {
+  display: flex;
+}
+
+.sort-icon-wrapper {
+  margin-left: auto;
+}
+
+.sort-icon-wrapper .icon,
+.sort-icon-wrapper .number {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.sort-icon-wrapper .icon.asc {
+  background: url(../../../icons/light/arrow-up.svg);
+  background-size: 16px 16px;
+}
+
+.vscode-dark .sort-icon-wrapper .icon.asc {
+  background: url(../../../icons/dark/arrow-up.svg);
+  background-size: 16px 16px;
+}
+
+.sort-icon-wrapper .icon.desc {
+  background: url(../../../icons/light/arrow-down.svg);
+  background-size: 16px 16px;
+}
+
+.vscode-dark .sort-icon-wrapper .icon.desc {
+  background: url(../../../icons/dark/arrow-down.svg);
+  background-size: 16px 16px;
+}
