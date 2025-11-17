@@ -5,6 +5,7 @@ import { AgColumn, ColumnState, GridApi } from "ag-grid-community";
 import GridMenu from "./GridMenu";
 import localize from "./localize";
 import { storeViewProperties } from "./useDataViewer";
+import useTheme from "./useTheme";
 
 export interface ColumnMenuProps {
   column: AgColumn;
@@ -15,7 +16,6 @@ export interface ColumnMenuProps {
   removeAllSorting: () => void;
   removeFromSort: () => void;
   sortColumn: (direction: "asc" | "desc") => void;
-  theme: string;
   top: number;
 }
 
@@ -27,7 +27,6 @@ const applyColumnState = (api: GridApi, state: ColumnState[]) => {
 
 export const getColumnMenu = (
   api: GridApi,
-  theme: ColumnMenuProps["theme"],
   column: AgColumn,
   { height, top, left }: DOMRect,
   dismissMenu: () => void,
@@ -37,7 +36,6 @@ export const getColumnMenu = (
   dismissMenu,
   hasSort: api.getColumnState().some((c) => c.sort),
   left,
-  theme,
   top: top + height,
   sortColumn: (direction: "asc" | "desc" | null) => {
     const newColumnState = api.getColumnState().filter((c) => c.sort);
@@ -85,9 +83,9 @@ const ColumnMenu = ({
   removeAllSorting,
   removeFromSort,
   sortColumn,
-  theme,
   top,
 }: ColumnMenuProps) => {
+  const theme = useTheme();
   const menuItems = [
     {
       name: localize("Sort"),

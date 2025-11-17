@@ -4,6 +4,8 @@ import { useRef } from "react";
 
 import { AgColumn, GridApi } from "ag-grid-community";
 
+import useTheme from "./useTheme";
+
 const getIconForColumnType = (type: string) => {
   switch (type.toLocaleLowerCase()) {
     case "float":
@@ -29,16 +31,15 @@ const ColumnHeader = ({
   column,
   currentColumn: getCurrentColumn,
   columnType,
-  theme,
   displayMenuForColumn,
 }: {
   api: GridApi;
   column: AgColumn;
   currentColumn: () => AgColumn | undefined;
   columnType: string;
-  theme: string;
   displayMenuForColumn: (api: GridApi, column: AgColumn, rect: DOMRect) => void;
 }) => {
+  const theme = useTheme();
   const ref = useRef<HTMLButtonElement>(undefined!);
   const currentColumn = getCurrentColumn();
   const currentSortedColumns = api.getColumnState().filter((c) => c.sort);
