@@ -26,7 +26,7 @@
   "commands.SAS.run": "執行所有 SAS 程式碼",
   "commands.SAS.runRegion": "執行區域",
   "commands.SAS.runSelected": "執行選取的或所有的 SAS 程式碼",
-  "commands.SAS.showTableProperties": "Properties",
+  "commands.SAS.showTableProperties": "屬性",
   "commands.SAS.switchProfile": "切換目前連線設定檔",
   "commands.SAS.toggleLineComment": "依行切換 SAS 程式碼註解",
   "commands.SAS.updateProfile": "更新連線設定檔",
