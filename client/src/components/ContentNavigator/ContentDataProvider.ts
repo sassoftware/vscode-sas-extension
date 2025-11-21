@@ -60,6 +60,8 @@ import {
   isContainer as getIsContainer,
 } from "./utils";
 
+const SAS_FILE_SEPARATOR = "~fs~";
+
 class ContentDataProvider
   implements
     TreeDataProvider<ContentItem>,
@@ -684,7 +686,7 @@ class ContentDataProvider
           newUri,
         );
         if (newFileUri) {
-          commands.executeCommand("vscode.open", newFileUri);
+          await commands.executeCommand("vscode.open", newFileUri);
         }
       }
     }
@@ -733,10 +735,12 @@ class ContentDataProvider
           );
           try {
             return decodeURIComponent(uriWithoutPrefix);
-          } catch {
+          } catch (error) {
+            console.error("Failed to decode URI component:", error);
             return uriWithoutPrefix;
           }
-        } catch {
+        } catch (error) {
+          console.error("Failed to extract path from URI:", error);
           return "";
         }
       };
@@ -748,7 +752,7 @@ class ContentDataProvider
       if (
         oldBasePath &&
         closedFilePath &&
-        closedFilePath.startsWith(oldBasePath + "~fs~")
+        closedFilePath.startsWith(oldBasePath + SAS_FILE_SEPARATOR)
       ) {
         try {
           const relativePath = closedFilePath.substring(oldBasePath.length);
@@ -767,9 +771,10 @@ class ContentDataProvider
           );
 
           return Uri.parse(
-            `sasServer:/${filename}?${encodeURIComponent(newQuery)}`,
+            `${newItemUri.scheme}:/${filename}?${encodeURIComponent(newQuery)}`,
           );
-        } catch {
+        } catch (error) {
+          console.error("Failed to construct new file URI:", error);
           return null;
         }
       }
