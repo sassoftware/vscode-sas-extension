@@ -270,4 +270,87 @@ describe("LibraryDataProvider", async function () {
 
     deleteTableStub.restore();
   });
+
+  it("deleteTables - deletes multiple tables successfully", async () => {
+    const items: LibraryItem[] = [
+      {
+        uid: "lib.table1",
+        id: "table1",
+        name: "table1",
+        type: "table",
+        readOnly: false,
+        library: "lib",
+      },
+      {
+        uid: "lib.table2",
+        id: "table2",
+        name: "table2",
+        type: "table",
+        readOnly: false,
+        library: "lib",
+      },
+    ];
+
+    const api = dataAccessApi();
+    const deleteTableStub = sinon.stub(api, "deleteTable");
+
+    const provider = libraryDataProvider(api);
+    await provider.deleteTables(items);
+
+    expect(deleteTableStub.callCount).to.equal(2);
+    deleteTableStub.restore();
+  });
+
+  it("deleteTables - reports failures when some tables fail to delete", async () => {
+    const items: LibraryItem[] = [
+      {
+        uid: "lib.table1",
+        id: "table1",
+        name: "table1",
+        type: "table",
+        readOnly: false,
+        library: "lib",
+      },
+      {
+        uid: "lib.table2",
+        id: "table2",
+        name: "table2",
+        type: "table",
+        readOnly: false,
+        library: "lib",
+      },
+      {
+        uid: "lib.table3",
+        id: "table3",
+        name: "table3",
+        type: "table",
+        readOnly: false,
+        library: "lib",
+      },
+    ];
+
+    const api = dataAccessApi();
+    const deleteTableStub = sinon.stub(api, "deleteTable");
+
+    // First table succeeds
+    deleteTableStub.onFirstCall().resolves();
+    // Second table fails
+    deleteTableStub
+      .onSecondCall()
+      .throwsException(new Error("Failed to delete"));
+    // Third table succeeds
+    deleteTableStub.onThirdCall().resolves();
+
+    const provider = libraryDataProvider(api);
+
+    try {
+      await provider.deleteTables(items);
+      expect.fail("Should have thrown an error");
+    } catch (error) {
+      expect(error.message).to.contain("lib.table2");
+      expect(deleteTableStub.callCount).to.equal(3);
+    }
+
+    deleteTableStub.restore();
+  });
 });
