@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 
 import { AgGridReact } from "ag-grid-react";
@@ -8,6 +8,7 @@ import { AgGridReact } from "ag-grid-react";
 import ".";
 import ColumnMenu from "./ColumnMenu";
 import useDataViewer from "./useDataViewer";
+import useTheme from "./useTheme";
 
 import "./DataViewer.css";
 import "ag-grid-community/styles/ag-grid.css";
@@ -21,22 +22,8 @@ const gridStyles = {
 };
 
 const DataViewer = () => {
-  const theme = useMemo(() => {
-    const themeKind = document
-      .querySelector("[data-vscode-theme-kind]")
-      .getAttribute("data-vscode-theme-kind");
-
-    switch (themeKind) {
-      case "vscode-high-contrast-light":
-      case "vscode-light":
-        return "ag-theme-alpine";
-      case "vscode-high-contrast":
-      case "vscode-dark":
-        return "ag-theme-alpine-dark";
-    }
-  }, []);
-  const { columns, onGridReady, columnMenu, dismissMenu } =
-    useDataViewer(theme);
+  const theme = useTheme();
+  const { columns, onGridReady, columnMenu, dismissMenu } = useDataViewer();
 
   const handleKeydown = useCallback(
     (event) => {

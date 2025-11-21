@@ -114,7 +114,7 @@ export const storeViewProperties = (viewProperties: ViewProperties) =>
     data: { viewProperties },
   });
 
-const useDataViewer = (theme: string) => {
+const useDataViewer = () => {
   const [columns, setColumns] = useState<ColDef[]>([]);
   const [columnMenu, setColumnMenu] = useState<ColumnMenuProps | undefined>();
   const columnMenuRef = useRef<ColumnMenuProps | undefined>(columnMenu);
@@ -168,7 +168,6 @@ const useDataViewer = (theme: string) => {
       setColumnMenu(
         getColumnMenu(
           api,
-          theme,
           column,
           rect,
           () => setColumnMenu(undefined),
@@ -181,7 +180,7 @@ const useDataViewer = (theme: string) => {
         ),
       );
     },
-    [theme],
+    [],
   );
 
   useEffect(() => {
@@ -201,7 +200,6 @@ const useDataViewer = (theme: string) => {
           columnType: column.type,
           currentColumn: () => columnMenuRef.current?.column,
           displayMenuForColumn,
-          theme,
         },
         ...getColumnState(column.name),
         suppressHeaderKeyboardEvent: (
@@ -247,7 +245,7 @@ const useDataViewer = (theme: string) => {
 
       setColumns(columns);
     });
-  }, [columns.length, theme, displayMenuForColumn]);
+  }, [columns.length, displayMenuForColumn]);
 
   useEffect(() => {
     window.addEventListener("contextmenu", contextMenuHandler, true);
