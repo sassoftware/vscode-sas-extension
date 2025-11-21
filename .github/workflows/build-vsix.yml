@@ -1,4 +1,4 @@
-name: Build VSIX
+name: Build VSIX for testing
 
 on:
   workflow_dispatch:
@@ -12,6 +12,7 @@ jobs:
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
+      - run: npm ci
       - run: npx @vscode/vsce package
       - uses: actions/upload-artifact@v5
         with:
