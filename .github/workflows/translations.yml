@@ -18,7 +18,7 @@ jobs:
       - run: npm ci
       - run: npm run locale --update-locales
       - run: |
-          CHANGES=$(git diff --name-only)
+          CHANGES=$(git diff --name-only -- "*.nls.*" "l10n/*")
           if [ -z "$CHANGES" ]
           then
             echo "No translations needed"
