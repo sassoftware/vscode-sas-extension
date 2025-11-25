@@ -26,6 +26,7 @@
   "commands.SAS.run": "运行所有 SAS 代码",
   "commands.SAS.runRegion": "运行区域",
   "commands.SAS.runSelected": "运行选定或所有 SAS 代码",
+  "commands.SAS.showTableProperties": "属性",
   "commands.SAS.switchProfile": "切换当前连接配置文件",
   "commands.SAS.toggleLineComment": "按行切换 SAS 代码注释",
   "commands.SAS.updateProfile": "更新连接配置文件",
