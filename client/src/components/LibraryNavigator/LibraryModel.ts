@@ -132,6 +132,24 @@ class LibraryModel {
     }
   }
 
+  public async deleteTables(items: LibraryItem[]) {
+    const failures: string[] = [];
+
+    for (const item of items) {
+      try {
+        await this.libraryAdapter.deleteTable(item);
+      } catch {
+        failures.push(item.uid);
+      }
+    }
+
+    if (failures.length > 0) {
+      throw new Error(
+        l10n.t(Messages.TableDeletionError, { tableName: failures.join(", ") }),
+      );
+    }
+  }
+
   public async getTableInfo(item: LibraryItem) {
     if (this.libraryAdapter.getTableInfo) {
       await this.libraryAdapter.setup();
