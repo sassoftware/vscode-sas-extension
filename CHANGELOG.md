@@ -4,11 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). If you introduce breaking changes, please group them together in the "Changed" section using the **BREAKING:** prefix.
 
-## [Unreleased]
+## [v1.18.0] - 2025-12-01
 
 ### Added
 
-- Added the ability to sort columns in data viewer and view column properties ([#1622](https://github.com/sassoftware/vscode-sas-extension/pull/1622))
+- Add the ability to sort columns in data viewer and view column properties ([#1622](https://github.com/sassoftware/vscode-sas-extension/pull/1622))
+- Add code comment collapsing ([#1638](https://github.com/sassoftware/vscode-sas-extension/pull/1638))
+- Add ability to view dataset properties ([#1631](https://github.com/sassoftware/vscode-sas-extension/pull/1631))
+
+### Fixed
+
+- Fix light/dark theme toggling ([#1701](https://github.com/sassoftware/vscode-sas-extension/pull/1701))
+- Add name checking for duplicates on drag and drop ([#1665](https://github.com/sassoftware/vscode-sas-extension/pull/1665))
 
 ## [v1.17.0] - 2025-09-26
 
