@@ -1134,9 +1134,10 @@ export const FilesApiAxiosParamCreator = function (
       };
       const localVarHeaderParameter = {} as any;
       const localVarQueryParameter = {} as any;
-      const localVarFormParams = new ((configuration &&
-        configuration.formDataCtor) ||
-        FormData)();
+      const localVarFormParams = new (
+        (configuration && configuration.formDataCtor) ||
+        FormData
+      )();
 
       if (expirationTimeStamp !== undefined) {
         localVarQueryParameter["expirationTimeStamp"] = expirationTimeStamp;
@@ -2048,9 +2049,10 @@ export const FilesApiAxiosParamCreator = function (
       };
       const localVarHeaderParameter = {} as any;
       const localVarQueryParameter = {} as any;
-      const localVarFormParams = new ((configuration &&
-        configuration.formDataCtor) ||
-        FormData)();
+      const localVarFormParams = new (
+        (configuration && configuration.formDataCtor) ||
+        FormData
+      )();
 
       if (ifMatch != null) {
         localVarHeaderParameter["If-Match"] = String(ifMatch);
