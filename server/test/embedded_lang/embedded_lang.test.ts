@@ -66,7 +66,7 @@ describe("Test code zone for embedded language", () => {
   });
 
   it("proc rlang", () => {
-    const doc = openDoc("server/testFixture/embedded_lang/proc_r.sas");
+    const doc = openDoc("server/testFixture/embedded_lang/proc_rlang.sas");
     const languageServer = new LanguageServiceProvider(doc);
     const codeZoneManager = languageServer.getCodeZoneManager();
 
