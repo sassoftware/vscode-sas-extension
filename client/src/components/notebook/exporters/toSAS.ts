@@ -17,8 +17,6 @@ const exportCell = (cell: NotebookCell) => {
       return wrapPython(text);
     case "r":
       return wrapRlang(text);
-    case "rlang":
-      return wrapRlang(text);
     case "sql":
       return wrapSQL(text);
     case "markdown":
