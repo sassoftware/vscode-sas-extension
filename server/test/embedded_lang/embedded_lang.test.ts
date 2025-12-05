@@ -75,6 +75,8 @@ describe("Test code zone for embedded language", () => {
       zoneList.push(codeZoneManager.getCurrentZone(i, 1));
     }
 
+    console.log(zoneList);
+
     assert.equal(zoneList[1], CodeZoneManager.ZONE_TYPE.PROC_STMT);
     assert.equal(zoneList[2], CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG);
     assert.equal(zoneList[4], CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG);
