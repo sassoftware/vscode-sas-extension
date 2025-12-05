@@ -28,7 +28,7 @@ import { includeLogInNotebookExport } from "../../utils/settings";
 const templatesDir = path.resolve(__dirname, "../notebook/exporters/templates");
 
 hljs.registerLanguage("python", python);
-hljs.registerLanguage("rlang", r);
+hljs.registerLanguage("r", r);
 hljs.registerLanguage("sql", sql);
 
 export const exportToHTML = async (

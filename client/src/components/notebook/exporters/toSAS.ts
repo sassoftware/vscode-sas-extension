@@ -15,6 +15,8 @@ const exportCell = (cell: NotebookCell) => {
       return text;
     case "python":
       return wrapPython(text);
+    case "r":
+      return wrapRlang(text);
     case "rlang":
       return wrapRlang(text);
     case "sql":

@@ -40,7 +40,7 @@ run;
 
   it("wrap rlang code", () => {
     const parameters: SASCodeDocumentParameters = {
-      languageId: "rlang",
+      languageId: "r",
       code: `for (x in 1:6) {
   print(x)
 }
