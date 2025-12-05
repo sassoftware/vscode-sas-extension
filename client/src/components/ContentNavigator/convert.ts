@@ -20,12 +20,14 @@ const stepRef: Record<string, string> = {
   sas: "a7190700-f59c-4a94-afe2-214ce639fcde",
   sql: "a7190700-f59c-4a94-afe2-214ce639fcde",
   python: "ab59f8c4-af9a-4608-a5d5-a8365357bb99",
+  rlang: "ab59f8c4-af9a-4608-a5d5-a8365357bb99",
 };
 
 const stepTitle: Record<string, string> = {
   sas: l10n.t("SAS Program"),
   sql: l10n.t("SQL Program"),
   python: l10n.t("Python Program"),
+  rlang: l10n.t("R Program"),
 };
 
 const NODE_SPACING = 150;
@@ -305,7 +307,7 @@ function generateCodeListFromSASNotebook(content: string): Entry[] {
       let code = cell.value;
       if (code !== "") {
         const language = cell.language;
-        if (["python", "sas", "sql"].includes(language)) {
+        if (["python", "sas", "sql", "rlang"].includes(language)) {
           if (language === "sql") {
             code = `PROC SQL;
 ${code};

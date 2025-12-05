@@ -3101,7 +3101,11 @@ export class LexerEx {
                 this.setKeyword_(token, true);
                 generalProcStmt = false;
               }
-            } else if (procName === "LUA" || procName === "PYTHON") {
+            } else if (
+              procName === "LUA" ||
+              procName === "PYTHON" ||
+              procName === "RLANG"
+            ) {
               if (["SUBMIT", "INTERACTIVE", "I"].includes(word)) {
                 const next = this.prefetch_({ pos: 1 });
                 if (next && next.text === ";" && next.type === "sep") {
