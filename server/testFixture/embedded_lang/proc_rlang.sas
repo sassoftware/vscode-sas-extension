@@ -1,6 +1,8 @@
 proc rlang;
-submit;
-  x <- c(1, 2, 3)
-  print(x)
-endsubmit;
+  submit;
+    for (x in 1:6) {
+      print(x)
+    }
+    print("first statement after for loop");
+  endsubmit;
 run;
