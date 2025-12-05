@@ -3,6 +3,7 @@
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
   "editor.formatOnSave": true,
+  "git.alwaysSignOff": true,
   "typescript.tsc.autoDetect": "off",
   "typescript.preferences.quoteStyle": "single"
 }
