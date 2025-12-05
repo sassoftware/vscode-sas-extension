@@ -439,11 +439,7 @@ export class Lexer {
             ).exec(lineContent.substring(pos));
             if (match) {
               const matchedText = match[0];
-              if (
-                matchedText.startsWith("'") ||
-                matchedText.startsWith('"') ||
-                matchedText.startsWith("#")
-              ) {
+              if (/^('|"|#)/.test(matchedText)) {
                 // do nothing to skip string and single line comment
               } else {
                 token = this._foundEmbeddedCodeToken(this.curr, {
