@@ -206,10 +206,7 @@ ${code}`;
       wrapped = this.wrapPython(wrapped);
     }
 
-    if (
-      this.parameters.languageId === "r" ||
-      this.parameters.languageId === "rlang"
-    ) {
+    if (this.parameters.languageId === "r") {
       wrapped = this.wrapRlang(wrapped);
     }
 
