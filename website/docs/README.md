@@ -16,4 +16,4 @@ The SAS extension includes the following features:
 
 - Access to SAS Content and libraries
 
-- Ability to create notebooks for SAS, SQL, Python, and other languages
+- Ability to create notebooks for SAS, SQL, Python, R, and other languages
