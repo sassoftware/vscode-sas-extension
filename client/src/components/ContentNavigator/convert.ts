@@ -20,7 +20,7 @@ const stepRef: Record<string, string> = {
   sas: "a7190700-f59c-4a94-afe2-214ce639fcde",
   sql: "a7190700-f59c-4a94-afe2-214ce639fcde",
   python: "ab59f8c4-af9a-4608-a5d5-a8365357bb99",
-  rlang: "ab59f8c4-af9a-4608-a5d6-a8365357bb98",
+  rlang: "ab59f8c4-af9a-4608-a5d5-a8365357bb99",
 };
 
 const stepTitle: Record<string, string> = {
