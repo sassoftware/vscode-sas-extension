@@ -8,7 +8,7 @@ After you configure the SAS extension for a SAS Viya, SAS 9.4 (local), or SAS 9.
 
 You can use the Libraries pane to delete a table, drag and drop tables into your SAS program code, view table data, or view table properties.
 
-## Viewing tables
+## Viewing Table Data
 
 When viewing table data, you have the following options available for each column (accessible by hovering over a column and clicking the menu button):
 
@@ -17,8 +17,8 @@ When viewing table data, you have the following options available for each colum
 
 ![Table Viewing](/images/tableViewing.gif)
 
-## Table properties
+## Table Properties
 
-Table properties can be revealed using the "Properties" menu item in the libraries pane or by clicking "Properties" from a table's column menu.
+Table Properties can be revealed using the "Properties" menu item in the libraries pane or by clicking "Properties" from a table's column menu.
 
 ![Table Properties](/images/tableProperties.png)
