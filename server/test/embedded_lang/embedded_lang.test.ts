@@ -74,25 +74,9 @@ describe("Test code zone for embedded language", () => {
     for (let i = 0; i < doc.lineCount; i++) {
       zoneList.push(codeZoneManager.getCurrentZone(i, 1));
     }
-    assert.equal(
-      zoneList[1],
-      CodeZoneManager.ZONE_TYPE.PROC_STMT,
-      `Expected PROC_STMT at line 2 but got ${CodeZoneManager.getZoneTypeName(zoneList[1])} (Code: ${zoneList[1]})`,
-    );
-    assert.equal(
-      zoneList[2],
-      CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG,
-      `Expected EMBEDDED_LANG at line 3 but got ${CodeZoneManager.getZoneTypeName(zoneList[2])} (Code: ${zoneList[2]})`,
-    );
-    assert.equal(
-      zoneList[4],
-      CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG,
-      `Expected EMBEDDED_LANG at line 5 but got ${CodeZoneManager.getZoneTypeName(zoneList[4])} (Code: ${zoneList[4]})`,
-    );
-    assert.equal(
-      zoneList[6],
-      CodeZoneManager.ZONE_TYPE.PROC_STMT,
-      `Expected PROC_STMT at line 7 but got ${CodeZoneManager.getZoneTypeName(zoneList[6])} (Code: ${zoneList[6]})`,
-    );
+    assert.equal(zoneList[1], CodeZoneManager.ZONE_TYPE.PROC_STMT);
+    assert.equal(zoneList[2], CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG);
+    assert.equal(zoneList[4], CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG);
+    assert.equal(zoneList[6], CodeZoneManager.ZONE_TYPE.PROC_STMT);
   });
 });
