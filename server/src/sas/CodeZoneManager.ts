@@ -2027,16 +2027,17 @@ export class CodeZoneManager {
     const zone = this._zone(stack, context);
     return zone.type;
   }
-  //only for debug
-  //function _getZoneName(zone) {
-  //    for(var attr in ZONE_TYPE) {
-  //        if (ZONE_TYPE.hasOwnProperty(attr)) {
-  //            if (ZONE_TYPE[attr] === zone) {
-  //                return attr;
-  //            }
-  //        }
-  //    }
-  //}
+
+  // Helper function for debugging zone types
+  static getZoneTypeName(zone: number): string {
+    for (const [attr, value] of Object.entries(CodeZoneManager.ZONE_TYPE)) {
+      if (value === zone) {
+        return attr;
+      }
+    }
+    return `UNKNOWN(${zone})`;
+  }
+
   private _datasetOptions(context: Context) {
     let token1 = this._getNextEx(context),
       equal,
