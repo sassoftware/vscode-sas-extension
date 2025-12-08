@@ -36,6 +36,7 @@ import { basename, join } from "path";
 import { promisify } from "util";
 
 import { profileConfig } from "../../commands/profile";
+import { SAS_FILE_SEPARATOR } from "../../connection/rest/RestServerAdapter";
 import { getResourceId } from "../../connection/rest/util";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ViyaProfile } from "../profile";
@@ -59,8 +60,6 @@ import {
   getFileStatement,
   isContainer as getIsContainer,
 } from "./utils";
-
-const SAS_FILE_SEPARATOR = "~fs~";
 
 class ContentDataProvider
   implements
