@@ -19,6 +19,23 @@ Starting with Visual Studio Code version 1.93, [the language for SQL files has b
 
 :::
 
+## Language Support for Embedded Code
+
+SAS Notebook supports multiple languages including Python, R, SQL, and Lua. When working with these languages in SAS notebooks, enhanced language features such as code completion, hover information, and signature help are available.
+
+### Python Language Features
+
+Python code cells benefit from integrated IntelliSense powered by Pyright, which is included with the extension. No additional setup is required for Python language features.
+
+### R Language Features
+
+R code cells include basic IntelliSense features (code completion and hover documentation) for common R functions:
+
+- **In VS Code Desktop**: Basic code completion and hover information for common R functions is provided automatically - no installation required
+- **In Browser (VS Code for Web)**: Enhanced R language features are automatically available via WebR - no installation required! WebR provides basic code completion and hover information for common R functions.
+
+Note: R code execution via PROC RLANG requires a SAS connection, but the language features work independently.
+
 ## Export
 
 To export your SAS Notebook to other formats, click the **More Actions** (`...`) button on the notebook toolbar at top, and select `Export`. The following formats are supported.

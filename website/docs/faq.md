@@ -107,3 +107,36 @@ If the options on the Problems panel toolbar are not visible, you can display th
 ### Can I control whether errors and warnings from my SAS log are displayed in the Problems panel?
 
 Yes. The `SAS.problems.log` setting controls whether problems from the SAS log are displayed in the Problems panel. This option is enabled by default. To access this option, select `File > Preferences > Settings`, and search for "sas problems".
+
+## Language Server questions
+
+### Why don't I see code completion or hover information in my PROC RLANG code?
+
+**In VS Code Desktop**: Basic R language features (code completion and hover) are provided automatically for common R functions - no installation required. If you're not seeing them:
+
+1. Make sure you're inside a `PROC RLANG` submit block
+2. Check that your cursor is positioned on R code (not SAS code)
+3. Try restarting VS Code if features don't appear
+
+**In Browser (VS Code for Web)**: R language features are automatically available via WebR. If you don't see completions:
+
+```r
+1. WebR may still be initializing - wait a few moments after opening the file
+2. Check the console log (`Help > Toggle Developer Tools`) for WebR initialization messages
+3. Refresh the page if features don\'t appear after waiting
+
+### How can I verify that R language features are working?
+
+**In VS Code Desktop**:
+1. Open a SAS file with a PROC RLANG submit block
+2. Type common R functions like `mean`, `sum`, `print`, or `paste` inside the submit block
+3. You should see autocomplete suggestions as you type
+4. Hover over these function names - you should see documentation
+
+If features don\'t work, check the VS Code console log (`Help > Toggle Developer Tools`) for errors.
+
+**In Browser (VS Code for Web)**:
+1. Open a SAS file with a PROC RLANG block
+2. Check the console log (`Help > Toggle Developer Tools`) for messages like "WebR initialized successfully"
+3. Try typing common R functions like `mean`, `sum`, or `plot` - you should see autocomplete suggestions
+```

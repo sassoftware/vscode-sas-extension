@@ -10,9 +10,20 @@ The SAS extension includes many [features](https://sassoftware.github.io/vscode-
 
 - SAS syntax highlighting and help, code completion, and code snippets
 - Navigate SAS Content and libraries, including table viewer
-- Create notebooks for SAS, SQL, Python, R, and other languages
+- Create notebooks for SAS, SQL, Python, R, Julia, and other languages
 
 <img src="website/static/images/featuresGlance.png"/>
+
+## Language Support
+
+The SAS extension provides enhanced language support for embedded languages in SAS notebooks and code files:
+
+- **Python**: Full IntelliSense support (code completion, hover, signature help) is included via Pyright
+- **R**: 
+  - **In VS Code Desktop**: Basic IntelliSense support (code completion, hover) for common R functions - no installation required
+  - **In Browser (VS Code for Web)**: Basic IntelliSense support provided automatically via WebR (no installation required)
+- **Julia**: Syntax highlighting and execution via PROC JULIA
+- **SQL** and **Lua**: Syntax highlighting and execution support
 
 ## Support
 
