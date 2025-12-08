@@ -39,7 +39,7 @@ import {
 } from "./util";
 
 export const SAS_SERVER_HOME_DIRECTORY = "SAS_SERVER_HOME_DIRECTORY";
-const SAS_FILE_SEPARATOR = "~fs~";
+export const SAS_FILE_SEPARATOR = "~fs~";
 
 class RestServerAdapter implements ContentAdapter {
   protected baseUrl: string;
