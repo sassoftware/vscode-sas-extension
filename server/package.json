@@ -11,6 +11,7 @@
     "pyright-internal-node": "^1.1.367",
     "pyright-internal-browser": "^1.1.367",
     "vscode-languageserver": "^10.0.0-next.2",
-    "vscode-languageserver-textdocument": "1.0.11"
+    "vscode-languageserver-textdocument": "1.0.11",
+    "webr": "^0.4.2"
   }
 }

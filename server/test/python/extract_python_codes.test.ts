@@ -4,8 +4,8 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 import { assert } from "chai";
 
-import { LanguageServiceProvider } from "../../src/sas/LanguageServiceProvider";
 import { extractPythonCodes } from "../../src/python/utils";
+import { LanguageServiceProvider } from "../../src/sas/LanguageServiceProvider";
 
 describe("Python Code Extraction", () => {
   it("extracts simple Python code from PROC PYTHON", () => {

@@ -5,7 +5,7 @@ import type { RLanguageProviderNode } from "./node/RLanguageProviderNode";
 
 /**
  * Union type for R Language Provider implementations.
- * 
+ *
  * - Node: Full R language server support (spawns external R process)
  * - Browser: Stub implementation (R not available in WASM yet)
  */
