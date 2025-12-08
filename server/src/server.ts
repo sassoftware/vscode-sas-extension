@@ -38,6 +38,7 @@ import { CollectionResult } from "pyright-internal-node/dist/packages/pyright-in
 import { ParseFileResults } from "pyright-internal-node/dist/packages/pyright-internal/src/parser/parser";
 
 import { PyrightLanguageProvider } from "./python/PyrightLanguageProvider";
+import { RLanguageProvider } from "./r/RLanguageProvider";
 import { CodeZoneManager } from "./sas/CodeZoneManager";
 import { LanguageServiceProvider, legend } from "./sas/LanguageServiceProvider";
 import type { LibCompleteItem } from "./sas/SyntaxDataProvider";
@@ -52,6 +53,7 @@ interface DocumentInfo {
 export const runServer = (
   connection: Connection,
   _pyrightLanguageProvider: PyrightLanguageProvider,
+  _rLanguageProvider: RLanguageProvider,
 ) => {
   const documentPool: Record<string, DocumentInfo> = {};
 
@@ -59,6 +61,7 @@ export const runServer = (
   let registeredAdvancedCapabilities = false;
 
   _pyrightLanguageProvider.setSasLspProvider(getLanguageService);
+  _rLanguageProvider.setSasLspProvider(getLanguageService);
 
   connection.onInitialize((params) => {
     if (
@@ -117,7 +120,10 @@ export const runServer = (
     return result;
   });
 
-  connection.onInitialized(() => _pyrightLanguageProvider.onInitialized());
+  connection.onInitialized(() => {
+    _pyrightLanguageProvider.onInitialized();
+    _rLanguageProvider.onInitialized();
+  });
 
   connection.onRequest(SemanticTokensRequest.type, (params) => {
     syncIfDocChange(params.textDocument.uri);
@@ -135,6 +141,9 @@ export const runServer = (
       },
       async python(pyrightLanguageService) {
         return await pyrightLanguageService.onHover(params, token);
+      },
+      async r(rLanguageService) {
+        return await rLanguageService.onHover(params, token);
       },
     });
   });
@@ -216,6 +225,53 @@ export const runServer = (
         }
         return completionList;
       },
+      async r(rLanguageService) {
+        const completionList = await rLanguageService.onCompletion(
+          params,
+          token,
+        );
+        if (completionList) {
+          for (const item of completionList.items) {
+            if (!item.data) {
+              item.data = {};
+            }
+            item.data._languageService = "r";
+            item.data._uri = params.textDocument.uri;
+          }
+
+          if (
+            params.context?.triggerKind === CompletionTriggerKind.Invoked ||
+            params.context?.triggerKind ===
+              CompletionTriggerKind.TriggerForIncompleteCompletions
+          ) {
+            const doc = documentPool[params.textDocument.uri].document;
+            const line = doc.getText({
+              start: {
+                line: params.position.line,
+                character: 0,
+              },
+              end: params.position,
+            });
+            if (!/\W/.test(line.trimStart())) {
+              const item = {
+                kind: CompletionItemKind.Keyword,
+                data: {
+                  _languageService: "sas",
+                  _uri: params.textDocument.uri,
+                },
+              };
+              if (
+                completionList.items.findIndex(
+                  (item) => item.label === "endsubmit",
+                ) === -1
+              ) {
+                completionList.items.push({ ...item, label: "endsubmit" });
+              }
+            }
+          }
+        }
+        return completionList;
+      },
     });
   });
 
@@ -228,6 +284,11 @@ export const runServer = (
       );
     } else if (lang === "python") {
       return await _pyrightLanguageProvider.onCompletionResolve(
+        completionItem,
+        token,
+      );
+    } else if (lang === "r") {
+      return await _rLanguageProvider.onCompletionResolve(
         completionItem,
         token,
       );
@@ -329,6 +390,14 @@ export const runServer = (
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         )) as any;
       },
+      async r(rLanguageService) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        return (await rLanguageService.onSignatureHelp(
+          params,
+          token,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        )) as any;
+      },
     });
   });
 
@@ -350,12 +419,14 @@ export const runServer = (
     );
     documentPool[doc.uri] = { document: doc, changed: false };
     await _pyrightLanguageProvider.onDidOpenTextDocument(params);
+    await _rLanguageProvider.onDidOpenTextDocument(params);
   });
 
   connection.onDidCloseTextDocument(async (params) => {
     const uri = params.textDocument.uri;
     delete documentPool[uri];
     await _pyrightLanguageProvider.onDidCloseTextDocument(params);
+    await _rLanguageProvider.onDidCloseTextDocument(params);
   });
 
   connection.onDidChangeTextDocument((params) => {
@@ -381,6 +452,9 @@ export const runServer = (
       return await dispatch(params, {
         async python(pyrightLanguageService) {
           return await pyrightLanguageService.onDefinition(params, token);
+        },
+        async r(rLanguageService) {
+          return await rLanguageService.onDefinition(params, token);
         },
       });
     },
@@ -562,6 +636,7 @@ export const runServer = (
 
   connection.onShutdown(async (token) => {
     await _pyrightLanguageProvider.onShutdown(token);
+    await _rLanguageProvider.onShutdown(token);
   });
 
   // Listen on the connection
@@ -591,9 +666,11 @@ export const runServer = (
       python?: (
         pyrightLanguageService: PyrightLanguageProvider,
       ) => Promise<Ret>;
+      r?: (rLanguageService: RLanguageProvider) => Promise<Ret>;
       default?: (languageServices: {
         sasLanguageService: LanguageServiceProvider;
         pythonLanguageService?: PyrightLanguageProvider;
+        rLanguageService?: RLanguageProvider;
       }) => Promise<Ret>;
     },
   ) => {
@@ -627,6 +704,24 @@ export const runServer = (
             return await callbacks.default({
               sasLanguageService: languageService,
               pythonLanguageService: _pyrightLanguageProvider,
+              rLanguageService: _rLanguageProvider,
+            });
+          } else {
+            return undefined;
+          }
+        }
+        if (
+          symbol.name?.toUpperCase() === "PROC RLANG" &&
+          codeZoneManager.getCurrentZone(pos.line, pos.character) ===
+            CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG
+        ) {
+          if (callbacks.r) {
+            return await callbacks.r(_rLanguageProvider);
+          } else if (callbacks.default) {
+            return await callbacks.default({
+              sasLanguageService: languageService,
+              pythonLanguageService: _pyrightLanguageProvider,
+              rLanguageService: _rLanguageProvider,
             });
           } else {
             return undefined;
@@ -640,6 +735,7 @@ export const runServer = (
       return await callbacks.default({
         sasLanguageService: languageService,
         pythonLanguageService: _pyrightLanguageProvider,
+        rLanguageService: _rLanguageProvider,
       });
     }
     {
@@ -660,11 +756,16 @@ export const runServer = (
 
   const syncIfDocChange = (uri: string) => {
     const docInfo = documentPool[uri];
+    if (!docInfo) {
+      // Document not in pool yet - this can happen if hover is triggered before onDidOpenTextDocument
+      return;
+    }
     if (!docInfo.changed) {
       return;
     }
     docInfo.changed = false;
     _pyrightLanguageProvider.addContentChange(docInfo.document);
+    _rLanguageProvider.addContentChange(docInfo.document);
   };
 
   const syncAllChangedDoc = () => {

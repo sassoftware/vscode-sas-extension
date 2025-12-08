@@ -8,6 +8,7 @@ import {
 } from "vscode-languageserver/browser";
 
 import { PyrightLanguageProviderBrowser } from "../python/browser/PyrightLanguageProviderBrowser";
+import { RLanguageProviderBrowser } from "../r/browser/RLanguageProviderBrowser";
 import { runServer } from "../server";
 
 /* browser specific setup code */
@@ -16,4 +17,8 @@ const messageWriter = new BrowserMessageWriter(self);
 
 const connection: Connection = createConnection(messageReader, messageWriter);
 
-runServer(connection, new PyrightLanguageProviderBrowser(connection, 1));
+runServer(
+  connection,
+  new PyrightLanguageProviderBrowser(connection, 1),
+  new RLanguageProviderBrowser(connection),
+);
