@@ -169,11 +169,6 @@ class LibraryDataProvider
     return this.model.writeTableContentsToStream(stream, item);
   }
 
-  public async deleteTable(item: LibraryItem): Promise<void> {
-    await this.model.deleteTable(item);
-    this._onDidChangeTreeData.fire(undefined);
-  }
-
   public async deleteTables(items: LibraryItem[]): Promise<void> {
     await this.model.deleteTables(items);
     this._onDidChangeTreeData.fire(undefined);

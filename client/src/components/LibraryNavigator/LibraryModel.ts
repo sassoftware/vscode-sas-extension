@@ -121,17 +121,6 @@ class LibraryModel {
     return items;
   }
 
-  public async deleteTable(item: LibraryItem) {
-    try {
-      await this.libraryAdapter.deleteTable(item);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      throw new Error(
-        l10n.t(Messages.TableDeletionError, { tableName: item.uid }),
-      );
-    }
-  }
-
   public async deleteTables(items: LibraryItem[]) {
     const failures: string[] = [];
 

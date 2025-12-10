@@ -225,34 +225,38 @@ describe("LibraryDataProvider", async function () {
     expect(treeItem.command === undefined).to.equal(true);
   });
 
-  it("deleteTable - deletes a table successfully", async () => {
-    const item: LibraryItem = {
-      uid: "test",
-      id: "test",
-      name: "test",
-      type: "table",
-      readOnly: false,
-      library: "lib",
-    };
+  it("deleteTables - deletes a single table successfully", async () => {
+    const items: LibraryItem[] = [
+      {
+        uid: "test",
+        id: "test",
+        name: "test",
+        type: "table",
+        readOnly: false,
+        library: "lib",
+      },
+    ];
 
     const api = dataAccessApi();
     const deleteTableStub = sinon.stub(api, "deleteTable");
 
     const provider = libraryDataProvider(api);
-    await provider.deleteTable(item);
+    await provider.deleteTables(items);
     expect(deleteTableStub.calledOnce).to.equal(true);
     deleteTableStub.restore();
   });
 
-  it("deleteTable - fails with error message", async () => {
-    const item: LibraryItem = {
-      uid: "test",
-      id: "test",
-      name: "test",
-      type: "table",
-      readOnly: false,
-      library: "lib",
-    };
+  it("deleteTables - fails with error message for single table", async () => {
+    const items: LibraryItem[] = [
+      {
+        uid: "test",
+        id: "test",
+        name: "test",
+        type: "table",
+        readOnly: false,
+        library: "lib",
+      },
+    ];
 
     const api = dataAccessApi();
     const deleteTableStub = sinon.stub(api, "deleteTable");
@@ -260,7 +264,7 @@ describe("LibraryDataProvider", async function () {
 
     const provider = libraryDataProvider(api);
     try {
-      await provider.deleteTable(item);
+      await provider.deleteTables(items);
     } catch (error) {
       expect(error.message).to.equal(
         new Error(l10n.t(Messages.TableDeletionError, { tableName: "test" }))

@@ -5,7 +5,7 @@ import { l10n } from "vscode";
 export const Messages = {
   TableDeletionError: l10n.t("Unable to delete table {tableName}."),
   TablesDeletionWarning: l10n.t(
-    "Are you sure you want to delete {count} table(s): {tableNames}?",
+    "Are you sure you want to delete the selected tables?",
   ),
   ViewTableCommandTitle: l10n.t("View SAS Table"),
 };

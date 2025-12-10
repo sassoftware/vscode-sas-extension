@@ -21,6 +21,7 @@ import DataViewer from "../../panels/DataViewer";
 import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
+import { treeViewSelections } from "../utils/treeViewSelections";
 import LibraryAdapterFactory from "./LibraryAdapterFactory";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
@@ -68,35 +69,27 @@ class LibraryNavigator implements SubscriptionProvider {
       ),
       commands.registerCommand("SAS.refreshLibraries", () => this.refresh()),
       commands.registerCommand("SAS.deleteTable", async (item: LibraryItem) => {
-        const selectedItems = this.treeViewSelections(item);
+        const selectedItems = treeViewSelections(
+          this.libraryDataProvider.treeView,
+          item,
+        );
 
         if (selectedItems.length === 0) {
           return;
         }
 
+        const result = await window.showWarningMessage(
+          l10n.t(Messages.TablesDeletionWarning),
+          { modal: true },
+          "Delete",
+        );
+
+        if (result !== "Delete") {
+          return;
+        }
+
         try {
-          if (selectedItems.length === 1) {
-            await this.libraryDataProvider.deleteTable(selectedItems[0]);
-          } else {
-            const tableNames = selectedItems
-              .map((table) => `${table.library}.${table.name}`)
-              .join(", ");
-
-            const result = await window.showWarningMessage(
-              l10n.t(Messages.TablesDeletionWarning, {
-                tableNames: tableNames,
-                count: selectedItems.length,
-              }),
-              { modal: true },
-              "Delete",
-            );
-
-            if (result !== "Delete") {
-              return;
-            }
-
-            await this.libraryDataProvider.deleteTables(selectedItems);
-          }
+          await this.libraryDataProvider.deleteTables(selectedItems);
         } catch (error) {
           window.showErrorMessage(error.message);
         }
@@ -155,15 +148,6 @@ class LibraryNavigator implements SubscriptionProvider {
 
   public async refresh(): Promise<void> {
     this.libraryDataProvider.useAdapter(this.libraryAdapterForConnectionType());
-  }
-
-  private treeViewSelections(item: LibraryItem): LibraryItem[] {
-    const items =
-      this.libraryDataProvider.treeView.selection.length > 1 || !item
-        ? this.libraryDataProvider.treeView.selection
-        : [item];
-
-    return items.filter(Boolean);
   }
 
   private async displayTableProperties(
