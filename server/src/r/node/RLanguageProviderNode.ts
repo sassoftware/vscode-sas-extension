@@ -11,7 +11,7 @@ import {
 } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
-import { formatRDocAsMarkdown, getRDocumentation } from "../../r/documentation";
+import { RHelpService } from "../../r/RHelpService";
 import { extractRCodes, getWordAtPosition } from "../../r/utils";
 import { LanguageServiceProvider } from "../../sas/LanguageServiceProvider";
 
@@ -49,15 +49,68 @@ import { LanguageServiceProvider } from "../../sas/LanguageServiceProvider";
 export class RLanguageProviderNode {
   protected sasLspProvider?: (uri: string) => LanguageServiceProvider;
   protected connection: Connection;
+  protected rHelpService: RHelpService;
+  protected useRRuntime: boolean = false; // Default to false until we check
+  protected currentRPath: string = "R";
+  protected initialized: boolean = false;
 
-  constructor(connection: Connection) {
+  constructor(connection: Connection, rPath: string = "R") {
     this.connection = connection;
+    this.currentRPath = rPath;
+    this.rHelpService = new RHelpService(rPath);
   }
 
   public setSasLspProvider(
     provider: (uri: string) => LanguageServiceProvider,
   ): void {
     this.sasLspProvider = provider;
+  }
+
+  /**
+   * Initialize the R language provider and check R availability
+   */
+  public async initialize(): Promise<void> {
+    if (this.initialized) {
+      return;
+    }
+
+    try {
+      const available = await this.rHelpService.isRAvailable();
+      this.useRRuntime = available;
+      if (!available) {
+        this.connection.console.warn(
+          `R runtime not found at '${this.currentRPath}'. Hover support disabled. Please install R or set SAS.r.runtimePath in VS Code settings.`,
+        );
+      } else {
+        this.connection.console.log(
+          `R runtime detected at '${this.currentRPath}'. R hover support enabled.`,
+        );
+      }
+    } catch (error) {
+      this.useRRuntime = false;
+      this.connection.console.warn(
+        `Failed to check R runtime at '${this.currentRPath}': ${error}. Hover support disabled.`,
+      );
+    }
+
+    this.initialized = true;
+  }
+
+  /**
+   * Update the R runtime path. This will create a new RHelpService
+   * and check if the new R runtime is available.
+   */
+  public async setRPath(rPath: string): Promise<void> {
+    if (rPath === this.currentRPath) {
+      return; // No change
+    }
+
+    this.currentRPath = rPath;
+    this.rHelpService = new RHelpService(rPath);
+    this.initialized = false; // Force re-initialization
+
+    // Re-initialize with new R path
+    await this.initialize();
   }
 
   public addContentChange(doc: TextDocument): void {
@@ -78,7 +131,22 @@ export class RLanguageProviderNode {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     token: CancellationToken,
   ): Promise<Hover | null> {
-    if (!this.sasLspProvider) {
+    this.connection.console.log("[R Hover] onHover called");
+
+    // Ensure we're initialized
+    if (!this.initialized) {
+      this.connection.console.log("[R Hover] Not initialized, initializing...");
+      await this.initialize();
+    }
+
+    this.connection.console.log(
+      `[R Hover] useRRuntime: ${this.useRRuntime}, sasLspProvider: ${!!this.sasLspProvider}`,
+    );
+
+    if (!this.sasLspProvider || !this.useRRuntime) {
+      this.connection.console.log(
+        "[R Hover] Returning null - no provider or R runtime",
+      );
       return null;
     }
 
@@ -101,24 +169,44 @@ export class RLanguageProviderNode {
 
     // Get the word at the cursor position
     const word = getWordAtPosition(doc, params.position);
+    this.connection.console.log(`[R Hover] Word at position: '${word}'`);
     if (!word) {
       return null;
     }
 
-    // Look up the documentation for the R symbol
-    const docInfo = getRDocumentation(word);
-    if (!docInfo) {
-      return null;
+    // Extract R code blocks to search for local variable definitions
+    const rCode = extractRCodes(doc, languageService);
+    this.connection.console.log(
+      `[R Hover] Extracted R code length: ${rCode.length}`,
+    );
+
+    // Get help from R runtime or parse local definitions
+    try {
+      const rHelp = await this.rHelpService.getHelp(word, rCode);
+      this.connection.console.log(`[R Hover] Got help result: ${!!rHelp}`);
+      if (rHelp) {
+        const markdown = this.rHelpService.formatAsMarkdown(rHelp);
+        this.connection.console.log(
+          `[R Hover] Markdown content: ${markdown.substring(0, 100)}...`,
+        );
+        const hoverResult = {
+          contents: {
+            kind: MarkupKind.Markdown,
+            value: markdown,
+          },
+        };
+        this.connection.console.log(
+          `[R Hover] Returning hover: ${JSON.stringify(hoverResult).substring(0, 200)}`,
+        );
+        return hoverResult;
+      }
+    } catch (error) {
+      this.connection.console.warn(
+        `Failed to get R structure for '${word}': ${error}`,
+      );
     }
 
-    // Format and return the hover information
-    const markdown = formatRDocAsMarkdown(docInfo);
-    return {
-      contents: {
-        kind: MarkupKind.Markdown,
-        value: markdown,
-      },
-    };
+    return null;
   }
 
   public async onDocumentHighlight(
