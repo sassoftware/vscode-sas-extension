@@ -243,18 +243,20 @@ async function _runTask(
   messageEmitter.fire(`${l10n.t("SAS code running...")}\r\n`);
   return cancelled
     ? undefined
-    : session.run(codeDoc.getWrappedCode()).then((results) => {
-        const outputHtml = isOutputHtmlEnabled();
+    : session
+        .run(codeDoc.getWrappedCode(), { baseDirectory: basePath })
+        .then((results) => {
+          const outputHtml = isOutputHtmlEnabled();
 
-        if (outputHtml && results.html5) {
-          messageEmitter.fire(l10n.t("Show results...") + "\r\n");
-          showResult(
-            results.html5,
-            undefined,
-            l10n.t("Result: {result}", { result: taskLabel }),
-          );
-        }
-      });
+          if (outputHtml && results.html5) {
+            messageEmitter.fire(l10n.t("Show results...") + "\r\n");
+            showResult(
+              results.html5,
+              undefined,
+              l10n.t("Result: {result}", { result: taskLabel }),
+            );
+          }
+        });
 }
 
 const isErrorRep = (err: unknown): err is ErrorRepresentation => {
