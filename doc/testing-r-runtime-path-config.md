@@ -18,21 +18,25 @@
 ## Test Scenarios
 
 ### Default Configuration (R in PATH)
+
 - Leave `SAS.r.runtimePath` empty
 - Verify R is accessible: `which R` (Unix) or `where R` (Windows)
 - Hover over R functions should work automatically
 
 ### Custom R Path
+
 - Set `SAS.r.runtimePath` to `/usr/local/bin/R` (or your R location)
 - Reload VS Code
 - Hover should use specified R installation
 
 ### No R Installation
+
 - Remove R from PATH or set invalid `SAS.r.runtimePath`
 - Check Output panel (View → Output → "SAS Log") for warning
 - Hover should return no information (graceful degradation)
 
 ### Dynamic Configuration
+
 - Change `SAS.r.runtimePath` while VS Code is open
 - No reload needed - changes apply immediately
 - Hover over R symbols to verify new path is used
@@ -40,12 +44,13 @@
 ## Test Examples
 
 **Basic Functions:**
+
 ```sas
 proc rlang;
 submit;
   result <- mean(c(1, 2, 3, 4, 5))
   print(result)
-  
+
   # Test with variables
   x <- 1:10
   summary(x)
@@ -54,6 +59,7 @@ run;
 ```
 
 **Data Frames:**
+
 ```sas
 proc rlang;
 submit;
@@ -69,6 +75,7 @@ run;
 ## Configuration
 
 Set `SAS.r.runtimePath` in VS Code settings:
+
 - User Settings: `Preferences > Settings > Extensions > SAS`
 - Workspace Settings: `.vscode/settings.json`:
   ```json
@@ -80,5 +87,6 @@ Set `SAS.r.runtimePath` in VS Code settings:
 ## Logs
 
 Check Output panel (View → Output → "SAS Log") for messages:
+
 - `R runtime detected at '/usr/local/bin/R'` - Success
 - `R runtime not found` - R not accessible
