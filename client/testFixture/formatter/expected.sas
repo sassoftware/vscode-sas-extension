@@ -46,6 +46,16 @@ def my_function():
 endsubmit;
 run;
 
+proc rlang;
+submit;
+# Reference to variable defined in previous PROC RLANG call
+print(paste("x =", x))
+my_function <- function() {
+    print("Inside the proc step")
+}
+endsubmit;
+run;
+
 proc lua;
 submit;
 local dsid = sas.open("sashelp.company") -- open for input            
@@ -129,6 +139,17 @@ for x in fruits:
 
 print('first statement after for loop')
 endinteractive;
+run;
+
+proc rlang;
+submit;
+fruits <- c("apple", "banana", "cherry")
+for (x in fruits) {
+   print(x)
+}
+
+print('first statement after for loop')
+endsubmit;
 run;
 
 proc lua;
