@@ -1,10 +1,11 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { assert } from "chai";
-import { describe, it } from "mocha";
 import { HoverParams, Position } from "vscode-languageserver";
 import { CancellationToken } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
+
+import { assert } from "chai";
+import { describe, it } from "mocha";
 
 import { RLanguageProviderNode } from "../../src/r/node/RLanguageProviderNode";
 import { LanguageServiceProvider } from "../../src/sas/LanguageServiceProvider";
@@ -37,12 +38,7 @@ print(result)
 endsubmit;
 run;`;
 
-    mockDoc = TextDocument.create(
-      "file:///test.sas",
-      "sas",
-      1,
-      sasContent,
-    );
+    mockDoc = TextDocument.create("file:///test.sas", "sas", 1, sasContent);
 
     // Set up mock language service provider
     const languageService = new LanguageServiceProvider(mockDoc);
@@ -55,13 +51,14 @@ run;`;
       position: Position.create(3, 12), // Position of 'mean'
     };
 
-    const hover = await rProvider.onHover(
-      params,
-      CancellationToken.None,
-    );
+    const hover = await rProvider.onHover(params, CancellationToken.None);
 
     assert.isNotNull(hover);
-    if (hover && typeof hover.contents !== "string" && !Array.isArray(hover.contents)) {
+    if (
+      hover &&
+      typeof hover.contents !== "string" &&
+      !Array.isArray(hover.contents)
+    ) {
       assert.include(hover.contents.value, "mean");
       assert.include(hover.contents.value, "arithmetic mean");
     }
@@ -73,13 +70,14 @@ run;`;
       position: Position.create(4, 1), // Position of 'print'
     };
 
-    const hover = await rProvider.onHover(
-      params,
-      CancellationToken.None,
-    );
+    const hover = await rProvider.onHover(params, CancellationToken.None);
 
     assert.isNotNull(hover);
-    if (hover && typeof hover.contents !== "string" && !Array.isArray(hover.contents)) {
+    if (
+      hover &&
+      typeof hover.contents !== "string" &&
+      !Array.isArray(hover.contents)
+    ) {
       assert.include(hover.contents.value, "print");
       assert.include(hover.contents.value, "Prints its argument");
     }
@@ -91,13 +89,14 @@ run;`;
       position: Position.create(2, 6), // Position of 'c'
     };
 
-    const hover = await rProvider.onHover(
-      params,
-      CancellationToken.None,
-    );
+    const hover = await rProvider.onHover(params, CancellationToken.None);
 
     assert.isNotNull(hover);
-    if (hover && typeof hover.contents !== "string" && !Array.isArray(hover.contents)) {
+    if (
+      hover &&
+      typeof hover.contents !== "string" &&
+      !Array.isArray(hover.contents)
+    ) {
       assert.include(hover.contents.value, "c(");
       assert.include(hover.contents.value, "Combines values");
     }
@@ -109,10 +108,7 @@ run;`;
       position: Position.create(2, 1), // Position of variable 'x'
     };
 
-    const hover = await rProvider.onHover(
-      params,
-      CancellationToken.None,
-    );
+    const hover = await rProvider.onHover(params, CancellationToken.None);
 
     // Variables don't have documentation, should return null
     assert.isNull(hover);
@@ -124,10 +120,7 @@ run;`;
       position: Position.create(0, 0), // Position at 'proc'
     };
 
-    const hover = await rProvider.onHover(
-      params,
-      CancellationToken.None,
-    );
+    const hover = await rProvider.onHover(params, CancellationToken.None);
 
     assert.isNull(hover);
   });
@@ -154,13 +147,14 @@ run;`;
       position: Position.create(2, 8), // Position of 'data.frame'
     };
 
-    const hover = await rProvider.onHover(
-      params,
-      CancellationToken.None,
-    );
+    const hover = await rProvider.onHover(params, CancellationToken.None);
 
     assert.isNotNull(hover);
-    if (hover && typeof hover.contents !== "string" && !Array.isArray(hover.contents)) {
+    if (
+      hover &&
+      typeof hover.contents !== "string" &&
+      !Array.isArray(hover.contents)
+    ) {
       assert.include(hover.contents.value, "data.frame");
       assert.include(hover.contents.value, "Creates data frames");
     }
@@ -188,13 +182,14 @@ run;`;
       position: Position.create(2, 10), // Position of 'TRUE'
     };
 
-    const hover = await rProvider.onHover(
-      params,
-      CancellationToken.None,
-    );
+    const hover = await rProvider.onHover(params, CancellationToken.None);
 
     assert.isNotNull(hover);
-    if (hover && typeof hover.contents !== "string" && !Array.isArray(hover.contents)) {
+    if (
+      hover &&
+      typeof hover.contents !== "string" &&
+      !Array.isArray(hover.contents)
+    ) {
       assert.include(hover.contents.value, "TRUE");
       assert.include(hover.contents.value, "Logical constant");
     }
@@ -206,13 +201,14 @@ run;`;
       position: Position.create(3, 12), // Position of 'mean'
     };
 
-    const hover = await rProvider.onHover(
-      params,
-      CancellationToken.None,
-    );
+    const hover = await rProvider.onHover(params, CancellationToken.None);
 
     assert.isNotNull(hover);
-    if (hover && typeof hover.contents !== "string" && !Array.isArray(hover.contents)) {
+    if (
+      hover &&
+      typeof hover.contents !== "string" &&
+      !Array.isArray(hover.contents)
+    ) {
       assert.include(hover.contents.value, "```r");
       assert.include(hover.contents.value, "mean(");
     }
