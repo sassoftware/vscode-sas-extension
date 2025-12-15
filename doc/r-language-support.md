@@ -23,6 +23,7 @@ R language support requires R to be installed and accessible:
    - If left empty, the extension will look for `R` in your system PATH
 
 3. **Verify R is accessible**: Test in your terminal
+
    ```bash
    R --version
    ```
@@ -56,10 +57,10 @@ submit;
   # Hover over 'mean' to see function signature
   x <- c(1, 2, 3, 4, 5)
   result <- mean(x)
-  
+
   # Hover over 'x' to see vector structure
   # Shows: num [1:5] 1 2 3 4 5
-  
+
   # Create a data frame
   df <- data.frame(a = 1:3, b = letters[1:3])
   # Hover over 'df' to see structure:
@@ -85,3 +86,4 @@ submit;
 - Set `SAS.r.runtimePath` to the full path of your R executable
 - Or add R to your system PATH
 - Reload VS Code after making changes
+```
