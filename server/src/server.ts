@@ -63,13 +63,25 @@ export const runServer = (
   _pyrightLanguageProvider.setSasLspProvider(getLanguageService);
   _rLanguageProvider?.setSasLspProvider(getLanguageService);
 
-  connection.onInitialize((params) => {
+  connection.onInitialize(async (params) => {
     if (
       params.initializationOptions &&
       params.initializationOptions.supportSASGetLibList
     ) {
       supportSASGetLibList = true;
     }
+    
+    // Initialize R language provider
+    if (_rLanguageProvider) {
+      // Set R runtime path from initialization options if provided
+      if (params.initializationOptions?.rRuntimePath) {
+        await _rLanguageProvider.setRPath(params.initializationOptions.rRuntimePath);
+      } else {
+        // Initialize with default R path
+        await _rLanguageProvider.initialize();
+      }
+    }
+    
     _pyrightLanguageProvider.initialize(params, [], []);
 
     const result: InitializeResult = {
@@ -378,6 +390,11 @@ export const runServer = (
 
   connection.onDidChangeConfiguration(
     async (params: DidChangeConfigurationParams) => {
+      // Handle R runtime path configuration changes
+      if (params.settings?.SAS?.r?.runtimePath !== undefined && _rLanguageProvider) {
+        const newRPath = params.settings.SAS.r.runtimePath || "R";
+        await _rLanguageProvider.setRPath(newRPath);
+      }
       return await _pyrightLanguageProvider.onDidChangeConfiguration(params);
     },
   );

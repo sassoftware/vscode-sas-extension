@@ -84,10 +84,17 @@ export function activate(context: ExtensionContext) {
     },
   };
 
+  // Get R runtime path from configuration
+  const config = workspace.getConfiguration("SAS");
+  const rRuntimePath = config.get<string>("r.runtimePath", "");
+
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
     // Register the server for sas file
     documentSelector: [{ language: "sas" }],
+    initializationOptions: {
+      rRuntimePath: rRuntimePath || undefined,
+    },
   };
 
   // Create the language client and start the client.
