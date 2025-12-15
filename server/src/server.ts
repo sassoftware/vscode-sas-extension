@@ -600,9 +600,7 @@ export const runServer = (
       python?: (
         pyrightLanguageService: PyrightLanguageProvider,
       ) => Promise<Ret>;
-      r?: (
-        rLanguageService: RLanguageProvider,
-      ) => Promise<Ret>;
+      r?: (rLanguageService: RLanguageProvider) => Promise<Ret>;
       default?: (languageServices: {
         sasLanguageService: LanguageServiceProvider;
         pythonLanguageService?: PyrightLanguageProvider;
