@@ -86,16 +86,17 @@ const ColumnMenu = ({
   top,
 }: ColumnMenuProps) => {
   const theme = useTheme();
+  const sort = column.getSort();
   const menuItems = [
     {
       name: localize("Sort"),
       children: [
         {
           name:
-            hasSort && !column.sort
+            hasSort && !sort
               ? localize("Ascending (add to sorting)")
               : localize("Ascending"),
-          checked: column.sort === "asc",
+          checked: sort === "asc",
           onPress: () => {
             sortColumn("asc");
             dismissMenu();
@@ -103,10 +104,10 @@ const ColumnMenu = ({
         },
         {
           name:
-            hasSort && !column.sort
+            hasSort && !sort
               ? localize("Descending (add to sorting)")
               : localize("Descending"),
-          checked: column.sort === "desc",
+          checked: sort === "desc",
           onPress: () => {
             sortColumn("desc");
             dismissMenu();
@@ -119,7 +120,7 @@ const ColumnMenu = ({
             removeFromSort();
             dismissMenu();
           },
-          disabled: !hasSort || !column.sort,
+          disabled: !hasSort || !sort,
         },
         {
           name: localize("Remove all sorting"),
