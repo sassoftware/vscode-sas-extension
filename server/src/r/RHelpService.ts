@@ -18,8 +18,8 @@ export interface RHelpResult {
 }
 
 /**
- * Service for querying R help documentation using an R runtime.
- * This allows us to get documentation for any R function, including tidyverse packages.
+ * Service for querying R help documentation and inspecting R objects.
+ * Uses R's help() system for functions and parses source code for variables.
  */
 export class RHelpService {
   private rPath: string;
@@ -137,7 +137,6 @@ export class RHelpService {
   }
 
   /**
-  /**
    * Format R output as Markdown
    */
   formatAsMarkdown(help: RHelpResult): string {
@@ -151,8 +150,10 @@ export class RHelpService {
     }
 
     // For help documentation, clean up formatting characters
-    let cleaned = help.description
+    const cleaned = help.description
+      // eslint-disable-next-line no-control-regex
       .replace(/_\x08/g, "") // Remove underscore+backspace (used for underlining)
+      // eslint-disable-next-line no-control-regex
       .replace(/(.)\x08/g, "$1") // Remove char+backspace (used for bold)
       .replace(/_(.)/g, "$1"); // Remove remaining underscores
 

@@ -131,22 +131,12 @@ export class RLanguageProviderNode {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     token: CancellationToken,
   ): Promise<Hover | null> {
-    this.connection.console.log("[R Hover] onHover called");
-
     // Ensure we're initialized
     if (!this.initialized) {
-      this.connection.console.log("[R Hover] Not initialized, initializing...");
       await this.initialize();
     }
 
-    this.connection.console.log(
-      `[R Hover] useRRuntime: ${this.useRRuntime}, sasLspProvider: ${!!this.sasLspProvider}`,
-    );
-
     if (!this.sasLspProvider || !this.useRRuntime) {
-      this.connection.console.log(
-        "[R Hover] Returning null - no provider or R runtime",
-      );
       return null;
     }
 
@@ -169,36 +159,24 @@ export class RLanguageProviderNode {
 
     // Get the word at the cursor position
     const word = getWordAtPosition(doc, params.position);
-    this.connection.console.log(`[R Hover] Word at position: '${word}'`);
     if (!word) {
       return null;
     }
 
     // Extract R code blocks to search for local variable definitions
     const rCode = extractRCodes(doc, languageService);
-    this.connection.console.log(
-      `[R Hover] Extracted R code length: ${rCode.length}`,
-    );
 
     // Get help from R runtime or parse local definitions
     try {
       const rHelp = await this.rHelpService.getHelp(word, rCode);
-      this.connection.console.log(`[R Hover] Got help result: ${!!rHelp}`);
       if (rHelp) {
         const markdown = this.rHelpService.formatAsMarkdown(rHelp);
-        this.connection.console.log(
-          `[R Hover] Markdown content: ${markdown.substring(0, 100)}...`,
-        );
-        const hoverResult = {
+        return {
           contents: {
             kind: MarkupKind.Markdown,
             value: markdown,
           },
         };
-        this.connection.console.log(
-          `[R Hover] Returning hover: ${JSON.stringify(hoverResult).substring(0, 200)}`,
-        );
-        return hoverResult;
       }
     } catch (error) {
       this.connection.console.warn(
