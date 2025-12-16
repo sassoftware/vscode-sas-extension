@@ -22,6 +22,10 @@ describe("R Hover Support", () => {
         log: (_message: string) => {
           // Mock console log
         },
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        warn: (_message: string) => {
+          // Mock console warn
+        },
       },
     };
 
