@@ -439,9 +439,8 @@ export class Lexer {
             ).exec(lineContent.substring(pos));
             if (match) {
               const matchedText = match[0];
-              if (/^('|"|#)/.test(matchedText)) {
-                // do nothing to skip string and single line comment
-              } else {
+              // Skip strings and single line comments
+              if (!/^('|"|#)/.test(matchedText)) {
                 token = this._foundEmbeddedCodeToken(this.curr, {
                   line: line,
                   column: pos + match.index,
