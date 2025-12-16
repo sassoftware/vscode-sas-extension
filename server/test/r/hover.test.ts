@@ -218,3 +218,151 @@ run;`;
     }
   });
 });
+
+describe("R Signature Help Support", () => {
+  let rProvider: RLanguageProviderNode;
+  let mockDoc: TextDocument;
+
+  beforeEach(() => {
+    const mockConnection = {
+      console: {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        log: (_message: string) => {},
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        warn: (_message: string) => {},
+      },
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rProvider = new RLanguageProviderNode(mockConnection as any);
+
+    const sasContent = `proc rlang;
+submit;
+result <- mean(
+endsubmit;
+run;`;
+
+    mockDoc = TextDocument.create("file:///test.sas", "sas", 1, sasContent);
+    const languageService = new LanguageServiceProvider(mockDoc);
+    rProvider.setSasLspProvider(() => languageService);
+  });
+
+  it("should provide signature help for 'mean' function", async () => {
+    await rProvider.initialize();
+
+    const params = {
+      textDocument: { uri: mockDoc.uri },
+      position: Position.create(2, 15), // After 'mean('
+      context: undefined,
+    };
+
+    const sigHelp = await rProvider.onSignatureHelp(
+      params,
+      CancellationToken.None,
+    );
+
+    if (sigHelp) {
+      assert.isNotNull(sigHelp);
+      assert.isArray(sigHelp.signatures);
+      assert.isAtLeast(sigHelp.signatures.length, 1);
+      assert.include(sigHelp.signatures[0].label, "mean");
+    }
+  });
+});
+
+describe("R Completion Support", () => {
+  let rProvider: RLanguageProviderNode;
+  let mockDoc: TextDocument;
+
+  beforeEach(() => {
+    const mockConnection = {
+      console: {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        log: (_message: string) => {},
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        warn: (_message: string) => {},
+      },
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rProvider = new RLanguageProviderNode(mockConnection as any);
+
+    const sasContent = `proc rlang;
+submit;
+x <- c(1, 2, 3)
+result <- me
+endsubmit;
+run;`;
+
+    mockDoc = TextDocument.create("file:///test.sas", "sas", 1, sasContent);
+    const languageService = new LanguageServiceProvider(mockDoc);
+    rProvider.setSasLspProvider(() => languageService);
+  });
+
+  it("should provide completions starting with 'me'", async () => {
+    await rProvider.initialize();
+
+    const params = {
+      textDocument: { uri: mockDoc.uri },
+      position: Position.create(3, 12), // After 'me'
+      context: undefined,
+    };
+
+    const completions = await rProvider.onCompletion(
+      params,
+      CancellationToken.None,
+    );
+
+    if (completions) {
+      assert.isNotNull(completions);
+      assert.isArray(completions.items);
+
+      // Should include functions like 'mean', 'median', etc.
+      const labels = completions.items.map((item) => item.label);
+      const hasRelevantCompletions = labels.some((label) =>
+        label.startsWith("me"),
+      );
+      assert.isTrue(
+        hasRelevantCompletions,
+        "Should have completions starting with 'me'",
+      );
+    }
+  });
+
+  it("should include local variables in completions", async () => {
+    await rProvider.initialize();
+
+    const sasWithLocalVar = `proc rlang;
+submit;
+myVar <- 42
+my
+endsubmit;
+run;`;
+
+    const doc = TextDocument.create(
+      "file:///test2.sas",
+      "sas",
+      1,
+      sasWithLocalVar,
+    );
+    const languageService = new LanguageServiceProvider(doc);
+    rProvider.setSasLspProvider(() => languageService);
+
+    const params = {
+      textDocument: { uri: doc.uri },
+      position: Position.create(3, 2), // After 'my'
+      context: undefined,
+    };
+
+    const completions = await rProvider.onCompletion(
+      params,
+      CancellationToken.None,
+    );
+
+    if (completions) {
+      const labels = completions.items.map((item) => item.label);
+      const hasMyVar = labels.includes("myVar");
+      assert.isTrue(hasMyVar, "Should include local variable 'myVar'");
+    }
+  });
+});

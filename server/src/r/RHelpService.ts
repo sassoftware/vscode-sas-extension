@@ -160,6 +160,125 @@ export class RHelpService {
     return `\`\`\`r\n${cleaned}\n\`\`\``;
   }
   /**
+   * Get signature help for a function (parameters and their types)
+   */
+  async getSignatureHelp(
+    functionName: string,
+  ): Promise<{ label: string; parameters: string[]; documentation?: string }> {
+    try {
+      const rCommand = `tryCatch({
+        if(exists('${functionName}') && is.function(get('${functionName}'))) {
+          # Get function arguments
+          args_list <- formals('${functionName}');
+          if(length(args_list) > 0) {
+            params <- paste(names(args_list), '=', sapply(args_list, deparse), collapse=', ');
+            cat('PARAMS:', params);
+          } else {
+            cat('PARAMS:');
+          }
+        }
+      }, error = function(e) cat('ERROR:', e$message))`;
+
+      const { stdout } = await execAsync(
+        `${this.rPath} --vanilla --slave -e "${rCommand}"`,
+        { timeout: 2000 },
+      );
+
+      const output = stdout.trim();
+      if (output.startsWith("PARAMS:")) {
+        const paramsStr = output.substring(7).trim();
+        const parameters = paramsStr
+          ? paramsStr.split(",").map((p) => p.trim())
+          : [];
+        const label = `${functionName}(${paramsStr})`;
+
+        // Try to get brief documentation
+        const helpResult = await this.getHelp(functionName);
+        const documentation = helpResult?.description?.split("\n")[0];
+
+        return { label, parameters, documentation };
+      }
+
+      return { label: `${functionName}()`, parameters: [] };
+    } catch {
+      return { label: `${functionName}()`, parameters: [] };
+    }
+  }
+
+  /**
+   * Get completion suggestions for R code
+   */
+  async getCompletions(
+    prefix: string,
+    sourceCode?: string,
+  ): Promise<Array<{ label: string; kind: string; detail?: string }>> {
+    const completions: Array<{ label: string; kind: string; detail?: string }> =
+      [];
+
+    try {
+      // Get matching functions from base R and loaded packages
+      const rCommand = `tryCatch({
+        # Get all matching objects
+        matches <- apropos('^${prefix}', ignore.case=FALSE);
+        for(m in matches) {
+          if(exists(m)) {
+            obj <- get(m);
+            if(is.function(obj)) {
+              cat('FUNC:', m, '\\n');
+            } else {
+              cat('VAR:', m, '\\n');
+            }
+          }
+        }
+      }, error = function(e) {})`;
+
+      const { stdout } = await execAsync(
+        `${this.rPath} --vanilla --slave -e "${rCommand}"`,
+        { timeout: 2000 },
+      );
+
+      const lines = stdout.trim().split("\n");
+      for (const line of lines) {
+        if (line.startsWith("FUNC:")) {
+          const name = line.substring(5).trim();
+          completions.push({ label: name, kind: "Function" });
+        } else if (line.startsWith("VAR:")) {
+          const name = line.substring(4).trim();
+          completions.push({ label: name, kind: "Variable" });
+        }
+      }
+
+      // Also add local variables from source code if provided
+      if (sourceCode) {
+        const varPattern = /\b([a-zA-Z][a-zA-Z0-9._]*)\s*(<-|=)/g;
+        let match;
+        const localVars = new Set<string>();
+
+        while ((match = varPattern.exec(sourceCode)) !== null) {
+          const varName = match[1];
+          if (varName.startsWith(prefix)) {
+            localVars.add(varName);
+          }
+        }
+
+        for (const varName of localVars) {
+          if (!completions.some((c) => c.label === varName)) {
+            completions.push({
+              label: varName,
+              kind: "Variable",
+              detail: "local variable",
+            });
+          }
+        }
+      }
+
+      return completions;
+    } catch {
+      return [];
+    }
+  }
+
+  /**
    * Clear the help cache
    */
   clearCache(): void {

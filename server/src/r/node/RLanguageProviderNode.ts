@@ -2,12 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 import {
   CancellationToken,
+  CompletionItem,
+  CompletionItemKind,
+  CompletionList,
+  CompletionParams,
   Connection,
   DocumentHighlight,
   DocumentHighlightParams,
   Hover,
   HoverParams,
   MarkupKind,
+  ParameterInformation,
+  SignatureHelp,
+  SignatureHelpParams,
+  SignatureInformation,
 } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
@@ -185,6 +193,146 @@ export class RLanguageProviderNode {
     }
 
     return null;
+  }
+
+  public async onSignatureHelp(
+    params: SignatureHelpParams,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    token: CancellationToken,
+  ): Promise<SignatureHelp | null> {
+    if (!this.useRRuntime || !this.sasLspProvider) {
+      return null;
+    }
+
+    try {
+      const languageService = this.sasLspProvider(params.textDocument.uri);
+      const lineCount = languageService.model.getLineCount();
+      const fullText = languageService.model.getText({
+        start: { line: 0, column: 0 },
+        end: {
+          line: lineCount - 1,
+          column: languageService.model.getColumnCount(lineCount - 1),
+        },
+      });
+      const doc = TextDocument.create(
+        params.textDocument.uri,
+        "sas",
+        1,
+        fullText,
+      );
+
+      // Find the function being called
+      const line = doc.getText({
+        start: { line: params.position.line, character: 0 },
+        end: params.position,
+      });
+
+      // Look for function name before '('
+      const match = line.match(/([a-zA-Z][a-zA-Z0-9._]*)\s*\([^)]*$/);
+      if (!match) {
+        return null;
+      }
+
+      const functionName = match[1];
+      const sigHelp = await this.rHelpService.getSignatureHelp(functionName);
+
+      if (sigHelp.parameters.length === 0) {
+        return null;
+      }
+
+      const signature: SignatureInformation = {
+        label: sigHelp.label,
+        documentation: sigHelp.documentation
+          ? {
+              kind: MarkupKind.Markdown,
+              value: sigHelp.documentation,
+            }
+          : undefined,
+        parameters: sigHelp.parameters.map((param) => {
+          const paramInfo: ParameterInformation = {
+            label: param,
+          };
+          return paramInfo;
+        }),
+      };
+
+      // Calculate active parameter based on comma count
+      const beforeCursor = line.substring(line.lastIndexOf("(") + 1);
+      const activeParameter = (beforeCursor.match(/,/g) || []).length;
+
+      return {
+        signatures: [signature],
+        activeSignature: 0,
+        activeParameter: Math.min(
+          activeParameter,
+          sigHelp.parameters.length - 1,
+        ),
+      };
+    } catch (error) {
+      this.connection.console.warn(`Failed to get signature help: ${error}`);
+      return null;
+    }
+  }
+
+  public async onCompletion(
+    params: CompletionParams,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    token: CancellationToken,
+  ): Promise<CompletionList | null> {
+    if (!this.useRRuntime || !this.sasLspProvider) {
+      return null;
+    }
+
+    try {
+      const languageService = this.sasLspProvider(params.textDocument.uri);
+      const lineCount = languageService.model.getLineCount();
+      const fullText = languageService.model.getText({
+        start: { line: 0, column: 0 },
+        end: {
+          line: lineCount - 1,
+          column: languageService.model.getColumnCount(lineCount - 1),
+        },
+      });
+      const doc = TextDocument.create(
+        params.textDocument.uri,
+        "sas",
+        1,
+        fullText,
+      );
+      const rDocContent = extractRCodes(doc, languageService);
+
+      // Get the word being typed
+      const word = getWordAtPosition(doc, params.position);
+      if (!word || word.length < 1) {
+        return null;
+      }
+
+      const completions = await this.rHelpService.getCompletions(
+        word,
+        rDocContent,
+      );
+
+      const items: CompletionItem[] = completions.map((comp) => ({
+        label: comp.label,
+        kind:
+          comp.kind === "Function"
+            ? CompletionItemKind.Function
+            : CompletionItemKind.Variable,
+        detail: comp.detail,
+        data: {
+          _languageService: "r",
+          _uri: params.textDocument.uri,
+        },
+      }));
+
+      return {
+        isIncomplete: false,
+        items,
+      };
+    } catch (error) {
+      this.connection.console.warn(`Failed to get completions: ${error}`);
+      return null;
+    }
   }
 
   public async onDocumentHighlight(

@@ -70,18 +70,20 @@ export const runServer = (
     ) {
       supportSASGetLibList = true;
     }
-    
+
     // Initialize R language provider
     if (_rLanguageProvider) {
       // Set R runtime path from initialization options if provided
       if (params.initializationOptions?.rRuntimePath) {
-        await _rLanguageProvider.setRPath(params.initializationOptions.rRuntimePath);
+        await _rLanguageProvider.setRPath(
+          params.initializationOptions.rRuntimePath,
+        );
       } else {
         // Initialize with default R path
         await _rLanguageProvider.initialize();
       }
     }
-    
+
     _pyrightLanguageProvider.initialize(params, [], []);
 
     const result: InitializeResult = {
@@ -234,6 +236,9 @@ export const runServer = (
         }
         return completionList;
       },
+      async r(rLanguageService) {
+        return await rLanguageService.onCompletion(params, token);
+      },
     });
   });
 
@@ -347,6 +352,9 @@ export const runServer = (
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         )) as any;
       },
+      async r(rLanguageService) {
+        return await rLanguageService.onSignatureHelp(params, token);
+      },
     });
   });
 
@@ -376,7 +384,7 @@ export const runServer = (
     await _pyrightLanguageProvider.onDidCloseTextDocument(params);
   });
 
-  connection.onDidChangeTextDocument((params) => {
+  connection.onDidChangeTextDocument(async (params) => {
     const uri = params.textDocument.uri;
     const docInfo = documentPool[uri];
     TextDocument.update(
@@ -391,7 +399,10 @@ export const runServer = (
   connection.onDidChangeConfiguration(
     async (params: DidChangeConfigurationParams) => {
       // Handle R runtime path configuration changes
-      if (params.settings?.SAS?.r?.runtimePath !== undefined && _rLanguageProvider) {
+      if (
+        params.settings?.SAS?.r?.runtimePath !== undefined &&
+        _rLanguageProvider
+      ) {
         const newRPath = params.settings.SAS.r.runtimePath || "R";
         await _rLanguageProvider.setRPath(newRPath);
       }
