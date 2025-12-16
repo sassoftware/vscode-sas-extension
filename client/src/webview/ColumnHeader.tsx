@@ -43,10 +43,9 @@ const ColumnHeader = ({
   const ref = useRef<HTMLButtonElement>(undefined!);
   const currentColumn = getCurrentColumn();
   const currentSortedColumns = api.getColumnState().filter((c) => c.sort);
+  const sort = column.getSort();
   const columnNumber =
-    column.sort && currentSortedColumns.length > 1
-      ? `${column.sortIndex + 1}`
-      : "";
+    sort && currentSortedColumns.length > 1 ? `${column.sortIndex + 1}` : "";
   const dropdownClassname =
     currentColumn?.colId === column.colId ? "active dropdown" : "dropdown";
 
@@ -59,9 +58,9 @@ const ColumnHeader = ({
         <span className={`header-icon ${getIconForColumnType(columnType)}`} />
         <span className="ag-header-cell-text">{column.colId}</span>
         <span className="sort-icon-wrapper">
-          {!!column.sort && (
+          {!!sort && (
             <>
-              <span className={`icon ${column.sort}`}></span>
+              <span className={`icon ${sort}`}></span>
               {!!columnNumber && <span className="number">{columnNumber}</span>}
             </>
           )}
