@@ -19,7 +19,7 @@ jobs:
       - run: xvfb-run -a npm run test
         if: runner.os == 'Linux'
       - run: npx @vscode/vsce package
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           path: ./*.vsix
           retention-days: 5
