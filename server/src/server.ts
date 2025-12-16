@@ -496,9 +496,6 @@ export const runServer = (
             token,
           );
         },
-        async r(rLanguageService) {
-          return await rLanguageService.onDocumentHighlight(params, token);
-        },
       });
     },
   );
@@ -723,7 +720,6 @@ export const runServer = (
     }
     docInfo.changed = false;
     _pyrightLanguageProvider.addContentChange(docInfo.document);
-    _rLanguageProvider?.addContentChange(docInfo.document);
   };
 
   const syncAllChangedDoc = () => {

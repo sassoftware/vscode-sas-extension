@@ -7,8 +7,6 @@ import {
   CompletionList,
   CompletionParams,
   Connection,
-  DocumentHighlight,
-  DocumentHighlightParams,
   Hover,
   HoverParams,
   MarkupKind,
@@ -19,9 +17,9 @@ import {
 } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
-import { RHelpService } from "../../r/RHelpService";
 import { extractRCodes, getWordAtPosition } from "../../r/utils";
 import { LanguageServiceProvider } from "../../sas/LanguageServiceProvider";
+import { RHelpService } from "../RLanguageService";
 
 /**
  * Basic R Language Provider for handling R code embedded in SAS files.
@@ -119,19 +117,6 @@ export class RLanguageProviderNode {
 
     // Re-initialize with new R path
     await this.initialize();
-  }
-
-  public addContentChange(doc: TextDocument): void {
-    // Extract R code from the document
-    if (!this.sasLspProvider) {
-      return;
-    }
-    const languageService = this.sasLspProvider(doc.uri);
-    const rDoc = extractRCodes(doc, languageService);
-
-    // In a full implementation, this would update an R language server
-    // For now, we just extract the R code for potential future use
-    this.connection.console.log(`R code extracted: ${rDoc.length} characters`);
   }
 
   public async onHover(
@@ -333,40 +318,5 @@ export class RLanguageProviderNode {
       this.connection.console.warn(`Failed to get completions: ${error}`);
       return null;
     }
-  }
-
-  public async onDocumentHighlight(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    params: DocumentHighlightParams,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    token: CancellationToken,
-  ): Promise<DocumentHighlight[] | null | undefined> {
-    // Basic document highlight support
-    return null;
-  }
-
-  public async onDidOpenTextDocument(doc: TextDocument): Promise<void> {
-    if (!this.sasLspProvider) {
-      return;
-    }
-    const languageService = this.sasLspProvider(doc.uri);
-    const rDocContent = extractRCodes(doc, languageService);
-
-    // Log that we've opened an R document
-    this.connection.console.log(
-      `Opened R document with ${rDocContent.length} characters`,
-    );
-  }
-
-  public async onDidCloseTextDocument(doc: TextDocument): Promise<void> {
-    // Clean up any resources
-    this.connection.console.log(`Closed R document: ${doc.uri}`);
-  }
-
-  public async onShutdown(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    token: CancellationToken,
-  ): Promise<void> {
-    // Clean up resources on shutdown
   }
 }

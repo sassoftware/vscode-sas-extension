@@ -7,10 +7,6 @@ import { CodeZoneManager } from "../sas/CodeZoneManager";
 import { LanguageServiceProvider } from "../sas/LanguageServiceProvider";
 import { isCustomRegionStartComment } from "../sas/utils";
 
-/**
- * Extracts R code from a SAS document that contains PROC RLANG blocks.
- * Similar to extractPythonCodes but for R code blocks.
- */
 export const extractRCodes = (
   doc: TextDocument,
   languageService: LanguageServiceProvider,
@@ -24,8 +20,6 @@ export const extractRCodes = (
     if (isCustomRegionStartComment(symbol.name)) {
       symbols.splice(i + 1, 0, ...(symbol.children ?? []));
     }
-
-    // Look for PROC RLANG blocks
     if (symbol.name?.toUpperCase() !== "PROC RLANG") {
       continue;
     }
