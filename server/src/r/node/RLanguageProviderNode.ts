@@ -119,6 +119,28 @@ export class RLanguageProviderNode {
     await this.initialize();
   }
 
+  /**
+   * Helper method to get TextDocument from URI
+   * Extracts full text from the language service model and creates a TextDocument
+   */
+  private getTextDocument(uri: string): TextDocument | null {
+    if (!this.sasLspProvider) {
+      return null;
+    }
+
+    const languageService = this.sasLspProvider(uri);
+    const lineCount = languageService.model.getLineCount();
+    const fullText = languageService.model.getText({
+      start: { line: 0, column: 0 },
+      end: {
+        line: lineCount - 1,
+        column: languageService.model.getColumnCount(lineCount - 1),
+      },
+    });
+
+    return TextDocument.create(uri, "sas", 1, fullText);
+  }
+
   public async onHover(
     params: HoverParams,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -133,22 +155,11 @@ export class RLanguageProviderNode {
       return null;
     }
 
-    // Get the language service
     const uri = params.textDocument.uri;
-    const languageService = this.sasLspProvider(uri);
-
-    // Get the full document text from the language service model
-    const lineCount = languageService.model.getLineCount();
-    const fullText = languageService.model.getText({
-      start: { line: 0, column: 0 },
-      end: {
-        line: lineCount - 1,
-        column: languageService.model.getColumnCount(lineCount - 1),
-      },
-    });
-
-    // Create a TextDocument for word extraction
-    const doc = TextDocument.create(uri, "sas", 1, fullText);
+    const doc = this.getTextDocument(uri);
+    if (!doc) {
+      return null;
+    }
 
     // Get the word at the cursor position
     const word = getWordAtPosition(doc, params.position);
@@ -157,6 +168,7 @@ export class RLanguageProviderNode {
     }
 
     // Extract R code blocks to search for local variable definitions
+    const languageService = this.sasLspProvider(uri);
     const rCode = extractRCodes(doc, languageService);
 
     // Get help from R runtime or parse local definitions
@@ -190,21 +202,10 @@ export class RLanguageProviderNode {
     }
 
     try {
-      const languageService = this.sasLspProvider(params.textDocument.uri);
-      const lineCount = languageService.model.getLineCount();
-      const fullText = languageService.model.getText({
-        start: { line: 0, column: 0 },
-        end: {
-          line: lineCount - 1,
-          column: languageService.model.getColumnCount(lineCount - 1),
-        },
-      });
-      const doc = TextDocument.create(
-        params.textDocument.uri,
-        "sas",
-        1,
-        fullText,
-      );
+      const doc = this.getTextDocument(params.textDocument.uri);
+      if (!doc) {
+        return null;
+      }
 
       // Find the function being called
       const line = doc.getText({
@@ -269,21 +270,12 @@ export class RLanguageProviderNode {
     }
 
     try {
+      const doc = this.getTextDocument(params.textDocument.uri);
+      if (!doc) {
+        return null;
+      }
+
       const languageService = this.sasLspProvider(params.textDocument.uri);
-      const lineCount = languageService.model.getLineCount();
-      const fullText = languageService.model.getText({
-        start: { line: 0, column: 0 },
-        end: {
-          line: lineCount - 1,
-          column: languageService.model.getColumnCount(lineCount - 1),
-        },
-      });
-      const doc = TextDocument.create(
-        params.textDocument.uri,
-        "sas",
-        1,
-        fullText,
-      );
       const rDocContent = extractRCodes(doc, languageService);
 
       // Get the word being typed
