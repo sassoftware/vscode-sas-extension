@@ -80,6 +80,49 @@ const copyFiles = () => {
   foldersToCopy.forEach((item) =>
     fs.cpSync(item.src, item.dest, { recursive: true }),
   );
+
+  // Process KaTeX CSS - embed fonts as base64 data URIs for self-contained HTML
+  let katexCss = fs.readFileSync(
+    "./client/node_modules/katex/dist/katex.min.css",
+    "utf8",
+  );
+
+  const katexFontsDir = "./client/node_modules/katex/dist/fonts";
+
+  // Find all font file references in the CSS
+  const fontRegex = /url\(fonts\/([\w-]+\.(woff2|woff|ttf))\)/g;
+  let match;
+  const fontReplacements = new Map();
+
+  while ((match = fontRegex.exec(katexCss)) !== null) {
+    const fontFile = match[1];
+    if (!fontReplacements.has(fontFile)) {
+      const fontPath = `${katexFontsDir}/${fontFile}`;
+      if (fs.existsSync(fontPath)) {
+        const fontData = fs.readFileSync(fontPath);
+        const base64 = fontData.toString("base64");
+        const mimeType = fontFile.endsWith(".woff2")
+          ? "font/woff2"
+          : fontFile.endsWith(".woff")
+            ? "font/woff"
+            : "font/ttf";
+        fontReplacements.set(fontFile, `data:${mimeType};base64,${base64}`);
+      }
+    }
+  }
+
+  // Replace all font URLs with data URIs
+  fontReplacements.forEach((dataUri, fontFile) => {
+    katexCss = katexCss.replace(
+      new RegExp(`fonts/${fontFile.replace(/\./g, "\\.")}`, "g"),
+      dataUri,
+    );
+  });
+
+  fs.writeFileSync(
+    "./client/dist/notebook/exporters/templates/katex.css",
+    katexCss,
+  );
 };
 
 if (process.env.npm_config_webviews || process.env.npm_config_client) {
