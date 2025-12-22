@@ -21,6 +21,7 @@ import { Column } from "../connection/rest/api/compute";
 import type { ViewProperties } from "../panels/DataViewer";
 import ColumnHeader from "./ColumnHeader";
 import { ColumnMenuProps, getColumnMenu } from "./ColumnMenu";
+import localize from "./localize";
 
 declare const acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
@@ -262,6 +263,7 @@ const useDataViewer = () => {
         field: "#",
         suppressMovable: true,
         sortable: false,
+        headerTooltip: localize("Row number"),
       });
 
       setColumns(columns);
