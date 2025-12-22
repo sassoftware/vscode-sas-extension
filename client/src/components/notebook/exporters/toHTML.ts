@@ -88,18 +88,31 @@ const exportCells = async (cells: NotebookCell[], client: LanguageClient) => {
 
 const markdownToHTML = (doc: TextDocument) => {
   let text = doc.getText();
-
-  // Normalize display math blocks: ensure $$ delimiters are on their own lines with blank lines around them
-  text = text.replace(/\$\$([\s\S]*?)\$\$/g, (_match, content) => {
-    // Trim whitespace, preserve internal formatting
-    const trimmedContent = content.trim();
-    return `\n\n$$\n${trimmedContent}\n$$\n\n`;
-  });
+  text = normalizeDisplayMathBlocks(text);
 
   return `<div class="markdown-cell">
 ${marked.parse(text)}
 </div>`;
 };
+
+/**
+ * Normalize display math blocks in markdown text.
+ *
+ * Ensures each $$...$$ display math block is on its own lines with blank
+ * lines before and after, and trims leading/trailing whitespace inside the
+ * delimiters while preserving internal newlines.
+ *
+ * @example
+ * Inline: "This is $$ x^2 $$ in text." -> "This is\n\n$$\n x^2\n$$\n\n"
+ *
+ * @example
+ * Display: "Text$$\\frac{1}{2}$$More" -> "Text\n\n$$\n\\frac{1}{2}\n$$\n\nMore"
+ */
+const normalizeDisplayMathBlocks = (input: string) =>
+  input.replace(/\$\$([\s\S]*?)\$\$/g, (_match, content) => {
+    const trimmedContent = content.trim();
+    return `\n\n$$\n${trimmedContent}\n$$\n\n`;
+  });
 
 const codeToHTML = async (doc: TextDocument, client: LanguageClient) => {
   let result = "";

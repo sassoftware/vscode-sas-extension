@@ -80,8 +80,11 @@ const copyFiles = () => {
   foldersToCopy.forEach((item) =>
     fs.cpSync(item.src, item.dest, { recursive: true }),
   );
+  copyKatexCss();
+};
 
-  // Process KaTeX CSS - embed fonts as base64 data URIs for self-contained HTML
+// Process KaTeX CSS - embed fonts as base64 data URIs for self-contained HTML
+const copyKatexCss = () => {
   let katexCss = fs.readFileSync(
     "./client/node_modules/katex/dist/katex.min.css",
     "utf8",
