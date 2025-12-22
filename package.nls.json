@@ -18,7 +18,6 @@
   "commands.SAS.notebook.export": "Export",
   "commands.SAS.notebook.new": "New SAS Notebook",
   "commands.SAS.notebook.new.short": "SAS Notebook",
-  "commands.SAS.notebook.saveOutput": "Save Output",
   "commands.SAS.refresh": "Refresh",
   "commands.SAS.removeFromFavorites": "Remove from My Favorites",
   "commands.SAS.renameResource": "Rename...",

@@ -8,6 +8,7 @@ import {
   commands,
   l10n,
   languages,
+  notebooks,
   tasks,
   window,
   workspace,
@@ -54,7 +55,10 @@ import { LogTokensProvider, legend } from "../components/logViewer";
 import { sasDiagnostic } from "../components/logViewer/sasDiagnostics";
 import { NotebookController } from "../components/notebook/Controller";
 import { NotebookSerializer } from "../components/notebook/Serializer";
-import { exportNotebook, saveOutput } from "../components/notebook/exporters";
+import {
+  exportNotebook,
+  saveOutputFromRenderer,
+} from "../components/notebook/exporters";
 import { ConnectionType } from "../components/profile";
 import { SasTaskProvider } from "../components/tasks/SasTaskProvider";
 import { SAS_TASK_TYPE } from "../components/tasks/SasTasks";
@@ -202,11 +206,29 @@ export function activate(context: ExtensionContext) {
     commands.registerCommand("SAS.notebook.export", () =>
       exportNotebook(client),
     ),
-    commands.registerCommand("SAS.notebook.saveOutput", saveOutput),
     tasks.registerTaskProvider(SAS_TASK_TYPE, new SasTaskProvider()),
     ...sasDiagnostic.getSubscriptions(),
     commands.registerTextEditorCommand("SAS.toggleLineComment", (editor) => {
       toggleLineComment(editor, client);
+    }),
+  );
+
+  // Set up message handlers for notebook renderers
+  const htmlRendererMessaging =
+    notebooks.createRendererMessaging("sas-html-renderer");
+  const logRendererMessaging =
+    notebooks.createRendererMessaging("sas-log-renderer");
+
+  context.subscriptions.push(
+    htmlRendererMessaging.onDidReceiveMessage((e) => {
+      if (e.message.command === "saveOutput") {
+        saveOutputFromRenderer(e.message, e.editor.notebook);
+      }
+    }),
+    logRendererMessaging.onDidReceiveMessage((e) => {
+      if (e.message.command === "saveOutput") {
+        saveOutputFromRenderer(e.message, e.editor.notebook);
+      }
     }),
   );
 
