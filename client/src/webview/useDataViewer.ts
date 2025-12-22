@@ -222,7 +222,6 @@ const useDataViewer = () => {
           currentColumn: () => columnMenuRef.current?.column,
           displayMenuForColumn,
         },
-        // ...getColumnState(column.name),
         suppressHeaderKeyboardEvent: (
           params: SuppressHeaderKeyboardEventParams,
         ) => {
