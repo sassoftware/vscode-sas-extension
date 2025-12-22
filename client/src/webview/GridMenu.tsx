@@ -67,6 +67,7 @@ const GridMenu = ({
     setTimeout(() => {
       const item =
         menuRef.current &&
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         (menuRef.current.querySelector(
           `[data-index="${index}"]`,
         ) as HTMLElement);

@@ -177,6 +177,7 @@ const useDataViewer = () => {
 
   const dismissMenu = (focusColumn: boolean = true) => {
     if (focusColumn && columnMenuRef.current?.column.colId) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const headerElement = document.querySelector(
         `.ag-header-cell[col-id="${columnMenuRef.current.column.colId}"]`,
       ) as HTMLElement;
