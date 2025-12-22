@@ -77,9 +77,9 @@
       ]
     },
     {
-      "begin": "(?i)proc(\\s|/\\*.*?\\*/)*rlang",
+      "begin": "(?i)proc(\\s|/\\*.*?\\*/)*r",
       "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
-      "name": "sas.proc.rlang",
+      "name": "sas.proc.r",
       "patterns": [
         {
           "include": "#strings-or-comments"

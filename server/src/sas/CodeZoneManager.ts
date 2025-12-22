@@ -1132,7 +1132,7 @@ export class CodeZoneManager {
     this._getFullStmtName(context, this._procName, stmt);
     const zone = this._stmtEx(context, stmt);
     type = zone.type;
-    if (["PYTHON", "LUA", "RLANG"].includes(this._procName)) {
+    if (["PYTHON", "LUA", "R"].includes(this._procName)) {
       if (!this._embeddedCodeStarted) {
         if (["SUBMIT", "INTERACTIVE", "I"].includes(stmt.text)) {
           this._embeddedCodeStarted = true;

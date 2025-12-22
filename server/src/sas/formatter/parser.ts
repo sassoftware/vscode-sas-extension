@@ -135,7 +135,7 @@ const preserveProcs = (
     region.children[0].children.length > 0 &&
     lastStatement.length > 1 &&
     "text" in region.children[0].children[1] &&
-    /^(python|lua|rlang)$/i.test(region.children[0].children[1].text) &&
+    /^(python|lua|r)$/i.test(region.children[0].children[1].text) &&
     "text" in lastStatement[0] &&
     /^(submit|interactive|i)$/i.test(lastStatement[0].text)
   ) {

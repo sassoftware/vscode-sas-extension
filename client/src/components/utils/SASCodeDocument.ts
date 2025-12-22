@@ -180,8 +180,8 @@ endsubmit;
 run;`;
   }
 
-  private wrapRlang(code: string) {
-    return `proc rlang;
+  private wrapR(code: string) {
+    return `proc r;
 submit;
 ${code}
 endsubmit;
@@ -207,7 +207,7 @@ ${code}`;
     }
 
     if (this.parameters.languageId === "r") {
-      wrapped = this.wrapRlang(wrapped);
+      wrapped = this.wrapR(wrapped);
     }
 
     wrapped = this.wrapCodeWithSASProgramFileName(wrapped);

@@ -86,9 +86,9 @@ enum EmbeddedLangState {
   PROC_LUA_DEF,
   PROC_LUA_SUBMIT_OR_INTERACTIVE,
   PROC_LUA_CODE,
-  PROC_RLANG_DEF,
-  PROC_RLANG_SUBMIT_OR_INTERACTIVE,
-  PROC_RLANG_CODE,
+  PROC_R_DEF,
+  PROC_R_SUBMIT_OR_INTERACTIVE,
+  PROC_R_CODE,
 }
 export class Lexer {
   start = { line: 0, column: 0 };
@@ -293,8 +293,8 @@ export class Lexer {
         ) {
           if (token.type === "text" && token.text === "PYTHON") {
             this.context.embeddedLangState = EmbeddedLangState.PROC_PYTHON_DEF;
-          } else if (token.type === "text" && token.text === "RLANG") {
-            this.context.embeddedLangState = EmbeddedLangState.PROC_RLANG_DEF;
+          } else if (token.type === "text" && token.text === "R") {
+            this.context.embeddedLangState = EmbeddedLangState.PROC_R_DEF;
           } else if (token.type === "text" && token.text === "LUA") {
             this.context.embeddedLangState = EmbeddedLangState.PROC_LUA_DEF;
           }
@@ -329,7 +329,7 @@ export class Lexer {
         }
         break SWITCH;
       }
-      case EmbeddedLangState.PROC_RLANG_DEF: {
+      case EmbeddedLangState.PROC_R_DEF: {
         token = this._readToken();
         if (!token) {
           break SWITCH;
@@ -339,7 +339,7 @@ export class Lexer {
           ["SUBMIT", "INTERACTIVE", "I"].includes(token.text)
         ) {
           this.context.embeddedLangState =
-            EmbeddedLangState.PROC_RLANG_SUBMIT_OR_INTERACTIVE;
+            EmbeddedLangState.PROC_R_SUBMIT_OR_INTERACTIVE;
         }
         break SWITCH;
       }
@@ -405,17 +405,17 @@ export class Lexer {
         token = this._foundEmbeddedCodeToken(this.curr);
         break SWITCH;
       }
-      case EmbeddedLangState.PROC_RLANG_SUBMIT_OR_INTERACTIVE: {
+      case EmbeddedLangState.PROC_R_SUBMIT_OR_INTERACTIVE: {
         token = this._readToken();
         if (!token) {
           break SWITCH;
         }
         if (token.type === "sep" && token.text === ";") {
-          this.context.embeddedLangState = EmbeddedLangState.PROC_RLANG_CODE;
+          this.context.embeddedLangState = EmbeddedLangState.PROC_R_CODE;
         }
         break SWITCH;
       }
-      case EmbeddedLangState.PROC_RLANG_CODE: {
+      case EmbeddedLangState.PROC_R_CODE: {
         // R doesn't have multi-line string delimiters like Python's triple quotes
         for (
           let line = this.curr.line;

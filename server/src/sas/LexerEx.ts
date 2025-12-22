@@ -3104,7 +3104,7 @@ export class LexerEx {
             } else if (
               procName === "LUA" ||
               procName === "PYTHON" ||
-              procName === "RLANG"
+              procName === "R"
             ) {
               if (["SUBMIT", "INTERACTIVE", "I"].includes(word)) {
                 const next = this.prefetch_({ pos: 1 });

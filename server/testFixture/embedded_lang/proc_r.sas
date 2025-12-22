@@ -1,4 +1,4 @@
-proc rlang;
+proc r;
 submit;
     for (x in 1:6) {
       print(x)

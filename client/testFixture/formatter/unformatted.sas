@@ -40,9 +40,9 @@ def my_function():
     print("Inside the proc step")
 endsubmit;
 run;
-proc rlang;
+proc r;
 submit;
-# Reference to variable defined in previous PROC RLANG call
+# Reference to variable defined in previous PROC R call
 print(paste("x =", x))
 my_function <- function() {
     print("Inside the proc step")
@@ -135,7 +135,7 @@ print('first statement after for loop')
 endinteractive;
 run;
 
-proc rlang;
+proc r;
 submit;
 fruits <- c("apple", "banana", "cherry")
 for (x in fruits) {

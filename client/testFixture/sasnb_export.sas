@@ -29,7 +29,7 @@ This is some R code
 This is a separate note in **Markdown** format.
 */
 
-proc rlang;
+proc r;
 submit;
 die <- 1:6
 paste("Die Maths: ", die[3]*4 + die[6])

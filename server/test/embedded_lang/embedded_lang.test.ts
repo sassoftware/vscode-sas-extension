@@ -65,8 +65,8 @@ describe("Test code zone for embedded language", () => {
     assert.equal(zoneList[6], CodeZoneManager.ZONE_TYPE.PROC_STMT);
   });
 
-  it("proc rlang", () => {
-    const doc = openDoc("server/testFixture/embedded_lang/proc_rlang.sas");
+  it("proc r", () => {
+    const doc = openDoc("server/testFixture/embedded_lang/proc_r.sas");
     const languageServer = new LanguageServiceProvider(doc);
     const codeZoneManager = languageServer.getCodeZoneManager();
 

@@ -25,7 +25,7 @@ To export your SAS Notebook to other formats, click the **More Actions** (`...`)
 
 ### SAS
 
-PYTHON, R, and SQL code cells will be wrapped with PROC PYTHON/RLANG/SQL respectively to be executed on SAS. Markdown cells will be converted to block comments.
+PYTHON, R, and SQL code cells will be wrapped with PROC PYTHON/R/SQL respectively to be executed on SAS. Markdown cells will be converted to block comments.
 
 ### HTML
 
