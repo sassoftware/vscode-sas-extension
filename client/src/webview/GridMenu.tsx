@@ -1,6 +1,6 @@
 // Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface MenuItem {
   checked?: boolean;
@@ -11,13 +11,15 @@ interface MenuItem {
 }
 
 const GridMenu = ({
+  dismissMenu,
   left: incomingLeft,
   menuItems,
   parentDimensions,
-  subMenu,
+  subMenu: isSubMenu,
   theme,
   top,
 }: {
+  dismissMenu?: () => void;
   left?: number;
   menuItems: (MenuItem | string)[];
   parentDimensions?: { left: number; width: number };
@@ -27,8 +29,10 @@ const GridMenu = ({
 }) => {
   const menuRef = useRef<HTMLDivElement>(undefined);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [subMenuItems, setSubMenuItems] = useState<(MenuItem | string)[]>([]);
-  const className = subMenu
+  const [subMenu, setSubMenu] = useState<
+    { items: (MenuItem | string)[]; index: number } | undefined
+  >(undefined);
+  const className = isSubMenu
     ? `ag-menu ag-ltr ag-popup-child ${theme}`
     : `ag-menu ag-column-menu ag-ltr ag-popup-child ag-popup-positioned-under ${theme}`;
 
@@ -42,10 +46,102 @@ const GridMenu = ({
   //   put the child menu on the left side.
   const [left, setLeft] = useState(parentDimensions?.left ?? incomingLeft);
   const [width, setWidth] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const handleClickMenuItem = useCallback(
+    (index: number, menuItem: MenuItem) => {
+      if (menuItem.disabled) {
+        return;
+      }
+      if (menuItem.onPress) {
+        return menuItem.onPress();
+      }
+      if (menuItem.children) {
+        setSubMenu({ items: menuItem.children, index });
+      }
+    },
+    [],
+  );
+
+  const focusItem = (index: number) => {
+    setTimeout(() => {
+      const item =
+        menuRef.current &&
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        (menuRef.current.querySelector(
+          `[data-index="${index}"]`,
+        ) as HTMLElement);
+      if (!item) {
+        return;
+      }
+      item.focus();
+      setSelectedIndex(index);
+    }, 0);
+  };
+
+  const handleKeydown = useCallback(
+    (event: KeyboardEvent) => {
+      if (subMenu || typeof menuItems[selectedIndex] === "string") {
+        return;
+      }
+
+      switch (event.key) {
+        case "ArrowLeft":
+        case "Escape":
+          if (event.key === "ArrowLeft") {
+            event.stopPropagation();
+          }
+          if (dismissMenu) {
+            return dismissMenu();
+          }
+          break;
+        case "ArrowDown":
+          return focusItem(nextIndex());
+        case "ArrowUp":
+          return focusItem(previousIndex());
+        case "Enter":
+        case " ":
+          handleClickMenuItem(selectedIndex, menuItems[selectedIndex]);
+          return event.stopPropagation();
+        case "ArrowRight":
+          if (!menuItems[selectedIndex].children) {
+            break;
+          }
+          handleClickMenuItem(selectedIndex, menuItems[selectedIndex]);
+          return event.stopPropagation();
+        default:
+          break;
+      }
+      function nextIndex() {
+        return menuItems.findIndex(
+          (menuItem, index) =>
+            index > selectedIndex && typeof menuItem !== "string",
+        );
+      }
+      function previousIndex() {
+        for (let index = menuItems.length - 1; index >= 0; --index) {
+          if (index < selectedIndex && typeof menuItems[index] !== "string") {
+            return index;
+          }
+        }
+        return 0;
+      }
+    },
+    [handleClickMenuItem, selectedIndex, menuItems, dismissMenu, subMenu],
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeydown);
+    return () => {
+      document.removeEventListener("keydown", handleKeydown);
+    };
+  }, [handleKeydown]);
+
   useEffect(() => {
     const clientWidth = menuRef.current.closest("body").clientWidth;
     const width = menuRef.current.getBoundingClientRect().width;
     setWidth(width);
+    focusItem(0);
     if (parentDimensions) {
       // First, lets put the child menu to the right
       let adjustedLeft = parentDimensions.left + parentDimensions.width;
@@ -63,9 +159,13 @@ const GridMenu = ({
 
   return (
     <>
-      {subMenuItems.length > 0 && (
+      {subMenu && subMenu.items.length > 0 && (
         <GridMenu
-          menuItems={subMenuItems}
+          dismissMenu={() => {
+            focusItem(subMenu.index);
+            setSubMenu(undefined);
+          }}
+          menuItems={subMenu.items}
           parentDimensions={{ left, width }}
           subMenu
           theme={theme}
@@ -98,19 +198,21 @@ const GridMenu = ({
               return (
                 <div
                   aria-expanded="false"
+                  data-index={index}
                   className={`ag-menu-option ${index === activeIndex ? "ag-menu-option-active" : ""} ${menuItem.disabled ? "ag-menu-option-disabled" : ""}`}
                   role="menuitem"
                   aria-haspopup="menu"
                   key={menuItem.name}
+                  tabIndex={-1}
                   onMouseEnter={() => {
                     if (menuItem.disabled) {
                       return;
                     }
                     setActiveIndex(index);
                     if (menuItem.children) {
-                      setSubMenuItems(menuItem.children);
+                      setSubMenu({ items: menuItem.children, index });
                     } else {
-                      setSubMenuItems([]);
+                      setSubMenu(undefined);
                     }
                   }}
                   onMouseLeave={(e) => {
@@ -123,7 +225,7 @@ const GridMenu = ({
                       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                     ).some((t) => t.contains(e.target as HTMLElement));
                     if (!targetInPopup) {
-                      setSubMenuItems([]);
+                      setSubMenu(undefined);
                     }
                   }}
                 >
@@ -140,17 +242,7 @@ const GridMenu = ({
                   </span>
                   <span
                     className="ag-menu-option-part ag-menu-option-text"
-                    onClick={() => {
-                      if (menuItem.disabled) {
-                        return;
-                      }
-                      if (menuItem.onPress) {
-                        return menuItem.onPress();
-                      }
-                      if (menuItem.children) {
-                        setSubMenuItems(menuItem.children);
-                      }
-                    }}
+                    onClick={() => handleClickMenuItem(index, menuItem)}
                   >
                     {menuItem.name}
                   </span>

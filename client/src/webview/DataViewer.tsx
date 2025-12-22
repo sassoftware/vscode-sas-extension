@@ -33,15 +33,19 @@ const DataViewer = () => {
     },
     [columnMenu, dismissMenu],
   );
+  const dismissMenuWithoutFocus = useCallback(
+    () => dismissMenu(false),
+    [dismissMenu],
+  );
 
   useEffect(() => {
     document.addEventListener("keydown", handleKeydown);
-    window.addEventListener("blur", dismissMenu);
+    window.addEventListener("blur", dismissMenuWithoutFocus);
     return () => {
       document.removeEventListener("keydown", handleKeydown);
-      window.removeEventListener("blur", dismissMenu);
+      window.removeEventListener("blur", dismissMenuWithoutFocus);
     };
-  }, [handleKeydown, dismissMenu]);
+  }, [handleKeydown, dismissMenuWithoutFocus]);
 
   if (columns.length === 0) {
     return null;
@@ -53,7 +57,7 @@ const DataViewer = () => {
       <div
         className={`ag-grid-wrapper ${theme}`}
         style={gridStyles}
-        onClick={() => columnMenu && dismissMenu()}
+        onClick={() => columnMenu && dismissMenuWithoutFocus()}
       >
         <AgGridReact
           cacheBlockSize={100}
