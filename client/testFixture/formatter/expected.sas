@@ -9,6 +9,7 @@ data _null_;
 3  BB  4
 ;
 
+
 data a;
   cards4;
 1  AA  2
