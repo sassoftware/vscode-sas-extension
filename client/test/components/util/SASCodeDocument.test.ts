@@ -58,7 +58,7 @@ print("test")`,
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
-proc e;
+proc r;
 submit;
 for (x in 1:6) {
   print(x)
