@@ -18,6 +18,7 @@ import {
 import { profileConfig } from "../../commands/profile";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
+import { treeViewSelections } from "../utils/treeViewSelections";
 import ContentAdapterFactory from "./ContentAdapterFactory";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
@@ -101,7 +102,7 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
-          this.treeViewSelections(item).forEach(
+          this.getTreeViewSelections(item).forEach(
             async (resource: ContentItem) => {
               if (!resource.contextValue.includes("delete")) {
                 return;
@@ -154,7 +155,7 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.restoreResource`,
         async (item: ContentItem) => {
-          this.treeViewSelections(item).forEach(
+          this.getTreeViewSelections(item).forEach(
             async (resource: ContentItem) => {
               const isContainer = getIsContainer(resource);
               if (!(await this.contentDataProvider.restoreResource(resource))) {
@@ -276,7 +277,7 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.addToFavorites`,
         async (item: ContentItem) => {
-          this.treeViewSelections(item).forEach(
+          this.getTreeViewSelections(item).forEach(
             async (resource: ContentItem) => {
               if (
                 !(await this.contentDataProvider.addToMyFavorites(resource))
@@ -290,7 +291,7 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.removeFromFavorites`,
         async (item: ContentItem) => {
-          this.treeViewSelections(item).forEach(
+          this.getTreeViewSelections(item).forEach(
             async (resource: ContentItem) => {
               if (
                 !(await this.contentDataProvider.removeFromMyFavorites(
@@ -369,7 +370,7 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.downloadResource`,
         async (resource: ContentItem) => {
-          const selections = this.treeViewSelections(resource);
+          const selections = this.getTreeViewSelections(resource);
           const uris = await window.showOpenDialog({
             title: l10n.t("Choose where to save your files."),
             openLabel: l10n.t("Save"),
@@ -492,11 +493,8 @@ class ContentNavigator implements SubscriptionProvider {
       : "";
   }
 
-  private treeViewSelections(item: ContentItem): ContentItem[] {
-    const items =
-      this.contentDataProvider.treeView.selection.length > 1 || !item
-        ? this.contentDataProvider.treeView.selection
-        : [item];
+  private getTreeViewSelections(item: ContentItem): ContentItem[] {
+    const items = treeViewSelections(this.contentDataProvider.treeView, item);
 
     const uris: string[] = items.map(({ uri }: ContentItem) => uri);
 
