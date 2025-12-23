@@ -163,12 +163,26 @@ class RestSession extends Session {
     updateStatusBarItem(true);
   };
 
-  protected _run = async (code: string) => {
+  protected _run = async (code: string, ...args) => {
     if (!this._computeSession?.sessionId) {
       throw new Error();
     }
+
+    //Check the args for extra information
+    const variables: { [key: string]: string } = {};
+
+    //If baseDirectory is passed in, use it as a sas variable
+    const runArgs = args[0] || {};
+    const basePath = runArgs.baseDirectory || undefined;
+    if (basePath) {
+      variables._SASPROGRAMDIR = basePath;
+    }
+
     //Get the job
-    const job = await this._computeSession.execute({ code: [code] });
+    const job = await this._computeSession.execute({
+      code: [code],
+      variables: variables,
+    });
 
     //Clear out the logs
     await this.printJobLog(job);
