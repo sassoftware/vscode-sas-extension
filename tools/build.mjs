@@ -26,7 +26,6 @@ const commonBuildOptions = {
     ".properties": "text",
     ".node": "copy",
     ".svg": "dataurl",
-    ".ps1": "text",
   },
   sourcemap: !!dev,
   minify: !dev,
