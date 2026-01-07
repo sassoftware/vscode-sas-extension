@@ -1,110 +1,72 @@
-// Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
-import {
-  ERROR_END_TAG,
-  ERROR_START_TAG,
-  WORK_DIR_END_TAG,
-  WORK_DIR_START_TAG,
-} from "./const";
-import { LineCodes } from "./types";
-
-type ScriptProperties = {
-  interopLibraryFolderPath?: string;
-};
-
-export const getScript = ({
-  interopLibraryFolderPath = "",
-}: ScriptProperties) => `
 using namespace System.Collections.Generic
-function GetInteropDirectory {
-  # try to load from user specified path first
-  if ("${interopLibraryFolderPath}") {
-    if (Test-Path -Path "${interopLibraryFolderPath}\\SASInterop.dll") {
-      return "${interopLibraryFolderPath}"
-    }
-  }
 
-  # try to load path from registry
-  try {
-    $pathFromRegistry = (Get-ItemProperty -ErrorAction Stop -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
-    if (Test-Path -Path "$pathFromRegistry\\SASInterop.dll") {
-      return $pathFromRegistry
-    }
-  } catch {
-  }
+$global:env = (Get-Content -Path "$PWD\\env.json" -Raw) | ConvertFrom-Json
 
-  # try to load path from integration technologies
-  $itcPath = "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
-  if (Test-Path -Path "$itcPath\\SASInterop.dll") {
-    return $itcPath
-  }
-
-  return ""
-}
+Import-Module "$PWD\\GetInteropDirectory.psm1"
 
 try {
   $interopDir = GetInteropDirectory
   Add-Type -Path "$interopDir\\SASInterop.dll"
   Add-Type -Path "$interopDir\\SASOManInterop.dll"
 } catch {
-  Write-Error "${ERROR_START_TAG}LoadingInterop error: $_${ERROR_END_TAG}"
+  Write-Error "$($global:env.Tags.ErrorStartTag)LoadingInterop error: $_$($global:env.Tags.ErrorEndTag)"
 }
 
-class SASRunner{
+class SASRunner {
   [System.__ComObject] $objSAS
   [System.__ComObject] $objKeeper
   [System.__ComObject] $dataConnection
 
-  [void]ResolveSystemVars(){
+  [void]ResolveSystemVars() {
     try {
-      Write-Host "${WORK_DIR_START_TAG}"
+      Write-Host "$($global:env.Tags.WorkDirStartTag)"
       Write-Host $this.GetWorkDir()
-      Write-Host "${WORK_DIR_END_TAG}"
+      Write-Host "$($global:env.Tags.WorkDirEndTag)"
     } catch {
-      Write-Error "${ERROR_START_TAG}Setup error: $_${ERROR_END_TAG}"
+      Write-Error "$($global:env.Tags.ErrorStartTag)Setup error: $_$($global:env.Tags.ErrorEndTag)"
     }
   }
 
   [void]Setup([string]$profileHost, [string]$username, [string]$password, [int]$port, [int]$protocol, [string]$serverName, [string]$displayLang) {
     try {
-        # Set Encoding for input and output
-        $OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding
+      # Set Encoding for input and output
+      $OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding
 
-        # create the Integration Technologies objects
-        $objFactory = New-Object -TypeName SASObjectManager.ObjectFactoryMulti2Class
-        $objFactory.ApplicationName = "SAS Extension for Visual Studio Code"
-        $objServerDef = New-Object -TypeName SASObjectManager.ServerDefClass
-        $objServerDef.MachineDNSName = $profileHost # SAS Workspace node
-        $objServerDef.Port = $port # workspace server port
-        $objServerDef.Protocol = $protocol # 0 = COM protocol
-        $sasLocale = $displayLang -replace '-', '_'
-        $objServerDef.ExtraNameValuePairs="LOCALE=$sasLocale" # set the correct locale
+      # create the Integration Technologies objects
+      $objFactory = New-Object -TypeName SASObjectManager.ObjectFactoryMulti2Class
+      $objFactory.ApplicationName = "SAS Extension for Visual Studio Code"
+      $objServerDef = New-Object -TypeName SASObjectManager.ServerDefClass
+      $objServerDef.MachineDNSName = $profileHost # SAS Workspace node
+      $objServerDef.Port = $port # workspace server port
+      $objServerDef.Protocol = $protocol # 0 = COM protocol
+      $sasLocale = $displayLang -replace '-', '_'
+      $objServerDef.ExtraNameValuePairs = "LOCALE=$sasLocale" # set the correct locale
 
-        # Class Identifier for SAS Workspace
-        $objServerDef.ClassIdentifier = "440196d4-90f0-11d0-9f41-00a024bb830c"
+      # Class Identifier for SAS Workspace
+      $objServerDef.ClassIdentifier = "440196d4-90f0-11d0-9f41-00a024bb830c"
 
-        # create and connect to the SAS session
-        $this.objSAS = $objFactory.CreateObjectByServer(
-            $serverName, # server name
-            $true,
-            $objServerDef, # built server definition
-            $username,
-            $password
-        )
+      # create and connect to the SAS session
+      $this.objSAS = $objFactory.CreateObjectByServer(
+        $serverName, # server name
+        $true,
+        $objServerDef, # built server definition
+        $username,
+        $password
+      )
 
-        $this.objKeeper = New-Object -ComObject SASObjectManager.ObjectKeeper
-        $this.objKeeper.AddObject(1, "WorkspaceObject", $this.objSAS)
+      $this.objKeeper = New-Object -ComObject SASObjectManager.ObjectKeeper
+      $this.objKeeper.AddObject(1, "WorkspaceObject", $this.objSAS)
 
-        $this.dataConnection = New-Object -comobject ADODB.Connection
-        $this.dataConnection.Provider = "sas.IOMProvider"
-        $this.dataConnection.Properties("Data Source") = (
-          "iom-id://" + $this.objSAS.UniqueIdentifier
-        )
-        $this.dataConnection.Open()
+      $this.dataConnection = New-Object -comobject ADODB.Connection
+      $this.dataConnection.Provider = "sas.IOMProvider"
+      $this.dataConnection.Properties("Data Source") = (
+        "iom-id://" + $this.objSAS.UniqueIdentifier
+      )
+      $this.dataConnection.Open()
 
-        Write-Host "${LineCodes.SessionCreatedCode}"
+      Write-Host "$($global:env.LineCodes.SessionCreatedCode)"
     } catch {
-      Write-Error "${ERROR_START_TAG}Setup error: $_${ERROR_END_TAG}"
+      Write-Error "$($global:env.Tags.ErrorStartTag)Setup error: $_$($global:env.Tags.ErrorEndTag)"
     }
   }
 
@@ -113,104 +75,104 @@ class SASRunner{
     $values = [string[]]@()
 
     foreach ($item in $sasOptions) {
-        $parts = $item -split '=| '
-        $names += $parts[0] -replace '^-'
-        if ($parts.Length -gt 1) {
-            $values += $parts[1]
-        } else {
-            $values += ""
-        }
+      $parts = $item -split '=| '
+      $names += $parts[0] -replace '^-'
+      if ($parts.Length -gt 1) {
+        $values += $parts[1]
+      } else {
+        $values += ""
+      }
     }
 
     [ref]$errorIndices = [int[]]::new($names.Length)
     [ref]$errors = [string[]]::new($names.Length)
     [ref]$errorCodes = [int[]]::new($names.Length)
 
-    try{
+    try {
       $this.objSAS.Utilities.OptionService.SetOptions([string[]]$names, [string[]]$values, $errorIndices, $errorCodes, $errors)
 
       $errVals = $errors.Value
-      if($errVals.Length -gt 0){
-          throw $errVals
+      if ($errVals.Length -gt 0) {
+        throw $errVals
       }
     } catch {
-        Write-Error "${ERROR_START_TAG}$Error[0].Exception.Message${ERROR_END_TAG}"
+      Write-Error "$($global:env.Tags.ErrorStartTag)$Error[0].Exception.Message$($global:env.Tags.ErrorEndTag)"
     }
   }
 
   [string]GetWorkDir() {
     $fieldInclusionMask = ($false, $false, $false, $true, $false)
     [ref]$engineName = [string[]]@()
-    [ref]$engineAttrs = New-Object 'int[,]' 0,0
+    [ref]$engineAttrs = New-Object 'int[,]' 0, 0
     [ref]$libraryAttrs = [int[]]@()
     [ref]$physicalName = [string[]]::new(1)
-    [ref]$infoPropertyNames = New-Object 'string[,]' 0,0
-    [ref]$infoPropertyValues = New-Object 'string[,]' 0,0
+    [ref]$infoPropertyNames = New-Object 'string[,]' 0, 0
+    [ref]$infoPropertyValues = New-Object 'string[,]' 0, 0
     $lib = $this.objSAS.DataService.UseLibref("work")
-    $lib.LevelInfo([bool[]]$fieldInclusionMask,$engineName,$engineAttrs,$libraryAttrs,
-                  $physicalName,$infoPropertyNames,$infoPropertyValues)
+    $lib.LevelInfo([bool[]]$fieldInclusionMask, $engineName, $engineAttrs, $libraryAttrs,
+      $physicalName, $infoPropertyNames, $infoPropertyValues)
     return $physicalName.Value[0]
   }
 
   [void]Run([string]$code) {
-    try{
-        $this.objSAS.LanguageService.Reset()
-        $this.objSAS.LanguageService.Async = $true
-        $this.objSAS.LanguageService.Submit($code)
-    }catch{
-      Write-Error "${ERROR_START_TAG}Run error: $_${ERROR_END_TAG}"
+    try {
+      $this.objSAS.LanguageService.Reset()
+      $this.objSAS.LanguageService.Async = $true
+      $this.objSAS.LanguageService.Submit($code)
+    } catch {
+      Write-Error "$($global:env.Tags.ErrorStartTag)Run error: $_$($global:env.Tags.ErrorEndTag)"
     }
   }
 
-  [void]Close(){
-  try{
-        $this.dataConnection.Close()
-        $this.objKeeper.RemoveObject($this.objSAS)
-        $this.objSAS.Close()
-    }catch{
-      Write-Error "${ERROR_START_TAG}Close error: $_${ERROR_END_TAG}"
+  [void]Close() {
+    try {
+      $this.dataConnection.Close()
+      $this.objKeeper.RemoveObject($this.objSAS)
+      $this.objSAS.Close()
+    } catch {
+      Write-Error "$($global:env.Tags.ErrorStartTag)Close error: $_$($global:env.Tags.ErrorEndTag)"
     }
   }
 
-  [void]Cancel(){
-    try{
-        $this.objSAS.LanguageService.Cancel()
-        Write-Host "${LineCodes.RunCancelledCode}"
-      }catch{
-        Write-Error "${ERROR_START_TAG}Cancel error: $_${ERROR_END_TAG}"
-      }
+  [void]Cancel() {
+    try {
+      $this.objSAS.LanguageService.Cancel()
+      Write-Host "$($global:env.LineCodes.RunCancelledCode)"
+    } catch {
+      Write-Error "$($global:env.Tags.ErrorStartTag)Cancel error: $_$($global:env.Tags.ErrorEndTag)"
     }
+  }
 
   [String]FlushLog([int]$chunkSize) {
-      try{
-        return $this.objSAS.LanguageService.FlushLog($chunkSize)
-      } catch{
-        Write-Error "${ERROR_START_TAG}FlushLog error: $_${ERROR_END_TAG}"
-      }
-      return ""
+    try {
+      return $this.objSAS.LanguageService.FlushLog($chunkSize)
+    } catch {
+      Write-Error "$($global:env.Tags.ErrorStartTag)FlushLog error: $_$($global:env.Tags.ErrorEndTag)"
+    }
+    return ""
   }
 
-  [int]FlushLogLines([int]$chunkSize,[bool]$skipPageHeader) {
+  [int]FlushLogLines([int]$chunkSize, [bool]$skipPageHeader) {
     [ref]$carriageControls = [int[]]::new($chunkSize)
     [ref]$lineTypes = [int[]]::new($chunkSize)
     [ref]$logLines = [string[]]::new($chunkSize)
 
-    try{
-      $this.objSAS.LanguageService.FlushLogLines($chunkSize,$carriageControls,$lineTypes,$logLines)
-    } catch{
-      Write-Error "${ERROR_START_TAG}FlushLog error: $_${ERROR_END_TAG}"
+    try {
+      $this.objSAS.LanguageService.FlushLogLines($chunkSize, $carriageControls, $lineTypes, $logLines)
+    } catch {
+      Write-Error "$($global:env.Tags.ErrorStartTag)FlushLog error: $_$($global:env.Tags.ErrorEndTag)"
     }
     for ($i = 0; $i -lt $logLines.Value.Length; $i++) {
       if (($carriageControls.Value[$i] -eq 1) -and $skipPageHeader) {
         continue
       }
-      Write-Host "${LineCodes.LogLineType}" $lineTypes.Value[$i]
+      Write-Host "$($global:env.LineCodes.LogLineType)" $lineTypes.Value[$i]
       Write-Host $logLines.Value[$i]
     }
     return $logLines.Value.Length
   }
 
-  [void]FlushCompleteLog(){
+  [void]FlushCompleteLog() {
     do {
       $chunkSize = 32768
       $log = $this.FlushLog($chunkSize)
@@ -228,8 +190,7 @@ class SASRunner{
     $byteCount = 0
     $outStream = New-Object System.IO.FileStream($outputFile, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write)
     try {
-      do
-      {
+      do {
         $objStream.Read(8192, [ref] $bytes)
         $outStream.Write($bytes, 0, $bytes.length)
         $endOfFile = $bytes.Length -lt 8192
@@ -241,7 +202,7 @@ class SASRunner{
       $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
     }
 
-    Write-Host "${LineCodes.ResultsFetchedCode}"
+    Write-Host "$($global:env.LineCodes.ResultsFetchedCode)"
   }
 
   [void]GetDatasetRecords([string]$library, [string]$table, [int]$start = 0, [int]$limit = 100, [string]$sortCriteria = "") {
@@ -327,11 +288,11 @@ class SASRunner{
     $parsedRows = @()
     for ($i = 0; $i -lt $rows.GetLength(1); $i++) {
       $parsedRow = [PSCustomObject]@{
-        index = $i + 1
-        name  = $rows[0, $i]
-        type  = $rows[1, $i]
+        index  = $i + 1
+        name   = $rows[0, $i]
+        type   = $rows[1, $i]
         format = $rows[2, $i]
-        label = $rows[3, $i]
+        label  = $rows[3, $i]
         length = $rows[4, $i]
         varnum = $rows[5, $i]
       }
@@ -341,10 +302,10 @@ class SASRunner{
     Write-Host $(ConvertTo-Json -Depth 10 -InputObject $parsedRows -Compress)
   }
 
-  [void]DeleteItemAtPath([string]$filePath,[bool]$recursive) {
+  [void]DeleteItemAtPath([string]$filePath, [bool]$recursive) {
     if ($recursive) {
       $items = $this.GetItemsAtPath($filePath, [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath);
-      for($i = 0; $i -lt $items.Count; $i++) {
+      for ($i = 0; $i -lt $items.Count; $i++) {
         if ($items[$i].category -eq 0) {
           $this.DeleteItemAtPath($items[$i].uri, $true);
         } else {
@@ -368,9 +329,9 @@ class SASRunner{
     }
     try {
       $this.DeleteItemAtPath($filePath, $recursive)
-      Write-Host (@{success=$true} | ConvertTo-Json)
+      Write-Host (@{success = $true } | ConvertTo-Json)
     } catch {
-      Write-Host (@{success=$false; message=$Error[0].Exception.Message} | ConvertTo-Json)
+      Write-Host (@{success = $false; message = $Error[0].Exception.Message } | ConvertTo-Json)
     }
   }
 
@@ -378,15 +339,15 @@ class SASRunner{
     try {
       $currentFolder = $this.GetItemAtPathWithName($folderPath, $folderName)
       if ($currentFolder -ne $null) {
-        Write-Host (@{success=$false} | ConvertTo-Json)
+        Write-Host (@{success = $false } | ConvertTo-Json)
         return;
       }
 
       $uri = $this.objSAS.FileService.MakeDirectory($folderPath, $folderName)
       $newFolder = $this.GetItemAtPathWithName($folderPath, $folderName)
-      Write-Host (@{success=$true; data=$newFolder} | ConvertTo-Json)
+      Write-Host (@{success = $true; data = $newFolder } | ConvertTo-Json)
     } catch {
-      Write-Host (@{success=$false; message=$Error[0].Exception.Message} | ConvertTo-Json)
+      Write-Host (@{success = $false; message = $Error[0].Exception.Message } | ConvertTo-Json)
     }
   }
 
@@ -394,7 +355,7 @@ class SASRunner{
     try {
       $currentItem = $this.GetItemAtPathWithName($folderPath, $fileName)
       if ($currentItem -ne $null) {
-        Write-Host (@{success=$false} | ConvertTo-Json)
+        Write-Host (@{success = $false } | ConvertTo-Json)
         return;
       }
 
@@ -409,9 +370,9 @@ class SASRunner{
       $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
 
       $newFile = $this.GetItemAtPathWithName($folderPath, $fileName)
-      Write-Host (@{success=$true; data=$newFile} | ConvertTo-Json)
+      Write-Host (@{success = $true; data = $newFile } | ConvertTo-Json)
     } catch {
-      Write-Host (@{success=$false; message=$Error[0].Exception.Message} | ConvertTo-Json)
+      Write-Host (@{success = $false; message = $Error[0].Exception.Message } | ConvertTo-Json)
     }
   }
 
@@ -426,9 +387,9 @@ class SASRunner{
       $objStream.Close()
       $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
 
-      Write-Host (@{success=$true} | ConvertTo-Json)
+      Write-Host (@{success = $true } | ConvertTo-Json)
     } catch {
-      Write-Host (@{success=$false; message=$Error[0].Exception.Message} | ConvertTo-Json)
+      Write-Host (@{success = $false; message = $Error[0].Exception.Message } | ConvertTo-Json)
     }
   }
 
@@ -440,19 +401,19 @@ class SASRunner{
     return "\\"
   }
 
-  [void]RenameFile([string]$oldPath,[string]$newPath,[string]$newName) {
+  [void]RenameFile([string]$oldPath, [string]$newPath, [string]$newName) {
     try {
       $currentItem = $this.GetItemAtPathWithName($newPath, $newName)
       if ($currentItem -ne $null) {
-        Write-Host (@{success=$false} | ConvertTo-Json)
+        Write-Host (@{success = $false } | ConvertTo-Json)
         return;
       }
 
-      $this.objSAS.FileService.RenameFile($oldPath,$newPath+$this.GetDirectorySeparator($newPath)+$newName);
+      $this.objSAS.FileService.RenameFile($oldPath, $newPath + $this.GetDirectorySeparator($newPath) + $newName);
       $item = $this.GetItemAtPathWithName($newPath, $newName);
-      Write-Host (@{success=$true; data=$item} | ConvertTo-Json)
+      Write-Host (@{success = $true; data = $item } | ConvertTo-Json)
     } catch {
-      Write-Host (@{success=$false; message=$Error[0].Exception.Message} | ConvertTo-Json)
+      Write-Host (@{success = $false; message = $Error[0].Exception.Message } | ConvertTo-Json)
     }
   }
 
@@ -467,8 +428,7 @@ class SASRunner{
       $byteCount = 0
       $outStream = New-Object System.IO.FileStream($outputFile, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write)
       try {
-        do
-        {
+        do {
           $objStream.Read(8192, [ref] $bytes)
           $outStream.Write($bytes, 0, $bytes.length)
           $endOfFile = $bytes.Length -lt 8192
@@ -479,15 +439,15 @@ class SASRunner{
         $outStream.Close()
         $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)
       }
-      Write-Host (@{success=$true} | ConvertTo-Json)
+      Write-Host (@{success = $true } | ConvertTo-Json)
     } catch {
-      Write-Host (@{success=$false; message=$Error[0].Exception.Message} | ConvertTo-Json)
+      Write-Host (@{success = $false; message = $Error[0].Exception.Message } | ConvertTo-Json)
     }
   }
 
   [object] GetItemAtPathWithName([string]$folderPath, [string]$name) {
     $items = $this.GetItemsAtPath($folderPath, [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath)
-    for($i = 0; $i -lt $items.Count; $i++) {
+    for ($i = 0; $i -lt $items.Count; $i++) {
       if ($items[$i].name -eq $name) {
         return $items[$i]
       }
@@ -495,7 +455,7 @@ class SASRunner{
     return $null;
   }
 
-  [object[]] GetItemsAtPath([string]$folderPath,[SAS.FileServiceListFilesMode] $mode) {
+  [object[]] GetItemsAtPath([string]$folderPath, [SAS.FileServiceListFilesMode] $mode) {
     $fieldInclusionMask = [boolean[]]@()
     # Out data
     $listedPath = ""
@@ -507,33 +467,33 @@ class SASRunner{
     $engines = [string[]]@()
 
     $this.objSAS.FileService.ListFiles(
-        $folderPath,
-        $mode,
-        $fieldInclusionMask,
-        [ref]$listedPath,
-        [ref]$names,
-        [ref]$typeNames,
-        [ref]$typeCategories,
-        [ref]$sizes,
-        [ref]$modTimes,
-        [ref]$engines
+      $folderPath,
+      $mode,
+      $fieldInclusionMask,
+      [ref]$listedPath,
+      [ref]$names,
+      [ref]$typeNames,
+      [ref]$typeCategories,
+      [ref]$sizes,
+      [ref]$modTimes,
+      [ref]$engines
     )
 
     $output = [object[]]::new($names.Length)
-    for($i = 0; $i -lt $names.Count; $i++) {
+    for ($i = 0; $i -lt $names.Count; $i++) {
       $uri = $listedPath.Trim("\\") + $this.GetDirectorySeparator($listedPath) + $names[$i];
       if ($listedPath -eq "") {
         $uri = $names[$i]
       }
       $output[$i] = @{
-        uri=$uri;
-        name=$names[$i];
-        type=$typeNames[$i];
-        category=$typeCategories[$i];
-        size=$sizes[$i];
-        modifiedTimeStamp=$modTimes[$i];
-        engine=$engines[$i];
-        parentFolderUri=$listedPath
+        uri               = $uri;
+        name              = $names[$i];
+        type              = $typeNames[$i];
+        category          = $typeCategories[$i];
+        size              = $sizes[$i];
+        modifiedTimeStamp = $modTimes[$i];
+        engine            = $engines[$i];
+        parentFolderUri   = $listedPath
       }
     }
 
@@ -556,9 +516,9 @@ class SASRunner{
         }
       }
       $output = $this.GetItemsAtPath($folderPath, $mode)
-      Write-Host (@{success=$true; data=$output} | ConvertTo-Json)
+      Write-Host (@{success = $true; data = $output } | ConvertTo-Json)
     } catch {
-      Write-Host (@{success=$false; message=$Error[0].Exception.Message} | ConvertTo-Json)
+      Write-Host (@{success = $false; message = $Error[0].Exception.Message } | ConvertTo-Json)
     }
   }
 
@@ -664,4 +624,3 @@ class SASRunner{
     Write-Host $(ConvertTo-Json -Depth 10 -InputObject $result -Compress)
   }
 }
-`;

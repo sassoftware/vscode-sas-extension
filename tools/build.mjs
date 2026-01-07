@@ -76,6 +76,10 @@ const copyFiles = () => {
       src: "./client/src/components/notebook/exporters/templates",
       dest: "./client/dist/notebook/exporters/templates",
     },
+    {
+      src: "./client/src/connection/itc/script",
+      dest: "./client/dist/node",
+    },
   ];
   foldersToCopy.forEach((item) =>
     fs.cpSync(item.src, item.dest, { recursive: true }),
