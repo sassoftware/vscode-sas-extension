@@ -10,12 +10,9 @@ import { v4 } from "uuid";
 
 import { setContext } from "../../../src/components/ExtensionContext";
 import { getSession } from "../../../src/connection/itc";
-import {
-  WORK_DIR_END_TAG,
-  WORK_DIR_START_TAG,
-} from "../../../src/connection/itc/const";
+import { LineCodes, Tags } from "../../../src/connection/itc/env.json";
 import { getScript } from "../../../src/connection/itc/script";
-import { ITCProtocol, LineCodes } from "../../../src/connection/itc/types";
+import { ITCProtocol } from "../../../src/connection/itc/types";
 import { Session } from "../../../src/connection/session";
 import { extensionContext } from "../../../src/node/extension";
 
@@ -88,9 +85,9 @@ describe("ITC connection", () => {
     it("creates a well-formed local session", async () => {
       const setupPromise = session.setup();
 
-      onDataCallback(Buffer.from(`${WORK_DIR_START_TAG}`));
+      onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
       onDataCallback(Buffer.from(`/work/dir`));
-      onDataCallback(Buffer.from(`${WORK_DIR_END_TAG}`));
+      onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
 
       await setupPromise;
 
@@ -138,9 +135,9 @@ describe("ITC connection", () => {
     beforeEach(async () => {
       writeFileSync(tempHtmlPath, html5);
       const setupPromise = session.setup();
-      onDataCallback(Buffer.from(`${WORK_DIR_START_TAG}`));
+      onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
       onDataCallback(Buffer.from(`/work/dir`));
-      onDataCallback(Buffer.from(`${WORK_DIR_END_TAG}`));
+      onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
       await setupPromise;
     });
     afterEach(() => {
@@ -189,9 +186,9 @@ $runner.FetchResultsFile($filePath, $outputFile)
   describe("close", () => {
     beforeEach(async () => {
       const setupPromise = session.setup();
-      onDataCallback(Buffer.from(`${WORK_DIR_START_TAG}`));
+      onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
       onDataCallback(Buffer.from(`/work/dir`));
-      onDataCallback(Buffer.from(`${WORK_DIR_END_TAG}`));
+      onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
       await setupPromise;
     });
 

@@ -26,6 +26,7 @@ const commonBuildOptions = {
     ".properties": "text",
     ".node": "copy",
     ".svg": "dataurl",
+    ".ps1": "text",
   },
   sourcemap: !!dev,
   minify: !dev,
@@ -75,6 +76,14 @@ const copyFiles = () => {
     {
       src: "./client/src/components/notebook/exporters/templates",
       dest: "./client/dist/notebook/exporters/templates",
+    },
+    {
+      src: "./client/src/connection/itc/env.json",
+      dest: "./client/dist/node/env.json",
+    },
+    {
+      src: "./client/src/connection/itc/GetInteropDirectory.psm1",
+      dest: "./client/dist/node/GetInteropDirectory.psm1",
     },
   ];
   foldersToCopy.forEach((item) =>
