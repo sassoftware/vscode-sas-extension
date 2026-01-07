@@ -1,13 +1,6 @@
 import { runTests } from "@vscode/test-electron";
 
-import fs from "fs";
 import * as path from "path";
-
-// These tests run against our typescript files. Typescript does not
-// copy files that aren't ts files but _are_ declared modules. If there
-// are any files that need to be copied from the src directory to the
-// ts compiled directory, put them here.
-const filesToCopy = ["src/connection/itc/itc.ps1"];
 
 async function main() {
   try {
@@ -18,16 +11,6 @@ async function main() {
     // The path to test runner
     // Passed to --extensionTestsPath
     const extensionTestsPath = path.resolve(__dirname, "./index");
-
-    // This is somewhat of a hack, but
-
-    filesToCopy.forEach((item) =>
-      fs.cpSync(
-        path.join(extensionDevelopmentPath, "client", item),
-        path.join(__dirname, "..", item),
-        { recursive: true },
-      ),
-    );
 
     // Download VS Code, unzip it and run the integration test
     await runTests({
