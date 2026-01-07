@@ -85,6 +85,10 @@ const copyFiles = () => {
       src: "./client/src/connection/itc/GetInteropDirectory.psm1",
       dest: "./client/dist/node/GetInteropDirectory.psm1",
     },
+    {
+      src: "./client/src/connection/itc/itc.ps1",
+      dest: "./client/dist/node/itc.ps1",
+    },
   ];
   foldersToCopy.forEach((item) =>
     fs.cpSync(item.src, item.dest, { recursive: true }),
