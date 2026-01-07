@@ -29,12 +29,21 @@ class DataViewer extends WebView {
   public l10nMessages() {
     return {
       "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
-      Ascending: l10n.t("Ascending"),
       "Descending (add to sorting)": l10n.t("Descending (add to sorting)"),
-      Descending: l10n.t("Descending"),
-      Properties: l10n.t("Properties"),
       "Remove all sorting": l10n.t("Remove all sorting"),
       "Remove sorting": l10n.t("Remove sorting"),
+      "Row number": l10n.t("Row number"),
+      "Sorted, Ascending": l10n.t("Sorted, Ascending"),
+      "Sorted, Descending": l10n.t("Sorted, Descending"),
+      Ascending: l10n.t("Ascending"),
+      Character: l10n.t("Character"),
+      Currency: l10n.t("Currency"),
+      Date: l10n.t("Date"),
+      Datetime: l10n.t("Datetime"),
+      Descending: l10n.t("Descending"),
+      Numeric: l10n.t("Numeric"),
+      Options: l10n.t("Options"),
+      Properties: l10n.t("Properties"),
       Sort: l10n.t("Sort"),
     };
   }

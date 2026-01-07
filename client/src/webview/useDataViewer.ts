@@ -6,6 +6,7 @@ import {
   AgColumn,
   AllCommunityModule,
   ColDef,
+  ColumnState,
   GridApi,
   GridReadyEvent,
   IGetRowsParams,
@@ -20,6 +21,7 @@ import { Column } from "../connection/rest/api/compute";
 import type { ViewProperties } from "../panels/DataViewer";
 import ColumnHeader from "./ColumnHeader";
 import { ColumnMenuProps, getColumnMenu } from "./ColumnMenu";
+import localize from "./localize";
 
 declare const acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
@@ -28,6 +30,12 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 const contextMenuHandler = (e) => {
   e.stopImmediatePropagation();
+};
+
+export const applyColumnState = (api: GridApi, state: ColumnState[]) => {
+  api.applyColumnState({ state, defaultState: { sort: null } });
+  api.ensureIndexVisible(0);
+  storeViewProperties({ columnState: state });
 };
 
 const defaultTimeout = 60 * 1000; // 60 seconds (accounting for compute session expiration)
@@ -118,6 +126,7 @@ const useDataViewer = () => {
   const [columns, setColumns] = useState<ColDef[]>([]);
   const [columnMenu, setColumnMenu] = useState<ColumnMenuProps | undefined>();
   const columnMenuRef = useRef<ColumnMenuProps | undefined>(columnMenu);
+  const columnStateRef = useRef<ColumnState[] | undefined>(undefined);
   useEffect(() => {
     columnMenuRef.current = columnMenu;
   }, [columnMenu]);
@@ -156,9 +165,28 @@ const useDataViewer = () => {
         },
       };
       event.api.setGridOption("datasource", dataSource);
+
+      if (columnStateRef.current && columnStateRef.current.length > 0) {
+        applyColumnState(event.api, columnStateRef.current);
+        event.api.refreshHeader();
+        columnStateRef.current = undefined;
+      }
     },
     [columns],
   );
+
+  const dismissMenu = (focusColumn: boolean = true) => {
+    if (focusColumn && columnMenuRef.current?.column.colId) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const headerElement = document.querySelector(
+        `.ag-header-cell[col-id="${columnMenuRef.current.column.colId}"]`,
+      ) as HTMLElement;
+      if (headerElement) {
+        headerElement.focus();
+      }
+    }
+    setColumnMenu(undefined);
+  };
 
   const displayMenuForColumn = useCallback(
     (api: GridApi, column: AgColumn, rect: DOMRect) => {
@@ -166,18 +194,12 @@ const useDataViewer = () => {
         return setColumnMenu(undefined);
       }
       setColumnMenu(
-        getColumnMenu(
-          api,
-          column,
-          rect,
-          () => setColumnMenu(undefined),
-          (columnName: string) => {
-            vscode.postMessage({
-              command: "request:loadColumnProperties",
-              data: { columnName },
-            });
-          },
-        ),
+        getColumnMenu(api, column, rect, dismissMenu, (columnName: string) => {
+          vscode.postMessage({
+            command: "request:loadColumnProperties",
+            data: { columnName },
+          });
+        }),
       );
     },
     [],
@@ -189,10 +211,10 @@ const useDataViewer = () => {
     }
 
     fetchColumns().then(({ columns: columnsData, viewProperties }) => {
-      const getColumnState = (name: string) =>
-        viewProperties.columnState
-          ? viewProperties.columnState.find(({ colId }) => colId === name)
-          : {};
+      if (viewProperties.columnState && viewProperties.columnState.length > 0) {
+        columnStateRef.current = viewProperties.columnState;
+      }
+
       const columns: ColDef[] = columnsData.map((column) => ({
         field: column.name,
         headerComponent: ColumnHeader,
@@ -201,7 +223,6 @@ const useDataViewer = () => {
           currentColumn: () => columnMenuRef.current?.column,
           displayMenuForColumn,
         },
-        ...getColumnState(column.name),
         suppressHeaderKeyboardEvent: (
           params: SuppressHeaderKeyboardEventParams,
         ) => {
@@ -231,6 +252,7 @@ const useDataViewer = () => {
               params.column as AgColumn,
               dropdownButton.getBoundingClientRect(),
             );
+            params.event.stopPropagation();
             return true;
           }
           return false;
@@ -241,6 +263,7 @@ const useDataViewer = () => {
         field: "#",
         suppressMovable: true,
         sortable: false,
+        headerTooltip: localize("Row number"),
       });
 
       setColumns(columns);
@@ -254,8 +277,6 @@ const useDataViewer = () => {
       window.removeEventListener("contextmenu", contextMenuHandler);
     };
   }, []);
-
-  const dismissMenu = () => setColumnMenu(undefined);
 
   return {
     columns,
