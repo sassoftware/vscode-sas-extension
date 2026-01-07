@@ -21,8 +21,8 @@ import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 import { extractOutputHtmlFileName } from "../util";
 import { LineParser } from "./LineParser";
-import { LineCodes, Tags } from "./env.json";
 import { getScript } from "./script";
+import { LineCodes, Tags } from "./script/env.json";
 import { Config, ITCProtocol } from "./types";
 import {
   decodeEntities,

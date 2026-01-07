@@ -10,8 +10,8 @@ import { v4 } from "uuid";
 
 import { setContext } from "../../../src/components/ExtensionContext";
 import { getSession } from "../../../src/connection/itc";
-import { LineCodes, Tags } from "../../../src/connection/itc/env.json";
 import { getScript } from "../../../src/connection/itc/script";
+import { LineCodes, Tags } from "../../../src/connection/itc/script/env.json";
 import { ITCProtocol } from "../../../src/connection/itc/types";
 import { Session } from "../../../src/connection/session";
 import { extensionContext } from "../../../src/node/extension";

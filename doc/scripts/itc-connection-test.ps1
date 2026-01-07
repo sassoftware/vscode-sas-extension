@@ -22,7 +22,7 @@ param (
 
 $global:interopLibraryFolderPath = $InteropLibraryPath
 
-Set-Location "$PSScriptRoot\..\..\client\src\connection\itc\"
+Set-Location "$PSScriptRoot\..\..\client\src\connection\itc\script\"
 
 Import-Module .\GetInteropDirectory.psm1
 

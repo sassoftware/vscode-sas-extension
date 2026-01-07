@@ -77,16 +77,8 @@ const copyFiles = () => {
       dest: "./client/dist/notebook/exporters/templates",
     },
     {
-      src: "./client/src/connection/itc/env.json",
-      dest: "./client/dist/node/env.json",
-    },
-    {
-      src: "./client/src/connection/itc/GetInteropDirectory.psm1",
-      dest: "./client/dist/node/GetInteropDirectory.psm1",
-    },
-    {
-      src: "./client/src/connection/itc/itc.ps1",
-      dest: "./client/dist/node/itc.ps1",
+      src: "./client/src/connection/itc/script",
+      dest: "./client/dist/node",
     },
   ];
   foldersToCopy.forEach((item) =>
