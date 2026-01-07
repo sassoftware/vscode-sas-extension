@@ -10,7 +10,7 @@ import { v4 } from "uuid";
 
 import { setContext } from "../../../src/components/ExtensionContext";
 import { getSession } from "../../../src/connection/itc";
-import { getScript } from "../../../src/connection/itc/script";
+import * as scripts from "../../../src/connection/itc/script";
 import { LineCodes, Tags } from "../../../src/connection/itc/script/env.json";
 import { ITCProtocol } from "../../../src/connection/itc/types";
 import { Session } from "../../../src/connection/session";
@@ -31,6 +31,10 @@ describe("ITC connection", () => {
   beforeEach(() => {
     sandbox = createSandbox({});
 
+    // For these tests, we don't particularly care about the script
+    // contents, but rather care about how our ts code interacts with
+    // the script.
+    sandbox.stub(scripts, "getScript");
     spawnStub = sandbox.stub(proc, "spawn");
 
     stdoutStub = sandbox.stub();
@@ -98,7 +102,6 @@ describe("ITC connection", () => {
       ).to.be.true;
 
       //using args here allows use of deep equal, that generates a concise diff in the test output on failures
-      expect(stdinStub.args[0][0]).to.deep.equal(getScript({}) + "\n");
       expect(stdinStub.args[1][0]).to.deep.equal(
         "$runner = New-Object -TypeName SASRunner\n",
       );

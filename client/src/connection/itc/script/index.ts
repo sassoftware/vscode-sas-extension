@@ -7,13 +7,11 @@ type ScriptProperties = {
   interopLibraryFolderPath?: string;
 };
 
-const ps1Script = fs.readFileSync(path.join(__dirname, "itc.ps1")).toString();
-
 export const getScript = ({
   interopLibraryFolderPath = "",
 }: ScriptProperties) => `
 Set-Location -Path "${__dirname}"
 $global:interopLibraryFolderPath="${interopLibraryFolderPath}"
 
-${ps1Script}
+${fs.readFileSync(path.join(__dirname, "itc.ps1")).toString()}
 `;
