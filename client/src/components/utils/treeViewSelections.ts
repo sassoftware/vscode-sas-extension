@@ -5,9 +5,8 @@ import { TreeItem, TreeView } from "vscode";
 /**
  * Gets the selected items from a tree view based on the current selection state.
  *
- * If multiple items are selected in the tree view, returns those selections.
- * If no item is passed or no selections exist, returns the tree view's selection.
- * Otherwise, returns the single clicked item.
+ * If an item is present and is not part of selections, return the item. Otherwise,
+ * return the selections.
  *
  * @param treeView - The VS Code TreeView instance
  * @param item - The item that was clicked/activated
@@ -17,9 +16,6 @@ export function treeViewSelections<T extends TreeItem>(
   treeView: TreeView<T>,
   item: T | undefined,
 ): T[] {
-  // If we have an item, we need to make sure it is part of the selection
-  // If it's not, _it_ should be what is selected. Otherwise, we can
-  // just rely on treeView selection
   if (item) {
     const itemIsInSelection = treeView.selection.some(
       ({ id }) => id === item.id,
