@@ -13,6 +13,8 @@ const plugins = [
         // for VS Code task tracking
         console.log("start");
         console.log("end");
+        // After we've compiled things, lets copy over any file changes
+        process.env.npm_config_client && copyFiles();
       });
     },
   },
@@ -81,8 +83,9 @@ const copyFiles = () => {
       dest: "./client/dist/node",
     },
   ];
+  console.log("files copied");
   foldersToCopy.forEach((item) =>
-    fs.cpSync(item.src, item.dest, { recursive: true }),
+    fs.cpSync(item.src, item.dest, { recursive: true, force: true }),
   );
 };
 
