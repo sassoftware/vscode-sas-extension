@@ -575,6 +575,12 @@
             "type": "boolean",
             "default": false,
             "description": "%configuration.SAS.notebook.export.includeLog%"
+          },
+          "SAS.r.runtimePath": {
+            "order": 11,
+            "type": "string",
+            "default": "",
+            "description": "%configuration.SAS.r.runtimePath%"
           }
         }
       }
@@ -1296,7 +1302,8 @@
         "embeddedLanguages": {
           "source.python": "python",
           "source.lua": "lua",
-          "source.sql": "sql"
+          "source.sql": "sql",
+          "source.r": "r"
         }
       }
     ],

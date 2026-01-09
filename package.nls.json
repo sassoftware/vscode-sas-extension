@@ -68,6 +68,7 @@
   "configuration.SAS.log.showOnExecutionStart": "Show SAS Log when code execution starts",
   "configuration.SAS.notebook.export.includeLog": "Include SAS log in exported notebook",
   "configuration.SAS.problems.log.enabled": "Show problems from SAS log",
+  "configuration.SAS.r.runtimePath": "Path to R executable. If not specified, the extension will look for 'R' in your system PATH. Use this setting to specify a custom R installation location.",
   "configuration.SAS.results.html.custom.style": "Specifies which SAS style to use for the light, dark, highContrast, or highContrastLight themes. This option takes effect when `#SAS.results.html.style#` is set to `(auto)`.",
   "configuration.SAS.results.html.custom.style.dark": "Style to use for dark theme",
   "configuration.SAS.results.html.custom.style.highContrast": "Style to use for high contrast theme",
