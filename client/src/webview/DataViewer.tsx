@@ -7,6 +7,7 @@ import { AgGridReact } from "ag-grid-react";
 
 import ".";
 import ColumnMenu from "./ColumnMenu";
+import TableFilter from "./TableFilter";
 import useDataViewer from "./useDataViewer";
 import useTheme from "./useTheme";
 
@@ -22,8 +23,18 @@ const gridStyles = {
 };
 
 const DataViewer = () => {
+  const title = document
+    .querySelector("[data-title]")
+    .getAttribute("data-title");
   const theme = useTheme();
-  const { columns, onGridReady, columnMenu, dismissMenu } = useDataViewer();
+  const {
+    columnMenu,
+    columns,
+    dismissMenu,
+    gridRef,
+    onGridReady,
+    refreshResults,
+  } = useDataViewer();
 
   const handleKeydown = useCallback(
     (event) => {
@@ -53,6 +64,12 @@ const DataViewer = () => {
 
   return (
     <div className="data-viewer">
+      <h1>{title}</h1>
+      <TableFilter
+        onCommit={(value) => {
+          refreshResults({ filterValue: value });
+        }}
+      />
       {columnMenu && <ColumnMenu {...columnMenu} />}
       <div
         className={`ag-grid-wrapper ${theme}`}
@@ -60,6 +77,7 @@ const DataViewer = () => {
         onClick={() => columnMenu && dismissMenuWithoutFocus()}
       >
         <AgGridReact
+          ref={gridRef}
           cacheBlockSize={100}
           columnDefs={columns}
           defaultColDef={{
@@ -77,5 +95,5 @@ const DataViewer = () => {
   );
 };
 
-const root = createRoot(document.querySelector(".data-viewer"));
+const root = createRoot(document.querySelector(".data-viewer-container"));
 root.render(<DataViewer />);

@@ -27,8 +27,8 @@ describe("PaginatedResultSet", async function () {
       async () => mockAxiosResponse,
     );
 
-    expect(await paginatedResultSet.getData(0, 100, [])).to.deep.equal(
-      mockAxiosResponse,
-    );
+    expect(
+      await paginatedResultSet.getData(0, 100, [], undefined),
+    ).to.deep.equal(mockAxiosResponse);
   });
 });

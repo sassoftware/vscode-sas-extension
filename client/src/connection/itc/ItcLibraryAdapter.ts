@@ -10,6 +10,7 @@ import {
   LibraryAdapter,
   LibraryItem,
   TableData,
+  TableQuery,
   TableRow,
 } from "../../components/LibraryNavigator/types";
 import { ColumnCollection, TableInfo } from "../rest/api/compute";
@@ -94,6 +95,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
     start: number,
     limit: number,
     sortModel: SortModelItem[],
+    _query: TableQuery | undefined,
   ): Promise<TableData> {
     const { rows: rawRowValues, count } = await this.getDatasetInformation(
       item,
@@ -128,7 +130,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
           }
         : {};
 
-    const { rows } = await this.getRows(item, start, limit, []);
+    const { rows } = await this.getRows(item, start, limit, [], undefined);
 
     rows.unshift(columns);
     // Fetching csv doesn't rely on count. Instead, we get the count

@@ -9,8 +9,13 @@ body {
 
 html,
 body,
+.data-viewer-container,
 .data-viewer {
   height: 100%;
+}
+
+.data-viewer {
+  padding: 1rem;
 }
 
 .header-icon.float,
@@ -146,5 +151,55 @@ button,
 
 .vscode-dark .sort-icon-wrapper .icon.desc {
   background: url(../../../icons/dark/arrow-down.svg);
+  background-size: 16px 16px;
+}
+
+.filter-wrapper .filter-input {
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-editorGroup-border);
+  margin-bottom: 1rem;
+  position: relative;
+}
+.filter-wrapper .filter-input input {
+  color: var(--vscode-input-foreground);
+  background: transparent;
+  border: none;
+  padding: 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: calc(32px + 2rem);
+}
+
+.filter-wrapper .filter-input button {
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  top: 0;
+  padding: 1rem;
+  border: 0;
+  right: 0;
+}
+
+.filter-wrapper .filter-input button.clear {
+  right: calc(16px + 1rem);
+}
+
+.vscode-dark .filter-wrapper .filter-input button.clear {
+  background: url(../../../icons/dark/close.svg) center no-repeat;
+  background-size: 16px 16px;
+}
+
+.vscode-dark .filter-wrapper .filter-input button.search {
+  background: url(../../../icons/dark/search.svg) center no-repeat;
+  background-size: 16px 16px;
+}
+
+.vscode-light .filter-wrapper .filter-input button.clear {
+  background: url(../../../icons/light/close.svg) center no-repeat;
+  background-size: 16px 16px;
+}
+
+.vscode-light .filter-wrapper .filter-input button.search {
+  background: url(../../../icons/light/search.svg) center no-repeat;
   background-size: 16px 16px;
 }
