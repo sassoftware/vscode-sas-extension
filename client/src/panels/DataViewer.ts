@@ -48,7 +48,7 @@ class DataViewer extends WebView {
   }
 
   public body() {
-    return `<div class="data-viewer"></div>`;
+    return `<div class="data-viewer-container" data-title="${this.title}"></div>`;
   }
 
   public async processMessage(
@@ -70,6 +70,7 @@ class DataViewer extends WebView {
           event.data!.start!,
           event.data!.end!,
           event.data!.sortModel!,
+          event.data!.query!,
         );
         if (error) {
           await window.showErrorMessage(error.message);
