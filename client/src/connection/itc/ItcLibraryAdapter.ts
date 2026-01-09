@@ -95,13 +95,14 @@ class ItcLibraryAdapter implements LibraryAdapter {
     start: number,
     limit: number,
     sortModel: SortModelItem[],
-    _query: TableQuery | undefined,
+    query: TableQuery | undefined,
   ): Promise<TableData> {
     const { rows: rawRowValues, count } = await this.getDatasetInformation(
       item,
       start,
       limit,
       sortModel,
+      query,
     );
 
     const rows = rawRowValues.map((line, idx: number): TableRow => {
@@ -183,12 +184,13 @@ class ItcLibraryAdapter implements LibraryAdapter {
     start: number,
     limit: number,
     sortModel: SortModelItem[],
+    query: TableQuery | undefined,
   ): Promise<{ rows: Array<string[]>; count: number }> {
     const sortString = sortModel
       .map((col) => `${col.colId} ${col.sort}`)
       .join(",");
     const code = `
-      $runner.GetDatasetRecords("${item.library}","${item.name}", ${start}, ${limit}, "${sortString}")
+      $runner.GetDatasetRecords("${item.library}","${item.name}", ${start}, ${limit}, "${sortString}", '${query ? JSON.stringify(query) : ""}')
     `;
     const output = await executeRawCode(code);
     try {
