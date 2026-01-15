@@ -77,6 +77,31 @@
       ]
     },
     {
+      "begin": "(?i)proc(\\s|/\\*.*?\\*/)*r",
+      "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
+      "name": "sas.proc.r",
+      "patterns": [
+        {
+          "include": "#strings-or-comments"
+        },
+        {
+          "begin": "(?i)(?<=\\bsubmit|\\binteractive|\\bi)(\\s|/\\*.*?\\*/)*;",
+          "end": "(?i)(endsubmit|endinteractive)(\\s|/\\*.*?\\*/)*;",
+          "name": "source.r",
+          "beginCaptures": {
+            "0": {
+              "name": "strange_bug"
+            }
+          },
+          "patterns": [
+            {
+              "include": "source.r"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "begin": "(?i)data\\b.*?;",
       "end": "(?i)(?=(run|quit)(\\s|/\\*.*?\\*/)*;|(data|proc|%macro)\\b[^;]*;)",
       "name": "sas.data",
