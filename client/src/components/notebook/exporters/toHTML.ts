@@ -19,6 +19,7 @@ import hljs from "highlight.js/lib/core";
 import python from "highlight.js/lib/languages/python";
 import sql from "highlight.js/lib/languages/sql";
 import { marked } from "marked";
+import markedKatex from "marked-katex-extension";
 import path from "path";
 
 import type { LogLine } from "../../../connection";
@@ -28,6 +29,15 @@ const templatesDir = path.resolve(__dirname, "../notebook/exporters/templates");
 
 hljs.registerLanguage("python", python);
 hljs.registerLanguage("sql", sql);
+
+// Configure marked options
+marked.setOptions({
+  breaks: false,
+  gfm: false,
+});
+
+// Enable KaTeX extension for marked
+marked.use(markedKatex());
 
 export const exportToHTML = async (
   notebook: NotebookDocument,
@@ -44,6 +54,10 @@ export const exportToHTML = async (
     `${templatesDir}/${isDark ? "dark" : "light"}.css`,
   ).toString();
 
+  // Read KaTeX CSS from templates directory (copied from node_modules during build)
+  const katexCss = readFileSync(`${templatesDir}/katex.css`).toString();
+
+  template = template.replace("${katex}", katexCss);
   template = template.replace("${theme}", theme);
   template = template.replace("${content}", await exportCells(cells, client));
 
@@ -73,10 +87,32 @@ const exportCells = async (cells: NotebookCell[], client: LanguageClient) => {
 };
 
 const markdownToHTML = (doc: TextDocument) => {
+  let text = doc.getText();
+  text = normalizeDisplayMathBlocks(text);
+
   return `<div class="markdown-cell">
-${marked.parse(doc.getText())}
+${marked.parse(text)}
 </div>`;
 };
+
+/**
+ * Normalize display math blocks in markdown text.
+ *
+ * Ensures each $$...$$ display math block is on its own lines with blank
+ * lines before and after, and trims leading/trailing whitespace inside the
+ * delimiters while preserving internal newlines.
+ *
+ * @example
+ * Inline: "This is $$ x^2 $$ in text." -> "This is\n\n$$\n x^2\n$$\n\n"
+ *
+ * @example
+ * Display: "Text$$\\frac{1}{2}$$More" -> "Text\n\n$$\n\\frac{1}{2}\n$$\n\nMore"
+ */
+const normalizeDisplayMathBlocks = (input: string) =>
+  input.replace(/\$\$([\s\S]*?)\$\$/g, (_match, content) => {
+    const trimmedContent = content.trim();
+    return `\n\n$$\n${trimmedContent}\n$$\n\n`;
+  });
 
 const codeToHTML = async (doc: TextDocument, client: LanguageClient) => {
   let result = "";
