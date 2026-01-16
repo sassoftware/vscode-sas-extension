@@ -8,6 +8,7 @@ import { AgGridReact } from "ag-grid-react";
 import ".";
 import ColumnMenu from "./ColumnMenu";
 import TableFilter from "./TableFilter";
+import localize from "./localize";
 import useDataViewer from "./useDataViewer";
 import useTheme from "./useTheme";
 
@@ -18,7 +19,7 @@ import "ag-grid-community/styles/ag-theme-alpine.css";
 const gridStyles = {
   "--ag-borders": "none",
   "--ag-row-border-width": "0px",
-  height: "100%",
+  height: "calc(100% - 9.2rem)",
   width: "100%",
 };
 
@@ -89,6 +90,9 @@ const DataViewer = () => {
           onGridReady={onGridReady}
           rowModelType="infinite"
           theme="legacy"
+          noRowsOverlayComponent={() =>
+            localize("No data matches the current filters.")
+          }
         />
       </div>
     </div>

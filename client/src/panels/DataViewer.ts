@@ -30,6 +30,9 @@ class DataViewer extends WebView {
     return {
       "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
       "Descending (add to sorting)": l10n.t("Descending (add to sorting)"),
+      "No data matches the current filters.": l10n.t(
+        "No data matches the current filters.",
+      ),
       "Remove all sorting": l10n.t("Remove all sorting"),
       "Remove sorting": l10n.t("Remove sorting"),
       "Row number": l10n.t("Row number"),
@@ -81,14 +84,14 @@ class DataViewer extends WebView {
           event.data!.sortModel!,
           event.data!.query!,
         );
-        if (error) {
-          await window.showErrorMessage(error.message);
-        }
         this.panel.webview.postMessage({
           command: "response:loadData",
           key: event.key,
           data,
         });
+        if (error) {
+          await window.showErrorMessage(error.message);
+        }
         break;
       }
       case "request:loadColumns":
