@@ -177,6 +177,7 @@
                       "enum": [
                         "rest",
                         "ssh",
+                        "stdio",
                         "com",
                         "iom"
                       ]
@@ -347,6 +348,27 @@
                             "type": "string",
                             "default": "",
                             "description": "%configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath%"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "connectionType": {
+                            "const": "stdio"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "saspath"
+                        ],
+                        "properties": {
+                          "saspath": {
+                            "type": "string",
+                            "default": "",
+                            "description": "%configuration.SAS.connectionProfiles.profiles.stdio.saspath%"
                           }
                         }
                       }

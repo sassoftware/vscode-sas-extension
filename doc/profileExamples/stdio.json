@@ -1,0 +1,12 @@
+{
+  "SAS.connectionProfiles": {
+    "profiles": {
+      "local_stdio": {
+        "connectionType": "stdio",
+        "saspath": "/opt/sasinside/SASHome/SASFoundation/9.4/bin/sas_u8",
+        "sasOptions": ["-memsize", "2G"]
+      }
+    },
+    "activeProfile": "local_stdio"
+  }
+}
