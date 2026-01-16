@@ -30,6 +30,7 @@ class DataViewer extends WebView {
     return {
       "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
       "Descending (add to sorting)": l10n.t("Descending (add to sorting)"),
+      "Enter expression": l10n.t("Enter expression"),
       "No data matches the current filters.": l10n.t(
         "No data matches the current filters.",
       ),
@@ -40,6 +41,7 @@ class DataViewer extends WebView {
       "Sorted, Descending": l10n.t("Sorted, Descending"),
       Ascending: l10n.t("Ascending"),
       Character: l10n.t("Character"),
+      Clear: l10n.t("Clear"),
       Currency: l10n.t("Currency"),
       Date: l10n.t("Date"),
       Datetime: l10n.t("Datetime"),
@@ -47,6 +49,7 @@ class DataViewer extends WebView {
       Numeric: l10n.t("Numeric"),
       Options: l10n.t("Options"),
       Properties: l10n.t("Properties"),
+      Search: l10n.t("Search"),
       Sort: l10n.t("Sort"),
     };
   }

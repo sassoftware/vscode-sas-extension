@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import localize from "./localize";
+
 const TableFilter = ({ onCommit }: { onCommit: (value: string) => void }) => {
   const [filterValue, setFilterValue] = useState("");
 
@@ -8,7 +10,8 @@ const TableFilter = ({ onCommit }: { onCommit: (value: string) => void }) => {
       <div className="filter-input">
         <input
           type="text"
-          placeholder="Enter expression"
+          title={localize("Enter expression")}
+          placeholder={localize("Enter expression")}
           value={filterValue}
           onChange={(e) => setFilterValue(e.target.value)}
           onKeyUp={(e) => {
@@ -20,7 +23,7 @@ const TableFilter = ({ onCommit }: { onCommit: (value: string) => void }) => {
         {filterValue ? (
           <button
             className="clear"
-            title="Clear"
+            title={localize("Clear")}
             type="button"
             onClick={() => {
               setFilterValue("");
@@ -30,7 +33,7 @@ const TableFilter = ({ onCommit }: { onCommit: (value: string) => void }) => {
         ) : undefined}
         <button
           className="search"
-          title="Search"
+          title={localize("Search")}
           type="button"
           onClick={() => onCommit(filterValue)}
         ></button>
