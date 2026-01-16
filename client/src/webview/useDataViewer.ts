@@ -145,33 +145,43 @@ const useDataViewer = () => {
     (incomingQueryParams?: TableQuery) => ({
       rowCount: undefined,
       getRows: async (params: IGetRowsParams) => {
-        await queryTableData(
-          params.startRow,
-          params.endRow,
-          params.sortModel,
-          incomingQueryParams || queryParams,
-        ).then(({ rows, count }: TableData) => {
-          const rowData = rows.map(({ cells }) => {
-            const row = cells.reduce(
-              (carry, cell, index) => ({
-                ...carry,
-                [columns[index].field]: cell,
-              }),
-              {},
-            );
-
-            return row;
-          });
-
-          params.successCallback(
-            rowData,
-            // If we've returned less than 100 rows, we can assume that's the last page
-            // of the data and stop searching.
-            rowData.length < 100 && count === undefined
-              ? rowData[rowData.length - 1]["#"]
-              : count,
+        params.api.setGridOption("activeOverlay", undefined);
+        let tableData: TableData;
+        try {
+          tableData = await queryTableData(
+            params.startRow,
+            params.endRow,
+            params.sortModel,
+            incomingQueryParams || queryParams,
           );
+          if (tableData.rows.length === 0) {
+            params.api.setGridOption("activeOverlay", "agNoRowsOverlay");
+          }
+        } catch (e) {
+          params.api.setGridOption("activeOverlay", "agNoRowsOverlay");
+        }
+
+        const { rows, count } = tableData;
+        const rowData = rows.map(({ cells }) => {
+          const row = cells.reduce(
+            (carry, cell, index) => ({
+              ...carry,
+              [columns[index].field]: cell,
+            }),
+            {},
+          );
+
+          return row;
         });
+
+        params.successCallback(
+          rowData,
+          // If we've returned less than 100 rows, we can assume that's the last page
+          // of the data and stop searching.
+          rowData.length < 100 && count === undefined
+            ? rowData[rowData.length - 1]["#"]
+            : count,
+        );
       },
     }),
     [columns, queryParams],
