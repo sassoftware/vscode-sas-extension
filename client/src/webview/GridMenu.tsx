@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useCallback, useEffect, useRef, useState } from "react";
 
+const MENU_RIGHT_OFFSET = 30;
+
 interface MenuItem {
   checked?: boolean;
   children?: (MenuItem | string)[];
@@ -153,7 +155,7 @@ const GridMenu = ({
       return;
     }
     if (left + width > clientWidth) {
-      setLeft(left - (left + width - clientWidth + 15));
+      setLeft(left - (left + width - clientWidth + MENU_RIGHT_OFFSET));
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

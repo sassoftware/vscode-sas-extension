@@ -14,8 +14,12 @@ body,
   height: 100%;
 }
 
+.data-viewer-container {
+  overflow: hidden;
+}
+
 .data-viewer {
-  padding: 1rem;
+  padding: 1rem 1rem 0 1rem;
 }
 
 .header-icon.float,
@@ -156,7 +160,6 @@ button,
 
 .filter-wrapper .filter-input {
   background: var(--vscode-input-background);
-  border: 1px solid var(--vscode-editorGroup-border);
   margin-bottom: 1rem;
   position: relative;
 }
@@ -168,6 +171,11 @@ button,
   width: 100%;
   box-sizing: border-box;
   padding-right: calc(32px + 2rem);
+  outline: 1px solid var(--vscode-editorGroup-border);
+}
+
+.filter-wrapper .filter-input input:focus {
+  outline: 1px solid var(--vscode-inputOption-activeBorder);
 }
 
 .filter-wrapper .filter-input button {
