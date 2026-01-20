@@ -60,6 +60,7 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath": "SAS SSH 連線私密金鑰檔案路徑",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "SAS SSH 連線可執行檔路徑",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "SAS SSH 連線使用者名稱",
+  "configuration.SAS.connectionProfiles.profiles.stdio.saspath": "SAS stdio 連線可執行檔路徑",
   "configuration.SAS.flowConversionMode": "選擇筆記本的轉換模式",
   "configuration.SAS.flowConversionModeNode": "將每個筆記本儲存格轉換為節點",
   "configuration.SAS.flowConversionModeSwimlane": "將每個筆記本儲存格轉換為區隔線",

@@ -60,6 +60,7 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath": "Ścieżka do pliku klucza prywatnego dla połączenia SAS-owego SSH",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "Ścieżka wykonywalna do połączenia SAS-owego SSH",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "Nazwa użytkownika połączenia SAS-owego SSH",
+  "configuration.SAS.connectionProfiles.profiles.stdio.saspath": "Ścieżka wykonywalna do połączenia SAS-owego stdio",
   "configuration.SAS.flowConversionMode": "Wybierz metodę konwersji dla notatników",
   "configuration.SAS.flowConversionModeNode": "Konwertuj każdą komórkę notatnika na węzeł",
   "configuration.SAS.flowConversionModeSwimlane": "Konweruj każdą komórkę notatnika na tor",

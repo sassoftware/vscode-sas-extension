@@ -60,6 +60,7 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath": "SAS SSH 连接私钥文件路径",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "SAS SSH 连接可执行路径",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "SAS SSH 连接用户名",
+  "configuration.SAS.connectionProfiles.profiles.stdio.saspath": "SAS stdio 连接可执行路径",
   "configuration.SAS.flowConversionMode": "选择笔记本的转换模式",
   "configuration.SAS.flowConversionModeNode": "将每个笔记本单元转换为一个节点",
   "configuration.SAS.flowConversionModeSwimlane": "将每个笔记本单元转换为泳道",
