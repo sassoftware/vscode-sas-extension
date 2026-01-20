@@ -6,7 +6,6 @@
 .gitignore
 .prettierignore
 .nvmrc
-.history/
 .DS_Store
 Thumbs.db
 **/src/**
@@ -15,7 +14,6 @@ Thumbs.db
 **/out/**
 **/*.ts
 **/*.map
-**/*.log
 **/node_modules/**
 **/website/**
 tools
