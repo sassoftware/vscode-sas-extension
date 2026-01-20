@@ -2,8 +2,13 @@ import { useState } from "react";
 
 import localize from "./localize";
 
-const TableFilter = ({ onCommit }: { onCommit: (value: string) => void }) => {
-  const [filterValue, setFilterValue] = useState("");
+interface TableFilterProps {
+  onCommit: (value: string) => void;
+  initialValue: string;
+}
+
+const TableFilter = ({ onCommit, initialValue }: TableFilterProps) => {
+  const [filterValue, setFilterValue] = useState(initialValue);
 
   return (
     <div className="filter-wrapper">

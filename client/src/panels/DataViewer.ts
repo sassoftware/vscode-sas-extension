@@ -5,11 +5,14 @@ import { Uri, l10n, window } from "vscode";
 import type { ColumnState, SortModelItem } from "ag-grid-community";
 
 import PaginatedResultSet from "../components/LibraryNavigator/PaginatedResultSet";
-import { TableData } from "../components/LibraryNavigator/types";
+import { TableData, TableQuery } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
 import { WebView } from "./WebviewManager";
 
-export type ViewProperties = { columnState?: ColumnState[] };
+export type ViewProperties = {
+  columnState?: ColumnState[];
+  query?: TableQuery;
+};
 
 class DataViewer extends WebView {
   protected viewProperties: ViewProperties = {};
@@ -76,6 +79,7 @@ class DataViewer extends WebView {
         sortModel?: SortModelItem[];
         columnName?: string;
         viewProperties?: Partial<ViewProperties>;
+        query: TableQuery | undefined;
       };
     },
   ): Promise<void> {
