@@ -131,12 +131,17 @@ const useDataViewer = () => {
   const gridRef = useRef<AgGridReact>(null);
   const [columns, setColumns] = useState<ColDef[]>([]);
   const [columnMenu, setColumnMenu] = useState<ColumnMenuProps | undefined>();
-  const [queryParams, setQueryParams] = useState<TableQuery | undefined>(
+  const [queryParams, setQueryParamsState] = useState<TableQuery | undefined>(
     undefined,
   );
+  const setQueryParams = (query: TableQuery | undefined) => {
+    setQueryParamsState(query);
+    storeViewProperties({ query });
+  };
 
   const columnMenuRef = useRef<ColumnMenuProps | undefined>(columnMenu);
   const columnStateRef = useRef<ColumnState[] | undefined>(undefined);
+  const loadedViewPropertiesRef = useRef<ViewProperties | undefined>(undefined);
   useEffect(() => {
     columnMenuRef.current = columnMenu;
   }, [columnMenu]);
@@ -146,18 +151,13 @@ const useDataViewer = () => {
       rowCount: undefined,
       getRows: async (params: IGetRowsParams) => {
         params.api.setGridOption("activeOverlay", undefined);
-        let tableData: TableData;
-        try {
-          tableData = await queryTableData(
-            params.startRow,
-            params.endRow,
-            params.sortModel,
-            incomingQueryParams || queryParams,
-          );
-          if (tableData.rows.length === 0) {
-            params.api.setGridOption("activeOverlay", "agNoRowsOverlay");
-          }
-        } catch (e) {
+        const tableData = await queryTableData(
+          params.startRow,
+          params.endRow,
+          params.sortModel,
+          incomingQueryParams || queryParams,
+        );
+        if (tableData.rows.length === 0) {
           params.api.setGridOption("activeOverlay", "agNoRowsOverlay");
         }
 
@@ -189,10 +189,18 @@ const useDataViewer = () => {
 
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
-      event.api.setGridOption("datasource", dataSource());
+      const { columnState, query } = loadedViewPropertiesRef.current;
+      event.api.setGridOption("datasource", dataSource(query));
 
-      if (columnStateRef.current && columnStateRef.current.length > 0) {
-        applyColumnState(event.api, columnStateRef.current);
+      // Re-hydrate our view with persisted view properties
+      if (!loadedViewPropertiesRef.current) {
+        return;
+      }
+      if (query) {
+        setQueryParams(query);
+      }
+      if (columnState && columnState.length > 0) {
+        applyColumnState(event.api, columnState);
         event.api.refreshHeader();
         columnStateRef.current = undefined;
       }
@@ -222,10 +230,6 @@ const useDataViewer = () => {
     [dataSource, queryParams],
   );
 
-  const setFilter = (filterValue: string) => {
-    setQueryParams((params) => ({ ...params, filterValue }));
-  };
-
   const displayMenuForColumn = useCallback(
     (api: GridApi, column: AgColumn, rect: DOMRect) => {
       if (columnMenuRef.current?.column) {
@@ -252,6 +256,7 @@ const useDataViewer = () => {
       if (viewProperties.columnState && viewProperties.columnState.length > 0) {
         columnStateRef.current = viewProperties.columnState;
       }
+      loadedViewPropertiesRef.current = viewProperties;
 
       const columns: ColDef[] = columnsData.map((column) => ({
         field: column.name,
@@ -323,7 +328,7 @@ const useDataViewer = () => {
     gridRef,
     onGridReady,
     refreshResults,
-    setFilter,
+    viewProperties: () => loadedViewPropertiesRef.current,
   };
 };
 
