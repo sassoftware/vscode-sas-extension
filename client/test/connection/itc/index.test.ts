@@ -10,12 +10,9 @@ import { v4 } from "uuid";
 
 import { setContext } from "../../../src/components/ExtensionContext";
 import { getSession } from "../../../src/connection/itc";
-import {
-  WORK_DIR_END_TAG,
-  WORK_DIR_START_TAG,
-} from "../../../src/connection/itc/const";
-import { getScript } from "../../../src/connection/itc/script";
-import { ITCProtocol, LineCodes } from "../../../src/connection/itc/types";
+import * as scripts from "../../../src/connection/itc/script";
+import { LineCodes, Tags } from "../../../src/connection/itc/script/env.json";
+import { ITCProtocol } from "../../../src/connection/itc/types";
 import { Session } from "../../../src/connection/session";
 import { extensionContext } from "../../../src/node/extension";
 
@@ -34,6 +31,10 @@ describe("ITC connection", () => {
   beforeEach(() => {
     sandbox = createSandbox({});
 
+    // For these tests, we don't particularly care about the script
+    // contents, but rather care about how our ts code interacts with
+    // the script.
+    sandbox.stub(scripts, "getScript");
     spawnStub = sandbox.stub(proc, "spawn");
 
     stdoutStub = sandbox.stub();
@@ -88,9 +89,9 @@ describe("ITC connection", () => {
     it("creates a well-formed local session", async () => {
       const setupPromise = session.setup();
 
-      onDataCallback(Buffer.from(`${WORK_DIR_START_TAG}`));
+      onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
       onDataCallback(Buffer.from(`/work/dir`));
-      onDataCallback(Buffer.from(`${WORK_DIR_END_TAG}`));
+      onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
 
       await setupPromise;
 
@@ -101,7 +102,6 @@ describe("ITC connection", () => {
       ).to.be.true;
 
       //using args here allows use of deep equal, that generates a concise diff in the test output on failures
-      expect(stdinStub.args[0][0]).to.deep.equal(getScript({}) + "\n");
       expect(stdinStub.args[1][0]).to.deep.equal(
         "$runner = New-Object -TypeName SASRunner\n",
       );
@@ -138,9 +138,9 @@ describe("ITC connection", () => {
     beforeEach(async () => {
       writeFileSync(tempHtmlPath, html5);
       const setupPromise = session.setup();
-      onDataCallback(Buffer.from(`${WORK_DIR_START_TAG}`));
+      onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
       onDataCallback(Buffer.from(`/work/dir`));
-      onDataCallback(Buffer.from(`${WORK_DIR_END_TAG}`));
+      onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
       await setupPromise;
     });
     afterEach(() => {
@@ -189,9 +189,9 @@ $runner.FetchResultsFile($filePath, $outputFile)
   describe("close", () => {
     beforeEach(async () => {
       const setupPromise = session.setup();
-      onDataCallback(Buffer.from(`${WORK_DIR_START_TAG}`));
+      onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
       onDataCallback(Buffer.from(`/work/dir`));
-      onDataCallback(Buffer.from(`${WORK_DIR_END_TAG}`));
+      onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
       await setupPromise;
     });
 

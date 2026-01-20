@@ -12,7 +12,7 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
-import { basename, extname } from "path";
+import { basename, dirname, extname } from "path";
 
 import { showResult } from "../components/ResultPanel";
 import {
@@ -115,10 +115,9 @@ async function runCode(selected?: boolean, uri?: Uri) {
   session.onExecutionLogFn = onExecutionLogFn;
   session.onSessionLogFn = appendSessionLogFn;
 
-  const fileName = basename(
-    codeDoc.getFileName(),
-    extname(codeDoc.getFileName()),
-  );
+  const fullPath = codeDoc.getFileName();
+  const basePath = dirname(fullPath);
+  const fileName = basename(fullPath, extname(fullPath));
   setFileName(fileName);
 
   await session.setup();
@@ -133,11 +132,13 @@ async function runCode(selected?: boolean, uri?: Uri) {
       cancellationToken.onCancellationRequested(() => {
         session.cancel?.();
       });
-      return session.run(codeDoc.getWrappedCode()).then((results) => {
-        if (outputHtml && results.html5) {
-          showResult(results.html5, uri);
-        }
-      });
+      return session
+        .run(codeDoc.getWrappedCode(), { baseDirectory: basePath })
+        .then((results) => {
+          if (outputHtml && results.html5) {
+            showResult(results.html5, uri);
+          }
+        });
     },
   );
 }
@@ -231,10 +232,9 @@ async function _runTask(
   );
   session.onSessionLogFn = appendSessionLogFn;
 
-  const fileName = basename(
-    codeDoc.getFileName(),
-    extname(codeDoc.getFileName()),
-  );
+  const fullPath = codeDoc.getFileName();
+  const basePath = dirname(fullPath);
+  const fileName = basename(fullPath, extname(fullPath));
   setFileName(fileName);
 
   messageEmitter.fire(`${l10n.t("Connecting to SAS session...")}\r\n`);
@@ -243,18 +243,20 @@ async function _runTask(
   messageEmitter.fire(`${l10n.t("SAS code running...")}\r\n`);
   return cancelled
     ? undefined
-    : session.run(codeDoc.getWrappedCode()).then((results) => {
-        const outputHtml = isOutputHtmlEnabled();
+    : session
+        .run(codeDoc.getWrappedCode(), { baseDirectory: basePath })
+        .then((results) => {
+          const outputHtml = isOutputHtmlEnabled();
 
-        if (outputHtml && results.html5) {
-          messageEmitter.fire(l10n.t("Show results...") + "\r\n");
-          showResult(
-            results.html5,
-            undefined,
-            l10n.t("Result: {result}", { result: taskLabel }),
-          );
-        }
-      });
+          if (outputHtml && results.html5) {
+            messageEmitter.fire(l10n.t("Show results...") + "\r\n");
+            showResult(
+              results.html5,
+              undefined,
+              l10n.t("Result: {result}", { result: taskLabel }),
+            );
+          }
+        });
 }
 
 const isErrorRep = (err: unknown): err is ErrorRepresentation => {

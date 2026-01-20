@@ -121,13 +121,20 @@ class LibraryModel {
     return items;
   }
 
-  public async deleteTable(item: LibraryItem) {
-    try {
-      await this.libraryAdapter.deleteTable(item);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+  public async deleteTables(items: LibraryItem[]) {
+    const failures: string[] = [];
+
+    for (const item of items) {
+      try {
+        await this.libraryAdapter.deleteTable(item);
+      } catch {
+        failures.push(item.uid);
+      }
+    }
+
+    if (failures.length > 0) {
       throw new Error(
-        l10n.t(Messages.TableDeletionError, { tableName: item.uid }),
+        l10n.t(Messages.TableDeletionError, { tableName: failures.join(", ") }),
       );
     }
   }

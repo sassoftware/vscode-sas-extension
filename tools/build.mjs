@@ -2,7 +2,6 @@ import concurrently from "concurrently";
 import esbuild from "esbuild";
 import fs from "fs";
 
-console.log("start");
 const dev = process.argv[2];
 
 const plugins = [
@@ -58,31 +57,6 @@ const browserBuildOptions = {
   },
 };
 
-const copyFiles = () => {
-  const foldersToCopy = [
-    {
-      src: "./server/node_modules/jsonc-parser/lib/umd/impl",
-      dest: "./server/dist/node/impl",
-    },
-    {
-      src: "./server/node_modules/pyright-internal-node/dist/packages/pyright-internal/typeshed-fallback",
-      dest: "./server/dist/node/typeshed-fallback",
-    },
-    {
-      src: "./server/src/python/sas",
-      dest: "./server/dist/node/typeshed-fallback/stubs/sas",
-    },
-    {
-      src: "./client/src/components/notebook/exporters/templates",
-      dest: "./client/dist/notebook/exporters/templates",
-    },
-  ];
-  foldersToCopy.forEach((item) =>
-    fs.cpSync(item.src, item.dest, { recursive: true }),
-  );
-  copyKatexCss();
-};
-
 // Process KaTeX CSS - embed fonts as base64 data URIs for self-contained HTML
 const copyKatexCss = () => {
   let katexCss = fs.readFileSync(
@@ -128,14 +102,64 @@ const copyKatexCss = () => {
   );
 };
 
-if (process.env.npm_config_webviews || process.env.npm_config_client) {
+const copyFiles = (filter = null) => {
+  const foldersToCopy = [
+    {
+      src: "./server/node_modules/jsonc-parser/lib/umd/impl",
+      dest: "./server/dist/node/impl",
+    },
+    {
+      src: "./server/node_modules/pyright-internal-node/dist/packages/pyright-internal/typeshed-fallback",
+      dest: "./server/dist/node/typeshed-fallback",
+    },
+    {
+      src: "./server/src/python/sas",
+      dest: "./server/dist/node/typeshed-fallback/stubs/sas",
+    },
+    {
+      src: "./client/src/components/notebook/exporters/templates",
+      dest: "./client/dist/notebook/exporters/templates",
+    },
+    {
+      src: "./client/src/connection/itc/script",
+      dest: "./client/dist/node",
+    },
+  ];
+  const filteredFoldersToCopy =
+    filter === null
+      ? foldersToCopy
+      : foldersToCopy.filter((folder) => folder.src === filter);
+
+  if (filter) {
+    console.log(`Copying files matching "${filter}"`);
+  } else {
+    console.log("Copying files");
+  }
+
+  filteredFoldersToCopy.map((item) =>
+    fs.cpSync(item.src, item.dest, { recursive: true, force: true }),
+  );
+
+  copyKatexCss();
+  console.log("Files copied");
+};
+
+const staticFilesToWatch = ["./client/src/connection/itc/script"];
+
+if (process.env.npm_config_static) {
+  copyFiles();
+  if (dev) {
+    staticFilesToWatch.forEach((pathToWatch) =>
+      fs.watch(pathToWatch, () => copyFiles(pathToWatch)),
+    );
+  }
+} else if (process.env.npm_config_webviews || process.env.npm_config_client) {
   const ctx = await esbuild.context(
     process.env.npm_config_webviews ? browserBuildOptions : nodeBuildOptions,
   );
   await ctx.rebuild();
 
   if (dev) {
-    process.env.npm_config_client && copyFiles();
     await ctx.watch();
   } else {
     await ctx.dispose();
@@ -145,13 +169,21 @@ if (process.env.npm_config_webviews || process.env.npm_config_client) {
     {
       command: `npm run ${process.env.npm_lifecycle_event} --webviews`,
       name: "browser",
+      prefixColor: "magenta",
     },
     {
       command: `npm run ${process.env.npm_lifecycle_event} --client`,
       name: "node",
+      prefixColor: "cyan",
+    },
+    {
+      command: `npm run ${process.env.npm_lifecycle_event} --static`,
+      name: "static",
+      prefixColor: "green",
     },
   ]);
-  await result.then(copyFiles, () =>
-    console.error("Assets failed to build successfully"),
+  await result.then(
+    () => {},
+    () => console.error("Concurrently failed to run"),
   );
 }
