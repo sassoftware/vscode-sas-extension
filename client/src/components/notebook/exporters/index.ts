@@ -15,20 +15,70 @@ export const exportNotebook = async (client: LanguageClient) => {
     return;
   }
 
+  // Show QuickPick for export format selection
+  const formatChoices = [
+    {
+      label: l10n.t("HTML"),
+      description: l10n.t("Export as HTML file"),
+      format: "html" as const,
+      extension: "html",
+    },
+    {
+      label: l10n.t("SAS Code"),
+      description: l10n.t("Export as SAS program file"),
+      format: "sas" as const,
+      extension: "sas",
+    },
+  ];
+
+  const formatChoice = await window.showQuickPick(formatChoices, {
+    placeHolder: l10n.t("Select export format"),
+    ignoreFocusOut: true,
+  });
+
+  if (!formatChoice) {
+    return;
+  }
+
+  // Show save dialog with appropriate file extension
+  const defaultFileName =
+    path.basename(notebook.uri.path, ".sasnb") + `.${formatChoice.extension}`;
+
+  const filters: { [name: string]: string[] } = {};
+  filters[formatChoice.extension.toUpperCase()] = [formatChoice.extension];
+
   const uri = await window.showSaveDialog({
-    filters: { SAS: ["sas"], HTML: ["html"] },
-    defaultUri: Uri.parse(path.basename(notebook.uri.path, ".sasnb")),
+    filters,
+    defaultUri: Uri.parse(defaultFileName),
   });
 
   if (!uri) {
     return;
   }
 
-  const content = uri.path.endsWith(".html")
-    ? await exportToHTML(notebook, client)
-    : exportToSAS(notebook);
+  try {
+    let content: string | Uint8Array;
 
-  workspace.fs.writeFile(uri, Buffer.from(content));
+    // Generate content based on selected format
+    switch (formatChoice.format) {
+      case "html":
+        content = await exportToHTML(notebook, client);
+        await workspace.fs.writeFile(uri, new TextEncoder().encode(content));
+        break;
+      case "sas":
+        content = exportToSAS(notebook);
+        await workspace.fs.writeFile(uri, new TextEncoder().encode(content));
+        break;
+    }
+
+    window.showInformationMessage(
+      l10n.t("Notebook exported to {0}", uri.fsPath),
+    );
+  } catch (error) {
+    window.showErrorMessage(
+      l10n.t("Failed to export notebook: {0}", error.message || error),
+    );
+  }
 };
 
 export const saveOutput = async () => {
@@ -131,7 +181,7 @@ export const saveOutput = async () => {
     return;
   }
 
-  await workspace.fs.writeFile(uri, Buffer.from(content));
+  await workspace.fs.writeFile(uri, new TextEncoder().encode(content));
 
   window.showInformationMessage(l10n.t("Saved to {0}", uri.fsPath));
 };
