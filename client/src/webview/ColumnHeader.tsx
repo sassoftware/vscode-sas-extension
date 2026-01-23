@@ -4,6 +4,7 @@ import { useRef } from "react";
 
 import { AgColumn, GridApi } from "ag-grid-community";
 
+import localize from "./localize";
 import useTheme from "./useTheme";
 
 const getIconForColumnType = (type: string) => {
@@ -23,6 +24,24 @@ const getIconForColumnType = (type: string) => {
       return "char";
     default:
       return "";
+  }
+};
+
+const getTermForColumnType = (type: string) => {
+  switch (type.toLocaleLowerCase()) {
+    case "float":
+    case "num":
+      return localize("Numeric");
+    case "date":
+      return localize("Date");
+    case "time":
+    case "datetime":
+      return localize("Datetime");
+    case "currency":
+      return localize("Currency");
+    case "char":
+    default:
+      return localize("Character");
   }
 };
 
@@ -48,6 +67,10 @@ const ColumnHeader = ({
     sort && currentSortedColumns.length > 1 ? `${column.sortIndex + 1}` : "";
   const dropdownClassname =
     currentColumn?.colId === column.colId ? "active dropdown" : "dropdown";
+  const sortTitle =
+    sort === "asc"
+      ? localize("Sorted, Ascending")
+      : localize("Sorted, Descending");
 
   const displayColumnMenu = () =>
     displayMenuForColumn(api, column, ref.current.getBoundingClientRect());
@@ -55,12 +78,17 @@ const ColumnHeader = ({
   return (
     <div className={`ag-cell-label-container ${theme}`} role="presentation">
       <div className="ag-header-cell-label" role="presentation">
-        <span className={`header-icon ${getIconForColumnType(columnType)}`} />
-        <span className="ag-header-cell-text">{column.colId}</span>
+        <span
+          className={`header-icon ${getIconForColumnType(columnType)}`}
+          title={getTermForColumnType(columnType)}
+        />
+        <span className="ag-header-cell-text" title={column.colId}>
+          {column.colId}
+        </span>
         <span className="sort-icon-wrapper">
           {!!sort && (
             <>
-              <span className={`icon ${sort}`}></span>
+              <span className={`icon ${sort}`} title={sortTitle}></span>
               {!!columnNumber && <span className="number">{columnNumber}</span>}
             </>
           )}
@@ -71,6 +99,7 @@ const ColumnHeader = ({
             type="button"
             onClick={displayColumnMenu}
             tabIndex={-1}
+            title={localize("Options")}
           >
             <span />
           </button>

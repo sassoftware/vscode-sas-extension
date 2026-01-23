@@ -3,6 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <style>
+      ${katex}
+    </style>
+    <style>
       body {
         font-family: "Segoe UI", sans-serif;
       }
@@ -14,6 +17,15 @@
         padding: 0 .4em;
         border-radius: 4px;
         background-color: var(--highlight-background-color);
+      }
+      /* Override KaTeX default to ensure display mode math is centered */
+      .markdown-cell .katex-display {
+        display: block;
+        text-align: center;
+      }
+      /* Also ensure inner spans inherit the centering */
+      .markdown-cell .katex-display span {
+        text-align: center;
       }
       .code-cell {
         position: relative;
