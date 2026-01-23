@@ -698,24 +698,25 @@ export class CompletionProvider {
   getCompleteItemHelp(item: CompletionItem): Promise<CompletionItem> {
     return new Promise((resolve) => {
       if (["endsubmit", "endinteractive"].includes(item.label?.toLowerCase())) {
-        // Determine which procedure context we're in (PYTHON or R)
         const procName = this.czMgr.getProcName()?.toUpperCase();
-        const targetProc =
-          procName === "R" || procName === "PYTHON" ? procName : "PYTHON";
 
-        this.loader.getProcedureStatementHelp(
-          targetProc,
-          item.label.toUpperCase(),
-          (data) => {
-            if (data && data.data) {
-              item.documentation = {
-                kind: MarkupKind.Markdown,
-                value: this._addLinkContext(515, data),
-              };
-            }
-            resolve(item);
-          },
-        );
+        if (procName === "R" || procName === "PYTHON") {
+          this.loader.getProcedureStatementHelp(
+            procName,
+            item.label.toUpperCase(),
+            (data) => {
+              if (data && data.data) {
+                item.documentation = {
+                  kind: MarkupKind.Markdown,
+                  value: this._addLinkContext(515, data),
+                };
+              }
+              resolve(item);
+            },
+          );
+        } else {
+          resolve(item);
+        }
       } else {
         this._loadHelp({
           keyword: item.label,
