@@ -60,6 +60,7 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath": "SAS SSH 接続の秘密キーファイルパス",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "SAS SSH 接続の実行可能パス",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "SAS SSH 接続ユーザー名",
+  "configuration.SAS.connectionProfiles.profiles.stdio.saspath": "SAS stdio 接続の実行可能パス",
   "configuration.SAS.flowConversionMode": "ノートブックの変換モードを選択する",
   "configuration.SAS.flowConversionModeNode": "各ノートブックのセルをノードに変換する",
   "configuration.SAS.flowConversionModeSwimlane": "各ノートブックのセルをスイムレーンに変換する",
