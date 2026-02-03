@@ -181,13 +181,13 @@ function getFileName(textDocument: TextDocument): string {
     }
   }
 
-  // Local files will default to utilizing the fileName.
-  // fileName = c:\\Development\\VSCODE\\files\\myprogram.sas
-
   // We could consider utilizing the "sasContent" scheme id value but this
   // is the internal uri in the form of /files/files/<guid> which would need to
   // potentially get translated to a readable path name.  Also it doesn't work well
   // with the _SASPROGRAMDIR variable as it assumes folder structure.
+
+  // Local files will default to utilizing the fileName.
+  // fileName = c:\\Development\\VSCODE\\files\\myprogram.sas
 
   return pathName ?? textDocument.fileName ?? textDocument.uri?.fsPath;
 }
