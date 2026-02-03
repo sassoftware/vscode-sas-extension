@@ -157,29 +157,34 @@ function getFileName(textDocument: TextDocument): string {
   const params = new URL(decodeURIComponent(textDocument.uri.toString()))
     .searchParams;
 
-  let id: string;
   let pathName: string;
 
   // Massage file path value
   const scheme = textDocument.uri?.scheme;
-  if (scheme === "sasServer") {
-    if (params.has("id")) {
-      id = params.get("id");
-      // Viya - server file
-      if (/^\/compute\/sessions\/\w+(-\w+)+\/files\/~fs~[^/]+$/.test(id)) {
-        pathName = `${id}`.split("/").pop().replace(/~fs~/g, "/");
-      }
-      if (!pathName) {
-        // IOM - server file
-        const index = id.indexOf("\\\\");
-        if (index >= 0) {
-          pathName = id.substring(index).replace(/\\\\/g, "/");
-        }
+  if (scheme === "sasServer" && params.has("id")) {
+    const id = params.get("id");
+    // Viya - server file
+    // id = /compute/sessions/<guid>/files/~fs~studiodev~fs~myprogram.sas
+    // result = /studiodev/myprogram.sas
+    if (/^\/compute\/sessions\/\w+(-\w+)+\/files\/~fs~[^/]+$/.test(id)) {
+      pathName = `${id}`.split("/").pop().replace(/~fs~/g, "/");
+    }
+    if (!pathName) {
+      // IOM - server file
+      // id = C:\\Users\\sasdemo\\Documents\\My SAS Files\\9.4\\\\myfolder\\\\myprogram.sas
+      // result = /myfolder/myprogram.sas
+      const index = id.indexOf("\\\\");
+      if (index >= 0) {
+        // id is in the form:
+        pathName = id.substring(index).replace(/\\\\/g, "/");
       }
     }
   }
 
-  // We could consider some utilizing the "sasContent"scheme id value but this
+  // Local files will default to utilizing the fileName.
+  // fileName = c:\\Development\\VSCODE\\files\\myprogram.sas
+
+  // We could consider utilizing the "sasContent" scheme id value but this
   // is the internal uri in the form of /files/files/<guid> which would need to
   // potentially get translated to a readable path name.  Also it doesn't work well
   // with the _SASPROGRAMDIR variable as it assumes folder structure.
