@@ -171,13 +171,8 @@ function getFileName(textDocument: TextDocument): string {
     }
     if (!pathName) {
       // IOM - server file
-      // id = C:\\Users\\sasdemo\\Documents\\My SAS Files\\9.4\\\\myfolder\\\\myprogram.sas
-      // result = /myfolder/myprogram.sas
-      const index = id.indexOf("\\\\");
-      if (index >= 0) {
-        // id is in the form:
-        pathName = id.substring(index).replace(/\\\\/g, "/");
-      }
+      // id = C:\\Users\\sasdemo\\Documents\\My SAS Files\\9.4\\myfolder\\myprogram.sas
+      pathName = id;
     }
   }
 
