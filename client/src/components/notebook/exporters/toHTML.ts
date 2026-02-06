@@ -17,6 +17,7 @@ import {
 import { readFileSync } from "fs";
 import hljs from "highlight.js/lib/core";
 import python from "highlight.js/lib/languages/python";
+import r from "highlight.js/lib/languages/r";
 import sql from "highlight.js/lib/languages/sql";
 import { marked } from "marked";
 import markedKatex from "marked-katex-extension";
@@ -28,6 +29,7 @@ import { includeLogInNotebookExport } from "../../utils/settings";
 const templatesDir = path.resolve(__dirname, "../notebook/exporters/templates");
 
 hljs.registerLanguage("python", python);
+hljs.registerLanguage("r", r);
 hljs.registerLanguage("sql", sql);
 
 // Configure marked options
