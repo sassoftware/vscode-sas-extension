@@ -14,6 +14,7 @@ When viewing table data, you have the following options available for each colum
 
 - Sort: Each column can be sorted ascending or descending. To add multiple columns to a sort, click the menu for each column and select the sort type. Sort priority will be displayed next to each column's direction icon.
 - Properties: Clicking properties will reveal the properties for the specific column chosen.
+- Filtering results: Results can be filtered by specifying where conditions in the filter bar and pressing enter. To reset the filter, click the clear (X) button.
 
 ![Table Viewing](/images/tableViewing.gif)
 
