@@ -14,6 +14,8 @@ interface MenuItem {
 
 const GridMenu = ({
   dismissMenu,
+  // note: `id` is used to distinguish one menu from another, so that we trigger
+  // a resize when the menu contents have changed.
   id,
   left: incomingLeft,
   menuItems,
