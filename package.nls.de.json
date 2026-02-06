@@ -60,6 +60,7 @@
   "configuration.SAS.connectionProfiles.profiles.ssh.privateKeyFilePath": "SAS SSH Private Key Dateipfad",
   "configuration.SAS.connectionProfiles.profiles.ssh.saspath": "Ausführbarer Pfad für die SAS SSH-Verbindung",
   "configuration.SAS.connectionProfiles.profiles.ssh.username": "SAS SSH Verbindungsbenutzername",
+  "configuration.SAS.connectionProfiles.profiles.stdio.saspath": "Ausführbarer Pfad für die SAS stdio-Verbindung",
   "configuration.SAS.flowConversionMode": "Wählen Sie den Konvertierungsmodus für Notebooks",
   "configuration.SAS.flowConversionModeNode": "Jede Notebook-Zelle in einen Knoten umwandeln",
   "configuration.SAS.flowConversionModeSwimlane": "Jede Notebook-Zelle in eine Swimlane umwandeln",
