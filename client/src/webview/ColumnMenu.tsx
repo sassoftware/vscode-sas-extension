@@ -178,12 +178,6 @@ const ColumnMenu = ({
         },
       ],
     },
-    {
-      name: localize("Filter column"),
-      onPress: () => {
-        dismissMenu();
-      },
-    },
     "separator",
     {
       name: localize("Properties"),
@@ -191,11 +185,7 @@ const ColumnMenu = ({
     },
   ];
 
-  return (
-    <>
-      <GridMenu menuItems={menuItems} top={top} left={left} theme={theme} />
-    </>
-  );
+  return <GridMenu menuItems={menuItems} top={top} left={left} theme={theme} />;
 };
 
 export default ColumnMenu;
