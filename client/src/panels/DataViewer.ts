@@ -30,6 +30,9 @@ class DataViewer extends WebView {
     return {
       "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
       "Descending (add to sorting)": l10n.t("Descending (add to sorting)"),
+      "Not pinned": l10n.t("Not pinned"),
+      "Pinned to the left": l10n.t("Pinned to the left"),
+      "Pinned to the right": l10n.t("Pinned to the right"),
       "Remove all sorting": l10n.t("Remove all sorting"),
       "Remove sorting": l10n.t("Remove sorting"),
       "Row number": l10n.t("Row number"),
@@ -43,6 +46,7 @@ class DataViewer extends WebView {
       Descending: l10n.t("Descending"),
       Numeric: l10n.t("Numeric"),
       Options: l10n.t("Options"),
+      Pin: l10n.t("Pin"),
       Properties: l10n.t("Properties"),
       Sort: l10n.t("Sort"),
     };
