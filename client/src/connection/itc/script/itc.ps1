@@ -3,6 +3,7 @@ using namespace System.Collections.Generic
 $global:env = (Get-Content -Path "$PWD\\env.json" -Raw) | ConvertFrom-Json
 
 Import-Module "$PWD\\GetInteropDirectory.psm1"
+Import-Module "$PWD\\TableHelpers.psm1"
 
 try {
   $interopDir = GetInteropDirectory
@@ -205,18 +206,18 @@ class SASRunner {
     Write-Host "$($global:env.LineCodes.ResultsFetchedCode)"
   }
 
-  [void]GetDatasetRecords([string]$library, [string]$table, [int]$start = 0, [int]$limit = 100, [string]$sortCriteria = "") {
+  [void]GetDatasetRecords([string]$library, [string]$table, [int]$start = 0, [int]$limit = 100, [string]$sortCriteria = "", [string]$jsonQueryData = "") {
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection # This is needed to set the properties for sas formats.
     $objRecordSet.Properties.Item("SAS Formats").Value = "_ALL_"
 
+    $queryParams = $jsonQueryData | ConvertFrom-Json
+
     $tableName = $library + "." + $table
-    if ($sortCriteria -ne "") {
-      $epoch = [datetime]::FromFileTimeUtc(0)
-      $currentUtcTime = (Get-Date).ToUniversalTime()
-      $ts = [int64]($currentUtcTime - $epoch).TotalSeconds
-      $tableName = "WORK.temp_$ts"
-      $this.dataConnection.Execute("CREATE VIEW $tableName AS SELECT * FROM $library.$table ORDER BY $sortCriteria")
+    if ($sortCriteria -ne "" -or $jsonQueryData -ne "") {
+      $view = GetFilteredView -Library $library -Table $table -SortCriteria $sortCriteria -JSONQueryData $jsonQueryData
+      $tableName = $view.Name
+      $this.dataConnection.Execute($view.Query)
     }
 
     $objRecordSet.Open(

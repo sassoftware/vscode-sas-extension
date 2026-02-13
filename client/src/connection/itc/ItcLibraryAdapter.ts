@@ -10,6 +10,7 @@ import {
   LibraryAdapter,
   LibraryItem,
   TableData,
+  TableQuery,
   TableRow,
 } from "../../components/LibraryNavigator/types";
 import { ColumnCollection, TableInfo } from "../rest/api/compute";
@@ -94,12 +95,14 @@ class ItcLibraryAdapter implements LibraryAdapter {
     start: number,
     limit: number,
     sortModel: SortModelItem[],
+    query: TableQuery | undefined,
   ): Promise<TableData> {
     const { rows: rawRowValues, count } = await this.getDatasetInformation(
       item,
       start,
       limit,
       sortModel,
+      query,
     );
 
     const rows = rawRowValues.map((line, idx: number): TableRow => {
@@ -128,7 +131,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
           }
         : {};
 
-    const { rows } = await this.getRows(item, start, limit, []);
+    const { rows } = await this.getRows(item, start, limit, [], undefined);
 
     rows.unshift(columns);
     // Fetching csv doesn't rely on count. Instead, we get the count
@@ -181,12 +184,13 @@ class ItcLibraryAdapter implements LibraryAdapter {
     start: number,
     limit: number,
     sortModel: SortModelItem[],
+    query: TableQuery | undefined,
   ): Promise<{ rows: Array<string[]>; count: number }> {
     const sortString = sortModel
       .map((col) => `${col.colId} ${col.sort}`)
       .join(",");
     const code = `
-      $runner.GetDatasetRecords("${item.library}","${item.name}", ${start}, ${limit}, "${sortString}")
+      $runner.GetDatasetRecords("${item.library}","${item.name}", ${start}, ${limit}, "${sortString}", '${query ? JSON.stringify(query) : ""}')
     `;
     const output = await executeRawCode(code);
     try {

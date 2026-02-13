@@ -8,6 +8,7 @@ import {
   LibraryAdapter,
   LibraryItem,
   TableData,
+  TableQuery,
 } from "../../components/LibraryNavigator/types";
 import { appendSessionLogFn } from "../../components/logViewer";
 import {
@@ -51,9 +52,10 @@ class RestLibraryAdapter implements LibraryAdapter {
     start: number,
     limit: number,
     sortModel: SortModelItem[],
+    query: TableQuery | undefined,
   ): Promise<TableData> {
     if (sortModel.length > 0) {
-      return await this.getSortedRows(item, start, limit, sortModel);
+      return await this.getSortedRows(item, start, limit, sortModel, query);
     }
 
     const { data } = await this.retryOnFail<RowCollection>(
@@ -67,6 +69,7 @@ class RestLibraryAdapter implements LibraryAdapter {
             start,
             limit,
             formatMissingValues: true,
+            where: query && query.filterValue ? query.filterValue : undefined,
           },
           requestOptions,
         ),
@@ -83,6 +86,7 @@ class RestLibraryAdapter implements LibraryAdapter {
     start: number,
     limit: number,
     sortModel: SortModelItem[],
+    query: TableQuery | undefined,
   ): Promise<TableData> {
     const { data: viewData } = await this.retryOnFail(
       async () =>
@@ -104,10 +108,14 @@ class RestLibraryAdapter implements LibraryAdapter {
     );
 
     const results = await this.getRows(
-      { library: viewData.libref, name: viewData.name },
+      {
+        library: viewData.libref,
+        name: viewData.name,
+      },
       start,
       limit,
       [],
+      query,
     );
 
     await this.deleteTable({ library: viewData.libref, name: viewData.name });
