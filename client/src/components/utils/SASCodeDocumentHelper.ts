@@ -36,7 +36,7 @@ export function getCodeDocumentConstructionParameters(
     code: textDocument.getText(),
     selectedCode: getSelectedCode(textDocument, addition?.selections),
     uri: textDocument.uri.toString(),
-    fileName: textDocument.fileName ?? textDocument.uri?.fsPath,
+    fileName: getFileName(textDocument),
     selections: getCodeSelections(addition?.selections, textDocument),
     preamble: addition?.preamble,
     postamble: addition?.postamble,
@@ -150,4 +150,39 @@ function getCodeSelections(
       new Selection(new Position(0, 0), new Position(lastLine, lastCharacter)),
     ];
   }
+}
+
+function getFileName(textDocument: TextDocument): string {
+  // Extract the query parameters
+  const params = new URL(decodeURIComponent(textDocument.uri.toString()))
+    .searchParams;
+
+  let pathName: string;
+
+  // Massage file path value
+  const scheme = textDocument.uri?.scheme;
+  if (scheme === "sasServer" && params.has("id")) {
+    const id = params.get("id");
+    // Viya - server file
+    // id = /compute/sessions/<guid>/files/~fs~studiodev~fs~myprogram.sas
+    // result = /studiodev/myprogram.sas
+    if (/^\/compute\/sessions\/\w+(-\w+)+\/files\/~fs~[^/]+$/.test(id)) {
+      pathName = `${id}`.split("/").pop().replace(/~fs~/g, "/");
+    }
+    if (!pathName) {
+      // IOM - server file
+      // id = C:\\Users\\sasdemo\\Documents\\My SAS Files\\9.4\\myfolder\\myprogram.sas
+      pathName = id;
+    }
+  }
+
+  // Local files will default to utilizing the fileName.
+  // fileName = c:\\Development\\VSCODE\\files\\myprogram.sas
+
+  // We could consider utilizing the "sasContent" scheme id value but this
+  // is the internal uri in the form of /files/files/<guid> which would need to
+  // potentially get translated to a readable path name.  Also it doesn't work well
+  // with the _SASPROGRAMDIR variable as it assumes folder structure.
+
+  return pathName ?? textDocument.fileName ?? textDocument.uri?.fsPath;
 }

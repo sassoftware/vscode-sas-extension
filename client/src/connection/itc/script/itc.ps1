@@ -398,7 +398,7 @@ class SASRunner {
       return "/"
     }
 
-    return "\\"
+    return "\"
   }
 
   [void]RenameFile([string]$oldPath, [string]$newPath, [string]$newName) {
