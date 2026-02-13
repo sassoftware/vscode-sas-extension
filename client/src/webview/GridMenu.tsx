@@ -12,6 +12,9 @@ interface MenuItem {
 
 const GridMenu = ({
   dismissMenu,
+  // note: `id` is used to distinguish one menu from another, so that we trigger
+  // a resize when the menu contents have changed.
+  id,
   left: incomingLeft,
   menuItems,
   parentDimensions,
@@ -20,6 +23,7 @@ const GridMenu = ({
   top,
 }: {
   dismissMenu?: () => void;
+  id?: number;
   left?: number;
   menuItems: (MenuItem | string)[];
   parentDimensions?: { left: number; width: number };
@@ -155,12 +159,13 @@ const GridMenu = ({
     if (left + width > clientWidth) {
       setLeft(left - (left + width - clientWidth + 15));
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
       {subMenu && subMenu.items.length > 0 && (
         <GridMenu
+          id={subMenu.index}
           dismissMenu={() => {
             focusItem(subMenu.index);
             setSubMenu(undefined);
