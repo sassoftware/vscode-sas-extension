@@ -68,11 +68,8 @@ class RestLibraryAdapter implements LibraryAdapter {
             includeIndex: true,
             start,
             limit,
-<<<<<<< HEAD
             formatMissingValues: true,
-=======
             where: query && query.filterValue ? query.filterValue : undefined,
->>>>>>> de4abb9d (chore: add search text)
           },
           requestOptions,
         ),
