@@ -66,6 +66,7 @@ class RestLibraryAdapter implements LibraryAdapter {
             includeIndex: true,
             start,
             limit,
+            formatMissingValues: true,
           },
           requestOptions,
         ),
