@@ -124,7 +124,7 @@ const preserveProcs = (
   token: Token,
   model: Model,
 ) => {
-  // should not format python/lua, treat it as raw data
+  // should not format python/R/lua, treat it as raw data
   const lastStatement =
     region.children.length >= 2 &&
     region.children[region.children.length - 1].children;
@@ -135,7 +135,7 @@ const preserveProcs = (
     region.children[0].children.length > 0 &&
     lastStatement.length > 1 &&
     "text" in region.children[0].children[1] &&
-    /^(python|lua)$/i.test(region.children[0].children[1].text) &&
+    /^(python|lua|r)$/i.test(region.children[0].children[1].text) &&
     "text" in lastStatement[0] &&
     /^(submit|interactive|i)$/i.test(lastStatement[0].text)
   ) {
@@ -286,7 +286,7 @@ export const getParser =
       const node = tokens[i];
       let parent = parents.length ? parents[parents.length - 1] : root;
 
-      //#region --- Preserve Python/Lua
+      //#region --- Preserve Python/R/Lua
       if (region && region.block) {
         preserveProc = preserveProcs(preserveProc, region, node, model);
         if (preserveProc === 0 && i === tokens.length - 1) {
