@@ -877,12 +877,12 @@
     ],
     "keybindings": [
       {
-        "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
+        "when": "(editorLangId == sas || editorLangId == python || editorLangId == sql) && editorFocus && !SAS.hideRunMenuItem",
         "command": "SAS.run",
         "key": "f8"
       },
       {
-        "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+        "when": "(editorLangId == sas || editorLangId == python || editorLangId == sql) && editorFocus && !SAS.hideRunMenuItem",
         "command": "SAS.runSelected",
         "key": "f3"
       },
@@ -1108,23 +1108,23 @@
       ],
       "editor/title/run": [
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "(editorLangId == sas || editorLangId == python || editorLangId == sql) && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected"
         }
       ],
       "editor/context": [
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "(editorLangId == sas || editorLangId == python || editorLangId == sql) && !SAS.hideRunMenuItem",
           "command": "SAS.run",
           "group": "navigation@2"
         },
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "(editorLangId == sas || editorLangId == python || editorLangId == sql) && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected",
           "group": "navigation@1"
         },
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "(editorLangId == sas || editorLangId == python || editorLangId == sql) && !SAS.hideRunMenuItem",
           "command": "SAS.runRegion",
           "group": "navigation@3"
         }
@@ -1143,15 +1143,15 @@
       ],
       "commandPalette": [
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "(editorLangId == sas || editorLangId == python || editorLangId == sql) && !SAS.hideRunMenuItem",
           "command": "SAS.run"
         },
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "(editorLangId == sas || editorLangId == python || editorLangId == sql) && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected"
         },
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "(editorLangId == sas || editorLangId == python || editorLangId == sql) && !SAS.hideRunMenuItem",
           "command": "SAS.runRegion"
         },
         {
