@@ -36,7 +36,6 @@ import { basename, join } from "path";
 import { promisify } from "util";
 
 import { profileConfig } from "../../commands/profile";
-import { SAS_FILE_SEPARATOR } from "../../connection/rest/RestServerAdapter";
 import { getResourceId } from "../../connection/rest/util";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ViyaProfile } from "../profile";
@@ -678,108 +677,19 @@ class ContentDataProvider
     if (Array.isArray(closedFiles) && closedFiles.length > 0) {
       // Reopen only the files that were closed
       for (const closedFileUri of closedFiles) {
-        // Calculate the new URI for each closed file
-        const newFileUri = this.calculateNewFileUri(
-          closedFileUri,
-          item,
-          newUri,
-        );
-        if (newFileUri) {
-          await commands.executeCommand("vscode.open", newFileUri);
+        // Calculate the new URI for each closed file using the adapter
+        if (typeof newUri === "object" && newUri) {
+          const newFileUri = this.model
+            .getAdapter()
+            .calculateNewFileUri?.(closedFileUri, item, newUri);
+          if (newFileUri) {
+            await commands.executeCommand("vscode.open", newFileUri);
+          }
         }
       }
     }
 
     return !!newUri;
-  }
-
-  private calculateNewFileUri(
-    closedFileUri: Uri,
-    movedItem: ContentItem,
-    newItemUri: boolean | Uri,
-  ): Uri | null {
-    if (typeof newItemUri === "boolean" || !newItemUri) {
-      return null;
-    }
-
-    const isFolder = getIsContainer(movedItem);
-
-    // If the moved item is a file and matches the closed file, return the new URI
-    if (
-      !isFolder &&
-      closedFileUri.toString() === movedItem.vscUri?.toString()
-    ) {
-      return newItemUri;
-    }
-
-    // If the moved item is a folder, calculate the new path for files within it
-    if (isFolder && movedItem.vscUri) {
-      const extractPathFromUri = (uri: string): string => {
-        try {
-          const queryStart = uri.indexOf("?");
-          if (queryStart === -1) {
-            return "";
-          }
-
-          const queryString = uri.substring(queryStart + 1);
-
-          const decodedQuery = decodeURIComponent(queryString);
-          const idMatch = decodedQuery.match(/id=(.+)/);
-          if (!idMatch || !idMatch[1]) {
-            return "";
-          }
-          const uriWithoutPrefix = idMatch[1].replace(
-            /\/compute\/sessions\/[a-zA-Z0-9-]*\/files\//,
-            "",
-          );
-          try {
-            return decodeURIComponent(uriWithoutPrefix);
-          } catch (error) {
-            console.error("Failed to decode URI component:", error);
-            return uriWithoutPrefix;
-          }
-        } catch (error) {
-          console.error("Failed to extract path from URI:", error);
-          return "";
-        }
-      };
-
-      const oldBasePath = extractPathFromUri(movedItem.vscUri.toString());
-      const closedFilePath = extractPathFromUri(closedFileUri.toString());
-
-      // Check if the closed file was inside the moved folder
-      if (
-        oldBasePath &&
-        closedFilePath &&
-        closedFilePath.startsWith(oldBasePath + SAS_FILE_SEPARATOR)
-      ) {
-        try {
-          const relativePath = closedFilePath.substring(oldBasePath.length);
-          const filename = relativePath.replace(/^~fs~/, "");
-          const newUriStr = newItemUri.toString();
-          // Extract and modify the query to append the filename path
-          const queryMatch = newUriStr.match(/\?(.+)$/);
-          if (!queryMatch) {
-            return null;
-          }
-
-          const decodedQuery = decodeURIComponent(queryMatch[1]);
-          const newQuery = decodedQuery.replace(
-            /(\/files\/[^&]*)/,
-            `$1~fs~${filename}`,
-          );
-
-          return Uri.parse(
-            `${newItemUri.scheme}:/${filename}?${encodeURIComponent(newQuery)}`,
-          );
-        } catch (error) {
-          console.error("Failed to construct new file URI:", error);
-          return null;
-        }
-      }
-    }
-
-    return null;
   }
 
   private async handleContentItemDrop(
