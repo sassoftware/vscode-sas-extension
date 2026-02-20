@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Update pubsdata files to use the latest version (2026.01) of the SAS documentation for procedures, statements, and functions ([#1770](https://github.com/sassoftware/vscode-sas-extension/pull/1770))
 
+### Fixed
+
+- Fix issue affecting data viewer scroll position ([#1800](https://github.com/sassoftware/vscode-sas-extension/pull/1800))
+
 ## [v1.18.0] - 2025-12-01
 
 ### Added
