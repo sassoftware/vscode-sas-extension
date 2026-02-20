@@ -502,7 +502,7 @@ class ContentDataProvider
         !success && failedUploads.push(fileName);
       } else {
         const file = await workspace.fs.readFile(uri);
-        const newUri = await this.createFile(target, fileName, file);
+        const newUri = await this.createFile(target, fileName, file.buffer);
         !newUri && failedUploads.push(fileName);
       }
     }
@@ -634,7 +634,7 @@ class ContentDataProvider
       } else {
         await workspace.fs.writeFile(
           Uri.joinPath(folderUri, selection.name),
-          await this.model.downloadFile(selection),
+          new Uint8Array(await this.model.downloadFile(selection)),
         );
       }
     }
@@ -667,15 +667,26 @@ class ContentDataProvider
     if (!targetUri) {
       return false;
     }
-
     const closing = closeFileIfOpen(item);
-    if (!(await closing)) {
+    const closedFiles = await closing;
+    if (!closedFiles) {
       return false;
     }
 
     const newUri = await this.model.moveTo(item, targetUri);
-    if (closing !== true) {
-      commands.executeCommand("vscode.open", newUri);
+    if (Array.isArray(closedFiles) && closedFiles.length > 0) {
+      // Reopen only the files that were closed
+      for (const closedFileUri of closedFiles) {
+        // Calculate the new URI for each closed file using the adapter
+        if (typeof newUri === "object" && newUri) {
+          const newFileUri = this.model
+            .getAdapter()
+            .calculateNewFileUri?.(closedFileUri, item, newUri);
+          if (newFileUri) {
+            await commands.executeCommand("vscode.open", newFileUri);
+          }
+        }
+      }
     }
 
     return !!newUri;
@@ -743,10 +754,11 @@ class ContentDataProvider
           success = await this.handleFolderDrop(folder, fileOrFolder);
         } else {
           const name = basename(fileOrFolder);
+          const fileBuffer = await promisify(readFile)(fileOrFolder);
           const fileCreated = await this.createFile(
             folder,
             name,
-            await promisify(readFile)(fileOrFolder),
+            fileBuffer.buffer,
           );
           if (!fileCreated) {
             success = false;
@@ -787,10 +799,11 @@ class ContentDataProvider
           return;
         }
 
+        const fileBuffer = await promisify(readFile)(itemUri.fsPath);
         const fileCreated = await this.createFile(
           target,
           name,
-          await promisify(readFile)(itemUri.fsPath),
+          fileBuffer.buffer,
         );
 
         if (!fileCreated) {

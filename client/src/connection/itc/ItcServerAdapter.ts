@@ -306,6 +306,79 @@ class ItcServerAdapter implements ContentAdapter {
     }
   }
 
+  public calculateNewFileUri(
+    closedFileUri: Uri,
+    movedItem: ContentItem,
+    newItemUri: Uri,
+  ): Uri | null {
+    const isFolder = movedItem.fileStat?.type === FileType.Directory;
+
+    // If the moved item is a file and matches the closed file, return the new URI
+    if (
+      !isFolder &&
+      closedFileUri.toString() === movedItem.vscUri?.toString()
+    ) {
+      return newItemUri;
+    }
+
+    // If the moved item is a folder, calculate the new path for files within it
+    if (isFolder && movedItem.vscUri) {
+      const extractPathFromUri = (uri: string): string => {
+        try {
+          const queryStart = uri.indexOf("?");
+          if (queryStart === -1) {
+            return uri;
+          }
+          return uri.substring(0, queryStart);
+        } catch (error) {
+          console.error("Failed to extract path from URI:", error);
+          return "";
+        }
+      };
+
+      const oldBasePath = extractPathFromUri(movedItem.vscUri.toString());
+      const closedFilePath = extractPathFromUri(closedFileUri.toString());
+
+      // Check if the closed file was inside the moved folder
+      const dirSeparator = getDirectorySeparator(oldBasePath);
+      const isChildFile =
+        oldBasePath &&
+        closedFilePath &&
+        (closedFilePath.startsWith(oldBasePath + dirSeparator) ||
+          closedFilePath === oldBasePath);
+
+      if (isChildFile && oldBasePath !== closedFilePath) {
+        try {
+          const relativePath = closedFilePath.substring(oldBasePath.length);
+          const newUriStr = newItemUri.toString();
+
+          // Extract the path without query parameters
+          const queryStart = newUriStr.indexOf("?");
+          const newPath =
+            queryStart === -1 ? newUriStr : newUriStr.substring(0, queryStart);
+
+          // Combine new path with relative path
+          const newFilePath = newPath.endsWith(dirSeparator)
+            ? newPath + relativePath.substring(1)
+            : newPath + relativePath;
+
+          // Reconstruct URI with query parameters if present
+          if (queryStart !== -1) {
+            const queryString = newUriStr.substring(queryStart);
+            return Uri.parse(newFilePath + queryString);
+          }
+
+          return Uri.parse(newFilePath);
+        } catch (error) {
+          console.error("Failed to construct new file URI:", error);
+          return null;
+        }
+      }
+    }
+
+    return null;
+  }
+
   public async renameItem(
     item: ContentItem,
     newName: string,
