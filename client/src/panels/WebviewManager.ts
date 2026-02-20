@@ -18,6 +18,7 @@ export class WebViewManager {
 
     const panel = window.createWebviewPanel("webView", uid, ViewColumn.One, {
       enableScripts: true,
+      retainContextWhenHidden: true,
     });
 
     webview.onDispose = () => delete this.panels[uid];
