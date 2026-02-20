@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add the ability to pin columns ([#1781](https://github.com/sassoftware/vscode-sas-extension/pull/1781))
 - Allow running R code files in SAS Content ([#1845](https://github.com/sassoftware/vscode-sas-extension/pull/1845))
 
+### Fixed
+
+- Fix issue affecting data viewer scroll position ([#1800](https://github.com/sassoftware/vscode-sas-extension/pull/1800))
+
 ## [1.19.1] - 2026-04-01
 
 ### Fixed
