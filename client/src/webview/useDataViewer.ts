@@ -22,7 +22,6 @@ import type {
   TableQuery,
 } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
-import type { ViewProperties } from "../panels/DataViewer";
 import ColumnHeader from "./ColumnHeader";
 import { ColumnMenuProps, getColumnMenu } from "./ColumnMenu";
 import localize from "./localize";
@@ -92,7 +91,6 @@ const clearFetchColumnsTimeout = () =>
   fetchColumnsTimeoutId && clearTimeout(fetchColumnsTimeoutId);
 const fetchColumns = (): Promise<{
   columns: Column[];
-  viewProperties?: ViewProperties;
 }> => {
   const requestKey = v4();
   vscode.postMessage({ command: "request:loadColumns", key: requestKey });
