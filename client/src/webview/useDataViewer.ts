@@ -39,7 +39,6 @@ const contextMenuHandler = (e) => {
 export const applyColumnState = (api: GridApi, state: ColumnState[]) => {
   api.applyColumnState({ state, defaultState: { sort: null } });
   api.ensureIndexVisible(0);
-  storeViewProperties({ columnState: state });
 };
 
 const defaultTimeout = 60 * 1000; // 60 seconds (accounting for compute session expiration)
@@ -121,12 +120,6 @@ const fetchColumns = (): Promise<{
   });
 };
 
-export const storeViewProperties = (viewProperties: ViewProperties) =>
-  vscode.postMessage({
-    command: "request:storeViewProperties",
-    data: { viewProperties },
-  });
-
 const useDataViewer = () => {
   const gridRef = useRef<AgGridReact>(null);
   const [columns, setColumns] = useState<ColDef[]>([]);
@@ -136,12 +129,9 @@ const useDataViewer = () => {
   );
   const setQueryParams = (query: TableQuery | undefined) => {
     setQueryParamsState(query);
-    storeViewProperties({ query });
   };
 
   const columnMenuRef = useRef<ColumnMenuProps | undefined>(columnMenu);
-  const columnStateRef = useRef<ColumnState[] | undefined>(undefined);
-  const loadedViewPropertiesRef = useRef<ViewProperties | undefined>(undefined);
   useEffect(() => {
     columnMenuRef.current = columnMenu;
   }, [columnMenu]);
@@ -189,21 +179,7 @@ const useDataViewer = () => {
 
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
-      const { columnState, query } = loadedViewPropertiesRef.current;
-      event.api.setGridOption("datasource", dataSource(query));
-
-      // Re-hydrate our view with persisted view properties
-      if (!loadedViewPropertiesRef.current) {
-        return;
-      }
-      if (query) {
-        setQueryParams(query);
-      }
-      if (columnState && columnState.length > 0) {
-        applyColumnState(event.api, columnState);
-        event.api.refreshHeader();
-        columnStateRef.current = undefined;
-      }
+      event.api.setGridOption("datasource", dataSource());
     },
     [dataSource],
   );
@@ -252,12 +228,7 @@ const useDataViewer = () => {
       return;
     }
 
-    fetchColumns().then(({ columns: columnsData, viewProperties }) => {
-      if (viewProperties.columnState && viewProperties.columnState.length > 0) {
-        columnStateRef.current = viewProperties.columnState;
-      }
-      loadedViewPropertiesRef.current = viewProperties;
-
+    fetchColumns().then(({ columns: columnsData }) => {
       const columns: ColDef[] = columnsData.map((column) => ({
         field: column.name,
         headerComponent: ColumnHeader,
@@ -328,7 +299,6 @@ const useDataViewer = () => {
     gridRef,
     onGridReady,
     refreshResults,
-    viewProperties: () => loadedViewPropertiesRef.current,
   };
 };
 

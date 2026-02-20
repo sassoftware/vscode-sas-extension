@@ -35,7 +35,6 @@ const DataViewer = () => {
     gridRef,
     onGridReady,
     refreshResults,
-    viewProperties,
   } = useDataViewer();
 
   const handleKeydown = useCallback(
@@ -71,7 +70,7 @@ const DataViewer = () => {
         onCommit={(value) => {
           refreshResults({ filterValue: value });
         }}
-        initialValue={viewProperties()?.query?.filterValue ?? ""}
+        initialValue={""}
       />
       {columnMenu && <ColumnMenu {...columnMenu} />}
       <div
