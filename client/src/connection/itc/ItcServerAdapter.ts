@@ -29,7 +29,11 @@ import { ProfileWithFileRootOptions } from "../../components/profile";
 import { getLink, getResourceId, getSasServerUri } from "../rest/util";
 import { executeRawCode } from "./CodeRunner";
 import { PowershellResponse, ScriptActions } from "./types";
-import { getDirectorySeparator } from "./util";
+import {
+  extractPathFromUri,
+  generateNewFilePath,
+  getDirectorySeparator,
+} from "./util";
 
 class ItcServerAdapter implements ContentAdapter {
   protected sessionId: string;
@@ -323,19 +327,6 @@ class ItcServerAdapter implements ContentAdapter {
 
     // If the moved item is a folder, calculate the new path for files within it
     if (isFolder && movedItem.vscUri) {
-      const extractPathFromUri = (uri: string): string => {
-        try {
-          const queryStart = uri.indexOf("?");
-          if (queryStart === -1) {
-            return uri;
-          }
-          return uri.substring(0, queryStart);
-        } catch (error) {
-          console.error("Failed to extract path from URI:", error);
-          return "";
-        }
-      };
-
       const oldBasePath = extractPathFromUri(movedItem.vscUri.toString());
       const closedFilePath = extractPathFromUri(closedFileUri.toString());
 
@@ -348,31 +339,12 @@ class ItcServerAdapter implements ContentAdapter {
           closedFilePath === oldBasePath);
 
       if (isChildFile && oldBasePath !== closedFilePath) {
-        try {
-          const relativePath = closedFilePath.substring(oldBasePath.length);
-          const newUriStr = newItemUri.toString();
-
-          // Extract the path without query parameters
-          const queryStart = newUriStr.indexOf("?");
-          const newPath =
-            queryStart === -1 ? newUriStr : newUriStr.substring(0, queryStart);
-
-          // Combine new path with relative path
-          const newFilePath = newPath.endsWith(dirSeparator)
-            ? newPath + relativePath.substring(1)
-            : newPath + relativePath;
-
-          // Reconstruct URI with query parameters if present
-          if (queryStart !== -1) {
-            const queryString = newUriStr.substring(queryStart);
-            return Uri.parse(newFilePath + queryString);
-          }
-
-          return Uri.parse(newFilePath);
-        } catch (error) {
-          console.error("Failed to construct new file URI:", error);
-          return null;
-        }
+        return generateNewFilePath(
+          oldBasePath,
+          closedFilePath,
+          newItemUri,
+          dirSeparator,
+        );
       }
     }
 
