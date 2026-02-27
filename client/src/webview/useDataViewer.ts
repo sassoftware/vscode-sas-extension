@@ -306,6 +306,8 @@ const useDataViewer = () => {
         field: "#",
         headerTooltip: localize("Row number"),
         pinned: "left",
+        lockPinned: true,
+        lockPosition: true,
         sortable: false,
         suppressMovable: true,
       });
