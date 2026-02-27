@@ -2,10 +2,6 @@ name: Feature Request
 description: Suggest an idea for this project
 type: Feature
 body:
-  - type: markdown
-    attributes:
-      value: |
-        **<ins>NOTE: Please do not share screenshots or settings containing sensitive information (i.e. domains, credentials, files, etc)</ins>**
   - type: textarea
     attributes:
       label: Is your feature request related to a problem? Please describe.
@@ -26,3 +22,11 @@ body:
     attributes:
       label: SAS version
       placeholder: e.g. Viya 4
+  - type: checkboxes
+    attributes:
+      label: Sensitive information
+      description: |
+        **<ins>Please do not share screenshots or settings containing sensitive information (i.e. domains, credentials, files, etc)</ins>**
+      options:
+        - label: I have confirmed that this feature request contains no sensitive information
+          required: true
