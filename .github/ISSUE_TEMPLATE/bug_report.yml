@@ -2,6 +2,10 @@ name: Bug Report
 description: Report a bug
 type: Bug
 body:
+  - type: markdown
+    attributes:
+      value: |
+        ### NOTE: Please do not share screenshots or settings containing sensitive information (i.e. domains, credentials, files, etc)
   - type: textarea
     attributes:
       label: Describe the bug
