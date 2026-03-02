@@ -11,7 +11,7 @@
   "dependencies": {
     "ag-grid-community": "^35.1.0",
     "ag-grid-react": "^35.1.0",
-    "axios": "^1.13.5",
+    "axios": "^1.13.6",
     "highlight.js": "^11.11.1",
     "katex": "^0.16.28",
     "marked": "^17.0.3",
