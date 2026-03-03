@@ -1,0 +1,367 @@
+
+> sas-lsp@1.18.0 pretest
+> npm run compile && tsc -p ./client
+
+
+> sas-lsp@1.18.0 compile
+> node ./tools/build.mjs
+
+[node] 
+[node] > sas-lsp@1.18.0 compile
+[node] > node ./tools/build.mjs
+[node] 
+[browser] 
+[browser] > sas-lsp@1.18.0 compile
+[browser] > node ./tools/build.mjs
+[browser] 
+[static] 
+[static] > sas-lsp@1.18.0 compile
+[static] > node ./tools/build.mjs
+[static] 
+[static] Copying files
+[browser] npm run compile --webviews exited with code 0
+[node] npm run compile --client exited with code 0
+[static] Files copied
+[static] npm run compile --static exited with code 0
+
+> sas-lsp@1.18.0 test
+> npm run test-server && npm run test-client
+
+
+> sas-lsp@1.18.0 test-server
+> cross-env TS_NODE_PROJECT=./server/tsconfig.json mocha -r ts-node/register ./server/test/**/*.test.ts
+
+
+
+  Test code zone for embedded language
+    ✔ proc sql
+    ✔ proc python
+    ✔ proc lua
+
+
+  3 passing (31ms)
+
+
+> sas-lsp@1.18.0 test-client
+> node ./client/out/test/runTest.js
+
+- Resolving version...
+✔ Validated version: 1.109.5
+✔ Found existing install in /Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5
+Warning: 'locale en-US' is not in the list of known options, but still passed to Electron/Chromium.
+[90m[main 2026-03-03T06:15:33.416Z][0m update#setState disabled
+[90m[main 2026-03-03T06:15:33.418Z][0m update#ctor - updates are disabled by the environment
+Started local extension host with pid 73809.
+Loading development extension at /Users/sbjyil/workspace/vscode-sas-extension
+MCP Registry configured: https://api.mcp.github.com
+Settings Sync: Account status changed from uninitialized to unavailable
+[0m[0m
+[0m  ContentDataProvider[0m
+  [32m  ✔[0m[90m getTreeItem - returns a file tree item for file reference[0m
+  [32m  ✔[0m[90m getTreeItem - returns a folder tree item for file reference[0m
+  [32m  ✔[0m[90m getChildren - returns no children if not authorized[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m getChildren - returns root children without content item[0m
+  [32m  ✔[0m[90m getChildren - returns children with content item[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m stat - returns file data[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m stat - returns folder data[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m readFile - returns file contents[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m createFolder - creates a folder[0m
+  [32m  ✔[0m[90m createFolder - fails to create a folder without parent folder[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m createFile - creates a file and adds it to a folder[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m renameResource - fail if the new name is conflicted[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m renameResource - renames resource and returns uri[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m renameResource - renames reference resource and returns uri of referenced item[0m
+fail to retrieve the viya cadence
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m writeFile - saves text based content to file[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m delete - deletes item and underlying resource[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m recycleResource - move item to the recycle bin[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m restoreResource - restore item to the previous parent folder[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m add to favorites - Add the reference of an item to My Favorites folder[0m
+  [32m  ✔[0m[90m remove from favorites - Remove the reference of an item from the resource[0m
+  [32m  ✔[0m[90m handleDrop - allows dropping files[0m
+  [32m  ✔[0m[90m handleDrop - allows dropping folder[0m
+  [32m  ✔[0m[90m handleDrop - allows dropping content items[0m
+  [32m  ✔[0m[90m handleDrop - allows dropping content items to favorites[0m
+  [32m  ✔[0m[90m handleDrop - allows dropping content items to trash[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m getFileFolderPath - returns empty path for folder[0m
+fail to retrieve the viya cadence
+  [32m  ✔[0m[90m getFileFolderPath - traverses parentFolderUri to find path[0m
+[0m  Notebook Conversion[0m
+  [32m  ✔[0m[90m convert the multi cell sas notebook to node flow[0m[31m (84ms)[0m
+  [32m  ✔[0m[90m convert the single cell sas notebook to node flow[0m[31m (76ms)[0m
+  [32m  ✔[0m[90m convert the multi cell sas notebook to swimlane flow[0m
+  [32m  ✔[0m[90m convert the single cell sas notebook to swimlane flow[0m
+[0m  utils[0m
+  [32m  ✔[0m[90m getFileStatement - returns extensionless name + numeric suffix with no content[0m
+  [32m  ✔[0m[90m getFileStatement - returns uppercase name + suffix with uppercase content[0m
+  [32m  ✔[0m[90m getFileStatement - returns encoded filename when filename contains quotes[0m
+[0m  LibraryDataProvider[0m
+  [32m  ✔[0m[90m getChildren - returns an empty array when no adapter is specified[0m
+  [32m  ✔[0m[90m getChildren - returns tables with a content item[0m
+  [32m  ✔[0m[90m getChildren - returns libraries without content item[0m
+  [32m  ✔[0m[90m getTreeItem - returns table tree item[0m
+  [32m  ✔[0m[90m getTreeItem - returns read only library[0m
+  [32m  ✔[0m[90m getTreeItem - returns regular library[0m
+  [32m  ✔[0m[90m getTreeItem - returns work library[0m
+  [32m  ✔[0m[90m deleteTables - deletes a single table successfully[0m
+  [32m  ✔[0m[90m deleteTables - fails with error message for single table[0m
+  [32m  ✔[0m[90m deleteTables - deletes multiple tables successfully[0m
+  [32m  ✔[0m[90m deleteTables - reports failures when some tables fail to delete[0m
+[0m  PaginatedResultSet[0m
+  [32m  ✔[0m[90m returns a basic response[0m
+[0m  parse log[0m
+  [32m  ✔[0m[90m parse the log in which has 7 problems[0m
+  [32m  ✔[0m[90m parse the log in which has 13 problems[0m
+  [32m  ✔[0m[90m parse the log in which has 3 problems[0m
+  [32m  ✔[0m[90m parse the replayed log in which has 13 problems[0m
+  [32m  ✔[0m[90m parse the log in which has long source code and 3 problems[0m
+  [32m  ✔[0m[90m parse the log in which has 8 problems, 6 errors and 2 warning[0m
+  [32m  ✔[0m[90m parse the log in which an problem message is shared[0m
+  [32m  ✔[0m[90m parse the log in which same problem index occurs at different positions in different lines[0m
+  [32m  ✔[0m[90m parse the log in which same problem index have different problem message[0m
+  [32m  ✔[0m[90m parse the log in which there is 1 indicator but 2 problem indexes[0m
+  [32m  ✔[0m[90m parse the long log[0m
+  [32m  ✔[0m[90m parse the log with case9[0m
+  [32m  ✔[0m[90m parse the log with case10[0m
+  [32m  ✔[0m[90m parse the log with case11[0m
+[0m  export notebook[0m
+  [32m  ✔[0m[90m exports the sasnb to sas file correctly[0m
+  [32m  ✔[0m[90m cancels export when no format is selected[0m
+  [32m  ✔[0m[90m cancels export when no save location is selected[0m
+[0m  notebook serializer[0m
+  [32m  ✔[0m[90m serialize/deserialize the data correctly[0m
+[0m  Profiles[0m
+[0m    Legacy Profile[0m
+    [32m  ✔[0m[90m adds connectionType to legacy profiles[0m[31m (259ms)[0m
+    [32m  ✔[0m[90m removes trailing slash from endpoint on legacy profiles[0m[31m (571ms)[0m
+    [32m  ✔[0m[90m fails to validate missing connectionType[0m
+[0m    No Profile[0m
+[0m      CRUD Operations[0m
+      [32m  ✔[0m[90m validate initial state[0m
+      [32m  ✔[0m[90m add a new viya profile[0m[31m (311ms)[0m
+[0m    ClientId/Secret Profile[0m
+[0m      CRUD Operations[0m
+      [32m  ✔[0m[90m add a new profile[0m[31m (282ms)[0m
+      [32m  ✔[0m[90m delete a profile[0m[31m (320ms)[0m
+      [32m  ✔[0m[90m list the expected profiles[0m
+      [32m  ✔[0m[90m get profile by name[0m
+      [32m  ✔[0m[90m update single element of the profile[0m[31m (364ms)[0m
+[0m      Validate Profile[0m
+      [32m  ✔[0m[90m set active profile[0m[31m (385ms)[0m
+      [32m  ✔[0m[90m get active profile[0m[31m (398ms)[0m
+rejected promise not handled within 1 second: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+stack trace: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+    at Ntt.prompt (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:1310:3623)
+    at zui.G (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:78672)
+    at zui.I (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80084)
+    at async zui.$getSession (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80930)
+DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+rejected promise not handled within 1 second: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+stack trace: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+    at Ntt.prompt (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:1310:3623)
+    at zui.G (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:78672)
+    at zui.I (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80084)
+    at async zui.$getSession (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80930)
+      [32m  ✔[0m[90m validate client id/secret profile[0m
+[0m    Empty File Profile[0m
+[0m      CRUD Operations[0m
+rejected promise not handled within 1 second: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+stack trace: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+    at Ntt.prompt (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:1310:3623)
+    at zui.G (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:78672)
+    at zui.I (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80084)
+    at async zui.$getSession (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80930)
+rejected promise not handled within 1 second: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+stack trace: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+    at Ntt.prompt (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:1310:3623)
+    at zui.G (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:78672)
+    at zui.I (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80084)
+    at async zui.$getSession (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80930)
+      [32m  ✔[0m[90m add a new profile[0m[31m (416ms)[0m
+      [32m  ✔[0m[90m delete a profile[0m[31m (535ms)[0m
+      [32m  ✔[0m[90m get profile by name[0m
+      [32m  ✔[0m[90m list the expected profiles[0m
+      [32m  ✔[0m[90m update single element of the profile[0m[31m (484ms)[0m
+[0m      Validate Profiles[0m
+      [32m  ✔[0m[90m validate no active profile when only name sent in[0m
+      [32m  ✔[0m[90m get active profile when no profile active[0m
+[0m    Overloaded Profile[0m
+[0m      Validate Profiles[0m
+      [32m  ✔[0m[90m set active profile[0m[31m (534ms)[0m
+rejected promise not handled within 1 second: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+stack trace: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+    at Ntt.prompt (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:1310:3623)
+    at zui.G (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:78672)
+    at zui.I (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80084)
+    at async zui.$getSession (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80930)
+DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+rejected promise not handled within 1 second: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+stack trace: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+    at Ntt.prompt (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:1310:3623)
+    at zui.G (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:78672)
+    at zui.I (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80084)
+    at async zui.$getSession (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80930)
+      [32m  ✔[0m[90m get active profile[0m[31m (529ms)[0m
+      [32m  ✔[0m[90m validate overloaded file profile[0m
+[0m    SSH Profile[0m
+[0m      CRUD Operations[0m
+rejected promise not handled within 1 second: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+stack trace: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+    at Ntt.prompt (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:1310:3623)
+    at zui.G (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:78672)
+    at zui.I (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80084)
+    at async zui.$getSession (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80930)
+DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+rejected promise not handled within 1 second: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+stack trace: Error: DialogService: refused to show dialog in tests. Contents: The extension 'SAS' wants to sign in using SAS.
+    at Ntt.prompt (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:1310:3623)
+    at zui.G (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:78672)
+    at zui.I (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80084)
+    at async zui.$getSession (vscode-file://vscode-app/Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/workbench.desktop.main.js:607:80930)
+      [32m  ✔[0m[90m add a new profile[0m[31m (552ms)[0m
+      [32m  ✔[0m[90m delete a profile[0m[31m (642ms)[0m
+      [32m  ✔[0m[90m list the expected profiles[0m
+[0m    COM Profile[0m
+[0m      CRUD Operations[0m
+      [32m  ✔[0m[90m add a new profile[0m[31m (679ms)[0m
+      [32m  ✔[0m[90m delete a profile[0m[31m (714ms)[0m
+      [32m  ✔[0m[90m list the expected profiles[0m
+[0m    Empty Item Profile[0m
+[0m      Validate Profiles[0m
+      [32m  ✔[0m[90m set active profile[0m[31m (713ms)[0m
+      [32m  ✔[0m[90m get active profile[0m[31m (800ms)[0m
+[0m    Viya Input Prompts[0m
+    [32m  ✔[0m[90m Valid Profile Input[0m
+    [32m  ✔[0m[90m Valid New Profile Input[0m
+    [32m  ✔[0m[90m Valid Endpoint Input[0m
+    [32m  ✔[0m[90m Valid Compute Context Input[0m
+    [32m  ✔[0m[90m Valid Client Id Input[0m
+    [32m  ✔[0m[90m Valid Client Secret Input[0m
+[0m    SSH Input Prompts[0m
+    [32m  ✔[0m[90m Valid Host Input[0m
+    [32m  ✔[0m[90m Valid SAS Path Input[0m
+    [32m  ✔[0m[90m Valid Port Input[0m
+    [32m  ✔[0m[90m Valid Username Input[0m
+    [32m  ✔[0m[90m Valid Private Key File Path Input[0m
+[0m  sas code document[0m
+  [32m  ✔[0m[90m wrap python code[0m
+  [32m  ✔[0m[90m wrap sql code[0m
+  [32m  ✔[0m[90m wrap sas code[0m
+  [32m  ✔[0m[90m wrap sas code with correct windows style file path to &_SASPROGRAMFILE[0m
+  [32m  ✔[0m[90m wrap sas code with correct unix style file path to &_SASPROGRAMFILE[0m
+  [32m  ✔[0m[90m includes blank lines[0m
+  [32m  ✔[0m[90m getProblemLocationInRawCode[0m
+[0m  sas code document helper[0m
+[0m    getCodeDocumentConstructionParameters[0m
+    [32m  ✔[0m[90m should construct parameters with default values[0m
+    [32m  ✔[0m[90m should use custom style from results.html.custom.style for dark theme[0m
+    [32m  ✔[0m[90m should not use custom style from results.html.custom.style for dark theme when not defined[0m
+    [32m  ✔[0m[90m should use no style when results.html.style is '(server default)'[0m
+    [32m  ✔[0m[90m should use results.html.style when results.html.style is neither '(auto)' nor '(server default)'[0m
+[0m  CodeRunner tests[0m
+  [32m  ✔[0m[90m parses output between start tag and end tag[0m
+  [32m  ✔[0m[90m returns all output when no tags are specifed[0m
+[0m  ItcLibraryAdapter tests[0m
+  [32m  ✔[0m[90m fetches columns[0m
+  [32m  ✔[0m[90m loads libraries[0m
+FakeTimers: clearTimeout was invoked to clear a native timer instead of one created by this library.
+To automatically clean-up native timers, use `shouldClearNativeTimers`.
+	at clearTimer (/Users/sbjyil/workspace/vscode-sas-extension/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:900:32)
+	at Object.clearTimeout (/Users/sbjyil/workspace/vscode-sas-extension/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1354:20)
+	at clearTimeout (/Users/sbjyil/workspace/vscode-sas-extension/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1055:38)
+	at ef.value (file:///Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:25:6726)
+	at I.C (file:///Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:27:2328)
+	at I.fire (file:///Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:27:2546)
+	at ef.value (file:///Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:213:78082)
+	at I.C (file:///Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:27:2328)
+	at I.fire (file:///Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:27:2546)
+	at PC.useAdapter (/Users/sbjyil/workspace/vscode-sas-extension/client/dist/node/extension.js:324:6715)
+	at FC.refresh (/Users/sbjyil/workspace/vscode-sas-extension/client/dist/node/extension.js:325:3069)
+	at /Users/sbjyil/workspace/vscode-sas-extension/client/dist/node/extension.js:325:3015
+	at ef.value (file:///Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:213:103000)
+	at I.C (file:///Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:27:2328)
+	at I.D (file:///Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:27:2398)
+	at I.fire (file:///Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:27:2615)
+	at _B.$acceptConfigurationChanged (file:///Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:3166)
+	at file:///Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:2716
+  [32m  ✔[0m[90m loads table data[0m
+  [32m  ✔[0m[90m loads table data for csv output[0m
+  [32m  ✔[0m[90m gets table row count[0m
+  [32m  ✔[0m[90m loads a list of tables[0m
+[0m  ITC connection[0m
+[0m    setup[0m
+    [32m  ✔[0m[90m creates a well-formed local session[0m
+[0m    run[0m
+    [32m  ✔[0m[90m calls run function from script[0m
+[0m    close[0m
+    [32m  ✔[0m[90m closes session gracefully[0m
+[0m  ITC util test[0m
+  [32m  ✔[0m[90m escapePowershellString - escapes powershell special characters[0m
+[0m  REST Session _run[0m
+[0m    baseDirectory argument handling[0m
+    [32m  ✔[0m[90m should set _SASPROGRAMDIR variable when baseDirectory is provided[0m
+    [32m  ✔[0m[90m should not set _SASPROGRAMDIR variable when baseDirectory is not provided[0m
+    [32m  ✔[0m[90m should not set _SASPROGRAMDIR variable when args object is empty[0m
+    [32m  ✔[0m[90m should not set _SASPROGRAMDIR variable when baseDirectory is undefined[0m
+    [32m  ✔[0m[90m should not set _SASPROGRAMDIR variable when baseDirectory is empty string[0m
+    [32m  ✔[0m[90m should handle Windows-style paths for baseDirectory[0m
+    [32m  ✔[0m[90m should handle Unix-style paths for baseDirectory[0m
+[0m  Session test[0m
+  [32m  ✔[0m[90m triggers establish connection only once[0m[31m (100ms)[0m
+[0m  ssh connection auth handler[0m
+[0m    sshAgentAuth[0m
+    [32m  ✔[0m[90m pass socket path to the callback[0m
+[0m    privateKeyAuth[0m
+    [32m  ✔[0m[90m should pass the key contents and passphrase to the callback for an encrypted key[0m
+    [32m  ✔[0m[90m should pass the key contents to the callback for an unencrypted key[0m
+[0m    passwordAuth[0m
+    [32m  ✔[0m[90m should pass the password to the callback[0m
+[0m    keyboardAuth[0m
+    [32m  ✔[0m[90m should present input prompts and pass the answers to the callback[0m
+[0m  ssh connection[0m
+[0m    setup[0m
+    [32m  ✔[0m[90m calls connect with correct params[0m
+    [32m  ✔[0m[90m rejects on connection error[0m
+    [32m  ✔[0m[90m rejects on shell error[0m
+[0m    run[0m
+    [32m  ✔[0m[90m writes code input to stream[0m
+    [32m  ✔[0m[90m runs long-running code to completion[0m
+[0m    close[0m
+    [32m  ✔[0m[90m writes closing commands to ssh session[0m
+[0m    getSession[0m
+    [32m  ✔[0m[90m builds a well-formed ssh session instance[0m
+[0m  lsp[0m
+rejected promise not handled within 1 second: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, unlink '/Users/sbjyil/workspace/vscode-sas-extension/client/out/test/connection/itc/0242aa6a-5930-4b4a-8c3a-b3e454b3b925.htm'
+stack trace: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, unlink '/Users/sbjyil/workspace/vscode-sas-extension/client/out/test/connection/itc/0242aa6a-5930-4b4a-8c3a-b3e454b3b925.htm'
+	at Lr.e (file:///Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.delete (file:///Users/sbjyil/workspace/vscode-sas-extension/.vscode-test/vscode-darwin-arm64-1.109.5/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:17171)
+An unknown error occurred. Please consult the log for more details.
+  [32m  ✔[0m[90m provides completion items[0m
+  [32m  ✔[0m[90m provides hover[0m
+  [32m  ✔[0m[90m provides signature help[0m[31m (5045ms)[0m
+  [32m  ✔[0m[90m provides document symbol[0m
+[0m  Formatter tests[0m
+  [36m  - formats sas code well[0m
+[0m  log actions[0m
+  [32m  ✔[0m[90m unsetProducedExecutionOutput[0m
+[0m  run actions[0m
+  [32m  ✔[0m[90m setIsExecutingCode[0m
+[92m [0m[32m 156 passing[0m[90m (35s)[0m
+[36m [0m[36m 1 pending[0m
+[90m[main 2026-03-03T06:16:10.461Z][0m Extension host with pid 73809 exited with code: 0, signal: unknown.
+Exit code:   0
