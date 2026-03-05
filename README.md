@@ -16,21 +16,25 @@ The SAS extension includes many [features](https://sassoftware.github.io/vscode-
 
 ## Support
 
-### SAS Communities
+### FAQs
 
-Ask, Find, and Share on the VS Code SAS Extension on the [SAS Programmers Community site](https://communities.sas.com/t5/SAS-Programming/bd-p/programming).
+Please check the [FAQ](https://sassoftware.github.io/vscode-sas-extension/faq) page for some common questions.
 
 ### SAS Programming Documentation
 
 [SAS Programming documentation](https://go.documentation.sas.com/doc/en/pgmsascdc/v_048/lepg/titlepage.htm)
 
-### FAQs
+### SAS Communities
 
-Please check the [FAQ](https://sassoftware.github.io/vscode-sas-extension/faq) page for some common questions.
+For usage questions, tips, and workarounds, interact with other SAS users to ask questions and get answers on the [SAS Programmers Community site](https://communities.sas.com/t5/SAS-Programming/bd-p/programming).
 
-### GitHub Issues
+### Reporting Issues
 
-See the [SUPPORT.md](SUPPORT.md) file for information on how to open an issue against this repository.
+Submit a [GitHub issue](https://github.com/sassoftware/vscode-sas-extension/issues) for tracking bugs, feature requests, or questions regarding open‑source contributions.
+
+### SAS Technical Support
+
+SAS Technical Support provides standard support for the current release of the [SAS Extension for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp) available through the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items), in accordance with the [Policies for All SAS Products | SAS Support](https://support.sas.com/en/technical-support/services-policies/policies-for-sas-products.html). If you have been unable to solve a problem or find answers using self‑help resources, open a case in the [Customer Service Portal](https://service.sas.com/csm) to get technical support for the SAS Extension for VS Code.
 
 ## Contributing to the SAS Extension
 
