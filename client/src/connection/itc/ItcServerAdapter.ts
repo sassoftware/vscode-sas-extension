@@ -29,7 +29,11 @@ import { ProfileWithFileRootOptions } from "../../components/profile";
 import { getLink, getResourceId, getSasServerUri } from "../rest/util";
 import { executeRawCode } from "./CodeRunner";
 import { PowershellResponse, ScriptActions } from "./types";
-import { getDirectorySeparator } from "./util";
+import {
+  extractPathFromUri,
+  generateNewFilePath,
+  getDirectorySeparator,
+} from "./util";
 
 class ItcServerAdapter implements ContentAdapter {
   protected sessionId: string;
@@ -304,6 +308,47 @@ class ItcServerAdapter implements ContentAdapter {
     } catch (error) {
       return undefined;
     }
+  }
+
+  public calculateNewFileUri(
+    closedFileUri: Uri,
+    movedItem: ContentItem,
+    newItemUri: Uri,
+  ): Uri | null {
+    const isFolder = movedItem.fileStat?.type === FileType.Directory;
+
+    // If the moved item is a file and matches the closed file, return the new URI
+    if (
+      !isFolder &&
+      closedFileUri.toString() === movedItem.vscUri?.toString()
+    ) {
+      return newItemUri;
+    }
+
+    // If the moved item is a folder, calculate the new path for files within it
+    if (isFolder && movedItem.vscUri) {
+      const oldBasePath = extractPathFromUri(movedItem.vscUri.toString());
+      const closedFilePath = extractPathFromUri(closedFileUri.toString());
+
+      // Check if the closed file was inside the moved folder
+      const dirSeparator = getDirectorySeparator(oldBasePath);
+      const isChildFile =
+        oldBasePath &&
+        closedFilePath &&
+        (closedFilePath.startsWith(oldBasePath + dirSeparator) ||
+          closedFilePath === oldBasePath);
+
+      if (isChildFile && oldBasePath !== closedFilePath) {
+        return generateNewFilePath(
+          oldBasePath,
+          closedFilePath,
+          newItemUri,
+          dirSeparator,
+        );
+      }
+    }
+
+    return null;
   }
 
   public async renameItem(
