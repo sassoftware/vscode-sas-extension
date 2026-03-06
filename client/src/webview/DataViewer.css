@@ -211,3 +211,13 @@ button,
   background: url(../../../icons/light/search.svg) center no-repeat;
   background-size: 16px 16px;
 }
+
+.selection-rectangle {
+  background: rgba(236, 32, 232, 0.4);
+  border: 1px solid rgba(236, 32, 232, 1);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 999;
+  display: none;
+}
