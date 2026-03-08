@@ -38,6 +38,40 @@ run;
     assert.equal(sasCodeDoc.getWrappedCode(), expected);
   });
 
+  it("wrap r code", () => {
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "r",
+      code: `for (x in 1:6) {
+  print(x)
+}
+print("test")`,
+      selectedCode: "",
+      htmlStyle: "Illuminate",
+      outputHtml: true,
+      uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+
+    const expected = `/** LOG_START_INDICATOR **/
+title;footnote;ods _all_ close;
+ods graphics on;
+ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
+proc r;
+submit;
+for (x in 1:6) {
+  print(x)
+}
+print("test")
+endsubmit;
+run;
+;*';*";*/;run;quit;ods html5(id=vscode) close;
+`;
+
+    assert.equal(sasCodeDoc.getWrappedCode(), expected);
+  });
+
   it("wrap sql code", () => {
     const parameters: SASCodeDocumentParameters = {
       languageId: "sql",
