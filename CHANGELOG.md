@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Add support for filtering table results ([#1757](https://github.com/sassoftware/vscode-sas-extension/pull/1757))
 
+### Added
+
+- Add the ability to pin columns ([#1781](https://github.com/sassoftware/vscode-sas-extension/pull/1781))
+
 ### Changed
 
 - Update pubsdata files to use the latest version (2026.01) of the SAS documentation for procedures, statements, and functions ([#1770](https://github.com/sassoftware/vscode-sas-extension/pull/1770))
