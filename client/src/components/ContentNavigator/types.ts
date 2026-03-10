@@ -76,6 +76,11 @@ export interface ContentAdapter {
     fileName: string,
     buffer?: ArrayBufferLike,
   ) => Promise<ContentItem | undefined>;
+  calculateNewFileUri?: (
+    closedFileUri: Uri,
+    movedItem: ContentItem,
+    newItemUri: Uri,
+  ) => Uri | null;
   deleteItem: (item: ContentItem) => Promise<boolean>;
   getChildItems: (parentItem: ContentItem) => Promise<ContentItem[]>;
   getContentOfItem: (item: ContentItem) => Promise<string>;
