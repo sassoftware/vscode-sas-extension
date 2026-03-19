@@ -587,7 +587,7 @@ class RestServerAdapter implements ContentAdapter {
       fileStat: {
         ctime: item.creationTimeStamp,
         mtime: item.modifiedTimeStamp,
-        size: 0,
+        size: fileProperties.size || 0,
         type:
           fileProperties.isDirectory ||
           FOLDER_TYPES.indexOf(typeName) >= 0 ||

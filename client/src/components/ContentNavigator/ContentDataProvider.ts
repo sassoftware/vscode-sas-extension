@@ -217,6 +217,29 @@ class ContentDataProvider
   public async getTreeItem(item: ContentItem): Promise<TreeItem> {
     const isContainer = getIsContainer(item);
     const uri = await this.model.getUri(item, false);
+    const fileName = item.name || "";
+    const extension = fileName.split(".").pop()?.toLowerCase() || "";
+    const imageExtensions = [
+      "png",
+      "jpg",
+      "jpeg",
+      "gif",
+      "bmp",
+      "tiff",
+      "webp",
+      "svg",
+    ];
+    const openCommand = imageExtensions.includes(extension)
+      ? {
+          command: "vscode.openWith",
+          arguments: [uri, "imagePreview.previewEditor"],
+          title: "Open Image",
+        }
+      : {
+          command: "vscode.open",
+          arguments: [uri],
+          title: "Open SAS File",
+        };
 
     // Cache the URI to parent mapping
     this.uriToParentMap.set(
@@ -228,13 +251,7 @@ class ContentDataProvider
       collapsibleState: isContainer
         ? TreeItemCollapsibleState.Collapsed
         : undefined,
-      command: isContainer
-        ? undefined
-        : {
-            command: "vscode.open",
-            arguments: [uri],
-            title: "Open SAS File",
-          },
+      command: isContainer ? undefined : openCommand,
       contextValue: item.contextValue || undefined,
       iconPath: this.iconPathForItem(item),
       id: item.uid,
