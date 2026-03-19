@@ -52,6 +52,7 @@ import {
 import {
   ContentItem,
   ContentNavigatorConfig,
+  ContentSourceType,
   FileManipulationEvent,
 } from "./types";
 import {
@@ -77,6 +78,7 @@ class ContentDataProvider
   private model: ContentModel;
   private extensionUri: Uri;
   private mimeType: string;
+  private openResourceCommand: string;
 
   public dropMimeTypes: string[];
   public dragMimeTypes: string[];
@@ -90,7 +92,7 @@ class ContentDataProvider
   constructor(
     model: ContentModel,
     extensionUri: Uri,
-    { mimeType, treeIdentifier }: ContentNavigatorConfig,
+    { mimeType, treeIdentifier, sourceType }: ContentNavigatorConfig,
   ) {
     this._onDidManipulateFile = new EventEmitter<FileManipulationEvent>();
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
@@ -101,6 +103,7 @@ class ContentDataProvider
     this.dropMimeTypes = [mimeType, "text/uri-list"];
     this.dragMimeTypes = [mimeType];
     this.mimeType = mimeType;
+    this.openResourceCommand = `SAS.${sourceType === ContentSourceType.SASContent ? "content" : "server"}.openResource`;
 
     this._treeView = window.createTreeView(treeIdentifier, {
       treeDataProvider: this,
@@ -217,29 +220,6 @@ class ContentDataProvider
   public async getTreeItem(item: ContentItem): Promise<TreeItem> {
     const isContainer = getIsContainer(item);
     const uri = await this.model.getUri(item, false);
-    const fileName = item.name || "";
-    const extension = fileName.split(".").pop()?.toLowerCase() || "";
-    const imageExtensions = [
-      "png",
-      "jpg",
-      "jpeg",
-      "gif",
-      "bmp",
-      "tiff",
-      "webp",
-      "svg",
-    ];
-    const openCommand = imageExtensions.includes(extension)
-      ? {
-          command: "vscode.openWith",
-          arguments: [uri, "imagePreview.previewEditor"],
-          title: "Open Image",
-        }
-      : {
-          command: "vscode.open",
-          arguments: [uri],
-          title: "Open SAS File",
-        };
 
     // Cache the URI to parent mapping
     this.uriToParentMap.set(
@@ -251,7 +231,13 @@ class ContentDataProvider
       collapsibleState: isContainer
         ? TreeItemCollapsibleState.Collapsed
         : undefined,
-      command: isContainer ? undefined : openCommand,
+      command: isContainer
+        ? undefined
+        : {
+            command: this.openResourceCommand,
+            arguments: [item],
+            title: "Open SAS File",
+          },
       contextValue: item.contextValue || undefined,
       iconPath: this.iconPathForItem(item),
       id: item.uid,

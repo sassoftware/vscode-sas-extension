@@ -16,6 +16,7 @@ import {
 } from "vscode";
 
 import { profileConfig } from "../../commands/profile";
+import { getGlobalStorageUri } from "../ExtensionContext";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
 import ContentAdapterFactory from "./ContentAdapterFactory";
@@ -96,8 +97,54 @@ class ContentNavigator implements SubscriptionProvider {
 
   public getSubscriptions(): Disposable[] {
     const SAS = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}`;
+    const imageExtensions = [
+      "png",
+      "jpg",
+      "jpeg",
+      "gif",
+      "bmp",
+      "tiff",
+      "webp",
+      "svg",
+    ];
     return [
       ...this.contentDataProvider.getSubscriptions(),
+      commands.registerCommand(`${SAS}.openResource`, async (resource: ContentItem) => {
+        if (!resource) {
+          return;
+        }
+        const extension = resource.name?.split(".").pop()?.toLowerCase() || "";
+        const isImage = imageExtensions.includes(extension);
+
+        if (!isImage) {
+          await commands.executeCommand("vscode.open", resource.vscUri);
+          return;
+        }
+
+        const globalStorageUri = getGlobalStorageUri();
+        try {
+          await workspace.fs.readDirectory(globalStorageUri);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+          await workspace.fs.createDirectory(globalStorageUri);
+        }
+
+        const safeName = resource.name?.replace(/[\\/:*?"<>|]/g, "_") || "image.png";
+        const localUri = Uri.joinPath(
+          globalStorageUri,
+          `${Date.now()}-${safeName}`,
+        );
+
+        const bytes = await this.contentModel.getContentByUriAsBinary(
+          resource.vscUri,
+        );
+        await workspace.fs.writeFile(localUri, bytes);
+        await commands.executeCommand(
+          "vscode.openWith",
+          localUri,
+          "imagePreview.previewEditor",
+        );
+      }),
       commands.registerCommand(
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
