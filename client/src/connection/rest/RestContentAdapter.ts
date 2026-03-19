@@ -336,6 +336,24 @@ class RestContentAdapter implements ContentAdapter {
     return data;
   }
 
+  public async getContentOfUriAsBinary(uri: Uri): Promise<Uint8Array> {
+    const resourceId = getResourceId(uri);
+    const { data } = await this.connection.get(resourceId + "/content", {
+      responseType: "arraybuffer",
+    });
+
+    // Convert the arraybuffer response to Uint8Array
+    if (data instanceof ArrayBuffer) {
+      return new Uint8Array(data);
+    }
+    // If it's already a Uint8Array or Buffer, use it directly
+    if (data instanceof Uint8Array) {
+      return data;
+    }
+    // Fallback: treat as string and encode
+    return new TextEncoder().encode(String(data));
+  }
+
   public async getContentOfItem(item: ContentItem): Promise<string> {
     return await this.getContentOfUri(item.vscUri);
   }

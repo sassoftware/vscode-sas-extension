@@ -345,6 +345,31 @@ class RestServerAdapter implements ContentAdapter {
     return response.data as unknown as string;
   }
 
+  public async getContentOfUriAsBinary(uri: Uri): Promise<Uint8Array> {
+    const path = this.trimComputePrefix(getResourceId(uri));
+    const response = await this.fileSystemApi.getFileContentFromSystem(
+      {
+        sessionId: this.sessionId,
+        filePath: path,
+      },
+      {
+        responseType: "arraybuffer",
+      },
+    );
+
+    this.updateFileMetadata(path, response);
+    const responseData: unknown = response.data;
+
+    // Convert the arraybuffer response to Uint8Array
+    if (responseData instanceof ArrayBuffer) {
+      return new Uint8Array(responseData);
+    }
+    if (responseData instanceof Uint8Array) {
+      return responseData;
+    }
+    return new TextEncoder().encode(String(responseData));
+  }
+
   public async getFolderPathForItem(): Promise<string> {
     // This is for creating a filename statement which won't work as expected for
     // file system files.
@@ -562,7 +587,7 @@ class RestServerAdapter implements ContentAdapter {
       fileStat: {
         ctime: item.creationTimeStamp,
         mtime: item.modifiedTimeStamp,
-        size: 0,
+        size: fileProperties.size || 0,
         type:
           fileProperties.isDirectory ||
           FOLDER_TYPES.indexOf(typeName) >= 0 ||
