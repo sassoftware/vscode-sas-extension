@@ -345,6 +345,30 @@ class RestServerAdapter implements ContentAdapter {
     return response.data as unknown as string;
   }
 
+  public async getContentOfUriAsBinary(uri: Uri): Promise<Uint8Array> {
+    const path = this.trimComputePrefix(getResourceId(uri));
+    const response = await this.fileSystemApi.getFileContentFromSystem(
+      {
+        sessionId: this.sessionId,
+        filePath: path,
+      },
+      {
+        responseType: "arraybuffer",
+      },
+    );
+
+    this.updateFileMetadata(path, response);
+
+    // Convert the arraybuffer response to Uint8Array
+    if (response.data instanceof ArrayBuffer) {
+      return new Uint8Array(response.data);
+    }
+    if (response.data instanceof Uint8Array) {
+      return response.data;
+    }
+    return new TextEncoder().encode(String(response.data));
+  }
+
   public async getFolderPathForItem(): Promise<string> {
     // This is for creating a filename statement which won't work as expected for
     // file system files.

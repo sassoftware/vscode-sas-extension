@@ -264,6 +264,33 @@ class ContentDataProvider
   }
 
   public async readFile(uri: Uri): Promise<Uint8Array> {
+    // Check if this is a binary file format (image, PDF, etc.)
+    const fileName = uri.path.split("/").pop() || "";
+    const extension = fileName.split(".").pop()?.toLowerCase() || "";
+    const binaryExtensions = [
+      "png",
+      "jpg",
+      "jpeg",
+      "gif",
+      "bmp",
+      "tiff",
+      "webp",
+      "svg",
+      "pdf",
+      "zip",
+      "tar",
+      "gz",
+      "exe",
+      "dll",
+      "so",
+      "bin",
+    ];
+
+    if (binaryExtensions.includes(extension)) {
+      return await this.model.getContentByUriAsBinary(uri);
+    }
+
+    // For text files, use the regular content method
     return await this.model
       .getContentByUri(uri)
       .then((content) => new TextEncoder().encode(content));
