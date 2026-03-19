@@ -358,15 +358,16 @@ class RestServerAdapter implements ContentAdapter {
     );
 
     this.updateFileMetadata(path, response);
+    const responseData: unknown = response.data;
 
     // Convert the arraybuffer response to Uint8Array
-    if (response.data instanceof ArrayBuffer) {
-      return new Uint8Array(response.data);
+    if (responseData instanceof ArrayBuffer) {
+      return new Uint8Array(responseData);
     }
-    if (response.data instanceof Uint8Array) {
-      return response.data;
+    if (responseData instanceof Uint8Array) {
+      return responseData;
     }
-    return new TextEncoder().encode(String(response.data));
+    return new TextEncoder().encode(String(responseData));
   }
 
   public async getFolderPathForItem(): Promise<string> {
