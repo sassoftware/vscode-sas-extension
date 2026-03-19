@@ -16,9 +16,9 @@ import {
 } from "vscode";
 
 import { profileConfig } from "../../commands/profile";
+import { getGlobalStorageUri } from "../ExtensionContext";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
-import { treeViewSelections } from "../utils/treeViewSelections";
 import ContentAdapterFactory from "./ContentAdapterFactory";
 import ContentDataProvider from "./ContentDataProvider";
 import { ContentModel } from "./ContentModel";
@@ -97,12 +97,58 @@ class ContentNavigator implements SubscriptionProvider {
 
   public getSubscriptions(): Disposable[] {
     const SAS = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}`;
+    const imageExtensions = [
+      "png",
+      "jpg",
+      "jpeg",
+      "gif",
+      "bmp",
+      "tiff",
+      "webp",
+      "svg",
+    ];
     return [
       ...this.contentDataProvider.getSubscriptions(),
+      commands.registerCommand(`${SAS}.openResource`, async (resource: ContentItem) => {
+        if (!resource) {
+          return;
+        }
+        const extension = resource.name?.split(".").pop()?.toLowerCase() || "";
+        const isImage = imageExtensions.includes(extension);
+
+        if (!isImage) {
+          await commands.executeCommand("vscode.open", resource.vscUri);
+          return;
+        }
+
+        const globalStorageUri = getGlobalStorageUri();
+        try {
+          await workspace.fs.readDirectory(globalStorageUri);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+          await workspace.fs.createDirectory(globalStorageUri);
+        }
+
+        const safeName = resource.name?.replace(/[\\/:*?"<>|]/g, "_") || "image.png";
+        const localUri = Uri.joinPath(
+          globalStorageUri,
+          `${Date.now()}-${safeName}`,
+        );
+
+        const bytes = await this.contentModel.getContentByUriAsBinary(
+          resource.vscUri,
+        );
+        await workspace.fs.writeFile(localUri, bytes);
+        await commands.executeCommand(
+          "vscode.openWith",
+          localUri,
+          "imagePreview.previewEditor",
+        );
+      }),
       commands.registerCommand(
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
-          this.getTreeViewSelections(item).forEach(
+          this.treeViewSelections(item).forEach(
             async (resource: ContentItem) => {
               if (!resource.contextValue.includes("delete")) {
                 return;
@@ -155,7 +201,7 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.restoreResource`,
         async (item: ContentItem) => {
-          this.getTreeViewSelections(item).forEach(
+          this.treeViewSelections(item).forEach(
             async (resource: ContentItem) => {
               const isContainer = getIsContainer(resource);
               if (!(await this.contentDataProvider.restoreResource(resource))) {
@@ -277,7 +323,7 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.addToFavorites`,
         async (item: ContentItem) => {
-          this.getTreeViewSelections(item).forEach(
+          this.treeViewSelections(item).forEach(
             async (resource: ContentItem) => {
               if (
                 !(await this.contentDataProvider.addToMyFavorites(resource))
@@ -291,7 +337,7 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.removeFromFavorites`,
         async (item: ContentItem) => {
-          this.getTreeViewSelections(item).forEach(
+          this.treeViewSelections(item).forEach(
             async (resource: ContentItem) => {
               if (
                 !(await this.contentDataProvider.removeFromMyFavorites(
@@ -370,7 +416,7 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.downloadResource`,
         async (resource: ContentItem) => {
-          const selections = this.getTreeViewSelections(resource);
+          const selections = this.treeViewSelections(resource);
           const uris = await window.showOpenDialog({
             title: l10n.t("Choose where to save your files."),
             openLabel: l10n.t("Save"),
@@ -493,8 +539,11 @@ class ContentNavigator implements SubscriptionProvider {
       : "";
   }
 
-  private getTreeViewSelections(item: ContentItem): ContentItem[] {
-    const items = treeViewSelections(this.contentDataProvider.treeView, item);
+  private treeViewSelections(item: ContentItem): ContentItem[] {
+    const items =
+      this.contentDataProvider.treeView.selection.length > 1 || !item
+        ? this.contentDataProvider.treeView.selection
+        : [item];
 
     const uris: string[] = items.map(({ uri }: ContentItem) => uri);
 

@@ -52,6 +52,7 @@ import {
 import {
   ContentItem,
   ContentNavigatorConfig,
+  ContentSourceType,
   FileManipulationEvent,
 } from "./types";
 import {
@@ -77,6 +78,7 @@ class ContentDataProvider
   private model: ContentModel;
   private extensionUri: Uri;
   private mimeType: string;
+  private openResourceCommand: string;
 
   public dropMimeTypes: string[];
   public dragMimeTypes: string[];
@@ -90,7 +92,7 @@ class ContentDataProvider
   constructor(
     model: ContentModel,
     extensionUri: Uri,
-    { mimeType, treeIdentifier }: ContentNavigatorConfig,
+    { mimeType, treeIdentifier, sourceType }: ContentNavigatorConfig,
   ) {
     this._onDidManipulateFile = new EventEmitter<FileManipulationEvent>();
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
@@ -101,6 +103,7 @@ class ContentDataProvider
     this.dropMimeTypes = [mimeType, "text/uri-list"];
     this.dragMimeTypes = [mimeType];
     this.mimeType = mimeType;
+    this.openResourceCommand = `SAS.${sourceType === ContentSourceType.SASContent ? "content" : "server"}.openResource`;
 
     this._treeView = window.createTreeView(treeIdentifier, {
       treeDataProvider: this,
@@ -231,8 +234,8 @@ class ContentDataProvider
       command: isContainer
         ? undefined
         : {
-            command: "vscode.open",
-            arguments: [uri],
+            command: this.openResourceCommand,
+            arguments: [item],
             title: "Open SAS File",
           },
       contextValue: item.contextValue || undefined,
@@ -264,6 +267,33 @@ class ContentDataProvider
   }
 
   public async readFile(uri: Uri): Promise<Uint8Array> {
+    // Check if this is a binary file format (image, PDF, etc.)
+    const fileName = uri.path.split("/").pop() || "";
+    const extension = fileName.split(".").pop()?.toLowerCase() || "";
+    const binaryExtensions = [
+      "png",
+      "jpg",
+      "jpeg",
+      "gif",
+      "bmp",
+      "tiff",
+      "webp",
+      "svg",
+      "pdf",
+      "zip",
+      "tar",
+      "gz",
+      "exe",
+      "dll",
+      "so",
+      "bin",
+    ];
+
+    if (binaryExtensions.includes(extension)) {
+      return await this.model.getContentByUriAsBinary(uri);
+    }
+
+    // For text files, use the regular content method
     return await this.model
       .getContentByUri(uri)
       .then((content) => new TextEncoder().encode(content));
