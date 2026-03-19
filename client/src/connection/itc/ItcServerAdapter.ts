@@ -275,7 +275,7 @@ class ItcServerAdapter implements ContentAdapter {
       if (!success) {
         return new Uint8Array();
       }
-    } catch (error) {
+    } catch {
       return new Uint8Array();
     }
 
