@@ -1,0 +1,80 @@
+{\rtf1\ansi\deff0
+{\fonttbl{\f0 Calibri;}{\f1 Consolas;}}
+\viewkind4\uc1\pard\sa120\sl276\slmult1\lang1033\b Change Description\b0\par
+\b Repository:\b0  vscode-sas-extension\par
+\b Branch:\b0  feature/png-open-sas-server\par
+\b Commit:\b0  5fb7cd5a218fde877f4d616ea7cf880be1d64bd5\par
+\b Date:\b0  2026-03-19\par
+\par
+\b 1. Summary\b0\par
+This change enables image files (especially PNG) to open correctly from the SAS explorers by using a binary retrieval path and a local preview flow.\par
+\par
+Before this change, resources selected from SAS content/server trees used a generic open path that was primarily text-oriented. Binary formats could be opened incorrectly or without the intended preview experience.\par
+\par
+After this change, image resources are detected by extension, fetched as bytes, written to a local temporary location in extension global storage, and opened with VS Code's image preview editor. Non-image resources continue using the normal open flow.\par
+\par
+\b 2. Motivation\b0\par
+Users expect files such as .png to open as images, not as text. The existing path was not reliably binary-safe across all adapter types.\par
+\par
+\b 3. Scope\b0\par
+This feature is intentionally focused and limited to the resource-open behavior from Content Navigator views.\par
+\par
+\b Files updated (7):\b0\par
+- client/src/components/ContentNavigator/ContentDataProvider.ts\par
+- client/src/components/ContentNavigator/ContentModel.ts\par
+- client/src/components/ContentNavigator/index.ts\par
+- client/src/components/ContentNavigator/types.ts\par
+- client/src/connection/itc/ItcServerAdapter.ts\par
+- client/src/connection/rest/RestContentAdapter.ts\par
+- client/src/connection/rest/RestServerAdapter.ts\par
+\par
+\b 4. Technical Changes\b0\par
+\b 4.1 Command routing in navigator\b0\par
+A SAS-specific open command was introduced for tree items. Instead of directly calling vscode.open for every resource, the tree now routes through:\par
+\pard\li360\sa120\sl276\slmult1\f1 SAS.content.openResource\f0  or \f1 SAS.server.openResource\f0 \par
+\pard\sa120\sl276\slmult1
+This command checks extension type. For image extensions (png/jpg/jpeg/gif/bmp/tiff/webp/svg), it triggers binary fetch and image preview; otherwise it falls back to normal open.\par
+\par
+\b 4.2 Binary content support in model/interface\b0\par
+The content adapter interface now includes an optional binary read API:\par
+\pard\li360\sa120\sl276\slmult1\f1 getContentOfUriAsBinary?(uri): Promise<Uint8Array>\f0\par
+\pard\sa120\sl276\slmult1
+ContentModel now exposes \f1 getContentByUriAsBinary\f0  with fallback behavior when an adapter does not implement binary fetch.\par
+\par
+\b 4.3 Adapter implementations\b0\par
+- RestContentAdapter: requests content endpoint with arraybuffer response and converts to Uint8Array.\par
+- RestServerAdapter: fetches file content with arraybuffer response, converts to bytes, and keeps metadata updated (including file size).\par
+- ItcServerAdapter: retrieves file content to a temp file, reads bytes, cleans up temp artifact, and returns Uint8Array.\par
+\par
+\b 4.4 Data provider behavior\b0\par
+ContentDataProvider now detects likely binary extensions in readFile and uses binary path when needed. Text resources keep the prior text encoding path.\par
+\par
+\b 5. Functional Outcome\b0\par
+- Opening PNG (and other supported image types) from SAS explorers now launches image preview correctly.\par
+- Non-image files continue to open with normal editor behavior.\par
+- Behavior works across both REST and ITC-backed server/content flows.\par
+\par
+\b 6. Risk and Mitigation\b0\par
+\b Risks:\b0\par
+- Extension-based binary detection is heuristic.\par
+- Temporary local-file strategy may create short-lived files in global storage.\par
+\par
+\b Mitigations:\b0\par
+- Binary API is optional and has controlled fallback.\par
+- Non-image path is unchanged.\par
+- Temp file name is sanitized and isolated in extension-managed storage.\par
+\par
+\b 7. Suggested Validation\b0\par
+1. Open .png from SAS Content tree and verify image preview editor opens.\par
+2. Open .png from SAS Server tree and verify the same behavior.\par
+3. Open a text file (.sas/.txt) and confirm normal editor open still works.\par
+4. Confirm no regressions for delete/download/other tree commands.\par
+\par
+\b 8. Backward Compatibility\b0\par
+The change is backward compatible for non-image resources. Existing command patterns are preserved for non-binary use cases.\par
+\par
+\b 9. Future Improvements (Optional)\b0\par
+- Use server-provided MIME type when available instead of extension-only detection.\par
+- Add cleanup policy for old preview temp files.\par
+- Add explicit tests for image open command routing and binary adapters.\par
+}
