@@ -1,10 +1,10 @@
 // Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { AgColumn, ColumnState, GridApi } from "ag-grid-community";
+import { AgColumn, GridApi } from "ag-grid-community";
 
 import GridMenu from "./GridMenu";
 import localize from "./localize";
-import { storeViewProperties } from "./useDataViewer";
+import { applyColumnState } from "./useDataViewer";
 import useTheme from "./useTheme";
 
 export interface ColumnMenuProps {
@@ -18,12 +18,6 @@ export interface ColumnMenuProps {
   sortColumn: (direction: "asc" | "desc") => void;
   top: number;
 }
-
-const applyColumnState = (api: GridApi, state: ColumnState[]) => {
-  api.applyColumnState({ state, defaultState: { sort: null } });
-  api.ensureIndexVisible(0);
-  storeViewProperties({ columnState: state });
-};
 
 export const getColumnMenu = (
   api: GridApi,
@@ -47,7 +41,10 @@ export const getColumnMenu = (
         sortIndex: newColumnState.length,
       });
     } else {
-      newColumnState[colIndex].sort = direction;
+      newColumnState[colIndex] = {
+        colId: newColumnState[colIndex].colId,
+        sort: direction,
+      };
     }
     applyColumnState(api, newColumnState);
   },
@@ -86,16 +83,17 @@ const ColumnMenu = ({
   top,
 }: ColumnMenuProps) => {
   const theme = useTheme();
+  const sort = column.getSort();
   const menuItems = [
     {
       name: localize("Sort"),
       children: [
         {
           name:
-            hasSort && !column.sort
+            hasSort && !sort
               ? localize("Ascending (add to sorting)")
               : localize("Ascending"),
-          checked: column.sort === "asc",
+          checked: sort === "asc",
           onPress: () => {
             sortColumn("asc");
             dismissMenu();
@@ -103,10 +101,10 @@ const ColumnMenu = ({
         },
         {
           name:
-            hasSort && !column.sort
+            hasSort && !sort
               ? localize("Descending (add to sorting)")
               : localize("Descending"),
-          checked: column.sort === "desc",
+          checked: sort === "desc",
           onPress: () => {
             sortColumn("desc");
             dismissMenu();
@@ -119,7 +117,7 @@ const ColumnMenu = ({
             removeFromSort();
             dismissMenu();
           },
-          disabled: !hasSort || !column.sort,
+          disabled: !hasSort || !sort,
         },
         {
           name: localize("Remove all sorting"),

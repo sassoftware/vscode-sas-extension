@@ -5,11 +5,14 @@ import { Uri, l10n, window } from "vscode";
 import type { ColumnState, SortModelItem } from "ag-grid-community";
 
 import PaginatedResultSet from "../components/LibraryNavigator/PaginatedResultSet";
-import { TableData } from "../components/LibraryNavigator/types";
+import { TableData, TableQuery } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
 import { WebView } from "./WebviewManager";
 
-export type ViewProperties = { columnState?: ColumnState[] };
+export type ViewProperties = {
+  columnState?: ColumnState[];
+  query?: TableQuery;
+};
 
 class DataViewer extends WebView {
   protected viewProperties: ViewProperties = {};
@@ -29,12 +32,27 @@ class DataViewer extends WebView {
   public l10nMessages() {
     return {
       "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
-      Ascending: l10n.t("Ascending"),
       "Descending (add to sorting)": l10n.t("Descending (add to sorting)"),
-      Descending: l10n.t("Descending"),
-      Properties: l10n.t("Properties"),
+      "Enter expression": l10n.t("Enter expression"),
+      "No data matches the current filters.": l10n.t(
+        "No data matches the current filters.",
+      ),
       "Remove all sorting": l10n.t("Remove all sorting"),
       "Remove sorting": l10n.t("Remove sorting"),
+      "Row number": l10n.t("Row number"),
+      "Sorted, Ascending": l10n.t("Sorted, Ascending"),
+      "Sorted, Descending": l10n.t("Sorted, Descending"),
+      Ascending: l10n.t("Ascending"),
+      Character: l10n.t("Character"),
+      Clear: l10n.t("Clear"),
+      Currency: l10n.t("Currency"),
+      Date: l10n.t("Date"),
+      Datetime: l10n.t("Datetime"),
+      Descending: l10n.t("Descending"),
+      Numeric: l10n.t("Numeric"),
+      Options: l10n.t("Options"),
+      Properties: l10n.t("Properties"),
+      Search: l10n.t("Search"),
       Sort: l10n.t("Sort"),
     };
   }
@@ -48,7 +66,7 @@ class DataViewer extends WebView {
   }
 
   public body() {
-    return `<div class="data-viewer"></div>`;
+    return `<div class="data-viewer-container" data-title="${this.title}"></div>`;
   }
 
   public async processMessage(
@@ -61,6 +79,7 @@ class DataViewer extends WebView {
         sortModel?: SortModelItem[];
         columnName?: string;
         viewProperties?: Partial<ViewProperties>;
+        query: TableQuery | undefined;
       };
     },
   ): Promise<void> {
@@ -70,15 +89,16 @@ class DataViewer extends WebView {
           event.data!.start!,
           event.data!.end!,
           event.data!.sortModel!,
+          event.data!.query!,
         );
-        if (error) {
-          await window.showErrorMessage(error.message);
-        }
         this.panel.webview.postMessage({
           command: "response:loadData",
           key: event.key,
           data,
         });
+        if (error) {
+          await window.showErrorMessage(error.message);
+        }
         break;
       }
       case "request:loadColumns":

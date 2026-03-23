@@ -50,6 +50,10 @@ class LibraryDataProvider
     return this._onDidChangeTreeData.event;
   }
 
+  get treeView(): TreeView<LibraryItem> {
+    return this._treeView;
+  }
+
   constructor(
     private readonly model: LibraryModel,
     private readonly extensionUri: Uri,
@@ -165,8 +169,8 @@ class LibraryDataProvider
     return this.model.writeTableContentsToStream(stream, item);
   }
 
-  public async deleteTable(item: LibraryItem): Promise<void> {
-    await this.model.deleteTable(item);
+  public async deleteTables(items: LibraryItem[]): Promise<void> {
+    await this.model.deleteTables(items);
     this._onDidChangeTreeData.fire(undefined);
   }
 

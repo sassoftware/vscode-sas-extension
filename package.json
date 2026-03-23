@@ -877,12 +877,12 @@
     ],
     "keybindings": [
       {
-        "when": "editorFocus && editorLangId == sas && !SAS.hideRunMenuItem",
+        "when": "editorFocus && (editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
         "command": "SAS.run",
         "key": "f8"
       },
       {
-        "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+        "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
         "command": "SAS.runSelected",
         "key": "f3"
       },
@@ -967,12 +967,12 @@
         },
         {
           "command": "SAS.content.addFolderResource",
-          "when": "viewItem =~ /createChild/ && view == contentdataprovider",
+          "when": "viewItem =~ /createChild/ && view == contentdataprovider && !listMultiSelection",
           "group": "addgroup@0"
         },
         {
           "command": "SAS.content.addFileResource",
-          "when": "viewItem =~ /createChild/ && view == contentdataprovider",
+          "when": "viewItem =~ /createChild/ && view == contentdataprovider && !listMultiSelection",
           "group": "addgroup@1"
         },
         {
@@ -987,7 +987,7 @@
         },
         {
           "command": "SAS.content.copyPath",
-          "when": "viewItem =~ /copyPath/ && view == contentdataprovider",
+          "when": "viewItem =~ /copyPath/ && view == contentdataprovider && !listMultiSelection",
           "group": "copypathgroup@0"
         },
         {
@@ -1002,7 +1002,7 @@
         },
         {
           "command": "SAS.content.convertNotebookToFlow",
-          "when": "viewItem =~ /convertNotebookToFlow/ && view == contentdataprovider",
+          "when": "viewItem =~ /convertNotebookToFlow/ && view == contentdataprovider && !listMultiSelection",
           "group": "actionsgroup@0"
         },
         {
@@ -1108,23 +1108,23 @@
       ],
       "editor/title/run": [
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected"
         }
       ],
       "editor/context": [
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
           "command": "SAS.run",
           "group": "navigation@2"
         },
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected",
           "group": "navigation@1"
         },
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
           "command": "SAS.runRegion",
           "group": "navigation@3"
         }
@@ -1143,15 +1143,15 @@
       ],
       "commandPalette": [
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
           "command": "SAS.run"
         },
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
           "command": "SAS.runSelected"
         },
         {
-          "when": "editorLangId == sas && !SAS.hideRunMenuItem",
+          "when": "(editorLangId == sas || (editorLangId == python && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
           "command": "SAS.runRegion"
         },
         {
@@ -1160,15 +1160,7 @@
         },
         {
           "when": "false",
-          "command": "SAS.content.restoreResource"
-        },
-        {
-          "when": "false",
-          "command": "SAS.content.deleteResource"
-        },
-        {
-          "when": "false",
-          "command": "SAS.content.convertNotebookToFlow"
+          "command": "SAS.collapseAllLibraries"
         },
         {
           "when": "false",
@@ -1184,6 +1176,34 @@
         },
         {
           "when": "false",
+          "command": "SAS.content.collapseAllContent"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.convertNotebookToFlow"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.copyPath"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.deleteResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.downloadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.emptyRecycleBin"
+        },
+        {
+          "when": "false",
+          "command": "SAS.content.refreshContent"
+        },
+        {
+          "when": "false",
           "command": "SAS.content.removeFromFavorites"
         },
         {
@@ -1192,39 +1212,7 @@
         },
         {
           "when": "false",
-          "command": "SAS.content.refreshContent"
-        },
-        {
-          "when": "false",
-          "command": "SAS.refreshLibraries"
-        },
-        {
-          "when": "false",
-          "command": "SAS.content.collapseAllContent"
-        },
-        {
-          "when": "false",
-          "command": "SAS.collapseAllLibraries"
-        },
-        {
-          "when": "false",
-          "command": "SAS.deleteTable"
-        },
-        {
-          "when": "false",
-          "command": "SAS.downloadTable"
-        },
-        {
-          "when": "false",
-          "command": "SAS.showTableProperties"
-        },
-        {
-          "when": "false",
-          "command": "SAS.content.downloadResource"
-        },
-        {
-          "when": "false",
-          "command": "SAS.content.uploadResource"
+          "command": "SAS.content.restoreResource"
         },
         {
           "when": "false",
@@ -1236,7 +1224,15 @@
         },
         {
           "when": "false",
-          "command": "SAS.saveHTML"
+          "command": "SAS.content.uploadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.deleteTable"
+        },
+        {
+          "when": "false",
+          "command": "SAS.downloadTable"
         },
         {
           "when": "false",
@@ -1244,11 +1240,83 @@
         },
         {
           "when": "false",
-          "command": "SAS.content.copyPath"
+          "command": "SAS.notebook.saveOutput"
+        },
+        {
+          "when": "false",
+          "command": "SAS.refreshLibraries"
+        },
+        {
+          "when": "false",
+          "command": "SAS.saveHTML"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.addFileResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.addFolderResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.addToFavorites"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.collapseAllContent"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.convertNotebookToFlow"
         },
         {
           "when": "false",
           "command": "SAS.server.copyPath"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.deleteResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.downloadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.emptyRecycleBin"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.refreshContent"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.removeFromFavorites"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.renameResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.restoreResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.uploadFileResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.uploadFolderResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.uploadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.showTableProperties"
         }
       ],
       "file/newFile": [
@@ -1430,35 +1498,35 @@
     "locale": "npx @vscode/l10n-dev export -o ./l10n ./client/src && node ./tools/locale.mjs"
   },
   "devDependencies": {
-    "@eslint/compat": "2.0.0",
-    "@trivago/prettier-plugin-sort-imports": "^6.0.0",
+    "@eslint/compat": "2.0.2",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^25.0.2",
+    "@types/node": "^25.0.10",
     "@types/sinon": "^21.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.49.0",
+    "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.32.1",
     "@vscode/l10n-dev": "^0.0.35",
     "buffer": "6.0.3",
     "chai": "^4.4.1",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
-    "esbuild": "^0.27.1",
+    "esbuild": "^0.27.3",
     "eslint": "^9.39.2",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
-    "glob": "^13.0.0",
+    "glob": "^13.0.3",
     "mocha": "^11.7.5",
     "papaparse": "^5.5.3",
     "path-browserify": "^1.0.1",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.1",
     "proxyquire": "^2.1.3",
-    "sinon": "^21.0.0",
+    "sinon": "^21.0.1",
     "ts-loader": "^9.5.4",
     "ts-node": "^10.9.2",
     "ts-sinon": "^2.0.2",
     "typescript": "^5.5.3",
-    "webpack": "^5.103.0",
+    "webpack": "^5.105.3",
     "webpack-cli": "^6.0.1"
   }
 }

@@ -7,6 +7,7 @@ import {
   Uri,
   commands,
   env,
+  l10n,
   window,
   workspace,
 } from "vscode";
@@ -20,10 +21,12 @@ import DataViewer from "../../panels/DataViewer";
 import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
+import { treeViewSelections } from "../utils/treeViewSelections";
 import LibraryAdapterFactory from "./LibraryAdapterFactory";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
 import PaginatedResultSet from "./PaginatedResultSet";
+import { Messages } from "./const";
 import { LibraryAdapter, LibraryItem, TableData } from "./types";
 
 class LibraryNavigator implements SubscriptionProvider {
@@ -66,8 +69,27 @@ class LibraryNavigator implements SubscriptionProvider {
       ),
       commands.registerCommand("SAS.refreshLibraries", () => this.refresh()),
       commands.registerCommand("SAS.deleteTable", async (item: LibraryItem) => {
+        const selectedItems = treeViewSelections(
+          this.libraryDataProvider.treeView,
+          item,
+        );
+
+        if (selectedItems.length === 0) {
+          return;
+        }
+
+        const result = await window.showWarningMessage(
+          l10n.t(Messages.TablesDeletionWarning),
+          { modal: true },
+          "Delete",
+        );
+
+        if (result !== "Delete") {
+          return;
+        }
+
         try {
-          await this.libraryDataProvider.deleteTable(item);
+          await this.libraryDataProvider.deleteTables(selectedItems);
         } catch (error) {
           window.showErrorMessage(error.message);
         }

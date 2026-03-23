@@ -2,7 +2,6 @@ import concurrently from "concurrently";
 import esbuild from "esbuild";
 import fs from "fs";
 
-console.log("start");
 const dev = process.argv[2];
 
 const plugins = [
@@ -58,7 +57,52 @@ const browserBuildOptions = {
   },
 };
 
-const copyFiles = () => {
+// Process KaTeX CSS - embed fonts as base64 data URIs for self-contained HTML
+const copyKatexCss = () => {
+  let katexCss = fs.readFileSync(
+    "./client/node_modules/katex/dist/katex.min.css",
+    "utf8",
+  );
+
+  const katexFontsDir = "./client/node_modules/katex/dist/fonts";
+
+  // Find all font file references in the CSS
+  const fontRegex = /url\(fonts\/([\w-]+\.(woff2|woff|ttf))\)/g;
+  let match;
+  const fontReplacements = new Map();
+
+  while ((match = fontRegex.exec(katexCss)) !== null) {
+    const fontFile = match[1];
+    if (!fontReplacements.has(fontFile)) {
+      const fontPath = `${katexFontsDir}/${fontFile}`;
+      if (fs.existsSync(fontPath)) {
+        const fontData = fs.readFileSync(fontPath);
+        const base64 = fontData.toString("base64");
+        const mimeType = fontFile.endsWith(".woff2")
+          ? "font/woff2"
+          : fontFile.endsWith(".woff")
+            ? "font/woff"
+            : "font/ttf";
+        fontReplacements.set(fontFile, `data:${mimeType};base64,${base64}`);
+      }
+    }
+  }
+
+  // Replace all font URLs with data URIs
+  fontReplacements.forEach((dataUri, fontFile) => {
+    katexCss = katexCss.replace(
+      new RegExp(`fonts/${fontFile.replace(/\./g, "\\.")}`, "g"),
+      dataUri,
+    );
+  });
+
+  fs.writeFileSync(
+    "./client/dist/notebook/exporters/templates/katex.css",
+    katexCss,
+  );
+};
+
+const copyFiles = (filter = null) => {
   const foldersToCopy = [
     {
       src: "./server/node_modules/jsonc-parser/lib/umd/impl",
@@ -76,20 +120,46 @@ const copyFiles = () => {
       src: "./client/src/components/notebook/exporters/templates",
       dest: "./client/dist/notebook/exporters/templates",
     },
+    {
+      src: "./client/src/connection/itc/script",
+      dest: "./client/dist/node",
+    },
   ];
-  foldersToCopy.forEach((item) =>
-    fs.cpSync(item.src, item.dest, { recursive: true }),
+  const filteredFoldersToCopy =
+    filter === null
+      ? foldersToCopy
+      : foldersToCopy.filter((folder) => folder.src === filter);
+
+  if (filter) {
+    console.log(`Copying files matching "${filter}"`);
+  } else {
+    console.log("Copying files");
+  }
+
+  filteredFoldersToCopy.map((item) =>
+    fs.cpSync(item.src, item.dest, { recursive: true, force: true }),
   );
+
+  copyKatexCss();
+  console.log("Files copied");
 };
 
-if (process.env.npm_config_webviews || process.env.npm_config_client) {
+const staticFilesToWatch = ["./client/src/connection/itc/script"];
+
+if (process.env.npm_config_static) {
+  copyFiles();
+  if (dev) {
+    staticFilesToWatch.forEach((pathToWatch) =>
+      fs.watch(pathToWatch, () => copyFiles(pathToWatch)),
+    );
+  }
+} else if (process.env.npm_config_webviews || process.env.npm_config_client) {
   const ctx = await esbuild.context(
     process.env.npm_config_webviews ? browserBuildOptions : nodeBuildOptions,
   );
   await ctx.rebuild();
 
   if (dev) {
-    process.env.npm_config_client && copyFiles();
     await ctx.watch();
   } else {
     await ctx.dispose();
@@ -99,13 +169,21 @@ if (process.env.npm_config_webviews || process.env.npm_config_client) {
     {
       command: `npm run ${process.env.npm_lifecycle_event} --webviews`,
       name: "browser",
+      prefixColor: "magenta",
     },
     {
       command: `npm run ${process.env.npm_lifecycle_event} --client`,
       name: "node",
+      prefixColor: "cyan",
+    },
+    {
+      command: `npm run ${process.env.npm_lifecycle_event} --static`,
+      name: "static",
+      prefixColor: "green",
     },
   ]);
-  await result.then(copyFiles, () =>
-    console.error("Assets failed to build successfully"),
+  await result.then(
+    () => {},
+    () => console.error("Concurrently failed to run"),
   );
 }

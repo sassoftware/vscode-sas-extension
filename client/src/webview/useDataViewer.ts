@@ -6,6 +6,7 @@ import {
   AgColumn,
   AllCommunityModule,
   ColDef,
+  ColumnState,
   GridApi,
   GridReadyEvent,
   IGetRowsParams,
@@ -13,13 +14,18 @@ import {
   SortModelItem,
   SuppressHeaderKeyboardEventParams,
 } from "ag-grid-community";
+import { AgGridReact } from "ag-grid-react";
 import { v4 } from "uuid";
 
-import { TableData } from "../components/LibraryNavigator/types";
+import type {
+  TableData,
+  TableQuery,
+} from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
 import type { ViewProperties } from "../panels/DataViewer";
 import ColumnHeader from "./ColumnHeader";
 import { ColumnMenuProps, getColumnMenu } from "./ColumnMenu";
+import localize from "./localize";
 
 declare const acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
@@ -28,6 +34,12 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 const contextMenuHandler = (e) => {
   e.stopImmediatePropagation();
+};
+
+export const applyColumnState = (api: GridApi, state: ColumnState[]) => {
+  api.applyColumnState({ state, defaultState: { sort: null } });
+  api.ensureIndexVisible(0);
+  storeViewProperties({ columnState: state });
 };
 
 const defaultTimeout = 60 * 1000; // 60 seconds (accounting for compute session expiration)
@@ -44,12 +56,13 @@ const queryTableData = (
   start: number,
   end: number,
   sortModel: SortModelItem[],
+  query: TableQuery | undefined,
 ): Promise<TableData> => {
   const requestKey = v4();
   vscode.postMessage({
     command: "request:loadData",
     key: requestKey,
-    data: { start, end, sortModel },
+    data: { start, end, sortModel, query },
   });
 
   return new Promise((resolve, reject) => {
@@ -115,49 +128,106 @@ export const storeViewProperties = (viewProperties: ViewProperties) =>
   });
 
 const useDataViewer = () => {
+  const gridRef = useRef<AgGridReact>(null);
   const [columns, setColumns] = useState<ColDef[]>([]);
   const [columnMenu, setColumnMenu] = useState<ColumnMenuProps | undefined>();
+  const [queryParams, setQueryParamsState] = useState<TableQuery | undefined>(
+    undefined,
+  );
+  const setQueryParams = (query: TableQuery | undefined) => {
+    setQueryParamsState(query);
+    storeViewProperties({ query });
+  };
+
   const columnMenuRef = useRef<ColumnMenuProps | undefined>(columnMenu);
+  const columnStateRef = useRef<ColumnState[] | undefined>(undefined);
+  const loadedViewPropertiesRef = useRef<ViewProperties | undefined>(undefined);
   useEffect(() => {
     columnMenuRef.current = columnMenu;
   }, [columnMenu]);
 
+  const dataSource = useCallback(
+    (incomingQueryParams?: TableQuery) => ({
+      rowCount: undefined,
+      getRows: async (params: IGetRowsParams) => {
+        params.api.setGridOption("activeOverlay", undefined);
+        const tableData = await queryTableData(
+          params.startRow,
+          params.endRow,
+          params.sortModel,
+          incomingQueryParams || queryParams,
+        );
+        if (tableData.rows.length === 0) {
+          params.api.setGridOption("activeOverlay", "agNoRowsOverlay");
+        }
+
+        const { rows, count } = tableData;
+        const rowData = rows.map(({ cells }) => {
+          const row = cells.reduce(
+            (carry, cell, index) => ({
+              ...carry,
+              [columns[index].field]: cell,
+            }),
+            {},
+          );
+
+          return row;
+        });
+
+        params.successCallback(
+          rowData,
+          // If we've returned less than 100 rows, we can assume that's the last page
+          // of the data and stop searching.
+          rowData.length < 100 && count === undefined
+            ? rowData[rowData.length - 1]["#"]
+            : count,
+        );
+      },
+    }),
+    [columns, queryParams],
+  );
+
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
-      const dataSource = {
-        rowCount: undefined,
-        getRows: async (params: IGetRowsParams) => {
-          await queryTableData(
-            params.startRow,
-            params.endRow,
-            params.sortModel,
-          ).then(({ rows, count }: TableData) => {
-            const rowData = rows.map(({ cells }) => {
-              const row = cells.reduce(
-                (carry, cell, index) => ({
-                  ...carry,
-                  [columns[index].field]: cell,
-                }),
-                {},
-              );
+      const { columnState, query } = loadedViewPropertiesRef.current;
+      event.api.setGridOption("datasource", dataSource(query));
 
-              return row;
-            });
-
-            params.successCallback(
-              rowData,
-              // If we've returned less than 100 rows, we can assume that's the last page
-              // of the data and stop searching.
-              rowData.length < 100 && count === undefined
-                ? rowData[rowData.length - 1]["#"]
-                : count,
-            );
-          });
-        },
-      };
-      event.api.setGridOption("datasource", dataSource);
+      // Re-hydrate our view with persisted view properties
+      if (!loadedViewPropertiesRef.current) {
+        return;
+      }
+      if (query) {
+        setQueryParams(query);
+      }
+      if (columnState && columnState.length > 0) {
+        applyColumnState(event.api, columnState);
+        event.api.refreshHeader();
+        columnStateRef.current = undefined;
+      }
     },
-    [columns],
+    [dataSource],
+  );
+
+  const dismissMenu = (focusColumn: boolean = true) => {
+    if (focusColumn && columnMenuRef.current?.column.colId) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const headerElement = document.querySelector(
+        `.ag-header-cell[col-id="${columnMenuRef.current.column.colId}"]`,
+      ) as HTMLElement;
+      if (headerElement) {
+        headerElement.focus();
+      }
+    }
+    setColumnMenu(undefined);
+  };
+
+  const refreshResults = useCallback(
+    (query: TableQuery | undefined) => {
+      const params = queryParams ? { ...queryParams, ...(query || {}) } : query;
+      setQueryParams(params);
+      gridRef.current.api.setGridOption("datasource", dataSource(params));
+    },
+    [dataSource, queryParams],
   );
 
   const displayMenuForColumn = useCallback(
@@ -166,18 +236,12 @@ const useDataViewer = () => {
         return setColumnMenu(undefined);
       }
       setColumnMenu(
-        getColumnMenu(
-          api,
-          column,
-          rect,
-          () => setColumnMenu(undefined),
-          (columnName: string) => {
-            vscode.postMessage({
-              command: "request:loadColumnProperties",
-              data: { columnName },
-            });
-          },
-        ),
+        getColumnMenu(api, column, rect, dismissMenu, (columnName: string) => {
+          vscode.postMessage({
+            command: "request:loadColumnProperties",
+            data: { columnName },
+          });
+        }),
       );
     },
     [],
@@ -189,10 +253,11 @@ const useDataViewer = () => {
     }
 
     fetchColumns().then(({ columns: columnsData, viewProperties }) => {
-      const getColumnState = (name: string) =>
-        viewProperties.columnState
-          ? viewProperties.columnState.find(({ colId }) => colId === name)
-          : {};
+      if (viewProperties.columnState && viewProperties.columnState.length > 0) {
+        columnStateRef.current = viewProperties.columnState;
+      }
+      loadedViewPropertiesRef.current = viewProperties;
+
       const columns: ColDef[] = columnsData.map((column) => ({
         field: column.name,
         headerComponent: ColumnHeader,
@@ -201,7 +266,6 @@ const useDataViewer = () => {
           currentColumn: () => columnMenuRef.current?.column,
           displayMenuForColumn,
         },
-        ...getColumnState(column.name),
         suppressHeaderKeyboardEvent: (
           params: SuppressHeaderKeyboardEventParams,
         ) => {
@@ -231,6 +295,7 @@ const useDataViewer = () => {
               params.column as AgColumn,
               dropdownButton.getBoundingClientRect(),
             );
+            params.event.stopPropagation();
             return true;
           }
           return false;
@@ -241,6 +306,7 @@ const useDataViewer = () => {
         field: "#",
         suppressMovable: true,
         sortable: false,
+        headerTooltip: localize("Row number"),
       });
 
       setColumns(columns);
@@ -255,13 +321,14 @@ const useDataViewer = () => {
     };
   }, []);
 
-  const dismissMenu = () => setColumnMenu(undefined);
-
   return {
-    columns,
-    onGridReady,
     columnMenu,
+    columns,
     dismissMenu,
+    gridRef,
+    onGridReady,
+    refreshResults,
+    viewProperties: () => loadedViewPropertiesRef.current,
   };
 };
 

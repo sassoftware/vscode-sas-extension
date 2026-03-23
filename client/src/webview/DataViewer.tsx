@@ -7,6 +7,8 @@ import { AgGridReact } from "ag-grid-react";
 
 import ".";
 import ColumnMenu from "./ColumnMenu";
+import TableFilter from "./TableFilter";
+import localize from "./localize";
 import useDataViewer from "./useDataViewer";
 import useTheme from "./useTheme";
 
@@ -17,13 +19,24 @@ import "ag-grid-community/styles/ag-theme-alpine.css";
 const gridStyles = {
   "--ag-borders": "none",
   "--ag-row-border-width": "0px",
-  height: "100%",
+  height: "calc(100% - 9.2rem)",
   width: "100%",
 };
 
 const DataViewer = () => {
+  const title = document
+    .querySelector("[data-title]")
+    .getAttribute("data-title");
   const theme = useTheme();
-  const { columns, onGridReady, columnMenu, dismissMenu } = useDataViewer();
+  const {
+    columnMenu,
+    columns,
+    dismissMenu,
+    gridRef,
+    onGridReady,
+    refreshResults,
+    viewProperties,
+  } = useDataViewer();
 
   const handleKeydown = useCallback(
     (event) => {
@@ -33,15 +46,19 @@ const DataViewer = () => {
     },
     [columnMenu, dismissMenu],
   );
+  const dismissMenuWithoutFocus = useCallback(
+    () => dismissMenu(false),
+    [dismissMenu],
+  );
 
   useEffect(() => {
     document.addEventListener("keydown", handleKeydown);
-    window.addEventListener("blur", dismissMenu);
+    window.addEventListener("blur", dismissMenuWithoutFocus);
     return () => {
       document.removeEventListener("keydown", handleKeydown);
-      window.removeEventListener("blur", dismissMenu);
+      window.removeEventListener("blur", dismissMenuWithoutFocus);
     };
-  }, [handleKeydown, dismissMenu]);
+  }, [handleKeydown, dismissMenuWithoutFocus]);
 
   if (columns.length === 0) {
     return null;
@@ -49,13 +66,21 @@ const DataViewer = () => {
 
   return (
     <div className="data-viewer">
+      <h1>{title}</h1>
+      <TableFilter
+        onCommit={(value) => {
+          refreshResults({ filterValue: value });
+        }}
+        initialValue={viewProperties()?.query?.filterValue ?? ""}
+      />
       {columnMenu && <ColumnMenu {...columnMenu} />}
       <div
         className={`ag-grid-wrapper ${theme}`}
         style={gridStyles}
-        onClick={() => columnMenu && dismissMenu()}
+        onClick={() => columnMenu && dismissMenuWithoutFocus()}
       >
         <AgGridReact
+          ref={gridRef}
           cacheBlockSize={100}
           columnDefs={columns}
           defaultColDef={{
@@ -67,11 +92,14 @@ const DataViewer = () => {
           onGridReady={onGridReady}
           rowModelType="infinite"
           theme="legacy"
+          noRowsOverlayComponent={() =>
+            localize("No data matches the current filters.")
+          }
         />
       </div>
     </div>
   );
 };
 
-const root = createRoot(document.querySelector(".data-viewer"));
+const root = createRoot(document.querySelector(".data-viewer-container"));
 root.render(<DataViewer />);

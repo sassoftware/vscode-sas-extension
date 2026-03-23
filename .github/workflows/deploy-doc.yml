@@ -21,7 +21,13 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - uses: johnnybenson/package-json-versioned-action@v1.0.9
+        id: package-json
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/checkout@v6
+        with:
+          ref: v${{ steps.package-json.outputs.version }}
       - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"

@@ -12,6 +12,7 @@ import {
   LibraryItem,
   LibraryItemType,
   TableData,
+  TableQuery,
   TableRow,
 } from "./types";
 
@@ -28,7 +29,12 @@ class LibraryModel {
     item: LibraryItem,
   ): PaginatedResultSet<{ data: TableData; error?: Error }> {
     return new PaginatedResultSet<{ data: TableData; error?: Error }>(
-      async (start: number, end: number, sortModel: SortModelItem[]) => {
+      async (
+        start: number,
+        end: number,
+        sortModel: SortModelItem[],
+        query: TableQuery | undefined,
+      ) => {
         await this.libraryAdapter.setup();
         const limit = end - start + 1;
         try {
@@ -38,6 +44,7 @@ class LibraryModel {
               start,
               limit,
               sortModel,
+              query,
             ),
           };
         } catch (e) {
@@ -121,13 +128,20 @@ class LibraryModel {
     return items;
   }
 
-  public async deleteTable(item: LibraryItem) {
-    try {
-      await this.libraryAdapter.deleteTable(item);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+  public async deleteTables(items: LibraryItem[]) {
+    const failures: string[] = [];
+
+    for (const item of items) {
+      try {
+        await this.libraryAdapter.deleteTable(item);
+      } catch {
+        failures.push(item.uid);
+      }
+    }
+
+    if (failures.length > 0) {
       throw new Error(
-        l10n.t(Messages.TableDeletionError, { tableName: item.uid }),
+        l10n.t(Messages.TableDeletionError, { tableName: failures.join(", ") }),
       );
     }
   }
