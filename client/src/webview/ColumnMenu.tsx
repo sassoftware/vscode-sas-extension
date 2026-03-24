@@ -1,6 +1,7 @@
 // Copyright © 2025, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import { AgColumn, GridApi } from "ag-grid-community";
+import { useEffect } from "react";
 
 import GridMenu from "./GridMenu";
 import localize from "./localize";
@@ -10,9 +11,15 @@ import useTheme from "./useTheme";
 export interface ColumnMenuProps {
   column: AgColumn;
   dismissMenu: () => void;
+  distinctValues?: (string | number | null)[];
+  hasColumnFilter: boolean;
   hasSort: boolean;
+  isDistinctValuesLoading: boolean;
   left: number;
+  loadDistinctValues: () => void;
   loadColumnProperties: () => void;
+  filterByDistinctValue: (value: string | number | null) => void;
+  clearColumnFilter: () => void;
   removeAllSorting: () => void;
   removeFromSort: () => void;
   sortColumn: (direction: "asc" | "desc") => void;
@@ -72,10 +79,16 @@ export const getColumnMenu = (
 });
 
 const ColumnMenu = ({
+  clearColumnFilter,
   column,
   dismissMenu,
+  distinctValues,
+  filterByDistinctValue,
+  hasColumnFilter,
   hasSort,
+  isDistinctValuesLoading,
   left,
+  loadDistinctValues,
   loadColumnProperties,
   removeAllSorting,
   removeFromSort,
@@ -84,6 +97,64 @@ const ColumnMenu = ({
 }: ColumnMenuProps) => {
   const theme = useTheme();
   const sort = column.getSort();
+  useEffect(() => {
+    if (!distinctValues && !isDistinctValuesLoading) {
+      loadDistinctValues();
+    }
+  }, [distinctValues, isDistinctValuesLoading, loadDistinctValues]);
+
+  const formatDistinctValue = (value: string | number | null) => {
+    if (value === null) {
+      return localize("(missing)");
+    }
+    if (value === "") {
+      return localize("(blank)");
+    }
+    return `${value}`;
+  };
+
+  const filterChildren = isDistinctValuesLoading
+    ? [
+        {
+          name: localize("Loading values..."),
+          disabled: true,
+        },
+      ]
+    : (distinctValues || []).length > 0
+      ? [
+          ...distinctValues.map((value) => ({
+            name: formatDistinctValue(value),
+            onPress: () => {
+              filterByDistinctValue(value);
+              dismissMenu();
+            },
+          })),
+          "separator",
+          {
+            name: localize("Clear filter for this column"),
+            disabled: !hasColumnFilter,
+            onPress: () => {
+              clearColumnFilter();
+              dismissMenu();
+            },
+          },
+        ]
+      : [
+          {
+            name: localize("No values found"),
+            disabled: true,
+          },
+          "separator",
+          {
+            name: localize("Clear filter for this column"),
+            disabled: !hasColumnFilter,
+            onPress: () => {
+              clearColumnFilter();
+              dismissMenu();
+            },
+          },
+        ];
+
   const menuItems = [
     {
       name: localize("Sort"),
@@ -128,6 +199,10 @@ const ColumnMenu = ({
           disabled: !hasSort,
         },
       ],
+    },
+    {
+      name: localize("Filter by values"),
+      children: filterChildren,
     },
     "separator",
     {

@@ -15,8 +15,21 @@ function GetFilteredView {
 
   if ($JSONQueryData -ne "") {
     $queryParams = $JSONQueryData | ConvertFrom-Json
+    $whereClauses = @()
     if ($queryParams.filterValue) {
-      $query = "$query WHERE $($queryParams.filterValue)"
+      $whereClauses += "($($queryParams.filterValue))"
+    }
+
+    if ($queryParams.columnFilters) {
+      foreach ($columnFilter in $queryParams.columnFilters.PSObject.Properties) {
+        if ($columnFilter.Value) {
+          $whereClauses += "($($columnFilter.Value))"
+        }
+      }
+    }
+
+    if ($whereClauses.Length -gt 0) {
+      $query = "$query WHERE $($whereClauses -join ' AND ')"
     }
   }
 

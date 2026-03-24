@@ -28,6 +28,7 @@ export interface TableData {
 
 export interface TableQuery {
   filterValue: string;
+  columnFilters?: Record<string, string>;
 }
 
 export interface LibraryAdapter {
@@ -52,6 +53,12 @@ export interface LibraryAdapter {
     sortModel: SortModelItem[],
     query: TableQuery | undefined,
   ): Promise<TableData>;
+  getDistinctColumnValues(
+    item: LibraryItem,
+    columnName: string,
+    query: TableQuery | undefined,
+    maxValues?: number,
+  ): Promise<(string | number | null)[]>;
   getRowsAsCSV(
     item: LibraryItem,
     start: number,

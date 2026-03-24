@@ -24,6 +24,11 @@ class DataViewer extends WebView {
       error?: Error;
     }>,
     protected readonly fetchColumns: () => Column[],
+    protected readonly fetchDistinctColumnValues: (
+      columnName: string,
+      query: TableQuery | undefined,
+      maxValues: number,
+    ) => Promise<(string | number | null)[]>,
     protected readonly loadColumnProperties: (columnName: string) => void,
   ) {
     super(extensionUri, uid);
@@ -37,6 +42,12 @@ class DataViewer extends WebView {
       "No data matches the current filters.": l10n.t(
         "No data matches the current filters.",
       ),
+      "Filter by values": l10n.t("Filter by values"),
+      "No values found": l10n.t("No values found"),
+      "Loading values...": l10n.t("Loading values..."),
+      "Clear filter for this column": l10n.t("Clear filter for this column"),
+      "(missing)": l10n.t("(missing)"),
+      "(blank)": l10n.t("(blank)"),
       "Remove all sorting": l10n.t("Remove all sorting"),
       "Remove sorting": l10n.t("Remove sorting"),
       "Row number": l10n.t("Row number"),
@@ -76,6 +87,8 @@ class DataViewer extends WebView {
       data?: {
         start?: number;
         end?: number;
+        maxValues?: number;
+        distinctValues?: (string | number | null)[];
         sortModel?: SortModelItem[];
         columnName?: string;
         viewProperties?: Partial<ViewProperties>;
@@ -114,6 +127,21 @@ class DataViewer extends WebView {
       case "request:loadColumnProperties":
         if (event.data.columnName) {
           this.loadColumnProperties(event.data.columnName);
+        }
+        break;
+      case "request:loadDistinctValues":
+        if (event.data.columnName) {
+          this.panel.webview.postMessage({
+            key: event.key,
+            command: "response:loadDistinctValues",
+            data: {
+              distinctValues: await this.fetchDistinctColumnValues(
+                event.data.columnName,
+                event.data.query,
+                event.data.maxValues || 100,
+              ),
+            },
+          });
         }
         break;
       case "request:storeViewProperties":

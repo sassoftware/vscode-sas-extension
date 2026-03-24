@@ -59,6 +59,13 @@ class LibraryNavigator implements SubscriptionProvider {
               item.uid,
               paginator,
               fetchColumns,
+              (columnName, query, maxValues) =>
+                this.libraryDataProvider.fetchDistinctColumnValues(
+                  item,
+                  columnName,
+                  query,
+                  maxValues,
+                ),
               (columnName: string) => {
                 this.displayTableProperties(item, true, columnName);
               },

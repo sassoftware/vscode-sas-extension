@@ -23,6 +23,19 @@ const requestOptions = {
   headers: { Accept: "application/vnd.sas.collection+json" },
 };
 
+const buildWhereClause = (query: TableQuery | undefined): string | undefined => {
+  if (!query) {
+    return undefined;
+  }
+
+  const whereParts = [query.filterValue, ...Object.values(query.columnFilters || {})]
+    .map((value) => value?.trim())
+    .filter((value) => !!value)
+    .map((value) => `(${value})`);
+
+  return whereParts.length > 0 ? whereParts.join(" and ") : undefined;
+};
+
 class RestLibraryAdapter implements LibraryAdapter {
   protected dataAccessApi: ReturnType<typeof DataAccessApi>;
   protected sessionId: string;
@@ -69,7 +82,7 @@ class RestLibraryAdapter implements LibraryAdapter {
             start,
             limit,
             formatMissingValues: true,
-            where: query && query.filterValue ? query.filterValue : undefined,
+            where: buildWhereClause(query),
           },
           requestOptions,
         ),
@@ -151,6 +164,62 @@ class RestLibraryAdapter implements LibraryAdapter {
       rows: data.items,
       count: data.count,
     };
+  }
+
+  public async getDistinctColumnValues(
+    item: Pick<LibraryItem, "name" | "library">,
+    columnName: string,
+    query: TableQuery | undefined,
+    maxValues: number = 100,
+  ): Promise<(string | number | null)[]> {
+    const distinctValues: (string | number | null)[] = [];
+    const seen = new Set<string>();
+    let start = 0;
+    const limit = 100;
+    let totalCount = Infinity;
+
+    while (start < totalCount && distinctValues.length < maxValues) {
+      const { data } = await this.retryOnFail<RowCollection>(
+        async () =>
+          await this.dataAccessApi.getRows(
+            {
+              sessionId: this.sessionId,
+              libref: item.library || "",
+              tableName: item.name,
+              includeColumns: columnName,
+              includeIndex: false,
+              start,
+              limit,
+              formatMissingValues: true,
+              where: buildWhereClause(query),
+            },
+            requestOptions,
+          ),
+      );
+
+      totalCount = data.count;
+
+      for (const row of data.items || []) {
+        const value = row.cells?.[0] ?? null;
+        const valueKey = JSON.stringify(value);
+        if (seen.has(valueKey)) {
+          continue;
+        }
+
+        seen.add(valueKey);
+        distinctValues.push(value);
+        if (distinctValues.length >= maxValues) {
+          break;
+        }
+      }
+
+      if ((data.items || []).length === 0) {
+        break;
+      }
+      start += limit;
+    }
+
+    return distinctValues;
   }
 
   public async getColumns(

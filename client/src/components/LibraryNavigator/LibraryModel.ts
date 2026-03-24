@@ -128,6 +128,21 @@ class LibraryModel {
     return items;
   }
 
+  public async fetchDistinctColumnValues(
+    item: LibraryItem,
+    columnName: string,
+    query: TableQuery | undefined,
+    maxValues: number = 100,
+  ) {
+    await this.libraryAdapter.setup();
+    return await this.libraryAdapter.getDistinctColumnValues(
+      item,
+      columnName,
+      query,
+      maxValues,
+    );
+  }
+
   public async deleteTables(items: LibraryItem[]) {
     const failures: string[] = [];
 

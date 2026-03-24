@@ -303,6 +303,44 @@ class SASRunner {
     Write-Host $(ConvertTo-Json -Depth 10 -InputObject $parsedRows -Compress)
   }
 
+  [void]GetDistinctColumnValues(
+    [string]$library,
+    [string]$table,
+    [string]$column,
+    [string]$jsonQueryData = "",
+    [int]$limit = 100
+  ) {
+    $tableName = "$library.$table"
+    if ($jsonQueryData -ne "") {
+      $view = GetFilteredView -Library $library -Table $table -JSONQueryData $jsonQueryData
+      $tableName = $view.Name
+      $this.dataConnection.Execute($view.Query)
+    }
+
+    $objRecordSet = New-Object -comobject ADODB.Recordset
+    $query = "SELECT DISTINCT $column FROM $tableName ORDER BY $column"
+    $objRecordSet.Open(
+      $query,
+      $this.dataConnection,
+      3, # adOpenStatic
+      1, # adLockReadOnly
+      1  # adCmdText
+    )
+
+    $values = [List[object]]::new()
+    for ($i = 0; $i -lt $limit -and $objRecordSet.EOF -eq $False; $i++) {
+      $values.Add($objRecordSet.Fields.Item(0).Value)
+      $objRecordSet.MoveNext()
+    }
+    $objRecordSet.Close()
+
+    if ($jsonQueryData -ne "") {
+      $this.dataConnection.Execute("DROP VIEW $tableName")
+    }
+
+    Write-Host $(ConvertTo-Json -Depth 10 -InputObject $values -Compress)
+  }
+
   [void]DeleteItemAtPath([string]$filePath, [bool]$recursive) {
     if ($recursive) {
       $items = $this.GetItemsAtPath($filePath, [SAS.FileServiceListFilesMode]::FileServiceListFilesModePath);

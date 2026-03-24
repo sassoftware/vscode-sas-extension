@@ -139,6 +139,23 @@ class ItcLibraryAdapter implements LibraryAdapter {
     return { rows, count: -1 };
   }
 
+  public async getDistinctColumnValues(
+    item: LibraryItem,
+    columnName: string,
+    query: TableQuery | undefined,
+    maxValues: number = 100,
+  ): Promise<(string | number | null)[]> {
+    const queryData = query
+      ? JSON.stringify(query).replace(/'/g, "''")
+      : "";
+    const code = `
+      $runner.GetDistinctColumnValues("${item.library}","${item.name}","${columnName}", '${queryData}', ${maxValues})
+    `;
+    const output = await executeRawCode(code);
+
+    return JSON.parse(output);
+  }
+
   public async getTableRowCount(
     item: LibraryItem,
   ): Promise<{ rowCount: number; maxNumberOfRowsToRead: number }> {

@@ -28,7 +28,13 @@ import { registerAPI } from "../APIProvider";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import LibraryModel from "./LibraryModel";
 import { Icons, Messages, WorkLibraryId } from "./const";
-import { LibraryAdapter, LibraryItem, LibraryType, TableType } from "./types";
+import {
+  LibraryAdapter,
+  LibraryItem,
+  LibraryType,
+  TableQuery,
+  TableType,
+} from "./types";
 
 export const libraryItemMimeType =
   "application/vnd.code.tree.librarydataprovider";
@@ -190,6 +196,20 @@ class LibraryDataProvider
 
   public async fetchColumns(item: LibraryItem) {
     return await this.model.fetchColumns(item);
+  }
+
+  public async fetchDistinctColumnValues(
+    item: LibraryItem,
+    columnName: string,
+    query: TableQuery | undefined,
+    maxValues: number,
+  ) {
+    return await this.model.fetchDistinctColumnValues(
+      item,
+      columnName,
+      query,
+      maxValues,
+    );
   }
 }
 
