@@ -130,6 +130,11 @@
         "description": "SAS Macro Comment"
       },
       {
+        "id": "macro-keyword-param",
+        "superType": "parameter",
+        "description": "SAS Macro Keyword Parameter"
+      },
+      {
         "id": "sec-keyword",
         "superType": "function",
         "description": "SAS Section keyword"

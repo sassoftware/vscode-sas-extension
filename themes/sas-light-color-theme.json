@@ -12,6 +12,7 @@
     "macro-comment": { "foreground": "#647f29" },
     "macro-ref": { "foreground": "#1b1d22", "bold": true },
     "macro-sec-keyword": { "foreground": "#1b1d22", "bold": true },
+    "macro-keyword-param": { "foreground": "#054894" },
     "cards-data": { "foreground": "#ad6531" },
     "string": { "foreground": "#8f4238" },
     "date": { "foreground": "#3c8275", "bold": true },

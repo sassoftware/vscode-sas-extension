@@ -65,6 +65,10 @@ body {
   font-weight: bold;
 }
 
+.sas-syntax-macro-keyword-param {
+  color: #054894;
+}
+
 .sas-syntax-cards-data {
   color: #ad6531;
 }
