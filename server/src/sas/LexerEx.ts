@@ -3926,7 +3926,8 @@ class Expression {
             exit = true;
             break;
           case "=":
-            // The word before '=' is a keyword parameter. Only mark it if it wasn't already recognized as a known keyword.
+            // The word before '=' is a keyword parameter. 
+            // Only mark it if it wasn't already recognized as a known keyword.
             if (
               lastArgToken &&
               (lastArgToken.type === "text" ||
