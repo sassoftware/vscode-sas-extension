@@ -2234,7 +2234,33 @@ export class LexerEx {
     return this.handleStatement_(this.OptionCheckers_["data-def"]);
   }
   private readMacroDef_() {
-    return this.handleStatement_(this.OptionCheckers_["macro-def"]);
+    const token = this.handleStatement_(this.OptionCheckers_["macro-def"]);
+    // When we encounter '(' in a macro definition, push a dedicated handler to process macro parameters.
+    if (token && token.text === "(") {
+      this.stack.push({
+        parse: this.readMacroParams_,
+        state: this.PARSING_STATE.IN_MACRO,
+      });
+    }
+    return token;
+  }
+
+  // Handler for macro definition parameter lists. Processes tokens inside %macro name(...) until ')'.
+  private readMacroParams_() {
+    const token = this.getNext_();
+    if (!token) return token;
+
+    if (token.text === ")") {
+      // End of parameter list — pop back to readMacroDef_
+      this.stack.pop();
+    } else if (Lexer.isWord[token.type]) {
+      // Check if this word is a keyword parameter (followed by '=')
+      const next = this.prefetch_({ pos: 1 });
+      if (next && next.text === "=") {
+        token.type = Lexer.TOKEN_TYPES.MKEYWORDPARAM;
+      }
+    }
+    return token;
   }
   private handleODSStmt_(token: Token) {
     let isKeyword = false;
@@ -2718,6 +2744,13 @@ export class LexerEx {
     if (token && token.text === ")") {
       this.stack.pop();
     } else {
+      if (token && Lexer.isWord[token.type]) {
+        // Check if this is a keyword parameter (name=value pattern)
+        const next = this.prefetch_({ pos: 1 });
+        if (next && next.text === "=") {
+          token.type = Lexer.TOKEN_TYPES.MKEYWORDPARAM;
+        }
+      }
       const next = this.prefetch_({ pos: 1 });
       if (next && next.text === "(") {
         this.stack.push(this.curr);
@@ -3829,6 +3862,16 @@ class Expression {
         ret = _tryGetOpr(context);
         text = ret.token.text;
         if (Lexer.isBinaryOpr[text]) {
+          // When a word token is followed by '=' as a binary operator
+          // inside a parenthesized argument list, mark it as a keyword parameter.
+          if (
+            text === "=" &&
+            optionNameCandidate &&
+            Lexer.isWord[token.type] &&
+            (token.type === "text" || token.type === Lexer.TOKEN_TYPES.MREF)
+          ) {
+            token.type = Lexer.TOKEN_TYPES.MKEYWORDPARAM;
+          }
           _copyContext(ret.context, context);
           if (Lexer.isWord[ret.token.type]) {
             //may always be keyword, but we take the general flow (HTMLCOMMONS-3812)
@@ -3860,8 +3903,17 @@ class Expression {
 
       ends = { ";": 1 };
       ends[rmark] = 1;
+      let lastArgToken: any = null;
       do {
+        lastArgToken = null;
+        const origOnMeetTarget = context.onMeetTarget;
+        // Wrap onMeetTarget to capture the last word token in an argument
+        context.onMeetTarget = function (tok: any, pos: any) {
+          lastArgToken = tok;
+          origOnMeetTarget(tok, pos);
+        };
         _expr(context, ends, true); //complex expression
+        context.onMeetTarget = origOnMeetTarget;
         tmpContext = _cloneContext(context);
         token = _next(tmpContext);
         switch (token.text) {
@@ -3874,6 +3926,14 @@ class Expression {
             exit = true;
             break;
           case "=":
+            // The word before '=' is a keyword parameter.  Only mark it if it wasn't already recognized as a known keyword.
+            if (
+              lastArgToken &&
+              (lastArgToken.type === "text" ||
+                lastArgToken.type === Lexer.TOKEN_TYPES.MREF)
+            ) {
+              lastArgToken.type = Lexer.TOKEN_TYPES.MKEYWORDPARAM;
+            }
             _copyContext(tmpContext, context);
             _expr(context, ends); //option value
             break;
