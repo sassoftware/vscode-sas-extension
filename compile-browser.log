@@ -1,0 +1,328 @@
+
+> sas-lsp@1.18.1-pngtest compile-browser
+> webpack --mode production
+
+asset [1m[33mextension.js[39m[22m [1m[33m328 KiB[39m[22m [1m[33m[compared for emit][39m[22m [1m[32m[minimized][39m[22m [1m[33m[big][39m[22m (name: extension) 1 related asset
+runtime modules 670 bytes 3 modules
+modules by path [1m./node_modules/[39m[22m 846 KiB
+  modules by path [1m./node_modules/vscode-languageclient/[39m[22m 452 KiB 55 modules
+  modules by path [1m./node_modules/vscode-languageserver-protocol/[39m[22m 114 KiB
+    modules by path [1m./node_modules/vscode-languageserver-protocol/lib/common/*.js[39m[22m 111 KiB 25 modules
+    + 3 modules
+  modules by path [1m./node_modules/vscode-jsonrpc/[39m[22m 124 KiB 17 modules
+  modules by path [1m./node_modules/minimatch/dist/commonjs/*.js[39m[22m 69.9 KiB
+    [1m./node_modules/minimatch/dist/commonjs/index.js[39m[22m 39.6 KiB [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+    + 5 modules
+  [1m./node_modules/vscode-languageserver-types/lib/esm/main.js[39m[22m 79.6 KiB [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+  [1m./node_modules/brace-expansion/index.js[39m[22m 4.88 KiB [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+  [1m./node_modules/balanced-match/index.js[39m[22m 1.19 KiB [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+[1m./src/browser/extension.ts[39m[22m 1.35 KiB [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+[1mexternal "vscode"[39m[22m 42 bytes [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+webpack 5.105.3 compiled [1m[32msuccessfully[39m[22m in 36206 ms
+
+assets by status 17.3 MiB [1m[32m[cached][39m[22m 1 asset
+runtime modules 891 bytes 4 modules
+json modules 16.6 MiB 498 modules
+javascript modules 1.09 MiB
+  modules by path [1m./node_modules/[39m[22m 458 KiB 69 modules
+  modules by path [1m./src/[39m[22m 488 KiB 18 modules
+  modules by path [1m../node_modules/prettier/*.js[39m[22m 153 KiB 2 modules
+  + 3 modules
+asset modules 106 KiB
+  [1m./messagebundle.properties[39m[22m 2.39 KiB [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+  [1m./messagebundle_ar.properties[39m[22m 5.29 KiB [1m[33m[optional][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+  [1m./messagebundle_cs.properties[39m[22m 2.74 KiB [1m[33m[optional][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+  [1m./messagebundle_da.properties[39m[22m 2.63 KiB [1m[33m[optional][39m[22m [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+  + 29 modules
+
+[1m[31mERROR[39m[22m in [1m./src/python/browser/PyrightLanguageProviderBrowser.ts[39m[22m [1m[32m5:21-111[39m[22m
+[1mModule [1m[31mnot found[39m[22m[1m: [1m[31mError[39m[22m[1m: Can't resolve 'pyright-internal-browser/dist/packages/pyright-internal/src/analyzer/sourceFile' in 'C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\python\browser'[39m[22m
+ @ ./src/browser/server.ts 4:41-100
+
+[1m[31mERROR[39m[22m in [1m./src/python/browser/PyrightLanguageProviderBrowser.ts[39m[22m [1m[32m6:17-94[39m[22m
+[1mModule [1m[31mnot found[39m[22m[1m: [1m[31mError[39m[22m[1m: Can't resolve 'pyright-internal-browser/dist/packages/pyright-internal/src/server' in 'C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\python\browser'[39m[22m
+ @ ./src/browser/server.ts 4:41-100
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m31:7-30[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(31,8)
+      TS2307: Cannot find module 'vscode-languageserver' or its corresponding type declarations.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m63:27-33[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(63,28)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m122:52-58[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(122,53)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m129:28-34[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(129,29)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m129:36-41[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(129,37)
+      TS7006: Parameter 'token' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m142:33-39[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(142,34)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m142:41-46[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(142,42)
+      TS7006: Parameter 'token' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m202:19-23[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(202,20)
+      TS7006: Parameter 'item' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m209:19-23[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(209,20)
+      TS7006: Parameter 'item' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m222:40-54[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(222,41)
+      TS7006: Parameter 'completionItem' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m222:56-61[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(222,57)
+      TS7006: Parameter 'token' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m238:37-43[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(238,38)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m238:45-50[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(238,46)
+      TS7006: Parameter 'token' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m275:30-36[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(275,31)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m281:53-59[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(281,54)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m297:49-55[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(297,50)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m302:47-53[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(302,48)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m316:36-42[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(316,37)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m316:44-49[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(316,45)
+      TS7006: Parameter 'token' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m335:35-41[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(335,36)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m344:42-48[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(344,43)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m355:43-49[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(355,44)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m361:38-44[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(361,39)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m444:6-22[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(444,7)
+      TS7006: Parameter 'workDoneProgress' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m445:6-20[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(445,7)
+      TS7006: Parameter 'resultProgress' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m499:30-34[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(499,31)
+      TS7006: Parameter 'item' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m525:33-39[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(525,34)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m525:41-46[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(525,42)
+      TS7006: Parameter 'token' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m538:39-45[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(538,40)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m538:47-52[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(538,48)
+      TS7006: Parameter 'token' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m545:39-45[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(545,40)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m545:47-52[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(545,48)
+      TS7006: Parameter 'token' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m552:33-39[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(552,34)
+      TS7006: Parameter 'params' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m552:41-46[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(552,42)
+      TS7006: Parameter 'token' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts[39m[22m
+[1m./src/server.ts[39m[22m [1m[32m563:31-36[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\server.ts(563,32)
+      TS7006: Parameter 'token' implicitly has an 'any' type.[39m[22m
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\browser\server.ts[39m[22m
+[1m./src/browser/server.ts[39m[22m [1m[32m3:27-50[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\browser\server.ts(3,28)
+      TS2307: Cannot find module 'vscode-languageserver' or its corresponding type declarations.[39m[22m
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\browser\server.ts[39m[22m
+[1m./src/browser/server.ts[39m[22m [1m[32m8:7-38[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\browser\server.ts(8,8)
+      TS2307: Cannot find module 'vscode-languageserver/browser' or its corresponding type declarations.[39m[22m
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\node\server.ts[39m[22m
+[1m[32m3:27-50[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\node\server.ts(3,28)
+      TS2307: Cannot find module 'vscode-languageserver' or its corresponding type declarations.[39m[22m
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\node\server.ts[39m[22m
+[1m[32m4:51-79[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\node\server.ts(4,52)
+      TS2307: Cannot find module 'vscode-languageserver/node' or its corresponding type declarations.[39m[22m
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\python\utils.ts[39m[22m
+[1m./src/python/utils.ts[39m[22m [1m[32m3:31-54[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\python\utils.ts(3,32)
+      TS2307: Cannot find module 'vscode-languageserver' or its corresponding type declarations.[39m[22m
+ @ ./src/python/browser/PyrightLanguageProviderBrowser.ts 7:16-35
+ @ ./src/browser/server.ts 4:41-100
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\python\browser\PyrightLanguageProviderBrowser.ts[39m[22m
+[1m./src/python/browser/PyrightLanguageProviderBrowser.ts[39m[22m [1m[32m45:7-30[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\python\browser\PyrightLanguageProviderBrowser.ts(45,8)
+      TS2307: Cannot find module 'vscode-languageserver' or its corresponding type declarations.[39m[22m
+ @ ./src/browser/server.ts 4:41-100
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\python\node\PyrightLanguageProviderNode.ts[39m[22m
+[1m[32m45:7-30[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\python\node\PyrightLanguageProviderNode.ts(45,8)
+      TS2307: Cannot find module 'vscode-languageserver' or its corresponding type declarations.[39m[22m
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\sas\CompletionProvider.ts[39m[22m
+[1m./src/sas/CompletionProvider.ts[39m[22m [1m[32m14:7-30[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\sas\CompletionProvider.ts(14,8)
+      TS2307: Cannot find module 'vscode-languageserver' or its corresponding type declarations.[39m[22m
+ @ ./src/sas/LanguageServiceProvider.ts 7:29-60
+ @ ./src/server.ts 9:34-74
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\sas\FormatOnTypeProvider.ts[39m[22m
+[1m./src/sas/FormatOnTypeProvider.ts[39m[22m [1m[32m3:25-48[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\sas\FormatOnTypeProvider.ts(3,26)
+      TS2307: Cannot find module 'vscode-languageserver' or its corresponding type declarations.[39m[22m
+ @ ./src/sas/LanguageServiceProvider.ts 8:31-64
+ @ ./src/server.ts 9:34-74
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\sas\LanguageServiceProvider.ts[39m[22m
+[1m./src/sas/LanguageServiceProvider.ts[39m[22m [1m[32m7:7-30[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\sas\LanguageServiceProvider.ts(7,8)
+      TS2307: Cannot find module 'vscode-languageserver' or its corresponding type declarations.[39m[22m
+ @ ./src/server.ts 9:34-74
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[31mERROR[39m[22m in [1mC:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\sas\formatter\index.ts[39m[22m
+[1m./src/sas/formatter/index.ts[39m[22m [1m[32m3:30-62[39m[22m
+[1m[tsl] [1m[31mERROR[39m[22m[1m in C:\Users\gghcj\OneDrive - Bayer\Personal Data\git\vscode-sas-extension\server\src\sas\formatter\index.ts(3,31)
+      TS2307: Cannot find module 'vscode-languageserver-protocol' or its corresponding type declarations.[39m[22m
+ @ ./src/sas/LanguageServiceProvider.ts 12:20-42
+ @ ./src/server.ts 9:34-74
+ @ ./src/browser/server.ts 5:17-37
+
+[1m[33m48 errors have detailed information that is not shown.
+Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.[39m[22m
+
+webpack 5.105.3 compiled with [1m[31m48 errors[39m[22m in 38510 ms

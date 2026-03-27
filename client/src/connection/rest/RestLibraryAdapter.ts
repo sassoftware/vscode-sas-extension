@@ -15,6 +15,7 @@ import {
   ColumnCollection,
   DataAccessApi,
   RowCollection,
+  RowSet,
   TableInfo,
 } from "./api/compute";
 import { getApiConfig } from "./common";
@@ -176,18 +177,16 @@ class RestLibraryAdapter implements LibraryAdapter {
     const seen = new Set<string>();
     let start = 0;
     const limit = 100;
-    let totalCount = Infinity;
 
-    while (start < totalCount && distinctValues.length < maxValues) {
-      const { data } = await this.retryOnFail<RowCollection>(
+    while (distinctValues.length < maxValues) {
+      const { data } = await this.retryOnFail<RowSet>(
         async () =>
-          await this.dataAccessApi.getRows(
+          await this.dataAccessApi.getRowSet(
             {
               sessionId: this.sessionId,
               libref: item.library || "",
               tableName: item.name,
               includeColumns: columnName,
-              includeIndex: false,
               start,
               limit,
               formatMissingValues: true,
@@ -197,10 +196,9 @@ class RestLibraryAdapter implements LibraryAdapter {
           ),
       );
 
-      totalCount = data.count;
-
-      for (const row of data.items || []) {
-        const value = row.cells?.[0] ?? null;
+      const rows = data.rows || [];
+      for (const row of rows) {
+        const value = row?.[0] ?? null;
         const valueKey = JSON.stringify(value);
         if (seen.has(valueKey)) {
           continue;
@@ -213,7 +211,7 @@ class RestLibraryAdapter implements LibraryAdapter {
         }
       }
 
-      if ((data.items || []).length === 0) {
+      if (rows.length === 0 || rows.length < limit) {
         break;
       }
       start += limit;

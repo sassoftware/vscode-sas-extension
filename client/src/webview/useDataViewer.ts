@@ -182,16 +182,16 @@ const useDataViewer = () => {
   const [queryParams, setQueryParamsState] = useState<TableQuery | undefined>(
     undefined,
   );
-  const normalizeQuery = (
-    query: TableQuery | undefined,
-  ): TableQuery | undefined => {
-    if (!query) {
-      return undefined;
-    }
+  const normalizeQuery = useCallback(
+    (query: TableQuery | undefined): TableQuery | undefined => {
+      if (!query) {
+        return undefined;
+      }
 
-    const filterValue = query.filterValue || "";
-    const columnFilters = Object.entries(query.columnFilters || {}).reduce(
-      (carry, [columnName, expression]) => {
+      const filterValue = query.filterValue || "";
+      const columnFilters = Object.entries(query.columnFilters || {}).reduce<
+        Record<string, string>
+      >((carry, [columnName, expression]) => {
         if (!expression?.trim()) {
           return carry;
         }
@@ -200,24 +200,28 @@ const useDataViewer = () => {
           ...carry,
           [columnName]: expression,
         };
-      },
-      {},
-    );
+      }, {});
 
-    if (!filterValue.trim() && Object.keys(columnFilters).length === 0) {
-      return undefined;
-    }
+      if (!filterValue.trim() && Object.keys(columnFilters).length === 0) {
+        return undefined;
+      }
 
-    return {
-      filterValue,
-      ...(Object.keys(columnFilters).length > 0 ? { columnFilters } : {}),
-    };
-  };
-  const setQueryParams = (query: TableQuery | undefined) => {
-    const normalizedQuery = normalizeQuery(query);
-    setQueryParamsState(normalizedQuery);
-    storeViewProperties({ query: normalizedQuery });
-  };
+      return {
+        filterValue,
+        ...(Object.keys(columnFilters).length > 0 ? { columnFilters } : {}),
+      };
+    },
+    [],
+  );
+
+  const setQueryParams = useCallback(
+    (query: TableQuery | undefined) => {
+      const normalizedQuery = normalizeQuery(query);
+      setQueryParamsState(normalizedQuery);
+      storeViewProperties({ query: normalizedQuery });
+    },
+    [normalizeQuery],
+  );
 
   const columnMenuRef = useRef<ColumnMenuProps | undefined>(columnMenu);
   const columnStateRef = useRef<ColumnState[] | undefined>(undefined);
@@ -309,52 +313,54 @@ const useDataViewer = () => {
       setQueryParams(params);
       gridRef.current.api.setGridOption("datasource", dataSource(params));
     },
-    [dataSource, queryParams, setQueryParams],
+    [dataSource, normalizeQuery, queryParams, setQueryParams],
   );
 
-  const quoteString = (value: string): string =>
-    `'${value.replace(/'/g, "''")}'`;
+  const quoteString = useCallback(
+    (value: string): string => `'${value.replace(/'/g, "''")}'`,
+    [],
+  );
 
-  const buildColumnFilterExpression = (
-    columnName: string,
-    value: string | number | null,
-  ): string => {
-    const columnType = (columnTypesRef.current[columnName] || "").toLowerCase();
-    const isNumericColumn = [
-      "float",
-      "num",
-      "date",
-      "time",
-      "datetime",
-      "currency",
-    ].includes(columnType);
+  const buildColumnFilterExpression = useCallback(
+    (columnName: string, value: string | number | null): string => {
+      const columnType = (columnTypesRef.current[columnName] || "").toLowerCase();
+      const isNumericColumn = [
+        "float",
+        "num",
+        "date",
+        "time",
+        "datetime",
+        "currency",
+      ].includes(columnType);
 
-    if (value === null || (value === "." && isNumericColumn)) {
-      return `missing(${columnName})`;
-    }
+      if (value === null || (value === "." && isNumericColumn)) {
+        return `missing(${columnName})`;
+      }
 
-    if (isNumericColumn) {
-      return `${columnName} = ${value}`;
-    }
+      if (isNumericColumn) {
+        return `${columnName} = ${value}`;
+      }
 
-    return `${columnName} = ${quoteString(`${value}`)}`;
-  };
+      return `${columnName} = ${quoteString(`${value}`)}`;
+    },
+    [quoteString],
+  );
 
-  const queryWithoutColumnFilter = (
-    columnName: string,
-    query: TableQuery | undefined,
-  ): TableQuery | undefined => {
-    if (!query?.columnFilters?.[columnName]) {
-      return query;
-    }
+  const queryWithoutColumnFilter = useCallback(
+    (columnName: string, query: TableQuery | undefined): TableQuery | undefined => {
+      if (!query?.columnFilters?.[columnName]) {
+        return query;
+      }
 
-    const remainingFilters = { ...query.columnFilters };
-    delete remainingFilters[columnName];
-    return normalizeQuery({
-      ...query,
-      columnFilters: remainingFilters,
-    });
-  };
+      const remainingFilters = { ...query.columnFilters };
+      delete remainingFilters[columnName];
+      return normalizeQuery({
+        ...query,
+        columnFilters: remainingFilters,
+      });
+    },
+    [normalizeQuery],
+  );
 
   const loadDistinctValues = useCallback(
     async (columnName: string) => {
@@ -550,10 +556,10 @@ const useDataViewer = () => {
       });
 
       setColumns(columns);
-      columnTypesRef.current = columnsData.reduce(
+      columnTypesRef.current = columnsData.reduce<Record<string, string>>(
         (carry, column) => ({
           ...carry,
-          [column.name]: column.type,
+          [column.name || ""]: column.type || "",
         }),
         {},
       );
