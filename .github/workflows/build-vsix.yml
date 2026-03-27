@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: 'Branch, tag, or commit SHA to build from'
+        description: "Branch, tag, or commit SHA to build from"
         required: false
-        default: ''
+        default: ""
         type: string
 
 jobs:
