@@ -285,7 +285,7 @@ const useDataViewer = () => {
         columnStateRef.current = undefined;
       }
     },
-    [dataSource],
+    [dataSource, setQueryParams],
   );
 
   const dismissMenu = (focusColumn: boolean = true) => {
@@ -309,7 +309,7 @@ const useDataViewer = () => {
       setQueryParams(params);
       gridRef.current.api.setGridOption("datasource", dataSource(params));
     },
-    [dataSource, queryParams],
+    [dataSource, queryParams, setQueryParams],
   );
 
   const quoteString = (value: string): string =>
@@ -348,8 +348,8 @@ const useDataViewer = () => {
       return query;
     }
 
-    const { [columnName]: _unused, ...remainingFilters } =
-      query.columnFilters;
+    const remainingFilters = { ...query.columnFilters };
+    delete remainingFilters[columnName];
     return normalizeQuery({
       ...query,
       columnFilters: remainingFilters,
@@ -385,7 +385,7 @@ const useDataViewer = () => {
         }));
       }
     },
-    [loadingDistinctValuesByColumn, queryParams],
+    [loadingDistinctValuesByColumn, queryParams, queryWithoutColumnFilter],
   );
 
   const applyColumnFilter = useCallback(
@@ -401,7 +401,7 @@ const useDataViewer = () => {
         },
       });
     },
-    [queryParams, refreshResults],
+    [buildColumnFilterExpression, queryParams, refreshResults],
   );
 
   const clearColumnFilter = useCallback(
@@ -410,8 +410,8 @@ const useDataViewer = () => {
         return;
       }
 
-      const { [columnName]: _unused, ...remainingFilters } =
-        queryParams.columnFilters;
+      const remainingFilters = { ...queryParams.columnFilters };
+      delete remainingFilters[columnName];
       refreshResults({
         filterValue: queryParams?.filterValue || "",
         columnFilters: remainingFilters,
@@ -427,12 +427,18 @@ const useDataViewer = () => {
       }
       const colId = column.colId;
       setColumnMenu({
-        ...getColumnMenu(api, column, rect, dismissMenu, (columnName: string) => {
-          vscode.postMessage({
-            command: "request:loadColumnProperties",
-            data: { columnName },
-          });
-        }),
+        ...getColumnMenu(
+          api,
+          column,
+          rect,
+          dismissMenu,
+          (columnName: string) => {
+            vscode.postMessage({
+              command: "request:loadColumnProperties",
+              data: { columnName },
+            });
+          },
+        ),
         distinctValues: distinctValuesByColumn[colId],
         hasColumnFilter: !!queryParams?.columnFilters?.[colId],
         isDistinctValuesLoading: !!loadingDistinctValuesByColumn[colId],
