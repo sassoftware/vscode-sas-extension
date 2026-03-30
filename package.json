@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
-  "version": "1.18.1-pngtest",
+  "version": "1.18.1-variable-filter-distinct-values",
   "categories": [
     "Programming Languages",
     "Data Science",

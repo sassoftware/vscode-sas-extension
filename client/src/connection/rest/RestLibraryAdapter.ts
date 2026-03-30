@@ -24,12 +24,17 @@ const requestOptions = {
   headers: { Accept: "application/vnd.sas.collection+json" },
 };
 
-const buildWhereClause = (query: TableQuery | undefined): string | undefined => {
+const buildWhereClause = (
+  query: TableQuery | undefined,
+): string | undefined => {
   if (!query) {
     return undefined;
   }
 
-  const whereParts = [query.filterValue, ...Object.values(query.columnFilters || {})]
+  const whereParts = [
+    query.filterValue,
+    ...Object.values(query.columnFilters || {}),
+  ]
     .map((value) => value?.trim())
     .filter((value) => !!value)
     .map((value) => `(${value})`);

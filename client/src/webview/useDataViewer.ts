@@ -323,7 +323,9 @@ const useDataViewer = () => {
 
   const buildColumnFilterExpression = useCallback(
     (columnName: string, value: string | number | null): string => {
-      const columnType = (columnTypesRef.current[columnName] || "").toLowerCase();
+      const columnType = (
+        columnTypesRef.current[columnName] || ""
+      ).toLowerCase();
       const isNumericColumn = [
         "float",
         "num",
@@ -347,7 +349,10 @@ const useDataViewer = () => {
   );
 
   const queryWithoutColumnFilter = useCallback(
-    (columnName: string, query: TableQuery | undefined): TableQuery | undefined => {
+    (
+      columnName: string,
+      query: TableQuery | undefined,
+    ): TableQuery | undefined => {
       if (!query?.columnFilters?.[columnName]) {
         return query;
       }
