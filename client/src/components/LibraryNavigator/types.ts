@@ -26,6 +26,10 @@ export interface TableData {
   count: number;
 }
 
+export interface TableQuery {
+  filterValue: string;
+}
+
 export interface LibraryAdapter {
   connect(): Promise<void>;
   deleteTable(item: LibraryItem): Promise<void>;
@@ -46,6 +50,7 @@ export interface LibraryAdapter {
     start: number,
     limit: number,
     sortModel: SortModelItem[],
+    query: TableQuery | undefined,
   ): Promise<TableData>;
   getRowsAsCSV(
     item: LibraryItem,

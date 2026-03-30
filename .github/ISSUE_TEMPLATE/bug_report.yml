@@ -13,7 +13,7 @@ body:
       label: Steps to reproduce
       description: Detailed steps for us to consistently reproduce what you're seeing
       value: |
-        1. 
+        1.
         2.
   - type: textarea
     attributes:
@@ -47,3 +47,11 @@ body:
     attributes:
       label: Additional context
       placeholder: Add any other context about the problem here
+  - type: checkboxes
+    attributes:
+      label: Sensitive information
+      description: |
+        **<ins>Please do not share screenshots or settings containing sensitive information (i.e. domains, credentials, files, etc)</ins>**
+      options:
+        - label: I have confirmed that this bug report contains no sensitive information
+          required: true

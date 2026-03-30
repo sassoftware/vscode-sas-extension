@@ -10,11 +10,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Add R language support for PROC R (syntax highlighting, notebook cells, code formatting preservation) ([#1719](https://github.com/sassoftware/vscode-sas-extension/pull/1719))
 
-### Changed
+## [1.19.0] - 2026-03-26
 
-- Update pubsdata files to use the latest version (2026.01) of the SAS documentation for procedures, statements, and functions ([#1770](https://github.com/sassoftware/vscode-sas-extension/pull/1770))
+### Added
 
-## [v1.18.0] - 2025-12-01
+- Add filter for data viewer ([#1757](https://github.com/sassoftware/vscode-sas-extension/pull/1757))
+- Add keyboard accessibility / tooltips for table header ([#1743](https://github.com/sassoftware/vscode-sas-extension/pull/1743))
+- Allow running Python code files in SAS Content ([#1815](https://github.com/sassoftware/vscode-sas-extension/pull/1815))
+
+### Fixed
+
+- Syntax highlighter no longer handles if/then/else ([#1718](https://github.com/sassoftware/vscode-sas-extension/issues/1718))
+- Correctly render katex symbols on html export ([#1734](https://github.com/sassoftware/vscode-sas-extension/pull/1734))
+- Fix misc selection issues ([#1748](https://github.com/sassoftware/vscode-sas-extension/pull/1748))
+- Fix sasprogramfile macro ([#1774](https://github.com/sassoftware/vscode-sas-extension/pull/1774))
+
+### Chore
+
+- Update table filter docs ([#1806](https://github.com/sassoftware/vscode-sas-extension/pull/1806))
+- Clarify sas options footnote ([#1816](https://github.com/sassoftware/vscode-sas-extension/pull/1816))
+- Updating pubsdata to use latest SAS doc version ([#1770](https://github.com/sassoftware/vscode-sas-extension/pull/1770))
+- Move itc script to ps1 file ([#1747](https://github.com/sassoftware/vscode-sas-extension/pull/1747))
+
+## [1.18.0] - 2025-12-01
 
 ### Added
 
@@ -27,7 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fix light/dark theme toggling ([#1701](https://github.com/sassoftware/vscode-sas-extension/pull/1701))
 - Add name checking for duplicates on drag and drop ([#1665](https://github.com/sassoftware/vscode-sas-extension/pull/1665))
 
-## [v1.17.0] - 2025-09-26
+## [1.17.0] - 2025-09-26
 
 ### Added
 
@@ -41,7 +59,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Enable filter library name in SET statement ([#1608](https://github.com/sassoftware/vscode-sas-extension/issues/1608))
 - Fix multiple establish connection calls ([#1621](https://github.com/sassoftware/vscode-sas-extension/issues/1621))
 
-## [v1.16.0] - 2025-07-31
+## [1.16.0] - 2025-07-31
 
 ### Added
 
@@ -61,7 +79,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Auto-complete for sub-options ([#1555](https://github.com/sassoftware/vscode-sas-extension/issues/1555))
 - Toggle line comment in Proc Python ([#1554](https://github.com/sassoftware/vscode-sas-extension/issues/1554))
 
-## [v1.15.0] - 2025-06-10
+## [1.15.0] - 2025-06-10
 
 ### Changed
 
@@ -79,7 +97,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `Fold All Regions` in Command Palette don't work ([#1486](https://github.com/sassoftware/vscode-sas-extension/issues/1486))
 - Table Viewer optimization in ITC ([#1466](https://github.com/sassoftware/vscode-sas-extension/pull/1466)) ([#1132](https://github.com/sassoftware/vscode-sas-extension/issues/1132))
 
-## [v1.14.0] - 2025-04-28
+## [1.14.0] - 2025-04-28
 
 ### Added
 
@@ -90,7 +108,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Reduce overhead time when running code to Viya ([#1447](https://github.com/sassoftware/vscode-sas-extension/issues/1447))
 
-## [v1.13.1] - 2025-03-04
+## [1.13.1] - 2025-03-04
 
 ### Fixed
 
@@ -100,7 +118,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Better error display for Rest session creation errors ([#1367](https://github.com/sassoftware/vscode-sas-extension/issues/1367))
 - Stop running when close session ([#1390](https://github.com/sassoftware/vscode-sas-extension/pull/1390))
 
-## [v1.13.0] - 2024-12-23
+## [1.13.0] - 2024-12-23
 
 ### Changed
 
@@ -121,7 +139,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - The notebook file is opened incorrectly after renaming ([#1289](https://github.com/sassoftware/vscode-sas-extension/issues/1289))
 - Resolve breaking changes by AG Grid 33 ([#1334](https://github.com/sassoftware/vscode-sas-extension/issues/1334))
 
-## [v1.12.0] - 2024-11-25
+## [1.12.0] - 2024-11-25
 
 ### Added
 
@@ -137,7 +155,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Failed to run code the second time with IOM ([#1266](https://github.com/sassoftware/vscode-sas-extension/issues/1266))
 - Should not show hover help on whitespaces ([#1267](https://github.com/sassoftware/vscode-sas-extension/issues/1267))
 
-## [v1.11.0] - 2024-10-09
+## [1.11.0] - 2024-10-09
 
 ### Added
 
@@ -152,7 +170,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Try to run a SAS file having no contents will lead to console error ([#1201](https://github.com/sassoftware/vscode-sas-extension/issues/1201))
 - Formatting proc FEDSQL deletes the content of the proc ([#1202](https://github.com/sassoftware/vscode-sas-extension/issues/1202))
 
-## [v1.10.2] - 2024-08-30
+## [1.10.2] - 2024-08-30
 
 ### Fixed
 
@@ -165,7 +183,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Log information are missing in certain case with Viya connection ([#963](https://github.com/sassoftware/vscode-sas-extension/issues/963))
 - Get working directory error in IOM connection ([#1163](https://github.com/sassoftware/vscode-sas-extension/issues/1163))
 
-## [v1.10.1] - 2024-07-22
+## [1.10.1] - 2024-07-22
 
 ### Fixed
 
@@ -174,7 +192,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Resolve the breaking change introduced by AG Grid 32.0 ([#1096](https://github.com/sassoftware/vscode-sas-extension/issues/1096))
 - Library pane crash with option symbolgen ([#1012](https://github.com/sassoftware/vscode-sas-extension/issues/1012))
 
-## [v1.10.0] - 2024-06-18
+## [1.10.0] - 2024-06-18
 
 ### Added
 
@@ -189,7 +207,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Support cshell for ssh ([#1005](https://github.com/sassoftware/vscode-sas-extension/issues/1005))
 - Fix content type when saving files ([#878](https://github.com/sassoftware/vscode-sas-extension/issues/878))
 
-## [v1.9.0] - 2024-04-30
+## [1.9.0] - 2024-04-30
 
 ### Added
 
@@ -206,7 +224,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - using pretty for json output to avoid long line ([#938](https://github.com/sassoftware/vscode-sas-extension/pull/938))
 - Password Character Parsing for SAS 9.4 Remote IOM Connection ([#939](https://github.com/sassoftware/vscode-sas-extension/issues/939))
 
-## [v1.8.0] - 2024-03-20
+## [1.8.0] - 2024-03-20
 
 ### Added
 
@@ -225,7 +243,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - PDF Download doesn't display content ([#838](https://github.com/sassoftware/vscode-sas-extension/issues/838))
 - Prevent Viya connection from generating guid based html files ([#815](https://github.com/sassoftware/vscode-sas-extension/pull/815))
 
-## [v1.7.1] - 2024-02-15
+## [1.7.1] - 2024-02-15
 
 ### Fixed
 
@@ -235,7 +253,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Add Spanish translation ([#749](https://github.com/sassoftware/vscode-sas-extension/pull/749))
 
-## [v1.7.0] - 2024-02-08
+## [1.7.0] - 2024-02-08
 
 ### Added
 
@@ -251,7 +269,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - I18n node names when converting SAS Notebook to SAS Flow ([#530](https://github.com/sassoftware/vscode-sas-extension/issues/530))
 - Ending inner block properly inside macro ([#772](https://github.com/sassoftware/vscode-sas-extension/issues/772))
 
-## [v1.6.0] - 2024-01-15
+## [1.6.0] - 2024-01-15
 
 ### Added
 
@@ -277,7 +295,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - sasnb extension name for save ([#607](https://github.com/sassoftware/vscode-sas-extension/issues/607))
 - document symbol error ([#715](https://github.com/sassoftware/vscode-sas-extension/issues/715))
 
-## [v1.5.0] - 2023-10-27
+## [1.5.0] - 2023-10-27
 
 ### Added
 
@@ -292,13 +310,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Target display issue for local profile ([#514](https://github.com/sassoftware/vscode-sas-extension/issues/514))
 - Check for failed state during session log stream to prevent unbounded loop ([#562](https://github.com/sassoftware/vscode-sas-extension/issues/562))
 
-## [v1.4.1] - 2023-09-29
+## [1.4.1] - 2023-09-29
 
 ### Fixed
 
 - Use sas-notebook renderer only for .sasnb files ([#538](https://github.com/sassoftware/vscode-sas-extension/pull/538))
 
-## [v1.4.0] - 2023-09-28
+## [1.4.0] - 2023-09-28
 
 ### Added
 
@@ -314,7 +332,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Call routine autocomplete ([#497](https://github.com/sassoftware/vscode-sas-extension/issues/497))
 - Update high contrast data viewer theming ([#448](https://github.com/sassoftware/vscode-sas-extension/issues/448))
 
-## [v1.3.0] - 2023-09-12
+## [1.3.0] - 2023-09-12
 
 ### Added
 
@@ -336,7 +354,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Previous log shown for SSH connection ([#470](https://github.com/sassoftware/vscode-sas-extension/issues/470))
 - Result displaying issue for SSH connection ([#483](https://github.com/sassoftware/vscode-sas-extension/issues/483))
 
-## [v1.2.0] - 2023-08-11
+## [1.2.0] - 2023-08-11
 
 ### Added
 
@@ -346,7 +364,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Fixed column icons for data viewer ([#443](https://github.com/sassoftware/vscode-sas-extension/pull/443))
 
-## [v1.1.0] - 2023-08-04
+## [1.1.0] - 2023-08-04
 
 ### Added
 
@@ -371,7 +389,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - SAS Content error on Viya 2023.03 ([#328](https://github.com/sassoftware/vscode-sas-extension/issues/328))
 - (Engineering) Fixed an issue with `npm run copyright:check` where some files were not being validated. ([#344](https://github.com/sassoftware/vscode-sas-extension/pull/344))
 
-## [v1.0.0] - 2023-06-16
+## [1.0.0] - 2023-06-16
 
 ### Added
 
@@ -389,7 +407,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - 406 error for library view on Viya 3.5 ([#300](https://github.com/sassoftware/vscode-sas-extension/issues/300))
 
-## [v0.1.5] - 2023-05-19
+## [0.1.5] - 2023-05-19
 
 ### Added
 
@@ -405,7 +423,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Show user acount information correctly ([#235](https://github.com/sassoftware/vscode-sas-extension/issues/235))
 - Updated syntax data ([#249](https://github.com/sassoftware/vscode-sas-extension/issues/249))
 
-## [v0.1.4] - 2023-04-28
+## [0.1.4] - 2023-04-28
 
 ### Fixed
 
@@ -414,7 +432,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Sort the folder children in Explorer pane alphabetically and case-insensitively, folders first ([#225](https://github.com/sassoftware/vscode-sas-extension/issues/225))
 - Fixed an issue where preview mode wasn't working as expected when opening files in sas content ([#224](https://github.com/sassoftware/vscode-sas-extension/issues/224), [#243](https://github.com/sassoftware/vscode-sas-extension/pull/243))
 
-## [v0.1.3] - 2023-04-13
+## [0.1.3] - 2023-04-13
 
 ### Added
 
@@ -426,7 +444,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added support for SAS libraries. You are now able to see libraries and tables from a SAS instance. You are also able to delete, view, and drag tables into your sas programs. ([#129](https://github.com/sassoftware/vscode-sas-extension/issues/129))
 - Update syntax colors ([#153](https://github.com/sassoftware/vscode-sas-extension/pull/153))
 
-## [v0.1.2] - 2023-02-01
+## [0.1.2] - 2023-02-01
 
 ### Changed
 
@@ -445,7 +463,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Only show Result window if result is generated #46, #77
 - Run some code, error happened unexpectedly #63, #40
 
-## [v0.1.1] - 2022-11-24
+## [0.1.1] - 2022-11-24
 
 ### Changed
 
@@ -461,7 +479,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Removed password and token file login approach
 
-## [v0.1.0] - 2022-10-08
+## [0.1.0] - 2022-10-08
 
 ### Changed
 
@@ -478,13 +496,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed issue where percentage sign should escape quotes in %str
 - Fixed PROC SQL snippet syntax
 
-## [v0.0.7] - 2022-07-26
+## [0.0.7] - 2022-07-26
 
 ### Added
 
 - Added support to run selected SAS code
 
-## [v0.0.6] - 2022-07-08
+## [0.0.6] - 2022-07-08
 
 ### Fixed
 
@@ -497,7 +515,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Changed SAS syntax to have basic type colors in non-SAS themes
 - Updated README to show animated gifs
 
-## [v0.0.5] - 2022-05-26
+## [0.0.5] - 2022-05-26
 
 ### Fixed
 
@@ -508,7 +526,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Rearranged settings fields
 - Updated dependencies versions
 
-## [v0.0.4] - 2022-05-19
+## [0.0.4] - 2022-05-19
 
 ### Fixed
 
@@ -518,6 +536,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Updated README.md to link to wiki
 
-## [v0.0.3] - 2022-05-17
+## [0.0.3] - 2022-05-17
 
 Initial release
