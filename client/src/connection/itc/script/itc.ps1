@@ -2,6 +2,68 @@ using namespace System.Collections.Generic
 
 $global:env = (Get-Content -Path "$PWD\\env.json" -Raw) | ConvertFrom-Json
 
+#region Table Helpers
+function GetFilteredView {
+  param(
+    [string]$Library,
+    [string]$Table,
+    [string]$SortCriteria = "",
+    [string]$JSONQueryData = ""
+  )
+
+  $epoch = [datetime]::FromFileTimeUtc(0)
+  $currentUtcTime = (Get-Date).ToUniversalTime()
+  $ts = [int64]($currentUtcTime - $epoch).TotalSeconds
+  $tableName = "WORK.temp_$ts"
+
+  $query = "CREATE VIEW $tableName AS SELECT * FROM $library.$table"
+
+  if ($JSONQueryData -ne "") {
+    $queryParams = $JSONQueryData | ConvertFrom-Json
+    if ($queryParams.filterValue) {
+      $query = "$query WHERE $($queryParams.filterValue)"
+    }
+  }
+
+  if ($SortCriteria -ne "") {
+    $query = "$query ORDER BY $sortCriteria"
+  }
+
+  return @{
+    Query = $query
+    Name  = $tableName
+  }
+}
+#endregion Table Helpers
+
+#region Setup Helpers
+function GetInteropDirectory {
+  # try to load from user specified path first
+  if ("$($global:interopLibraryFolderPath)") {
+    if (Test-Path -Path "$($global:interopLibraryFolderPath)\\SASInterop.dll") {
+      return "$($global:interopLibraryFolderPath)"
+    }
+  }
+
+  # try to load path from registry
+  try {
+    $pathFromRegistry = (Get-ItemProperty -ErrorAction Stop -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
+    if (Test-Path -Path "$pathFromRegistry\\SASInterop.dll") {
+      return $pathFromRegistry
+    }
+  } catch {
+  }
+
+  # try to load path from integration technologies
+  $itcPath = "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
+  if (Test-Path -Path "$itcPath\\SASInterop.dll") {
+    return $itcPath
+  }
+
+  return ""
+}
+#endregion Setup Helpers
+
 try {
   $interopDir = GetInteropDirectory
   Add-Type -Path "$interopDir\\SASInterop.dll"
@@ -623,64 +685,3 @@ class SASRunner {
   }
 }
 
-#region Table Helpers
-function GetFilteredView {
-  param(
-    [string]$Library,
-    [string]$Table,
-    [string]$SortCriteria = "",
-    [string]$JSONQueryData = ""
-  )
-
-  $epoch = [datetime]::FromFileTimeUtc(0)
-  $currentUtcTime = (Get-Date).ToUniversalTime()
-  $ts = [int64]($currentUtcTime - $epoch).TotalSeconds
-  $tableName = "WORK.temp_$ts"
-
-  $query = "CREATE VIEW $tableName AS SELECT * FROM $library.$table"
-
-  if ($JSONQueryData -ne "") {
-    $queryParams = $JSONQueryData | ConvertFrom-Json
-    if ($queryParams.filterValue) {
-      $query = "$query WHERE $($queryParams.filterValue)"
-    }
-  }
-
-  if ($SortCriteria -ne "") {
-    $query = "$query ORDER BY $sortCriteria"
-  }
-
-  return @{
-    Query = $query
-    Name  = $tableName
-  }
-}
-#endregion Table Helpers
-
-#region Setup Helpers
-function GetInteropDirectory {
-  # try to load from user specified path first
-  if ("$($global:interopLibraryFolderPath)") {
-    if (Test-Path -Path "$($global:interopLibraryFolderPath)\\SASInterop.dll") {
-      return "$($global:interopLibraryFolderPath)"
-    }
-  }
-
-  # try to load path from registry
-  try {
-    $pathFromRegistry = (Get-ItemProperty -ErrorAction Stop -Path "HKLM:\\SOFTWARE\\WOW6432Node\\SAS Institute Inc.\\Common Data\\Shared Files\\Integration Technologies").Path
-    if (Test-Path -Path "$pathFromRegistry\\SASInterop.dll") {
-      return $pathFromRegistry
-    }
-  } catch {
-  }
-
-  # try to load path from integration technologies
-  $itcPath = "C:\\Program Files\\SASHome\\x86\\Integration Technologies"
-  if (Test-Path -Path "$itcPath\\SASInterop.dll") {
-    return $itcPath
-  }
-
-  return ""
-}
-#endregion Setup Helpers
