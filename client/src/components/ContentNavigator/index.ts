@@ -166,11 +166,24 @@ class ContentNavigator implements SubscriptionProvider {
               confirmed = true; // For recycle bin without dirty files, delete directly
             }
           } else {
+            // Multiple items deletion - build list of file names for display
+            const maxDisplayItems = 10;
+            const itemNames = deletableItems
+              .slice(0, maxDisplayItems)
+              .map((item) => `  • ${item.name}`)
+              .join("\n");
+            const remainingItemsCount = deletableItems.length - maxDisplayItems;
+            const itemsList =
+              remainingItemsCount > 0
+                ? `${itemNames}\n  • ...and ${remainingItemsCount} more`
+                : itemNames;
+
             // Multiple items deletion - use new multi-deletion messages
             if (permanentDelete) {
               confirmed = !!(await window.showWarningMessage(
                 l10n.t(Messages.DeleteMultipleWarningMessage, {
                   count: deletableItems.length,
+                  items: itemsList,
                 }),
                 { modal: true },
                 Messages.DeleteButtonLabel,
@@ -179,6 +192,7 @@ class ContentNavigator implements SubscriptionProvider {
               confirmed = !!(await window.showWarningMessage(
                 l10n.t(Messages.RecycleMultipleDirtyWarning, {
                   count: deletableItems.length,
+                  items: itemsList,
                 }),
                 { modal: true },
                 Messages.MoveToRecycleBinLabel,
@@ -187,6 +201,7 @@ class ContentNavigator implements SubscriptionProvider {
               confirmed = !!(await window.showWarningMessage(
                 l10n.t(Messages.RecycleMultipleWarningMessage, {
                   count: deletableItems.length,
+                  items: itemsList,
                 }),
                 { modal: true },
                 Messages.MoveToRecycleBinLabel,
