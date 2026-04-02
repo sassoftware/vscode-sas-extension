@@ -103,10 +103,10 @@ class ContentNavigator implements SubscriptionProvider {
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
           const selections = this.getTreeViewSelections(item);
-          
+
           // Filter items that can be deleted
           const deletableItems = selections.filter((resource: ContentItem) =>
-            resource.contextValue.includes("delete")
+            resource.contextValue.includes("delete"),
           );
 
           if (deletableItems.length === 0) {
@@ -114,17 +114,22 @@ class ContentNavigator implements SubscriptionProvider {
           }
 
           // Check if items will be moved to recycle bin or permanently deleted
-          const recyclableItems = deletableItems.filter((resource: ContentItem) =>
-            this.contentDataProvider.canRecycleResource(resource)
+          const recyclableItems = deletableItems.filter(
+            (resource: ContentItem) =>
+              this.contentDataProvider.canRecycleResource(resource),
           );
           const moveToRecycleBin = recyclableItems.length > 0;
-          const permanentDelete = deletableItems.length > recyclableItems.length;
+          const permanentDelete =
+            deletableItems.length > recyclableItems.length;
 
           // Check if any folders have unsaved files
           let hasUnsavedFiles = false;
           for (const resource of deletableItems) {
             const isContainer = getIsContainer(resource);
-            if (isContainer && await this.contentDataProvider.checkFolderDirty(resource)) {
+            if (
+              isContainer &&
+              (await this.contentDataProvider.checkFolderDirty(resource))
+            ) {
               hasUnsavedFiles = true;
               break;
             }
@@ -136,7 +141,8 @@ class ContentNavigator implements SubscriptionProvider {
             // Single item deletion - use existing messages
             const resource = deletableItems[0];
             const isContainer = getIsContainer(resource);
-            const canRecycle = this.contentDataProvider.canRecycleResource(resource);
+            const canRecycle =
+              this.contentDataProvider.canRecycleResource(resource);
             const itemHasUnsavedFiles = isContainer
               ? await this.contentDataProvider.checkFolderDirty(resource)
               : false;
@@ -196,11 +202,12 @@ class ContentNavigator implements SubscriptionProvider {
           // Process deletions for all confirmed items
           for (const resource of deletableItems) {
             const isContainer = getIsContainer(resource);
-            const canRecycle = this.contentDataProvider.canRecycleResource(resource);
+            const canRecycle =
+              this.contentDataProvider.canRecycleResource(resource);
             const deleteResult = canRecycle
               ? await this.contentDataProvider.recycleResource(resource)
               : await this.contentDataProvider.deleteResource(resource);
-            
+
             if (!deleteResult) {
               window.showErrorMessage(
                 isContainer
