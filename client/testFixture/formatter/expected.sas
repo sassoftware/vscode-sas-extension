@@ -9,6 +9,7 @@ data _null_;
 3  BB  4
 ;
 
+
 data a;
   cards4;
 1  AA  2
@@ -43,6 +44,16 @@ submit;
 print("x = " + x)
 def my_function():
     print("Inside the proc step")
+endsubmit;
+run;
+
+proc r;
+submit;
+# Reference to variable defined in previous PROC R call
+print(paste("x =", x))
+my_function <- function() {
+    print("Inside the proc step")
+}
 endsubmit;
 run;
 
@@ -129,6 +140,17 @@ for x in fruits:
 
 print('first statement after for loop')
 endinteractive;
+run;
+
+proc r;
+submit;
+fruits <- c("apple", "banana", "cherry")
+for (x in fruits) {
+   print(x)
+}
+
+print('first statement after for loop')
+endsubmit;
 run;
 
 proc lua;

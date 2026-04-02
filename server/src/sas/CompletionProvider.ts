@@ -698,19 +698,25 @@ export class CompletionProvider {
   getCompleteItemHelp(item: CompletionItem): Promise<CompletionItem> {
     return new Promise((resolve) => {
       if (["endsubmit", "endinteractive"].includes(item.label?.toLowerCase())) {
-        this.loader.getProcedureStatementHelp(
-          "PYTHON",
-          item.label.toUpperCase(),
-          (data) => {
-            if (data && data.data) {
-              item.documentation = {
-                kind: MarkupKind.Markdown,
-                value: this._addLinkContext(515, data),
-              };
-            }
-            resolve(item);
-          },
-        );
+        const procName = this.czMgr.getProcName()?.toUpperCase();
+
+        if (procName === "R" || procName === "PYTHON") {
+          this.loader.getProcedureStatementHelp(
+            procName,
+            item.label.toUpperCase(),
+            (data) => {
+              if (data && data.data) {
+                item.documentation = {
+                  kind: MarkupKind.Markdown,
+                  value: this._addLinkContext(515, data),
+                };
+              }
+              resolve(item);
+            },
+          );
+        } else {
+          resolve(item);
+        }
       } else {
         this._loadHelp({
           keyword: item.label,

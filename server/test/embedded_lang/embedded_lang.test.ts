@@ -64,4 +64,19 @@ describe("Test code zone for embedded language", () => {
     assert.equal(zoneList[4], CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG);
     assert.equal(zoneList[6], CodeZoneManager.ZONE_TYPE.PROC_STMT);
   });
+
+  it("proc r", () => {
+    const doc = openDoc("server/testFixture/embedded_lang/proc_r.sas");
+    const languageServer = new LanguageServiceProvider(doc);
+    const codeZoneManager = languageServer.getCodeZoneManager();
+
+    const zoneList = [];
+    for (let i = 0; i < doc.lineCount; i++) {
+      zoneList.push(codeZoneManager.getCurrentZone(i, 1));
+    }
+    assert.equal(zoneList[1], CodeZoneManager.ZONE_TYPE.PROC_STMT);
+    assert.equal(zoneList[2], CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG);
+    assert.equal(zoneList[4], CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG);
+    assert.equal(zoneList[6], CodeZoneManager.ZONE_TYPE.PROC_STMT);
+  });
 });

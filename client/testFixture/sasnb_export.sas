@@ -20,6 +20,23 @@ endsubmit;
 run;
 
 /*
+## R Code
+
+This is some R code
+*/
+
+/*
+This is a separate note in **Markdown** format.
+*/
+
+proc r;
+submit;
+die <- 1:6
+paste("Die Maths: ", die[3]*4 + die[6])
+endsubmit;
+run;
+
+/*
 ## SAS Code
 */
 

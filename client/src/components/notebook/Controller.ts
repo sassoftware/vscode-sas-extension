@@ -11,7 +11,7 @@ export class NotebookController {
   readonly controllerId = "sas-notebook-controller-id";
   readonly notebookType = "sas-notebook";
   readonly label = "SAS Notebook";
-  readonly supportedLanguages = ["sas", "sql", "python"];
+  readonly supportedLanguages = ["sas", "sql", "python", "r"];
 
   private readonly _controller: vscode.NotebookController;
   private _executionOrder = 0;
