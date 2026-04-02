@@ -106,7 +106,7 @@ class ContentNavigator implements SubscriptionProvider {
 
           // Filter items that can be deleted
           const deletableItems = selections.filter((resource: ContentItem) =>
-            resource.contextValue.includes("delete"),
+            resource.contextValue?.includes("delete"),
           );
 
           if (deletableItems.length === 0) {
@@ -118,7 +118,6 @@ class ContentNavigator implements SubscriptionProvider {
             (resource: ContentItem) =>
               this.contentDataProvider.canRecycleResource(resource),
           );
-          const moveToRecycleBin = recyclableItems.length > 0;
           const permanentDelete =
             deletableItems.length > recyclableItems.length;
 
