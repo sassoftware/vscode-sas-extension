@@ -102,54 +102,113 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
-          this.getTreeViewSelections(item).forEach(
-            async (resource: ContentItem) => {
-              if (!resource.contextValue.includes("delete")) {
-                return;
-              }
-              const isContainer = getIsContainer(resource);
-              const hasUnsavedFiles = isContainer
-                ? await this.contentDataProvider.checkFolderDirty(resource)
-                : false;
-              const moveToRecycleBin =
-                this.contentDataProvider.canRecycleResource(resource);
-
-              if (
-                !moveToRecycleBin &&
-                !(await window.showWarningMessage(
-                  l10n.t(Messages.DeleteWarningMessage, {
-                    name: resource.name,
-                  }),
-                  { modal: true },
-                  Messages.DeleteButtonLabel,
-                ))
-              ) {
-                return;
-              } else if (moveToRecycleBin && hasUnsavedFiles) {
-                if (
-                  !(await window.showWarningMessage(
-                    l10n.t(Messages.RecycleDirtyFolderWarning, {
-                      name: resource.name,
-                    }),
-                    { modal: true },
-                    Messages.MoveToRecycleBinLabel,
-                  ))
-                ) {
-                  return;
-                }
-              }
-              const deleteResult = moveToRecycleBin
-                ? await this.contentDataProvider.recycleResource(resource)
-                : await this.contentDataProvider.deleteResource(resource);
-              if (!deleteResult) {
-                window.showErrorMessage(
-                  isContainer
-                    ? Messages.FolderDeletionError
-                    : Messages.FileDeletionError,
-                );
-              }
-            },
+          const selections = this.getTreeViewSelections(item);
+          
+          // Filter items that can be deleted
+          const deletableItems = selections.filter((resource: ContentItem) =>
+            resource.contextValue.includes("delete")
           );
+
+          if (deletableItems.length === 0) {
+            return;
+          }
+
+          // Check if items will be moved to recycle bin or permanently deleted
+          const recyclableItems = deletableItems.filter((resource: ContentItem) =>
+            this.contentDataProvider.canRecycleResource(resource)
+          );
+          const moveToRecycleBin = recyclableItems.length > 0;
+          const permanentDelete = deletableItems.length > recyclableItems.length;
+
+          // Check if any folders have unsaved files
+          let hasUnsavedFiles = false;
+          for (const resource of deletableItems) {
+            const isContainer = getIsContainer(resource);
+            if (isContainer && await this.contentDataProvider.checkFolderDirty(resource)) {
+              hasUnsavedFiles = true;
+              break;
+            }
+          }
+
+          // Show appropriate confirmation dialog based on context
+          let confirmed = false;
+          if (deletableItems.length === 1) {
+            // Single item deletion - use existing messages
+            const resource = deletableItems[0];
+            const isContainer = getIsContainer(resource);
+            const canRecycle = this.contentDataProvider.canRecycleResource(resource);
+            const itemHasUnsavedFiles = isContainer
+              ? await this.contentDataProvider.checkFolderDirty(resource)
+              : false;
+
+            if (!canRecycle) {
+              confirmed = !!(await window.showWarningMessage(
+                l10n.t(Messages.DeleteWarningMessage, {
+                  name: resource.name,
+                }),
+                { modal: true },
+                Messages.DeleteButtonLabel,
+              ));
+            } else if (itemHasUnsavedFiles) {
+              confirmed = !!(await window.showWarningMessage(
+                l10n.t(Messages.RecycleDirtyFolderWarning, {
+                  name: resource.name,
+                }),
+                { modal: true },
+                Messages.MoveToRecycleBinLabel,
+              ));
+            } else {
+              confirmed = true; // For recycle bin without dirty files, delete directly
+            }
+          } else {
+            // Multiple items deletion - use new multi-deletion messages
+            if (permanentDelete) {
+              confirmed = !!(await window.showWarningMessage(
+                l10n.t(Messages.DeleteMultipleWarningMessage, {
+                  count: deletableItems.length,
+                }),
+                { modal: true },
+                Messages.DeleteButtonLabel,
+              ));
+            } else if (hasUnsavedFiles) {
+              confirmed = !!(await window.showWarningMessage(
+                l10n.t(Messages.RecycleMultipleDirtyWarning, {
+                  count: deletableItems.length,
+                }),
+                { modal: true },
+                Messages.MoveToRecycleBinLabel,
+              ));
+            } else {
+              confirmed = !!(await window.showWarningMessage(
+                l10n.t(Messages.RecycleMultipleWarningMessage, {
+                  count: deletableItems.length,
+                }),
+                { modal: true },
+                Messages.MoveToRecycleBinLabel,
+              ));
+            }
+          }
+
+          if (!confirmed) {
+            return;
+          }
+
+          // Process deletions for all confirmed items
+          for (const resource of deletableItems) {
+            const isContainer = getIsContainer(resource);
+            const canRecycle = this.contentDataProvider.canRecycleResource(resource);
+            const deleteResult = canRecycle
+              ? await this.contentDataProvider.recycleResource(resource)
+              : await this.contentDataProvider.deleteResource(resource);
+            
+            if (!deleteResult) {
+              window.showErrorMessage(
+                isContainer
+                  ? Messages.FolderDeletionError
+                  : Messages.FileDeletionError,
+              );
+            }
+          }
         },
       ),
       commands.registerCommand(
