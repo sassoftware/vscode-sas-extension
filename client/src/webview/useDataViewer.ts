@@ -304,9 +304,12 @@ const useDataViewer = () => {
 
       columns.unshift({
         field: "#",
-        suppressMovable: true,
-        sortable: false,
         headerTooltip: localize("Row number"),
+        pinned: "left",
+        lockPinned: true,
+        lockPosition: true,
+        sortable: false,
+        suppressMovable: true,
       });
 
       setColumns(columns);

@@ -95,6 +95,7 @@ const DataViewer = () => {
           noRowsOverlayComponent={() =>
             localize("No data matches the current filters.")
           }
+          suppressDragLeaveHidesColumns
         />
       </div>
     </div>
