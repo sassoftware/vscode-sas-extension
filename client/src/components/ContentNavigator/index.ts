@@ -104,7 +104,6 @@ class ContentNavigator implements SubscriptionProvider {
         async (item: ContentItem) => {
           const selections = this.getTreeViewSelections(item);
 
-          // Filter items that can be deleted
           const deletableItems = selections.filter((resource: ContentItem) =>
             resource.contextValue?.includes("delete"),
           );
@@ -113,7 +112,6 @@ class ContentNavigator implements SubscriptionProvider {
             return;
           }
 
-          // Check if items will be moved to recycle bin or permanently deleted
           const recyclableItems = deletableItems.filter(
             (resource: ContentItem) =>
               this.contentDataProvider.canRecycleResource(resource),
@@ -121,7 +119,6 @@ class ContentNavigator implements SubscriptionProvider {
           const permanentDelete =
             deletableItems.length > recyclableItems.length;
 
-          // Check if any folders have unsaved files
           let hasUnsavedFiles = false;
           for (const resource of deletableItems) {
             const isContainer = getIsContainer(resource);
@@ -134,10 +131,8 @@ class ContentNavigator implements SubscriptionProvider {
             }
           }
 
-          // Show appropriate confirmation dialog based on context
           let confirmed = false;
           if (deletableItems.length === 1) {
-            // Single item deletion - use existing messages
             const resource = deletableItems[0];
             const isContainer = getIsContainer(resource);
             const canRecycle =
@@ -163,10 +158,9 @@ class ContentNavigator implements SubscriptionProvider {
                 Messages.MoveToRecycleBinLabel,
               ));
             } else {
-              confirmed = true; // For recycle bin without dirty files, delete directly
+              confirmed = true;
             }
           } else {
-            // Multiple items deletion - build list of file names for display
             const maxDisplayItems = 10;
             const itemNames = deletableItems
               .slice(0, maxDisplayItems)
@@ -178,7 +172,6 @@ class ContentNavigator implements SubscriptionProvider {
                 ? `${itemNames}\n  • ...and ${remainingItemsCount} more`
                 : itemNames;
 
-            // Multiple items deletion - use new multi-deletion messages
             if (permanentDelete) {
               confirmed = !!(await window.showWarningMessage(
                 l10n.t(Messages.DeleteMultipleWarningMessage, {
@@ -213,7 +206,6 @@ class ContentNavigator implements SubscriptionProvider {
             return;
           }
 
-          // Process deletions for all confirmed items
           for (const resource of deletableItems) {
             const isContainer = getIsContainer(resource);
             const canRecycle =
