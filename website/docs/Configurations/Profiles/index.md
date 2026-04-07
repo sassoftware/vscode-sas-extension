@@ -1,4 +1,4 @@
-# Profile Definitions and Connection Types
+# Profile Definitions and Connection Types 
 
 Profiles provide an easy way to switch between multiple SAS deployments. For SAS Viya connections, multiple Viya profiles are used to switch between compute contexts. There is no limit to the number of stored profiles you can create.
 
