@@ -16,7 +16,11 @@ import { v4 } from "uuid";
 import { profileConfig } from "../../commands/profile";
 import { ConnectionType } from "../profile";
 import { SASCodeDocumentParameters } from "./SASCodeDocument";
-import { getHtmlStyle, isOutputHtmlEnabled } from "./settings";
+import {
+  getHtmlStyle,
+  getPythonAutoPrintMethod,
+  isOutputHtmlEnabled,
+} from "./settings";
 
 export function getCodeDocumentConstructionParameters(
   textDocument: TextDocument,
@@ -43,6 +47,7 @@ export function getCodeDocumentConstructionParameters(
     htmlStyle: getHtmlStyleValue(),
     outputHtml: isOutputHtmlEnabled(),
     uuid,
+    pythonAutoPrintMethod: getPythonAutoPrintMethod(),
     checkKeyword: async (lineNumber: number, ...keywords: string[]) => {
       const codeLines = textDocument.getText().split("\n");
       const codeLine = codeLines[lineNumber];

@@ -20,6 +20,7 @@ export interface SASCodeDocumentParameters {
   outputHtml?: boolean;
   htmlStyle?: string;
   uuid?: string;
+  pythonAutoPrintMethod?: string;
   checkKeyword: (LineNumber: number, ...keywords: string[]) => Promise<boolean>;
 }
 
@@ -173,9 +174,11 @@ ${code}
   }
 
   private wrapPython(code: string) {
+    const method = this.parameters.pythonAutoPrintMethod ?? "(auto)";
+    const processedCode = applyPythonAutoPrint(code, method);
     return `proc python;
 submit;
-${code}
+${processedCode}
 endsubmit;
 run;`;
   }
@@ -416,4 +419,152 @@ ${code}`;
 
 function isSameOrStartsWith(base: string, target: string): boolean {
   return target === "" ? base === target : base.startsWith(target);
+}
+
+// Statement-starting keywords that cannot be expressions on their own
+const PYTHON_STATEMENT_PREFIXES = [
+  "import ",
+  "from ",
+  "def ",
+  "class ",
+  "return ",
+  "yield ",
+  "raise ",
+  "del ",
+  "pass",
+  "break",
+  "continue",
+  "assert ",
+  "global ",
+  "nonlocal ",
+  "async ",
+  "await ",
+  "if ",
+  "elif ",
+  "else",
+  "for ",
+  "while ",
+  "with ",
+  "try",
+  "except",
+  "finally",
+  "print(",
+  "SAS.",
+];
+
+/**
+ * Returns true if the trimmed line looks like a Python expression
+ * (i.e., something that produces a value and should be auto-printed).
+ */
+/**
+ * Walk `line` character-by-character and return true if there is an `=` sign
+ * at the top syntactic level (depth 0, i.e. outside all parens / brackets /
+ * braces) that is not part of `==`, `!=`, `<=`, `>=`, or `:=`.
+ *
+ * This correctly handles tuple-unpacking assignments such as:
+ *   a, b = 1, 2
+ *   X_train, X_test, y_train, y_test = train_test_split(X, y)
+ * as well as attribute and subscript assignments:
+ *   obj.attr = value
+ *   arr[0] = value
+ * while leaving keyword arguments inside calls untouched:
+ *   func(key=value)   → depth > 0, so NOT flagged as assignment
+ */
+function hasTopLevelAssignment(line: string): boolean {
+  let depth = 0;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === "(" || ch === "[" || ch === "{") {
+      depth++;
+    } else if (ch === ")" || ch === "]" || ch === "}") {
+      depth--;
+    } else if (ch === "=" && depth === 0) {
+      const prev = i > 0 ? line[i - 1] : "";
+      const next = i + 1 < line.length ? line[i + 1] : "";
+      if (next === "=") {
+        continue; // == comparison
+      }
+      if (
+        prev === "!" ||
+        prev === "<" ||
+        prev === ">" ||
+        prev === "=" ||
+        prev === ":"
+      ) {
+        continue; // !=  <=  >=  ==  :=
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+function isPythonExpression(line: string): boolean {
+  const stripped = line.trim();
+  if (!stripped || stripped.startsWith("#")) {
+    return false;
+  }
+  if (stripped.endsWith(":")) {
+    return false; // block opener
+  }
+
+  for (const prefix of PYTHON_STATEMENT_PREFIXES) {
+    if (stripped === prefix.trim() || stripped.startsWith(prefix)) {
+      return false;
+    }
+  }
+
+  // Detect any top-level assignment (simple, augmented, tuple-unpacking, etc.)
+  if (hasTopLevelAssignment(stripped)) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * If the last non-empty, non-indented line of `code` is a bare expression,
+ * wraps it with `method(...)` so it is automatically displayed.
+ */
+function applyPythonAutoPrint(code: string, method: string): string {
+  const lines = code.split("\n");
+  let lastIdx = lines.length - 1;
+  while (lastIdx >= 0 && !lines[lastIdx].trim()) {
+    lastIdx--;
+  }
+  if (lastIdx < 0) {
+    return code;
+  }
+
+  const lastLine = lines[lastIdx];
+  const indent = lastLine.match(/^(\s*)/)?.[1] ?? "";
+  const trimmedLast = lastLine.trim();
+
+  // Only auto-print top-level (unindented) expressions.
+  if (indent === "" && isPythonExpression(trimmedLast)) {
+    if (method === "(auto)") {
+      // Use _repr_html_() when available (DataFrames, sklearn models, etc.)
+      // for rich HTML output.  Fall back to print() for
+      // plain values that don't implement the protocol.
+      lines[lastIdx] = [
+        `_sas_repr_val_ = (${trimmedLast})`,
+        `if hasattr(_sas_repr_val_, '_repr_html_'):`,
+        `    import base64 as _b64_`,
+        `    _sas_repr_html_ = _sas_repr_val_._repr_html_()`,
+        `    _sas_repr_b64_ = _b64_.b64encode(_sas_repr_html_.encode()).decode()`,
+        `    print('__SAS_EXT_HTML_START__')`,
+        `    for _i_ in range(0, len(_sas_repr_b64_), 4096):`,
+        `        print(_sas_repr_b64_[_i_:_i_+4096])`,
+        `    print('__SAS_EXT_HTML_END__')`,
+        `else:`,
+        `    print(_sas_repr_val_)`,
+      ].join("\n");
+    } else {
+      // SAS.show() renders via ODS HTML5 — wrap directly without _repr_html_()
+      // so the user's explicit choice of renderer is always honoured.
+      lines[lastIdx] = `SAS.show(${trimmedLast})`;
+    }
+  }
+
+  return lines.join("\n");
 }

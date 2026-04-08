@@ -2,10 +2,86 @@
 // SPDX-License-Identifier: Apache-2.0
 import * as vscode from "vscode";
 
+import { LogLine } from "../../connection";
 import { getSession } from "../../connection";
 import { SASCodeDocument } from "../utils/SASCodeDocument";
 import { getCodeDocumentConstructionParameters } from "../utils/SASCodeDocumentHelper";
 import { Deferred, deferred } from "../utils/deferred";
+import { buildPythonError, processPythonLog } from "./PythonOutputProcessor";
+
+/**
+ * Wraps a bare HTML fragment (e.g. from `_repr_html_()`) in a minimal HTML
+ * document
+ *
+ * sklearn models embed their own `<style>` tags and render correctly as-is.
+ */
+function wrapHtmlFragment(fragment: string): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {
+  margin: 0;
+  padding: 4px;
+  background: transparent;
+  color: var(--vscode-editor-foreground);
+  font-size: var(--vscode-editor-font-size);
+  font-family: var(--vscode-editor-font-family);
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: none;
+  color: var(--vscode-editor-foreground);
+  font-size: var(--vscode-editor-font-size);
+  table-layout: fixed;
+  /* outputarea/base.css: margin-left/right 0 for output-area tables */
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 1em;
+}
+
+thead {
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  vertical-align: bottom;
+}
+
+td,
+th,
+tr {
+  vertical-align: middle;
+  padding: 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+  text-align: right;
+}
+
+th {
+  font-weight: bold;
+}
+
+tbody tr:nth-child(odd) {
+  background: transparent;
+}
+
+tbody tr:nth-child(even) {
+  background: var(
+    --vscode-list-inactiveSelectionBackground,
+    rgba(128, 128, 128, 0.08)
+  );
+}
+
+tbody tr:hover {
+  background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.12));
+}
+</style>
+</head>
+<body>${fragment}</body>
+</html>`;
+}
 
 export class NotebookController {
   readonly controllerId = "sas-notebook-controller-id";
@@ -63,6 +139,7 @@ export class NotebookController {
     execution.clearOutput();
 
     const session = getSession();
+    let logs: LogLine[] = [];
     session.onExecutionLogFn = (logLines) => {
       logs = logs.concat(logLines);
     };
@@ -70,27 +147,96 @@ export class NotebookController {
     const parameters = getCodeDocumentConstructionParameters(cell.document);
     const codeDoc = new SASCodeDocument(parameters);
 
-    let logs = [];
+    const isPythonCell = cell.document.languageId === "python";
+
     try {
       const result = await session.run(codeDoc.getWrappedCode());
 
-      execution.replaceOutput([
-        new vscode.NotebookCellOutput([
-          ...(result.html5?.length
-            ? [
-                vscode.NotebookCellOutputItem.text(
-                  result.html5,
-                  "application/vnd.sas.ods.html5",
-                ),
-              ]
-            : []),
+      const outputItems: vscode.NotebookCellOutputItem[] = [];
+      let success = true;
+
+      if (isPythonCell) {
+        const pythonOutput = processPythonLog(logs);
+
+        // ODS output (from SAS.show(), SAS.pyplot(), etc.) is always shown
+        if (result.html5?.length) {
+          outputItems.push(
+            vscode.NotebookCellOutputItem.text(
+              result.html5,
+              "application/vnd.sas.ods.html5",
+            ),
+          );
+        }
+
+        if (pythonOutput.isPythonError) {
+          success = false;
+          // Use VS Code's built-in error renderer (application/vnd.code.notebook.error)
+          // with ANSI-coded stack
+          const pyErr = buildPythonError(pythonOutput.errorLines);
+          outputItems.push(
+            vscode.NotebookCellOutputItem.error({
+              name: pyErr.name,
+              message: pyErr.message,
+              stack: pyErr.stack,
+            }),
+          );
+        } else if (pythonOutput.isSASError) {
+          success = false;
+          outputItems.push(
+            vscode.NotebookCellOutputItem.json(
+              pythonOutput.outputLines,
+              "application/vnd.sas.compute.log.lines",
+            ),
+          );
+        } else {
+          // Show _repr_html_() output (DataFrames, sklearn models, etc.)
+          if (pythonOutput.htmlRepr) {
+            outputItems.push(
+              vscode.NotebookCellOutputItem.text(
+                wrapHtmlFragment(pythonOutput.htmlRepr),
+                "application/vnd.sas.ods.html5",
+              ),
+            );
+          }
+          // Show any remaining plain-text stdout
+          if (pythonOutput.outputLines.length > 0) {
+            outputItems.push(
+              vscode.NotebookCellOutputItem.json(
+                pythonOutput.outputLines,
+                "application/vnd.sas.compute.log.lines",
+              ),
+            );
+          }
+        }
+        // When success === true and no outputItems were added (beyond HTML),
+        // the cell renders with just the green checkmark – no log noise.
+      } else {
+        // Original behavior for SAS / SQL / R cells
+        if (result.html5?.length) {
+          outputItems.push(
+            vscode.NotebookCellOutputItem.text(
+              result.html5,
+              "application/vnd.sas.ods.html5",
+            ),
+          );
+        }
+        outputItems.push(
           vscode.NotebookCellOutputItem.json(
             logs,
             "application/vnd.sas.compute.log.lines",
           ),
-        ]),
-      ]);
-      execution.end(true, Date.now());
+        );
+      }
+
+      // Only create a NotebookCellOutput when there is something to show.
+      // Passing an empty array to replaceOutput removes all output and avoids
+      // the blank gap that VS Code renders when a cell has an empty output item.
+      if (outputItems.length > 0) {
+        execution.replaceOutput([new vscode.NotebookCellOutput(outputItems)]);
+      } else {
+        execution.replaceOutput([]);
+      }
+      execution.end(success, Date.now());
     } catch (error) {
       execution.replaceOutput([
         new vscode.NotebookCellOutput([

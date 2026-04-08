@@ -37,3 +37,11 @@ export function isShowProblemsFromSASLogEnabled(): boolean {
 export function includeLogInNotebookExport(): boolean {
   return workspace.getConfiguration("SAS").get("notebook.export.includeLog");
 }
+
+export function getPythonAutoPrintMethod(): string {
+  return (
+    workspace
+      .getConfiguration("SAS")
+      .get<string>("notebook.python.autoPrintMethod") ?? "auto"
+  );
+}
