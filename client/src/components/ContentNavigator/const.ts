@@ -70,6 +70,9 @@ export const Messages = {
   DeleteMultipleWarningMessage: l10n.t(
     "Are you sure you want to permanently delete these {count} items?\n\n{items}",
   ),
+  RecycleWarningMessage: l10n.t(
+    'Are you sure you want to move the item "{name}" to the Recycle Bin?',
+  ),
   RecycleDirtyFolderWarning: l10n.t(
     "This folder contains unsaved files, are you sure you want to delete?",
   ),

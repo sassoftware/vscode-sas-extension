@@ -166,7 +166,13 @@ class ContentNavigator implements SubscriptionProvider {
                 Messages.MoveToRecycleBinLabel,
               ));
             } else {
-              confirmed = true;
+              confirmed = !!(await window.showWarningMessage(
+                l10n.t(Messages.RecycleWarningMessage, {
+                  name: resource.name,
+                }),
+                { modal: true },
+                Messages.MoveToRecycleBinLabel,
+              ));
             }
           } else {
             const maxDisplayItems = 10;
