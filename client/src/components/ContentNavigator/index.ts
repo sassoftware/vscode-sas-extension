@@ -112,6 +112,14 @@ class ContentNavigator implements SubscriptionProvider {
             return;
           }
 
+          // Close all open files first and handle unsaved changes
+          // If user cancels the save dialog, abort the deletion
+          if (
+            !(await this.contentDataProvider.closeResourceFiles(deletableItems))
+          ) {
+            return;
+          }
+
           const recyclableItems = deletableItems.filter(
             (resource: ContentItem) =>
               this.contentDataProvider.canRecycleResource(resource),

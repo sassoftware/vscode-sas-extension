@@ -362,10 +362,18 @@ class ContentDataProvider
     return this.model.saveContentToUri(uri, new TextDecoder().decode(content));
   }
 
-  public async deleteResource(item: ContentItem): Promise<boolean> {
-    if (!(await closeFileIfOpen(item))) {
-      return false;
+  public async closeResourceFiles(items: ContentItem[]): Promise<boolean> {
+    for (const item of items) {
+      const result = await closeFileIfOpen(item);
+      if (result === false) {
+        // User canceled the save dialog
+        return false;
+      }
     }
+    return true;
+  }
+
+  public async deleteResource(item: ContentItem): Promise<boolean> {
     const success = await this.model.delete(item);
     if (success) {
       this.refresh();
@@ -379,10 +387,6 @@ class ContentDataProvider
   }
 
   public async recycleResource(item: ContentItem): Promise<boolean> {
-    if (!(await closeFileIfOpen(item))) {
-      return false;
-    }
-
     const { newUri, oldUri } = await this.model.recycleResource(item);
 
     if (newUri) {
@@ -847,23 +851,32 @@ class ContentDataProvider
 
 export default ContentDataProvider;
 
-const closeFileIfOpen = (item: ContentItem): Promise<Uri[]> | boolean => {
+const closeFileIfOpen = (item: ContentItem): Promise<Uri[] | false> | true => {
   const tabs = getEditorTabsForItem(item);
   if (tabs.length > 0) {
     return new Promise((resolve, reject) => {
       Promise.all(tabs.map((tab) => window.tabGroups.close(tab)))
-        .then(() =>
-          resolve(
-            tabs
-              .map(
-                (tab) =>
-                  (tab.input instanceof TabInputText ||
-                    tab.input instanceof TabInputNotebook) &&
-                  tab.input.uri,
-              )
-              .filter((exists) => exists),
-          ),
-        )
+        .then((results) => {
+          // Check if all tabs were successfully closed
+          const allClosed = results.every((result) => result === true);
+          if (!allClosed) {
+            // User canceled the save dialog
+            resolve(false);
+            return;
+          }
+          // All tabs closed successfully, return their URIs
+          const closedUris: Uri[] = [];
+          for (const tab of tabs) {
+            if (
+              (tab.input instanceof TabInputText ||
+                tab.input instanceof TabInputNotebook) &&
+              tab.input.uri
+            ) {
+              closedUris.push(tab.input.uri);
+            }
+          }
+          resolve(closedUris);
+        })
         .catch(reject);
     });
   }
