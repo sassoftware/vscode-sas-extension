@@ -42,6 +42,6 @@ export function getPythonAutoPrintMethod(): string {
   return (
     workspace
       .getConfiguration("SAS")
-      .get<string>("notebook.python.autoPrintMethod") ?? "auto"
+      .get<string>("notebook.python.autoPrintMethod") ?? "(auto)"
   );
 }
