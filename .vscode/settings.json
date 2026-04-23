@@ -4,5 +4,6 @@
   "editor.insertSpaces": true,
   "editor.formatOnSave": true,
   "typescript.tsc.autoDetect": "off",
-  "typescript.preferences.quoteStyle": "single"
+  "typescript.preferences.quoteStyle": "single",
+  "python.defaultInterpreterPath": "C:\\Users\\gghcj\\Anaconda3\\python.exe"
 }
