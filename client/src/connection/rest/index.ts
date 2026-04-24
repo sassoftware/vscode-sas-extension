@@ -89,6 +89,7 @@ class RestSession extends Session {
         createIfNone: true,
       });
       apiConfig.accessToken = session.accessToken;
+      apiConfig.username = session.account.id;
     }
 
     if (this._computeSession && this._computeSession.sessionId) {
