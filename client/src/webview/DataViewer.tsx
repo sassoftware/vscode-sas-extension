@@ -181,7 +181,12 @@ const DataViewer = () => {
     dismissSelection,
     rectangleRef,
     ...selectionRectangleHooks
-  } = useSelectionRectangle();
+  } = useSelectionRectangle({
+    scrollContainer: ".ag-body-viewport",
+    scrollBoundaries: () => ({
+      bottom: document.body.clientHeight - 30,
+    }),
+  });
 
   if (columns.length === 0) {
     return null;
@@ -198,12 +203,23 @@ const DataViewer = () => {
       />
       {columnMenu && <ColumnMenu {...columnMenu} />}
       <div
+        className="xy"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          zIndex: 99999,
+          background: "black",
+        }}
+      >
+        0,0
+      </div>
+      <div
         className={`ag-grid-wrapper ${theme}`}
         style={gridStyles}
         onClick={() => columnMenu && dismissMenuWithoutFocus()}
         {...selectionRectangleHooks}
       >
-        <div className="selection-rectangle" ref={rectangleRef} />
         <AgGridReact
           ref={gridRef}
           cacheBlockSize={100}
