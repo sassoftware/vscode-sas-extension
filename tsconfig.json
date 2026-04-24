@@ -1,14 +1,4 @@
 {
-  "compilerOptions": {
-    "module": "commonjs",
-    "target": "es2019",
-    "lib": ["ES2019"],
-    "outDir": "out",
-    "rootDir": "src",
-    "sourceMap": true,
-    "jsx": "react"
-  },
-  "include": ["src"],
-  "exclude": ["node_modules", ".vscode-test"],
+  "files": [],
   "references": [{ "path": "./client" }, { "path": "./server" }]
 }

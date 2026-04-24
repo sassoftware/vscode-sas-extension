@@ -1,12 +1,7 @@
 {
+  "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "esModuleInterop": true,
-    "target": "es2019",
     "lib": ["ES2019", "WebWorker"],
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "sourceMap": true,
-    "strict": true,
     "outDir": "out",
     "rootDir": "."
   },
