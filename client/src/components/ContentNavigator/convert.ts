@@ -21,7 +21,7 @@ const stepRef: Record<string, string> = {
   sql: "a7190700-f59c-4a94-afe2-214ce639fcde",
   python: "ab59f8c4-af9a-4608-a5d5-a8365357bb99",
   r: "bc60f8c4-bf9b-5719-b6d6-b9476468cc00",
-  julia: "a4998365-5ff9-42f2-a933-c7329e37d181",
+  julia: "30673542-7527-4457-963a-de1166416c2c",
 };
 
 const stepTitle: Record<string, string> = {
