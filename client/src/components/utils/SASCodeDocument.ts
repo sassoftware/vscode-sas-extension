@@ -189,7 +189,7 @@ run;`;
   }
 
   private wrapJulia(code: string) {
-    return `proc julia; 
+    return `proc julia;
 submit;
 ${code}
 endsubmit;
