@@ -29,6 +29,9 @@ class DataViewer extends WebView {
   public l10nMessages() {
     return {
       "All columns are hidden.": l10n.t("All columns are hidden."),
+      "An error was encountered when copying data.": l10n.t(
+        "An error was encountered when copying data.",
+      ),
       "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
       "Column order controls": l10n.t("Column order controls"),
       "Column visibility controls": l10n.t("Column visibility controls"),
@@ -115,6 +118,7 @@ class DataViewer extends WebView {
         sortModel?: SortModelItem[];
         columnName?: string;
         query: TableQuery | undefined;
+        error?: string;
       };
     },
   ): Promise<void> {
@@ -148,8 +152,13 @@ class DataViewer extends WebView {
         break;
       }
       case "request:loadColumnProperties":
-        if (event.data.columnName) {
+        if (event.data && event.data.columnName) {
           this.loadColumnProperties(event.data.columnName);
+        }
+        break;
+      case "displayError":
+        if (event.data && event.data.error) {
+          window.showErrorMessage(event.data.error);
         }
         break;
       default:
