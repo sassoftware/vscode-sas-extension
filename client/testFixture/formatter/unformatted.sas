@@ -50,7 +50,7 @@ my_function <- function() {
 endsubmit;
 run;
 
-proc r;
+proc julia;
 submit;
 # Reference to variable defined in previous PROC JULIA call
 println("x = $x")
@@ -156,7 +156,7 @@ print('first statement after for loop')
 endsubmit;
 run;
 
-proc r;
+proc julia;
 submit;
 fruits = ["apple", "banana", "cherry"]
 for x in fruits

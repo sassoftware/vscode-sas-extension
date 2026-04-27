@@ -1,4 +1,4 @@
-proc r;
+proc julia;
 submit;
     for x in 1:6
       println(x)

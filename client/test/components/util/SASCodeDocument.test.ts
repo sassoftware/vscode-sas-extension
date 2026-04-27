@@ -87,12 +87,11 @@ println("test")`,
     };
 
     const sasCodeDoc = new SASCodeDocument(parameters);
-    // Update to proc julia when Proc Julia feature is added
     const expected = `/** LOG_START_INDICATOR **/
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
-proc r;
+proc julia;
 submit;
 for x in 1:6
   println(x)

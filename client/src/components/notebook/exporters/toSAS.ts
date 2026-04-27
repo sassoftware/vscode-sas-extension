@@ -47,8 +47,7 @@ ${code}
 endsubmit;
 run;`;
 
-// update to julia once proc is completed
-const wrapJulia = (code: string) => `proc r; 
+const wrapJulia = (code: string) => `proc julia; 
 submit;
 ${code}
 endsubmit;

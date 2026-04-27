@@ -46,7 +46,7 @@ This is some Julia code
 This is a separate note in **Markdown** format.
 */
 
-proc r;
+proc julia;
 submit;
 die = 1:6
 println("Die Maths: ", die[3]*4 + die[6])

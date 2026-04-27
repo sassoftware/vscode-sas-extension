@@ -188,9 +188,8 @@ endsubmit;
 run;`;
   }
 
-  // update to Julia once proc julia is supported in SAS Viya
   private wrapJulia(code: string) {
-    return `proc r; 
+    return `proc julia; 
 submit;
 ${code}
 endsubmit;
