@@ -57,6 +57,16 @@ my_function <- function() {
 endsubmit;
 run;
 
+proc r;
+submit;
+# Reference to variable defined in previous PROC JULIA call
+println("x = $x")
+function my_function()
+    println("Inside the proc step")
+end
+endsubmit;
+run;
+
 proc lua;
 submit;
 local dsid = sas.open("sashelp.company") -- open for input            
@@ -150,6 +160,17 @@ for (x in fruits) {
 }
 
 print('first statement after for loop')
+endsubmit;
+run;
+
+proc r;
+submit;
+fruits = ["apple", "banana", "cherry"]
+for x in fruits
+   println(x)
+end
+
+println("first statement after for loop")
 endsubmit;
 run;
 
