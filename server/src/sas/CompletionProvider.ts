@@ -700,7 +700,7 @@ export class CompletionProvider {
       if (["endsubmit", "endinteractive"].includes(item.label?.toLowerCase())) {
         const procName = this.czMgr.getProcName()?.toUpperCase();
 
-        if (procName === "R" || procName === "PYTHON") {
+        if (procName === "R" || procName === "PYTHON" || procName === "JULIA") {
           this.loader.getProcedureStatementHelp(
             procName,
             item.label.toUpperCase(),
