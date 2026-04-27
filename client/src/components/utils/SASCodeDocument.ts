@@ -188,6 +188,15 @@ endsubmit;
 run;`;
   }
 
+  // update to Julia once proc julia is supported in SAS Viya
+  private wrapJulia(code: string) {
+    return `proc r; 
+submit;
+${code}
+endsubmit;
+run;`;
+  }
+
   private insertLogStartIndicator(code: string): string {
     // add a comment line at the top of code,
     // this comment line will be used as indicator to the beginning of log related with this code
@@ -208,6 +217,10 @@ ${code}`;
 
     if (this.parameters.languageId === "r") {
       wrapped = this.wrapR(wrapped);
+    }
+
+    if (this.parameters.languageId === "julia") {
+      wrapped = this.wrapJulia(wrapped);
     }
 
     wrapped = this.wrapCodeWithSASProgramFileName(wrapped);
