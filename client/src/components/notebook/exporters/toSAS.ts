@@ -47,7 +47,7 @@ ${code}
 endsubmit;
 run;`;
 
-const wrapJulia = (code: string) => `proc julia; 
+const wrapJulia = (code: string) => `proc julia;
 submit;
 ${code}
 endsubmit;
