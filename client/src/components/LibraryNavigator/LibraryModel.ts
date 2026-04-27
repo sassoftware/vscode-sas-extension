@@ -5,6 +5,7 @@ import { ProgressLocation, l10n, window } from "vscode";
 import type { SortModelItem } from "ag-grid-community";
 import { Writable } from "stream";
 
+import { stringArrayToCsvString } from "../utils/csv";
 import PaginatedResultSet from "./PaginatedResultSet";
 import { DefaultRecordLimit, Messages } from "./const";
 import {
@@ -63,12 +64,6 @@ class LibraryModel {
     const { rowCount: totalItemCount, maxNumberOfRowsToRead: limit } =
       await this.libraryAdapter.getTableRowCount(item);
     let hasWrittenHeader: boolean = false;
-    const stringArrayToCsvString = (strings: string[]): string =>
-      `"${strings
-        .map((item: string | number) =>
-          (item ?? "").toString().replace(/"/g, '""'),
-        )
-        .join('","')}"`;
 
     await window.withProgress(
       {

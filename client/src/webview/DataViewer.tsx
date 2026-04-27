@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import { AgGridReact } from "ag-grid-react";
@@ -24,24 +24,6 @@ const gridStyles = {
   width: "100%",
 };
 
-// Copied from LibraryModel
-const stringArrayToCsvString = (strings: string[]): string =>
-  `"${strings
-    .map((item: string | number) => (item ?? "").toString().replace(/"/g, '""'))
-    .join('","')}"`;
-// Randomly copied from the internet
-function doRectsIntersect(rect1, rect2) {
-  if (
-    rect1.right < rect2.left ||
-    rect1.left > rect2.right ||
-    rect1.bottom < rect2.top ||
-    rect1.top > rect2.bottom
-  ) {
-    return false;
-  }
-  return true;
-}
-
 const DataViewer = () => {
   const title = document
     .querySelector("[data-title]")
@@ -55,6 +37,20 @@ const DataViewer = () => {
     onGridReady,
     refreshResults,
   } = useDataViewer();
+  const [gridDragging, setGridDragging] = useState(false);
+  const {
+    dimensions,
+    dismissSelection,
+    rectangleRef,
+    copySelection,
+    ...selectionRectangleHooks
+  } = useSelectionRectangle({
+    enabled: !gridDragging,
+    scrollContainer: ".ag-body-viewport",
+    scrollBoundaries: () => ({
+      bottom: document.body.clientHeight - 30,
+    }),
+  });
 
   const handleKeydown = useCallback(
     (event: KeyboardEvent) => {
@@ -66,79 +62,10 @@ const DataViewer = () => {
         dismissSelection();
       }
       if (event.key === "c" && (event.metaKey || event.ctrlKey)) {
-        const dim = dimensions();
-
-        const headers = Array.from(
-          document.querySelectorAll(".ag-header-cell"),
-        ).filter((hc) => {
-          if (
-            (dim.x <= hc.offsetLeft + hc.clientWidth &&
-              dim.x >= hc.clientLeft) ||
-            (dim.x <= hc.clientLeft && dim.x + dim.width >= hc.clientLeft)
-          ) {
-            if (hc.offsetLeft >= dim.x + dim.width) {
-              return false;
-            }
-            return true;
-          }
-          return false;
-        });
-
-        // Lets grab the first row that's part of the selection
-        const efp = document.elementsFromPoint(dimensions().x, dimensions().y);
-        const firstRowForSelection = efp.find((i) =>
-          i.classList.contains("ag-cell"),
-        ).parentElement;
-        let rowIndex = parseInt(
-          firstRowForSelection.getAttribute("row-index"),
-          10,
-        );
-
-        // ...and add it to our selection
-        const rows = [gridRef.current.api.getDisplayedRowAtIndex(rowIndex)];
-
-        // Now, lets iterate over remaining rows and do so until a row
-        // does _not_ intersect our selection rectangle.
-        do {
-          rowIndex += 1;
-          const rowElement = document.querySelector(
-            `[row-index="${rowIndex}"]`,
-          );
-          if (
-            doRectsIntersect(
-              document
-                .querySelector(".selection-rectangle")
-                .getBoundingClientRect(),
-              rowElement.getBoundingClientRect(),
-            )
-          ) {
-            rows.push(gridRef.current.api.getDisplayedRowAtIndex(rowIndex));
-          } else {
-            break;
-          }
-        } while (true);
-
-        const headerKeys = headers.map((h) => h.getAttribute("col-id"));
-        // Lets iterate over rows, only grabbing data that matches one of the header
-        // keys
-        const selectionData = rows.map((row) => {
-          const rowData = [];
-          headerKeys.forEach((key) => {
-            rowData.push(row.data[key]);
-          });
-          return rowData;
-        });
-
-        // Finally, lets turn this into a CSV and copy the data
-        let csv = stringArrayToCsvString(headerKeys);
-        selectionData.forEach(
-          (item) => (csv += "\n" + stringArrayToCsvString(item)),
-        );
-
-        navigator.clipboard.writeText(csv);
+        copySelection(gridRef.current!.api);
       }
     },
-    [columnMenu, dismissMenu],
+    [columnMenu, dismissMenu, copySelection],
   );
   const dismissMenuWithoutFocus = useCallback(
     () => dismissMenu(false),
@@ -170,18 +97,6 @@ const DataViewer = () => {
     };
   }, [handleKeydown, dismissMenuWithoutFocus, focusChanged]);
 
-  const {
-    dimensions,
-    dismissSelection,
-    rectangleRef,
-    ...selectionRectangleHooks
-  } = useSelectionRectangle({
-    scrollContainer: ".ag-body-viewport",
-    scrollBoundaries: () => ({
-      bottom: document.body.clientHeight - 30,
-    }),
-  });
-
   if (columns.length === 0) {
     return null;
   }
@@ -196,18 +111,6 @@ const DataViewer = () => {
         initialValue={""}
       />
       {columnMenu && <ColumnMenu {...columnMenu} />}
-      <div
-        className="xy"
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          zIndex: 99999,
-          background: "black",
-        }}
-      >
-        0,0
-      </div>
       <div
         className={`ag-grid-wrapper ${theme}`}
         style={gridStyles}
@@ -230,6 +133,9 @@ const DataViewer = () => {
           noRowsOverlayComponent={() =>
             localize("No data matches the current filters.")
           }
+          onDragStarted={() => setGridDragging(true)}
+          onDragCancelled={() => setGridDragging(false)}
+          onDragStopped={() => setGridDragging(false)}
           suppressDragLeaveHidesColumns
         />
       </div>
