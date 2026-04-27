@@ -10,7 +10,7 @@ The SAS extension includes many [features](https://sassoftware.github.io/vscode-
 
 - SAS syntax highlighting and help, code completion, and code snippets
 - Navigate SAS Content and libraries, including table viewer
-- Create notebooks for SAS, SQL, Python, R, and other languages
+- Create notebooks for SAS, SQL, Python, R, Julia, and other languages
 
 <img src="website/static/images/featuresGlance.png"/>
 

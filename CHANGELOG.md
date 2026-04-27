@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Add R language support for PROC R (syntax highlighting, notebook cells, code formatting preservation) ([#1719](https://github.com/sassoftware/vscode-sas-extension/pull/1719))
+- Add Julia language support for PROC JULIA (syntax highlighting, notebook cells, code formatting preservation) ([#1878](https://github.com/sassoftware/vscode-sas-extension/pull/1878))
 - Add the ability to pin columns ([#1781](https://github.com/sassoftware/vscode-sas-extension/pull/1781))
 
 ## [1.19.1] - 2026-04-01
