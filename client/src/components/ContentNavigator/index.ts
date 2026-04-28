@@ -18,6 +18,9 @@ import {
 import { profileConfig } from "../../commands/profile";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
+import LibraryAdapterFactory from "../LibraryNavigator/LibraryAdapterFactory";
+import LibraryModel from "../LibraryNavigator/LibraryModel";
+import { LibraryAdapter, LibraryItem } from "../LibraryNavigator/types";
 import { treeViewSelections } from "../utils/treeViewSelections";
 import ContentAdapterFactory from "./ContentAdapterFactory";
 import ContentDataProvider from "./ContentDataProvider";
@@ -48,6 +51,8 @@ const flowFileValidator = (value: string): string | null => {
   }
   return res;
 };
+
+const DATASET_EXTENSION = ".sas7bdat";
 
 const folderValidator = (
   value: string,
@@ -99,6 +104,9 @@ class ContentNavigator implements SubscriptionProvider {
     const SAS = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}`;
     return [
       ...this.contentDataProvider.getSubscriptions(),
+      commands.registerCommand(`${SAS}.openResource`, async (item: ContentItem) => {
+        await this.openResource(item);
+      }),
       commands.registerCommand(
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
@@ -447,6 +455,102 @@ class ContentNavigator implements SubscriptionProvider {
     ];
   }
 
+  private async openResource(item: ContentItem): Promise<void> {
+    const itemUri = await this.contentModel.getUri(item, false);
+    if (
+      this.sourceType !== ContentSourceType.SASServer ||
+      !item.name.toLowerCase().endsWith(DATASET_EXTENSION)
+    ) {
+      await commands.executeCommand("vscode.open", itemUri);
+      return;
+    }
+
+    if (await this.openDatasetInDataViewer(item)) {
+      return;
+    }
+
+    window.showWarningMessage(
+      l10n.t(
+        "Unable to open this dataset in Data Viewer because no matching library table was found.",
+      ),
+    );
+  }
+
+  private async openDatasetInDataViewer(item: ContentItem): Promise<boolean> {
+    const libraryAdapter = this.libraryAdapterForConnectionType();
+    if (!libraryAdapter) {
+      return false;
+    }
+
+    const tableName = item.name.slice(0, -DATASET_EXTENSION.length);
+    const libraryModel = new LibraryModel(libraryAdapter);
+    const libraries = await libraryModel.getLibraries();
+
+    const path = await this.contentDataProvider.getPathOfItem(item);
+    const pathParts = path.split("/").filter(Boolean);
+    const parentFolderName = pathParts.length > 1 ? pathParts.at(-2) : undefined;
+
+    const matchingLibraries = [
+      ...libraries.filter(
+        (library) => library.id.toLowerCase() === parentFolderName?.toLowerCase(),
+      ),
+      ...libraries.filter(
+        (library) => library.id.toLowerCase() !== parentFolderName?.toLowerCase(),
+      ),
+    ];
+
+    const matches: LibraryItem[] = [];
+    for (const library of matchingLibraries) {
+      const tables = await libraryModel.getTables(library);
+      matches.push(
+        ...tables.filter(
+          (table) => table.name.toLowerCase() === tableName.toLowerCase(),
+        ),
+      );
+      if (matches.length === 1 && library.id.toLowerCase() === parentFolderName?.toLowerCase()) {
+        break;
+      }
+    }
+
+    if (matches.length === 0) {
+      return false;
+    }
+
+    const selectedTable = await this.chooseTableMatch(matches);
+    if (!selectedTable) {
+      return true;
+    }
+
+    await commands.executeCommand(
+      "SAS.viewTable",
+      selectedTable,
+      libraryModel.getTableResultSet(selectedTable),
+      () => libraryModel.fetchColumns(selectedTable),
+    );
+    return true;
+  }
+
+  private async chooseTableMatch(
+    matches: LibraryItem[],
+  ): Promise<LibraryItem | undefined> {
+    if (matches.length === 1) {
+      return matches[0];
+    }
+
+    const selection = await window.showQuickPick(
+      matches.map((item) => ({
+        label: `${item.library}.${item.name}`,
+        description: l10n.t("Select table to open in Data Viewer"),
+        item,
+      })),
+      {
+        title: l10n.t("Multiple dataset matches found"),
+      },
+    );
+
+    return selection?.item;
+  }
+
   private async collapseAllContent() {
     const collapeAllCmd = `workbench.actions.treeView.${this.treeIdentifier}.collapseAll`;
     const commandExists = (await commands.getCommands()).find(
@@ -534,6 +638,18 @@ class ContentNavigator implements SubscriptionProvider {
           return undefined;
       }
     }
+  }
+
+  private libraryAdapterForConnectionType(): LibraryAdapter | undefined {
+    const activeProfile = profileConfig.getProfileByName(
+      profileConfig.getActiveProfile(),
+    );
+
+    if (!activeProfile) {
+      return;
+    }
+
+    return new LibraryAdapterFactory().create(activeProfile.connectionType);
   }
 }
 

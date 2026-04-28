@@ -52,6 +52,7 @@ import {
 import {
   ContentItem,
   ContentNavigatorConfig,
+  ContentSourceType,
   FileManipulationEvent,
 } from "./types";
 import {
@@ -77,6 +78,7 @@ class ContentDataProvider
   private model: ContentModel;
   private extensionUri: Uri;
   private mimeType: string;
+  private sourceType: ContentSourceType;
 
   public dropMimeTypes: string[];
   public dragMimeTypes: string[];
@@ -90,7 +92,7 @@ class ContentDataProvider
   constructor(
     model: ContentModel,
     extensionUri: Uri,
-    { mimeType, treeIdentifier }: ContentNavigatorConfig,
+    { mimeType, treeIdentifier, sourceType }: ContentNavigatorConfig,
   ) {
     this._onDidManipulateFile = new EventEmitter<FileManipulationEvent>();
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
@@ -101,6 +103,7 @@ class ContentDataProvider
     this.dropMimeTypes = [mimeType, "text/uri-list"];
     this.dragMimeTypes = [mimeType];
     this.mimeType = mimeType;
+    this.sourceType = sourceType;
 
     this._treeView = window.createTreeView(treeIdentifier, {
       treeDataProvider: this,
@@ -231,8 +234,12 @@ class ContentDataProvider
       command: isContainer
         ? undefined
         : {
-            command: "vscode.open",
-            arguments: [uri],
+            command:
+              this.sourceType === ContentSourceType.SASServer
+                ? "SAS.server.openResource"
+                : "vscode.open",
+            arguments:
+              this.sourceType === ContentSourceType.SASServer ? [item] : [uri],
             title: "Open SAS File",
           },
       contextValue: item.contextValue || undefined,

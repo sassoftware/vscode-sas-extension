@@ -1,0 +1,5 @@
+The Doxygen application is not installed or configured. This external tool is used by 'sasjs doc'.
+'doxygen' is not recognized as an internal or external command,
+operable program or batch file.
+
+Please download and install from here: https://www.doxygen.nl/download.html#srcbin
