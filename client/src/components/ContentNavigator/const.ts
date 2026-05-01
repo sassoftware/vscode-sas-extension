@@ -70,11 +70,8 @@ export const Messages = {
   DeleteMultipleWarningMessage: l10n.t(
     "Are you sure you want to permanently delete {count} items?",
   ),
-  RecycleDirtyFolderWarning: l10n.t(
-    "This folder contains unsaved files, are you sure you want to delete?",
-  ),
-  RecycleMultipleDirtyWarning: l10n.t(
-    "Some folders contain unsaved files. Are you sure you want to move these {count} items to the Recycle Bin?\n\n{items}",
+  DirtyFolderWarning: l10n.t(
+    "The selected folders contain unsaved files, are you sure you want to delete?",
   ),
   EmptyRecycleBinError: l10n.t("Unable to empty the recycle bin."),
   EmptyRecycleBinWarningMessage: l10n.t(

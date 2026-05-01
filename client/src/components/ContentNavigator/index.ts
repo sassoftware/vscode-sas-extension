@@ -159,11 +159,11 @@ class ContentNavigator implements SubscriptionProvider {
               ));
             } else if (itemHasUnsavedFiles) {
               confirmed = !!(await window.showWarningMessage(
-                l10n.t(Messages.RecycleDirtyFolderWarning, {
-                  name: resource.name,
-                }),
+                l10n.t(Messages.DirtyFolderWarning),
                 { modal: true },
-                Messages.MoveToRecycleBinLabel,
+                canRecycle
+                  ? Messages.MoveToRecycleBinLabel
+                  : Messages.DeleteButtonLabel,
               ));
             } else {
               confirmed = true;
@@ -179,11 +179,11 @@ class ContentNavigator implements SubscriptionProvider {
               ));
             } else if (hasUnsavedFiles) {
               confirmed = !!(await window.showWarningMessage(
-                l10n.t(Messages.RecycleMultipleDirtyWarning, {
-                  count: deletableItems.length,
-                }),
+                l10n.t(Messages.DirtyFolderWarning),
                 { modal: true },
-                Messages.MoveToRecycleBinLabel,
+                permanentDelete
+                  ? Messages.DeleteButtonLabel
+                  : Messages.MoveToRecycleBinLabel,
               ));
             } else {
               confirmed = true;
