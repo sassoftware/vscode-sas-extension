@@ -166,13 +166,7 @@ class ContentNavigator implements SubscriptionProvider {
                 Messages.MoveToRecycleBinLabel,
               ));
             } else {
-              confirmed = !!(await window.showWarningMessage(
-                l10n.t(Messages.RecycleWarningMessage, {
-                  name: resource.name,
-                }),
-                { modal: true },
-                Messages.MoveToRecycleBinLabel,
-              ));
+              confirmed = true;
             }
           } else {
             const maxDisplayItems = 10;
@@ -205,14 +199,7 @@ class ContentNavigator implements SubscriptionProvider {
                 Messages.MoveToRecycleBinLabel,
               ));
             } else {
-              confirmed = !!(await window.showWarningMessage(
-                l10n.t(Messages.RecycleMultipleWarningMessage, {
-                  count: deletableItems.length,
-                  items: itemsList,
-                }),
-                { modal: true },
-                Messages.MoveToRecycleBinLabel,
-              ));
+              confirmed = true;
             }
           }
 
