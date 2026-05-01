@@ -169,22 +169,10 @@ class ContentNavigator implements SubscriptionProvider {
               confirmed = true;
             }
           } else {
-            const maxDisplayItems = 10;
-            const itemNames = deletableItems
-              .slice(0, maxDisplayItems)
-              .map((item) => `  • ${item.name}`)
-              .join("\n");
-            const remainingItemsCount = deletableItems.length - maxDisplayItems;
-            const itemsList =
-              remainingItemsCount > 0
-                ? `${itemNames}\n  • ...and ${remainingItemsCount} more`
-                : itemNames;
-
             if (permanentDelete) {
               confirmed = !!(await window.showWarningMessage(
                 l10n.t(Messages.DeleteMultipleWarningMessage, {
                   count: deletableItems.length,
-                  items: itemsList,
                 }),
                 { modal: true },
                 Messages.DeleteButtonLabel,
@@ -193,7 +181,6 @@ class ContentNavigator implements SubscriptionProvider {
               confirmed = !!(await window.showWarningMessage(
                 l10n.t(Messages.RecycleMultipleDirtyWarning, {
                   count: deletableItems.length,
-                  items: itemsList,
                 }),
                 { modal: true },
                 Messages.MoveToRecycleBinLabel,

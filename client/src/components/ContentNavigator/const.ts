@@ -68,7 +68,7 @@ export const Messages = {
     'Are you sure you want to permanently delete the item "{name}"?',
   ),
   DeleteMultipleWarningMessage: l10n.t(
-    "Are you sure you want to permanently delete these {count} items?\n\n{items}",
+    "Are you sure you want to permanently delete {count} items?",
   ),
   RecycleDirtyFolderWarning: l10n.t(
     "This folder contains unsaved files, are you sure you want to delete?",
