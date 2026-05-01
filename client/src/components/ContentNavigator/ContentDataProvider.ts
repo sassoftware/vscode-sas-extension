@@ -860,7 +860,7 @@ const closeFileIfOpen = (item: ContentItem): Promise<Uri[] | false> | true => {
           // Check if all tabs were successfully closed
           const allClosed = results.every((result) => result === true);
           if (!allClosed) {
-            // User canceled the save dialog
+            // At least one tab could not be closed, e.g. the user declined to save
             resolve(false);
             return;
           }
