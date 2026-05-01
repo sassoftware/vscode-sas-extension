@@ -1,3 +1,6 @@
+// Copyright © 2026, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 import { HTMLAttributes, MouseEvent as ReactMouseEvent, useRef } from "react";
 
 import { GridApi } from "ag-grid-community";
