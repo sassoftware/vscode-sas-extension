@@ -9,7 +9,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     groups:
       dev:
         patterns:
@@ -19,7 +19,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/client"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     groups:
       aggrid:
         patterns:
@@ -35,11 +35,11 @@ updates:
   - package-ecosystem: "npm"
     directory: "/server"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
   - package-ecosystem: "npm"
     directory: "/website"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     groups:
       docusaurus:
         patterns:
@@ -51,4 +51,4 @@ updates:
     # Don't need to specify `/.github/workflows` for `directory`. Github knows it.
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
