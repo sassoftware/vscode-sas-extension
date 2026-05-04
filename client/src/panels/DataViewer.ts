@@ -35,6 +35,7 @@ class DataViewer extends WebView {
       "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
       "Column order controls": l10n.t("Column order controls"),
       "Column visibility controls": l10n.t("Column visibility controls"),
+      Copy: l10n.t("Copy"),
       "Descending (add to sorting)": l10n.t("Descending (add to sorting)"),
       "Displayed columns": l10n.t("Displayed columns"),
       "Displayed columns ({count}):": l10n.t("Displayed columns ({count}):"),
