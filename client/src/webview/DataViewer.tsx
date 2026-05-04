@@ -38,19 +38,16 @@ const DataViewer = () => {
     refreshResults,
   } = useDataViewer();
   const [gridDragging, setGridDragging] = useState(false);
-  const {
-    dimensions,
-    dismissSelection,
-    rectangleRef,
-    copySelection,
-    ...selectionRectangleHooks
-  } = useSelectionRectangle({
-    enabled: !gridDragging,
-    scrollContainer: ".ag-body-viewport",
-    scrollBoundaries: () => ({
-      bottom: document.body.clientHeight - 30,
-    }),
-  });
+  const { dismissSelection, copySelection, ...selectionRectangleHooks } =
+    useSelectionRectangle({
+      getRowData: (rowIndex: string) =>
+        gridRef.current?.api.getRowNode(rowIndex),
+      enabled: !gridDragging,
+      scrollContainer: ".ag-body-viewport",
+      scrollBoundaries: () => ({
+        bottom: document.body.clientHeight - 30,
+      }),
+    });
 
   const handleKeydown = useCallback(
     (event: KeyboardEvent) => {
@@ -62,10 +59,10 @@ const DataViewer = () => {
         dismissSelection();
       }
       if (event.key === "c" && (event.metaKey || event.ctrlKey)) {
-        copySelection(gridRef.current!.api);
+        copySelection();
       }
     },
-    [columnMenu, dismissMenu, copySelection],
+    [columnMenu, dismissSelection, dismissMenu, copySelection, gridRef],
   );
   const dismissMenuWithoutFocus = useCallback(
     () => dismissMenu(false),

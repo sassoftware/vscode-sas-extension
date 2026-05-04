@@ -1,24 +1,25 @@
 // Copyright © 2026, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-
 import { HTMLAttributes, MouseEvent as ReactMouseEvent, useRef } from "react";
 
-import { GridApi } from "ag-grid-community";
+import { IRowNode } from "ag-grid-community";
 
 import { stringArrayToCsvString } from "../components/utils/csv";
 import localize from "./localize";
 import vscode from "./vscode";
 
-const useSelectionRectangle = ({
+export const useSelectionRectangle = ({
   enabled,
-  scrollContainer,
   scrollBoundaries,
+  scrollContainer,
+  getRowData,
 }: {
   enabled: boolean;
   scrollContainer: string;
   scrollBoundaries: () => {
     bottom: number;
   };
+  getRowData: (rowIndex: string) => IRowNode | undefined;
 }) => {
   const rectangleRef = useRef<HTMLDivElement>(undefined!);
   const rectDimensionsRef = useRef<
@@ -44,7 +45,7 @@ const useSelectionRectangle = ({
     const left = xa;
     const width = x - xa;
     let top = ya;
-    let height = y - ya - rect.top;
+    const height = y - ya - rect.top;
     top += container.scrollTop || 0;
 
     dimensions.width = width;
@@ -53,6 +54,7 @@ const useSelectionRectangle = ({
     // Selection can only happen from left to right, top to bottomw
     // If we get into a situation where the user is trying to move in the
     // wrong direction, hide our selection.
+    rectangleRef.current.classList.add("active");
     rectangleRef.current.style.display =
       height < 2 || width < 2 ? "none" : "block";
     rectangleRef.current.style.left = `${left}px`;
@@ -69,9 +71,7 @@ const useSelectionRectangle = ({
     rectangleRef.current.style.display = "none";
   };
 
-  const dimensions = () => rectDimensionsRef.current;
-
-  const copySelection = (api: GridApi) => {
+  const copySelection = () => {
     // Clipboard needs to be available before we can copy text.
     if (!navigator.clipboard) {
       displayClipboardError();
@@ -137,7 +137,7 @@ const useSelectionRectangle = ({
     }
 
     function extractDataFromRow(rowIndex: number, cellNames: string[]) {
-      const row = api.getRowNode(`${rowIndex}`)!;
+      const row = getRowData(`${rowIndex}`)!;
       const strings = Object.keys(row.data)
         .filter((key) => cellNames.includes(key))
         .map((key) => row.data[key]);
@@ -154,16 +154,35 @@ const useSelectionRectangle = ({
     }
   };
 
+  const createSelectionRectangle = () => {
+    const div = document.createElement("div") as HTMLDivElement;
+    div.classList.add("selection-rectangle");
+
+    const button = document.createElement("button") as HTMLButtonElement;
+    const metaKey = /Mac/i.test(navigator.userAgent) ? "⌘" : "^";
+    button.innerHTML = `${localize("Copy")} (${metaKey} + c)`;
+    button.classList.add("copy-button");
+    div.appendChild(button);
+
+    document.querySelector(scrollContainer)?.appendChild(div);
+
+    return div;
+  };
+
   // #region: event handlers
   const onMouseDown: HTMLAttributes<HTMLDivElement>["onMouseDown"] = (e) => {
+    if (
+      e.target &&
+      (e.target as HTMLElement).classList.contains("copy-button")
+    ) {
+      copySelection();
+      return;
+    }
     if (!enabled) {
       return;
     }
     if (!document.querySelector(".selection-rectangle")) {
-      const div = document.createElement("div") as HTMLDivElement;
-      div.classList.add("selection-rectangle");
-      document.querySelector(scrollContainer)?.appendChild(div);
-      rectangleRef.current = div;
+      rectangleRef.current = createSelectionRectangle();
     }
 
     if (!e.shiftKey && !rectangleRef.current) {
@@ -241,6 +260,7 @@ const useSelectionRectangle = ({
 
   const onMouseUp: HTMLAttributes<HTMLDivElement>["onMouseUp"] = (e) => {
     stopScrolling();
+    rectangleRef.current.classList.remove("active");
     selectionEnabledRef.current = false;
     if (!mouseHaveMoved.current) {
       resetStyles();
@@ -250,12 +270,10 @@ const useSelectionRectangle = ({
 
   return {
     copySelection,
-    dimensions,
     dismissSelection: resetStyles,
     onMouseDown,
     onMouseMove,
     onMouseUp,
-    rectangleRef,
   };
 };
 

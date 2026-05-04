@@ -212,12 +212,45 @@ button,
   background-size: 16px 16px;
 }
 
+.vscode-dark .selection-rectangle {
+  background: rgba(4, 55, 114, 0.6);
+  border: 1px solid #4398f9;
+}
+.vscode-dark .selection-rectangle button {
+  background: #4398f9;
+  color: white;
+}
+
+.vscode-light .selection-rectangle {
+  background: rgba(225, 239, 254, 0.6);
+  border: 1px solid #054a99;
+}
+.vscode-light .selection-rectangle button {
+  background: #054a99;
+  color: white;
+}
+
 .selection-rectangle {
-  background: rgba(236, 32, 232, 0.4);
-  border: 1px solid rgba(236, 32, 232, 1);
   position: absolute;
   top: 0;
   left: 0;
   z-index: 999;
   display: none;
+}
+
+.selection-rectangle button {
+  border: none;
+  position: absolute;
+  overflow: hidden;
+  bottom: 0;
+  right: 0;
+  padding: 0.5rem;
+  font-weight: bold;
+  opacity: 1;
+  transition: opacity 0.15s ease-in-out;
+}
+
+.selection-rectangle.active button {
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
 }
