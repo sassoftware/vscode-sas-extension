@@ -8,6 +8,10 @@ import { stringArrayToCsvString } from "../components/utils/csv";
 import localize from "./localize";
 import vscode from "./vscode";
 
+const div = (el: HTMLDivElement | HTMLUnknownElement | EventTarget | null) =>
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  el as HTMLDivElement;
+
 export const useSelectionRectangle = ({
   enabled,
   scrollBoundaries,
@@ -37,7 +41,7 @@ export const useSelectionRectangle = ({
       return;
     }
     const dimensions = rectDimensionsRef.current;
-    const container = document.querySelector(scrollContainer) as HTMLDivElement;
+    const container = div(document.querySelector(scrollContainer));
     const rect = container.getBoundingClientRect()!;
     const { x: xa, y: ya } = dimensions;
     const { clientX: x, clientY: y } = e;
@@ -155,26 +159,23 @@ export const useSelectionRectangle = ({
   };
 
   const createSelectionRectangle = () => {
-    const div = document.createElement("div") as HTMLDivElement;
-    div.classList.add("selection-rectangle");
+    const divEl = div(document.createElement("div"));
+    divEl.classList.add("selection-rectangle");
 
-    const button = document.createElement("button") as HTMLButtonElement;
+    const button = div(document.createElement("button"));
     const metaKey = /Mac/i.test(navigator.userAgent) ? "⌘" : "^";
     button.innerHTML = `${localize("Copy")} (${metaKey} + c)`;
     button.classList.add("copy-button");
-    div.appendChild(button);
+    divEl.appendChild(button);
 
-    document.querySelector(scrollContainer)?.appendChild(div);
+    document.querySelector(scrollContainer)?.appendChild(divEl);
 
-    return div;
+    return divEl;
   };
 
   // #region: event handlers
   const onMouseDown: HTMLAttributes<HTMLDivElement>["onMouseDown"] = (e) => {
-    if (
-      e.target &&
-      (e.target as HTMLElement).classList.contains("copy-button")
-    ) {
+    if (e.target && div(e.target).classList.contains("copy-button")) {
       copySelection();
       return;
     }
@@ -188,7 +189,7 @@ export const useSelectionRectangle = ({
     if (!e.shiftKey && !rectangleRef.current) {
       return;
     }
-    const container = document.querySelector(scrollContainer) as HTMLDivElement;
+    const container = div(document.querySelector(scrollContainer));
     const rect = container.getBoundingClientRect()!;
     rectDimensionsRef.current = {
       x: e.clientX - rect.left,
@@ -201,7 +202,7 @@ export const useSelectionRectangle = ({
     firstItem.current = getFirstRow();
 
     function getFirstRow() {
-      const firstCell = (e.target as HTMLElement).closest(".ag-cell");
+      const firstCell = div(e.target).closest(".ag-cell");
       const firstRow = firstCell && firstCell.parentElement;
       if (!firstCell || !firstRow) {
         return { row: -1, column: -1 };
@@ -247,9 +248,7 @@ export const useSelectionRectangle = ({
           return;
         }
         const dimensions = rectDimensionsRef.current;
-        const container = document.querySelector(
-          scrollContainer,
-        ) as HTMLDivElement;
+        const container = div(document.querySelector(scrollContainer));
         const scrollDistance = 25;
         container.scrollBy(0, scrollDistance);
         dimensions.y -= scrollDistance;
@@ -258,7 +257,7 @@ export const useSelectionRectangle = ({
     }
   };
 
-  const onMouseUp: HTMLAttributes<HTMLDivElement>["onMouseUp"] = (e) => {
+  const onMouseUp: HTMLAttributes<HTMLDivElement>["onMouseUp"] = () => {
     stopScrolling();
     rectangleRef.current.classList.remove("active");
     selectionEnabledRef.current = false;
