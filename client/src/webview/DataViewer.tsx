@@ -57,12 +57,11 @@ const DataViewer = () => {
         }
 
         dismissSelection();
-      }
-      if (event.key === "c" && (event.metaKey || event.ctrlKey)) {
+      } else if (event.key === "c" && (event.metaKey || event.ctrlKey)) {
         copySelection();
       }
     },
-    [columnMenu, dismissSelection, dismissMenu, copySelection, gridRef],
+    [columnMenu, dismissSelection, dismissMenu, copySelection],
   );
   const dismissMenuWithoutFocus = useCallback(
     () => dismissMenu(false),
