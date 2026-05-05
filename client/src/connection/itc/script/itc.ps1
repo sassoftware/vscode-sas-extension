@@ -328,7 +328,7 @@ class SASRunner {
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection
     $query = @"
-      select name, type, format, label, length, varnum
+      select name, type, format, informat, label, length, varnum
       from sashelp.vcolumn
       where libname='$libname' and memname='$memname'
       order by varnum;
@@ -352,9 +352,10 @@ class SASRunner {
         name   = $rows[0, $i]
         type   = $rows[1, $i]
         format = $rows[2, $i]
-        label  = $rows[3, $i]
-        length = $rows[4, $i]
-        varnum = $rows[5, $i]
+        informat = $rows[3, $i]
+        label  = $rows[4, $i]
+        length = $rows[5, $i]
+        varnum = $rows[6, $i]
       }
       $parsedRows += $parsedRow
     }

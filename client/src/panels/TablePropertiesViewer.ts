@@ -166,8 +166,8 @@ class TablePropertiesViewer extends WebView {
             <td>${formatValue(column.name)}</td>
             <td>${formatValue(column.type)}</td>
             <td>${formatValue(column.length)}</td>
-            <td>${formatValue(column.format?.name)}</td>
-            <td>${formatValue(column.informat?.name)}</td>
+            <td>${formatValue(column.format?.name ? column.format?.name : column.format)}</td>
+            <td>${formatValue(column.informat?.name ? column.informat?.name : column.informat)}</td>
             <td>${formatValue(column.label)}</td>
           </tr>
         `,
