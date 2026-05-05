@@ -18,6 +18,10 @@ import {
   TableInfo,
 } from "./api/compute";
 import { getApiConfig } from "./common";
+import {
+  trackTemporaryLibrary,
+  untrackTemporaryLibrary,
+} from "./tempLibraries";
 
 const requestOptions = {
   headers: { Accept: "application/vnd.sas.collection+json" },
@@ -45,6 +49,71 @@ class RestLibraryAdapter implements LibraryAdapter {
     }
 
     await this.connect();
+  }
+
+  public async createTempLibraryForPath(path: string): Promise<string> {
+    await this.setup();
+
+    const { data } = await this.retryOnFail(
+      async () =>
+        await this.dataAccessApi.getLibraries(
+          {
+            sessionId: this.sessionId,
+            start: 0,
+            limit: 1000,
+          },
+          requestOptions,
+        ),
+    );
+
+    const existingLibrefs = new Set(
+      data.items
+        .map((item) => String(item.id || item.name || "").toUpperCase())
+        .filter(Boolean),
+    );
+
+    let tempLibref: string | undefined;
+    for (let i = 0; i < 1000; i++) {
+      const candidate = `_xtmp${i.toString().padStart(3, "0")}`.toUpperCase();
+      if (!existingLibrefs.has(candidate)) {
+        tempLibref = candidate;
+        break;
+      }
+    }
+
+    if (!tempLibref) {
+      throw new Error("No temporary libname is available.");
+    }
+
+    await this.retryOnFail(
+      async () =>
+        await this.dataAccessApi.createLibrary({
+          sessionId: this.sessionId,
+          libraryRequest: {
+            name: tempLibref,
+            engine: "BASE",
+            path,
+          },
+        }),
+    );
+
+    trackTemporaryLibrary(tempLibref, path);
+    return tempLibref;
+  }
+
+  public async deleteLibrary(library: string): Promise<void> {
+    await this.setup();
+    try {
+      await this.retryOnFail(
+        async () =>
+          await this.dataAccessApi.deleteLibrary({
+            sessionId: this.sessionId,
+            libref: library,
+          }),
+      );
+    } finally {
+      untrackTemporaryLibrary(library);
+    }
   }
 
   public async getRows(
