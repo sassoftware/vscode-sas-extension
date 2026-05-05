@@ -227,6 +227,8 @@ class ContentDataProvider
       item.parentFolderUri ? item.parentFolderUri : STOP_SIGN,
     );
 
+    const openResourceCommand = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}.openResource`;
+
     return {
       collapsibleState: isContainer
         ? TreeItemCollapsibleState.Collapsed
@@ -234,12 +236,8 @@ class ContentDataProvider
       command: isContainer
         ? undefined
         : {
-            command:
-              this.sourceType === ContentSourceType.SASServer
-                ? "SAS.server.openResource"
-                : "vscode.open",
-            arguments:
-              this.sourceType === ContentSourceType.SASServer ? [item] : [uri],
+            command: openResourceCommand,
+            arguments: [item],
             title: "Open SAS File",
           },
       contextValue: item.contextValue || undefined,
@@ -271,6 +269,31 @@ class ContentDataProvider
   }
 
   public async readFile(uri: Uri): Promise<Uint8Array> {
+    const fileName = uri.path.split("/").pop() || "";
+    const extension = fileName.split(".").pop()?.toLowerCase() || "";
+    const binaryExtensions = [
+      "png",
+      "jpg",
+      "jpeg",
+      "gif",
+      "bmp",
+      "tiff",
+      "webp",
+      "svg",
+      "pdf",
+      "zip",
+      "tar",
+      "gz",
+      "exe",
+      "dll",
+      "so",
+      "bin",
+    ];
+
+    if (binaryExtensions.includes(extension)) {
+      return await this.model.getContentByUriAsBinary(uri);
+    }
+
     return await this.model
       .getContentByUri(uri)
       .then((content) => new TextEncoder().encode(content));

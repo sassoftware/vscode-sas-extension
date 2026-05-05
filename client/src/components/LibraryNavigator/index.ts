@@ -53,18 +53,31 @@ class LibraryNavigator implements SubscriptionProvider {
           paginator: PaginatedResultSet<{ data: TableData; error?: Error }>,
           fetchColumns: () => Column[],
         ) => {
-          this.webviewManager.render(
-            new DataViewer(
-              this.extensionUri,
-              item.uid,
-              paginator,
-              fetchColumns,
-              (columnName: string) => {
-                this.displayTableProperties(item, true, columnName);
-              },
-            ),
+          const dataViewer = new DataViewer(
+            this.extensionUri,
             item.uid,
+            paginator,
+            fetchColumns,
+            (columnName: string) => {
+              this.displayTableProperties(item, true, columnName);
+            },
           );
+
+          if (item.temporaryLibrary && item.library) {
+            dataViewer.onDispose = async () => {
+              const libraryAdapter = this.libraryAdapterForConnectionType();
+              if (libraryAdapter?.deleteLibrary) {
+                try {
+                  await libraryAdapter.deleteLibrary(item.library || "");
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                } catch (error) {
+                  // Best effort cleanup; session close cleanup handles any leftovers.
+                }
+              }
+            };
+          }
+
+          this.webviewManager.render(dataViewer, item.uid);
         },
       ),
       commands.registerCommand("SAS.refreshLibraries", () => this.refresh()),

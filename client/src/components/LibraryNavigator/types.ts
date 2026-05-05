@@ -14,6 +14,7 @@ export interface LibraryItem {
   type: LibraryItemType;
   library?: string;
   readOnly: boolean;
+  temporaryLibrary?: boolean;
 }
 
 export interface TableRow {
@@ -32,6 +33,8 @@ export interface TableQuery {
 
 export interface LibraryAdapter {
   connect(): Promise<void>;
+  createTempLibraryForPath?(path: string): Promise<string>;
+  deleteLibrary?(library: string): Promise<void>;
   deleteTable(item: LibraryItem): Promise<void>;
   getColumns(
     item: LibraryItem,

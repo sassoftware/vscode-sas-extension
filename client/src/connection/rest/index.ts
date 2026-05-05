@@ -10,11 +10,21 @@ import {
 } from "../../components/ExtensionContext";
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session, SessionContextAttributes } from "../session";
-import { Context, ContextsApi, SessionsApi } from "./api/compute";
+import {
+  Context,
+  ContextsApi,
+  DataAccessApi,
+  SessionsApi,
+} from "./api/compute";
 import { ComputeState, getApiConfig } from "./common";
 import { ComputeJob } from "./job";
 import { ComputeServer } from "./server";
 import { ComputeSession } from "./session";
+import {
+  clearTrackedTemporaryLibraries,
+  getTrackedTemporaryLibraries,
+  untrackTemporaryLibrary,
+} from "./tempLibraries";
 
 let sessionInstance: RestSession;
 
@@ -221,12 +231,31 @@ class RestSession extends Session {
   protected _close = async () => {
     this._cachedContext = undefined;
     if (this.sessionId()) {
+      const temporaryLibrefs = getTrackedTemporaryLibraries();
+      if (temporaryLibrefs.length > 0) {
+        const dataAccessApi = DataAccessApi(getApiConfig());
+        await Promise.allSettled(
+          temporaryLibrefs.map(async (libref) => {
+            try {
+              await dataAccessApi.deleteLibrary({
+                sessionId: this.sessionId(),
+                libref,
+              });
+            } finally {
+              untrackTemporaryLibrary(libref);
+            }
+          }),
+        );
+      }
+
       this._computeSession.delete();
       this._computeSession = undefined;
 
       //Since the session is being closed, remove the cached session id
       setContextValue("SAS.sessionId", undefined);
       updateStatusBarItem(false);
+    } else {
+      clearTrackedTemporaryLibraries();
     }
   };
 
