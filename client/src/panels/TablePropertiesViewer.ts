@@ -70,8 +70,8 @@ class TablePropertiesViewer extends WebView {
 
         const numVal = parseFloat(stringVal);
         if (numVal > 0) {
-          // SAS datetime is seconds since 1960-01-01; subtract 315532800 seconds to shift to Unix epoch (1970-01-01), then multiply by 1000 for JavaScript milliseconds.
-          dateVal = new Date((numVal - 315532800) * 1000);
+          // SAS datetime is seconds since 1960-01-01; subtract the offset of 315619200 seconds to shift to Unix epoch (1970-01-01), then multiply by 1000 for JavaScript milliseconds.
+          dateVal = new Date((numVal - 315619200) * 1000);
           if (!isNaN(dateVal.getTime())) {
             return dateVal.toLocaleString();
           }
