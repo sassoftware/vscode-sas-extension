@@ -28,7 +28,7 @@ const gridStyles = {
 
 export const DataViewer = () => {
   const title = document
-    .querySelector("[data-title]")
+    .querySelector("[data-title]")!
     .getAttribute("data-title");
   const theme = useTheme();
   const [allColumnsHidden, setAllColumnsHidden] = useState(false);
