@@ -97,10 +97,10 @@ export const useSelectionRectangle = ({
         index: parseInt(cell.getAttribute("aria-colindex") ?? "-1", 10),
         rect: cell.getBoundingClientRect(),
       }))
-      .sort((a, b) => a.index - b.index);
+      .sort((a, b) => a.rect.x - b.rect.x);
     const cellNames = cellsInRow
       .filter((cell) => intersects(rectangleRect, cell.rect))
-      .map((i) => i.colId);
+      .map((cell) => cell.colId);
     const csvLines = [stringArrayToCsvString(cellNames)];
 
     // 2. Find the first and last row index in selection
@@ -142,9 +142,7 @@ export const useSelectionRectangle = ({
 
     function extractDataFromRow(rowIndex: number, cellNames: string[]) {
       const row = getRowData(`${rowIndex}`)!;
-      const strings = Object.keys(row.data)
-        .filter((key) => cellNames.includes(key))
-        .map((key) => row.data[key]);
+      const strings = cellNames.map((cellName) => row.data[cellName]);
       return stringArrayToCsvString(strings);
     }
 

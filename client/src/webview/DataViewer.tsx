@@ -26,7 +26,7 @@ const gridStyles = {
 
 const DataViewer = () => {
   const title = document
-    .querySelector("[data-title]")
+    .querySelector("[data-title]")!
     .getAttribute("data-title");
   const theme = useTheme();
   const {
