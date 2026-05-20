@@ -443,7 +443,12 @@ export const getParser =
             currentStatement.children.push(nextToken);
             ++i;
           }
-          if (nextToken.start.line - node.end.line > 1) {
+          const lineGap = nextToken.start.line - node.end.line;
+          const hasCardsData = currentStatement.children.some(
+            (token) => token.type === "cards-data",
+          );
+          const minGapToPreserve = hasCardsData ? 2 : 1;
+          if (lineGap > minGapToPreserve) {
             // preserve user explicit empty line
             currentStatement.children.push({
               type: "raw-data",
