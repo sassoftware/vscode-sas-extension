@@ -61,11 +61,23 @@ class TablePropertiesViewer extends WebView {
     };
 
     const formatDate = (value: unknown): string => {
-      if (!value) {
-        return "";
-      }
       try {
-        return new Date(String(value)).toLocaleString();
+        const stringVal = String(value);
+        let dateVal = new Date(stringVal);
+        if (!isNaN(dateVal.getTime())) {
+          return dateVal.toLocaleString();
+        }
+
+        const numVal = parseFloat(stringVal);
+        if (numVal > 0) {
+          // SAS datetime is seconds since 1960-01-01; subtract the offset of 315619200 seconds to shift to Unix epoch (1970-01-01), then multiply by 1000 for JavaScript milliseconds.
+          dateVal = new Date((numVal - 315619200) * 1000);
+          if (!isNaN(dateVal.getTime())) {
+            return dateVal.toLocaleString();
+          }
+        }
+
+        return stringVal;
       } catch {
         return String(value);
       }

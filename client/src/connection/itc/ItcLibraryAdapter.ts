@@ -212,8 +212,8 @@ class ItcLibraryAdapter implements LibraryAdapter {
       columnCount: 0,
       compressionRoutine: "",
       creationTimeStamp: "",
-      encoding: "", // Not available in vtable
-      engine: "", // Not available in sashelp.vtable for SAS 9.4
+      encoding: "",
+      engine: "",
       extendedType: "",
       label: "",
       libref: item.library,
@@ -221,7 +221,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
       modifiedTimeStamp: "",
       name: item.name,
       physicalRecordCount: 0,
-      recordLength: 0, // Not available in vtable
+      recordLength: 0,
       rowCount: 0,
       type: "DATA",
     };
@@ -241,6 +241,8 @@ class ItcLibraryAdapter implements LibraryAdapter {
           tableInfo.compressionRoutine || basicInfo.compressionRoutine,
         creationTimeStamp:
           tableInfo.creationTimeStamp || basicInfo.creationTimeStamp,
+        encoding: tableInfo.encoding || basicInfo.encoding,
+        engine: tableInfo.engine || basicInfo.engine,
         extendedType: tableInfo.extendedType || basicInfo.extendedType,
         label: tableInfo.label || basicInfo.label,
         libref: tableInfo.libref || basicInfo.libref,
@@ -250,6 +252,7 @@ class ItcLibraryAdapter implements LibraryAdapter {
         name: tableInfo.name || basicInfo.name,
         physicalRecordCount:
           tableInfo.rowCount || basicInfo.physicalRecordCount,
+        recordLength: tableInfo.recordLength || basicInfo.recordLength,
         rowCount: tableInfo.rowCount || basicInfo.rowCount,
         type: tableInfo.type || basicInfo.type,
       };

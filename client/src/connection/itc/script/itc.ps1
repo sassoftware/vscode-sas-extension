@@ -621,10 +621,11 @@ class SASRunner {
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection
     $query = @"
-      select memname, memtype, crdate, modate, nobs, nvar, compress,
-             memlabel, typemem, filesize, delobs
-      from sashelp.vtable
-      where libname='$libname' and memname='$memname';
+     select v.memname, v.memtype, v.crdate, v.modate, v.nobs, v.obslen, v.nvar, v.compress,
+        v.memlabel, v.typemem, v.filesize, v.delobs, v.encoding, m.engine
+        from sashelp.vtable v
+        left join sashelp.vmember m on v.libname = m.libname and v.memname = m.memname
+        where v.libname='$libname' and v.memname='$memname';
 "@
     $objRecordSet.Open(
       $query,
@@ -641,12 +642,15 @@ class SASRunner {
       $result | Add-Member -MemberType NoteProperty -Name "creationTimeStamp" -Value $objRecordSet.Fields.Item(2).Value
       $result | Add-Member -MemberType NoteProperty -Name "modifiedTimeStamp" -Value $objRecordSet.Fields.Item(3).Value
       $result | Add-Member -MemberType NoteProperty -Name "rowCount" -Value $objRecordSet.Fields.Item(4).Value
-      $result | Add-Member -MemberType NoteProperty -Name "columnCount" -Value $objRecordSet.Fields.Item(5).Value
-      $result | Add-Member -MemberType NoteProperty -Name "compressionRoutine" -Value $objRecordSet.Fields.Item(6).Value
-      $result | Add-Member -MemberType NoteProperty -Name "label" -Value $objRecordSet.Fields.Item(7).Value
-      $result | Add-Member -MemberType NoteProperty -Name "extendedType" -Value $objRecordSet.Fields.Item(8).Value
-      $result | Add-Member -MemberType NoteProperty -Name "fileSize" -Value $objRecordSet.Fields.Item(9).Value
-      $result | Add-Member -MemberType NoteProperty -Name "deletedObs" -Value $objRecordSet.Fields.Item(10).Value
+      $result | Add-Member -MemberType NoteProperty -Name "recordLength" -Value $objRecordSet.Fields.Item(5).Value
+      $result | Add-Member -MemberType NoteProperty -Name "columnCount" -Value $objRecordSet.Fields.Item(6).Value
+      $result | Add-Member -MemberType NoteProperty -Name "compressionRoutine" -Value $objRecordSet.Fields.Item(7).Value
+      $result | Add-Member -MemberType NoteProperty -Name "label" -Value $objRecordSet.Fields.Item(8).Value
+      $result | Add-Member -MemberType NoteProperty -Name "extendedType" -Value $objRecordSet.Fields.Item(9).Value
+      $result | Add-Member -MemberType NoteProperty -Name "fileSize" -Value $objRecordSet.Fields.Item(10).Value
+      $result | Add-Member -MemberType NoteProperty -Name "deletedObs" -Value $objRecordSet.Fields.Item(11).Value
+      $result | Add-Member -MemberType NoteProperty -Name "encoding" -Value $objRecordSet.Fields.Item(12).Value
+      $result | Add-Member -MemberType NoteProperty -Name "engine" -Value $objRecordSet.Fields.Item(13).Value
       $result | Add-Member -MemberType NoteProperty -Name "libref" -Value $libname
     }
     $objRecordSet.Close()
