@@ -12,7 +12,6 @@ To install the SAS extension:
 
 2. Search for the 'Official' SAS extension, and click the Install button. Once the installation is complete, the Install button changes to the Manage button.
 
-> [!NOTE]
->For macOS users, some environments may require additional certificate installation steps before connecting successfully to a SAS Viya server. Please refer to the
-[FAQ](https://sassoftware.github.io/vscode-sas-extension/faq?_highlight=mac&_highlight=os#why-did-i-get-the-unable-to-parse-decrypted-passworderror) for details.
-
+   **NOTE:**
+   For macOS users, some environments may require additional certificate installation steps before connecting successfully to a SAS Viya server.
+   Please refer to the [FAQ](https://sassoftware.github.io/vscode-sas-extension/faq?_highlight=mac&_highlight=osthhy-did-i-get-the-unable-to-parse-decrypted-passworderror) for details.
