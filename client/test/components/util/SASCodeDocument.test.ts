@@ -318,7 +318,6 @@ cas; caslib _all_ assign;
       const sasCodeDoc = new SASCodeDocument(parameters);
       const result = sasCodeDoc.getBaseDirectory();
 
-      // Deterministic: should return Windows directory on any platform
       assert.equal(result, "C:\\Users\\user\\Documents\\SAS Files");
     } finally {
       sandbox.restore();
