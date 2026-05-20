@@ -3,6 +3,7 @@
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
   "editor.formatOnSave": true,
-  "typescript.tsc.autoDetect": "off",
-  "typescript.preferences.quoteStyle": "single"
+  "js/ts.tsc.autoDetect": "off",
+  "js/ts.preferences.quoteStyle": "single",
+  "js/ts.tsdk.path": "node_modules/typescript/lib"
 }
