@@ -266,9 +266,7 @@ cas; caslib _all_ assign;
     const sandbox = createSandbox();
 
     const posixDirname = path.posix.dirname.bind(path.posix);
-
-    const dirnameStub = sandbox.stub(path, "dirname");
-    dirnameStub.callsFake((filepath: string) => posixDirname(filepath));
+    sandbox.stub(path, "dirname").callsFake(posixDirname);
 
     try {
       const parameters: SASCodeDocumentParameters = {
@@ -284,7 +282,6 @@ cas; caslib _all_ assign;
 
       const sasCodeDoc = new SASCodeDocument(parameters);
       const result = sasCodeDoc.getBaseDirectory();
-
       assert.equal(result, "/home/user/projects/notebooks");
     } finally {
       sandbox.restore();
@@ -299,9 +296,7 @@ cas; caslib _all_ assign;
     const sandbox = createSandbox();
 
     const win32Dirname = path.win32.dirname.bind(path.win32);
-
-    const dirnameStub = sandbox.stub(path, "dirname");
-    dirnameStub.callsFake((filepath: string) => win32Dirname(filepath));
+    sandbox.stub(path, "dirname").callsFake(win32Dirname);
 
     try {
       const parameters: SASCodeDocumentParameters = {
@@ -317,7 +312,6 @@ cas; caslib _all_ assign;
 
       const sasCodeDoc = new SASCodeDocument(parameters);
       const result = sasCodeDoc.getBaseDirectory();
-
       assert.equal(result, "C:\\Users\\user\\Documents\\SAS Files");
     } finally {
       sandbox.restore();
@@ -332,9 +326,7 @@ cas; caslib _all_ assign;
     const sandbox = createSandbox();
 
     const win32Dirname = path.win32.dirname.bind(path.win32);
-
-    const dirnameStub = sandbox.stub(path, "dirname");
-    dirnameStub.callsFake((filepath: string) => win32Dirname(filepath));
+    sandbox.stub(path, "dirname").callsFake(win32Dirname);
 
     try {
       const parameters: SASCodeDocumentParameters = {
@@ -350,7 +342,6 @@ cas; caslib _all_ assign;
 
       const sasCodeDoc = new SASCodeDocument(parameters);
       const result = sasCodeDoc.getBaseDirectory();
-
       assert.equal(result, "C:\\Program Files\\SAS\\My Projects");
     } finally {
       sandbox.restore();
