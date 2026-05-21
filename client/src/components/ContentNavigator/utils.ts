@@ -135,7 +135,10 @@ export const sortedContentItems = (items: ContentItem[]) =>
     } else if (!aIsDirectory && bIsDirectory) {
       return 1;
     } else {
-      return a.name.localeCompare(b.name);
+      return a.name.localeCompare(b.name, undefined, {
+        numeric: true,
+        sensitivity: "base",
+      });
     }
   });
 
