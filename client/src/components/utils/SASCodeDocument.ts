@@ -1,6 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import * as path from "path";
+import { dirname } from "path";
 
 import {
   ProblemLocation,
@@ -49,7 +49,7 @@ export class SASCodeDocument {
   }
 
   public getBaseDirectory(): string {
-    return path.dirname(this.getFileName());
+    return dirname(this.getFileName());
   }
 
   public wrappedCodeLineAt(lineNumber: number) {
