@@ -50,14 +50,30 @@ const DataViewer = () => {
     [dismissMenu],
   );
 
+  const focusChanged = useCallback(
+    (event: MessageEvent) => {
+      if (
+        event.data.command === "panel:changeFocus" &&
+        event.data.data.focused
+      ) {
+        const cell = gridRef.current?.api.getFocusedCell();
+        if (cell) {
+          gridRef.current?.api.setFocusedCell(cell.rowIndex, cell.column);
+        }
+      }
+    },
+    [gridRef],
+  );
   useEffect(() => {
     document.addEventListener("keydown", handleKeydown);
     window.addEventListener("blur", dismissMenuWithoutFocus);
+    window.addEventListener("message", focusChanged);
     return () => {
       document.removeEventListener("keydown", handleKeydown);
       window.removeEventListener("blur", dismissMenuWithoutFocus);
+      window.removeEventListener("message", focusChanged);
     };
-  }, [handleKeydown, dismissMenuWithoutFocus]);
+  }, [handleKeydown, dismissMenuWithoutFocus, focusChanged]);
 
   if (columns.length === 0) {
     return null;

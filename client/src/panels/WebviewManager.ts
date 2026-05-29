@@ -97,6 +97,12 @@ export abstract class WebView {
     this.panel = webviewPanel;
     this.panel.onDidDispose(() => this.dispose(), null, this._disposables);
     this.panel.webview.onDidReceiveMessage(this.processMessage.bind(this));
+    this.panel.onDidChangeViewState((e) =>
+      this.panel.webview.postMessage({
+        command: "panel:changeFocus",
+        data: { focused: e.webviewPanel.active },
+      }),
+    );
 
     return this;
   }
