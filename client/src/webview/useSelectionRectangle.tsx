@@ -55,7 +55,7 @@ export const useSelectionRectangle = ({
     dimensions.width = width;
     dimensions.height = height;
 
-    // Selection can only happen from left to right, top to bottomw
+    // Selection can only happen from left to right, top to bottom
     // If we get into a situation where the user is trying to move in the
     // wrong direction, hide our selection.
     rectangleRef.current.classList.add("active");
