@@ -18,6 +18,7 @@ export class WebViewManager {
 
     const panel = window.createWebviewPanel("webView", uid, ViewColumn.One, {
       enableScripts: true,
+      retainContextWhenHidden: true,
     });
 
     webview.onDispose = () => delete this.panels[uid];
@@ -96,6 +97,12 @@ export abstract class WebView {
     this.panel = webviewPanel;
     this.panel.onDidDispose(() => this.dispose(), null, this._disposables);
     this.panel.webview.onDidReceiveMessage(this.processMessage.bind(this));
+    this.panel.onDidChangeViewState((e) =>
+      this.panel.webview.postMessage({
+        command: "panel:changeFocus",
+        data: { focused: e.webviewPanel.active },
+      }),
+    );
 
     return this;
   }
