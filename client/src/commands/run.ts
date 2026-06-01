@@ -12,7 +12,7 @@ import {
 } from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
-import { basename, dirname, extname } from "path";
+import { basename, extname } from "path";
 
 import { showResult } from "../components/ResultPanel";
 import {
@@ -116,7 +116,6 @@ async function runCode(selected?: boolean, uri?: Uri) {
   session.onSessionLogFn = appendSessionLogFn;
 
   const fullPath = codeDoc.getFileName();
-  const basePath = dirname(fullPath);
   const fileName = basename(fullPath, extname(fullPath));
   setFileName(fileName);
 
@@ -133,7 +132,9 @@ async function runCode(selected?: boolean, uri?: Uri) {
         session.cancel?.();
       });
       return session
-        .run(codeDoc.getWrappedCode(), { baseDirectory: basePath })
+        .run(codeDoc.getWrappedCode(), {
+          baseDirectory: codeDoc.getBaseDirectory(),
+        })
         .then((results) => {
           if (outputHtml && results.html5) {
             showResult(results.html5, uri);
@@ -233,7 +234,6 @@ async function _runTask(
   session.onSessionLogFn = appendSessionLogFn;
 
   const fullPath = codeDoc.getFileName();
-  const basePath = dirname(fullPath);
   const fileName = basename(fullPath, extname(fullPath));
   setFileName(fileName);
 
@@ -244,7 +244,9 @@ async function _runTask(
   return cancelled
     ? undefined
     : session
-        .run(codeDoc.getWrappedCode(), { baseDirectory: basePath })
+        .run(codeDoc.getWrappedCode(), {
+          baseDirectory: codeDoc.getBaseDirectory(),
+        })
         .then((results) => {
           const outputHtml = isOutputHtmlEnabled();
 

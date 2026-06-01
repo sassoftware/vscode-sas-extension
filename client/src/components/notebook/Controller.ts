@@ -72,7 +72,9 @@ export class NotebookController {
 
     let logs = [];
     try {
-      const result = await session.run(codeDoc.getWrappedCode());
+      const result = await session.run(codeDoc.getWrappedCode(), {
+        baseDirectory: codeDoc.getBaseDirectory(),
+      });
 
       execution.replaceOutput([
         new vscode.NotebookCellOutput([

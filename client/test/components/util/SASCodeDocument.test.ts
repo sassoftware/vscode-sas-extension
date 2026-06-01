@@ -257,6 +257,96 @@ cas; caslib _all_ assign;
     );
     assert.equal(problemLocationInRawCode.lineNumber, 66);
   });
+
+  it("getBaseDirectory handles POSIX paths", function () {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require needed for Sinon stubbing (ES6 imports are non-configurable)
+    const path = require("path");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require needed for Sinon stubbing
+    const { createSandbox } = require("sinon");
+    const sandbox = createSandbox();
+
+    const posixDirname = path.posix.dirname.bind(path.posix);
+    sandbox.stub(path, "dirname").callsFake(posixDirname);
+
+    try {
+      const parameters: SASCodeDocumentParameters = {
+        languageId: "sas",
+        code: "%put &=_SASPROGRAMDIR;",
+        selectedCode: "",
+        fileName: "/home/user/projects/notebooks/test.sas",
+        htmlStyle: "Illuminate",
+        outputHtml: true,
+        uuid: "test-uuid",
+        checkKeyword: async () => false,
+      };
+
+      const sasCodeDoc = new SASCodeDocument(parameters);
+      const result = sasCodeDoc.getBaseDirectory();
+      assert.equal(result, "/home/user/projects/notebooks");
+    } finally {
+      sandbox.restore();
+    }
+  });
+
+  it("getBaseDirectory handles Windows paths", function () {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require needed for Sinon stubbing (ES6 imports are non-configurable)
+    const path = require("path");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require needed for Sinon stubbing
+    const { createSandbox } = require("sinon");
+    const sandbox = createSandbox();
+
+    const win32Dirname = path.win32.dirname.bind(path.win32);
+    sandbox.stub(path, "dirname").callsFake(win32Dirname);
+
+    try {
+      const parameters: SASCodeDocumentParameters = {
+        languageId: "sas",
+        code: "%put &=_SASPROGRAMDIR;",
+        selectedCode: "",
+        fileName: "C:\\Users\\user\\Documents\\SAS Files\\test.sas",
+        htmlStyle: "Illuminate",
+        outputHtml: true,
+        uuid: "test-uuid",
+        checkKeyword: async () => false,
+      };
+
+      const sasCodeDoc = new SASCodeDocument(parameters);
+      const result = sasCodeDoc.getBaseDirectory();
+      assert.equal(result, "C:\\Users\\user\\Documents\\SAS Files");
+    } finally {
+      sandbox.restore();
+    }
+  });
+
+  it("getBaseDirectory handles Windows paths with spaces", function () {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require needed for Sinon stubbing (ES6 imports are non-configurable)
+    const path = require("path");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require needed for Sinon stubbing
+    const { createSandbox } = require("sinon");
+    const sandbox = createSandbox();
+
+    const win32Dirname = path.win32.dirname.bind(path.win32);
+    sandbox.stub(path, "dirname").callsFake(win32Dirname);
+
+    try {
+      const parameters: SASCodeDocumentParameters = {
+        languageId: "sas",
+        code: "%put test;",
+        selectedCode: "",
+        fileName: "C:\\Program Files\\SAS\\My Projects\\analysis.sas",
+        htmlStyle: "Illuminate",
+        outputHtml: true,
+        uuid: "test-uuid",
+        checkKeyword: async () => false,
+      };
+
+      const sasCodeDoc = new SASCodeDocument(parameters);
+      const result = sasCodeDoc.getBaseDirectory();
+      assert.equal(result, "C:\\Program Files\\SAS\\My Projects");
+    } finally {
+      sandbox.restore();
+    }
+  });
 });
 
 const codeLinesInLog = [
