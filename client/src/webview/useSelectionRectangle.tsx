@@ -12,6 +12,8 @@ const div = (el: HTMLDivElement | HTMLUnknownElement | EventTarget | null) =>
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   el as HTMLDivElement;
 
+type Point = { x: number; y: number };
+type Target = HTMLDivElement;
 export const useSelectionRectangle = ({
   enabled,
   scrollBoundaries,
@@ -26,17 +28,17 @@ export const useSelectionRectangle = ({
   getRowData: (rowIndex: string) => IRowNode | undefined;
 }) => {
   const rectangleRef = useRef<HTMLDivElement>(undefined!);
-  const rectDimensionsRef = useRef<
-    undefined | { x: number; y: number; width: number; height: number }
-  >(undefined!);
-  const selectionEnabledRef = useRef<boolean>(false);
+  const rectDimensionsRef = useRef<undefined | { x: number; y: number }>(
+    undefined!,
+  );
+  const mouseSelectionEnabled = useRef<boolean>(false);
   const mouseHaveMoved = useRef<boolean>(false);
   const firstItem = useRef<{ row: number; column: number }>({
     row: -1,
     column: -1,
   });
 
-  const drawRectangle = (e: ReactMouseEvent<HTMLDivElement, MouseEvent>) => {
+  const drawRectangle = ({ x, y }: Point) => {
     if (!rectDimensionsRef.current) {
       return;
     }
@@ -44,16 +46,12 @@ export const useSelectionRectangle = ({
     const container = div(document.querySelector(scrollContainer));
     const rect = container.getBoundingClientRect()!;
     const { x: xa, y: ya } = dimensions;
-    const { clientX: x, clientY: y } = e;
 
     const left = xa;
     const width = x - xa;
     let top = ya;
     const height = y - ya - rect.top;
     top += container.scrollTop || 0;
-
-    dimensions.width = width;
-    dimensions.height = height;
 
     // Selection can only happen from left to right, top to bottom
     // If we get into a situation where the user is trying to move in the
@@ -156,51 +154,75 @@ export const useSelectionRectangle = ({
     }
   };
 
-  const createSelectionRectangle = () => {
-    const divEl = div(document.createElement("div"));
-    divEl.classList.add("selection-rectangle");
+  const handleKeyboardBasedRectangularSelection = (event: KeyboardEvent) => {
+    const targetRect = div(event.target).getBoundingClientRect();
+    if (
+      !rectangleRef.current ||
+      rectangleRef.current.style.display !== "block"
+    ) {
+      mouseHaveMoved.current = false;
+      mouseSelectionEnabled.current = false;
+      // Lets initialize our rectangle
+      initRectangularSelection({
+        x: targetRect.x,
+        y: targetRect.y,
+        target: div(event.target),
+      });
+    }
 
-    const button = div(document.createElement("button"));
-    const metaKey = /Mac/i.test(navigator.userAgent) ? "⌘" : "^";
-    button.innerHTML = `${localize("Copy")} (${metaKey} + c)`;
-    button.classList.add("copy-button");
-    divEl.appendChild(button);
-
-    document.querySelector(scrollContainer)?.appendChild(divEl);
-
-    return divEl;
+    drawRectangle({
+      x:
+        targetRect.x -
+        div(document.querySelector(scrollContainer)).getBoundingClientRect()
+          .left +
+        targetRect.width,
+      y: targetRect.y + targetRect.height,
+    });
   };
 
   // #region: event handlers
-  const onMouseDown: HTMLAttributes<HTMLDivElement>["onMouseDown"] = (e) => {
-    if (e.target && div(e.target).classList.contains("copy-button")) {
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "c" && (event.metaKey || event.ctrlKey)) {
       copySelection();
       return;
     }
-    if (!enabled) {
+    if (event.key === "Escape") {
+      resetStyles();
       return;
     }
+    if (
+      event.shiftKey &&
+      (event.key === "ArrowRight" || event.key === "ArrowDown")
+    ) {
+      handleKeyboardBasedRectangularSelection(event);
+    }
+  };
+
+  /**
+   * Initializes a rectangular selection using a point and sets ofur first
+   * selected grid cell
+   */
+  const initRectangularSelection = ({
+    x,
+    y,
+    target,
+  }: Point & { target: Target }) => {
     if (!document.querySelector(".selection-rectangle")) {
       rectangleRef.current = createSelectionRectangle();
     }
-
-    if (!e.shiftKey && !rectangleRef.current) {
+    if (!rectangleRef.current) {
       return;
     }
     const container = div(document.querySelector(scrollContainer));
     const rect = container.getBoundingClientRect()!;
     rectDimensionsRef.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-      width: 0,
-      height: 0,
+      x: x - rect.left,
+      y: y - rect.top,
     };
-    mouseHaveMoved.current = false;
-    selectionEnabledRef.current = true;
     firstItem.current = getFirstRow();
 
     function getFirstRow() {
-      const firstCell = div(e.target).closest(".ag-cell");
+      const firstCell = target.closest(".ag-cell");
       const firstRow = firstCell && firstCell.parentElement;
       if (!firstCell || !firstRow) {
         return { row: -1, column: -1 };
@@ -212,6 +234,39 @@ export const useSelectionRectangle = ({
         row: parseInt(firstRow.getAttribute("row-index") ?? "-1", 10),
       };
     }
+
+    function createSelectionRectangle() {
+      const divEl = div(document.createElement("div"));
+      divEl.classList.add("selection-rectangle");
+
+      const button = div(document.createElement("button"));
+      const metaKey = /Mac/i.test(navigator.userAgent) ? "⌘" : "^";
+      button.innerHTML = `${localize("Copy")} (${metaKey} + c)`;
+      button.classList.add("copy-button");
+      divEl.appendChild(button);
+
+      document.querySelector(scrollContainer)?.appendChild(divEl);
+
+      return divEl;
+    }
+  };
+
+  const onMouseDown: HTMLAttributes<HTMLDivElement>["onMouseDown"] = (e) => {
+    if (e.target && div(e.target).classList.contains("copy-button")) {
+      copySelection();
+      return;
+    }
+    if (!enabled) {
+      return;
+    }
+
+    mouseHaveMoved.current = false;
+    mouseSelectionEnabled.current = true;
+    initRectangularSelection({
+      x: e.clientX,
+      y: e.clientY,
+      target: div(e.target),
+    });
   };
 
   const onMouseMove: HTMLAttributes<HTMLDivElement>["onMouseMove"] = (e) => {
@@ -221,12 +276,12 @@ export const useSelectionRectangle = ({
     if (
       !rectDimensionsRef.current ||
       !rectangleRef.current ||
-      !selectionEnabledRef.current
+      !mouseSelectionEnabled.current
     ) {
       return;
     }
     mouseHaveMoved.current = true;
-    drawRectangle(e);
+    drawRectangle({ x: e.clientX, y: e.clientY });
 
     const boundaries = scrollBoundaries();
     if (e.clientY > boundaries.bottom) {
@@ -250,7 +305,7 @@ export const useSelectionRectangle = ({
         const scrollDistance = 25;
         container.scrollBy(0, scrollDistance);
         dimensions.y -= scrollDistance;
-        drawRectangle(e);
+        drawRectangle({ x: e.clientX, y: e.clientY });
       }, 50);
     }
   };
@@ -258,7 +313,7 @@ export const useSelectionRectangle = ({
   const onMouseUp: HTMLAttributes<HTMLDivElement>["onMouseUp"] = () => {
     stopScrolling();
     rectangleRef.current.classList.remove("active");
-    selectionEnabledRef.current = false;
+    mouseSelectionEnabled.current = false;
     if (!mouseHaveMoved.current) {
       resetStyles();
     }
@@ -266,8 +321,7 @@ export const useSelectionRectangle = ({
   // #endregion: event handlers
 
   return {
-    copySelection,
-    dismissSelection: resetStyles,
+    onKeyDown,
     onMouseDown,
     onMouseMove,
     onMouseUp,
