@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import type { GridApi } from "ag-grid-community";
@@ -57,8 +57,25 @@ export const DataViewer = () => {
     setManageColumnsOpen,
   } = useDataViewer();
   const [gridDragging, setGridDragging] = useState(false);
+  const [selectingRows, setSelectingRows] = useState(false);
+  const columnDefs = useMemo(() => {
+    if (!selectingRows) {
+      return columns;
+    }
+    return columns.map((column) => ({
+      ...column,
+      lockPosition: true,
+    }));
+  }, [columns, selectingRows]);
+
   const { onKeyDown, ...selectionRectangleHooks } = useSelectionRectangle({
     getRowData: (rowIndex: string) => gridRef.current?.api.getRowNode(rowIndex),
+    onSelectionStart: () => {
+      setSelectingRows(true);
+    },
+    onSelectionEnd: () => {
+      setSelectingRows(false);
+    },
     enabled: !gridDragging,
     scrollContainer: ".ag-body-viewport",
     scrollBoundaries: () => ({
@@ -134,10 +151,8 @@ export const DataViewer = () => {
         <AgGridReact
           ref={gridRef}
           cacheBlockSize={100}
-          columnDefs={columns}
-          defaultColDef={{
-            sortable: true,
-          }}
+          columnDefs={columnDefs}
+          defaultColDef={{ sortable: true }}
           maintainColumnOrder
           infiniteInitialRowCount={100}
           maxBlocksInCache={10}
