@@ -42,4 +42,4 @@ We welcome your contributions! Please read [CONTRIBUTING.md](/CONTRIBUTING.md) f
 
 ## License
 
-This project is subject to the Apache License Version 2.0, a copy of which is included as [LICENSE](LICENSE)
+This project is subject to the Apache License Version 2.0, a copy of which is included as [LICENSE](LICENSE) 
