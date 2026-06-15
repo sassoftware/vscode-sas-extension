@@ -26,15 +26,11 @@ export const useSelectionRectangle = ({
   scrollBoundaries,
   scrollContainer,
   getRowData,
-  onSelectionStart,
-  onSelectionEnd,
 }: {
   enabled: boolean;
   scrollContainer: string;
   scrollBoundaries: () => { bottom: number };
   getRowData: (rowIndex: string) => IRowNode | undefined;
-  onSelectionStart: () => void;
-  onSelectionEnd: () => void;
 }) => {
   const rectangleRef = useRef<HTMLDivElement>(undefined!);
   let rectangle = rectangleRef.current;
@@ -75,7 +71,6 @@ export const useSelectionRectangle = ({
 
   const resetStyles = () => {
     stopScrolling();
-    onSelectionEnd();
     rectangle.style.display = "none";
   };
 
@@ -263,38 +258,6 @@ export const useSelectionRectangle = ({
     };
   };
 
-  const _points = useRef({ xi: 0, yi: 0, x: 0, y: 0 });
-
-  const _drawTemporaryRectangle = ({ xi, yi, y, x }) => {
-    const divEl = div(document.createElement("div"));
-    divEl.classList.add("selection-rectangle");
-
-    // const button = div(document.createElement("button"));
-    // const metaKey = /Mac/i.test(navigator.userAgent) ? "⌘" : "^";
-    // button.innerHTML = `${localize("Copy")} (${metaKey} + c)`;
-    // button.classList.add("copy-button");
-    // divEl.appendChild(button);
-
-    document.querySelector(scrollContainer)?.appendChild(divEl);
-
-    const topLeftX = x < xi ? x : xi;
-    const topLeftY = y < yi ? y : yi;
-    const bottomRightX = x > xi ? x : xi;
-    const bottomRightY = y > yi ? y : yi;
-
-    const width = bottomRightX - topLeftX;
-    const height = bottomRightY - topLeftY;
-    const top = topLeftY;
-    const left = topLeftX;
-
-    divEl.classList.add("active");
-    divEl.style.display = `block`;
-    divEl.style.left = `${left}px`;
-    divEl.style.top = `${top}px`;
-    divEl.style.width = `${width}px`;
-    divEl.style.height = `${height}px`;
-  };
-
   const onMouseDown: HTMLAttributes<HTMLDivElement>["onMouseDown"] = (e) => {
     if (e.target && div(e.target).classList.contains("copy-button")) {
       copySelection();
@@ -308,7 +271,6 @@ export const useSelectionRectangle = ({
     mouseSelectionEnabled.current = true;
     selection.lastItemSelected = undefined;
     selection.start = relativePoint({ x: e.clientX, y: e.clientY });
-    onSelectionStart();
     initRectangularSelection(div(e.target));
   };
 
