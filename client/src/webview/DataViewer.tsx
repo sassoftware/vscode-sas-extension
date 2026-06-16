@@ -61,10 +61,7 @@ export const DataViewer = () => {
     getRowData: (rowIndex: string) => gridRef.current?.api.getRowNode(rowIndex),
     enabled: !gridDragging,
     scrollContainer: ".ag-body-viewport",
-    scrollBoundaries: () => ({
-      top: 145, // No please
-      bottom: document.body.clientHeight - 30,
-    }),
+    scrollBoundaries: ".ag-root",
   });
 
   const handleKeydown = useCallback(
