@@ -38,7 +38,15 @@ const DataViewer = () => {
     refreshResults,
   } = useDataViewer();
   const [gridDragging, setGridDragging] = useState(false);
+  // const [suppressNavigable, setSuppressNavigable] = useState(false);
   const { onKeyDown, ...selectionRectangleHooks } = useSelectionRectangle({
+    // onSelectionStarted: () => {
+    //   setSuppressNavigable(true);
+    //   gridRef.current?.api.clearFocusedCell();
+    // },
+    // onSelectionEnded: () => {
+    //   setSuppressNavigable(false);
+    // },
     getRowData: (rowIndex: string) => gridRef.current?.api.getRowNode(rowIndex),
     enabled: !gridDragging,
     scrollContainer: ".ag-body-viewport",
