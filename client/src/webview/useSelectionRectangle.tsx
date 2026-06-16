@@ -29,7 +29,7 @@ export const useSelectionRectangle = ({
 }: {
   enabled: boolean;
   scrollContainer: string;
-  scrollBoundaries: () => { bottom: number };
+  scrollBoundaries: string;
   getRowData: (rowIndex: string) => IRowNode | undefined;
 }) => {
   const rectangleRef = useRef<HTMLDivElement>(undefined!);
@@ -42,6 +42,26 @@ export const useSelectionRectangle = ({
     lastItemSelected: undefined,
   });
   const selection = selectionRef.current;
+
+  const boundariesRef = useRef<
+    Pick<DOMRect, "top" | "bottom" | "left" | "right">
+  >(undefined!);
+  const getScrollBoundaries = () => {
+    if (boundariesRef.current) {
+      return boundariesRef.current;
+    }
+    const gridRoot = document
+      .querySelector(scrollBoundaries)!
+      .getBoundingClientRect();
+    boundariesRef.current = {
+      top: gridRoot.top + 15,
+      bottom: gridRoot.bottom - 15,
+      left: gridRoot.left + 15,
+      right: gridRoot.right - 15,
+    };
+
+    return boundariesRef.current;
+  };
 
   const mouseSelectionEnabled = useRef<boolean>(false);
   const mouseHasMoved = useRef<boolean>(false);
@@ -66,11 +86,14 @@ export const useSelectionRectangle = ({
     rectangle.style.height = `${bottomRightY - topLeftY}px`;
   };
 
-  let scrollDownTimeout: ReturnType<typeof setInterval>;
-  const stopScrolling = () => clearInterval(scrollDownTimeout);
+  let scrollDownInterval: ReturnType<typeof setInterval>;
+  let scrollUpInterval: ReturnType<typeof setInterval>;
+  const stopScrolling = (timeout: ReturnType<typeof setInterval>) =>
+    clearInterval(timeout);
 
   const resetStyles = () => {
-    stopScrolling();
+    stopScrolling(scrollDownInterval);
+    stopScrolling(scrollUpInterval);
     rectangle.style.display = "none";
   };
 
@@ -285,20 +308,28 @@ export const useSelectionRectangle = ({
 
     drawRectangle();
 
-    const boundaries = scrollBoundaries();
+    const boundaries = getScrollBoundaries();
     if (e.clientY > boundaries.bottom) {
-      beginScrollingDown(e);
+      scrollDownInterval = beginScrolling("down", scrollDownInterval);
     } else {
-      stopScrolling();
+      stopScrolling(scrollDownInterval);
+    }
+    if (e.clientY < boundaries.top) {
+      scrollUpInterval = beginScrolling("up", scrollUpInterval);
+    } else {
+      stopScrolling(scrollUpInterval);
     }
 
-    function beginScrollingDown() {
-      if (scrollDownTimeout) {
-        clearInterval(scrollDownTimeout);
+    function beginScrolling(
+      dir: "down" | "up",
+      interval: ReturnType<typeof setInterval>,
+    ) {
+      if (interval) {
+        clearInterval(interval);
       }
-      scrollDownTimeout = setInterval(() => {
+      return setInterval(() => {
         const container = div(document.querySelector(scrollContainer));
-        const scrollDistance = 25;
+        const scrollDistance = dir === "down" ? 25 : -25;
         container.scrollBy(0, scrollDistance);
         selection.end!.y += scrollDistance;
         drawRectangle();
@@ -307,7 +338,8 @@ export const useSelectionRectangle = ({
   };
 
   const onMouseUp: HTMLAttributes<HTMLDivElement>["onMouseUp"] = (e) => {
-    stopScrolling();
+    stopScrolling(scrollDownInterval);
+    stopScrolling(scrollUpInterval);
     rectangle.classList.remove("active");
     mouseSelectionEnabled.current = false;
 
