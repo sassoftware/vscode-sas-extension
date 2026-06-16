@@ -12,8 +12,9 @@ import {
   workspace,
 } from "vscode";
 
+import { randomBytes, timingSafeEqual } from "crypto";
 import { createWriteStream } from "fs";
-import * as path from "path";
+import { createServer } from "http";
 
 import { profileConfig } from "../../commands/profile";
 import { Column } from "../../connection/rest/api/compute";
@@ -97,34 +98,54 @@ class LibraryNavigator implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.downloadTable",
         async (item: LibraryItem) => {
-          let dataFilePath: string = "";
-          if (
-            env.remoteName !== undefined &&
-            workspace.workspaceFolders &&
-            workspace.workspaceFolders.length > 0
-          ) {
-            // start from 'rootPath' workspace folder
-            dataFilePath = workspace.workspaceFolders[0].uri.fsPath;
-          }
-          dataFilePath = path.join(
-            dataFilePath,
-            `${item.library}.${item.name}.csv`.toLocaleLowerCase(),
-          );
+          const defaultFileName =
+            `${item.library}.${item.name}.csv`.toLocaleLowerCase();
+          const defaultUri =
+            workspace.workspaceFolders && workspace.workspaceFolders.length > 0
+              ? Uri.joinPath(workspace.workspaceFolders[0].uri, defaultFileName)
+              : Uri.file(defaultFileName);
 
-          // display save file dialog
           const uri = await window.showSaveDialog({
-            defaultUri: Uri.file(dataFilePath),
+            defaultUri,
           });
 
           if (!uri) {
             return;
           }
 
-          const stream = createWriteStream(uri.fsPath);
-          await this.libraryDataProvider.writeTableContentsToStream(
-            stream,
-            item,
-          );
+          if (uri.scheme === "file") {
+            try {
+              await this.libraryDataProvider.writeTableContentsToStream(
+                createWriteStream(uri.fsPath),
+                item,
+              );
+            } catch (error) {
+              window.showErrorMessage(
+                l10n.t("Failed to download table: {error}", {
+                  error: String(
+                    error?.message || error || "Unknown error",
+                  ).slice(0, 200),
+                }),
+              );
+            }
+            return;
+          }
+
+          try {
+            // In web/virtual file systems (e.g. vscode-local:// from code-server's "Show Local"),
+            // stream directly to the browser download pipeline.
+            const selectedName = uri.path.split("/").pop() || defaultFileName;
+            await this.streamTableToBrowserDownload(item, selectedName);
+          } catch (error) {
+            window.showErrorMessage(
+              l10n.t("Failed to download table: {error}", {
+                error: String(error?.message || error || "Unknown error").slice(
+                  0,
+                  200,
+                ),
+              }),
+            );
+          }
         },
       ),
       commands.registerCommand(
@@ -188,6 +209,198 @@ class LibraryNavigator implements SubscriptionProvider {
     }
 
     return new LibraryAdapterFactory().create(activeProfile.connectionType);
+  }
+
+  private async streamTableToBrowserDownload(
+    item: LibraryItem,
+    fileName: string,
+  ): Promise<void> {
+    const token = randomBytes(24).toString("hex");
+    // Preserve Unicode while removing only dangerous characters
+    const asciiFileName =
+      fileName
+        .trim()
+        // eslint-disable-next-line no-control-regex
+        .replace(/[\x00-\x1f"\r\n]/g, "") // Remove control chars + quotes
+        .replace(/\.\.+/g, ".") // Collapse multiple dots (path traversal)
+        .replace(/^\.+/, "") // Remove leading dots
+        .slice(0, 250) || "table.csv";
+    const encodedFileName = encodeURIComponent(fileName || "table.csv");
+
+    await new Promise<void>((resolve, reject) => {
+      let timeoutId: NodeJS.Timeout | undefined;
+      let streamTimeoutId: NodeJS.Timeout | undefined;
+      let tokenConsumed = false;
+      let requestLock = false;
+      let settled = false;
+
+      const settleResolve = () => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        server.removeListener("error", errorHandler);
+        resolve();
+      };
+
+      const settleReject = (error: Error) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = undefined;
+        }
+        if (streamTimeoutId) {
+          clearTimeout(streamTimeoutId);
+          streamTimeoutId = undefined;
+        }
+        server.removeListener("error", errorHandler);
+        server.close(() => {});
+        reject(error);
+      };
+
+      const isValidToken = (candidate: string | null): boolean => {
+        if (!candidate || candidate.length !== token.length) {
+          return false;
+        }
+        return timingSafeEqual(Buffer.from(candidate), Buffer.from(token));
+      };
+
+      const server = createServer((request, response) => {
+        if (request.method !== "GET") {
+          response.statusCode = 405;
+          response.setHeader("Allow", "GET");
+          response.end();
+          return;
+        }
+
+        if (tokenConsumed || requestLock) {
+          response.statusCode = 410;
+          response.end();
+          return;
+        }
+
+        const requestUrl = request.url
+          ? new URL(request.url, "http://127.0.0.1")
+          : undefined;
+
+        if (
+          !requestUrl ||
+          requestUrl.pathname !== "/sas-table-download" ||
+          !isValidToken(requestUrl.searchParams.get("token"))
+        ) {
+          response.statusCode = 404;
+          response.end();
+          return;
+        }
+
+        requestLock = true;
+        tokenConsumed = true;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = undefined;
+        }
+        server.close();
+
+        response.setHeader("Content-Type", "text/csv; charset=utf-8");
+        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Pragma", "no-cache");
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        response.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${asciiFileName}"; filename*=UTF-8''${encodedFileName}`,
+        );
+
+        // Set streaming timeout to prevent indefinite hangs on large tables
+        streamTimeoutId = setTimeout(() => {
+          response.destroy();
+          server.close();
+          settleReject(
+            new Error(l10n.t("Download streaming timeout exceeded.")),
+          );
+        }, 300_000); // 5 minutes
+
+        this.libraryDataProvider
+          .writeTableContentsToStream(response, item)
+          .then(() => {
+            if (streamTimeoutId) {
+              clearTimeout(streamTimeoutId);
+              streamTimeoutId = undefined;
+            }
+            if (!response.writableEnded) {
+              response.end();
+            }
+            settleResolve();
+          })
+          .catch((error) => {
+            if (streamTimeoutId) {
+              clearTimeout(streamTimeoutId);
+              streamTimeoutId = undefined;
+            }
+            if (!response.headersSent) {
+              response.statusCode = 500;
+              response.setHeader("Content-Type", "text/plain");
+              response.end("Download failed");
+            } else {
+              // Headers already sent - destroy connection to signal error to browser
+              response.destroy();
+            }
+            settleReject(error);
+          });
+      });
+
+      const errorHandler = (error: Error) => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = undefined;
+        }
+        settleReject(error);
+      };
+
+      server.on("error", errorHandler);
+
+      server.listen(0, "127.0.0.1", async () => {
+        try {
+          const address = server.address();
+          if (!address || typeof address === "string") {
+            throw new Error(l10n.t("Unable to start download server."));
+          }
+
+          // asExternalUri only transforms scheme+host+port — the proxy strips
+          // path and query. Resolve just the base, then append path+token.
+          const baseLocalUri = Uri.parse(`http://127.0.0.1:${address.port}`);
+          const externalBase = await env.asExternalUri(baseLocalUri);
+          const externalUri = Uri.parse(
+            `${externalBase.toString(true).replace(/\/+$/, "")}/sas-table-download?token=${token}`,
+          );
+          const opened = await env.openExternal(externalUri);
+
+          if (!opened) {
+            throw new Error(l10n.t("Failed to open browser download URL."));
+          }
+
+          // Timeout guards against the browser never making the request.
+          // Once the request arrives and streaming begins, settleResolve()
+          // is called from the request handler instead.
+          // Increased to 90s for slow networks and corporate proxies
+          timeoutId = setTimeout(() => {
+            server.close();
+            settleReject(
+              new Error(
+                l10n.t(
+                  "Timed out waiting for the browser to start the download.",
+                ),
+              ),
+            );
+          }, 90_000);
+        } catch (error) {
+          server.close();
+          settleReject(error);
+        }
+      });
+    });
   }
 }
 

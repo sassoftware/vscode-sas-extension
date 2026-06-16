@@ -13,7 +13,6 @@ import {
   LibraryItemType,
   TableData,
   TableQuery,
-  TableRow,
 } from "./types";
 
 const sortById = (a: LibraryItem, b: LibraryItem) => a.id.localeCompare(b.id);
@@ -92,13 +91,28 @@ class LibraryModel {
 
           const headers = data.rows.shift();
           if (!hasWrittenHeader) {
-            fileStream.write(stringArrayToCsvString(headers.columns));
+            const canContinue = fileStream.write(
+              stringArrayToCsvString(headers.columns),
+            );
+            if (!canContinue) {
+              await new Promise<void>((resolve) =>
+                fileStream.once("drain", resolve),
+              );
+            }
             hasWrittenHeader = true;
           }
 
-          data.rows.forEach((item: TableRow) =>
-            fileStream.write("\n" + stringArrayToCsvString(item.cells)),
-          );
+          // handle backpressure: wait for drain event when buffer is full
+          for (const row of data.rows) {
+            const canContinue = fileStream.write(
+              "\n" + stringArrayToCsvString(row.cells),
+            );
+            if (!canContinue) {
+              await new Promise<void>((resolve) =>
+                fileStream.once("drain", resolve),
+              );
+            }
+          }
 
           offset += limit;
         } while (offset < totalItemCount);
