@@ -135,6 +135,9 @@ class LibraryNavigator implements SubscriptionProvider {
             // In web/virtual file systems (e.g. vscode-local:// from code-server's "Show Local"),
             // stream directly to the browser download pipeline.
             const selectedName = uri.path.split("/").pop() || defaultFileName;
+            window.showInformationMessage(
+              l10n.t("Opening browser to download table..."),
+            );
             await this.streamTableToBrowserDownload(item, selectedName);
           } catch (error) {
             window.showErrorMessage(
@@ -229,7 +232,6 @@ class LibraryNavigator implements SubscriptionProvider {
 
     await new Promise<void>((resolve, reject) => {
       let timeoutId: NodeJS.Timeout | undefined;
-      let streamTimeoutId: NodeJS.Timeout | undefined;
       let tokenConsumed = false;
       let requestLock = false;
       let settled = false;
@@ -251,10 +253,6 @@ class LibraryNavigator implements SubscriptionProvider {
         if (timeoutId) {
           clearTimeout(timeoutId);
           timeoutId = undefined;
-        }
-        if (streamTimeoutId) {
-          clearTimeout(streamTimeoutId);
-          streamTimeoutId = undefined;
         }
         server.removeListener("error", errorHandler);
         server.close(() => {});
@@ -313,32 +311,15 @@ class LibraryNavigator implements SubscriptionProvider {
           `attachment; filename="${asciiFileName}"; filename*=UTF-8''${encodedFileName}`,
         );
 
-        // Set streaming timeout to prevent indefinite hangs on large tables
-        streamTimeoutId = setTimeout(() => {
-          response.destroy();
-          server.close();
-          settleReject(
-            new Error(l10n.t("Download streaming timeout exceeded.")),
-          );
-        }, 300_000); // 5 minutes
-
         this.libraryDataProvider
           .writeTableContentsToStream(response, item)
           .then(() => {
-            if (streamTimeoutId) {
-              clearTimeout(streamTimeoutId);
-              streamTimeoutId = undefined;
-            }
             if (!response.writableEnded) {
               response.end();
             }
             settleResolve();
           })
           .catch((error) => {
-            if (streamTimeoutId) {
-              clearTimeout(streamTimeoutId);
-              streamTimeoutId = undefined;
-            }
             if (!response.headersSent) {
               response.statusCode = 500;
               response.setHeader("Content-Type", "text/plain");
