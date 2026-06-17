@@ -31,6 +31,13 @@ import { Messages } from "./const";
 import { LibraryAdapter, LibraryItem, TableData } from "./types";
 
 class LibraryNavigator implements SubscriptionProvider {
+  private static readonly DOWNLOAD_TOKEN_BYTES = 24; // 192-bit token
+  private static readonly MAX_DOWNLOAD_FILENAME_LENGTH = 250;
+  private static readonly BROWSER_CONNECTION_TIMEOUT_MS = 60_000;
+  private static readonly DOWNLOAD_ENDPOINT_PATH = "/sas-library-download";
+  private static readonly DOWNLOAD_TOKEN_PARAM = "token";
+  private static readonly DEFAULT_DOWNLOAD_FILENAME = "table.csv";
+
   private libraryDataProvider: LibraryDataProvider;
   private extensionUri: Uri;
   private webviewManager: WebViewManager;
@@ -218,7 +225,9 @@ class LibraryNavigator implements SubscriptionProvider {
     item: LibraryItem,
     fileName: string,
   ): Promise<void> {
-    const token = randomBytes(24).toString("hex");
+    const token = randomBytes(LibraryNavigator.DOWNLOAD_TOKEN_BYTES).toString(
+      "hex",
+    );
     // Preserve Unicode while removing only dangerous characters
     const asciiFileName =
       fileName
@@ -227,8 +236,11 @@ class LibraryNavigator implements SubscriptionProvider {
         .replace(/[\x00-\x1f"\r\n]/g, "") // Remove control chars + quotes
         .replace(/\.\.+/g, ".") // Collapse multiple dots (path traversal)
         .replace(/^\.+/, "") // Remove leading dots
-        .slice(0, 250) || "table.csv";
-    const encodedFileName = encodeURIComponent(fileName || "table.csv");
+        .slice(0, LibraryNavigator.MAX_DOWNLOAD_FILENAME_LENGTH) ||
+      LibraryNavigator.DEFAULT_DOWNLOAD_FILENAME;
+    const encodedFileName = encodeURIComponent(
+      fileName || LibraryNavigator.DEFAULT_DOWNLOAD_FILENAME,
+    );
 
     await new Promise<void>((resolve, reject) => {
       let timeoutId: NodeJS.Timeout | undefined;
@@ -286,8 +298,10 @@ class LibraryNavigator implements SubscriptionProvider {
 
         if (
           !requestUrl ||
-          requestUrl.pathname !== "/sas-table-download" ||
-          !isValidToken(requestUrl.searchParams.get("token"))
+          requestUrl.pathname !== LibraryNavigator.DOWNLOAD_ENDPOINT_PATH ||
+          !isValidToken(
+            requestUrl.searchParams.get(LibraryNavigator.DOWNLOAD_TOKEN_PARAM),
+          )
         ) {
           response.statusCode = 404;
           response.end();
@@ -354,7 +368,7 @@ class LibraryNavigator implements SubscriptionProvider {
           const baseLocalUri = Uri.parse(`http://127.0.0.1:${address.port}`);
           const externalBase = await env.asExternalUri(baseLocalUri);
           const externalUri = Uri.parse(
-            `${externalBase.toString(true).replace(/\/+$/, "")}/sas-table-download?token=${token}`,
+            `${externalBase.toString(true).replace(/\/+$/, "")}${LibraryNavigator.DOWNLOAD_ENDPOINT_PATH}?${LibraryNavigator.DOWNLOAD_TOKEN_PARAM}=${token}`,
           );
           const opened = await env.openExternal(externalUri);
 
@@ -365,7 +379,7 @@ class LibraryNavigator implements SubscriptionProvider {
           // Timeout guards against the browser never making the request.
           // Once the request arrives and streaming begins, settleResolve()
           // is called from the request handler instead.
-          // Increased to 90s for slow networks and corporate proxies
+          // Increased to 60s for slow networks and corporate proxies
           timeoutId = setTimeout(() => {
             server.close();
             settleReject(
@@ -375,7 +389,7 @@ class LibraryNavigator implements SubscriptionProvider {
                 ),
               ),
             );
-          }, 90_000);
+          }, LibraryNavigator.BROWSER_CONNECTION_TIMEOUT_MS);
         } catch (error) {
           server.close();
           settleReject(error);
