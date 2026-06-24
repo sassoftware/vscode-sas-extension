@@ -16,10 +16,13 @@ jobs:
       - run: npm ci
       - run: npm run format:check
       - run: npm run copyright:check
+        if: github.repository == 'sassoftware/vscode-sas-extension'
       - run: xvfb-run -a npm run test
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && github.repository == 'sassoftware/vscode-sas-extension'
       - run: npx @vscode/vsce package
+        if: github.repository == 'sassoftware/vscode-sas-extension'
       - uses: actions/upload-artifact@v7
+        if: github.repository == 'sassoftware/vscode-sas-extension'
         with:
           path: ./*.vsix
           retention-days: 5
