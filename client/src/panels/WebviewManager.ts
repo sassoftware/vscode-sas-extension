@@ -21,7 +21,9 @@ export class WebViewManager {
       retainContextWhenHidden: true,
     });
 
-    webview.onDispose = () => delete this.panels[uid];
+    webview.onDispose = () => {
+      delete this.panels[uid];
+    };
     this.panels[uid] = webview.withPanel(panel).render();
   }
 }
@@ -29,15 +31,15 @@ export class WebViewManager {
 export abstract class WebView {
   protected panel: WebviewPanel;
   private _disposables: Disposable[] = [];
-  private _onDispose: () => void;
+  private _onDisposeCallbacks: Array<() => void | Promise<void>> = [];
 
   public constructor(
     protected readonly extensionUri: Uri,
     protected readonly title: string,
   ) {}
 
-  set onDispose(disposeCallback: () => void) {
-    this._onDispose = disposeCallback;
+  set onDispose(disposeCallback: () => void | Promise<void>) {
+    this._onDisposeCallbacks.push(disposeCallback);
   }
 
   abstract body(): string;
@@ -119,7 +121,9 @@ export abstract class WebView {
         disposable.dispose();
       }
     }
-    this._onDispose && this._onDispose();
+    for (const callback of this._onDisposeCallbacks) {
+      void Promise.resolve(callback()).catch(() => undefined);
+    }
   }
 
   public display() {

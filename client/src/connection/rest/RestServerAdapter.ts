@@ -325,6 +325,11 @@ class RestServerAdapter implements ContentAdapter {
     return await this.getContentOfItemAtPath(path);
   }
 
+  public async getContentOfUriAsBinary(uri: Uri): Promise<Uint8Array> {
+    const content = await this.getContentOfUri(uri);
+    return Buffer.from(content, "binary");
+  }
+
   private async getContentOfItemAtPath(path: string) {
     const response = await this.fileSystemApi.getFileContentFromSystem(
       {
