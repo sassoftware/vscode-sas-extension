@@ -102,54 +102,114 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
-          this.getTreeViewSelections(item).forEach(
-            async (resource: ContentItem) => {
-              if (!resource.contextValue.includes("delete")) {
-                return;
-              }
-              const isContainer = getIsContainer(resource);
-              const hasUnsavedFiles = isContainer
-                ? await this.contentDataProvider.checkFolderDirty(resource)
-                : false;
-              const moveToRecycleBin =
-                this.contentDataProvider.canRecycleResource(resource);
+          const selections = this.getTreeViewSelections(item);
 
-              if (
-                !moveToRecycleBin &&
-                !(await window.showWarningMessage(
-                  l10n.t(Messages.DeleteWarningMessage, {
-                    name: resource.name,
-                  }),
-                  { modal: true },
-                  Messages.DeleteButtonLabel,
-                ))
-              ) {
-                return;
-              } else if (moveToRecycleBin && hasUnsavedFiles) {
-                if (
-                  !(await window.showWarningMessage(
-                    l10n.t(Messages.RecycleDirtyFolderWarning, {
-                      name: resource.name,
-                    }),
-                    { modal: true },
-                    Messages.MoveToRecycleBinLabel,
-                  ))
-                ) {
-                  return;
-                }
-              }
-              const deleteResult = moveToRecycleBin
-                ? await this.contentDataProvider.recycleResource(resource)
-                : await this.contentDataProvider.deleteResource(resource);
-              if (!deleteResult) {
-                window.showErrorMessage(
-                  isContainer
-                    ? Messages.FolderDeletionError
-                    : Messages.FileDeletionError,
-                );
-              }
-            },
+          const deletableItems = selections.filter((resource: ContentItem) =>
+            resource.contextValue?.includes("delete"),
           );
+
+          if (deletableItems.length === 0) {
+            return;
+          }
+
+          // Close all open files first and handle unsaved changes
+          // If user cancels the save dialog, abort the deletion
+          if (
+            !(await this.contentDataProvider.closeResourceFiles(deletableItems))
+          ) {
+            return;
+          }
+
+          const recyclableItems = deletableItems.filter(
+            (resource: ContentItem) =>
+              this.contentDataProvider.canRecycleResource(resource),
+          );
+          const permanentDelete =
+            deletableItems.length > recyclableItems.length;
+
+          let hasUnsavedFiles = false;
+          for (const resource of deletableItems) {
+            const isContainer = getIsContainer(resource);
+            if (
+              isContainer &&
+              (await this.contentDataProvider.checkFolderDirty(resource))
+            ) {
+              hasUnsavedFiles = true;
+              break;
+            }
+          }
+
+          let confirmed = false;
+          if (deletableItems.length === 1) {
+            const resource = deletableItems[0];
+            const isContainer = getIsContainer(resource);
+            const canRecycle =
+              this.contentDataProvider.canRecycleResource(resource);
+            const itemHasUnsavedFiles = isContainer
+              ? await this.contentDataProvider.checkFolderDirty(resource)
+              : false;
+
+            if (!canRecycle) {
+              confirmed = !!(await window.showWarningMessage(
+                l10n.t(Messages.DeleteWarningMessage, {
+                  name: resource.name,
+                }),
+                { modal: true },
+                Messages.DeleteButtonLabel,
+              ));
+            } else if (itemHasUnsavedFiles) {
+              confirmed = !!(await window.showWarningMessage(
+                l10n.t(Messages.DirtyFolderWarning),
+                { modal: true },
+                canRecycle
+                  ? Messages.MoveToRecycleBinLabel
+                  : Messages.DeleteButtonLabel,
+              ));
+            } else {
+              confirmed = true;
+            }
+          } else {
+            if (permanentDelete) {
+              confirmed = !!(await window.showWarningMessage(
+                l10n.t(Messages.DeleteMultipleWarningMessage, {
+                  count: deletableItems.length,
+                }),
+                { modal: true },
+                Messages.DeleteButtonLabel,
+              ));
+            } else if (hasUnsavedFiles) {
+              confirmed = !!(await window.showWarningMessage(
+                l10n.t(Messages.DirtyFolderWarning),
+                { modal: true },
+                permanentDelete
+                  ? Messages.DeleteButtonLabel
+                  : Messages.MoveToRecycleBinLabel,
+              ));
+            } else {
+              confirmed = true;
+            }
+          }
+
+          if (!confirmed) {
+            return;
+          }
+
+          for (const resource of deletableItems) {
+            const isContainer = getIsContainer(resource);
+            const canRecycle =
+              this.contentDataProvider.canRecycleResource(resource);
+            const deleteResult = canRecycle
+              ? await this.contentDataProvider.recycleResource(resource)
+              : await this.contentDataProvider.deleteResource(resource);
+
+            if (!deleteResult) {
+              window.showErrorMessage(
+                isContainer
+                  ? Messages.FolderDeletionError
+                  : Messages.FileDeletionError,
+              );
+            }
+          }
         },
       ),
       commands.registerCommand(
