@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
-  "version": "1.19.1",
+  "version": "1.19.2",
   "categories": [
     "Programming Languages",
     "Data Science",
@@ -580,6 +580,20 @@
             "type": "boolean",
             "default": false,
             "description": "%configuration.SAS.notebook.export.includeLog%"
+          },
+          "SAS.notebook.python.autoPrintMethod": {
+            "order": 11,
+            "type": "string",
+            "default": "(auto)",
+            "enum": [
+              "(auto)",
+              "SAS.show"
+            ],
+            "enumDescriptions": [
+              "%configuration.SAS.notebook.python.autoPrintMethod.auto%",
+              "%configuration.SAS.notebook.python.autoPrintMethod.SAS.show%"
+            ],
+            "description": "%configuration.SAS.notebook.python.autoPrintMethod%"
           }
         }
       }
