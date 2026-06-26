@@ -216,21 +216,6 @@ export const useSelectionRectangle = ({
   //   drawRectangle();
   // };
 
-  // #region: event handlers
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "c" && (event.metaKey || event.ctrlKey)) {
-      copySelection();
-      return;
-    }
-    if (event.key === "Escape") {
-      resetStyles();
-      return;
-    }
-    // if (event.shiftKey && event.key.match(/^Arrow.*$/)) {
-    //   handleKeyboardBasedRectangularSelection(event);
-    // }
-  };
-
   const getClosestRow = (target: Target) => {
     const firstCell = target.closest(".ag-cell");
     const firstRow = firstCell && firstCell.parentElement;
@@ -288,6 +273,21 @@ export const useSelectionRectangle = ({
       x: x - rect.left + container.scrollLeft,
       y: y - rect.top + container.scrollTop,
     };
+  };
+
+  // #region: event handlers
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "c" && (event.metaKey || event.ctrlKey)) {
+      copySelection();
+      return;
+    }
+    if (event.key === "Escape") {
+      resetStyles();
+      return;
+    }
+    // if (event.shiftKey && event.key.match(/^Arrow.*$/)) {
+    //   handleKeyboardBasedRectangularSelection(event);
+    // }
   };
 
   const onMouseDown: HTMLAttributes<HTMLDivElement>["onMouseDown"] = (e) => {
