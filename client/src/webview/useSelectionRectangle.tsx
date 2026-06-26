@@ -8,6 +8,8 @@ import { stringArrayToCsvString } from "../components/utils/csv";
 import localize from "./localize";
 import vscode from "./vscode";
 
+let scrollDownInterval: ReturnType<typeof setInterval>;
+let scrollUpInterval: ReturnType<typeof setInterval>;
 const div = (el: HTMLDivElement | HTMLUnknownElement | EventTarget | null) =>
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   el as HTMLDivElement;
@@ -21,6 +23,7 @@ type Selection = {
   firstItemSelected?: SelectedItem;
   lastItemSelected?: SelectedItem;
 };
+
 export const useSelectionRectangle = ({
   enabled,
   scrollBoundaries,
@@ -89,8 +92,6 @@ export const useSelectionRectangle = ({
     rectangleRef.current.style.height = `${bottomRightY - topLeftY}px`;
   };
 
-  let scrollDownInterval: ReturnType<typeof setInterval>;
-  let scrollUpInterval: ReturnType<typeof setInterval>;
   const stopScrolling = (timeout: ReturnType<typeof setInterval>) =>
     clearInterval(timeout);
 
@@ -130,24 +131,14 @@ export const useSelectionRectangle = ({
     const csvLines = [stringArrayToCsvString(cellNames)];
 
     // 2. Find the first and last row index in selection
-
-    // We're finding the min row here, since selection can be top down or bottom up
     const firstRowIndex = Math.min(
       selection.firstItemSelected!.row,
       selection.lastItemSelected!.row,
     );
-
-    // Get all rows, reverse them, and travel from the last row _back_
-    // to the row that has an intersection with the rectangle
-    const allRows = Array.from(
-      document.querySelectorAll(`[row-index]`),
-    ).reverse();
-    const lastIntersectingRow = allRows.find((row) =>
-      intersects(rectangleRect, row.getBoundingClientRect()),
+    const lastRowIndex = Math.max(
+      selection.firstItemSelected!.row,
+      selection.lastItemSelected!.row,
     );
-    const lastRowIndex = lastIntersectingRow
-      ? parseInt(lastIntersectingRow.getAttribute("row-index")!, 10)
-      : -1;
     if (
       lastRowIndex === -1 ||
       firstRowIndex === -1 ||
