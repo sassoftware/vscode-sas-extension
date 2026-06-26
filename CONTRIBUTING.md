@@ -32,6 +32,18 @@ Use this as a space to provide details about your new feature. Your summary shou
 
 For each pull request, you are expected to test the defaults to make sure no regressions were introduced as part of your change. When adding new features, you are expected to add new test cases that cover the new functionality.
 
+## Avoiding DCO Flag Errors
+
+The SAS project requires all commits to be signed off to comply with the Contributor License Agreement. 
+When committing your changes via the command line, always use the -s (or --signoff) flag
+
+### Configure VS Code to Sign Off Automatically
+If you prefer using the VS Code Git interface:
+Open Settings (Ctrl+, or Command+,).
+Search for git.alwaysSignOff.
+Check the box to enable it. This will ensure every commit you make through the UI includes the sign-off.
+
+
 # Development
 
 ## Structure
