@@ -89,3 +89,66 @@ export const getItemContentType = (item: ContentItem): string | undefined => {
 };
 
 export const getResourceId = (uri: Uri): string => uri.query.substring(3); // ?id=...
+
+export const extractPathFromUri = (uri: string): string => {
+  try {
+    const queryStart = uri.indexOf("?");
+    if (queryStart === -1) {
+      return "";
+    }
+
+    const queryString = uri.substring(queryStart + 1);
+    const decodedQuery = decodeURIComponent(queryString);
+    const idMatch = decodedQuery.match(/id=(.+)/);
+    if (!idMatch || !idMatch[1]) {
+      return "";
+    }
+
+    // Extract the file path from the REST server URI format
+    // Removes the compute session prefix to get the actual file path
+    const uriWithoutPrefix = idMatch[1].replace(
+      /\/compute\/sessions\/[a-zA-Z0-9-]*\/files\//,
+      "",
+    );
+    try {
+      return decodeURIComponent(uriWithoutPrefix);
+    } catch (error) {
+      console.error("Failed to decode URI component:", error);
+      return uriWithoutPrefix;
+    }
+  } catch (error) {
+    console.error("Failed to extract path from URI:", error);
+    return "";
+  }
+};
+
+export const generateNewFilePath = (
+  oldBasePath: string,
+  closedFilePath: string,
+  newItemUri: Uri,
+): Uri | null => {
+  try {
+    const relativePath = closedFilePath.substring(oldBasePath.length);
+    const filename = relativePath.replace(/^~fs~/, "");
+    const newUriStr = newItemUri.toString();
+
+    // Extract and modify the query to append the filename path
+    const queryMatch = newUriStr.match(/\?(.+)$/);
+    if (!queryMatch) {
+      return null;
+    }
+
+    const decodedQuery = decodeURIComponent(queryMatch[1]);
+    const newQuery = decodedQuery.replace(
+      /(\/files\/[^&]*)/,
+      `$1~fs~${filename}`,
+    );
+
+    return Uri.parse(
+      `${newItemUri.scheme}:/${filename}?${encodeURIComponent(newQuery)}`,
+    );
+  } catch (error) {
+    console.error("Failed to construct new file URI:", error);
+    return null;
+  }
+};

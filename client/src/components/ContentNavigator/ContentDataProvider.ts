@@ -667,15 +667,25 @@ class ContentDataProvider
     if (!targetUri) {
       return false;
     }
-
     const closing = closeFileIfOpen(item);
-    if (!(await closing)) {
+    const closedFiles = await closing;
+    if (!closedFiles) {
       return false;
     }
 
     const newUri = await this.model.moveTo(item, targetUri);
-    if (closing !== true) {
-      commands.executeCommand("vscode.open", newUri);
+    if (!newUri || !Array.isArray(closedFiles)) {
+      return !!newUri;
+    }
+    // Reopen only the files that were closed
+    for (const closedFileUri of closedFiles) {
+      // Calculate the new URI for each closed file using the adapter
+      const newFileUri = this.model
+        .getAdapter()
+        .calculateNewFileUri?.(closedFileUri, item, newUri);
+      if (newFileUri) {
+        await commands.executeCommand("vscode.open", newFileUri);
+      }
     }
 
     return !!newUri;
