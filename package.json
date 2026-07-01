@@ -1522,7 +1522,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "glob": "^13.0.3",
-    "mocha": "^11.7.5",
+    "mocha": "^11.7.6",
     "papaparse": "^5.5.3",
     "path-browserify": "^1.0.1",
     "prettier": "^3.8.3",
