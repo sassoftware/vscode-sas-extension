@@ -1,6 +1,5 @@
 {
   "#": "#",
-  "An error was encountered when copying data.": "复制数据时遇到错误。",
   "An error was encountered when loading table data. This usually happens when a table is too large or the data couldn't be processed. See console for more details.": "加载表数据时遇到错误。 当表太大或无法处理数据时，通常会发生这种情况。 请参阅控制台了解更多详细信息。",
   "Are you sure you want to delete the selected tables?": "确实要删除选定的表吗？",
   "Are you sure you want to permanently delete all the items? You cannot undo this action.": "您确定要永久删除所有项目吗？您无法撤消此操作。",
@@ -28,7 +27,6 @@
   "Connecting to SAS session...": "正在连接到SAS会话...",
   "Connection Type": "连接类型",
   "Converting SAS notebook to flow...": "将 SAS 笔记本转换为流...",
-  "Copy": "复制",
   "Could not connect to the SAS server.": "无法连接到 SAS 服务器。",
   "Created": "创建时间",
   "Currency": "货币",

@@ -1,6 +1,5 @@
 {
   "#": "#",
-  "An error was encountered when copying data.": "Rilevato un errore copiando i dati.",
   "An error was encountered when loading table data. This usually happens when a table is too large or the data couldn't be processed. See console for more details.": "Rilevato un errore caricando i dati della tabella. Generalmente succede quando una tabella è troppo grande o i dati non possono essere elaborati. Vedere la console per maggiori dettagli.",
   "Are you sure you want to delete the selected tables?": "Eliminare le tabelle selezionate?",
   "Are you sure you want to permanently delete all the items? You cannot undo this action.": "Eliminare tutti gli elementi in modo permanente? Questa azione non può essere annullata.",
@@ -28,7 +27,6 @@
   "Connecting to SAS session...": "Connessione alla sessione SAS...",
   "Connection Type": "Tipo di connessione",
   "Converting SAS notebook to flow...": "Conversione di SAS Notebook in un flusso...",
-  "Copy": "Copia",
   "Could not connect to the SAS server.": "Impossibile connettersi al server SAS.",
   "Created": "Data di creazione",
   "Currency": "Valuta",

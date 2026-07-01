@@ -1,6 +1,5 @@
 {
   "#": "#",
-  "An error was encountered when copying data.": "複製資料時發生錯誤。",
   "An error was encountered when loading table data. This usually happens when a table is too large or the data couldn't be processed. See console for more details.": "載入表格資料時發生錯誤。這通常發生在表格太大或資料無法處理時。如需詳細資訊，請參閱主控台。",
   "Are you sure you want to delete the selected tables?": "是否確定要刪除選取的表格?",
   "Are you sure you want to permanently delete all the items? You cannot undo this action.": "是否確定要永久刪除所有項目? 您無法還原此動作。",
@@ -28,7 +27,6 @@
   "Connecting to SAS session...": "正在連線至 SAS 工作階段…",
   "Connection Type": "連線類型",
   "Converting SAS notebook to flow...": "正在將 SAS 筆記本轉換為流程…",
-  "Copy": "複製",
   "Could not connect to the SAS server.": "無法連線到 SAS 伺服器。",
   "Created": "建立",
   "Currency": "貨幣",
