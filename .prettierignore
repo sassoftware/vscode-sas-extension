@@ -4,6 +4,8 @@ out/
 dist/
 .vscode-test/
 website/build/
+.chglog/CHANGELOG.tpl.md
+CHANGELOG.md
 
 # git files
 .git/

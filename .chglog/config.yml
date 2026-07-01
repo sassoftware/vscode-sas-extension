@@ -1,0 +1,37 @@
+---
+style: gitlab
+template: CHANGELOG.tpl.md
+info:
+  title: CHANGELOG
+  repository_url: https://github.com/sassoftware/vscode-sas-extension
+options:
+  commits:
+    filters:
+      Type:
+        - feat
+        - fix
+        - chore
+        - docs
+  commit_groups:
+    sort_by: Custom
+    title_order:
+      - feat
+      - fix
+      - chore
+      - docs
+    title_maps:
+      feat: Added
+      fix: Fixed
+      # perf: Performance Improvements
+      # refactor: Code Refactoring
+
+  header:
+    # Match conventional commits and ignore scopes that are deps or start with deps-.
+    pattern: "^(\\w*)(?:\\(([^d)][^)]*|d[^e)][^)]*|de[^p)][^)]*|dep[^s)][^)]*|d|de|dep)\\))?\\:\\s(.*)$"
+    pattern_maps:
+      - Type
+      - Scope
+      - Subject
+  notes:
+    keywords:
+      - BREAKING CHANGE
