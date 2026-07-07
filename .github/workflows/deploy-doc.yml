@@ -25,7 +25,7 @@ jobs:
         id: package-json
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: v${{ steps.package-json.outputs.version }}
       - uses: actions/setup-node@v6
