@@ -584,6 +584,12 @@ class SASRunner {
   }
 
   [void]GetLibraries() {
+    # Reset LanguageService to clear any error state from previous syntax errors
+    $this.objSAS.LanguageService.Reset()
+    
+    # Flush any pending output/errors
+    $this.objSAS.LanguageService.FlushLog(32768) | Out-Null
+    
     $objRecordSet = New-Object -comobject ADODB.Recordset
     $objRecordSet.ActiveConnection = $this.dataConnection
     $query = @"
