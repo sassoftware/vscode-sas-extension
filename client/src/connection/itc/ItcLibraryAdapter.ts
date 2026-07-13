@@ -13,19 +13,20 @@ import {
   TableQuery,
   TableRow,
 } from "../../components/LibraryNavigator/types";
-import { ColumnCollection, TableInfo } from "../rest/api/compute";
+import { Column, ColumnCollection, TableInfo } from "../rest/api/compute";
 import { getColumnIconType } from "../util";
 import { executeRawCode, runCode } from "./CodeRunner";
-import { Config } from "./types";
+import type { Config } from "./types";
+import { sanitizePowershellString } from "./util";
 
 class ItcLibraryAdapter implements LibraryAdapter {
   protected hasEstablishedConnection: boolean = false;
-  protected shellProcess: ChildProcessWithoutNullStreams;
+  protected shellProcess: ChildProcessWithoutNullStreams | undefined;
   protected pollingForLogResults: boolean = false;
   protected log: string[] = [];
   protected endTag: string = "";
   protected outputFinished: boolean = false;
-  protected config: Config;
+  protected config: Config | undefined;
 
   public async connect(): Promise<void> {
     this.hasEstablishedConnection = true;
@@ -52,8 +53,8 @@ class ItcLibraryAdapter implements LibraryAdapter {
       $runner.GetColumns("${item.library}", "${item.name}")
     `;
     const output = await executeRawCode(code);
-    const rawColumns = JSON.parse(output);
-    const columns = rawColumns.map((column) => ({
+    const rawColumns: Column[] = JSON.parse(output);
+    const columns = rawColumns.map((column: Column) => ({
       ...column,
       type: getColumnIconType(column),
     }));
@@ -126,7 +127,9 @@ class ItcLibraryAdapter implements LibraryAdapter {
       start === 0
         ? {
             columns: ["INDEX"].concat(
-              (await this.getColumns(item)).items.map((column) => column.name),
+              (await this.getColumns(item)).items.flatMap((column) =>
+                column.name ? [column.name] : [],
+              ),
             ),
           }
         : {};
@@ -189,20 +192,20 @@ class ItcLibraryAdapter implements LibraryAdapter {
     const sortString = sortModel
       .map((col) => `${col.colId} ${col.sort}`)
       .join(",");
+    const escapedQuery = sanitizePowershellString(query);
     const code = `
-      $runner.GetDatasetRecords("${item.library}","${item.name}", ${start}, ${limit}, "${sortString}", '${query ? JSON.stringify(query) : ""}')
+      $runner.GetDatasetRecords("${item.library}","${item.name}", ${start}, ${limit}, "${sortString}", '${escapedQuery}')
     `;
     const output = await executeRawCode(code);
     try {
+      if (output.includes("<ITCError>")) {
+        return { rows: [], count: 0 };
+      }
       return JSON.parse(output);
     } catch (e) {
       console.warn("Failed to load table data with error", e);
       console.warn("Raw output", output);
-      throw new Error(
-        l10n.t(
-          "An error was encountered when loading table data. This usually happens when a table is too large or the data couldn't be processed. See console for more details.",
-        ),
-      );
+      return { rows: [], count: 0 };
     }
   }
 
