@@ -32,6 +32,8 @@ import { ProfileWithFileRootOptions } from "../../components/profile";
 import { FileProperties, FileSystemApi } from "./api/compute";
 import { getApiConfig } from "./common";
 import {
+  extractPathFromUri,
+  generateNewFilePath,
   getLink,
   getResourceId,
   getResourceIdFromItem,
@@ -458,6 +460,42 @@ class RestServerAdapter implements ContentAdapter {
     } catch (error) {
       return;
     }
+  }
+
+  public calculateNewFileUri(
+    closedFileUri: Uri,
+    movedItem: ContentItem,
+    newItemUri: Uri,
+  ): Uri | null {
+    const isFolder = movedItem.fileStat?.type === FileType.Directory;
+
+    // If the moved item is a file and matches the closed file, return the new URI
+    if (
+      !isFolder &&
+      closedFileUri.toString() === movedItem.vscUri?.toString()
+    ) {
+      return newItemUri;
+    }
+
+    // If the moved item is a folder, calculate the new path for files within it
+    if (isFolder && movedItem.vscUri) {
+      const oldBasePath = extractPathFromUri(movedItem.vscUri.toString());
+      const closedFilePath = extractPathFromUri(closedFileUri.toString());
+
+      // Check if the closed file was inside the moved folder
+      // Match if: closedFilePath starts with oldBasePath followed by separator
+      const isChildFile =
+        oldBasePath &&
+        closedFilePath &&
+        (closedFilePath.startsWith(oldBasePath + SAS_FILE_SEPARATOR) ||
+          closedFilePath === oldBasePath);
+
+      if (isChildFile && oldBasePath !== closedFilePath) {
+        return generateNewFilePath(oldBasePath, closedFilePath, newItemUri);
+      }
+    }
+
+    return null;
   }
 
   public async renameItem(
