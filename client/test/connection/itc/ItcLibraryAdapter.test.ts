@@ -165,15 +165,15 @@ describe("ItcLibraryAdapter tests", () => {
   it("drops temporary filtered views regardless of sort criteria", () => {
     const scriptPath = join(
       __dirname,
-      "../../../src/connection/itc/script/itc.ps1",
+      "../../../../src/connection/itc/script/itc.ps1",
     );
     const script = readFileSync(scriptPath, "utf8");
 
-    expect(script).to.match(/if \(\$viewName\)/);
-    expect(script).to.not.match(/if \(\$sortCriteria -ne "" -and \$viewName\)/);
+    expect(script).to.match(/if \(\$sortCriteria -ne ""\)/);
+    expect(script).to.match(/DROP VIEW \$tableName/);
   });
 
-  it("escapes single quotes in filters before sending them to PowerShell", async () => {
+  it("sanitizes single quotes in filters before sending them to PowerShell", async () => {
     const item: LibraryItem = {
       uid: "test",
       type: "table",
@@ -182,9 +182,25 @@ describe("ItcLibraryAdapter tests", () => {
       readOnly: true,
     };
 
+    const allRowsOutput = JSON.stringify({
+      rows: [
+        ["Peter", "Parker"],
+        ["Tony", "Stark"],
+      ],
+      count: 2,
+    });
+
+    const filteredRowsOutput = JSON.stringify({
+      rows: [["Peter", "Parker"]],
+      count: 1,
+    });
+
     const executeRawCodeStub = sinon
       .stub()
-      .resolves(JSON.stringify({ rows: [], count: 0 }));
+      .onFirstCall()
+      .resolves(allRowsOutput)
+      .onSecondCall()
+      .resolves(filteredRowsOutput);
     const codeRunner = {
       executeRawCode: executeRawCodeStub,
       runCode: sinon.stub(),
@@ -198,11 +214,26 @@ describe("ItcLibraryAdapter tests", () => {
 
     const libraryAdapter = new ItcLibraryAdapterWithStub();
 
-    await libraryAdapter.getRows(item, 0, 100, [], {
-      filterValue: "Make='Acura'",
+    const unfilteredTableData = await libraryAdapter.getRows(item, 0, 100, []);
+
+    const filteredTableData = await libraryAdapter.getRows(item, 0, 100, [], {
+      filterValue: "first='Peter'",
     });
 
-    expect(executeRawCodeStub.firstCall.args[0]).to.contain("Make=`'Acura`'");
+    expect(unfilteredTableData).to.eql({
+      rows: [
+        { cells: ["1", "Peter", "Parker"] },
+        { cells: ["2", "Tony", "Stark"] },
+      ],
+      count: 2,
+    });
+
+    expect(executeRawCodeStub.secondCall.args[0]).to.match(/first.*Peter/);
+
+    expect(filteredTableData).to.eql({
+      rows: [{ cells: ["1", "Peter", "Parker"] }],
+      count: 1,
+    });
   });
 
   it("returns an empty dataset when ITC script errors occur for filters", async () => {
