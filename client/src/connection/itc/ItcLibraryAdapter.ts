@@ -1,7 +1,5 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { l10n } from "vscode";
-
 import type { SortModelItem } from "ag-grid-community";
 import { ChildProcessWithoutNullStreams } from "child_process";
 
