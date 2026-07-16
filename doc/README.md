@@ -116,7 +116,8 @@ Here is the testing process proposal for this project (Code is merged in pull re
 - Testers remove label "test complete" and verify the pull request in main branch. Testers verify readme content is changed and correct if label "doc needed" exists in this PR.
   - If the issues are fixed in main branch, testers add label "verified" in pull request.
   - If the issues are not fixed in main branch, testers add comments in the pull request, reopen the pull request and assign it to developer.
-  - If no issues are found in the final validation, testers remove label "verified" and add label "ready for release" in PRs.
+  - If no issues are found in the final validation, testers remove label "verified", add label "ready for release" in PRs, and mark the status of the issue to 'Done'
+- Managers add the milestone and close the issue.
 
 ![Testing process diagram](img/test-process-diagram.png)
 
