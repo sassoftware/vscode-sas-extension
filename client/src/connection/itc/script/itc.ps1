@@ -266,62 +266,75 @@ class SASRunner {
   }
 
   [void]GetDatasetRecords([string]$library, [string]$table, [int]$start = 0, [int]$limit = 100, [string]$sortCriteria = "", [string]$jsonQueryData = "") {
-    $objRecordSet = New-Object -comobject ADODB.Recordset
-    $objRecordSet.ActiveConnection = $this.dataConnection # This is needed to set the properties for sas formats.
-    $objRecordSet.Properties.Item("SAS Formats").Value = "_ALL_"
+    try {
+      $objRecordSet = New-Object -comobject ADODB.Recordset
+      $objRecordSet.ActiveConnection = $this.dataConnection # This is needed to set the properties for sas formats.
+      $objRecordSet.Properties.Item("SAS Formats").Value = "_ALL_"
 
-    $queryParams = $jsonQueryData | ConvertFrom-Json
+      $tableName = $library + "." + $table
+      $queryError = $false
 
-    $tableName = $library + "." + $table
-    if ($sortCriteria -ne "" -or $jsonQueryData -ne "") {
-      $view = GetFilteredView -Library $library -Table $table -SortCriteria $sortCriteria -JSONQueryData $jsonQueryData
-      $tableName = $view.Name
-      $this.dataConnection.Execute($view.Query)
-    }
-
-    $objRecordSet.Open(
-      $tableName,
-      [System.Reflection.Missing]::Value, # Use the active connection
-      2,  # adOpenDynamic
-      1,  # adLockReadOnly
-      512 # adCmdTableDirect
-    )
-
-    $records = [List[List[object]]]::new()
-    $fields = $objRecordSet.Fields.Count
-
-    if ($objRecordSet.EOF) {
-      Write-Host '{"rows": [], "count": 0}'
-      return
-    }
-
-    $objRecordSet.AbsolutePosition = $start + 1
-    for ($j = 0; $j -lt $limit -and $objRecordSet.EOF -eq $False; $j++) {
-      $cell = [List[object]]::new()
-      for ($i = 0; $i -lt $fields; $i++) {
-        $cell.Add($objRecordSet.Fields.Item($i).Value)
+      if ($sortCriteria -ne "" -or $jsonQueryData -ne "") {
+        try {
+          $view = GetFilteredView -Library $library -Table $table -SortCriteria $sortCriteria -JSONQueryData $jsonQueryData
+          $tableName = $view.Name
+          $this.dataConnection.Execute($view.Query) | Out-Null
+        } catch {
+          $queryError = $true
+        }
       }
-      $records.Add($cell)
-      $objRecordSet.MoveNext()
+
+      if ($queryError) {
+        Write-Host '{"rows": [], "count": 0}'
+        return
+      }
+
+      $objRecordSet.Open(
+        $tableName,
+        [System.Reflection.Missing]::Value, # Use the active connection
+        2,  # adOpenDynamic
+        1,  # adLockReadOnly
+        512 # adCmdTableDirect
+      )
+
+      $records = [List[List[object]]]::new()
+      $fields = $objRecordSet.Fields.Count
+
+      if ($objRecordSet.EOF) {
+        Write-Host '{"rows": [], "count": 0}'
+        return
+      }
+
+      $objRecordSet.AbsolutePosition = $start + 1
+      for ($j = 0; $j -lt $limit -and $objRecordSet.EOF -eq $False; $j++) {
+        $cell = [List[object]]::new()
+        for ($i = 0; $i -lt $fields; $i++) {
+          $cell.Add($objRecordSet.Fields.Item($i).Value)
+        }
+        $records.Add($cell)
+        $objRecordSet.MoveNext()
+      }
+      $objRecordSet.Close()
+
+      $objRecordSet.Open(
+        "SELECT COUNT(1) FROM $tableName",
+        $this.dataConnection, 3, 1, 1
+      ) # adOpenStatic, adLockReadOnly, adCmdText
+      $count = $objRecordSet.Fields.Item(0).Value
+      $objRecordSet.Close()
+
+      $result = New-Object psobject
+      $result | Add-Member -MemberType NoteProperty -Name "rows" -Value $records
+      $result | Add-Member -MemberType NoteProperty -Name "count" -Value $count
+
+      if ($sortCriteria -ne "") {
+        $this.dataConnection.Execute("DROP VIEW $tableName") | Out-Null
+      }
+
+      Write-Host $(ConvertTo-Json -Depth 10 -InputObject $result -Compress)
+    } catch {
+      Write-Host '{"rows": [], "count": 0}'
     }
-    $objRecordSet.Close()
-
-    $objRecordSet.Open(
-      "SELECT COUNT(1) FROM $tableName",
-      $this.dataConnection, 3, 1, 1
-    ) # adOpenStatic, adLockReadOnly, adCmdText
-    $count = $objRecordSet.Fields.Item(0).Value
-    $objRecordSet.Close()
-
-    $result = New-Object psobject
-    $result | Add-Member -MemberType NoteProperty -Name "rows" -Value $records
-    $result | Add-Member -MemberType NoteProperty -Name "count" -Value $count
-
-    if ($sortCriteria -ne "") {
-      $this.dataConnection.Execute("DROP VIEW $tableName")
-    }
-
-    Write-Host $(ConvertTo-Json -Depth 10 -InputObject $result -Compress)
   }
 
   [void]GetColumns([string]$libname, [string]$memname) {
