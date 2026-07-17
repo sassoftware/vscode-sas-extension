@@ -13,10 +13,27 @@ import {
   LibraryItemType,
   TableData,
   TableQuery,
-  TableRow,
 } from "./types";
 
 const sortById = (a: LibraryItem, b: LibraryItem) => a.id.localeCompare(b.id);
+
+export function stringArrayToCsvString(
+  strings: (string | number | null)[],
+): string {
+  return `"${strings
+    .map((item) => (item ?? "").toString().replace(/"/g, '""'))
+    .join('","')}"`;
+}
+
+export async function writeWithBackpressure(
+  stream: Writable,
+  data: string,
+): Promise<void> {
+  const canContinue = stream.write(data);
+  if (!canContinue) {
+    await new Promise<void>((resolve) => stream.once("drain", resolve));
+  }
+}
 
 class LibraryModel {
   public constructor(protected libraryAdapter: LibraryAdapter | undefined) {}
@@ -67,12 +84,6 @@ class LibraryModel {
     const { rowCount: totalItemCount, maxNumberOfRowsToRead: limit } =
       await this.libraryAdapter.getTableRowCount(item);
     let hasWrittenHeader: boolean = false;
-    const stringArrayToCsvString = (strings: string[]): string =>
-      `"${strings
-        .map((item: string | number) =>
-          (item ?? "").toString().replace(/"/g, '""'),
-        )
-        .join('","')}"`;
 
     await window.withProgress(
       {
@@ -96,13 +107,20 @@ class LibraryModel {
 
           const headers = data.rows.shift();
           if (!hasWrittenHeader) {
-            fileStream.write(stringArrayToCsvString(headers.columns));
+            await writeWithBackpressure(
+              fileStream,
+              stringArrayToCsvString(headers.columns),
+            );
             hasWrittenHeader = true;
           }
 
-          data.rows.forEach((item: TableRow) =>
-            fileStream.write("\n" + stringArrayToCsvString(item.cells)),
-          );
+          // handle backpressure: wait for drain event when buffer is full
+          for (const row of data.rows) {
+            await writeWithBackpressure(
+              fileStream,
+              "\n" + stringArrayToCsvString(row.cells),
+            );
+          }
 
           offset += limit;
         } while (offset < totalItemCount);
