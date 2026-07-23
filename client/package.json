@@ -13,7 +13,7 @@
     "ag-grid-react": "^35.2.1",
     "axios": "^1.15.2",
     "highlight.js": "^11.11.1",
-    "katex": "^0.16.45",
+    "katex": "^0.17.0",
     "marked": "^17.0.5",
     "marked-katex-extension": "^5.1.7",
     "media-typer": "^1.1.0",
