@@ -468,7 +468,8 @@ class RestServerAdapter implements ContentAdapter {
 
     const parsedFilePath = filePath.split(SAS_FILE_SEPARATOR);
     parsedFilePath.pop();
-    const path = parsedFilePath.join("/");
+    const encodedPath = parsedFilePath.join("/");
+    const path = this.decodePath(encodedPath);
 
     try {
       const response = await this.fileSystemApi.updateFileOrDirectoryOnSystem({
@@ -618,6 +619,18 @@ class RestServerAdapter implements ContentAdapter {
     return {
       etag: "",
     };
+  }
+
+  private decodePath(path: string): string {
+    return path.replace(/~~|~sc~/g, (match) => {
+      if (match === "~~") {
+        return "~";
+      }
+      if (match === "~sc~") {
+        return ";";
+      }
+      return match;
+    });
   }
 }
 
