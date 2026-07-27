@@ -1,5 +1,12 @@
 # SAS Extension for Visual Studio Code
 
+<!-- Installs (Short) -->
+[![Installs](https://vsmarketplacebadges.dev/installs-short/SAS.sas-lsp.svg)](https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp) <!-- Downloads (Short) -->
+[![Downloads](https://vsmarketplacebadges.dev/downloads-short/SAS.sas-lsp.svg)](https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp)<!-- Rating (Short) -->
+[![Rating](https://vsmarketplacebadges.dev/rating-short/SAS.sas-lsp.svg)](https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp)<!-- Trending Monthly -->
+[![Trending Monthly](https://vsmarketplacebadges.dev/trending-monthly/SAS.sas-lsp.svg)](https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp)<!-- Trending Weekly -->
+[![Trending Weekly](https://vsmarketplacebadges.dev/trending-weekly/SAS.sas-lsp.svg)](https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp)
+
 [Capabilities](https://sassoftware.github.io/vscode-sas-extension/matrix) | [Installation](https://sassoftware.github.io/vscode-sas-extension/installation) | [Configuration](https://sassoftware.github.io/vscode-sas-extension/Configurations/) | [Features](https://sassoftware.github.io/vscode-sas-extension/Features/) | [FAQ](https://sassoftware.github.io/vscode-sas-extension/faq)
 
 Welcome to the SAS Extension for Visual Studio Code! The SAS extension is lightweight, runs anywhere, and allows you to integrate SAS with other languages. You can connect directly to SAS Viya and SAS 9 and run code.
