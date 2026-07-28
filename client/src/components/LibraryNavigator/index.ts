@@ -150,6 +150,14 @@ class LibraryNavigator implements SubscriptionProvider {
     this.libraryDataProvider.useAdapter(this.libraryAdapterForConnectionType());
   }
 
+  public refreshOpenTableViewers(): void {
+    Object.values(this.webviewManager.panels).forEach((panel) => {
+      if (panel instanceof DataViewer) {
+        panel.refreshData();
+      }
+    });
+  }
+
   private async displayTableProperties(
     item: LibraryItem,
     showPropertiesTab: boolean = false,
