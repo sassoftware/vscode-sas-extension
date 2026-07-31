@@ -10,6 +10,9 @@ import {
 
 import axios, { AxiosInstance, HeadersDefaults } from "axios";
 import { expect } from "chai";
+import { mkdtempSync, rmSync } from "fs";
+import { tmpdir } from "os";
+import { basename, join } from "path";
 import * as sinon from "sinon";
 import { StubbedInstance, stubInterface } from "ts-sinon";
 
@@ -773,6 +776,10 @@ describe("ContentDataProvider", async function () {
     const model = new ContentModel(new RestContentAdapter());
     const createFileStub: sinon.SinonStub = sinon.stub(model, "createFile");
     const createFolderStub: sinon.SinonStub = sinon.stub(model, "createFolder");
+    const getResourceByUriStub: sinon.SinonStub = sinon.stub(
+      model,
+      "getResourceByUri",
+    );
 
     const dataProvider = new ContentDataProvider(
       model,
@@ -786,6 +793,9 @@ describe("ContentDataProvider", async function () {
 
     createFileStub.returns(new Promise((resolve) => resolve(item)));
     createFolderStub.returns(new Promise((resolve) => resolve(newParentItem)));
+    getResourceByUriStub.returns(
+      new Promise((resolve) => resolve(newParentItem)),
+    );
 
     await dataProvider.handleDrop(parentItem, dataTransfer);
 
@@ -796,6 +806,51 @@ describe("ContentDataProvider", async function () {
       .true;
     expect(createFileStub.calledWith(newParentItem, "SampleCode2.sas")).to.be
       .true;
+    expect(getResourceByUriStub.called).to.be.true;
+  });
+
+  it("uploadUrisToTarget - refreshes tree for empty folder upload", async function () {
+    const parentItem = mockContentItem({
+      type: "folder",
+      name: "parent",
+    });
+    const createdFolder = mockContentItem({
+      type: "folder",
+      name: "uploaded-empty-folder",
+    });
+
+    const dataProvider = createDataProvider();
+    const emptyFolderPath = mkdtempSync(join(tmpdir(), "sas-empty-folder-"));
+    const folderName = basename(emptyFolderPath);
+
+    const refreshStub = sinon.stub(dataProvider, "refresh");
+    const handleCreationResponseStub = sinon
+      .stub(dataProvider, "handleCreationResponse")
+      .resolves();
+    const createFolderStub = sinon
+      .stub(ContentModel.prototype, "createFolder")
+      .resolves(createdFolder);
+    const getResourceByUriStub = sinon
+      .stub(ContentModel.prototype, "getResourceByUri")
+      .resolves(createdFolder);
+
+    try {
+      await dataProvider.uploadUrisToTarget(
+        [Uri.file(emptyFolderPath)],
+        parentItem,
+      );
+
+      expect(createFolderStub.calledOnceWith(parentItem, folderName)).to.be
+        .true;
+      expect(getResourceByUriStub.calledOnceWith(createdFolder.vscUri)).to.be
+        .true;
+      expect(refreshStub.calledTwice).to.be.true;
+      expect(handleCreationResponseStub.calledOnce).to.be.true;
+    } finally {
+      getResourceByUriStub.restore();
+      createFolderStub.restore();
+      rmSync(emptyFolderPath, { recursive: true, force: true });
+    }
   });
 
   it("handleDrop - allows dropping content items", async function () {
