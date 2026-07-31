@@ -109,6 +109,10 @@ export class FormatOnTypeProvider {
     if (!foldingBlock) {
       referLine = lastNotEmptyLine;
     } else if (foldingBlock?.startLine === line) {
+      if (foldingBlock?.endLine === line) {
+        // single-line block w/ run statement — don't adjust current line's indentation
+        return [];
+      }
       referLine = lastNotEmptyLine;
       const prevLineText = this.model.getLine(lastNotEmptyLine);
       const lastFoldingBlock: FoldingBlock | null =
@@ -225,10 +229,17 @@ export class FormatOnTypeProvider {
         }
       }
 
-      // multiple run
+      // multiple run — only fire when `run` is the first token on its line
+      let runPrevTokenOnSameLine: string | undefined;
+      if (tokenCol) {
+        [runPrevTokenOnSameLine] = this._getPrevValidTokenInfo(
+          line,
+          tokenCol - 1,
+          false,
+        );
+      }
       if (
-        zoneBeforeSemicolon === ZT.GBL_STMT &&
-        zoneAfterSemicolon === ZT.GBL_STMT &&
+        !runPrevTokenOnSameLine &&
         (tokenStyle === Lexer.TOKEN_TYPES.SKEYWORD ||
           tokenStyle === Lexer.TOKEN_TYPES.KEYWORD) &&
         tokenText?.toUpperCase() === "RUN"
