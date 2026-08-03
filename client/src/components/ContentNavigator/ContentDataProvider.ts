@@ -472,8 +472,7 @@ class ContentDataProvider
   }
 
   public readDirectory():
-    | [string, FileType][]
-    | Thenable<[string, FileType][]> {
+    [string, FileType][] | Thenable<[string, FileType][]> {
     throw new Error("Method not implemented.");
   }
 
