@@ -831,10 +831,9 @@ describe("ContentDataProvider", async function () {
 
       expect(createFolderStub.calledOnceWith(parentItem, folderName)).to.be
         .true;
-      expect(refreshStub.calledTwice).to.be.true;
+      expect(refreshStub.calledOnce).to.be.true;
       expect(handleCreationResponseStub.calledOnce).to.be.true;
     } finally {
-      getResourceByUriStub.restore();
       createFolderStub.restore();
       rmSync(emptyFolderPath, { recursive: true, force: true });
     }
