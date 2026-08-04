@@ -736,9 +736,9 @@ class ContentDataProvider
     displayErrorMessages: boolean = true,
   ): Promise<ContentItem | undefined> {
     const folderName = basename(path);
-    const folderUri = await this.createFolder(target, folderName);
+    const folder = await this.model.createFolder(target, folderName);
     let success = true;
-    if (!folderUri) {
+    if (!folder) {
       displayErrorMessages &&
         window.showErrorMessage(
           l10n.t(Messages.FileDropError, {
@@ -748,8 +748,6 @@ class ContentDataProvider
 
       return;
     }
-
-    const folder = await this.model.getResourceByUri(folderUri);
 
     // Read all the files in the folder and upload them
     const filesOrFolders = await promisify(readdir)(path);
