@@ -106,13 +106,17 @@ export class FormatOnTypeProvider {
     if (lastNotEmptyLine === undefined) {
       return [];
     }
+
+    const isSingleLineBlock =
+      foldingBlock?.startLine === line && foldingBlock?.endLine === line;
+
     if (!foldingBlock) {
       referLine = lastNotEmptyLine;
     } else if (foldingBlock?.startLine === line) {
-      if (foldingBlock?.endLine === line) {
-        // single-line block w/ run statement — don't adjust current line's indentation
-        return [];
+      if (isSingleLineBlock) {
+        return []; // leave the line's indentation alone
       }
+
       referLine = lastNotEmptyLine;
       const prevLineText = this.model.getLine(lastNotEmptyLine);
       const lastFoldingBlock: FoldingBlock | null =
