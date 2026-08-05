@@ -202,7 +202,7 @@ class RestServerAdapter implements ContentAdapter {
       if (buffer) {
         await this.updateContentOfItemAtPath(
           this.trimComputePrefix(contentItem.uri),
-          new TextDecoder().decode(buffer),
+          buffer,
         );
       }
 
@@ -495,7 +495,7 @@ class RestServerAdapter implements ContentAdapter {
 
   private async updateContentOfItemAtPath(
     filePath: string,
-    content: string,
+    content: string | ArrayBufferLike,
   ): Promise<void> {
     const { etag } = await this.getFileInfo(filePath);
     const data = {
