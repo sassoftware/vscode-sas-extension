@@ -302,13 +302,18 @@ export class CompletionProvider {
             resolve(undefined);
             return;
           }
+          const optName = this._resolveParenthesizedOptName(
+            zone,
+            this.czMgr.getOptionName(),
+            position,
+          );
           this._loadHelp({
             keyword: keyword,
             type: "hint",
             zone,
             procName: this.czMgr.getProcName(),
             stmtName: this.czMgr.getStmtName(),
-            optName: this.czMgr.getOptionName(),
+            optName,
             cb: (data) => {
               if (data && data.data) {
                 resolve({
@@ -741,8 +746,14 @@ export class CompletionProvider {
     cb: (data?: (string | LibCompleteItem)[]) => void,
   ) {
     let stmtName = _cleanUpKeyword(this.czMgr.getStmtName());
-    const optName = _cleanUpKeyword(this.czMgr.getOptionName()),
-      procName = _cleanUpKeyword(this.czMgr.getProcName());
+    let optName = _cleanUpKeyword(this.czMgr.getOptionName());
+    const procName = _cleanUpKeyword(this.czMgr.getProcName());
+
+    optName = this._resolveParenthesizedOptName(
+      zone,
+      optName,
+      this.popupContext.position,
+    );
 
     this.popupContext.procName = procName;
     this.popupContext.stmtName = stmtName;
@@ -1764,6 +1775,49 @@ export class CompletionProvider {
     } else {
       cb(undefined);
     }
+  }
+
+  private _resolveParenthesizedOptName(
+    zone: number,
+    optName: string,
+    position?: Position,
+  ) {
+    if (!position) {
+      return optName;
+    }
+
+    if (
+      ![
+        ZONE_TYPE.PROC_OPT_VALUE,
+        ZONE_TYPE.PROC_SUB_OPT_NAME,
+        ZONE_TYPE.PROC_STMT_OPT_VALUE,
+        ZONE_TYPE.PROC_STMT_SUB_OPT,
+      ].includes(zone)
+    ) {
+      return optName;
+    }
+
+    const lineText = this.model
+      .getLine(position.line)
+      .substring(0, position.character);
+    const pattern = /([A-Za-z_][\w.]*)\s*=\s*\(/g;
+    let match: RegExpExecArray | null;
+    let parentOpt: string | undefined;
+    let parentOptStart = -1;
+
+    while ((match = pattern.exec(lineText)) !== null) {
+      parentOpt = match[1];
+      parentOptStart = match.index;
+    }
+
+    if (!parentOpt || parentOptStart < 0) {
+      return optName;
+    }
+    const tail = lineText.substring(parentOptStart);
+    const openCount = (tail.match(/\(/g) || []).length;
+    const closeCount = (tail.match(/\)/g) || []).length;
+
+    return openCount > closeCount ? parentOpt.toUpperCase() : optName;
   }
 
   private _getZone(position: Position) {

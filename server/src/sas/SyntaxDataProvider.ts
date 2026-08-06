@@ -1143,6 +1143,9 @@ function _setProcedureOptionValueFromPubs(
   if (val.description) {
     _setProcedureOptionValueHelp(procName, optName, name, val.description);
   }
+  if (val.help) {
+    db.procOpts[procName][optName][name][ID_SYNTAX] = val.help;
+  }
 }
 function _setProcedureOptionValuesFromPubs(
   procName: string,
@@ -1559,6 +1562,9 @@ function _setProcedureStatementOptionValueFromPubs(
       val.description,
     );
   }
+  if (val.help) {
+    db.procStmts[procName][stmtName][optName][name][ID_SYNTAX] = val.help;
+  }
 }
 function _setProcedureStatementOptionValuesFromPubs(
   procName: string,
@@ -1911,6 +1917,7 @@ export class SyntaxDataProvider {
           key: valName,
           data: data[ID_HELP],
           alias: data[ID_ALIAS],
+          syntax: data[ID_SYNTAX],
           supportSite: _procOptSupportSite(procName, optName),
         };
       }
@@ -2162,6 +2169,7 @@ export class SyntaxDataProvider {
           key: valName,
           data: data[ID_HELP],
           alias: data[ID_ALIAS],
+          syntax: data[ID_SYNTAX],
           supportSite: _procStmtOptSupportSite(procName, stmtName, optName),
         };
       } else {
@@ -2278,6 +2286,7 @@ export class SyntaxDataProvider {
           key: valName,
           data: data[ID_HELP],
           alias: data[ID_ALIAS],
+          syntax: data[ID_SYNTAX],
           supportSite: _stmtOptSupportSite(context, stmtName, optName),
         };
       }
