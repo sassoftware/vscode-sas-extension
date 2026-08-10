@@ -4,6 +4,7 @@ import {
   ConfigurationChangeEvent,
   Disposable,
   ExtensionContext,
+  UIKind,
   Uri,
   commands,
   env,
@@ -13,7 +14,6 @@ import {
 } from "vscode";
 
 import { createWriteStream } from "fs";
-import * as path from "path";
 
 import { profileConfig } from "../../commands/profile";
 import { Column } from "../../connection/rest/api/compute";
@@ -26,6 +26,7 @@ import LibraryAdapterFactory from "./LibraryAdapterFactory";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
 import PaginatedResultSet from "./PaginatedResultSet";
+import { streamTableToBrowserDownload } from "./browserDownload";
 import { Messages } from "./const";
 import { LibraryAdapter, LibraryItem, TableData } from "./types";
 
@@ -97,34 +98,59 @@ class LibraryNavigator implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.downloadTable",
         async (item: LibraryItem) => {
-          let dataFilePath: string = "";
-          if (
-            env.remoteName !== undefined &&
-            workspace.workspaceFolders &&
-            workspace.workspaceFolders.length > 0
-          ) {
-            // start from 'rootPath' workspace folder
-            dataFilePath = workspace.workspaceFolders[0].uri.fsPath;
+          const defaultFileName =
+            `${item.library}.${item.name}.csv`.toLocaleLowerCase();
+
+          // In web-enabled vscode distros, the native save dialog cannot write to the user's local
+          // file system, so skip it and stream directly to the browser.
+          // In this mode, the file will be downloaded to the browser's default download location.
+          if (env.uiKind === UIKind.Web) {
+            try {
+              await streamTableToBrowserDownload(
+                item,
+                defaultFileName,
+                this.libraryDataProvider,
+              );
+            } catch (error) {
+              window.showErrorMessage(
+                l10n.t("Failed to download table: {error}", {
+                  error: String(
+                    error?.message || error || "Unknown error",
+                  ).slice(0, 200),
+                }),
+              );
+            }
+            return;
           }
-          dataFilePath = path.join(
-            dataFilePath,
-            `${item.library}.${item.name}.csv`.toLocaleLowerCase(),
-          );
 
-          // display save file dialog
-          const uri = await window.showSaveDialog({
-            defaultUri: Uri.file(dataFilePath),
-          });
+          // Desktop mode: let the user pick a save location.
+          const defaultUri =
+            workspace.workspaceFolders && workspace.workspaceFolders.length > 0
+              ? Uri.joinPath(workspace.workspaceFolders[0].uri, defaultFileName)
+              : Uri.file(defaultFileName);
 
+          const uri = await window.showSaveDialog({ defaultUri });
           if (!uri) {
             return;
           }
 
-          const stream = createWriteStream(uri.fsPath);
-          await this.libraryDataProvider.writeTableContentsToStream(
-            stream,
-            item,
-          );
+          if (uri.scheme === "file") {
+            try {
+              await this.libraryDataProvider.writeTableContentsToStream(
+                createWriteStream(uri.fsPath),
+                item,
+              );
+            } catch (error) {
+              window.showErrorMessage(
+                l10n.t("Failed to download table: {error}", {
+                  error: String(
+                    error?.message || error || "Unknown error",
+                  ).slice(0, 200),
+                }),
+              );
+            }
+            return;
+          }
         },
       ),
       commands.registerCommand(
