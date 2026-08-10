@@ -293,10 +293,8 @@ export class CompletionProvider {
           start: { line: position.line, column: start },
           end: { line: position.line, column: end },
         });
-        const zone = this.czMgr.getCurrentZone(
-          position.line,
-          position.character,
-        );
+        this._getZone(position);
+        const zone = this.popupContext.zone;
         return new Promise((resolve) => {
           if (keyword.trim() === "") {
             resolve(undefined);
@@ -747,13 +745,18 @@ export class CompletionProvider {
   ) {
     let stmtName = _cleanUpKeyword(this.czMgr.getStmtName());
     let optName = _cleanUpKeyword(this.czMgr.getOptionName());
+    const subOptName = _cleanUpKeyword(this.czMgr.getSubOptionName());
     const procName = _cleanUpKeyword(this.czMgr.getProcName());
 
-    optName = this._resolveParenthesizedOptName(
-      zone,
-      optName,
-      this.popupContext.position,
-    );
+    if (zone === ZONE_TYPE.PROC_STMT_SUB_OPT_VALUE && subOptName) {
+      optName = subOptName;
+    } else {
+      optName = this._resolveParenthesizedOptName(
+        zone,
+        optName,
+        this.popupContext.position,
+      );
+    }
 
     this.popupContext.procName = procName;
     this.popupContext.stmtName = stmtName;
@@ -803,6 +806,7 @@ export class CompletionProvider {
         );
         break;
       case ZONE_TYPE.PROC_STMT_OPT_VALUE:
+      case ZONE_TYPE.PROC_STMT_SUB_OPT_VALUE:
         if (procName === "ODS") {
           stmtName = "ODS " + stmtName;
         }
@@ -1787,12 +1791,7 @@ export class CompletionProvider {
     }
 
     if (
-      ![
-        ZONE_TYPE.PROC_OPT_VALUE,
-        ZONE_TYPE.PROC_SUB_OPT_NAME,
-        ZONE_TYPE.PROC_STMT_OPT_VALUE,
-        ZONE_TYPE.PROC_STMT_SUB_OPT,
-      ].includes(zone)
+      ![ZONE_TYPE.PROC_SUB_OPT_NAME, ZONE_TYPE.PROC_STMT_SUB_OPT].includes(zone)
     ) {
       return optName;
     }
@@ -1823,7 +1822,22 @@ export class CompletionProvider {
   private _getZone(position: Position) {
     this.popupContext.position = position;
     this.popupContext.prefix = this._getPrefix(position);
-    const zone = this.czMgr.getCurrentZone(position.line, position.character);
+    let zone = this.czMgr.getCurrentZone(position.line, position.character);
+    const parentOptName = this._resolveParenthesizedOptName(
+      ZONE_TYPE.PROC_STMT_SUB_OPT,
+      "",
+      position,
+    );
+    if (parentOptName) {
+      if (zone === ZONE_TYPE.PROC_STMT_OPT) {
+        zone = ZONE_TYPE.PROC_STMT_SUB_OPT;
+      } else if (
+        zone === ZONE_TYPE.PROC_STMT_OPT_VALUE &&
+        this.czMgr.getSubOptionName()
+      ) {
+        zone = ZONE_TYPE.PROC_STMT_SUB_OPT_VALUE;
+      }
+    }
     this.popupContext.zone =
       this.popupContext.prefix.startsWith("&") &&
       zone !== ZONE_TYPE.COMMENT &&
