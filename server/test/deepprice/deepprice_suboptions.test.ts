@@ -41,6 +41,66 @@ const completionLabels = (items?: Array<{ label: unknown }>) =>
     return "";
   });
 
+type DeepPriceSyntaxDbStub = {
+  getProcedureStatementOptionValues: (
+    procName: string,
+    stmtName: string,
+    optName: string,
+    cb: (data?: { values?: string[] }) => void,
+  ) => string[] | undefined;
+  getProcedureStatementSubOptions: (
+    procName: string,
+    stmtName: string,
+    optName: string,
+    cb: (data: string[]) => void,
+  ) => string[] | undefined;
+};
+
+const stubDeepPriceSubOptions = (syntaxDb: DeepPriceSyntaxDbStub) => {
+  syntaxDb.getProcedureStatementOptionValues = (
+    procName: string,
+    stmtName: string,
+    optName: string,
+    cb: (data?: { values?: string[] }) => void,
+  ) => {
+    if (
+      procName === "DEEPPRICE" &&
+      stmtName === "DNN" &&
+      optName === "OPTIMIZE"
+    ) {
+      cb(undefined);
+      return undefined;
+    }
+
+    cb(undefined);
+    return undefined;
+  };
+
+  syntaxDb.getProcedureStatementSubOptions = (
+    procName: string,
+    stmtName: string,
+    optName: string,
+    cb: (data: string[]) => void,
+  ) => {
+    if (
+      procName === "DEEPPRICE" &&
+      stmtName === "DNN" &&
+      optName === "OPTIMIZE"
+    ) {
+      cb(["OPTIMIZE_CONTEXT"]);
+      return undefined;
+    }
+
+    if (procName === "DEEPPRICE" && stmtName === "DNN" && optName === "TRAIN") {
+      cb(["TRAIN_CONTEXT"]);
+      return undefined;
+    }
+
+    cb([]);
+    return undefined;
+  };
+};
+
 describe("DeepPrice sub-option behavior", () => {
   it("does not suggest sub-options for nodes=()", async () => {
     const doc = openDoc(
@@ -95,6 +155,7 @@ describe("DeepPrice sub-option behavior", () => {
       "server/testFixture/deepprice/deepprice_suboptions_multiline.sas",
     );
     const languageServer = new LanguageServiceProvider(doc);
+    stubDeepPriceSubOptions(languageServer.syntaxProvider.lexer.syntaxDb);
 
     const optimizePos = getPositionBySnippet(
       doc,
@@ -111,7 +172,7 @@ describe("DeepPrice sub-option behavior", () => {
     const labels = completionLabels(completion?.items);
 
     assert.isTrue(
-      labels.some((label) => label.startsWith("ALGORITHM")),
+      labels.includes("OPTIMIZE_CONTEXT"),
       `Expected OPTIMIZE sub-options after optimize=, got: ${labels.join(", ")}`,
     );
   });
@@ -121,6 +182,7 @@ describe("DeepPrice sub-option behavior", () => {
       "server/testFixture/deepprice/deepprice_suboptions_multiline.sas",
     );
     const languageServer = new LanguageServiceProvider(doc);
+    stubDeepPriceSubOptions(languageServer.syntaxProvider.lexer.syntaxDb);
 
     const quotedWherePos = getPositionBySnippet(
       doc,
@@ -137,7 +199,7 @@ describe("DeepPrice sub-option behavior", () => {
     const labels = completionLabels(completion?.items);
 
     assert.isTrue(
-      labels.some((label) => label.startsWith("OPTIMIZE")),
+      labels.includes("TRAIN_CONTEXT"),
       `Expected TRAIN sub-options after quoted parentheses, got: ${labels.join(", ")}`,
     );
   });

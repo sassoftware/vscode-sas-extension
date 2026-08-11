@@ -824,8 +824,6 @@ export class CompletionProvider {
               return;
             }
 
-            // For options whose value is a nested option list (e.g. OPTIMIZE=),
-            // fall back to sub-options so Ctrl+Space after '=' still returns hints.
             this.loader.getProcedureStatementSubOptions(
               procName,
               stmtName,
