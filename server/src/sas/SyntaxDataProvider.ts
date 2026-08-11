@@ -2118,9 +2118,8 @@ export class SyntaxDataProvider {
     return _tryToLoadProcedure(procName, cb, () => {
       const stmtOpt = _procStmtObj(procName, stmtName, optName);
       let data;
-      if (stmtOpt) {
-        data = stmtOpt[ID_SUB_OPTS];
-        data = data ? data[ID_KEYWORDS] : [];
+      if (stmtOpt && stmtOpt[ID_SUB_OPTS]) {
+        data = stmtOpt[ID_SUB_OPTS][ID_KEYWORDS];
       } else {
         data = this.getStatementSubOptions("global", stmtName, optName);
       }

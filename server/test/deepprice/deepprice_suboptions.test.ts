@@ -16,6 +16,31 @@ const openDoc = (path: string): TextDocument => {
   return TextDocument.create(path, "sas", 1, content);
 };
 
+const getPositionBySnippet = (
+  doc: TextDocument,
+  snippet: string,
+  offset = 0,
+) => {
+  const source = doc.getText();
+  const index = source.indexOf(snippet);
+  assert.isAtLeast(index, 0, `snippet not found: ${snippet}`);
+  return doc.positionAt(index + offset);
+};
+
+const completionLabels = (items?: Array<{ label: unknown }>) =>
+  (items || []).map((item) => {
+    if (typeof item.label === "string") {
+      return item.label.toUpperCase();
+    }
+    if (item.label && typeof item.label === "object") {
+      const labelValue = Reflect.get(item.label, "label");
+      if (typeof labelValue === "string") {
+        return labelValue.toUpperCase();
+      }
+    }
+    return "";
+  });
+
 describe("DeepPrice sub-option behavior", () => {
   it("does not suggest sub-options for nodes=()", async () => {
     const doc = openDoc(
@@ -63,5 +88,57 @@ describe("DeepPrice sub-option behavior", () => {
     }
     assert.isNotEmpty(help.data || "", "description should not be empty");
     assert.isNotEmpty(help.syntax || "", "syntax should not be empty");
+  });
+
+  it("suggests sub-options after optimize= in multiline train block", async () => {
+    const doc = openDoc(
+      "server/testFixture/deepprice/deepprice_suboptions_multiline.sas",
+    );
+    const languageServer = new LanguageServiceProvider(doc);
+
+    const optimizePos = getPositionBySnippet(
+      doc,
+      "optimize=",
+      "optimize=".length,
+    );
+    const params = {
+      textDocument: { uri: doc.uri },
+      position: optimizePos,
+    };
+
+    const completion =
+      await languageServer.completionProvider.getCompleteItems(params);
+    const labels = completionLabels(completion?.items);
+
+    assert.isTrue(
+      labels.some((label) => label.startsWith("ALGORITHM")),
+      `Expected OPTIMIZE sub-options after optimize=, got: ${labels.join(", ")}`,
+    );
+  });
+
+  it("keeps parent option context when quoted value contains parentheses", async () => {
+    const doc = openDoc(
+      "server/testFixture/deepprice/deepprice_suboptions_multiline.sas",
+    );
+    const languageServer = new LanguageServiceProvider(doc);
+
+    const quotedWherePos = getPositionBySnippet(
+      doc,
+      'where=")("',
+      'where=")("'.length,
+    );
+    const params = {
+      textDocument: { uri: doc.uri },
+      position: quotedWherePos,
+    };
+
+    const completion =
+      await languageServer.completionProvider.getCompleteItems(params);
+    const labels = completionLabels(completion?.items);
+
+    assert.isTrue(
+      labels.some((label) => label.startsWith("OPTIMIZE")),
+      `Expected TRAIN sub-options after quoted parentheses, got: ${labels.join(", ")}`,
+    );
   });
 });

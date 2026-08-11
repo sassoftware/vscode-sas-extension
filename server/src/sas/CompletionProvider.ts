@@ -750,6 +750,10 @@ export class CompletionProvider {
 
     if (zone === ZONE_TYPE.PROC_STMT_SUB_OPT_VALUE && subOptName) {
       optName = subOptName;
+    } else if (zone === ZONE_TYPE.PROC_STMT_SUB_OPT_VALUE) {
+      optName =
+        this._resolveAssignedOptNameAtCursor(this.popupContext.position) ||
+        optName;
     } else {
       optName = this._resolveParenthesizedOptName(
         zone,
@@ -815,7 +819,25 @@ export class CompletionProvider {
           stmtName,
           optName,
           (data) => {
-            this._notifyOptValue(cb, data, optName);
+            if (data && data.values && data.values.length > 0) {
+              this._notifyOptValue(cb, data, optName);
+              return;
+            }
+
+            // For options whose value is a nested option list (e.g. OPTIMIZE=),
+            // fall back to sub-options so Ctrl+Space after '=' still returns hints.
+            this.loader.getProcedureStatementSubOptions(
+              procName,
+              stmtName,
+              optName,
+              function (subOpts) {
+                if (subOpts && subOpts.length > 0) {
+                  cb(subOpts);
+                } else {
+                  cb(undefined);
+                }
+              },
+            );
           },
         );
         break;
@@ -1796,27 +1818,109 @@ export class CompletionProvider {
       return optName;
     }
 
-    const lineText = this.model
-      .getLine(position.line)
-      .substring(0, position.character);
-    const pattern = /([A-Za-z_][\w.]*)\s*=\s*\(/g;
-    let match: RegExpExecArray | null;
-    let parentOpt: string | undefined;
-    let parentOptStart = -1;
+    const parentOpt = this._resolveParenthesizedOptAtCursor(position);
+    return parentOpt || optName;
+  }
 
-    while ((match = pattern.exec(lineText)) !== null) {
-      parentOpt = match[1];
-      parentOptStart = match.index;
+  private _resolveParenthesizedOptAtCursor(position: Position) {
+    const textBeforeCaret = this.model.getText({
+      start: { line: 0, column: 0 },
+      end: { line: position.line, column: position.character },
+    });
+    const stack: Array<string | null> = [];
+    let inSingleQuote = false;
+    let inDoubleQuote = false;
+
+    for (let i = 0; i < textBeforeCaret.length; i++) {
+      const ch = textBeforeCaret[i];
+
+      if (inSingleQuote) {
+        if (ch === "'") {
+          if (textBeforeCaret[i + 1] === "'") {
+            i++;
+          } else {
+            inSingleQuote = false;
+          }
+        }
+        continue;
+      }
+
+      if (inDoubleQuote) {
+        if (ch === '"') {
+          if (textBeforeCaret[i + 1] === '"') {
+            i++;
+          } else {
+            inDoubleQuote = false;
+          }
+        }
+        continue;
+      }
+
+      if (ch === "'") {
+        inSingleQuote = true;
+        continue;
+      }
+      if (ch === '"') {
+        inDoubleQuote = true;
+        continue;
+      }
+
+      if (ch === ")") {
+        if (stack.length > 0) {
+          stack.pop();
+        }
+        continue;
+      }
+
+      if (ch !== "(") {
+        continue;
+      }
+
+      let j = i - 1;
+      while (j >= 0 && /\s/.test(textBeforeCaret[j])) {
+        j--;
+      }
+
+      if (j >= 0 && textBeforeCaret[j] === "=") {
+        j--;
+        while (j >= 0 && /\s/.test(textBeforeCaret[j])) {
+          j--;
+        }
+
+        const end = j;
+        while (j >= 0 && /[\w.]/.test(textBeforeCaret[j])) {
+          j--;
+        }
+
+        const candidate = textBeforeCaret.substring(j + 1, end + 1);
+        if (/^[A-Za-z_][\w.]*$/.test(candidate)) {
+          stack.push(candidate.toUpperCase());
+          continue;
+        }
+      }
+
+      stack.push(null);
     }
 
-    if (!parentOpt || parentOptStart < 0) {
-      return optName;
+    for (let i = stack.length - 1; i >= 0; i--) {
+      if (stack[i]) {
+        return stack[i] as string;
+      }
     }
-    const tail = lineText.substring(parentOptStart);
-    const openCount = (tail.match(/\(/g) || []).length;
-    const closeCount = (tail.match(/\)/g) || []).length;
+    return undefined;
+  }
 
-    return openCount > closeCount ? parentOpt.toUpperCase() : optName;
+  private _resolveAssignedOptNameAtCursor(position?: Position) {
+    if (!position) {
+      return undefined;
+    }
+
+    const textBeforeCaret = this.model.getText({
+      start: { line: 0, column: 0 },
+      end: { line: position.line, column: position.character },
+    });
+    const match = /([A-Za-z_][\w.]*)\s*=\s*$/m.exec(textBeforeCaret);
+    return match ? match[1].toUpperCase() : undefined;
   }
 
   private _getZone(position: Position) {
