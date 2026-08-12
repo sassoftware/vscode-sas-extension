@@ -4,58 +4,54 @@ import { useRef } from "react";
 
 import { AgColumn, GridApi } from "ag-grid-community";
 
+import {
+  classifyFormatIcon,
+  getIconLabel,
+} from "../panels/columnIconClassifier";
 import localize from "./localize";
 import useTheme from "./useTheme";
 
-const getIconForColumnType = (type: string) => {
-  switch (type.toLocaleLowerCase()) {
-    case "float":
-    case "num":
-      return "float";
-    case "date":
-      return "date";
-    case "time":
-      return "time";
-    case "datetime":
-      return "date-time";
-    case "currency":
-      return "currency";
-    case "char":
+const getIconForColumn = (type: string, format?: string) => {
+  const formatIcon = classifyFormatIcon(format);
+  if (formatIcon) {
+    return formatIcon;
+  }
+
+  switch (type.toUpperCase()) {
+    case "CHAR":
+    case "CHARACTER":
       return "char";
+
+    case "FLOAT":
+    case "NUM":
+    case "NUMERIC":
+    case "DATE":
+    case "TIME":
+    case "DATETIME":
+    case "CURRENCY":
+      return "float";
+
     default:
       return "";
   }
 };
 
-const getTermForColumnType = (type: string) => {
-  switch (type.toLocaleLowerCase()) {
-    case "float":
-    case "num":
-      return localize("Numeric");
-    case "date":
-      return localize("Date");
-    case "time":
-    case "datetime":
-      return localize("Datetime");
-    case "currency":
-      return localize("Currency");
-    case "char":
-    default:
-      return localize("Character");
-  }
-};
+const getTermForIcon = (icon: string) =>
+  localize(getIconLabel(icon) || "Character");
 
 const ColumnHeader = ({
   api,
   column,
   currentColumn: getCurrentColumn,
   columnType,
+  columnFormat,
   displayMenuForColumn,
 }: {
   api: GridApi;
   column: AgColumn;
   currentColumn: () => AgColumn | undefined;
   columnType: string;
+  columnFormat?: string;
   displayMenuForColumn: (api: GridApi, column: AgColumn, rect: DOMRect) => void;
 }) => {
   const theme = useTheme();
@@ -71,6 +67,7 @@ const ColumnHeader = ({
     sort === "asc"
       ? localize("Sorted, Ascending")
       : localize("Sorted, Descending");
+  const columnIcon = getIconForColumn(columnType, columnFormat);
 
   const displayColumnMenu = () =>
     displayMenuForColumn(api, column, ref.current.getBoundingClientRect());
@@ -79,8 +76,8 @@ const ColumnHeader = ({
     <div className={`ag-cell-label-container ${theme}`} role="presentation">
       <div className="ag-header-cell-label" role="presentation">
         <span
-          className={`header-icon ${getIconForColumnType(columnType)}`}
-          title={getTermForColumnType(columnType)}
+          className={`header-icon ${columnIcon}`}
+          title={getTermForIcon(columnIcon)}
         />
         <span className="ag-header-cell-text" title={column.colId}>
           {column.colId}
