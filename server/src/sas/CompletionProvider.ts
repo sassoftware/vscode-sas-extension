@@ -1801,30 +1801,108 @@ export class CompletionProvider {
     }
   }
 
+  private _isParenthesizedResolutionZone(zone: number): boolean {
+    return (
+      zone === ZONE_TYPE.PROC_SUB_OPT_NAME ||
+      zone === ZONE_TYPE.PROC_STMT_SUB_OPT
+    );
+  }
+
+  private _toOptionIdentifier(candidate?: string): string | undefined {
+    if (!candidate) {
+      return undefined;
+    }
+    return /^[A-Za-z_][\w.]*$/.test(candidate)
+      ? candidate.toUpperCase()
+      : undefined;
+  }
+
+  private _extractOptionIdentifierBackward(
+    text: string,
+    endIndexInclusive: number,
+  ): string | undefined {
+    let j = endIndexInclusive;
+
+    while (j >= 0 && /\s/.test(text[j])) {
+      j--;
+    }
+    if (j < 0 || text[j] !== "=") {
+      return undefined;
+    }
+
+    j--;
+    while (j >= 0 && /\s/.test(text[j])) {
+      j--;
+    }
+
+    const end = j;
+    while (j >= 0 && /[\w.]/.test(text[j])) {
+      j--;
+    }
+
+    return this._toOptionIdentifier(text.substring(j + 1, end + 1));
+  }
+
+  private _buildRelevantTextWindow(position: Position, maxLines = 50): string {
+    const startLine = Math.max(0, position.line - maxLines);
+    let text = "";
+
+    for (let line = startLine; line <= position.line; line++) {
+      const lineText = this.model.getLine(line);
+      const syntax = this.syntaxProvider.getSyntax(line);
+      const lineEnd =
+        line === position.line ? position.character : lineText.length;
+
+      if (!syntax || syntax.length === 0) {
+        text += lineText.substring(0, lineEnd) + "\n";
+        continue;
+      }
+
+      for (let i = 0; i < syntax.length; i++) {
+        const tokenStart = syntax[i].start;
+        const tokenEnd =
+          i + 1 < syntax.length ? syntax[i + 1].start : lineText.length;
+
+        if (tokenStart >= lineEnd) {
+          break;
+        }
+
+        const from = tokenStart;
+        const to = Math.min(tokenEnd, lineEnd);
+
+        if (
+          syntax[i].style === "comment" ||
+          syntax[i].style === "macro-comment"
+        ) {
+          text += " ";
+          continue;
+        }
+
+        text += lineText.substring(from, to);
+      }
+      text += "\n";
+    }
+
+    return text;
+  }
+
   private _resolveParenthesizedOptName(
     zone: number,
     optName: string,
     position?: Position,
-  ) {
-    if (!position) {
-      return optName;
-    }
-
-    if (
-      ![ZONE_TYPE.PROC_SUB_OPT_NAME, ZONE_TYPE.PROC_STMT_SUB_OPT].includes(zone)
-    ) {
+  ): string {
+    if (!position || !this._isParenthesizedResolutionZone(zone)) {
       return optName;
     }
 
     const parentOpt = this._resolveParenthesizedOptAtCursor(position);
-    return parentOpt || optName;
+    return parentOpt ?? optName;
   }
 
-  private _resolveParenthesizedOptAtCursor(position: Position) {
-    const textBeforeCaret = this.model.getText({
-      start: { line: 0, column: 0 },
-      end: { line: position.line, column: position.character },
-    });
+  private _resolveParenthesizedOptAtCursor(
+    position: Position,
+  ): string | undefined {
+    const textBeforeCaret = this._buildRelevantTextWindow(position, 50);
     const stack: Array<string | null> = [];
     let inSingleQuote = false;
     let inDoubleQuote = false;
@@ -1874,30 +1952,11 @@ export class CompletionProvider {
         continue;
       }
 
-      let j = i - 1;
-      while (j >= 0 && /\s/.test(textBeforeCaret[j])) {
-        j--;
-      }
-
-      if (j >= 0 && textBeforeCaret[j] === "=") {
-        j--;
-        while (j >= 0 && /\s/.test(textBeforeCaret[j])) {
-          j--;
-        }
-
-        const end = j;
-        while (j >= 0 && /[\w.]/.test(textBeforeCaret[j])) {
-          j--;
-        }
-
-        const candidate = textBeforeCaret.substring(j + 1, end + 1);
-        if (/^[A-Za-z_][\w.]*$/.test(candidate)) {
-          stack.push(candidate.toUpperCase());
-          continue;
-        }
-      }
-
-      stack.push(null);
+      const candidate = this._extractOptionIdentifierBackward(
+        textBeforeCaret,
+        i - 1,
+      );
+      stack.push(candidate ?? null);
     }
 
     for (let i = stack.length - 1; i >= 0; i--) {
@@ -1908,17 +1967,22 @@ export class CompletionProvider {
     return undefined;
   }
 
-  private _resolveAssignedOptNameAtCursor(position?: Position) {
+  private _findLastAssignedOptionName(
+    textBeforeCaret: string,
+  ): string | undefined {
+    const match = /([A-Za-z_][\w.]*)\s*=\s*$/m.exec(textBeforeCaret);
+    return this._toOptionIdentifier(match ? match[1] : undefined);
+  }
+
+  private _resolveAssignedOptNameAtCursor(
+    position?: Position,
+  ): string | undefined {
     if (!position) {
       return undefined;
     }
 
-    const textBeforeCaret = this.model.getText({
-      start: { line: 0, column: 0 },
-      end: { line: position.line, column: position.character },
-    });
-    const match = /([A-Za-z_][\w.]*)\s*=\s*$/m.exec(textBeforeCaret);
-    return match ? match[1].toUpperCase() : undefined;
+    const textBeforeCaret = this._buildRelevantTextWindow(position, 10);
+    return this._findLastAssignedOptionName(textBeforeCaret);
   }
 
   private _getZone(position: Position) {
