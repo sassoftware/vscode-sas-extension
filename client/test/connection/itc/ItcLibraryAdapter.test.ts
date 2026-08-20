@@ -1,4 +1,6 @@
 import { expect } from "chai";
+import { readFileSync } from "fs";
+import { join } from "path";
 import proxyquire from "proxyquire";
 import sinon from "sinon";
 
@@ -160,6 +162,112 @@ describe("ItcLibraryAdapter tests", () => {
     expect(tableData).to.eql(expectedTableData);
   });
 
+  it("drops temporary filtered views regardless of sort criteria", () => {
+    const scriptPath = join(
+      __dirname,
+      "../../../../src/connection/itc/script/itc.ps1",
+    );
+    const script = readFileSync(scriptPath, "utf8");
+
+    expect(script).to.match(/if \(\$sortCriteria -ne ""\)/);
+    expect(script).to.match(/DROP VIEW \$tableName/);
+  });
+
+  it("sanitizes single quotes in filters before sending them to PowerShell", async () => {
+    const item: LibraryItem = {
+      uid: "test",
+      type: "table",
+      id: "test",
+      name: "TEST",
+      readOnly: true,
+    };
+
+    const allRowsOutput = JSON.stringify({
+      rows: [
+        ["Peter", "Parker"],
+        ["Tony", "Stark"],
+      ],
+      count: 2,
+    });
+
+    const filteredRowsOutput = JSON.stringify({
+      rows: [["Peter", "Parker"]],
+      count: 1,
+    });
+
+    const executeRawCodeStub = sinon
+      .stub()
+      .onFirstCall()
+      .resolves(allRowsOutput)
+      .onSecondCall()
+      .resolves(filteredRowsOutput);
+    const codeRunner = {
+      executeRawCode: executeRawCodeStub,
+      runCode: sinon.stub(),
+    };
+    const ItcLibraryAdapterWithStub = proxyquire(
+      "../../../src/connection/itc/ItcLibraryAdapter",
+      {
+        "./CodeRunner": codeRunner,
+      },
+    ).default;
+
+    const libraryAdapter = new ItcLibraryAdapterWithStub();
+
+    const unfilteredTableData = await libraryAdapter.getRows(item, 0, 100, []);
+
+    const filteredTableData = await libraryAdapter.getRows(item, 0, 100, [], {
+      filterValue: "first='Peter'",
+    });
+
+    expect(unfilteredTableData).to.eql({
+      rows: [
+        { cells: ["1", "Peter", "Parker"] },
+        { cells: ["2", "Tony", "Stark"] },
+      ],
+      count: 2,
+    });
+
+    expect(executeRawCodeStub.secondCall.args[0]).to.match(/first.*Peter/);
+
+    expect(filteredTableData).to.eql({
+      rows: [{ cells: ["1", "Peter", "Parker"] }],
+      count: 1,
+    });
+  });
+
+  it("returns an empty dataset when ITC script errors occur for filters", async () => {
+    const item: LibraryItem = {
+      uid: "test",
+      type: "table",
+      id: "test",
+      name: "TEST",
+      readOnly: true,
+    };
+
+    const executeRawCodeStub = sinon
+      .stub()
+      .resolves("<ITCError>GetDatasetRecords error: invalid filter</ITCError>");
+    const codeRunner = {
+      executeRawCode: executeRawCodeStub,
+      runCode: sinon.stub(),
+    };
+    const ItcLibraryAdapterWithStub = proxyquire(
+      "../../../src/connection/itc/ItcLibraryAdapter",
+      {
+        "./CodeRunner": codeRunner,
+      },
+    ).default;
+
+    const libraryAdapter = new ItcLibraryAdapterWithStub();
+
+    const tableData = await libraryAdapter.getRows(item, 0, 100, [], {
+      filterValue: "I_KNOW_THIS_WONT_WORK=1",
+    });
+
+    expect(tableData).to.eql({ rows: [], count: 0 });
+  });
+
   it("loads table data for csv output", async () => {
     const item: LibraryItem = {
       uid: "test",
@@ -255,5 +363,74 @@ describe("ItcLibraryAdapter tests", () => {
 
     expect(response.items).to.eql(expectedTables);
     expect(response.count).to.equal(-1);
+  });
+
+  it("returns no results for invalid filter and all results when filter is cleared", async () => {
+    const item: LibraryItem = {
+      uid: "test",
+      type: "table",
+      id: "test",
+      name: "TEST",
+      readOnly: true,
+    };
+
+    const allRowsOutput = JSON.stringify({
+      rows: [
+        ["Peter", "Parker"],
+        ["Tony", "Stark"],
+        ["Bruce", "Banner"],
+      ],
+      count: 3,
+    });
+
+    const noRowsOutput = JSON.stringify({
+      rows: [],
+      count: 0,
+    });
+
+    const executeRawCodeStub = sinon
+      .stub()
+      .onFirstCall()
+      .resolves(noRowsOutput)
+      .onSecondCall()
+      .resolves(allRowsOutput);
+
+    const codeRunner = {
+      executeRawCode: executeRawCodeStub,
+      runCode: sinon.stub(),
+    };
+
+    const ItcLibraryAdapterWithStub = proxyquire(
+      "../../../src/connection/itc/ItcLibraryAdapter",
+      {
+        "./CodeRunner": codeRunner,
+      },
+    ).default;
+
+    const libraryAdapter = new ItcLibraryAdapterWithStub();
+
+    // Test 1: Invalid filter returns no results
+    const tableDataWithFilter = await libraryAdapter.getRows(item, 0, 100, [], {
+      filterValue: "TEST=1",
+    });
+
+    expect(tableDataWithFilter).to.eql({ rows: [], count: 0 });
+
+    // Test 2: Clearing filter returns all rows
+    const tableDataWithoutFilter = await libraryAdapter.getRows(
+      item,
+      0,
+      100,
+      [],
+    );
+
+    expect(tableDataWithoutFilter).to.eql({
+      rows: [
+        { cells: ["1", "Peter", "Parker"] },
+        { cells: ["2", "Tony", "Stark"] },
+        { cells: ["3", "Bruce", "Banner"] },
+      ],
+      count: 3,
+    });
   });
 });

@@ -67,6 +67,12 @@ class DataViewer extends WebView {
     return `<div class="data-viewer-container" data-title="${this.title}"></div>`;
   }
 
+  public refreshData() {
+    this.panel.webview.postMessage({
+      command: "panel:refreshData",
+    });
+  }
+
   public async processMessage(
     event: Event & {
       key: string;

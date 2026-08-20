@@ -472,8 +472,7 @@ class ContentDataProvider
   }
 
   public readDirectory():
-    | [string, FileType][]
-    | Thenable<[string, FileType][]> {
+    [string, FileType][] | Thenable<[string, FileType][]> {
     throw new Error("Method not implemented.");
   }
 
@@ -494,17 +493,35 @@ class ContentDataProvider
     target: ContentItem,
   ): Promise<void> {
     const failedUploads = [];
+    let folderUploadSucceeded = false;
     for (let i = 0; i < uris.length; ++i) {
       const uri = uris[i];
       const fileName = basename(uri.fsPath);
       if (lstatSync(uri.fsPath).isDirectory()) {
-        const success = await this.handleFolderDrop(target, uri.fsPath, false);
-        !success && failedUploads.push(fileName);
+        const createdFolder = await this.handleFolderDrop(
+          target,
+          uri.fsPath,
+          false,
+        );
+        if (!createdFolder) {
+          failedUploads.push(fileName);
+        } else {
+          folderUploadSucceeded = true;
+          await this.handleCreationResponse(
+            target,
+            createdFolder.vscUri,
+            l10n.t(Messages.FileUploadError),
+          );
+        }
       } else {
         const file = await workspace.fs.readFile(uri);
         const newUri = await this.createFile(target, fileName, file);
         !newUri && failedUploads.push(fileName);
       }
+    }
+
+    if (folderUploadSucceeded) {
+      this.refresh();
     }
 
     if (failedUploads.length > 0) {
@@ -716,7 +733,7 @@ class ContentDataProvider
     target: ContentItem,
     path: string,
     displayErrorMessages: boolean = true,
-  ): Promise<boolean> {
+  ): Promise<ContentItem | undefined> {
     const folderName = basename(path);
     const folder = await this.model.createFolder(target, folderName);
     let success = true;
@@ -728,7 +745,7 @@ class ContentDataProvider
           }),
         );
 
-      return false;
+      return;
     }
 
     // Read all the files in the folder and upload them
@@ -740,7 +757,7 @@ class ContentDataProvider
           await promisify(lstat)(fileOrFolder)
         ).isDirectory();
         if (isDirectory) {
-          success = await this.handleFolderDrop(folder, fileOrFolder);
+          success = !!(await this.handleFolderDrop(folder, fileOrFolder));
         } else {
           const name = basename(fileOrFolder);
           const fileCreated = await this.createFile(
@@ -761,7 +778,7 @@ class ContentDataProvider
       }),
     );
 
-    return success;
+    return success ? folder : undefined;
   }
 
   private async handleDataTransferItemDrop(
@@ -779,8 +796,11 @@ class ContentDataProvider
         ).isDirectory();
 
         if (isDirectory) {
-          const success = await this.handleFolderDrop(target, itemUri.fsPath);
-          if (success) {
+          const createdFolder = await this.handleFolderDrop(
+            target,
+            itemUri.fsPath,
+          );
+          if (createdFolder) {
             this.refresh();
           }
 
