@@ -1,5 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import type { Column } from "./rest/api/compute";
 
 export function extractOutputHtmlFileName(
   line: string,
@@ -28,13 +29,9 @@ export const extractTextBetweenTags = (
 export const getColumnIconType = ({
   type,
   format,
-}: {
-  index: number;
-  type: string;
-  name: string;
-  format: string;
-}) => {
-  format = format.toUpperCase();
+}: Pick<Column, "type" | "format">) => {
+  const formatName = typeof format === "string" ? format : (format?.name ?? "");
+  const normalizedFormat = formatName.toUpperCase();
 
   const isDateFormat = () =>
     [
@@ -49,7 +46,7 @@ export const getColumnIconType = ({
       "MONTH",
       "MON",
       "DOWNAME",
-    ].some((f) => format.includes(f)) &&
+    ].some((f) => normalizedFormat.includes(f)) &&
     ![
       "TIME",
       "HH",
@@ -61,21 +58,24 @@ export const getColumnIconType = ({
       "NLDATM",
       "NLDATMAP",
       "NLDATMW",
-    ].some((f) => format.includes(f));
+    ].some((f) => normalizedFormat.includes(f));
 
   const isTimeFormat = () =>
     ["TIME", "TIMAP", "HOUR", "HH", "MM", "SS", "NLDATMTM"].some((f) =>
-      format.includes(f),
-    ) && !["DATEAMPM", "DATETIME", "COMMA"].some((f) => format.includes(f));
+      normalizedFormat.includes(f),
+    ) &&
+    !["DATEAMPM", "DATETIME", "COMMA"].some((f) =>
+      normalizedFormat.includes(f),
+    );
 
   const isDateTimeFormat = () =>
     ["DATEAMPM", "DATETIME", "NLDATM", "NLDATMAP", "NLDATMW"].some((f) =>
-      format.includes(f),
+      normalizedFormat.includes(f),
     );
 
   const isCurrencyFormat = () =>
     ["NLMNI", "NLMNL", "NLMNY", "YEN", "DOLLAR", "EURO"].some((f) =>
-      format.includes(f),
+      normalizedFormat.includes(f),
     );
 
   if (type !== "num") {
