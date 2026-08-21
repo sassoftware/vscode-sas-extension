@@ -102,54 +102,45 @@ class ContentNavigator implements SubscriptionProvider {
       commands.registerCommand(
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
-          this.getTreeViewSelections(item).forEach(
-            async (resource: ContentItem) => {
-              if (!resource.contextValue.includes("delete")) {
-                return;
-              }
-              const isContainer = getIsContainer(resource);
-              const hasUnsavedFiles = isContainer
-                ? await this.contentDataProvider.checkFolderDirty(resource)
-                : false;
-              const moveToRecycleBin =
-                this.contentDataProvider.canRecycleResource(resource);
-
-              if (
-                !moveToRecycleBin &&
-                !(await window.showWarningMessage(
-                  l10n.t(Messages.DeleteWarningMessage, {
-                    name: resource.name,
-                  }),
-                  { modal: true },
-                  Messages.DeleteButtonLabel,
-                ))
-              ) {
-                return;
-              } else if (moveToRecycleBin && hasUnsavedFiles) {
-                if (
-                  !(await window.showWarningMessage(
-                    l10n.t(Messages.RecycleDirtyFolderWarning, {
-                      name: resource.name,
-                    }),
-                    { modal: true },
-                    Messages.MoveToRecycleBinLabel,
-                  ))
-                ) {
-                  return;
-                }
-              }
-              const deleteResult = moveToRecycleBin
-                ? await this.contentDataProvider.recycleResource(resource)
-                : await this.contentDataProvider.deleteResource(resource);
-              if (!deleteResult) {
-                window.showErrorMessage(
-                  isContainer
-                    ? Messages.FolderDeletionError
-                    : Messages.FileDeletionError,
-                );
-              }
-            },
+          const resource = this.getTreeViewSelections(item).filter((resource) =>
+            resource.contextValue?.includes("delete"),
           );
+          if (!resource.length) {
+            return;
+          }
+
+          const deleteStates = await Promise.all(
+            resource.map(async (resource) => {
+              const isContainer = getIsContainer(resource);
+              return {
+                resource,
+                isContainer,
+                hasUnsavedFiles: isContainer
+                  ? await this.contentDataProvider.checkFolderDirty(resource)
+                  : false,
+                moveToRecycleBin:
+                  this.contentDataProvider.canRecycleResource(resource),
+              };
+            }),
+          );
+
+          if (!(await this.confirmDelete(deleteStates))) {
+            return;
+          }
+
+          for (const deleteState of deleteStates) {
+            const { resource, isContainer, moveToRecycleBin } = deleteState;
+            const deleteResult = moveToRecycleBin
+              ? await this.contentDataProvider.recycleResource(resource)
+              : await this.contentDataProvider.deleteResource(resource);
+            if (!deleteResult) {
+              window.showErrorMessage(
+                isContainer
+                  ? Messages.FolderDeletionError
+                  : Messages.FileDeletionError,
+              );
+            }
+          }
         },
       ),
       commands.registerCommand(
@@ -455,6 +446,50 @@ class ContentNavigator implements SubscriptionProvider {
     if (commandExists) {
       commands.executeCommand(collapeAllCmd);
     }
+  }
+
+  private async confirmDelete(
+    deleteStates: {
+      resource: ContentItem;
+      isContainer: boolean;
+      hasUnsavedFiles: boolean;
+      moveToRecycleBin: boolean;
+    }[],
+  ): Promise<boolean> {
+    const requiresPermanentDelete = deleteStates.some(
+      ({ moveToRecycleBin }) => !moveToRecycleBin,
+    );
+    const hasDirtyFolders = deleteStates.some(
+      ({ hasUnsavedFiles }) => hasUnsavedFiles,
+    );
+
+    let confirmed = true;
+    if (hasDirtyFolders) {
+      confirmed = !!(await window.showWarningMessage(
+        l10n.t(Messages.DirtyFolderWarning),
+        { modal: true },
+        requiresPermanentDelete
+          ? Messages.DeleteButtonLabel
+          : Messages.MoveToRecycleBinLabel,
+      ));
+    } else if (requiresPermanentDelete) {
+      const message =
+        deleteStates.length === 1
+          ? l10n.t(Messages.DeleteWarningMessage, {
+              name: deleteStates[0].resource.name,
+            })
+          : l10n.t(Messages.DeleteDirtyItemsWarningMessage, {
+              count: deleteStates.length,
+            });
+
+      confirmed = !!(await window.showWarningMessage(
+        message,
+        { modal: true },
+        Messages.DeleteButtonLabel,
+      ));
+    }
+
+    return confirmed;
   }
 
   private async uploadResource(
