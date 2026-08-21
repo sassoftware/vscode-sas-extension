@@ -231,7 +231,8 @@ const useDataViewer = () => {
         field: column.name,
         headerComponent: ColumnHeader,
         headerComponentParams: {
-          columnType: column.type,
+          columnType: column.type || "",
+          columnFormat: column.format?.name,
           currentColumn: () => columnMenuRef.current?.column,
           displayMenuForColumn,
         },
