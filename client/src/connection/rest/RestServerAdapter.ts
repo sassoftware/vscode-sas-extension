@@ -1,6 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { FileType, Uri } from "vscode";
+import { FileType, Uri, commands } from "vscode";
 
 import { AxiosResponse } from "axios";
 
@@ -90,15 +90,25 @@ class RestServerAdapter implements ContentAdapter {
     // Overwrite file nav settings with data coming from the compute context
     if (session.contextAttributes) {
       const attributes = await session.contextAttributes();
-      if (
-        attributes &&
-        (attributes.fileNavigationCustomRootPath ||
-          attributes.fileNavigationRoot)
-      ) {
-        this.fileNavigationSetByAdmin = true;
-        this.fileNavigationCustomRootPath =
-          attributes.fileNavigationCustomRootPath ?? "";
-        this.fileNavigationRoot = attributes.fileNavigationRoot ?? "USER";
+      if (attributes) {
+        if (
+          attributes.fileNavigationCustomRootPath ||
+          attributes.fileNavigationRoot
+        ) {
+          this.fileNavigationSetByAdmin = true;
+          this.fileNavigationCustomRootPath =
+            attributes.fileNavigationCustomRootPath ?? "";
+          this.fileNavigationRoot = attributes.fileNavigationRoot ?? "USER";
+        }
+        // What we get from the compute context is a string, so we'll make sure it is a valid boolean
+        const allowDownload = attributes.allowDownload?.toLowerCase();
+        if (allowDownload === "true" || allowDownload === "false") {
+          commands.executeCommand(
+            "setContext",
+            "SAS.allowDownload",
+            allowDownload === "true",
+          );
+        }
       }
     }
 
