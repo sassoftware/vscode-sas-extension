@@ -250,7 +250,7 @@ class ContentDataProvider
 
   public async provideTextDocumentContent(uri: Uri): Promise<string> {
     // use text document content provider to display the readonly editor for the files in the recycle bin
-    return await this.model.getContentByUri(uri);
+    return (await this.model.getContentByUri(uri)).toString();
   }
 
   public getChildren(item?: ContentItem): ProviderResult<ContentItem[]> {
@@ -269,34 +269,7 @@ class ContentDataProvider
   }
 
   public async readFile(uri: Uri): Promise<Uint8Array> {
-    const fileName = uri.path.split("/").pop() || "";
-    const extension = fileName.split(".").pop()?.toLowerCase() || "";
-    const binaryExtensions = [
-      "png",
-      "jpg",
-      "jpeg",
-      "gif",
-      "bmp",
-      "tiff",
-      "webp",
-      "svg",
-      "pdf",
-      "zip",
-      "tar",
-      "gz",
-      "exe",
-      "dll",
-      "so",
-      "bin",
-    ];
-
-    if (binaryExtensions.includes(extension)) {
-      return await this.model.getContentByUriAsBinary(uri);
-    }
-
-    return await this.model
-      .getContentByUri(uri)
-      .then((content) => new TextEncoder().encode(content));
+    return await this.model.getContentByUri(uri);
   }
 
   public async createFolder(
@@ -502,7 +475,8 @@ class ContentDataProvider
   }
 
   public readDirectory():
-    [string, FileType][] | Thenable<[string, FileType][]> {
+    | [string, FileType][]
+    | Thenable<[string, FileType][]> {
     throw new Error("Method not implemented.");
   }
 

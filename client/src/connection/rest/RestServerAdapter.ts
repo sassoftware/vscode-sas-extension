@@ -315,22 +315,17 @@ class RestServerAdapter implements ContentAdapter {
     return sortedContentItems(allItems);
   }
 
-  public async getContentOfItem(item: ContentItem): Promise<string> {
+  public async getContentOfItem(item: ContentItem): Promise<Uint8Array> {
     const path = this.trimComputePrefix(item.uri);
     return await this.getContentOfItemAtPath(path);
   }
 
-  public async getContentOfUri(uri: Uri): Promise<string> {
+  public async getContentOfUri(uri: Uri): Promise<Uint8Array> {
     const path = this.trimComputePrefix(getResourceId(uri));
     return await this.getContentOfItemAtPath(path);
   }
 
-  public async getContentOfUriAsBinary(uri: Uri): Promise<Uint8Array> {
-    const content = await this.getContentOfUri(uri);
-    return Buffer.from(content, "binary");
-  }
-
-  private async getContentOfItemAtPath(path: string) {
+  private async getContentOfItemAtPath(path: string): Promise<Uint8Array> {
     const response = await this.fileSystemApi.getFileContentFromSystem(
       {
         sessionId: this.sessionId,
@@ -345,9 +340,9 @@ class RestServerAdapter implements ContentAdapter {
 
     // Disabling typescript checks on this line as this function is typed
     // to return AxiosResponse<void,any>. However, it appears to return
-    // AxiosResponse<string,>.
+    // AxiosResponse<Uint8Array,>.
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return response.data as unknown as string;
+    return response.data as unknown as Uint8Array;
   }
 
   public async getFolderPathForItem(): Promise<string> {
