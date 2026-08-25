@@ -362,7 +362,7 @@ class ContentDataProvider
   }
 
   public writeFile(uri: Uri, content: Uint8Array): void | Promise<void> {
-    return this.model.saveContentToUri(uri, new TextDecoder().decode(content));
+    return this.model.saveContentToUri(uri, content);
   }
 
   public async deleteResource(item: ContentItem): Promise<boolean> {

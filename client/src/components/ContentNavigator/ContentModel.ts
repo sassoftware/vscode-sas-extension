@@ -135,7 +135,7 @@ export class ContentModel {
     return await this.contentAdapter.renameItem(item, name);
   }
 
-  public async saveContentToUri(uri: Uri, content: string): Promise<void> {
+  public async saveContentToUri(uri: Uri, content: Uint8Array): Promise<void> {
     await this.contentAdapter.updateContentOfItem(uri, content);
   }
 

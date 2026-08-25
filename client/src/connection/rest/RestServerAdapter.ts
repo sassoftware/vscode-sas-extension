@@ -488,14 +488,17 @@ class RestServerAdapter implements ContentAdapter {
     }
   }
 
-  public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
+  public async updateContentOfItem(
+    uri: Uri,
+    content: Uint8Array,
+  ): Promise<void> {
     const filePath = this.trimComputePrefix(getResourceId(uri));
     return await this.updateContentOfItemAtPath(filePath, content);
   }
 
   private async updateContentOfItemAtPath(
     filePath: string,
-    content: string | ArrayBufferLike,
+    content: Uint8Array | ArrayBufferLike,
   ): Promise<void> {
     const { etag } = await this.getFileInfo(filePath);
     const data = {

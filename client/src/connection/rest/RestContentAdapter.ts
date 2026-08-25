@@ -514,7 +514,10 @@ class RestContentAdapter implements ContentAdapter {
     return true;
   }
 
-  public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
+  public async updateContentOfItem(
+    uri: Uri,
+    content: Uint8Array,
+  ): Promise<void> {
     const resourceId = getResourceId(uri);
     const { etag, lastModified, contentType } = this.getFileInfo(resourceId);
     const headers = {

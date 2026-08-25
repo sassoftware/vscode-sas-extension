@@ -332,12 +332,15 @@ class ItcServerAdapter implements ContentAdapter {
     }
   }
 
-  public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
+  public async updateContentOfItem(
+    uri: Uri,
+    content: Uint8Array,
+  ): Promise<void> {
     try {
       const item = await this.getItemAtPath(getResourceId(uri));
       await this.execute(ScriptActions.UpdateFile, {
         filePath: item.uri,
-        content,
+        content: Buffer.from(content).toString("base64"),
       });
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
