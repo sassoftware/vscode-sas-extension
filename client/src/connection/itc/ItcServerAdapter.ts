@@ -262,12 +262,6 @@ class ItcServerAdapter implements ContentAdapter {
     return (await this.getContentOfItem(item)) || new Uint8Array();
   }
 
-  public async getContentOfUriAsBinary(uri: Uri): Promise<Uint8Array> {
-    const item = await this.getItemAtPath(getResourceId(uri));
-    const content = await this.getContentOfItem(item);
-    return Buffer.from(content, "binary");
-  }
-
   public async getItemOfUri(uri: Uri): Promise<ContentItem> {
     return this.getItemAtPath(getResourceId(uri));
   }
