@@ -71,6 +71,20 @@ export class ContentModel {
     return data;
   }
 
+  public async getContentByUriAsBinary(uri: Uri): Promise<Uint8Array> {
+    try {
+      if (this.contentAdapter.getContentOfUriAsBinary) {
+        return await this.contentAdapter.getContentOfUriAsBinary(uri);
+      }
+
+      const content = await this.getContentByUri(uri);
+      return new TextEncoder().encode(content);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {
+      throw new Error(Messages.FileOpenError);
+    }
+  }
+
   public async downloadFile(item: ContentItem): Promise<Buffer | undefined> {
     try {
       const data = await this.contentAdapter.getContentOfItem(item);

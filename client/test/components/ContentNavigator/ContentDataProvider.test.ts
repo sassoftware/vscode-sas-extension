@@ -180,8 +180,8 @@ describe("ContentDataProvider", async function () {
       id: "unique-id",
       label: "testFile",
       command: {
-        command: "vscode.open",
-        arguments: [uri],
+        command: "SAS.content.openResource",
+        arguments: [contentItem],
         title: "Open SAS File",
       },
       resourceUri: uri,
