@@ -962,7 +962,7 @@
         },
         {
           "command": "SAS.downloadTable",
-          "when": "viewItem =~ /table-/ && view == librarydataprovider",
+          "when": "viewItem =~ /table-/ && view == librarydataprovider && SAS.allowDownload",
           "group": "download@0"
         },
         {
