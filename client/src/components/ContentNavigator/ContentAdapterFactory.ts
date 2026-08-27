@@ -15,6 +15,7 @@ class ContentAdapterFactory {
     connectionType: ConnectionType,
     fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
     fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
+    globalShortcuts: ProfileWithFileRootOptions["globalShortcuts"],
     sourceType: ContentNavigatorConfig["sourceType"],
   ): ContentAdapter {
     const key = `${connectionType}.${sourceType}`;
@@ -23,6 +24,7 @@ class ContentAdapterFactory {
         return new RestServerAdapter(
           fileNavigationCustomRootPath,
           fileNavigationRoot,
+          globalShortcuts,
         );
       case `${ConnectionType.IOM}.${ContentSourceType.SASServer}`:
       case `${ConnectionType.COM}.${ContentSourceType.SASServer}`:
@@ -32,7 +34,7 @@ class ContentAdapterFactory {
         );
       case `${ConnectionType.Rest}.${ContentSourceType.SASContent}`:
       default:
-        return new RestContentAdapter();
+        return new RestContentAdapter(globalShortcuts);
     }
   }
 }

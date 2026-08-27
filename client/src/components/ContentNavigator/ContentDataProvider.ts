@@ -42,10 +42,13 @@ import { ViyaProfile } from "../profile";
 import { ContentModel } from "./ContentModel";
 import {
   FAVORITES_FOLDER_TYPE,
+  GLOBAL_SHORTCUT_TYPE,
   Messages,
   ROOT_FOLDER_TYPE,
+  ROOT_SHORTCUT_FOLDER_TYPE,
   SERVER_HOME_FOLDER_TYPE,
   SERVER_ROOT_FOLDER_TYPE,
+  SERVER_SHORTCUT_FOLDER_TYPE,
   STOP_SIGN,
   TRASH_FOLDER_TYPE,
 } from "./const";
@@ -870,6 +873,15 @@ class ContentDataProvider
           break;
         case FAVORITES_FOLDER_TYPE:
           icon = "favoritesFolder";
+          break;
+        case ROOT_SHORTCUT_FOLDER_TYPE:
+          icon = "shortcutsFolder";
+          break;
+        case SERVER_SHORTCUT_FOLDER_TYPE:
+          icon = "shortcutsServerContent";
+          break;
+        case GLOBAL_SHORTCUT_TYPE:
+          icon = "webDAVRepository";
           break;
         case SERVER_HOME_FOLDER_TYPE:
           icon = "userWorkspace";

@@ -20,6 +20,7 @@ import ContentDataProvider from "../../../src/components/ContentNavigator/Conten
 import { ContentModel } from "../../../src/components/ContentNavigator/ContentModel";
 import {
   FAVORITES_FOLDER_TYPE,
+  FOLDER_SHORTCUTS,
   ROOT_FOLDER,
   TRASH_FOLDER_TYPE,
 } from "../../../src/components/ContentNavigator/const";
@@ -239,11 +240,12 @@ describe("ContentDataProvider", async function () {
     await dataProvider.connect("http://test.io");
 
     const children = await dataProvider.getChildren();
-    expect(children.length).to.equal(4);
+    expect(children.length).to.equal(5);
     expect(children[0].name).to.equal("@myFavorites");
     expect(children[1].name).to.equal("@myFolder");
-    expect(children[2].name).to.equal(ROOT_FOLDER.name);
-    expect(children[3].name).to.equal("@myRecycleBin");
+    expect(children[2].name).to.equal(FOLDER_SHORTCUTS.name);
+    expect(children[3].name).to.equal(ROOT_FOLDER.name);
+    expect(children[4].name).to.equal("@myRecycleBin");
   });
 
   it("getChildren - returns children with content item", async function () {
@@ -262,7 +264,7 @@ describe("ContentDataProvider", async function () {
 
     axiosInstance.get
       .withArgs(
-        "uri://myFavorites?limit=1000000&filter=in(contentType,'file','dataFlow','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
+        "uri://myFavorites?limit=1000000&filter=in(contentType,'file','dataFlow','RootFolder','folder','myFolder','favoritesFolder','rootShortcutFolder','serverShortcutFolder','globalShortcutfolder','shortcutsFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
       )
       .resolves({
         data: {
