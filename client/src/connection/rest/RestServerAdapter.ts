@@ -1,6 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { FileType, Uri } from "vscode";
+import { FileType, Uri, commands } from "vscode";
 
 import { AxiosResponse } from "axios";
 
@@ -90,15 +90,25 @@ class RestServerAdapter implements ContentAdapter {
     // Overwrite file nav settings with data coming from the compute context
     if (session.contextAttributes) {
       const attributes = await session.contextAttributes();
-      if (
-        attributes &&
-        (attributes.fileNavigationCustomRootPath ||
-          attributes.fileNavigationRoot)
-      ) {
-        this.fileNavigationSetByAdmin = true;
-        this.fileNavigationCustomRootPath =
-          attributes.fileNavigationCustomRootPath ?? "";
-        this.fileNavigationRoot = attributes.fileNavigationRoot ?? "USER";
+      if (attributes) {
+        if (
+          attributes.fileNavigationCustomRootPath ||
+          attributes.fileNavigationRoot
+        ) {
+          this.fileNavigationSetByAdmin = true;
+          this.fileNavigationCustomRootPath =
+            attributes.fileNavigationCustomRootPath ?? "";
+          this.fileNavigationRoot = attributes.fileNavigationRoot ?? "USER";
+        }
+        // What we get from the compute context is a string, so we'll make sure it is a valid boolean
+        const allowDownload = attributes.allowDownload?.toLowerCase();
+        if (allowDownload === "true" || allowDownload === "false") {
+          commands.executeCommand(
+            "setContext",
+            "SAS.allowDownload",
+            allowDownload === "true",
+          );
+        }
       }
     }
 
@@ -202,7 +212,7 @@ class RestServerAdapter implements ContentAdapter {
       if (buffer) {
         await this.updateContentOfItemAtPath(
           this.trimComputePrefix(contentItem.uri),
-          new TextDecoder().decode(buffer),
+          buffer,
         );
       }
 
@@ -323,6 +333,11 @@ class RestServerAdapter implements ContentAdapter {
   public async getContentOfUri(uri: Uri): Promise<string> {
     const path = this.trimComputePrefix(getResourceId(uri));
     return await this.getContentOfItemAtPath(path);
+  }
+
+  public async getContentOfUriAsBinary(uri: Uri): Promise<Uint8Array> {
+    const content = await this.getContentOfUri(uri);
+    return Buffer.from(content, "binary");
   }
 
   private async getContentOfItemAtPath(path: string) {
@@ -495,7 +510,7 @@ class RestServerAdapter implements ContentAdapter {
 
   private async updateContentOfItemAtPath(
     filePath: string,
-    content: string,
+    content: string | ArrayBufferLike,
   ): Promise<void> {
     const { etag } = await this.getFileInfo(filePath);
     const data = {

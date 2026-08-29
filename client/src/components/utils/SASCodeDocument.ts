@@ -1,5 +1,7 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { Uri } from "vscode";
+
 import { dirname } from "path";
 
 import {
@@ -135,14 +137,24 @@ export class SASCodeDocument {
 
   private wrapCodeWithSASProgramFileName(code: string): string {
     let fileName = this.parameters.fileName;
-    if (fileName === undefined) {
-      return code;
-    } else {
+    let uri = this.parameters.uri;
+
+    if (uri !== undefined && uri.startsWith("sasContent")) {
+      // check if a uri is available, and if it is coming from sasContent.
+      // if so, parse out our service representation and add the sascontent prefix.
+      // should look like this at the end: "sascontent:/files/files/<uuid>"
+      uri = Uri.parse(uri).query.replace("id=", "sascontent:");
+      return "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + uri + "));\n" + code;
+    } else if (fileName !== undefined) {
+      // if we are not in sasContent, we want to use the fileName instead
       fileName = fileName.replace(/[('")]/g, "%$&");
-      const wrapped =
-        "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + fileName + "));\n" + code;
-      return wrapped;
+      return (
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + fileName + "));\n" + code
+      );
     }
+
+    // if a fileName was not found, just return the raw code
+    return code;
   }
 
   private wrapCodeWithPreambleAndPostamble(code: string): string {

@@ -22,6 +22,7 @@ import type {
   TableQuery,
 } from "../components/LibraryNavigator/types";
 import { Column } from "../connection/rest/api/compute";
+import { extractFormatName } from "../panels/columnIconClassifier";
 import ColumnHeader from "./ColumnHeader";
 import { ColumnMenuProps, getColumnMenu } from "./ColumnMenu";
 import localize from "./localize";
@@ -231,7 +232,8 @@ const useDataViewer = () => {
         field: column.name,
         headerComponent: ColumnHeader,
         headerComponentParams: {
-          columnType: column.type,
+          columnType: column.type || "",
+          columnFormat: extractFormatName(column.format),
           currentColumn: () => columnMenuRef.current?.column,
           displayMenuForColumn,
         },
