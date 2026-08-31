@@ -189,12 +189,14 @@ export function activate(context: ExtensionContext) {
     sasContentNavigator.onDidManipulateFile(handleFileUpdated),
     sasServerNavigator.onDidManipulateFile(handleFileUpdated),
     // If configFile setting is changed, update watcher to watch new configuration file
-    workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-      if (event.affectsConfiguration("SAS.connectionProfiles")) {
-        triggerProfileUpdate();
-        updateViewSettings();
-      }
-    }),
+    workspace.onDidChangeConfiguration(
+      async (event: ConfigurationChangeEvent) => {
+        if (event.affectsConfiguration("SAS.connectionProfiles")) {
+          await triggerProfileUpdate();
+          updateViewSettings();
+        }
+      },
+    ),
     workspace.registerNotebookSerializer(
       "sas-notebook",
       new NotebookSerializer(),
@@ -219,8 +221,10 @@ export function activate(context: ExtensionContext) {
   updateStatusBarItem();
 
   profileConfig.migrateLegacyProfiles();
-  triggerProfileUpdate();
-  updateViewSettings();
+
+  triggerProfileUpdate().then(() => {
+    updateViewSettings();
+  });
 
   return {
     getRestAPIs,
@@ -256,7 +260,7 @@ function updateViewSettings(): void {
   );
 }
 
-function triggerProfileUpdate(): void {
+async function triggerProfileUpdate(): Promise<void> {
   commands.executeCommand("SAS.close", true);
   const profileList = profileConfig.getAllProfiles();
   const activeProfileName = profileConfig.getActiveProfile();
@@ -277,7 +281,10 @@ function triggerProfileUpdate(): void {
         "serverId" in profileList[activeProfileName],
     );
   } else {
-    profileConfig.updateActiveProfileSetting("");
+    await profileConfig.updateActiveProfileSetting("");
+
+    updateStatusBarItem();
+
     commands.executeCommand(
       "setContext",
       "SAS.connectionType",
