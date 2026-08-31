@@ -7,15 +7,21 @@ import { onRunError } from "../../commands/run";
 import {
   LibraryAdapter,
   LibraryItem,
+  TableColumn,
+  TableColumnCollection,
   TableData,
   TableQuery,
   TableRow,
 } from "../../components/LibraryNavigator/types";
-import { Column, ColumnCollection, TableInfo } from "../rest/api/compute";
-import { getColumnIconType } from "../util";
+import { baseFormatName } from "../../panels/columnIconClassifier";
+import { FormatCategoryCache } from "../formatCategory";
+import { TableInfo } from "../rest/api/compute";
 import { executeRawCode, runCode } from "./CodeRunner";
 import type { Config } from "./types";
 import { sanitizePowershellString } from "./util";
+
+const formatCategoryStartTag = "<FormatCategories>";
+const formatCategoryEndTag = "</FormatCategories>";
 
 class ItcLibraryAdapter implements LibraryAdapter {
   protected hasEstablishedConnection: boolean = false;
@@ -25,9 +31,13 @@ class ItcLibraryAdapter implements LibraryAdapter {
   protected endTag: string = "";
   protected outputFinished: boolean = false;
   protected config: Config | undefined;
+  protected formatCategories: FormatCategoryCache = new FormatCategoryCache(
+    (formatNames) => this.fetchFormatCategories(formatNames),
+  );
 
   public async connect(): Promise<void> {
     this.hasEstablishedConnection = true;
+    this.formatCategories.clear();
   }
 
   public async setup(): Promise<void> {
@@ -46,21 +56,66 @@ class ItcLibraryAdapter implements LibraryAdapter {
     await this.runCode(code);
   }
 
-  public async getColumns(item: LibraryItem): Promise<ColumnCollection> {
+  public async getColumns(item: LibraryItem): Promise<TableColumnCollection> {
     const code = `
       $runner.GetColumns("${item.library}", "${item.name}")
     `;
     const output = await executeRawCode(code);
-    const rawColumns: Column[] = JSON.parse(output);
-    const columns = rawColumns.map((column: Column) => ({
+    const rawColumns: TableColumn[] = JSON.parse(output);
+    const categories = await this.formatCategories.resolve(
+      rawColumns.map((column) => column.format),
+    );
+    const columns = rawColumns.map((column: TableColumn) => ({
       ...column,
-      type: getColumnIconType(column),
+      formatCategory: categories.get(baseFormatName(column.format)) ?? "",
     }));
     return {
       items: columns,
       count: -1,
     };
   }
+
+  // SAS 9 categories are read from fmtinfo, which is
+  // the same source the Compute service uses.
+  protected async fetchFormatCategories(
+    formatNames: string[],
+  ): Promise<Record<string, string>> {
+    const nameList = formatNames
+      .map((name) => `'${name.replace(/'/g, "''")}'`)
+      .join(",");
+    const code = `
+      data _null_;
+        length _fmtName_ $32 _fmtCategory_ $32 _fmtLine_ $70;
+        put "${formatCategoryStartTag}";
+        do _fmtName_ = ${nameList};
+          _fmtCategory_ = fmtinfo(strip(_fmtName_), 'CAT');
+          _fmtLine_ = cats('[', _fmtName_, '=', _fmtCategory_, ']');
+          put _fmtLine_;
+        end;
+        put "${formatCategoryEndTag}";
+      run;
+    `;
+
+    const output = await this.runCode(
+      code,
+      formatCategoryStartTag,
+      formatCategoryEndTag,
+    );
+
+    // The log lines are concatenated without separators, so each entry is bracketed.
+    const entryPattern = /\[([^[\]=]*)=([^[\]]*)\]/g;
+    const requested = new Set(formatNames);
+    const categories: Record<string, string> = {};
+    let entry: RegExpExecArray | null;
+    while ((entry = entryPattern.exec(output)) !== null) {
+      const [, name, category] = entry;
+      if (requested.has(name)) {
+        categories[name] = category;
+      }
+    }
+    return categories;
+  }
+
   public async getLibraries(): Promise<{
     items: LibraryItem[];
     count: number;
