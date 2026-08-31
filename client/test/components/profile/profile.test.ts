@@ -1,6 +1,7 @@
 import { ConfigurationTarget, workspace } from "vscode";
 
 import { assert, expect } from "chai";
+import { SinonSandbox, SinonStub, createSandbox } from "sinon";
 
 import {
   AuthType,
@@ -998,6 +999,561 @@ describe("Profiles", async function () {
           `${testCase.name} description does not match expected`,
         );
       });
+    });
+  });
+
+  describe("Configuration Scope", async function () {
+    const userSetting = {
+      activeProfile: "userProfile",
+      profiles: {
+        userProfile: {
+          connectionType: "rest",
+          endpoint: "https://user-host.sas.com",
+        },
+      },
+    };
+    const workspaceSetting = {
+      activeProfile: "workspaceProfile",
+      profiles: {
+        workspaceProfile: {
+          connectionType: "rest",
+          endpoint: "https://workspace-host.sas.com",
+        },
+        workspaceProfile2: {
+          connectionType: "rest",
+          endpoint: "https://workspace-host2.sas.com",
+        },
+      },
+    };
+    const workspaceFolderSetting = {
+      activeProfile: "folderProfile",
+      profiles: {
+        folderProfile: {
+          connectionType: "rest",
+          endpoint: "https://folder-host.sas.com",
+        },
+      },
+    };
+
+    let sandbox: SinonSandbox;
+    let updateStub: SinonStub;
+
+    function stubConfiguration(
+      inspectResult: Partial<{
+        globalValue: unknown;
+        workspaceValue: unknown;
+        workspaceFolderValue: unknown;
+      }>,
+    ) {
+      updateStub = sandbox.stub().resolves();
+
+      const configuration = {
+        get: sandbox.stub(),
+        has: sandbox.stub(),
+        inspect: sandbox.stub().returns({
+          key: `${EXTENSION_CONFIG_KEY}.${EXTENSION_DEFINE_PROFILES_CONFIG_KEY}`,
+          ...inspectResult,
+        }),
+        update: updateStub,
+      };
+
+      sandbox.stub(workspace, "getConfiguration").returns(configuration);
+    }
+
+    beforeEach(async () => {
+      sandbox = createSandbox();
+      await initProfile();
+    });
+
+    afterEach(() => {
+      sandbox.restore();
+    });
+
+    it("prefers workspace profiles over user profiles", function () {
+      stubConfiguration({
+        globalValue: userSetting,
+        workspaceValue: workspaceSetting,
+      });
+
+      expect(profileConfig.getConfigurationTarget()).to.equal(
+        ConfigurationTarget.Workspace,
+      );
+      expect(profileConfig.getActiveProfile()).to.equal("workspaceProfile");
+      expect(Object.keys(profileConfig.getAllProfiles())).to.have.members([
+        "workspaceProfile",
+        "workspaceProfile2",
+      ]);
+    });
+
+    it("prefers workspace folder profiles over workspace profiles", function () {
+      stubConfiguration({
+        globalValue: userSetting,
+        workspaceValue: workspaceSetting,
+        workspaceFolderValue: workspaceFolderSetting,
+      });
+
+      expect(profileConfig.getConfigurationTarget()).to.equal(
+        ConfigurationTarget.WorkspaceFolder,
+      );
+      expect(profileConfig.getActiveProfile()).to.equal("folderProfile");
+      expect(Object.keys(profileConfig.getAllProfiles())).to.have.members([
+        "folderProfile",
+      ]);
+    });
+
+    it("switches the active profile in workspace settings", async function () {
+      stubConfiguration({
+        globalValue: userSetting,
+        workspaceValue: workspaceSetting,
+      });
+
+      await profileConfig.updateActiveProfileSetting("workspaceProfile2");
+
+      expect(updateStub.calledOnce).to.equal(true);
+      const [key, value, target] = updateStub.firstCall.args;
+      expect(key).to.equal(EXTENSION_DEFINE_PROFILES_CONFIG_KEY);
+      expect(value.activeProfile).to.equal("workspaceProfile2");
+      expect(target).to.equal(ConfigurationTarget.Workspace);
+    });
+
+    it("writes profile changes to workspace settings", async function () {
+      stubConfiguration({
+        globalValue: userSetting,
+        workspaceValue: workspaceSetting,
+      });
+
+      await profileConfig.upsertProfile("workspaceProfile3", {
+        connectionType: ConnectionType.Rest,
+        endpoint: "https://workspace-host3.sas.com",
+      });
+
+      const [, value, target] = updateStub.firstCall.args;
+      expect(Object.keys(value.profiles)).to.have.members([
+        "workspaceProfile",
+        "workspaceProfile2",
+        "workspaceProfile3",
+      ]);
+      expect(target).to.equal(ConfigurationTarget.Workspace);
+    });
+
+    it("deletes profiles from workspace settings", async function () {
+      stubConfiguration({
+        globalValue: userSetting,
+        workspaceValue: workspaceSetting,
+      });
+
+      await profileConfig.deleteProfile("workspaceProfile2");
+
+      const [, value, target] = updateStub.firstCall.args;
+      expect(Object.keys(value.profiles)).to.have.members(["workspaceProfile"]);
+      expect(target).to.equal(ConfigurationTarget.Workspace);
+    });
+
+    it("falls back to user settings when no workspace profiles exist", async function () {
+      stubConfiguration({ globalValue: userSetting });
+
+      expect(profileConfig.getConfigurationTarget()).to.equal(
+        ConfigurationTarget.Global,
+      );
+      expect(profileConfig.getActiveProfile()).to.equal("userProfile");
+      expect(Object.keys(profileConfig.getAllProfiles())).to.have.members([
+        "userProfile",
+      ]);
+
+      await profileConfig.updateActiveProfileSetting("userProfile");
+      expect(updateStub.firstCall.args[2]).to.equal(ConfigurationTarget.Global);
+    });
+
+    it("falls back to user profiles when workspace setting is empty", function () {
+      stubConfiguration({
+        globalValue: userSetting,
+        workspaceValue: {},
+      });
+
+      expect(profileConfig.getActiveProfile()).to.equal("userProfile");
+      expect(Object.keys(profileConfig.getAllProfiles())).to.have.members([
+        "userProfile",
+      ]);
+    });
+
+    it("falls back to user profiles when workspace setting is an empty normalized structure", function () {
+      stubConfiguration({
+        globalValue: userSetting,
+        workspaceValue: { activeProfile: "", profiles: {} },
+      });
+
+      expect(profileConfig.getConfigurationTarget()).to.equal(
+        ConfigurationTarget.Workspace,
+      );
+      expect(profileConfig.getActiveProfile()).to.equal("userProfile");
+      expect(Object.keys(profileConfig.getAllProfiles())).to.have.members([
+        "userProfile",
+      ]);
+    });
+
+    it("does not fall back when workspace has a profile but no active profile", function () {
+      stubConfiguration({
+        globalValue: userSetting,
+        workspaceValue: {
+          activeProfile: "",
+          profiles: {
+            testConn: {
+              connectionType: "rest",
+              endpoint: "https://daily.pgc.unx.sas.com",
+            },
+          },
+        },
+      });
+
+      expect(profileConfig.getActiveProfile()).to.equal("");
+      expect(Object.keys(profileConfig.getAllProfiles())).to.have.members([
+        "testConn",
+      ]);
+    });
+
+    it("does not modify user settings when workspace configuration is empty", function () {
+      stubConfiguration({
+        globalValue: userSetting,
+        workspaceValue: { activeProfile: "", profiles: {} },
+      });
+
+      profileConfig.getActiveProfile();
+      profileConfig.getAllProfiles();
+
+      expect(updateStub.called).to.equal(false);
+    });
+
+    it("does not clear the user's active profile during validation", function () {
+      stubConfiguration({
+        globalValue: userSetting,
+        workspaceValue: { activeProfile: "", profiles: {} },
+      });
+
+      const isValid = profileConfig.validateSettings();
+
+      expect(isValid).to.equal(true);
+      expect(updateStub.called).to.equal(false);
+      expect(profileConfig.getActiveProfile()).to.equal("userProfile");
+    });
+
+    it("writes new profiles to workspace when workspace owns the setting even if empty", async function () {
+      stubConfiguration({
+        globalValue: userSetting,
+        workspaceValue: {},
+      });
+
+      await profileConfig.upsertProfile("workspaceProfile3", {
+        connectionType: ConnectionType.Rest,
+        endpoint: "https://workspace-host3.sas.com",
+      });
+
+      const [, , target] = updateStub.firstCall.args;
+      expect(target).to.equal(ConfigurationTarget.Workspace);
+    });
+
+    it("normalizes a missing/empty workspace setting when no scope has profiles", function () {
+      stubConfiguration({
+        workspaceValue: {},
+      });
+
+      const isValid = profileConfig.validateSettings();
+
+      expect(isValid).to.equal(false);
+      expect(updateStub.calledOnce).to.equal(true);
+      const [key, value, target] = updateStub.firstCall.args;
+      expect(key).to.equal(EXTENSION_DEFINE_PROFILES_CONFIG_KEY);
+      expect(value).to.eql({ activeProfile: "", profiles: {} });
+      expect(target).to.equal(ConfigurationTarget.Workspace);
+    });
+
+    it("normalizes user settings when profiles are manually removed but activeProfile remains", function () {
+      stubConfiguration({
+        globalValue: { activeProfile: "userProfile", profiles: {} },
+      });
+
+      const isValid = profileConfig.validateSettings();
+
+      expect(isValid).to.equal(false);
+      expect(updateStub.calledOnce).to.equal(true);
+      const [key, value, target] = updateStub.firstCall.args;
+      expect(key).to.equal(EXTENSION_DEFINE_PROFILES_CONFIG_KEY);
+      expect(value).to.eql({ activeProfile: "", profiles: {} });
+      expect(target).to.equal(ConfigurationTarget.Global);
+    });
+
+    it("normalizes workspace settings when profiles are manually removed but activeProfile remains", function () {
+      stubConfiguration({
+        workspaceValue: { activeProfile: "workspaceProfile", profiles: {} },
+      });
+
+      const isValid = profileConfig.validateSettings();
+
+      expect(isValid).to.equal(false);
+      expect(updateStub.calledOnce).to.equal(true);
+      const [key, value, target] = updateStub.firstCall.args;
+      expect(key).to.equal(EXTENSION_DEFINE_PROFILES_CONFIG_KEY);
+      expect(value).to.eql({ activeProfile: "", profiles: {} });
+      expect(target).to.equal(ConfigurationTarget.Workspace);
+    });
+
+    it("normalizes workspace folder settings when profiles are manually removed but activeProfile remains", function () {
+      stubConfiguration({
+        workspaceFolderValue: { activeProfile: "folderProfile", profiles: {} },
+      });
+
+      const isValid = profileConfig.validateSettings();
+
+      expect(isValid).to.equal(false);
+      expect(updateStub.calledOnce).to.equal(true);
+      const [key, value, target] = updateStub.firstCall.args;
+      expect(key).to.equal(EXTENSION_DEFINE_PROFILES_CONFIG_KEY);
+      expect(value).to.eql({ activeProfile: "", profiles: {} });
+      expect(target).to.equal(ConfigurationTarget.WorkspaceFolder);
+    });
+
+    it("falls back to user profiles and normalizes a stale workspace folder setting", function () {
+      stubConfiguration({
+        globalValue: userSetting,
+        workspaceFolderValue: {
+          activeProfile: "folderProfile",
+          profiles: {},
+        },
+      });
+
+      expect(profileConfig.getActiveProfile()).to.equal("userProfile");
+
+      expect(updateStub.calledOnce).to.equal(true);
+      const [key, value, target] = updateStub.firstCall.args;
+      expect(key).to.equal(EXTENSION_DEFINE_PROFILES_CONFIG_KEY);
+      expect(value).to.eql({ activeProfile: "", profiles: {} });
+      expect(target).to.equal(ConfigurationTarget.WorkspaceFolder);
+    });
+
+    it("leaves no stale activeProfile once profiles becomes empty", async function () {
+      stubConfiguration({
+        workspaceValue: { activeProfile: "workspaceProfile", profiles: {} },
+      });
+
+      profileConfig.validateSettings();
+
+      const [, value] = updateStub.firstCall.args;
+      expect(value.activeProfile).to.equal("");
+      expect(value.profiles).to.eql({});
+    });
+  });
+
+  describe("Profile Creation Target", async function () {
+    const userSetting = {
+      activeProfile: "userProfile",
+      profiles: {
+        userProfile: {
+          connectionType: "rest",
+          endpoint: "https://user-host.sas.com",
+        },
+      },
+    };
+    const workspaceSetting = {
+      activeProfile: "workspaceProfile",
+      profiles: {
+        workspaceProfile: {
+          connectionType: "rest",
+          endpoint: "https://workspace-host.sas.com",
+        },
+      },
+    };
+    const workspaceFolderSetting = {
+      activeProfile: "folderProfile",
+      profiles: {
+        folderProfile: {
+          connectionType: "rest",
+          endpoint: "https://folder-host.sas.com",
+        },
+      },
+    };
+
+    let sandbox: SinonSandbox;
+    let updateStub: SinonStub;
+
+    function stubConfiguration(
+      inspectResult: Partial<{
+        globalValue: unknown;
+        workspaceValue: unknown;
+        workspaceFolderValue: unknown;
+      }>,
+    ) {
+      updateStub = sandbox.stub().resolves();
+
+      const configuration = {
+        get: sandbox.stub(),
+        has: sandbox.stub(),
+        inspect: sandbox.stub().returns({
+          key: `${EXTENSION_CONFIG_KEY}.${EXTENSION_DEFINE_PROFILES_CONFIG_KEY}`,
+          ...inspectResult,
+        }),
+        update: updateStub,
+      };
+
+      sandbox.stub(workspace, "getConfiguration").returns(configuration);
+    }
+
+    function stubWorkspaceFolders(count: number) {
+      const folders =
+        count === 0
+          ? undefined
+          : Array.from({ length: count }, (_, i) => ({
+              uri: { fsPath: `/folder${i}` },
+              name: `folder${i}`,
+              index: i,
+            }));
+      sandbox.stub(workspace, "workspaceFolders").value(folders);
+    }
+
+    function newViyaProfile(endpoint: string): ViyaProfile {
+      return { connectionType: ConnectionType.Rest, endpoint };
+    }
+
+    beforeEach(async () => {
+      sandbox = createSandbox();
+      await initProfile();
+    });
+
+    afterEach(() => {
+      sandbox.restore();
+    });
+
+    it("creates a new profile in workspace settings when a workspace is open but has no connectionProfiles setting", async function () {
+      stubConfiguration({ globalValue: userSetting });
+      stubWorkspaceFolders(1);
+
+      await profileConfig.upsertProfile(
+        "newProfile",
+        newViyaProfile("https://new-host.sas.com"),
+      );
+
+      const [, value, target] = updateStub.firstCall.args;
+      expect(target).to.equal(ConfigurationTarget.Workspace);
+      expect(Object.keys(value.profiles)).to.have.members(["newProfile"]);
+    });
+
+    it("creates a new profile in workspace settings when the workspace setting is empty", async function () {
+      stubConfiguration({ globalValue: userSetting, workspaceValue: {} });
+      stubWorkspaceFolders(1);
+
+      await profileConfig.upsertProfile(
+        "newProfile",
+        newViyaProfile("https://new-host.sas.com"),
+      );
+
+      const [, , target] = updateStub.firstCall.args;
+      expect(target).to.equal(ConfigurationTarget.Workspace);
+    });
+
+    it("creates a new profile in workspace folder settings when a multi-root workspace is open", async function () {
+      stubConfiguration({ globalValue: userSetting });
+      stubWorkspaceFolders(2);
+
+      await profileConfig.upsertProfile(
+        "newProfile",
+        newViyaProfile("https://new-host.sas.com"),
+      );
+
+      const [, , target] = updateStub.firstCall.args;
+      expect(target).to.equal(ConfigurationTarget.WorkspaceFolder);
+    });
+
+    it("creates a new profile in global settings when no workspace is open", async function () {
+      stubConfiguration({});
+      stubWorkspaceFolders(0);
+
+      await profileConfig.upsertProfile(
+        "newProfile",
+        newViyaProfile("https://new-host.sas.com"),
+      );
+
+      const [, , target] = updateStub.firstCall.args;
+      expect(target).to.equal(ConfigurationTarget.Global);
+    });
+
+    it("updates an existing user profile in global settings, even with a workspace open", async function () {
+      stubConfiguration({ globalValue: userSetting });
+      stubWorkspaceFolders(1);
+
+      await profileConfig.upsertProfile(
+        "userProfile",
+        newViyaProfile("https://user-host-updated.sas.com"),
+      );
+
+      const [, value, target] = updateStub.firstCall.args;
+      expect(target).to.equal(ConfigurationTarget.Global);
+      expect(value.profiles.userProfile.endpoint).to.equal(
+        "https://user-host-updated.sas.com",
+      );
+      expect(Object.keys(value.profiles)).to.have.members(["userProfile"]);
+    });
+
+    it("updates an existing workspace profile in workspace settings", async function () {
+      stubConfiguration({
+        globalValue: userSetting,
+        workspaceValue: workspaceSetting,
+      });
+      stubWorkspaceFolders(1);
+
+      await profileConfig.upsertProfile(
+        "workspaceProfile",
+        newViyaProfile("https://workspace-host-updated.sas.com"),
+      );
+
+      const [, value, target] = updateStub.firstCall.args;
+      expect(target).to.equal(ConfigurationTarget.Workspace);
+      expect(value.profiles.workspaceProfile.endpoint).to.equal(
+        "https://workspace-host-updated.sas.com",
+      );
+      expect(Object.keys(value.profiles)).to.have.members(["workspaceProfile"]);
+    });
+
+    it("updates an existing workspace folder profile in workspace folder settings", async function () {
+      stubConfiguration({
+        globalValue: userSetting,
+        workspaceValue: workspaceSetting,
+        workspaceFolderValue: workspaceFolderSetting,
+      });
+      stubWorkspaceFolders(2);
+
+      await profileConfig.upsertProfile(
+        "folderProfile",
+        newViyaProfile("https://folder-host-updated.sas.com"),
+      );
+
+      const [, value, target] = updateStub.firstCall.args;
+      expect(target).to.equal(ConfigurationTarget.WorkspaceFolder);
+      expect(value.profiles.folderProfile.endpoint).to.equal(
+        "https://folder-host-updated.sas.com",
+      );
+      expect(Object.keys(value.profiles)).to.have.members(["folderProfile"]);
+    });
+
+    it("does not copy user profiles into workspace settings when creating a new workspace profile", async function () {
+      stubConfiguration({ globalValue: userSetting });
+      stubWorkspaceFolders(1);
+
+      await profileConfig.upsertProfile(
+        "newProfile",
+        newViyaProfile("https://new-host.sas.com"),
+      );
+
+      const [, value, target] = updateStub.firstCall.args;
+      expect(target).to.equal(ConfigurationTarget.Workspace);
+      expect(Object.keys(value.profiles)).to.not.include("userProfile");
+    });
+
+    it("still falls back to user profiles for resolution when workspace has no profiles", function () {
+      stubConfiguration({ globalValue: userSetting });
+      stubWorkspaceFolders(1);
+
+      expect(profileConfig.getActiveProfile()).to.equal("userProfile");
+      expect(Object.keys(profileConfig.getAllProfiles())).to.have.members([
+        "userProfile",
+      ]);
     });
   });
 });
