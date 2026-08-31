@@ -231,3 +231,27 @@ The following demonstrates how to setup `fileNavigationCustomRootPath`/`fileNavi
     }
   }
   ```
+
+## Display Options Settings
+
+Display options can be configured for SAS Viya (REST) connection profiles to control how items are displayed in the file browser. Currently, one display option is available:
+
+- `showHiddenItems`: Set to `true` to display hidden folders and items on the file system. Default is `false`.
+
+The following demonstrates how to setup display options in user settings:
+
+- SAS Viya:
+
+  ```json
+  {
+    "profiles": {
+      "viya4": {
+        "endpoint": "https://example-endpoint.com",
+        "connectionType": "rest",
+        "displayOptions": {
+          "showHiddenItems": true
+        }
+      }
+    }
+  }
+  ```
