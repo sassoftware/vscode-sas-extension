@@ -7,13 +7,17 @@ import { getSession } from "..";
 import {
   LibraryAdapter,
   LibraryItem,
+  TableColumnCollection,
   TableData,
   TableQuery,
 } from "../../components/LibraryNavigator/types";
 import { appendSessionLogFn } from "../../components/logViewer";
+import { baseFormatName } from "../../panels/columnIconClassifier";
+import { FormatCategoryCache } from "../formatCategory";
 import {
-  ColumnCollection,
   DataAccessApi,
+  FormatsApi,
+  InformatsApi,
   RowCollection,
   TableInfo,
 } from "./api/compute";
@@ -25,7 +29,12 @@ const requestOptions = {
 
 class RestLibraryAdapter implements LibraryAdapter {
   protected dataAccessApi: ReturnType<typeof DataAccessApi>;
+  protected InformatsApi: ReturnType<typeof InformatsApi>;
+  protected FormatsApi: ReturnType<typeof FormatsApi>;
   protected sessionId: string;
+  protected formatCategories: FormatCategoryCache = new FormatCategoryCache(
+    (formatNames) => this.fetchFormatCategories(formatNames),
+  );
 
   public constructor() {}
 
@@ -37,6 +46,10 @@ class RestLibraryAdapter implements LibraryAdapter {
 
     this.sessionId = session?.sessionId();
     this.dataAccessApi = DataAccessApi(getApiConfig());
+    this.InformatsApi = InformatsApi(getApiConfig());
+    this.FormatsApi = FormatsApi(getApiConfig());
+    // Format definitions are session scoped, so previously resolved categories no longer apply.
+    this.formatCategories.clear();
   }
 
   public async setup(): Promise<void> {
@@ -157,7 +170,8 @@ class RestLibraryAdapter implements LibraryAdapter {
     item: LibraryItem,
     start: number,
     limit: number,
-  ): Promise<ColumnCollection> {
+  ): Promise<TableColumnCollection> {
+    await this.setup();
     const { data } = await this.retryOnFail(
       async () =>
         await this.dataAccessApi.getColumns(
@@ -172,7 +186,60 @@ class RestLibraryAdapter implements LibraryAdapter {
         ),
     );
 
-    return data;
+    const items = data.items ?? [];
+    const categories = await this.formatCategories.resolve(
+      items.map((column) => column.format),
+    );
+
+    const columns = items.map((column) => ({
+      ...column,
+      formatCategory: categories.get(baseFormatName(column.format)) ?? "",
+    }));
+
+    return {
+      ...data,
+      items: columns,
+    };
+  }
+
+  // The Compute service reports a format's category (char, date, datetime, time, curr, num, ...),
+  // which getColumns cannot provide because every non-character column is reported as FLOAT.
+  private async fetchFormatCategories(
+    formatNames: string[],
+  ): Promise<Record<string, string>> {
+    return await this.requestFormatCategories(formatNames);
+  }
+
+  private async requestFormatCategories(
+    formatNames: string[],
+  ): Promise<Record<string, string>> {
+    const entries = await Promise.all(
+      formatNames.map(async (formatName) => {
+        try {
+          const formatResp = await this.FormatsApi.getFormat({
+            sessionId: this.sessionId,
+            formatName,
+          });
+
+          let category = formatResp?.data?.category || "";
+
+          if (!category) {
+            const informatResp = await this.InformatsApi.getInformat({
+              sessionId: this.sessionId,
+              informatName: formatName,
+            });
+
+            category = informatResp?.data?.category || "";
+          }
+
+          return [formatName, category];
+        } catch {
+          return [formatName, ""];
+        }
+      }),
+    );
+
+    return Object.fromEntries(entries);
   }
 
   public async getTableRowCount(

@@ -1,43 +1,67 @@
 // Copyright © 2026, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import {
-  currencyFormatSet,
-  dateFormatSet,
-  dateTimeFormatSet,
-  timeFormatSet,
-} from "./columnFormatCategories";
-
 export type ColumnIconClass =
   "" | "float" | "char" | "date" | "time" | "date-time" | "currency";
 
-// Strips width/decimal suffixes (e.g. "DATE9." -> "DATE") so a format can be looked up in the category sets.
-export const normalizeFormatName = (format?: string): string =>
-  (format || "")
-    .trim()
-    .toUpperCase()
-    .replace(/[0-9_]*\.?[0-9]*$/, "");
+// Categories reported by SAS, either by the Compute service
+// (GET /sessions/{sessionId}/formats/{formatName}) or by fmtinfo(format, 'CAT').
+export type FormatCategory =
+  | "binary"
+  | "char"
+  | "curr"
+  | "date"
+  | "datetime"
+  | "num"
+  | "smf"
+  | "stat"
+  | "time";
 
-// Classifies a SAS format name into an icon class, or "" when it doesn't match a known category.
-export const classifyFormatIcon = (format?: string): ColumnIconClass => {
-  const normalizedFormat = normalizeFormatName(format);
+// binary, smf and stat have no dedicated asset, so they reuse the numeric icon.
+const categoryIcons: Record<FormatCategory, ColumnIconClass> = {
+  binary: "float",
+  char: "char",
+  curr: "currency",
+  date: "date",
+  datetime: "date-time",
+  num: "float",
+  smf: "float",
+  stat: "float",
+  time: "time",
+};
 
-  if (dateTimeFormatSet.has(normalizedFormat)) {
-    return "date-time";
+const iconsByCategory: Record<string, ColumnIconClass> = categoryIcons;
+
+// Maps a SAS format category to an icon class. Unknown or missing categories return "" so that
+// callers fall back to the generic numeric/character icon derived from the column type.
+export const iconForFormatCategory = (category?: string): ColumnIconClass =>
+  iconsByCategory[(category || "").trim().toLowerCase()] ?? "";
+
+// Single resolution path shared by the data viewer column headers and the table properties
+// panel: the SAS format category wins, otherwise the column type picks the generic icon.
+export const iconForColumn = (
+  type?: string,
+  formatCategory?: string,
+): ColumnIconClass => {
+  const categoryIcon = iconForFormatCategory(formatCategory);
+  if (categoryIcon) {
+    return categoryIcon;
   }
 
-  if (timeFormatSet.has(normalizedFormat)) {
-    return "time";
+  switch ((type || "").toUpperCase()) {
+    case "CHAR":
+    case "CHARACTER":
+      return "char";
+    case "FLOAT":
+    case "NUM":
+    case "NUMERIC":
+    case "CURRENCY":
+    case "DATE":
+    case "TIME":
+    case "DATETIME":
+      return "float";
+    default:
+      return "";
   }
-
-  if (dateFormatSet.has(normalizedFormat)) {
-    return "date";
-  }
-
-  if (currencyFormatSet.has(normalizedFormat)) {
-    return "currency";
-  }
-
-  return "";
 };
 
 // Canonical (untranslated) label for an icon class; callers apply their own localization, if any.
@@ -69,3 +93,12 @@ export const extractFormatName = (
   }
   return format?.name ?? "";
 };
+
+// Strips the width/decimal suffix so that SAS can resolve the format (e.g. "DOLLAR15.2" -> "DOLLAR").
+export const baseFormatName = (
+  format: { name?: string } | string | undefined,
+): string =>
+  extractFormatName(format)
+    .trim()
+    .toUpperCase()
+    .replace(/[0-9]*\.?[0-9]*$/, "");
