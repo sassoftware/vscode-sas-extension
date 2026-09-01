@@ -36,6 +36,18 @@ const MULTILINE_TRAIN_QUOTED_PARENS_CASE = [
   "run;",
 ].join("\n");
 
+const NODES_WITH_SPACE_CASE = [
+  "proc deepprice;",
+  "dnn nodes=( );",
+  "run;",
+].join("\n");
+
+const TRAIN_OPTIMIZE_TRAILING_SPACE_CASE = [
+  "proc deepprice;",
+  "dnn train=(optimize= );",
+  "run;",
+].join("\n");
+
 const getPositionBySnippet = (
   doc: TextDocument,
   snippet: string,
@@ -209,7 +221,54 @@ describe("DeepPrice sub-option behavior", () => {
     assert.isNotEmpty(help.syntax || "", "syntax should not be empty");
   });
 
-  it("[fallback-global] falls back to global statement sub-options for DNN NODES", async () => {
+  it("[nodes-empty] does not suggest sub-options inside nodes=( ) with whitespace", async () => {
+    const doc = openDocFromText(
+      NODES_WITH_SPACE_CASE,
+      "deepprice_nodes_with_space.sas",
+    );
+    const languageServer = new LanguageServiceProvider(doc);
+
+    const nodesSpacePos = getPositionBySnippet(
+      doc,
+      "nodes=( ",
+      "nodes=( ".length,
+    );
+    const completion = await languageServer.completionProvider.getCompleteItems(
+      {
+        textDocument: { uri: doc.uri },
+        position: nodesSpacePos,
+      },
+    );
+
+    assert.isTrue(
+      completion === undefined || completion.items.length === 0,
+      "nodes=( ) should not have sub-option completions",
+    );
+  });
+
+  it("[suboption-value-space] does not fall back to PROC_DEF suggestions after 'optimize= '", async () => {
+    const doc = openDocFromText(
+      TRAIN_OPTIMIZE_TRAILING_SPACE_CASE,
+      "deepprice_train_optimize_trailing_space.sas",
+    );
+    const languageServer = new LanguageServiceProvider(doc);
+
+    const pos = getPositionBySnippet(doc, "optimize= ", "optimize= ".length);
+    const completion = await languageServer.completionProvider.getCompleteItems(
+      {
+        textDocument: { uri: doc.uri },
+        position: pos,
+      },
+    );
+    const labels = completionLabels(completion?.items);
+
+    assert.isTrue(
+      completion === undefined || completion.items.length === 0,
+      `Expected no suggestions after "optimize= ", got: ${labels.join(", ")}`,
+    );
+  });
+
+  it("[nodes-empty] does not fall back to global sub-options for DNN NODES", async () => {
     const doc = openDoc(
       "server/testFixture/deepprice/deepprice_suboptions.sas",
     );
@@ -246,14 +305,14 @@ describe("DeepPrice sub-option behavior", () => {
         );
       });
 
-      assert.isTrue(
+      assert.isFalse(
         fallbackCalled,
-        "expected getProcedureStatementSubOptions to call global fallback for DNN NODES",
+        "DNN NODES should not fall back to global sub-options when procedure option exists",
       );
-      assert.include(
+      assert.deepEqual(
         data,
-        sentinel,
-        "expected fallback data from getStatementSubOptions(global, DNN, NODES)",
+        [],
+        "DNN NODES should resolve to an empty sub-option list",
       );
     } finally {
       syntaxDb.getStatementSubOptions = originalGetStatementSubOptions;

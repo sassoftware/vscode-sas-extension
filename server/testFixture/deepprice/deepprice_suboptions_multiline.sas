@@ -3,5 +3,5 @@ proc deepprice;
   dnn train=( optimize=);
 
   /* Case B: quoted parentheses must not break context detection */
-  dnn train=( where=")(" );
+  dnn train=( where= ")(" );
 run;

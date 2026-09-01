@@ -1,3 +1,4 @@
 proc deepprice;
   dnn nodes=();
-  dnn train=(optimize=) run;
+  dnn train=(optimize=)
+run;

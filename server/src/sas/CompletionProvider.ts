@@ -1995,14 +1995,9 @@ export class CompletionProvider {
       position,
     );
     if (parentOptName) {
-      if (zone === ZONE_TYPE.PROC_STMT_OPT) {
-        zone = ZONE_TYPE.PROC_STMT_SUB_OPT;
-      } else if (
-        zone === ZONE_TYPE.PROC_STMT_OPT_VALUE &&
-        this.czMgr.getSubOptionName()
-      ) {
-        zone = ZONE_TYPE.PROC_STMT_SUB_OPT_VALUE;
-      }
+      zone = this._resolveAssignedOptNameAtCursor(position)
+        ? ZONE_TYPE.PROC_STMT_SUB_OPT_VALUE
+        : ZONE_TYPE.PROC_STMT_SUB_OPT;
     }
     this.popupContext.zone =
       this.popupContext.prefix.startsWith("&") &&
