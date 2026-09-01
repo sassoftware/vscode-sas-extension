@@ -21,7 +21,7 @@
     "react-dom": "^19.2.8",
     "ssh2": "^1.17.0",
     "uuid": "^14.0.0",
-    "vscode-languageclient": "^10.0.0-next.2",
+    "vscode-languageclient": "^10.1.0",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
