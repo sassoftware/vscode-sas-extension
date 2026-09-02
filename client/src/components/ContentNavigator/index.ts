@@ -154,7 +154,7 @@ class ContentNavigator implements SubscriptionProvider {
             `${Date.now()}-${safeName}`,
           );
 
-          const bytes = await this.contentModel.getContentByUriAsBinary(
+          const bytes = await this.contentModel.getContentByUri(
             resource.vscUri,
           );
           await workspace.fs.writeFile(localUri, bytes);

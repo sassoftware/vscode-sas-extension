@@ -78,9 +78,8 @@ export interface ContentAdapter {
   ) => Promise<ContentItem | undefined>;
   deleteItem: (item: ContentItem) => Promise<boolean>;
   getChildItems: (parentItem: ContentItem) => Promise<ContentItem[]>;
-  getContentOfItem: (item: ContentItem) => Promise<string>;
-  getContentOfUri: (uri: Uri) => Promise<string>;
-  getContentOfUriAsBinary?: (uri: Uri) => Promise<Uint8Array>;
+  getContentOfItem: (item: ContentItem) => Promise<Uint8Array>;
+  getContentOfUri: (uri: Uri) => Promise<Uint8Array>;
   getFolderPathForItem: (item: ContentItem) => Promise<string> | string;
   getItemOfUri: (uri: Uri) => Promise<ContentItem>;
   getParentOfItem: (item: ContentItem) => Promise<ContentItem | undefined>;
@@ -102,7 +101,7 @@ export interface ContentAdapter {
     newName: string,
   ) => Promise<ContentItem | undefined>;
   restoreItem?: (item: ContentItem) => Promise<boolean>;
-  updateContentOfItem(uri: Uri, content: string): Promise<void>;
+  updateContentOfItem(uri: Uri, content: Uint8Array): Promise<void>;
 }
 
 export enum ContentSourceType {

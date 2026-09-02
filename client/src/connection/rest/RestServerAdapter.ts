@@ -325,22 +325,17 @@ class RestServerAdapter implements ContentAdapter {
     return sortedContentItems(allItems);
   }
 
-  public async getContentOfItem(item: ContentItem): Promise<string> {
+  public async getContentOfItem(item: ContentItem): Promise<Uint8Array> {
     const path = this.trimComputePrefix(item.uri);
     return await this.getContentOfItemAtPath(path);
   }
 
-  public async getContentOfUri(uri: Uri): Promise<string> {
+  public async getContentOfUri(uri: Uri): Promise<Uint8Array> {
     const path = this.trimComputePrefix(getResourceId(uri));
     return await this.getContentOfItemAtPath(path);
   }
 
-  public async getContentOfUriAsBinary(uri: Uri): Promise<Uint8Array> {
-    const content = await this.getContentOfUri(uri);
-    return Buffer.from(content, "binary");
-  }
-
-  private async getContentOfItemAtPath(path: string) {
+  private async getContentOfItemAtPath(path: string): Promise<Uint8Array> {
     const response = await this.fileSystemApi.getFileContentFromSystem(
       {
         sessionId: this.sessionId,
@@ -355,9 +350,9 @@ class RestServerAdapter implements ContentAdapter {
 
     // Disabling typescript checks on this line as this function is typed
     // to return AxiosResponse<void,any>. However, it appears to return
-    // AxiosResponse<string,>.
+    // AxiosResponse<Uint8Array,>.
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return response.data as unknown as string;
+    return response.data as unknown as Uint8Array;
   }
 
   public async getFolderPathForItem(): Promise<string> {
@@ -503,14 +498,17 @@ class RestServerAdapter implements ContentAdapter {
     }
   }
 
-  public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
+  public async updateContentOfItem(
+    uri: Uri,
+    content: Uint8Array,
+  ): Promise<void> {
     const filePath = this.trimComputePrefix(getResourceId(uri));
     return await this.updateContentOfItemAtPath(filePath, content);
   }
 
   private async updateContentOfItemAtPath(
     filePath: string,
-    content: string | ArrayBufferLike,
+    content: Uint8Array | ArrayBufferLike,
   ): Promise<void> {
     const { etag } = await this.getFileInfo(filePath);
     const data = {

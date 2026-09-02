@@ -234,7 +234,7 @@ class ItcServerAdapter implements ContentAdapter {
     return outputFile;
   }
 
-  public async getContentOfItem(item: ContentItem): Promise<string> {
+  public async getContentOfItem(item: ContentItem): Promise<Uint8Array> {
     const filePath = item.uri;
     const outputFile = await this.getTempFile();
 
@@ -244,28 +244,22 @@ class ItcServerAdapter implements ContentAdapter {
         outputFile: outputFile.fsPath,
       });
       if (!success) {
-        return "";
+        return new Uint8Array();
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      return "";
+      return new Uint8Array();
     }
 
     const file = await workspace.fs.readFile(outputFile);
     await workspace.fs.delete(outputFile);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return file as unknown as string;
+    return file as unknown as Uint8Array;
   }
 
-  public async getContentOfUri(uri: Uri): Promise<string> {
+  public async getContentOfUri(uri: Uri): Promise<Uint8Array> {
     const item = await this.getItemAtPath(getResourceId(uri));
-    return ((await this.getContentOfItem(item)) || "").toString();
-  }
-
-  public async getContentOfUriAsBinary(uri: Uri): Promise<Uint8Array> {
-    const item = await this.getItemAtPath(getResourceId(uri));
-    const content = await this.getContentOfItem(item);
-    return Buffer.from(content, "binary");
+    return (await this.getContentOfItem(item)) || new Uint8Array();
   }
 
   public async getItemOfUri(uri: Uri): Promise<ContentItem> {
@@ -332,12 +326,15 @@ class ItcServerAdapter implements ContentAdapter {
     }
   }
 
-  public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
+  public async updateContentOfItem(
+    uri: Uri,
+    content: Uint8Array,
+  ): Promise<void> {
     try {
       const item = await this.getItemAtPath(getResourceId(uri));
       await this.execute(ScriptActions.UpdateFile, {
         filePath: item.uri,
-        content,
+        content: Buffer.from(content).toString("base64"),
       });
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
