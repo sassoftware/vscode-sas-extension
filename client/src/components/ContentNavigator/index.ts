@@ -92,6 +92,11 @@ class ContentNavigator implements SubscriptionProvider {
       `${config.sourceType}ReadOnly`,
       this.contentDataProvider,
     );
+
+    // Remove any image preview cache files left behind by a previous session
+    // (e.g. VS Code was force-closed or the extension host crashed/timed-out
+    // before the tab-close/dispose cleanup could run).
+    void this.purgeImagePreviewCache();
   }
 
   get onDidManipulateFile(): Event<FileManipulationEvent> {
@@ -118,7 +123,7 @@ class ContentNavigator implements SubscriptionProvider {
         );
       }),
       new Disposable(() => {
-        void this.deleteTemporaryImageUris();
+        void this.purgeImagePreviewCache();
       }),
       commands.registerCommand(
         `${SAS}.openResource`,
@@ -135,11 +140,7 @@ class ContentNavigator implements SubscriptionProvider {
             return;
           }
 
-          const globalStorageUri = getGlobalStorageUri();
-          const imagePreviewCacheUri = Uri.joinPath(
-            globalStorageUri,
-            "imagePreviewCache",
-          );
+          const imagePreviewCacheUri = this.imagePreviewCacheUri();
           try {
             await workspace.fs.readDirectory(imagePreviewCacheUri);
           } catch {
@@ -522,6 +523,10 @@ class ContentNavigator implements SubscriptionProvider {
     await commands.executeCommand("vscode.open", itemUri);
   }
 
+  private imagePreviewCacheUri(): Uri {
+    return Uri.joinPath(getGlobalStorageUri(), "imagePreviewCache");
+  }
+
   private async deleteTemporaryImageUri(input: unknown): Promise<void> {
     const uri =
       input instanceof Uri
@@ -547,12 +552,16 @@ class ContentNavigator implements SubscriptionProvider {
     }
   }
 
-  private async deleteTemporaryImageUris(): Promise<void> {
-    await Promise.all(
-      [...this.temporaryImageUris.values()].map((uri) =>
-        this.deleteTemporaryImageUri(uri),
-      ),
-    );
+  private async purgeImagePreviewCache(): Promise<void> {
+    this.temporaryImageUris.clear();
+    try {
+      await workspace.fs.delete(this.imagePreviewCacheUri(), {
+        recursive: true,
+        useTrash: false,
+      });
+    } catch {
+      // Nothing to clean up if the cache directory does not exist.
+    }
   }
 
   private async collapseAllContent() {
