@@ -180,8 +180,8 @@ describe("ContentDataProvider", async function () {
       id: "unique-id",
       label: "testFile",
       command: {
-        command: "vscode.open",
-        arguments: [uri],
+        command: "SAS.content.openResource",
+        arguments: [contentItem],
         title: "Open SAS File",
       },
       resourceUri: uri,
@@ -339,7 +339,7 @@ describe("ContentDataProvider", async function () {
     const dataProvider = createDataProvider();
 
     axiosInstance.get.withArgs("uri://test/content").resolves({
-      data: "/* file content */",
+      data: new TextEncoder().encode("/* file content */"),
       headers: { etag: "1234", "last-modified": "5678" },
     });
 

@@ -52,6 +52,7 @@ import {
 import {
   ContentItem,
   ContentNavigatorConfig,
+  ContentSourceType,
   FileManipulationEvent,
 } from "./types";
 import {
@@ -77,6 +78,7 @@ class ContentDataProvider
   private model: ContentModel;
   private extensionUri: Uri;
   private mimeType: string;
+  private sourceType: ContentSourceType;
 
   public dropMimeTypes: string[];
   public dragMimeTypes: string[];
@@ -90,7 +92,7 @@ class ContentDataProvider
   constructor(
     model: ContentModel,
     extensionUri: Uri,
-    { mimeType, treeIdentifier }: ContentNavigatorConfig,
+    { mimeType, treeIdentifier, sourceType }: ContentNavigatorConfig,
   ) {
     this._onDidManipulateFile = new EventEmitter<FileManipulationEvent>();
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
@@ -101,6 +103,7 @@ class ContentDataProvider
     this.dropMimeTypes = [mimeType, "text/uri-list"];
     this.dragMimeTypes = [mimeType];
     this.mimeType = mimeType;
+    this.sourceType = sourceType;
 
     this._treeView = window.createTreeView(treeIdentifier, {
       treeDataProvider: this,
@@ -224,6 +227,8 @@ class ContentDataProvider
       item.parentFolderUri ? item.parentFolderUri : STOP_SIGN,
     );
 
+    const openResourceCommand = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}.openResource`;
+
     return {
       collapsibleState: isContainer
         ? TreeItemCollapsibleState.Collapsed
@@ -231,8 +236,8 @@ class ContentDataProvider
       command: isContainer
         ? undefined
         : {
-            command: "vscode.open",
-            arguments: [uri],
+            command: openResourceCommand,
+            arguments: [item],
             title: "Open SAS File",
           },
       contextValue: item.contextValue || undefined,
@@ -245,7 +250,7 @@ class ContentDataProvider
 
   public async provideTextDocumentContent(uri: Uri): Promise<string> {
     // use text document content provider to display the readonly editor for the files in the recycle bin
-    return await this.model.getContentByUri(uri);
+    return (await this.model.getContentByUri(uri)).toString();
   }
 
   public getChildren(item?: ContentItem): ProviderResult<ContentItem[]> {
@@ -264,9 +269,7 @@ class ContentDataProvider
   }
 
   public async readFile(uri: Uri): Promise<Uint8Array> {
-    return await this.model
-      .getContentByUri(uri)
-      .then((content) => new TextEncoder().encode(content));
+    return await this.model.getContentByUri(uri);
   }
 
   public async createFolder(
@@ -359,7 +362,7 @@ class ContentDataProvider
   }
 
   public writeFile(uri: Uri, content: Uint8Array): void | Promise<void> {
-    return this.model.saveContentToUri(uri, new TextDecoder().decode(content));
+    return this.model.saveContentToUri(uri, content);
   }
 
   public async deleteResource(item: ContentItem): Promise<boolean> {
