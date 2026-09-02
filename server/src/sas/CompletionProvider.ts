@@ -293,22 +293,25 @@ export class CompletionProvider {
           start: { line: position.line, column: start },
           end: { line: position.line, column: end },
         });
-        const zone = this.czMgr.getCurrentZone(
-          position.line,
-          position.character,
-        );
+        this._getZone(position);
+        const zone = this.popupContext.zone;
         return new Promise((resolve) => {
           if (keyword.trim() === "") {
             resolve(undefined);
             return;
           }
+          const optName = this._resolveParenthesizedOptName(
+            zone,
+            this.czMgr.getOptionName(),
+            position,
+          );
           this._loadHelp({
             keyword: keyword,
             type: "hint",
             zone,
             procName: this.czMgr.getProcName(),
             stmtName: this.czMgr.getStmtName(),
-            optName: this.czMgr.getOptionName(),
+            optName,
             cb: (data) => {
               if (data && data.data) {
                 resolve({
@@ -741,8 +744,23 @@ export class CompletionProvider {
     cb: (data?: (string | LibCompleteItem)[]) => void,
   ) {
     let stmtName = _cleanUpKeyword(this.czMgr.getStmtName());
-    const optName = _cleanUpKeyword(this.czMgr.getOptionName()),
-      procName = _cleanUpKeyword(this.czMgr.getProcName());
+    let optName = _cleanUpKeyword(this.czMgr.getOptionName());
+    const subOptName = _cleanUpKeyword(this.czMgr.getSubOptionName());
+    const procName = _cleanUpKeyword(this.czMgr.getProcName());
+
+    if (zone === ZONE_TYPE.PROC_STMT_SUB_OPT_VALUE && subOptName) {
+      optName = subOptName;
+    } else if (zone === ZONE_TYPE.PROC_STMT_SUB_OPT_VALUE) {
+      optName =
+        this._resolveAssignedOptNameAtCursor(this.popupContext.position) ||
+        optName;
+    } else {
+      optName = this._resolveParenthesizedOptName(
+        zone,
+        optName,
+        this.popupContext.position,
+      );
+    }
 
     this.popupContext.procName = procName;
     this.popupContext.stmtName = stmtName;
@@ -792,6 +810,7 @@ export class CompletionProvider {
         );
         break;
       case ZONE_TYPE.PROC_STMT_OPT_VALUE:
+      case ZONE_TYPE.PROC_STMT_SUB_OPT_VALUE:
         if (procName === "ODS") {
           stmtName = "ODS " + stmtName;
         }
@@ -800,7 +819,23 @@ export class CompletionProvider {
           stmtName,
           optName,
           (data) => {
-            this._notifyOptValue(cb, data, optName);
+            if (data && data.values && data.values.length > 0) {
+              this._notifyOptValue(cb, data, optName);
+              return;
+            }
+
+            this.loader.getProcedureStatementSubOptions(
+              procName,
+              stmtName,
+              optName,
+              function (subOpts) {
+                if (subOpts && subOpts.length > 0) {
+                  cb(subOpts);
+                } else {
+                  cb(undefined);
+                }
+              },
+            );
           },
         );
         break;
@@ -1766,10 +1801,204 @@ export class CompletionProvider {
     }
   }
 
+  private _isParenthesizedResolutionZone(zone: number): boolean {
+    return (
+      zone === ZONE_TYPE.PROC_SUB_OPT_NAME ||
+      zone === ZONE_TYPE.PROC_STMT_SUB_OPT
+    );
+  }
+
+  private _toOptionIdentifier(candidate?: string): string | undefined {
+    if (!candidate) {
+      return undefined;
+    }
+    return /^[A-Za-z_][\w.]*$/.test(candidate)
+      ? candidate.toUpperCase()
+      : undefined;
+  }
+
+  private _extractOptionIdentifierBackward(
+    text: string,
+    endIndexInclusive: number,
+  ): string | undefined {
+    let j = endIndexInclusive;
+
+    while (j >= 0 && /\s/.test(text[j])) {
+      j--;
+    }
+    if (j < 0 || text[j] !== "=") {
+      return undefined;
+    }
+
+    j--;
+    while (j >= 0 && /\s/.test(text[j])) {
+      j--;
+    }
+
+    const end = j;
+    while (j >= 0 && /[\w.]/.test(text[j])) {
+      j--;
+    }
+
+    return this._toOptionIdentifier(text.substring(j + 1, end + 1));
+  }
+
+  private _buildRelevantTextWindow(position: Position, maxLines = 50): string {
+    const startLine = Math.max(0, position.line - maxLines);
+    let text = "";
+
+    for (let line = startLine; line <= position.line; line++) {
+      const lineText = this.model.getLine(line);
+      const syntax = this.syntaxProvider.getSyntax(line);
+      const lineEnd =
+        line === position.line ? position.character : lineText.length;
+
+      if (!syntax || syntax.length === 0) {
+        text += lineText.substring(0, lineEnd) + "\n";
+        continue;
+      }
+
+      for (let i = 0; i < syntax.length; i++) {
+        const tokenStart = syntax[i].start;
+        const tokenEnd =
+          i + 1 < syntax.length ? syntax[i + 1].start : lineText.length;
+
+        if (tokenStart >= lineEnd) {
+          break;
+        }
+
+        const from = tokenStart;
+        const to = Math.min(tokenEnd, lineEnd);
+
+        if (
+          syntax[i].style === "comment" ||
+          syntax[i].style === "macro-comment"
+        ) {
+          text += " ";
+          continue;
+        }
+
+        text += lineText.substring(from, to);
+      }
+      text += "\n";
+    }
+
+    return text;
+  }
+
+  private _resolveParenthesizedOptName(
+    zone: number,
+    optName: string,
+    position?: Position,
+  ): string {
+    if (!position || !this._isParenthesizedResolutionZone(zone)) {
+      return optName;
+    }
+
+    const parentOpt = this._resolveParenthesizedOptAtCursor(position);
+    return parentOpt ?? optName;
+  }
+
+  private _resolveParenthesizedOptAtCursor(
+    position: Position,
+  ): string | undefined {
+    const textBeforeCaret = this._buildRelevantTextWindow(position, 50);
+    const stack: Array<string | null> = [];
+    let inSingleQuote = false;
+    let inDoubleQuote = false;
+
+    for (let i = 0; i < textBeforeCaret.length; i++) {
+      const ch = textBeforeCaret[i];
+
+      if (inSingleQuote) {
+        if (ch === "'") {
+          if (textBeforeCaret[i + 1] === "'") {
+            i++;
+          } else {
+            inSingleQuote = false;
+          }
+        }
+        continue;
+      }
+
+      if (inDoubleQuote) {
+        if (ch === '"') {
+          if (textBeforeCaret[i + 1] === '"') {
+            i++;
+          } else {
+            inDoubleQuote = false;
+          }
+        }
+        continue;
+      }
+
+      if (ch === "'") {
+        inSingleQuote = true;
+        continue;
+      }
+      if (ch === '"') {
+        inDoubleQuote = true;
+        continue;
+      }
+
+      if (ch === ")") {
+        if (stack.length > 0) {
+          stack.pop();
+        }
+        continue;
+      }
+
+      if (ch !== "(") {
+        continue;
+      }
+
+      const candidate = this._extractOptionIdentifierBackward(
+        textBeforeCaret,
+        i - 1,
+      );
+      stack.push(candidate ?? null);
+    }
+
+    for (let i = stack.length - 1; i >= 0; i--) {
+      if (stack[i]) {
+        return stack[i] as string;
+      }
+    }
+    return undefined;
+  }
+
+  private _findLastAssignedOptionName(
+    textBeforeCaret: string,
+  ): string | undefined {
+    const match = /([A-Za-z_][\w.]*)\s*=\s*$/m.exec(textBeforeCaret);
+    return this._toOptionIdentifier(match ? match[1] : undefined);
+  }
+
+  private _resolveAssignedOptNameAtCursor(
+    position?: Position,
+  ): string | undefined {
+    if (!position) {
+      return undefined;
+    }
+
+    const textBeforeCaret = this._buildRelevantTextWindow(position, 10);
+    return this._findLastAssignedOptionName(textBeforeCaret);
+  }
+
   private _getZone(position: Position) {
     this.popupContext.position = position;
     this.popupContext.prefix = this._getPrefix(position);
-    const zone = this.czMgr.getCurrentZone(position.line, position.character);
+    let zone = this.czMgr.getCurrentZone(position.line, position.character);
+    const parentOptName = this._resolveParenthesizedOptName(
+      ZONE_TYPE.PROC_STMT_SUB_OPT,
+      "",
+      position,
+    );
+    if (parentOptName) {
+      zone = this._resolveAssignedOptNameAtCursor(position)
+        ? ZONE_TYPE.PROC_STMT_SUB_OPT_VALUE
+        : ZONE_TYPE.PROC_STMT_SUB_OPT;
+    }
     this.popupContext.zone =
       this.popupContext.prefix.startsWith("&") &&
       zone !== ZONE_TYPE.COMMENT &&
