@@ -5,6 +5,7 @@ import { FileType, Uri, commands } from "vscode";
 import { AxiosResponse } from "axios";
 
 import { getSession } from "..";
+import { profileConfig } from "../../commands/profile";
 import {
   FOLDER_TYPES,
   Messages,
@@ -28,7 +29,10 @@ import {
   sortedContentItems,
 } from "../../components/ContentNavigator/utils";
 import { appendSessionLogFn } from "../../components/logViewer";
-import { ProfileWithFileRootOptions } from "../../components/profile";
+import {
+  ConnectionType,
+  ProfileWithFileRootOptions,
+} from "../../components/profile";
 import { FileProperties, FileSystemApi } from "./api/compute";
 import { getApiConfig } from "./common";
 import {
@@ -286,6 +290,12 @@ class RestServerAdapter implements ContentAdapter {
     do {
       let response;
       try {
+        const activeProfile = profileConfig.getActiveProfileDetail();
+        const profile = activeProfile?.profile;
+        const showHiddenItems =
+          profile?.connectionType === ConnectionType.Rest
+            ? (profile.displayOptions?.showHiddenItems ?? false)
+            : false;
         response = await this.fileSystemApi.getDirectoryMembers({
           sessionId: this.sessionId,
           directoryPath: this.trimComputePrefix(
@@ -293,6 +303,7 @@ class RestServerAdapter implements ContentAdapter {
           ).replace("/members", ""),
           limit,
           start,
+          showAll: showHiddenItems,
         });
       } catch (error) {
         // If this error is specifically related to file nav root settings, provide
