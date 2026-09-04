@@ -6,14 +6,17 @@ import { ConnectionType } from "../profile";
 import { LibraryAdapter } from "./types";
 
 class LibraryAdapterFactory {
-  public create(connectionType: ConnectionType): LibraryAdapter {
+  public create(
+    connectionType: ConnectionType,
+    onConnect?: () => void,
+  ): LibraryAdapter {
     switch (connectionType) {
       case ConnectionType.IOM:
       case ConnectionType.COM:
-        return new ItcLibraryAdapter();
+        return new ItcLibraryAdapter(onConnect);
       case ConnectionType.Rest:
       default:
-        return new RestLibraryAdapter();
+        return new RestLibraryAdapter(onConnect);
     }
   }
 }
