@@ -636,6 +636,7 @@ class ContentNavigator implements SubscriptionProvider {
       activeProfile.connectionType,
       profileWithFileRootOptions?.fileNavigationCustomRootPath,
       profileWithFileRootOptions?.fileNavigationRoot,
+      profileWithFileRootOptions?.globalShortcuts,
       this.sourceType,
     );
 

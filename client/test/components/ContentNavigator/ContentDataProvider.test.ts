@@ -20,7 +20,11 @@ import ContentDataProvider from "../../../src/components/ContentNavigator/Conten
 import { ContentModel } from "../../../src/components/ContentNavigator/ContentModel";
 import {
   FAVORITES_FOLDER_TYPE,
+  FOLDER_SHORTCUTS,
+  GLOBAL_SHORTCUT_TYPE,
   ROOT_FOLDER,
+  ROOT_SHORTCUT_FOLDER_TYPE,
+  SERVER_SHORTCUT_FOLDER_TYPE,
   TRASH_FOLDER_TYPE,
 } from "../../../src/components/ContentNavigator/const";
 import {
@@ -206,6 +210,35 @@ describe("ContentDataProvider", async function () {
     expect(treeItem).to.deep.include(expectedTreeItem);
   });
 
+  [
+    { typeName: ROOT_SHORTCUT_FOLDER_TYPE, icon: "shortcutsFolder" },
+    { typeName: SERVER_SHORTCUT_FOLDER_TYPE, icon: "shortcutsServerContent" },
+    { typeName: GLOBAL_SHORTCUT_TYPE, icon: "webDAVRepository" },
+  ].forEach(({ typeName, icon }) => {
+    it(`getTreeItem - returns the ${icon} icon for a ${typeName} folder`, async () => {
+      const contentItem: ContentItem = mockContentItem({
+        type: typeName,
+        typeName,
+        name: "testShortcutFolder",
+        fileStat: {
+          type: FileType.Directory,
+          ctime: 1234,
+          mtime: 1234,
+          size: 0,
+        },
+      });
+      const dataProvider = createDataProvider();
+
+      const treeItem = await dataProvider.getTreeItem(contentItem);
+
+      const extensionUri = Uri.from({ scheme: "http" });
+      expect(treeItem.iconPath).to.deep.equal({
+        dark: Uri.joinPath(extensionUri, `icons/dark/${icon}Dark.svg`),
+        light: Uri.joinPath(extensionUri, `icons/light/${icon}Light.svg`),
+      });
+    });
+  });
+
   it("getChildren - returns no children if not authorized", async () => {
     const dataProvider = createDataProvider();
     const children = await dataProvider.getChildren();
@@ -239,11 +272,12 @@ describe("ContentDataProvider", async function () {
     await dataProvider.connect("http://test.io");
 
     const children = await dataProvider.getChildren();
-    expect(children.length).to.equal(4);
+    expect(children.length).to.equal(5);
     expect(children[0].name).to.equal("@myFavorites");
     expect(children[1].name).to.equal("@myFolder");
-    expect(children[2].name).to.equal(ROOT_FOLDER.name);
-    expect(children[3].name).to.equal("@myRecycleBin");
+    expect(children[2].name).to.equal(FOLDER_SHORTCUTS.name);
+    expect(children[3].name).to.equal(ROOT_FOLDER.name);
+    expect(children[4].name).to.equal("@myRecycleBin");
   });
 
   it("getChildren - returns children with content item", async function () {
@@ -262,7 +296,7 @@ describe("ContentDataProvider", async function () {
 
     axiosInstance.get
       .withArgs(
-        "uri://myFavorites?limit=1000000&filter=in(contentType,'file','dataFlow','RootFolder','folder','myFolder','favoritesFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
+        "uri://myFavorites?limit=1000000&filter=in(contentType,'file','dataFlow','RootFolder','folder','myFolder','favoritesFolder','rootShortcutFolder','serverShortcutFolder','globalShortcutfolder','shortcutsFolder','userFolder','userRoot','trashFolder')&sortBy=eq(contentType,'folder'):descending,name:primary:ascending,type:ascending",
       )
       .resolves({
         data: {
