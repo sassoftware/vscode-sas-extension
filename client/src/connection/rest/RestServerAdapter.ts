@@ -295,7 +295,7 @@ class RestServerAdapter implements ContentAdapter {
     }
 
     if (parentItem.uri === "GLOBAL_SHORTCUTS_ID") {
-      // loo here creating a folder for each of the global paths the user defined
+      // loop here creating a folder for each of the global paths
       const globals = [];
       const globalShortcuts = Object.keys(this.globalShortcuts ?? {});
       if (!!globalShortcuts && globalShortcuts.length > 0) {
