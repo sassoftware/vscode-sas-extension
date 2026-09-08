@@ -327,7 +327,7 @@ class RestContentAdapter implements ContentAdapter {
     return await this.getItemOfId(resourceId);
   }
 
-  public async getContentOfUri(uri: Uri): Promise<string> {
+  public async getContentOfUri(uri: Uri): Promise<Uint8Array> {
     const resourceId = getResourceId(uri);
     const { data } = await this.connection.get(resourceId + "/content", {
       responseType: "arraybuffer",
@@ -336,7 +336,7 @@ class RestContentAdapter implements ContentAdapter {
     return data;
   }
 
-  public async getContentOfItem(item: ContentItem): Promise<string> {
+  public async getContentOfItem(item: ContentItem): Promise<Uint8Array> {
     return await this.getContentOfUri(item.vscUri);
   }
 
@@ -514,7 +514,10 @@ class RestContentAdapter implements ContentAdapter {
     return true;
   }
 
-  public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
+  public async updateContentOfItem(
+    uri: Uri,
+    content: Uint8Array,
+  ): Promise<void> {
     const resourceId = getResourceId(uri);
     const { etag, lastModified, contentType } = this.getFileInfo(resourceId);
     const headers = {

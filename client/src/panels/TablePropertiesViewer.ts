@@ -2,8 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 import { Uri, l10n } from "vscode";
 
-import { Column, TableInfo } from "../connection/rest/api/compute";
+import { TableColumn } from "../components/LibraryNavigator/types";
+import { TableInfo } from "../connection/rest/api/compute";
 import { WebView } from "./WebviewManager";
+import {
+  extractFormatName,
+  getIconLabel,
+  iconForColumn,
+} from "./columnIconClassifier";
 
 class TablePropertiesViewer extends WebView {
   l10nMessages = undefined;
@@ -12,7 +18,7 @@ class TablePropertiesViewer extends WebView {
     extensionUri: Uri,
     private readonly tableName: string,
     private readonly tableInfo: TableInfo,
-    private readonly columns: Column[],
+    private readonly columns: TableColumn[],
     private readonly showColumns: boolean = false,
     private readonly focusedColumn: string = "",
   ) {
@@ -163,6 +169,26 @@ class TablePropertiesViewer extends WebView {
   }
 
   private generateColumnsContent(): string {
+    const getDisplayType = (type: string): string => {
+      switch (type?.toUpperCase()) {
+        case "CHAR":
+        case "CHARACTER":
+          return "Character";
+
+        case "FLOAT":
+        case "NUMERIC":
+        case "NUM":
+        case "CURRENCY":
+        case "DATE":
+        case "TIME":
+        case "DATETIME":
+          return "Numeric";
+
+        default:
+          return type;
+      }
+    };
+
     const formatValue = (value: unknown): string => {
       if (value === null || value === undefined) {
         return "";
@@ -171,19 +197,43 @@ class TablePropertiesViewer extends WebView {
     };
 
     const columnsRows = this.columns
-      .map(
-        (column, index) => `
-          <tr class="${column.name === this.focusedColumn ? "active" : ""}">
-            <td>${index + 1}</td>
-            <td>${formatValue(column.name)}</td>
-            <td>${formatValue(column.type)}</td>
-            <td>${formatValue(column.length)}</td>
-            <td>${formatValue(column.format?.name ? column.format?.name : column.format)}</td>
-            <td>${formatValue(column.informat?.name ? column.informat?.name : column.informat)}</td>
-            <td>${formatValue(column.label)}</td>
-          </tr>
-        `,
-      )
+      .map((column, index) => {
+        const formatName = formatValue(extractFormatName(column.format));
+
+        const columnType = formatValue(column.type);
+
+        const nameIconClass = iconForColumn(columnType, column.formatCategory);
+
+        const typeIconClass = iconForColumn(columnType);
+
+        const nameIconTitle = getIconLabel(nameIconClass);
+
+        const typeIconTitle = getIconLabel(typeIconClass);
+
+        return `
+      <tr class="${column.name === this.focusedColumn ? "active" : ""}">
+        <td>${index + 1}</td>
+        <td>
+          <span
+            class="header-icon ${nameIconClass}"
+            title="${nameIconTitle}"
+          ></span>
+          ${column.name}
+        </td>
+        <td>
+          <span
+            class="header-icon ${typeIconClass}"
+            title="${typeIconTitle}"
+          ></span>
+          ${getDisplayType(columnType)}
+        </td>
+        <td>${formatValue(column.length)}</td>
+        <td>${formatName}</td>
+        <td>${formatValue(extractFormatName(column.informat))}</td>
+        <td>${formatValue(column.label)}</td>
+      </tr>
+      `;
+      })
       .join("");
 
     return `

@@ -53,29 +53,18 @@ export class ContentModel {
     return await this.contentAdapter.getItemOfUri(uri);
   }
 
-  public async getContentByUri(uri: Uri): Promise<string> {
-    let data;
+  public async getContentByUri(uri: Uri): Promise<Uint8Array> {
     try {
-      data = (await this.contentAdapter.getContentOfUri(uri)).toString();
+      return await this.contentAdapter.getContentOfUri(uri);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       throw new Error(Messages.FileOpenError);
     }
-
-    // We expect the returned data to be a string. If this isn't a string,
-    // we can't really open it
-    if (typeof data === "object") {
-      throw new Error(Messages.FileOpenError);
-    }
-
-    return data;
   }
 
-  public async downloadFile(item: ContentItem): Promise<Buffer | undefined> {
+  public async downloadFile(item: ContentItem): Promise<Uint8Array> {
     try {
-      const data = await this.contentAdapter.getContentOfItem(item);
-
-      return Buffer.from(data, "binary");
+      return await this.contentAdapter.getContentOfItem(item);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       throw new Error(Messages.FileDownloadError);
@@ -146,7 +135,7 @@ export class ContentModel {
     return await this.contentAdapter.renameItem(item, name);
   }
 
-  public async saveContentToUri(uri: Uri, content: string): Promise<void> {
+  public async saveContentToUri(uri: Uri, content: Uint8Array): Promise<void> {
     await this.contentAdapter.updateContentOfItem(uri, content);
   }
 

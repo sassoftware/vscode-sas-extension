@@ -50,8 +50,12 @@ const DataViewer = () => {
     [dismissMenu],
   );
 
-  const focusChanged = useCallback(
+  const panelMessageHandler = useCallback(
     (event: MessageEvent) => {
+      if (event.data.command === "panel:refreshData") {
+        refreshResults(undefined);
+      }
+
       if (
         event.data.command === "panel:changeFocus" &&
         event.data.data.focused
@@ -62,18 +66,18 @@ const DataViewer = () => {
         }
       }
     },
-    [gridRef],
+    [gridRef, refreshResults],
   );
   useEffect(() => {
     document.addEventListener("keydown", handleKeydown);
     window.addEventListener("blur", dismissMenuWithoutFocus);
-    window.addEventListener("message", focusChanged);
+    window.addEventListener("message", panelMessageHandler);
     return () => {
       document.removeEventListener("keydown", handleKeydown);
       window.removeEventListener("blur", dismissMenuWithoutFocus);
-      window.removeEventListener("message", focusChanged);
+      window.removeEventListener("message", panelMessageHandler);
     };
-  }, [handleKeydown, dismissMenuWithoutFocus, focusChanged]);
+  }, [handleKeydown, dismissMenuWithoutFocus, panelMessageHandler]);
 
   if (columns.length === 0) {
     return null;

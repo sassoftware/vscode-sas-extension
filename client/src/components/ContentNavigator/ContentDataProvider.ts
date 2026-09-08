@@ -52,6 +52,7 @@ import {
 import {
   ContentItem,
   ContentNavigatorConfig,
+  ContentSourceType,
   FileManipulationEvent,
 } from "./types";
 import {
@@ -77,6 +78,7 @@ class ContentDataProvider
   private model: ContentModel;
   private extensionUri: Uri;
   private mimeType: string;
+  private sourceType: ContentSourceType;
 
   public dropMimeTypes: string[];
   public dragMimeTypes: string[];
@@ -90,7 +92,7 @@ class ContentDataProvider
   constructor(
     model: ContentModel,
     extensionUri: Uri,
-    { mimeType, treeIdentifier }: ContentNavigatorConfig,
+    { mimeType, treeIdentifier, sourceType }: ContentNavigatorConfig,
   ) {
     this._onDidManipulateFile = new EventEmitter<FileManipulationEvent>();
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
@@ -101,6 +103,7 @@ class ContentDataProvider
     this.dropMimeTypes = [mimeType, "text/uri-list"];
     this.dragMimeTypes = [mimeType];
     this.mimeType = mimeType;
+    this.sourceType = sourceType;
 
     this._treeView = window.createTreeView(treeIdentifier, {
       treeDataProvider: this,
@@ -224,6 +227,8 @@ class ContentDataProvider
       item.parentFolderUri ? item.parentFolderUri : STOP_SIGN,
     );
 
+    const openResourceCommand = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}.openResource`;
+
     return {
       collapsibleState: isContainer
         ? TreeItemCollapsibleState.Collapsed
@@ -231,8 +236,8 @@ class ContentDataProvider
       command: isContainer
         ? undefined
         : {
-            command: "vscode.open",
-            arguments: [uri],
+            command: openResourceCommand,
+            arguments: [item],
             title: "Open SAS File",
           },
       contextValue: item.contextValue || undefined,
@@ -245,7 +250,7 @@ class ContentDataProvider
 
   public async provideTextDocumentContent(uri: Uri): Promise<string> {
     // use text document content provider to display the readonly editor for the files in the recycle bin
-    return await this.model.getContentByUri(uri);
+    return (await this.model.getContentByUri(uri)).toString();
   }
 
   public getChildren(item?: ContentItem): ProviderResult<ContentItem[]> {
@@ -264,9 +269,7 @@ class ContentDataProvider
   }
 
   public async readFile(uri: Uri): Promise<Uint8Array> {
-    return await this.model
-      .getContentByUri(uri)
-      .then((content) => new TextEncoder().encode(content));
+    return await this.model.getContentByUri(uri);
   }
 
   public async createFolder(
@@ -359,7 +362,7 @@ class ContentDataProvider
   }
 
   public writeFile(uri: Uri, content: Uint8Array): void | Promise<void> {
-    return this.model.saveContentToUri(uri, new TextDecoder().decode(content));
+    return this.model.saveContentToUri(uri, content);
   }
 
   public async deleteResource(item: ContentItem): Promise<boolean> {
@@ -472,8 +475,7 @@ class ContentDataProvider
   }
 
   public readDirectory():
-    | [string, FileType][]
-    | Thenable<[string, FileType][]> {
+    [string, FileType][] | Thenable<[string, FileType][]> {
     throw new Error("Method not implemented.");
   }
 
@@ -494,17 +496,35 @@ class ContentDataProvider
     target: ContentItem,
   ): Promise<void> {
     const failedUploads = [];
+    let folderUploadSucceeded = false;
     for (let i = 0; i < uris.length; ++i) {
       const uri = uris[i];
       const fileName = basename(uri.fsPath);
       if (lstatSync(uri.fsPath).isDirectory()) {
-        const success = await this.handleFolderDrop(target, uri.fsPath, false);
-        !success && failedUploads.push(fileName);
+        const createdFolder = await this.handleFolderDrop(
+          target,
+          uri.fsPath,
+          false,
+        );
+        if (!createdFolder) {
+          failedUploads.push(fileName);
+        } else {
+          folderUploadSucceeded = true;
+          await this.handleCreationResponse(
+            target,
+            createdFolder.vscUri,
+            l10n.t(Messages.FileUploadError),
+          );
+        }
       } else {
         const file = await workspace.fs.readFile(uri);
         const newUri = await this.createFile(target, fileName, file);
         !newUri && failedUploads.push(fileName);
       }
+    }
+
+    if (folderUploadSucceeded) {
+      this.refresh();
     }
 
     if (failedUploads.length > 0) {
@@ -716,7 +736,7 @@ class ContentDataProvider
     target: ContentItem,
     path: string,
     displayErrorMessages: boolean = true,
-  ): Promise<boolean> {
+  ): Promise<ContentItem | undefined> {
     const folderName = basename(path);
     const folder = await this.model.createFolder(target, folderName);
     let success = true;
@@ -728,7 +748,7 @@ class ContentDataProvider
           }),
         );
 
-      return false;
+      return;
     }
 
     // Read all the files in the folder and upload them
@@ -740,7 +760,7 @@ class ContentDataProvider
           await promisify(lstat)(fileOrFolder)
         ).isDirectory();
         if (isDirectory) {
-          success = await this.handleFolderDrop(folder, fileOrFolder);
+          success = !!(await this.handleFolderDrop(folder, fileOrFolder));
         } else {
           const name = basename(fileOrFolder);
           const fileCreated = await this.createFile(
@@ -761,7 +781,7 @@ class ContentDataProvider
       }),
     );
 
-    return success;
+    return success ? folder : undefined;
   }
 
   private async handleDataTransferItemDrop(
@@ -779,8 +799,11 @@ class ContentDataProvider
         ).isDirectory();
 
         if (isDirectory) {
-          const success = await this.handleFolderDrop(target, itemUri.fsPath);
-          if (success) {
+          const createdFolder = await this.handleFolderDrop(
+            target,
+            itemUri.fsPath,
+          );
+          if (createdFolder) {
             this.refresh();
           }
 

@@ -65,7 +65,11 @@ class LibraryModel {
             ),
           };
         } catch (e) {
-          return { error: e, data: { rows: [], count: 0 } };
+          const data: { data: TableData; error: Error } = {
+            error: e instanceof Error ? e : new Error(String(e)),
+            data: { rows: [], count: 0 },
+          };
+          return data;
         }
       },
     );
@@ -231,18 +235,16 @@ class LibraryModel {
     library: LibraryItem | undefined,
   ): LibraryItem[] {
     return items
-      .map(
-        (libraryItem: LibraryItem): LibraryItem => ({
-          ...libraryItem,
-          uid: `${library?.id || ""}.${libraryItem.id}`,
-          library: library?.id,
-          readOnly:
-            libraryItem.readOnly !== undefined
-              ? libraryItem.readOnly
-              : library?.readOnly || false,
-          type,
-        }),
-      )
+      .map((libraryItem: LibraryItem): LibraryItem => ({
+        ...libraryItem,
+        uid: `${library?.id || ""}.${libraryItem.id}`,
+        library: library?.id,
+        readOnly:
+          libraryItem.readOnly !== undefined
+            ? libraryItem.readOnly
+            : library?.readOnly || false,
+        type,
+      }))
       .sort(sortById);
   }
 }

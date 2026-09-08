@@ -10,6 +10,9 @@ import {
 
 import axios, { AxiosInstance, HeadersDefaults } from "axios";
 import { expect } from "chai";
+import { mkdtempSync, rmSync } from "fs";
+import { tmpdir } from "os";
+import { basename, join } from "path";
 import * as sinon from "sinon";
 import { StubbedInstance, stubInterface } from "ts-sinon";
 
@@ -177,8 +180,8 @@ describe("ContentDataProvider", async function () {
       id: "unique-id",
       label: "testFile",
       command: {
-        command: "vscode.open",
-        arguments: [uri],
+        command: "SAS.content.openResource",
+        arguments: [contentItem],
         title: "Open SAS File",
       },
       resourceUri: uri,
@@ -336,7 +339,7 @@ describe("ContentDataProvider", async function () {
     const dataProvider = createDataProvider();
 
     axiosInstance.get.withArgs("uri://test/content").resolves({
-      data: "/* file content */",
+      data: new TextEncoder().encode("/* file content */"),
       headers: { etag: "1234", "last-modified": "5678" },
     });
 
@@ -796,6 +799,44 @@ describe("ContentDataProvider", async function () {
       .true;
     expect(createFileStub.calledWith(newParentItem, "SampleCode2.sas")).to.be
       .true;
+  });
+
+  it("uploadUrisToTarget - refreshes tree for empty folder upload", async function () {
+    const parentItem = mockContentItem({
+      type: "folder",
+      name: "parent",
+    });
+    const createdFolder = mockContentItem({
+      type: "folder",
+      name: "uploaded-empty-folder",
+    });
+
+    const dataProvider = createDataProvider();
+    const emptyFolderPath = mkdtempSync(join(tmpdir(), "sas-empty-folder-"));
+    const folderName = basename(emptyFolderPath);
+
+    const refreshStub = sinon.stub(dataProvider, "refresh");
+    const handleCreationResponseStub = sinon
+      .stub(dataProvider, "handleCreationResponse")
+      .resolves();
+    const createFolderStub = sinon
+      .stub(ContentModel.prototype, "createFolder")
+      .resolves(createdFolder);
+
+    try {
+      await dataProvider.uploadUrisToTarget(
+        [Uri.file(emptyFolderPath)],
+        parentItem,
+      );
+
+      expect(createFolderStub.calledOnceWith(parentItem, folderName)).to.be
+        .true;
+      expect(refreshStub.calledOnce).to.be.true;
+      expect(handleCreationResponseStub.calledOnce).to.be.true;
+    } finally {
+      createFolderStub.restore();
+      rmSync(emptyFolderPath, { recursive: true, force: true });
+    }
   });
 
   it("handleDrop - allows dropping content items", async function () {
