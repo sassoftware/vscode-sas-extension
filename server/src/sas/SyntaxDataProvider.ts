@@ -1096,17 +1096,24 @@ function _setProcedureOptionSubOptKeywordsFromPubs(
     list[ID_KEYWORDS] = [];
   }
   data.forEach(function (arg) {
-    if (arg.placeholder || arg.type === "standalone") {
+    if (arg.placeholder) {
       return;
     }
     const name = arg.name;
+    const key = _removeEqu(name);
     list[ID_KEYWORDS].push(name);
-    list[_removeEqu(name)] = true;
-    if (db.procOpts[procName][optName][name] === undefined) {
-      db.procOpts[procName][optName][name] = {};
+    list[key] = true;
+    if (db.procOpts[procName][optName][key] === undefined) {
+      db.procOpts[procName][optName][key] = {};
     }
     if (arg.description) {
-      db.procOpts[procName][optName][name][ID_HELP] = arg.description;
+      db.procOpts[procName][optName][key][ID_HELP] = arg.description;
+    }
+    if (arg.help) {
+      db.procOpts[procName][optName][key][ID_SYNTAX] = arg.help;
+    }
+    if (arg.aliases) {
+      db.procOpts[procName][optName][key][ID_ALIAS] = arg.aliases;
     }
   });
   db.procOpts[procName][optName][ID_SUB_OPTS] = list;
@@ -1142,6 +1149,9 @@ function _setProcedureOptionValueFromPubs(
   db.procOpts[procName][optName][name][ID_ALIAS] = val.aliases;
   if (val.description) {
     _setProcedureOptionValueHelp(procName, optName, name, val.description);
+  }
+  if (val.help) {
+    db.procOpts[procName][optName][name][ID_SYNTAX] = val.help;
   }
 }
 function _setProcedureOptionValuesFromPubs(
@@ -1463,19 +1473,18 @@ function _setProcedureStatementSubOptKeywordFromPubs(
   subOptName: string,
   arg: StatementOption,
 ) {
-  if (db.procStmts[procName][stmtName][optName][subOptName] === undefined) {
-    db.procStmts[procName][stmtName][optName][subOptName] = {};
+  const key = _removeEqu(subOptName);
+  if (db.procStmts[procName][stmtName][optName][key] === undefined) {
+    db.procStmts[procName][stmtName][optName][key] = {};
   }
   if (arg.description) {
-    db.procStmts[procName][stmtName][optName][subOptName][ID_HELP] =
-      arg.description;
+    db.procStmts[procName][stmtName][optName][key][ID_HELP] = arg.description;
   }
   if (arg.help) {
-    db.procStmts[procName][stmtName][optName][subOptName][ID_SYNTAX] = arg.help;
+    db.procStmts[procName][stmtName][optName][key][ID_SYNTAX] = arg.help;
   }
   if (arg.aliases) {
-    db.procStmts[procName][stmtName][optName][subOptName][ID_ALIAS] =
-      arg.aliases;
+    db.procStmts[procName][stmtName][optName][key][ID_ALIAS] = arg.aliases;
   }
 }
 function _setProcedureStatementSubOptKeywordsFromPubs(
@@ -1489,7 +1498,7 @@ function _setProcedureStatementSubOptKeywordsFromPubs(
     list[ID_KEYWORDS] = [];
   }
   data.forEach(function (arg) {
-    if (arg.placeholder || arg.type === "standalone") {
+    if (arg.placeholder) {
       return;
     }
     const name = arg.name;
@@ -1558,6 +1567,9 @@ function _setProcedureStatementOptionValueFromPubs(
       name,
       val.description,
     );
+  }
+  if (val.help) {
+    db.procStmts[procName][stmtName][optName][name][ID_SYNTAX] = val.help;
   }
 }
 function _setProcedureStatementOptionValuesFromPubs(
@@ -1911,6 +1923,7 @@ export class SyntaxDataProvider {
           key: valName,
           data: data[ID_HELP],
           alias: data[ID_ALIAS],
+          syntax: data[ID_SYNTAX],
           supportSite: _procOptSupportSite(procName, optName),
         };
       }
@@ -2103,9 +2116,11 @@ export class SyntaxDataProvider {
     stmtName = stmtName.toUpperCase();
     optName = optName.toUpperCase();
     return _tryToLoadProcedure(procName, cb, () => {
-      let data = _procStmtObj(procName, stmtName, optName, ID_SUB_OPTS);
-      if (data) {
-        data = data[ID_KEYWORDS];
+      const stmtOpt = _procStmtObj(procName, stmtName, optName);
+      let data;
+      if (stmtOpt) {
+        data = stmtOpt[ID_SUB_OPTS];
+        data = data ? data[ID_KEYWORDS] : [];
       } else {
         data = this.getStatementSubOptions("global", stmtName, optName);
       }
@@ -2162,6 +2177,7 @@ export class SyntaxDataProvider {
           key: valName,
           data: data[ID_HELP],
           alias: data[ID_ALIAS],
+          syntax: data[ID_SYNTAX],
           supportSite: _procStmtOptSupportSite(procName, stmtName, optName),
         };
       } else {
@@ -2278,6 +2294,7 @@ export class SyntaxDataProvider {
           key: valName,
           data: data[ID_HELP],
           alias: data[ID_ALIAS],
+          syntax: data[ID_SYNTAX],
           supportSite: _stmtOptSupportSite(context, stmtName, optName),
         };
       }
