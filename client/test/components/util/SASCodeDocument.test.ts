@@ -7,6 +7,15 @@ import {
   SASCodeDocumentParameters,
 } from "../../../src/components/utils/SASCodeDocument";
 
+const windowsDirname = (filePath: string): string => {
+  const separatorIndex = Math.max(
+    filePath.lastIndexOf("\\"),
+    filePath.lastIndexOf("/"),
+  );
+
+  return separatorIndex === -1 ? "." : filePath.slice(0, separatorIndex);
+};
+
 describe("sas code document", () => {
   it("wrap python code", () => {
     const parameters: SASCodeDocumentParameters = {
@@ -98,27 +107,36 @@ SELECT * FROM issues WHERE issue.developer = 'scnjdl'
     assert.equal(sasCodeDoc.getWrappedCode(), expected);
   });
 
-  it("wrap sas code", () => {
-    const parameters: SASCodeDocumentParameters = {
-      languageId: "sas",
-      code: `proc sgplot data=sashelp.class;
+  it("wrap sas code", function () {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require needed for Sinon stubbing
+    const path = require("path");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require needed for Sinon stubbing
+    const { createSandbox } = require("sinon");
+    const sandbox = createSandbox();
+    sandbox.stub(path, "dirname").callsFake(windowsDirname);
+
+    try {
+      const parameters: SASCodeDocumentParameters = {
+        languageId: "sas",
+        code: `proc sgplot data=sashelp.class;
   histogram age;
 run;`,
-      selectedCode: "",
-      uri: "file:///c%3A/SAS/GIT/GitHub/TestData/run.sas",
-      fileName: "c:\\SAS\\GIT\\GitHub\\TestData\\run.sas",
-      htmlStyle: "Illuminate",
-      outputHtml: true,
-      uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
-      checkKeyword: async () => false,
-    };
+        selectedCode: "",
+        uri: "file:///c%3A/SAS/GIT/GitHub/TestData/run.sas",
+        fileName: "c:\\SAS\\GIT\\GitHub\\TestData\\run.sas",
+        htmlStyle: "Illuminate",
+        outputHtml: true,
+        uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
+        checkKeyword: async () => false,
+      };
 
-    const sasCodeDoc = new SASCodeDocument(parameters);
+      const sasCodeDoc = new SASCodeDocument(parameters);
 
-    const expected = `/** LOG_START_INDICATOR **/
+      const expected = `/** LOG_START_INDICATOR **/
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
+%let _SASPROGRAMDIR = %nrquote(%nrstr(c:\\SAS\\GIT\\GitHub\\TestData));
 %let _SASPROGRAMFILE = %nrquote(%nrstr(c:\\SAS\\GIT\\GitHub\\TestData\\run.sas));
 proc sgplot data=sashelp.class;
   histogram age;
@@ -126,37 +144,52 @@ run;
 ;*';*";*/;run;quit;ods html5(id=vscode) close;
 `;
 
-    assert.equal(sasCodeDoc.getWrappedCode(), expected);
+      assert.equal(sasCodeDoc.getWrappedCode(), expected);
+    } finally {
+      sandbox.restore();
+    }
   });
 
-  it("wrap sas code with correct windows style file path to &_SASPROGRAMFILE", () => {
-    const parameters: SASCodeDocumentParameters = {
-      languageId: "sas",
-      code: "%put &=_SASPROGRAMFILE;",
-      selectedCode: "",
-      uri: "file:///c%3A/SAS/GIT/GitHub/TestData/run.sas",
-      fileName: `c:\\temp\\My Test\\R&D\\mean(95%CI)\\Parkinson's Disease example.sas`,
-      htmlStyle: "Illuminate",
-      outputHtml: true,
-      uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
-      checkKeyword: async () => false,
-    };
-    const sasCodeDoc = new SASCodeDocument(parameters);
+  it("wrap sas code with correct windows style file path to &_SASPROGRAMFILE", function () {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require needed for Sinon stubbing
+    const path = require("path");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require needed for Sinon stubbing
+    const { createSandbox } = require("sinon");
+    const sandbox = createSandbox();
+    sandbox.stub(path, "dirname").callsFake(windowsDirname);
 
-    const expected = `/** LOG_START_INDICATOR **/
+    try {
+      const parameters: SASCodeDocumentParameters = {
+        languageId: "sas",
+        code: "%put &=_SASPROGRAMFILE;",
+        selectedCode: "",
+        uri: "file:///c%3A/SAS/GIT/GitHub/TestData/run.sas",
+        fileName: `c:\\temp\\My Test\\R&D\\mean(95%CI)\\Parkinson's Disease example.sas`,
+        htmlStyle: "Illuminate",
+        outputHtml: true,
+        uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
+        checkKeyword: async () => false,
+      };
+      const sasCodeDoc = new SASCodeDocument(parameters);
+
+      const expected = `/** LOG_START_INDICATOR **/
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
+%let _SASPROGRAMDIR = %nrquote(%nrstr(c:\\temp\\My Test\\R&D\\mean%(95%CI%)));
 %let _SASPROGRAMFILE = %nrquote(%nrstr(c:\\temp\\My Test\\R&D\\mean%(95%CI%)\\Parkinson%'s Disease example.sas));
 %put &=_SASPROGRAMFILE;
 ;*';*";*/;run;quit;ods html5(id=vscode) close;
 `;
 
-    assert.equal(
-      sasCodeDoc.getWrappedCode(),
-      expected,
-      "assign_SASProgramFile returned unexpected string",
-    );
+      assert.equal(
+        sasCodeDoc.getWrappedCode(),
+        expected,
+        "assign_SASProgramFile returned unexpected string",
+      );
+    } finally {
+      sandbox.restore();
+    }
   });
 
   it("wrap sas code with correct unix style file path to &_SASPROGRAMFILE", () => {
@@ -177,6 +210,7 @@ ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inl
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
+%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)));
 %let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)/Parkinson%'s Disease example.sas));
 %put &=_SASPROGRAMFILE;
 ;*';*";*/;run;quit;ods html5(id=vscode) close;
@@ -210,6 +244,7 @@ ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inl
     const expected = `/** LOG_START_INDICATOR **/
 title;footnote;ods _all_ close;\nods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
+%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)));
 %let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)/Parkinson%'s Disease example.sas));
 cas; caslib _all_ assign;
 
@@ -244,8 +279,63 @@ cas; caslib _all_ assign;
       "wrapped code should not include _SASPROGRAMFILE when fileName and uri are not provided",
     );
     assert(
+      !wrappedCode.includes("_SASPROGRAMDIR"),
+      "wrapped code should not include _SASPROGRAMDIR when fileName and uri are not provided",
+    );
+    assert(
       wrappedCode.includes("data test; run;"),
       "wrapped code should include the original code",
+    );
+  });
+
+  it("wrapCodeWithSASProgramDir with local fileName", () => {
+    const fileName =
+      "/tmp/My Test/R&D/mean(95%CI)/Parkinson's Disease example.sas";
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "data test; run;",
+      selectedCode: "",
+      fileName,
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)));",
+      ),
+      "wrapped code should include _SASPROGRAMDIR with the directory of fileName",
+    );
+  });
+
+  it("wrapCodeWithSASProgramDir is skipped for sasContent URI", () => {
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "this is the code",
+      selectedCode: "",
+      uri: "sasContent:/test.sas?id%3D%2Ffiles%2Ffiles%2F349be085-146d-4e0e-9fdc-99d330fa18d1",
+      fileName: "filename.sas",
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      !wrappedCode.includes("_SASPROGRAMDIR"),
+      "wrapped code should not include _SASPROGRAMDIR for sasContent URIs, since the readable parent folder cannot be resolved during session init",
+    );
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(sascontent:/files/files/349be085-146d-4e0e-9fdc-99d330fa18d1));",
+      ),
+      "wrapped code should include _SASPROGRAMFILE for sasContent URIs",
     );
   });
 
@@ -290,7 +380,7 @@ cas; caslib _all_ assign;
 
     const sasCodeDoc = new SASCodeDocument(parameters);
     const problem = {
-      lineNumber: 72,
+      lineNumber: 73,
       startColumn: 2,
       endColumn: 57,
       message:
@@ -341,8 +431,7 @@ cas; caslib _all_ assign;
     const { createSandbox } = require("sinon");
     const sandbox = createSandbox();
 
-    const win32Dirname = path.win32.dirname.bind(path.win32);
-    sandbox.stub(path, "dirname").callsFake(win32Dirname);
+    sandbox.stub(path, "dirname").callsFake(windowsDirname);
 
     try {
       const parameters: SASCodeDocumentParameters = {
@@ -371,8 +460,7 @@ cas; caslib _all_ assign;
     const { createSandbox } = require("sinon");
     const sandbox = createSandbox();
 
-    const win32Dirname = path.win32.dirname.bind(path.win32);
-    sandbox.stub(path, "dirname").callsFake(win32Dirname);
+    sandbox.stub(path, "dirname").callsFake(windowsDirname);
 
     try {
       const parameters: SASCodeDocumentParameters = {
@@ -400,53 +488,54 @@ const codeLinesInLog = [
   "2    title;footnote;ods _all_ close;",
   "3    ods graphics on;",
   "4    ods html5(id=vscode) style=Ignite options(bitmap_mode='inline' svg_mode='inline');",
-  "5    %let _SASPROGRAMFILE = %nrquote(%nrstr(c:\\SAS\\Workspace\\SAS-EXTENSION\\TestData\\samples\\temp.sas));",
-  "6    ",
+  "5    %let _SASPROGRAMDIR = %nrquote(%nrstr(c:\\SAS\\Workspace\\SAS-EXTENSION\\TestData\\samples));",
+  "6    %let _SASPROGRAMFILE = %nrquote(%nrstr(c:\\SAS\\Workspace\\SAS-EXTENSION\\TestData\\samples\\temp.sas));",
   "7    ",
-  "8    /* I am comment */",
-  "9    options ls=72;",
-  "10   ",
-  "11   data pf70 pm70 pf80 pm80;",
-  "12       input state $ pop_f70 pop_m70 pop_f80 pop_m80 @@;",
-  "13       drop pop_m70 pop_f70 pop_m80 pop_f80;",
-  "14       decade= 70;",
-  "15       sex= 'Female'",
-  "16       pop= pop_f70;  output pf70;",
-  "17       sex= 'Male';",
-  "18       pop= pop_m70;  output pm70;",
-  "19   ",
-  "20       decade= 80;",
-  "21       pop= pop_m80;  output pm80;",
-  "22       sex= 'Female';",
-  "23       pop= pop_f80;  output pf80;",
-  "24       decade= 70;",
-  "25       sex= 'Female'",
-  "26       pop= pop_f70;  output pf70;",
-  "27       sex= 'Male';",
-  "28       pop= pop_m70;  output pm70;",
-  "29       decade= 80;",
-  "30       pop= pop_m80;  output pm80;",
-  "31       sex= 'Female';",
-  "32       pop= pop_f80;  output pf80;",
-  "33       cards;",
-  "61   ;",
-  "62   ",
-  "63   data popstate;",
-  "64       set pf70 pm70 pf80 pm80;",
-  "65       label pop= 'Census Population In Millions';",
-  "66   title 'The SAS System';",
-  "67   ",
-  "68   proc univariate data=popstate freq plot normal;",
-  "69       var2 pop;",
-  "70       id state;",
-  "71       by decade sex;",
-  "72       output out= univout mean= popnmean median= popn50",
-  "73           pctlpre= pop_  pctlpts= 50, 95 to 100 by 2.5;",
-  "74   ",
-  "75   proc print data= univout;",
-  "76       title 'Output Dataset From PROC UNIVARIATE';",
-  "77       format popn50 pop_50 pop_95 pop_97_5 pop_100 best8.;",
-  "78   ",
-  `79   ;*';*";*/;run;`,
-  "80   ",
+  "8    ",
+  "9    /* I am comment */",
+  "10   options ls=72;",
+  "11   ",
+  "12   data pf70 pm70 pf80 pm80;",
+  "13       input state $ pop_f70 pop_m70 pop_f80 pop_m80 @@;",
+  "14       drop pop_m70 pop_f70 pop_m80 pop_f80;",
+  "15       decade= 70;",
+  "16       sex= 'Female'",
+  "17       pop= pop_f70;  output pf70;",
+  "18       sex= 'Male';",
+  "19       pop= pop_m70;  output pm70;",
+  "20   ",
+  "21       decade= 80;",
+  "22       pop= pop_m80;  output pm80;",
+  "23       sex= 'Female';",
+  "24       pop= pop_f80;  output pf80;",
+  "25       decade= 70;",
+  "26       sex= 'Female'",
+  "27       pop= pop_f70;  output pf70;",
+  "28       sex= 'Male';",
+  "29       pop= pop_m70;  output pm70;",
+  "30       decade= 80;",
+  "31       pop= pop_m80;  output pm80;",
+  "32       sex= 'Female';",
+  "33       pop= pop_f80;  output pf80;",
+  "34       cards;",
+  "62   ;",
+  "63   ",
+  "64   data popstate;",
+  "65       set pf70 pm70 pf80 pm80;",
+  "66       label pop= 'Census Population In Millions';",
+  "67   title 'The SAS System';",
+  "68   ",
+  "69   proc univariate data=popstate freq plot normal;",
+  "70       var2 pop;",
+  "71       id state;",
+  "72       by decade sex;",
+  "73       output out= univout mean= popnmean median= popn50",
+  "74           pctlpre= pop_  pctlpts= 50, 95 to 100 by 2.5;",
+  "75   ",
+  "76   proc print data= univout;",
+  "77       title 'Output Dataset From PROC UNIVARIATE';",
+  "78       format popn50 pop_50 pop_95 pop_97_5 pop_100 best8.;",
+  "79   ",
+  `80   ;*';*";*/;run;`,
+  "81   ",
 ];
