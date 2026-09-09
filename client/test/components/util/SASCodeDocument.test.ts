@@ -272,6 +272,29 @@ cas; caslib _all_ assign;
     );
   });
 
+  it("wrapCodeWithSASProgramFileName with sas notebook URI", () => {
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "this is the code",
+      selectedCode: "",
+      uri: "vscode-notebook-cell:/testContent.sasnb?id%3D%2Ffiles%2Ffiles%2F916e7678-a1c9-4f5b-9d72-5af9f19fae87#W0sc2FzQ29udGVudA%3D%3D",
+      fileName: "filename.sas",
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(sascontent:/files/files/916e7678-a1c9-4f5b-9d72-5af9f19fae87));",
+      ),
+      "wrapped code should include _SASPROGRAMFILE with sascontent: prefix from sasContent URI",
+    );
+  });
+
   it("getProblemLocationInRawCode", async () => {
     const parameters: SASCodeDocumentParameters = {
       languageId: "sas",

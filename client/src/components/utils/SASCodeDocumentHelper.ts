@@ -161,7 +161,11 @@ function getFileName(textDocument: TextDocument): string {
 
   // Massage file path value
   const scheme = textDocument.uri?.scheme;
-  if (scheme === "sasServer" && params.has("id")) {
+  const isServerFile =
+    scheme === "sasServer" ||
+    (scheme === "vscode-notebook-cell" &&
+      textDocument.uri?.query?.startsWith("id=/compute/sessions/"));
+  if (isServerFile && params.has("id")) {
     const id = params.get("id");
     // Viya - server file
     // id = /compute/sessions/<guid>/files/~fs~studiodev~fs~myprogram.sas

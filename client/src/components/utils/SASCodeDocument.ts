@@ -139,18 +139,21 @@ export class SASCodeDocument {
     let fileName = this.parameters.fileName;
     let uri = this.parameters.uri;
 
-    if (uri !== undefined && uri.startsWith("sasContent")) {
-      // check if a uri is available, and if it is coming from sasContent.
-      // if so, parse out our service representation and add the sascontent prefix.
-      // should look like this at the end: "sascontent:/files/files/<uuid>"
-      uri = Uri.parse(uri).query.replace("id=", "sascontent:");
-      return "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + uri + "));\n" + code;
-    } else if (fileName !== undefined) {
-      // if we are not in sasContent, we want to use the fileName instead
-      fileName = fileName.replace(/[('")]/g, "%$&");
-      return (
-        "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + fileName + "));\n" + code
-      );
+    if (uri !== undefined) {
+      const uriObj = Uri.parse(uri);
+      if (uriObj.query.startsWith("id=/files/files")) {
+        // check if a uri is available, and if it is coming from sasContent.
+        // if so, parse out our service representation and add the sascontent prefix.
+        // should look like this at the end: "sascontent:/files/files/<uuid>"
+        uri = uriObj.query.replace("id=", "sascontent:");
+        return "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + uri + "));\n" + code;
+      } else if (fileName !== undefined) {
+        // if we are not in sasContent, we want to use the fileName instead
+        fileName = fileName.replace(/[('")]/g, "%$&");
+        return (
+          "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + fileName + "));\n" + code
+        );
+      }
     }
 
     // if a fileName was not found, just return the raw code
