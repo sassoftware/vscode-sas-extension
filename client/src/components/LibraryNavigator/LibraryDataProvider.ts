@@ -179,6 +179,11 @@ class LibraryDataProvider
     return new Disposable(() => {});
   }
 
+  // Invalidates the tree cache so libraries/tables are refetched.
+  public refresh(): void {
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
   public useAdapter(libraryAdapter: LibraryAdapter): void {
     this.model.useAdapter(libraryAdapter);
     this._onDidChangeTreeData.fire(undefined);
