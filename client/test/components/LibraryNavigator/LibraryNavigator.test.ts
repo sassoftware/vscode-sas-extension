@@ -6,6 +6,7 @@ import * as sinon from "sinon";
 import LibraryNavigator from "../../../src/components/LibraryNavigator";
 import PaginatedResultSet from "../../../src/components/LibraryNavigator/PaginatedResultSet";
 import DataViewer from "../../../src/panels/DataViewer";
+import TablePropertiesViewer from "../../../src/panels/TablePropertiesViewer";
 
 interface WebviewMessagePanel {
   webview: {
@@ -24,6 +25,37 @@ const createDataViewer = () =>
     new PaginatedResultSet(async () => ({ data: { rows: [], count: 0 } })),
     () => [],
     () => {},
+  );
+
+const createTablePropertiesViewer = () =>
+  new TablePropertiesViewer(
+    Uri.file("C:/temp"),
+    "WORK.T_REFRESH",
+    {
+      name: "T_REFRESH",
+      libref: "WORK",
+    },
+    [
+      {
+        name: "date",
+        type: "num",
+        format: "YYMMDD10.",
+        index: 2,
+        formatCategory: "date",
+      },
+    ],
+    false,
+    "",
+    async () => ({ name: "T_REFRESH", libref: "WORK" }),
+    async () => [
+      {
+        name: "updatedDate",
+        type: "num",
+        format: "YYMMDD10.",
+        index: 2,
+        formatCategory: "date",
+      },
+    ],
   );
 
 describe("LibraryNavigator refresh flow", async function () {
@@ -50,17 +82,23 @@ describe("LibraryNavigator refresh flow", async function () {
     ).to.equal(true);
   });
 
-  it("refreshOpenTableViewers refreshes only open DataViewer panels", () => {
+  it("refreshOpenTableViewers refreshes open DataViewer and TablePropertiesViewer panels", () => {
     const navigator: LibraryNavigator = Object.create(
       LibraryNavigator.prototype,
     );
 
     const tableViewer = createDataViewer();
     const tableViewerRefresh = sinon.stub(tableViewer, "refreshData");
+    const tablePropertiesViewer = createTablePropertiesViewer();
+    const tablePropertiesViewerRefresh = sinon.stub(
+      tablePropertiesViewer,
+      "refreshData",
+    );
     const nonTablePanel = new RefreshTrackingPanel();
     const webviewManager = {
       panels: {
         table: tableViewer,
+        tableProperties: tablePropertiesViewer,
         other: nonTablePanel,
       },
     };
@@ -72,6 +110,7 @@ describe("LibraryNavigator refresh flow", async function () {
     navigator.refreshOpenTableViewers();
 
     expect(tableViewerRefresh.calledOnce).to.equal(true);
+    expect(tablePropertiesViewerRefresh.calledOnce).to.equal(true);
     expect(nonTablePanel.refreshData.called).to.equal(false);
   });
 });

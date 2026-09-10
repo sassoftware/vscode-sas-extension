@@ -151,7 +151,10 @@ class LibraryNavigator implements SubscriptionProvider {
 
   public refreshOpenTableViewers(): void {
     Object.values(this.webviewManager.panels).forEach((panel) => {
-      if (panel instanceof DataViewer) {
+      if (
+        panel instanceof DataViewer ||
+        panel instanceof TablePropertiesViewer
+      ) {
         panel.refreshData();
       }
     });
@@ -174,6 +177,8 @@ class LibraryNavigator implements SubscriptionProvider {
           columns,
           showPropertiesTab,
           focusedColumn,
+          () => this.libraryDataProvider.getTableInfo(item),
+          () => this.libraryDataProvider.fetchColumns(item),
         ),
         `properties-${item.uid}`,
         true,
