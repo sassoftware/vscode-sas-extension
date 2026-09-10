@@ -194,7 +194,10 @@ class LibraryNavigator implements SubscriptionProvider {
       return;
     }
 
-    return new LibraryAdapterFactory().create(activeProfile.connectionType);
+    return new LibraryAdapterFactory().create(
+      activeProfile.connectionType,
+      () => this.libraryDataProvider.refresh(),
+    );
   }
 }
 

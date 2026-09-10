@@ -35,9 +35,14 @@ class ItcLibraryAdapter implements LibraryAdapter {
     (formatNames) => this.fetchFormatCategories(formatNames),
   );
 
+  public constructor(private readonly onConnect?: () => void) {}
+
   public async connect(): Promise<void> {
     this.hasEstablishedConnection = true;
     this.formatCategories.clear();
+    if (this.onConnect) {
+      this.onConnect();
+    }
   }
 
   public async setup(): Promise<void> {
