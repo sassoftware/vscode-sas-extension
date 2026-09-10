@@ -46,6 +46,8 @@
   "configuration.SAS.connectionProfiles.profiles.com.interopLibraryFolderPath": "SAS COM interop ライブラリパス",
   "configuration.SAS.connectionProfiles.profiles.connectionType": "SAS プロファイル接続タイプ",
   "configuration.SAS.connectionProfiles.profiles.context": "SAS Viya コンテキスト",
+  "configuration.SAS.connectionProfiles.profiles.displayOptions": "表示オプション",
+  "configuration.SAS.connectionProfiles.profiles.displayOptions.showHiddenItems": "隠しフォルダーとファイルシステム内のアイテムを表示",
   "configuration.SAS.connectionProfiles.profiles.endpoint": "SAS Viya 接続プロファイルエンドポイント",
   "configuration.SAS.connectionProfiles.profiles.fileNavigationCustomRootPath": "SAS サーバーのカスタムルートパス",
   "configuration.SAS.connectionProfiles.profiles.fileNavigationRoot": "SAS サーバーのルート",

@@ -73,7 +73,8 @@ export enum ConnectionType {
  * value. Normally this option should not be set by the user since it is most likely
  * being set by an automated process.
  */
-export interface ViyaProfile extends BaseProfile, ProfileWithFileRootOptions {
+export interface ViyaProfile
+  extends BaseProfile, ProfileWithFileRootOptions, DisplayOptionsProfile {
   connectionType: ConnectionType.Rest;
   endpoint: string;
   clientId?: string;
@@ -125,6 +126,14 @@ export interface AutoExecFile {
 export interface BaseProfile {
   sasOptions?: string[];
   autoExec?: AutoExec[];
+}
+
+export interface DisplayOptionsProfile {
+  displayOptions?: DisplayOptions;
+}
+
+export interface DisplayOptions {
+  showHiddenItems?: boolean;
 }
 
 export interface ProfileWithFileRootOptions {
