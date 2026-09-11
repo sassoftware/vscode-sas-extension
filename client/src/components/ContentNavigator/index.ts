@@ -34,35 +34,17 @@ import {
   FileManipulationEvent,
 } from "./types";
 import { isContainer as getIsContainer } from "./utils";
+import { validateFileName, validateFolderName } from "./validation";
 
-const fileValidator = (value: string): string | null =>
-  /^([^/<>;\\{}]+)\.\w+$/.test(
-    // file service does not allow /, <, >, ;, \, {, }
-    value,
-  )
-    ? null
-    : Messages.FileValidationError;
-
-const flowFileValidator = (value: string): string | null => {
-  let res = fileValidator(value);
+const flowFileValidator = (
+  value: string,
+  sourceType: ContentSourceType,
+): string | null => {
+  let res = validateFileName(value, sourceType);
   if (!value.endsWith(".flw")) {
     res = Messages.InvalidFlowFileNameError;
   }
   return res;
-};
-
-const folderValidator = (
-  value: string,
-  sourceType: ContentSourceType,
-): string | null => {
-  const regex =
-    sourceType === ContentSourceType.SASServer
-      ? new RegExp(/[:/?\\*"|<>]/g)
-      : new RegExp(/[/;\\{}<>]/g);
-
-  return value.length <= 100 && !regex.test(value)
-    ? null
-    : Messages.FolderValidationError;
 };
 
 class ContentNavigator implements SubscriptionProvider {
@@ -263,7 +245,7 @@ class ContentNavigator implements SubscriptionProvider {
           const fileName = await window.showInputBox({
             prompt: Messages.NewFilePrompt,
             title: Messages.NewFileTitle,
-            validateInput: fileValidator,
+            validateInput: (value) => validateFileName(value, this.sourceType),
           });
           if (!fileName) {
             return;
@@ -291,7 +273,7 @@ class ContentNavigator implements SubscriptionProvider {
             prompt: Messages.NewFolderPrompt,
             title: Messages.NewFolderTitle,
             validateInput: (folderName) =>
-              folderValidator(folderName, this.sourceType),
+              validateFolderName(folderName, this.sourceType),
           });
           if (!folderName) {
             return;
@@ -320,8 +302,8 @@ class ContentNavigator implements SubscriptionProvider {
               : Messages.RenameFileTitle,
             value: resource.name,
             validateInput: isContainer
-              ? (value) => folderValidator(value, this.sourceType)
-              : fileValidator,
+              ? (value) => validateFolderName(value, this.sourceType)
+              : (value) => validateFileName(value, this.sourceType),
           });
           if (!name || name === resource.name) {
             return;
@@ -395,7 +377,7 @@ class ContentNavigator implements SubscriptionProvider {
           const outputName = await window.showInputBox({
             prompt: Messages.ConvertNotebookToFlowPrompt,
             value: inputName.replace(".sasnb", ".flw"),
-            validateInput: flowFileValidator,
+            validateInput: (value) => flowFileValidator(value, this.sourceType),
           });
 
           if (!outputName) {
