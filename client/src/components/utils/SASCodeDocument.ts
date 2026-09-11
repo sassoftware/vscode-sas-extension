@@ -157,6 +157,25 @@ export class SASCodeDocument {
     return code;
   }
 
+  private wrapCodeWithSASProgramDir(code: string): string {
+    const uri = this.parameters.uri;
+
+    // SAS Content files have no readable parent folder without an extra
+    // service call, which isn't possible during session init (LOCKDOWN);
+    if (uri !== undefined && uri.startsWith("sasContent")) {
+      return code;
+    }
+
+    if (this.parameters.fileName === undefined) {
+      return code;
+    }
+
+    const baseDirectory = this.getBaseDirectory().replace(/[('")]/g, "%$&");
+    return (
+      "%let _SASPROGRAMDIR = %nrquote(%nrstr(" + baseDirectory + "));\n" + code
+    );
+  }
+
   private wrapCodeWithPreambleAndPostamble(code: string): string {
     return (
       (this.parameters?.preamble ? this.parameters?.preamble + "\n" : "") +
@@ -229,6 +248,8 @@ ${code}`;
     }
 
     wrapped = this.wrapCodeWithSASProgramFileName(wrapped);
+
+    wrapped = this.wrapCodeWithSASProgramDir(wrapped);
 
     wrapped = this.wrapCodeWithPreambleAndPostamble(wrapped);
 
