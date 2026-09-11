@@ -105,6 +105,18 @@ export interface IOMProfile extends BaseProfile, ProfileWithFileRootOptions {
 
 export type Profile = ViyaProfile | SSHProfile | COMProfile | IOMProfile;
 
+/**
+ * A profile being assembled by {@link ProfileConfig.prompt}. Fields are filled in
+ * one prompt at a time, so every field is optional until the connection type
+ * specific branch has finished collecting input.
+ */
+type ProfileDraft = Partial<
+  Omit<ViyaProfile, "connectionType"> &
+    Omit<SSHProfile, "connectionType"> &
+    Omit<COMProfile, "connectionType"> &
+    Omit<IOMProfile, "connectionType">
+> & { connectionType?: ConnectionType };
+
 export enum AutoExecType {
   File = "file",
   Line = "line",
@@ -173,7 +185,8 @@ const toAutoExecLinesFromPaths = (filePath: string): string[] => {
     const content = readFileSync(filePath, "utf8").split(/\n|\r\n/);
     lines.push(...content);
   } catch (e) {
-    const err: Error = e;
+    /* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */
+    const err = e as Error;
     console.warn(
       `Error reading file: ${filePath}, error: ${err.message}, skipping...`,
     );
@@ -191,6 +204,14 @@ export interface ProfileDetail {
 }
 
 /**
+ * A {@link ProfileDetail} built from an unverified lookup, where the named
+ * profile may not exist.
+ */
+export type UnvalidatedProfileDetail = Omit<ProfileDetail, "profile"> & {
+  profile?: Profile;
+};
+
+/**
  * Profile validation is an interface that represents the validation
  * information from a profile needed when making a SAS connection.
  */
@@ -198,8 +219,24 @@ export interface ProfileValidation {
   type: AuthType;
   error: string;
   data?: string;
-  profile: Profile;
+  profile?: Profile;
 }
+
+/**
+ * Shape of the `SAS.connectionProfiles` setting as it is stored in settings.json.
+ */
+interface ConnectionProfilesSetting {
+  activeProfile?: string;
+  profiles?: Dictionary<Profile>;
+}
+
+/**
+ * Normalized shape of an empty `SAS.connectionProfiles` setting.
+ */
+const EMPTY_PROFILE_SETTING: ConnectionProfilesSetting = {
+  activeProfile: "",
+  profiles: {},
+};
 
 /**
  * ProfileConfig manages a list of {@link Profile}s that are located in vscode settings.
@@ -215,20 +252,221 @@ export class ProfileConfig {
 
     if (profiles) {
       for (const key in profiles) {
-        const profile = profiles[key];
+        let profile = profiles[key];
+        // Profiles written before connection types existed are Viya profiles.
         if (profile.connectionType === undefined) {
-          profile.connectionType = ConnectionType.Rest;
+          /* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */
+          profile = {
+            ...profile,
+            connectionType: ConnectionType.Rest,
+          } as ViyaProfile;
           await this.upsertProfile(key, profile);
         }
         if (
           profile.connectionType === ConnectionType.Rest &&
           /\/$/.test(profile.endpoint)
         ) {
-          profile.endpoint = profile.endpoint.replace(/\/$/, "");
+          profile = {
+            ...profile,
+            endpoint: profile.endpoint.replace(/\/$/, ""),
+          };
           await this.upsertProfile(key, profile);
         }
       }
     }
+  }
+
+  /**
+   * Inspects the `SAS.connectionProfiles` setting across all configuration scopes.
+   */
+  private inspectProfileSetting() {
+    return workspace
+      .getConfiguration(EXTENSION_CONFIG_KEY)
+      .inspect<ConnectionProfilesSetting>(EXTENSION_DEFINE_PROFILES_CONFIG_KEY);
+  }
+
+  /**
+   * Determines which configuration scope owns the connection profiles.
+   * Workspace folder settings take precedence over workspace settings, which
+   * take precedence over user (global) settings.
+   *
+   * @returns the {@link ConfigurationTarget} that profile updates should be written to
+   */
+  getConfigurationTarget(): ConfigurationTarget {
+    const inspected = this.inspectProfileSetting();
+
+    if (inspected?.workspaceFolderValue !== undefined) {
+      return ConfigurationTarget.WorkspaceFolder;
+    }
+
+    if (inspected?.workspaceValue !== undefined) {
+      return ConfigurationTarget.Workspace;
+    }
+
+    return ConfigurationTarget.Global;
+  }
+
+  /**
+   * Determines the default location for brand-new profiles when no
+   * profile collection currently exists in any scope.
+   *
+   * To preserve existing behavior, profiles are created in User
+   * settings by default.
+   */
+  getDefaultProfileCreationTarget(): ConfigurationTarget {
+    return ConfigurationTarget.Global;
+  }
+
+  /**
+   * Reads the setting owned by a single configuration scope. Values from other
+   * scopes are never merged in, so a write built from this value can only ever
+   * persist profiles that already belong to that scope.
+   */
+  private getProfileSettingForTarget(
+    target: ConfigurationTarget,
+  ): ConnectionProfilesSetting | undefined {
+    const inspected = this.inspectProfileSetting();
+
+    switch (target) {
+      case ConfigurationTarget.WorkspaceFolder:
+        return inspected?.workspaceFolderValue;
+      case ConfigurationTarget.Workspace:
+        return inspected?.workspaceValue;
+      default:
+        return inspected?.globalValue;
+    }
+  }
+
+  private getProfilesForTarget(
+    target: ConfigurationTarget,
+  ): Dictionary<Profile> {
+    return this.getProfileSettingForTarget(target)?.profiles ?? {};
+  }
+
+  /**
+   * Returns the configuration scope currently being used for
+   * profile resolution. Empty profile settings are ignored
+   * and fallback continues according to precedence rules.
+   */
+  private getResolvedProfileTarget(): ConfigurationTarget | undefined {
+    const inspected = this.inspectProfileSetting();
+
+    if (inspected?.workspaceFolderValue !== undefined) {
+      return ConfigurationTarget.WorkspaceFolder;
+    }
+
+    if (inspected?.workspaceValue !== undefined) {
+      return ConfigurationTarget.Workspace;
+    }
+
+    if (inspected?.globalValue !== undefined) {
+      return ConfigurationTarget.Global;
+    }
+    return undefined;
+  }
+
+  /**
+   * Finds the scope that actually defines the given profile, so updates and
+   * deletions are applied where the profile lives instead of the scope that
+   * merely declares an (possibly empty) setting.
+   */
+  private getTargetOwningProfile(
+    name: string,
+  ): ConfigurationTarget | undefined {
+    const inspected = this.inspectProfileSetting();
+    const scopes: [
+      ConnectionProfilesSetting | undefined,
+      ConfigurationTarget,
+    ][] = [
+      [inspected?.workspaceFolderValue, ConfigurationTarget.WorkspaceFolder],
+      [inspected?.workspaceValue, ConfigurationTarget.Workspace],
+      [inspected?.globalValue, ConfigurationTarget.Global],
+    ];
+
+    for (const [setting, target] of scopes) {
+      if (this.hasProfiles(setting) && name in (setting?.profiles ?? {})) {
+        return target;
+      }
+    }
+
+    return undefined;
+  }
+
+  /**
+   * A scope's `connectionProfiles` setting is considered empty when it is
+   * missing entirely, `{}`, or normalized to `{ activeProfile: "", profiles: {} }`.
+   * The presence of at least one profile makes the setting non-empty, even if
+   * `activeProfile` happens to be `""`.
+   */
+  private isEmptyProfileSetting(setting?: ConnectionProfilesSetting): boolean {
+    return setting === undefined;
+  }
+
+  private hasProfiles(setting?: ConnectionProfilesSetting): boolean {
+    const profiles = setting?.profiles;
+    return !!profiles && Object.keys(profiles).length > 0;
+  }
+
+  /**
+   * A scope needs normalization when `profiles` is missing/empty but
+   * `activeProfile` still holds a stale value from a manually edited
+   * settings.json.
+   */
+  private needsNormalization(setting?: ConnectionProfilesSetting): boolean {
+    return !this.hasProfiles(setting) && !!setting?.activeProfile;
+  }
+
+  /**
+   * Normalizes every configuration scope (User, Workspace, WorkspaceFolder)
+   * whose `connectionProfiles` setting is empty but still carries a stale
+   * `activeProfile`. Scopes with valid profiles are left untouched, and this
+   * runs independently of which scope currently owns profile resolution so
+   * fallback behavior between scopes keeps working.
+   */
+  private normalizeStaleScopes(): void {
+    const inspected = this.inspectProfileSetting();
+    const scopes: [
+      ConnectionProfilesSetting | undefined,
+      ConfigurationTarget,
+    ][] = [
+      [inspected?.globalValue, ConfigurationTarget.Global],
+      [inspected?.workspaceValue, ConfigurationTarget.Workspace],
+      [inspected?.workspaceFolderValue, ConfigurationTarget.WorkspaceFolder],
+    ];
+
+    for (const [setting, target] of scopes) {
+      if (this.needsNormalization(setting)) {
+        workspace
+          .getConfiguration(EXTENSION_CONFIG_KEY)
+          .update(
+            EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+            EMPTY_PROFILE_SETTING,
+            target,
+          );
+      }
+    }
+  }
+
+  /**
+   * Reads the connection profiles setting from the highest precedence scope that
+   * defines it. This intentionally avoids `get()` because VS Code deep merges
+   * object settings across scopes, which would blend user and workspace profiles.
+   * Scopes whose setting is empty (see {@link isEmptyProfileSetting}) are skipped
+   * and resolution falls through to the next lower-precedence scope.
+   */
+  private getProfileSetting(): ConnectionProfilesSetting | undefined {
+    const inspected = this.inspectProfileSetting();
+
+    // const workspaceFolderValue = inspected?.workspaceFolderValue;
+    if (inspected?.workspaceFolderValue !== undefined) {
+      return inspected.workspaceFolderValue;
+    }
+
+    if (inspected?.workspaceValue !== undefined) {
+      return inspected.workspaceValue;
+    }
+
+    return inspected?.globalValue ?? inspected?.defaultValue;
   }
 
   /**
@@ -238,19 +476,18 @@ export class ProfileConfig {
    * @returns Boolean for pass or fail
    */
   validateSettings(): boolean {
-    const profileList: Dictionary<Profile> = workspace
-      .getConfiguration(EXTENSION_CONFIG_KEY)
-      .get(EXTENSION_DEFINE_PROFILES_CONFIG_KEY)[EXTENSION_PROFILES_CONFIG_KEY];
+    // Normalize any other scope left with a stale activeProfile even when
+    // resolution otherwise falls back successfully.
+    this.normalizeStaleScopes();
 
-    if (!profileList) {
-      workspace.getConfiguration(EXTENSION_CONFIG_KEY).update(
-        EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
-        {
-          activeProfile: "",
-          profiles: {},
-        },
-        ConfigurationTarget.Global,
-      );
+    if (this.isEmptyProfileSetting(this.getProfileSetting())) {
+      workspace
+        .getConfiguration(EXTENSION_CONFIG_KEY)
+        .update(
+          EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
+          EMPTY_PROFILE_SETTING,
+          this.getConfigurationTarget(),
+        );
       return false;
     }
     return true;
@@ -265,12 +502,9 @@ export class ProfileConfig {
     if (!this.validateSettings()) {
       return "";
     }
-    const activeProfile: string = workspace
-      .getConfiguration(EXTENSION_CONFIG_KEY)
-      .get(EXTENSION_DEFINE_PROFILES_CONFIG_KEY)[
-      EXTENSION_ACTIVE_PROFILE_CONFIG_KEY
-    ];
-    return activeProfile;
+    return (
+      this.getProfileSetting()?.[EXTENSION_ACTIVE_PROFILE_CONFIG_KEY] ?? ""
+    );
   }
 
   /**
@@ -282,55 +516,80 @@ export class ProfileConfig {
     if (!this.validateSettings()) {
       return {};
     }
-    const profileList: Dictionary<Profile> = workspace
-      .getConfiguration(EXTENSION_CONFIG_KEY)
-      .get(EXTENSION_DEFINE_PROFILES_CONFIG_KEY)[EXTENSION_PROFILES_CONFIG_KEY];
 
-    return profileList;
+    const profiles = this.getProfileSetting()?.[EXTENSION_PROFILES_CONFIG_KEY];
+
+    return profiles ?? {};
+  }
+
+  /**
+   * Returns the normalized form of a setting about to be written: if
+   * `profiles` is empty, any stale `activeProfile` is cleared.
+   */
+  private normalizeSetting(
+    setting: ConnectionProfilesSetting,
+  ): ConnectionProfilesSetting {
+    return this.needsNormalization(setting) ? EMPTY_PROFILE_SETTING : setting;
   }
 
   /**
    * Update VSCode settings with profile dictionary
    *
    * @param profileDict {@link Dictionary<Profile>} the value for the key
+   * @param target optional {@link ConfigurationTarget} to write to
    */
-  async updateProfileSetting(profileDict: Dictionary<Profile>): Promise<void> {
-    const currentActiveProfile = this.getActiveProfile();
-    const profiles = {
+  async updateProfileSetting(
+    profileDict: Dictionary<Profile>,
+    target: ConfigurationTarget = this.getConfigurationTarget(),
+  ): Promise<void> {
+    // The active profile is read from the target scope only; a value resolved
+    // through fallback belongs to another scope and must not be copied here.
+    const currentActiveProfile =
+      this.getProfileSettingForTarget(target)?.[
+        EXTENSION_ACTIVE_PROFILE_CONFIG_KEY
+      ] ?? "";
+    const profiles = this.normalizeSetting({
       activeProfile: currentActiveProfile,
       profiles: profileDict,
-    };
+    });
+
     await workspace
       .getConfiguration(EXTENSION_CONFIG_KEY)
-      .update(
-        EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
-        profiles,
-        ConfigurationTarget.Global,
-      );
+      .update(EXTENSION_DEFINE_PROFILES_CONFIG_KEY, profiles, target);
   }
 
   /**
    * Update VSCode settings with active profile
    *
    * @param activeProfileParam {@link String} the value for the key
+   * @param target optional {@link ConfigurationTarget} to write to
    */
-  async updateActiveProfileSetting(activeProfileParam: string): Promise<void> {
-    const profileList = this.getAllProfiles();
+  async updateActiveProfileSetting(
+    activeProfileParam: string,
+    target?: ConfigurationTarget,
+  ): Promise<void> {
+    const writeTarget =
+      target ??
+      this.getTargetOwningProfile(activeProfileParam) ??
+      this.getConfigurationTarget();
+    const profileList = this.getProfilesForTarget(writeTarget);
     const profiles = {
       activeProfile: activeProfileParam,
       profiles: profileList,
     };
+
     if (activeProfileParam in profileList) {
       commands.executeCommand("SAS.close", true);
     } else {
       profiles.activeProfile = "";
     }
+
     await workspace
       .getConfiguration(EXTENSION_CONFIG_KEY)
       .update(
         EXTENSION_DEFINE_PROFILES_CONFIG_KEY,
-        profiles,
-        ConfigurationTarget.Global,
+        this.normalizeSetting(profiles),
+        writeTarget,
       );
   }
 
@@ -359,7 +618,7 @@ export class ProfileConfig {
    * @param name {@link String} of the profile name
    * @returns Profile object
    */
-  getProfileByName<T extends Profile>(name: string): T {
+  getProfileByName<T extends Profile>(name: string): T | undefined {
     const profileList = this.getAllProfiles();
     if (name in profileList) {
       /* eslint-disable @typescript-eslint/consistent-type-assertions*/
@@ -378,6 +637,7 @@ export class ProfileConfig {
     const activeProfileName = this.getActiveProfile();
 
     const profileList = this.getAllProfiles();
+
     if (activeProfileName in profileList) {
       const profile = { ...profileList[activeProfileName] };
       if (
@@ -403,11 +663,17 @@ export class ProfileConfig {
    * @param profile {@link Profile} object
    */
   async upsertProfile(name: string, profile: Profile): Promise<void> {
-    const profileList = this.getAllProfiles();
-    // Cannot mutate VSCode Config Object, create a clone and add that to settings.json
+    const target =
+      this.getTargetOwningProfile(name) ??
+      this.getResolvedProfileTarget() ??
+      this.getDefaultProfileCreationTarget();
+
+    const profileList = this.getProfilesForTarget(target);
+
     const newProfileList = JSON.parse(JSON.stringify(profileList));
     newProfileList[name] = profile;
-    await this.updateProfileSetting(newProfileList);
+
+    await this.updateProfileSetting(newProfileList, target);
   }
 
   /**
@@ -416,15 +682,18 @@ export class ProfileConfig {
    * @param name {@link String} of the name of the profile
    */
   async deleteProfile(name: string): Promise<void> {
-    const profileList = this.getAllProfiles();
-    if (name in profileList) {
-      // Cannot mutate VSCode Config Object, create a clone and add that to settings.json
-      const newProfileList = JSON.parse(JSON.stringify(profileList));
-      delete newProfileList[name];
-      await this.updateProfileSetting(newProfileList);
-      if (name === this.getActiveProfile()) {
-        await this.updateActiveProfileSetting("");
-      }
+    const target = this.getTargetOwningProfile(name);
+    if (target === undefined) {
+      return;
+    }
+
+    const profileList = this.getProfilesForTarget(target);
+    // Cannot mutate VSCode Config Object, create a clone and add that to settings.json
+    const newProfileList = JSON.parse(JSON.stringify(profileList));
+    delete newProfileList[name];
+    await this.updateProfileSetting(newProfileList, target);
+    if (name === this.getActiveProfile()) {
+      await this.updateActiveProfileSetting("", target);
     }
   }
 
@@ -439,7 +708,7 @@ export class ProfileConfig {
    * @param profileDetail
    * @returns ProfileValidation object
    */
-  validateProfile(profileDetail?: ProfileDetail): ProfileValidation {
+  validateProfile(profileDetail?: UnvalidatedProfileDetail): ProfileValidation {
     const pv: ProfileValidation = {
       type: AuthType.Error,
       error: "",
@@ -494,17 +763,16 @@ export class ProfileConfig {
    * @param name the {@link String} representation of the name of the profile
    */
   async prompt(name: string): Promise<void> {
-    const profile: Profile = this.getProfileByName(name);
+    const profile = this.getProfileByName(name);
     // Cannot mutate VSCode Config Object, create a clone and upsert
-    let profileClone = { ...profile };
-    if (!profile) {
-      profileClone = {
-        connectionType: ConnectionType.Rest,
-        endpoint: undefined,
-      };
-    }
+    const profileClone: ProfileDraft = profile
+      ? { ...profile }
+      : {
+          connectionType: ConnectionType.Rest,
+          endpoint: undefined,
+        };
 
-    const inputConnectionType: string = await createInputQuickPick(
+    const inputConnectionType = await createInputQuickPick(
       CONNECTION_PICK_OPTS,
       ProfilePromptType.ConnectionType,
     );
@@ -559,8 +827,8 @@ export class ProfileConfig {
           return;
         }
       }
-
-      await this.upsertProfile(name, profileClone);
+      // Required Viya fields have been validated above.
+      await this.upsertProfile(name, profileClone as ViyaProfile);
     } else if (profileClone.connectionType === ConnectionType.SSH) {
       profileClone.host = await createInputTextBox(
         ProfilePromptType.Host,
@@ -587,7 +855,8 @@ export class ProfileConfig {
       }
 
       profileClone.port = parseInt(
-        await createInputTextBox(ProfilePromptType.Port, DEFAULT_SSH_PORT),
+        (await createInputTextBox(ProfilePromptType.Port, DEFAULT_SSH_PORT)) ??
+          "",
       );
       if (isNaN(profileClone.port)) {
         return;
@@ -601,12 +870,13 @@ export class ProfileConfig {
       if (keyPath) {
         profileClone.privateKeyFilePath = keyPath;
       }
-
-      await this.upsertProfile(name, profileClone);
+      // Required SSH fields have been validated above.
+      await this.upsertProfile(name, profileClone as SSHProfile);
     } else if (profileClone.connectionType === ConnectionType.COM) {
       profileClone.sasOptions = [];
       profileClone.host = "localhost"; //once remote support rolls out this should be set via prompting
-      await this.upsertProfile(name, profileClone);
+      // Required COM fields have been populated above.
+      await this.upsertProfile(name, profileClone as COMProfile);
     } else if (profileClone.connectionType === ConnectionType.IOM) {
       profileClone.sasOptions = [];
       profileClone.host = await createInputTextBox(
@@ -618,7 +888,8 @@ export class ProfileConfig {
       }
 
       profileClone.port = parseInt(
-        await createInputTextBox(ProfilePromptType.Port, DEFAULT_IOM_PORT),
+        (await createInputTextBox(ProfilePromptType.Port, DEFAULT_IOM_PORT)) ??
+          "",
       );
       if (isNaN(profileClone.port)) {
         return;
@@ -631,8 +902,8 @@ export class ProfileConfig {
       if (profileClone.username === undefined) {
         return;
       }
-
-      await this.upsertProfile(name, profileClone);
+      // Required IOM fields have been validated above.
+      await this.upsertProfile(name, profileClone as IOMProfile);
     }
   }
 
@@ -642,15 +913,17 @@ export class ProfileConfig {
    * @param profileName - a profile name to retrieve.
    * @returns
    */
-  remoteTarget(profileName: string): string {
+  remoteTarget(profileName: string): string | undefined {
     const activeProfile = this.getProfileByName(profileName);
-    switch (activeProfile.connectionType) {
+    switch (activeProfile?.connectionType) {
       case ConnectionType.SSH:
       case ConnectionType.COM:
       case ConnectionType.IOM:
         return activeProfile.host;
       case ConnectionType.Rest:
         return activeProfile.endpoint;
+      default:
+        return undefined;
     }
   }
 }
@@ -710,9 +983,9 @@ export function getProfilePrompt(type: ProfilePromptType): ProfilePrompt {
  */
 export async function createInputTextBox(
   profilePromptType: ProfilePromptType,
-  defaultValue: string | undefined = null,
+  defaultValue: string | undefined = undefined,
   maskValue = false,
-): Promise<string> {
+): Promise<string | undefined> {
   const profilePrompt = getProfilePrompt(profilePromptType);
 
   const entered = await window.showInputBox({
@@ -735,7 +1008,7 @@ export async function createInputTextBox(
 export async function createInputQuickPick(
   items: readonly string[] | Thenable<readonly string[]> = [],
   profilePromptType: ProfilePromptType,
-): Promise<string> {
+): Promise<string | undefined> {
   const profilePrompt = getProfilePrompt(profilePromptType);
 
   const options: QuickPickOptions = {
@@ -829,7 +1102,9 @@ const input: ProfilePromptInput = {
  * @param connectionTypePickInput - string value of one of the quick pick option inputs
  * @returns {@link ConnectionType}
  */
-function mapQuickPickToEnum(connectionTypePickInput: string): ConnectionType {
+function mapQuickPickToEnum(
+  connectionTypePickInput: string,
+): ConnectionType | undefined {
   /*
      Having a translation layer here allows the profile types to potentially evolve separately from the
      underlying technology used to implement the connection. Down the road its quite possible to have
