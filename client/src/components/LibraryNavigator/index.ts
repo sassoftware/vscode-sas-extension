@@ -16,7 +16,9 @@ import { createWriteStream } from "fs";
 import * as path from "path";
 
 import { profileConfig } from "../../commands/profile";
+import BetterDataViewer from "../../panels/BetterDataViewer";
 import DataViewer from "../../panels/DataViewer";
+import { createDataViewer } from "../../panels/DataViewerFactory";
 import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
@@ -53,7 +55,7 @@ class LibraryNavigator implements SubscriptionProvider {
           fetchColumns: () => TableColumn[],
         ) => {
           this.webviewManager.render(
-            new DataViewer(
+            createDataViewer(
               this.extensionUri,
               item.uid,
               paginator,
@@ -153,6 +155,7 @@ class LibraryNavigator implements SubscriptionProvider {
     Object.values(this.webviewManager.panels).forEach((panel) => {
       if (
         panel instanceof DataViewer ||
+        panel instanceof BetterDataViewer ||
         panel instanceof TablePropertiesViewer
       ) {
         panel.refreshData();

@@ -580,6 +580,20 @@
             "type": "boolean",
             "default": false,
             "description": "%configuration.SAS.notebook.export.includeLog%"
+          },
+          "sas.betterTables.tableViewer": {
+            "order": 11,
+            "type": "string",
+            "enum": [
+              "better",
+              "classic"
+            ],
+            "default": "better",
+            "enumDescriptions": [
+              "%configuration.sas.betterTables.tableViewer.better%",
+              "%configuration.sas.betterTables.tableViewer.classic%"
+            ],
+            "description": "%configuration.sas.betterTables.tableViewer%"
           }
         }
       }
