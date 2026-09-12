@@ -29,6 +29,7 @@
   "commands.SAS.showTableProperties": "Properties",
   "commands.SAS.switchProfile": "Switch Current Connection Profile",
   "commands.SAS.toggleLineComment": "Toggle SAS Code Comments by Line",
+  "commands.SAS.openTableFile": "Open in Table Viewer",
   "commands.SAS.updateProfile": "Update Connection Profile",
   "commands.SAS.upload": "Upload",
   "commands.SAS.uploadFiles": "Upload Files",
