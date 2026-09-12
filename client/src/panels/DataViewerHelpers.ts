@@ -5,6 +5,8 @@
 // module so they can be unit-tested in isolation — the panel class
 // itself depends on the vscode runtime and is harder to instantiate in
 // a unit test.
+import type { SortModelItem } from "ag-grid-community";
+
 import type { TableQuery } from "../components/LibraryNavigator/types";
 import type { Column } from "../connection/rest/api/compute";
 import type {
@@ -12,6 +14,7 @@ import type {
   ColumnFilter,
   ColumnKind,
   ColumnMeta,
+  SortSpec,
   WebviewMessage,
 } from "../webview/better/protocol";
 
@@ -85,6 +88,30 @@ export function combineFilters(
     return undefined;
   }
   return { filterValue: parts.join(" and ") };
+}
+
+/**
+ * Map the webview's lightweight `SortSpec` list onto the ag-grid
+ * `SortModelItem` contract the upstream `PaginatedResultSet` expects.
+ * Kept here (not in the export helpers) because the host uses it both for
+ * normal paging and for exports.
+ */
+export function toSortModel(sort: SortSpec[]): SortModelItem[] {
+  return sort.map((s) => ({ colId: s.colId, sort: s.dir }));
+}
+
+/** Strip the leading index cell an adapter prepends, mapping undefined to
+ *  null so column indices line up with `ColumnMeta`. */
+export function stripIndexCell(
+  cells: ReadonlyArray<string | null | undefined> | undefined,
+): (string | null)[] {
+  const out: (string | null)[] = [];
+  const n = cells?.length ?? 0;
+  for (let i = 1; i < n; i++) {
+    const v = cells[i];
+    out.push(v === undefined ? null : v);
+  }
+  return out;
 }
 
 /** RFC-4180 cell formatter used by the host-side CSV exporter. */

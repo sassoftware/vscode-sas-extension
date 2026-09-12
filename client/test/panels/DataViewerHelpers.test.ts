@@ -8,7 +8,9 @@ import {
   csvCell,
   inSelectionAtCell,
   mapType,
+  stripIndexCell,
   toColumnMeta,
+  toSortModel,
 } from "../../src/panels/DataViewerHelpers";
 
 describe("DataViewerHelpers", () => {
@@ -147,6 +149,42 @@ describe("DataViewerHelpers", () => {
 
     it("returns false for empty selection", () => {
       assert.isFalse(inSelectionAtCell([], 0, 0));
+    });
+  });
+
+  describe("toSortModel", () => {
+    it("maps webview SortSpec onto ag-grid SortModelItem", () => {
+      assert.deepEqual(
+        toSortModel([
+          { colId: "A", dir: "asc" },
+          { colId: "B", dir: "desc" },
+        ]),
+        [
+          { colId: "A", sort: "asc" },
+          { colId: "B", sort: "desc" },
+        ],
+      );
+    });
+
+    it("returns an empty array for no sort", () => {
+      assert.deepEqual(toSortModel([]), []);
+    });
+  });
+
+  describe("stripIndexCell", () => {
+    it("removes the leading index cell and maps undefined to null", () => {
+      assert.deepEqual(stripIndexCell(["", "a", null, undefined]), [
+        "a",
+        null,
+        null,
+      ]);
+      assert.deepEqual(stripIndexCell(["", "x"]), ["x"]);
+    });
+
+    it("handles undefined input and an empty header row", () => {
+      assert.deepEqual(stripIndexCell(["", "only"]), ["only"]);
+      assert.deepEqual(stripIndexCell(undefined), []);
+      assert.deepEqual(stripIndexCell([]), []);
     });
   });
 });

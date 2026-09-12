@@ -37,14 +37,21 @@ import type {
   WebviewMessage,
 } from "../webview/better/protocol";
 import {
-  buildSelectionPredicate,
   combineFilters,
-  csvCell,
-  inSelectionAtCell,
   isWebviewMessage,
+  stripIndexCell,
   toColumnMeta,
+  toSortModel,
 } from "./DataViewerHelpers";
 import { WebView } from "./WebviewManager";
+import {
+  exportHeaders,
+  exportKeys,
+  formatCsvCells,
+  formatCsvHeader,
+  selectExportRows,
+  toJsonRecord,
+} from "./exportHelpers";
 
 const PAGE_SIZE = 200;
 /** When `init` happens we don't yet know the row count. We seed the webview
@@ -195,10 +202,7 @@ class BetterDataViewer extends WebView {
       filters: ColumnFilter[];
     },
   ): Promise<void> {
-    const sortModel: SortModelItem[] = req.sort.map((s) => ({
-      colId: s.colId,
-      sort: s.dir,
-    }));
+    const sortModel = toSortModel(req.sort);
     const query = combineFilters(req.filters);
 
     const { data, error } = await this.paginator.getData(
@@ -214,18 +218,8 @@ class BetterDataViewer extends WebView {
     }
 
     // Adapter rows include an index cell at position 0; strip it so column
-    // indices line up with `columnMeta`.
-    const rows = data.rows.map((row) => {
-      const cells = row.cells ?? [];
-      // Treat empty strings as nulls only when the slot is *known* to be
-      // blank; we leave non-empty strings exactly as the server sent them.
-      const stripped: (string | null)[] = [];
-      for (let i = 1; i < cells.length; i++) {
-        const v = cells[i];
-        stripped.push(v === undefined ? null : v);
-      }
-      return stripped;
-    });
+    // indices line up with `columnMeta` and blank slots become null.
+    const rows = data.rows.map((row) => stripIndexCell(row.cells));
 
     this.post({
       kind: "rows-resp",
@@ -256,15 +250,9 @@ class BetterDataViewer extends WebView {
       return;
     }
 
-    const sortModel: SortModelItem[] = state.sort.map((s) => ({
-      colId: s.colId,
-      sort: s.dir,
-    }));
+    const sortModel = toSortModel(state.sort);
     const query = combineFilters(state.filters);
     const cols = this.columnMeta;
-    const inSelection = selection
-      ? buildSelectionPredicate(selection)
-      : () => true;
 
     // Single try/catch around the entire export: if anything fails we
     // delete the partial file and re-throw so processMessage can post the
@@ -278,7 +266,7 @@ class BetterDataViewer extends WebView {
           sortModel,
           query,
           scope,
-          inSelection,
+          selection,
         );
       } else if (format === "json") {
         await this.exportJson(
@@ -288,7 +276,6 @@ class BetterDataViewer extends WebView {
           query,
           scope,
           selection,
-          inSelection,
         );
       } else if (format === "xlsx") {
         await this.exportXlsx(
@@ -298,7 +285,6 @@ class BetterDataViewer extends WebView {
           query,
           scope,
           selection,
-          inSelection,
         );
       }
     } catch (err) {
@@ -317,22 +303,19 @@ class BetterDataViewer extends WebView {
     sortModel: SortModelItem[],
     query: TableQuery | undefined,
     scope: ExportScope,
-    inSelection: (row: number) => boolean,
+    selection: CellRange[] | undefined,
   ): Promise<void> {
     const stream = createWriteStream(fsPath);
-    let rowIdx = -1;
+    const rows = selectExportRows(
+      cols,
+      scope,
+      selection,
+      this.iterAllRows(sortModel, query),
+    );
     try {
-      await writeChunk(
-        stream,
-        cols.map((c) => csvCell(c.label || c.name)).join(",") + "\n",
-      );
-      for await (const cells of this.iterAllRows(sortModel, query)) {
-        rowIdx++;
-        if (scope === "selection" && !inSelection(rowIdx)) {
-          continue;
-        }
-        const out: (string | null)[] = cols.map((_c, i) => cells[i] ?? null);
-        await writeChunk(stream, out.map(csvCell).join(",") + "\n");
+      await writeChunk(stream, formatCsvHeader(exportHeaders(cols)) + "\n");
+      for await (const cells of rows) {
+        await writeChunk(stream, formatCsvCells(cells) + "\n");
       }
     } finally {
       await endStream(stream);
@@ -346,33 +329,26 @@ class BetterDataViewer extends WebView {
     query: TableQuery | undefined,
     scope: ExportScope,
     selection: CellRange[] | undefined,
-    inSelection: (row: number) => boolean,
   ): Promise<void> {
     const stream = createWriteStream(fsPath);
-    let rowIdx = -1;
+    const rows = selectExportRows(
+      cols,
+      scope,
+      selection,
+      this.iterAllRows(sortModel, query),
+    );
+    const keys = exportKeys(cols);
     let first = true;
     try {
       await writeChunk(stream, "[\n");
-      for await (const cells of this.iterAllRows(sortModel, query)) {
-        rowIdx++;
-        if (scope === "selection" && !inSelection(rowIdx)) {
-          continue;
-        }
-        const obj: Record<string, string> = {};
-        for (let i = 0; i < cols.length; i++) {
-          if (
-            scope === "selection" &&
-            selection &&
-            !inSelectionAtCell(selection, rowIdx, i)
-          ) {
-            continue;
-          }
-          obj[cols[i].name] = cells[i] ?? "";
-        }
+      for await (const cells of rows) {
         if (!first) {
           await writeChunk(stream, ",\n");
         }
-        await writeChunk(stream, "  " + JSON.stringify(obj));
+        await writeChunk(
+          stream,
+          "  " + JSON.stringify(toJsonRecord(keys, cells)),
+        );
         first = false;
       }
       await writeChunk(stream, "\n]\n");
@@ -388,33 +364,21 @@ class BetterDataViewer extends WebView {
     query: TableQuery | undefined,
     scope: ExportScope,
     selection: CellRange[] | undefined,
-    inSelection: (row: number) => boolean,
   ): Promise<void> {
     // Dynamic import keeps exceljs out of the cold-path bundle until
     // someone exports xlsx.
     const ExcelJS = await import("exceljs");
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("data");
-    ws.addRow(cols.map((c) => c.label || c.name));
-    let rowIdx = -1;
-    for await (const cells of this.iterAllRows(sortModel, query)) {
-      rowIdx++;
-      if (scope === "selection" && !inSelection(rowIdx)) {
-        continue;
-      }
-      const out: (string | null)[] = [];
-      for (let i = 0; i < cols.length; i++) {
-        if (
-          scope === "selection" &&
-          selection &&
-          !inSelectionAtCell(selection, rowIdx, i)
-        ) {
-          out.push(null);
-        } else {
-          out.push(cells[i] ?? null);
-        }
-      }
-      ws.addRow(out);
+    ws.addRow(exportHeaders(cols));
+    const rows = selectExportRows(
+      cols,
+      scope,
+      selection,
+      this.iterAllRows(sortModel, query),
+    );
+    for await (const cells of rows) {
+      ws.addRow(cells.map((c) => (c.excluded ? null : c.value)));
     }
     await wb.xlsx.writeFile(fsPath);
   }
