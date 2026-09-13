@@ -1,6 +1,7 @@
 // Copyright © 2026, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import type { ColumnMeta, SortSpec } from "../protocol";
 import { useStore } from "../store";
@@ -28,6 +29,11 @@ export function HeaderCell({ column }: Props) {
   const filters = useStore((s) => s.filters);
   const setSort = useStore((s) => s.setSort);
   const [filterOpen, setFilterOpen] = useState(false);
+  // Snapshot of the filter button's position when the popup opens. The
+  // popup is rendered through a portal to <body> (the RDG header cell clips
+  // `overflow`), so we anchor it with fixed positioning from this rect.
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
+  const filterBtnRef = useRef<HTMLButtonElement>(null);
 
   const current = sort.find((s) => s.colId === column.id);
   const filter = filters.find((f) => f.colId === column.id);
@@ -46,6 +52,7 @@ export function HeaderCell({ column }: Props) {
 
   const onFilterClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setAnchor(filterBtnRef.current?.getBoundingClientRect() ?? null);
     setFilterOpen((b) => !b);
   };
 
@@ -61,6 +68,7 @@ export function HeaderCell({ column }: Props) {
       )}
       <button
         type="button"
+        ref={filterBtnRef}
         className={
           "btv-header-filter" + (filter ? " btv-header-filter-on" : "")
         }
@@ -69,13 +77,17 @@ export function HeaderCell({ column }: Props) {
       >
         ⚲
       </button>
-      {filterOpen && (
-        <FilterPopup
-          column={column}
-          current={filter}
-          onClose={() => setFilterOpen(false)}
-        />
-      )}
+      {filterOpen &&
+        anchor &&
+        createPortal(
+          <FilterPopup
+            column={column}
+            current={filter}
+            onClose={() => setFilterOpen(false)}
+            anchor={anchor}
+          />,
+          document.body,
+        )}
     </div>
   );
 }

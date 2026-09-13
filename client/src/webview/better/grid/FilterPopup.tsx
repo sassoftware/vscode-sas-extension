@@ -15,9 +15,12 @@ interface Props {
   column: ColumnMeta;
   current: ColumnFilter | undefined;
   onClose: () => void;
+  /** Position of the filter button (viewport coords) — the popup is portaled
+   *  to <body> and anchored here because the RDG header cell clips overflow. */
+  anchor: DOMRect;
 }
 
-export function FilterPopup({ column, current, onClose }: Props) {
+export function FilterPopup({ column, current, onClose, anchor }: Props) {
   const setFilter = useStore((s) => s.setFilter);
   const rows = useStore((s) => s.rows);
   const rowCount = useStore((s) => s.rowCount);
@@ -114,6 +117,11 @@ export function FilterPopup({ column, current, onClose }: Props) {
       className="btv-filter-popup"
       ref={ref}
       onClick={(e) => e.stopPropagation()}
+      style={{
+        position: "fixed",
+        top: anchor.bottom + 4,
+        right: Math.max(8, window.innerWidth - anchor.right),
+      }}
     >
       <div className="btv-filter-section">
         <input

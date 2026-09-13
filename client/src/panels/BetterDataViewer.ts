@@ -55,9 +55,11 @@ import {
 
 const PAGE_SIZE = 200;
 /** When `init` happens we don't yet know the row count. We seed the webview
- *  with this so it has *something* to render; the first row response will
- *  carry the real total. */
-const INITIAL_ROW_COUNT_GUESS = 1;
+ *  with this so the grid's first `ensureRange` requests a full page; the
+ *  first row response carries the real total. Seeding with 1 would clamp the
+ *  first request to `[0,0]`, and since the pump marks that page as already
+ *  requested it would never be refetched — leaving the whole first page NULL. */
+const INITIAL_ROW_COUNT_GUESS = PAGE_SIZE;
 
 class BetterDataViewer extends WebView {
   protected viewState: ViewState = { sort: [], filters: [] };

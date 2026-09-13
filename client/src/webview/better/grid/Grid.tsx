@@ -7,11 +7,12 @@
 //   - Ctrl+C copy via the active selection
 //   - scroll-driven prefetch through the data pump
 //   - sort/filter via custom header cells
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import DataGrid, {
   type CellClickArgs,
   type CellMouseEvent,
   type Column,
+  type DataGridHandle,
 } from "react-data-grid";
 
 import { send } from "../messaging";
@@ -39,11 +40,14 @@ const ROWNO_KEY = "__rowno";
 export function Grid() {
   const columns = useStore((s) => s.columns);
   const rowCount = useStore((s) => s.rowCount);
+  const filters = useStore((s) => s.filters);
+  const sort = useStore((s) => s.sort);
   const selection = useStore((s) => s.selection);
   const setSelection = useStore((s) => s.setSelection);
   const setAnchor = useStore((s) => s.setAnchor);
   const anchor = useStore((s) => s.selectionAnchor);
   const setCellDetail = useStore((s) => s.setCellDetail);
+  const gridRef = useRef<DataGridHandle>(null);
 
   // react-data-grid needs a contiguous rows array to virtualise; we hand it
   // skeletons that carry only the absolute row index. CellView then reads
@@ -141,12 +145,28 @@ export function Grid() {
     [rowCount],
   );
 
-  // Trigger the initial fetch once we know the row count.
+  // Trigger the initial fetch once we know the row count, and re-fetch
+  // whenever a sort or filter change invalidates the cache. setSort /
+  // setFilter clear `rows` and `requestedPages` and bump the generation,
+  // but they don't issue a request themselves (the component owns I/O) —
+  // without this, applying a filter would clear the table and never
+  // repopulate it until the user scrolled.
   useEffect(() => {
     if (rowCount > 0) {
       ensureRange(0, Math.min(rowCount - 1, 200));
     }
-  }, [rowCount]);
+  }, [filters, rowCount, sort]);
+
+  // A sort/filter changes the whole row set, so snap the view back to the
+  // top. Keyed on the query only (not rowCount), which also changes as
+  // filtered responses stream in — we don't want to fight the user's scroll
+  // every time a page arrives.
+  useEffect(() => {
+    const el = gridRef.current?.element;
+    if (el) {
+      el.scrollTop = 0;
+    }
+  }, [filters, sort]);
 
   // Ctrl/Cmd+C: copy the current selection in mssql's default format —
   // tab-separated cells with no headers (Shift adds the header row).
@@ -185,6 +205,7 @@ export function Grid() {
   return (
     <div className="btv-grid">
       <DataGrid
+        ref={gridRef}
         columns={gridColumns}
         rows={rows}
         rowKeyGetter={(row) => row.__index}

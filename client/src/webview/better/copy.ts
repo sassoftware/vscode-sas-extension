@@ -3,6 +3,7 @@
 //
 // Build copy-to-clipboard text from the current selection, in each of the
 // supported formats. Returns ready-to-write strings.
+import { csvCell } from "../../panels/DataViewerHelpers";
 import type { CellRange, ColumnMeta, CopyFormat } from "./protocol";
 import { bounds, cellKey, iterCells } from "./selection";
 
@@ -19,19 +20,16 @@ interface RowMatrix {
   /** Row index → array of cell strings (length === cols.length). null for
    *  cells that fell outside the selection or weren't fetched. */
   rows: Array<Array<string | null>>;
-  /** Absolute row indices of `rows` (parallel array). */
-  rowIndices: number[];
 }
 
 function materialise(src: CopySource): RowMatrix {
   const b = bounds(src.selection);
   if (!b) {
-    return { cols: [], rows: [], rowIndices: [] };
+    return { cols: [], rows: [] };
   }
 
   const cols = src.columns.slice(b.fromCol, b.toCol + 1);
   const rows: Array<Array<string | null>> = [];
-  const rowIndices: number[] = [];
 
   // Pre-build a sparse map of selected cells so we know which fall inside
   // a non-rectangular union.
@@ -54,25 +52,13 @@ function materialise(src: CopySource): RowMatrix {
     }
     if (any) {
       rows.push(row);
-      rowIndices.push(r);
     }
   }
-  return { cols, rows, rowIndices };
-}
-
-function csvEscape(v: string): string {
-  if (
-    v.indexOf(",") === -1 &&
-    v.indexOf('"') === -1 &&
-    v.indexOf("\n") === -1
-  ) {
-    return v;
-  }
-  return `"${v.replace(/"/g, '""')}"`;
+  return { cols, rows };
 }
 
 function joinCsvRow(cells: Array<string | null>): string {
-  return cells.map((c) => (c === null ? "" : csvEscape(c))).join(",");
+  return cells.map((c) => (c === null ? "" : csvCell(c))).join(",");
 }
 
 /** Tab-separated row. Cells containing tabs, CR/LF, or double quotes are
@@ -109,23 +95,18 @@ export function buildCopyText(format: CopyFormat, src: CopySource): string {
     return "";
   }
 
+  const header = headerRow(m.cols).join("\t");
   switch (format) {
     case "plain":
       return m.rows.map(joinTabRow).join("\n");
 
     case "with-headers":
-      return [headerRow(m.cols).join("\t"), ...m.rows.map(joinTabRow)].join(
-        "\n",
-      );
-
     case "tsv":
-      return [headerRow(m.cols).join("\t"), ...m.rows.map(joinTabRow)].join(
-        "\n",
-      );
+      return [header, ...m.rows.map(joinTabRow)].join("\n");
 
     case "csv":
       return [
-        headerRow(m.cols).map(csvEscape).join(","),
+        headerRow(m.cols).map(csvCell).join(","),
         ...m.rows.map(joinCsvRow),
       ].join("\n");
 

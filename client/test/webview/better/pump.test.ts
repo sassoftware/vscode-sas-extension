@@ -84,6 +84,21 @@ describe("better pump (paging efficiency)", () => {
     assert.deepEqual(pending, [1]);
   });
 
+  it("bootstraps a full first page from a pageSize-seeded count guess", () => {
+    // The host seeds rowCount = pageSize before the real total is known (see
+    // BetterDataViewer.INITIAL_ROW_COUNT_GUESS). The grid's initial effect
+    // then calls ensureRange(0, min(rowCount-1, pageSize)). If the seed were
+    // 1 this would clamp to [0,0], get one row back, mark page 0 "requested",
+    // and the page would never be refilled — leaving rows 1..n NULL. The
+    // pump must emit a full-page request so the whole first page loads.
+    init(200); // rowCount guess == pageSize
+    ensureRange(0, Math.min(useStore.getState().rowCount - 1, 200));
+    const r = reqs();
+    assert.lengthOf(r, 1);
+    assert.strictEqual(r[0].start, 0);
+    assert.strictEqual(r[0].end, 199);
+  });
+
   it("never re-requests a page already in flight or cached", () => {
     ensureRange(0, 199);
     posted = [];

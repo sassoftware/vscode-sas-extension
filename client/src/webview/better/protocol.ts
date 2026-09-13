@@ -82,7 +82,6 @@ export type HostMessage =
   | InitMessage
   | RowsResponseMessage
   | ErrorMessage
-  | ThemeMessage
   | RefreshMessage;
 
 export interface InitMessage {
@@ -110,12 +109,6 @@ export interface ErrorMessage {
   kind: "error";
   reqId?: number;
   message: string;
-}
-
-export interface ThemeMessage {
-  kind: "theme";
-  isDark: boolean;
-  isHighContrast: boolean;
 }
 
 export interface RefreshMessage {
