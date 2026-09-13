@@ -10,15 +10,21 @@
 // of rows never materialises more than the window in view, so it stays instant
 // and memory-bounded at any size.
 //
-// Because the source is random-access and not fully in memory, SAS-level
-// sorting and filtering of the whole table is not offered here: `getRows`
-// ignores its `sort`/`query` arguments and always returns file order (the
-// panel simply doesn't enable sort/filter for local sas7bdat files).
+// Because the source is random-access and not fully cached in memory:
+//   - Sorting is not offered (reordering a whole table would need an
+//     index pass; `getRows` ignores its `sort` argument).
+//   - Filtering IS offered for the better-viewer's checklist filters
+//     (`col in ("a","b")`). There is no index, so a filter triggers one
+//     whole-table scan that keeps only surviving *row indices* — memory
+//     stays bounded (we never hold all decoded rows), and the view is
+//     cached per filter so scrolling inside it costs one page-read per
+//     window, like unfiltered browsing.
 import type { SortModelItem } from "ag-grid-community";
 import * as fs from "fs";
 import * as path from "path";
 
 import type { Column } from "../../connection/rest/api/compute";
+import { tryBuildColValueFilter } from "./colValueFilter";
 import type {
   TableData,
   TableQuery,
@@ -128,6 +134,10 @@ class LazySasSource implements FileTableSource {
   private readonly firstRow: number[] = [0];
   /** Pages 0..filled-1 have had their row count resolved into firstRow. */
   private filled = 0;
+  /** Ascending global row indices surviving the current filter (null = no
+   *  filter applied — identity view). */
+  private filterView: number[] | null = null;
+  private filterSig = "";
 
   public constructor(
     public readonly title: string,
@@ -154,43 +164,100 @@ class LazySasSource implements FileTableSource {
   public async getRows(
     start: number,
     end: number,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- sort/filter unsupported for local sas7bdat (file order always)
-    sort: SortModelItem[],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- sort/filter unsupported for local sas7bdat (file order always)
+    sort: SortModelItem[], // sorting unsupported — file order always
     query: TableQuery | undefined,
   ): Promise<TableData> {
     const total = this.rowCount;
-    // Sort/filter are intentionally not supported for local sas7bdat: the
-    // table is not in memory to reorder, so we always return file order.
-    if (total === 0 || start >= total) {
+    if (total === 0) {
       return { rows: [], count: total };
     }
-    const stop = Math.min(end, total - 1);
+    const view = this.filterViewFor(query?.filterValue);
+    const count = view ? view.length : total;
+    if (start >= count) {
+      return { rows: [], count };
+    }
+    const stop = Math.min(end, count - 1);
 
     const pageCount = this.reader.meta.pageCount;
     const out: TableRow[] = [];
     let cursor = start;
+    let curPage = -1;
+    let curCells: ReadonlyArray<ReadonlyArray<string | null>> = [];
     while (cursor <= stop) {
-      const pageIndex = this.pageFor(cursor, pageCount);
+      const globalRow = view ? view[cursor] : cursor;
+      const pageIndex = this.pageFor(globalRow, pageCount);
+      if (pageIndex !== curPage) {
+        curPage = pageIndex;
+        curCells = this.reader.decodeRowsInPage(pageIndex);
+      }
+      // Consume the run of consecutive view entries that share this page.
       const pageFirst = this.firstRow[pageIndex];
-      const cells = this.reader.decodeRowsInPage(pageIndex);
-      const local = cursor - pageFirst;
-      const take = Math.min(cells.length - local, stop - cursor + 1);
-      if (take <= 0) {
-        break; // safety: no rows left to hand out
-      }
-      for (let k = 0; k < take; k++) {
-        const row = cells[local + k];
-        const display: string[] = new Array(row.length + 1);
-        display[0] = ""; // leading index placeholder the panel strips
-        for (let j = 0; j < row.length; j++) {
-          display[j + 1] = row[j] === null ? "" : row[j];
+      const pageEnd = this.firstRow[pageIndex + 1]; // exclusive
+      let k = 0;
+      while (cursor + k <= stop) {
+        const g = view ? view[cursor + k] : cursor + k;
+        if (g >= pageEnd) {
+          break;
         }
-        out.push({ cells: display });
+        out.push({ cells: this.toDisplay(curCells[g - pageFirst]) });
+        k++;
       }
-      cursor += take;
+      cursor += k;
     }
-    return { rows: out, count: total };
+    return { rows: out, count };
+  }
+
+  /** Render one decoded (column-aligned) row for the panel: a leading index
+   *  placeholder (the panel strips it) and missing values mapped to "". */
+  private toDisplay(row: ReadonlyArray<string | null>): string[] {
+    const display: string[] = new Array(row.length + 1);
+    display[0] = "";
+    for (let j = 0; j < row.length; j++) {
+      display[j + 1] = row[j] === null ? "" : row[j];
+    }
+    return display;
+  }
+
+  /**
+   * Resolve the current filter into an ascending view of surviving global
+   * row indices, cached against the filter string (like the unfiltered row
+   * geometry). A filter triggers one whole-table scan. A filter we can't
+   * interpret locally (free-form SAS WHERE) yields an empty view rather than
+   * silently showing unfiltered rows.
+   */
+  private filterViewFor(rawFilter: string | undefined): number[] | null {
+    const q = (rawFilter ?? "").trim();
+    if (q === this.filterSig) {
+      return this.filterView;
+    }
+    this.filterSig = q;
+    if (q.length === 0) {
+      this.filterView = null;
+      return null;
+    }
+    const predicate = tryBuildColValueFilter(q, this.columns);
+    // A filter we can't interpret locally (a free-form SAS expr, or the
+    // classic viewer's substring needle on a file-backed table) is ignored —
+    // matching the source's original "filter unsupported" behaviour — rather
+    // than matching nothing, which would blank the whole table.
+    if (!predicate) {
+      this.filterView = null;
+      return null;
+    }
+    const view: number[] = [];
+    const pageCount = this.reader.meta.pageCount;
+    for (let p = 0; p < pageCount; p++) {
+      this.ensureFilled(p + 1);
+      const pageFirst = this.firstRow[p];
+      const rows = this.reader.decodeRowsInPage(p);
+      for (let j = 0; j < rows.length; j++) {
+        if (predicate(rows[j])) {
+          view.push(pageFirst + j);
+        }
+      }
+    }
+    this.filterView = view;
+    return view;
   }
 
   /** Release the open file descriptor. */

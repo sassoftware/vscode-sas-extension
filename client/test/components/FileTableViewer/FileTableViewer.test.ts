@@ -173,5 +173,66 @@ describe("FileTableViewer", () => {
       assert.strictEqual(count, 2);
       assert.strictEqual(rows.length, 2);
     });
+
+    it("keeps only rows whose column value is in a checklist `in (...)` filter", async () => {
+      const src = source([
+        ["region", "qty"],
+        ["EU", "1"],
+        ["US", "2"],
+        ["APAC", "3"],
+      ]);
+      const { rows, count } = await src.getRows(0, 10, [], {
+        filterValue: '(region in ("EU","us"))',
+      });
+      assert.strictEqual(count, 2);
+      assert.deepEqual(
+        rows.map((r) => r.cells?.[1]),
+        ["EU", "US"],
+      );
+    });
+
+    it("ANDS multiple column checklist filters together", async () => {
+      const src = source([
+        ["region", "qty"],
+        ["EU", "10"],
+        ["US", "20"],
+        ["EU", "30"],
+      ]);
+      const { rows } = await src.getRows(0, 10, [], {
+        filterValue: '(region in ("EU")) and (qty in ("30"))',
+      });
+      assert.deepEqual(
+        rows.map((r) => r.cells?.[1]),
+        ["EU"],
+      );
+    });
+
+    it("decodes escaped quotes in checklist values", async () => {
+      const src = source([
+        ["a"],
+        ['say "hi"'],
+        ["plain"],
+      ]);
+      const { rows } = await src.getRows(0, 10, [], {
+        filterValue: '(a in ("say ""hi"""))',
+      });
+      assert.strictEqual(rows.length, 1);
+      assert.strictEqual(rows[0].cells?.[1], 'say "hi"');
+    });
+
+    it("falls back to substring when the filter is not a checklist expression", async () => {
+      const src = source([["a"], ["Alpha"], ["AL"], ["gamma"]]);
+      const { rows } = await src.getRows(0, 10, [], {
+        filterValue: "(foo in (\"x\"))",
+      });
+      // Unknown column in the `in` form → not an in-memory checklist,
+      // so no rows survive the substring lookup.
+      assert.strictEqual(rows.length, 0);
+      const again = await src.getRows(0, 10, [], {
+        filterValue: "ALP",
+      });
+      assert.strictEqual(again.rows.length, 1);
+      assert.strictEqual(again.rows[0].cells?.[1], "Alpha");
+    });
   });
 });

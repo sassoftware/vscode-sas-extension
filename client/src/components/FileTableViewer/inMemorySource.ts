@@ -18,6 +18,7 @@ import type {
   TableQuery,
   TableRow,
 } from "../LibraryNavigator/types";
+import { tryBuildColValueFilter } from "./colValueFilter";
 import type { FileTableSource } from "./types";
 
 export class InMemorySource implements FileTableSource {
@@ -72,19 +73,26 @@ export class InMemorySource implements FileTableSource {
     sort: SortModelItem[],
     query: TableQuery | undefined,
   ): number[] | null {
-    // The DataViewer sends one global `filterValue` text box query, which
-    // we apply as a case-insensitive substring match across every data
-    // column (mirroring how server adapters treat the same field).
-    const needle = (query?.filterValue ?? "").trim().toLowerCase();
-    const filters = needle.length > 0;
+    const raw = (query?.filterValue ?? "").trim();
+    const hasFilter = raw.length > 0;
+    // The classic viewer sends a single global substring needle, which we
+    // apply case-insensitively across every data column (mirroring how
+    // server adapters treat the same field). The better viewer instead
+    // sends a per-column `in ("a","b")` WHERE clause — parse that into
+    // real set-membership filters when we recognise it, so local files
+    // filter like the server-backed tables they mirror.
+    const colFilter = hasFilter ? tryBuildColValueFilter(raw, this.columns) : null;
+    const needle = raw.toLowerCase();
 
     const indices: number[] = [];
     for (let i = 0; i < this.rows.length; i++) {
       // Strip the leading index placeholder before matching.
       const dataRow = this.rows[i].slice(1);
       if (
-        !filters ||
-        dataRow.some((c) => (c ?? "").toLowerCase().includes(needle))
+        !hasFilter ||
+        (colFilter
+          ? colFilter(dataRow)
+          : dataRow.some((c) => (c ?? "").toLowerCase().includes(needle)))
       ) {
         indices.push(i);
       }
