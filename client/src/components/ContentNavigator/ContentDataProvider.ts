@@ -366,7 +366,7 @@ class ContentDataProvider
   }
 
   public async deleteResource(item: ContentItem): Promise<boolean> {
-    if (!(await closeFileIfOpen(item))) {
+    if (!(await this.closeItemAndDescendantTabs(item))) {
       return false;
     }
     const success = await this.model.delete(item);
@@ -375,6 +375,44 @@ class ContentDataProvider
       this._onDidManipulateFile.fire({ type: "delete", uri: item.vscUri });
     }
     return success;
+  }
+
+  private async closeItemAndDescendantTabs(
+    item: ContentItem,
+  ): Promise<boolean> {
+    const allTabs = window.tabGroups.all
+      .flatMap((tg) => tg.tabs)
+      .filter(
+        (tab) =>
+          tab.input instanceof TabInputText ||
+          tab.input instanceof TabInputNotebook,
+      );
+
+    const tabsToClose: (typeof allTabs)[number][] = [];
+    for (const tab of allTabs) {
+      if (
+        tab.input instanceof TabInputText ||
+        tab.input instanceof TabInputNotebook
+      ) {
+        const resourceId = getResourceId(tab.input.uri);
+        if (
+          resourceId === item.uri ||
+          (getIsContainer(item) &&
+            (await this.isDescendantOf(resourceId, item.uri)))
+        ) {
+          tabsToClose.push(tab);
+        }
+      }
+    }
+
+    if (!tabsToClose.length) {
+      return true;
+    }
+
+    const results = await Promise.all(
+      tabsToClose.map((tab) => window.tabGroups.close(tab)),
+    );
+    return results.every((r) => r !== false);
   }
 
   public canRecycleResource(item: ContentItem): boolean {
@@ -475,7 +513,8 @@ class ContentDataProvider
   }
 
   public readDirectory():
-    [string, FileType][] | Thenable<[string, FileType][]> {
+    | [string, FileType][]
+    | Thenable<[string, FileType][]> {
     throw new Error("Method not implemented.");
   }
 

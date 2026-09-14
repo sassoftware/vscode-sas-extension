@@ -173,6 +173,32 @@ describe("ContentNavigator confirmDelete", () => {
     expect(args[2]).to.equal(Messages.DeleteButtonLabel);
   });
 
+  it("shows permanent-delete message for recycle bin item even if files were open", async () => {
+    // items in Recycle Bin are non-recyclable; caller must pass hasUnsavedFiles: false
+    // to reflect that dirty check is skipped for recycled items
+    const showWarningMessageStub = sinon
+      .stub(window, "showWarningMessage")
+      .callsFake(async () => ({ title: Messages.DeleteButtonLabel }));
+
+    const resource = createItem("recycled-folder");
+    const confirmed = await callConfirmDelete([
+      {
+        hasUnsavedFiles: false,
+        isContainer: true,
+        moveToRecycleBin: false,
+        resource,
+      },
+    ]);
+
+    expect(confirmed).to.equal(true);
+    expect(showWarningMessageStub.calledOnce).to.equal(true);
+    const args = showWarningMessageStub.getCall(0).args;
+    expect(args[0]).to.equal(
+      l10n.t(Messages.DeleteWarningMessage, { name: resource.name }),
+    );
+    expect(args[2]).to.equal(Messages.DeleteButtonLabel);
+  });
+
   it("returns false when user cancels confirmation", async () => {
     sinon.stub(window, "showWarningMessage").resolves(undefined);
 

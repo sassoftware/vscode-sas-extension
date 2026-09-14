@@ -33,7 +33,7 @@ import {
   ContentSourceType,
   FileManipulationEvent,
 } from "./types";
-import { isContainer as getIsContainer } from "./utils";
+import { isContainer as getIsContainer, isItemInRecycleBin } from "./utils";
 
 const fileValidator = (value: string): string | null =>
   /^([^/<>;\\{}]+)\.\w+$/.test(
@@ -186,9 +186,11 @@ class ContentNavigator implements SubscriptionProvider {
               return {
                 resource,
                 isContainer,
-                hasUnsavedFiles: isContainer
-                  ? await this.contentDataProvider.checkFolderDirty(resource)
-                  : false,
+                // skip dirty check for items already in Recycle Bin
+                hasUnsavedFiles:
+                  isContainer && !isItemInRecycleBin(resource)
+                    ? await this.contentDataProvider.checkFolderDirty(resource)
+                    : false,
                 moveToRecycleBin:
                   this.contentDataProvider.canRecycleResource(resource),
               };
@@ -675,7 +677,8 @@ class ContentNavigator implements SubscriptionProvider {
     );
 
     function getProfileWithFileRootOptions():
-      ProfileWithFileRootOptions | undefined {
+      | ProfileWithFileRootOptions
+      | undefined {
       switch (activeProfile.connectionType) {
         case ConnectionType.Rest:
         case ConnectionType.IOM:
