@@ -19,7 +19,7 @@ function oneNumericColumn(values: Array<string | null | undefined>): number {
     ranges,
     columns: [NUM],
     getCell: (r) => values[r],
-  }).sum!;
+  }).numeric!.sum;
 }
 
 describe("better stats", () => {
@@ -33,10 +33,10 @@ describe("better stats", () => {
     assert.strictEqual(s.nonNullCount, 3);
     assert.strictEqual(s.distinctCount, 2);
     assert.strictEqual(s.nullCount, 0);
-    assert.strictEqual(s.sum, 19);
-    assert.strictEqual(s.avg, 19 / 3);
-    assert.strictEqual(s.min, 5);
-    assert.strictEqual(s.max, 7);
+    assert.strictEqual(s.numeric!.sum, 19);
+    assert.strictEqual(s.numeric!.avg, 19 / 3);
+    assert.strictEqual(s.numeric!.min, 5);
+    assert.strictEqual(s.numeric!.max, 7);
   });
 
   it("counts nulls separately and yields no numeric aggregates", () => {
@@ -47,7 +47,7 @@ describe("better stats", () => {
     });
     assert.strictEqual(s.nullCount, 2);
     assert.strictEqual(s.nonNullCount, 0);
-    assert.strictEqual(s.sum, null);
+    assert.strictEqual(s.numeric, null);
   });
 
   it("falls back to null aggregates when a non-numeric column is selected", () => {
@@ -56,7 +56,7 @@ describe("better stats", () => {
       columns: [NUM, CHAR],
       getCell: (r, col) => (col === 0 ? "3" : "text"),
     });
-    assert.strictEqual(s.sum, null);
+    assert.strictEqual(s.numeric, null);
     assert.strictEqual(s.nonNullCount, 2);
     assert.strictEqual(s.distinctCount, 2);
   });
@@ -69,7 +69,7 @@ describe("better stats", () => {
     });
     assert.strictEqual(s.cellCount, 2);
     assert.strictEqual(s.nonNullCount, 1);
-    assert.strictEqual(s.sum, 3);
+    assert.strictEqual(s.numeric!.sum, 3);
   });
 
   it("sums across a multi-row single column (sanity of helper)", () => {

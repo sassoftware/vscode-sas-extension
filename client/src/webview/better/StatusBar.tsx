@@ -62,19 +62,19 @@ export function StatusBar() {
               · {l10n("Nulls")}: {stats.nullCount.toLocaleString()}
             </span>
           )}
-          {stats.sum !== null && (
+          {stats.numeric && (
             <>
               <span>
-                · {l10n("Sum")}: {fmt(stats.sum)}
+                · {l10n("Sum")}: {fmt(stats.numeric.sum)}
               </span>
               <span>
-                · {l10n("Avg")}: {fmt(stats.avg!)}
+                · {l10n("Avg")}: {fmt(stats.numeric.avg)}
               </span>
               <span>
-                · {l10n("Min")}: {fmt(stats.min!)}
+                · {l10n("Min")}: {fmt(stats.numeric.min)}
               </span>
               <span>
-                · {l10n("Max")}: {fmt(stats.max!)}
+                · {l10n("Max")}: {fmt(stats.numeric.max)}
               </span>
             </>
           )}

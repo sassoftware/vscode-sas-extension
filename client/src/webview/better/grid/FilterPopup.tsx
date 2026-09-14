@@ -5,11 +5,12 @@
 // a checkbox list with a search box, plus a free-form WHERE-expression
 // slot for SAS-style server-side filtering when the value list is
 // incomplete (large tables).
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import type { ColumnFilter, ColumnMeta } from "../protocol";
 import { useStore } from "../store";
 import { l10n } from "../theme";
+import { useClickOutside } from "../useClickOutside";
 
 interface Props {
   column: ColumnMeta;
@@ -51,30 +52,7 @@ export function FilterPopup({ column, current, onClose, anchor }: Props) {
   );
   const [expr, setExpr] = useState(current?.expr ?? "");
   const ref = useRef<HTMLDivElement>(null);
-
-  // Close on outside click or Escape.
-  useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      if (
-        ref.current &&
-        e.target instanceof Node &&
-        !ref.current.contains(e.target)
-      ) {
-        onClose();
-      }
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
+  useClickOutside(ref, onClose);
 
   const visible = useMemo(
     () =>

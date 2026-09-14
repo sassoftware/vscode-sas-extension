@@ -1,12 +1,13 @@
 // Copyright © 2026, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { buildCopyText } from "./copy";
 import { send } from "./messaging";
 import type { CopyFormat, ExportFormat, ExportScope } from "./protocol";
 import { useStore } from "./store";
 import { l10n } from "./theme";
+import { useClickOutside } from "./useClickOutside";
 
 interface MenuProps {
   label: string;
@@ -16,36 +17,7 @@ interface MenuProps {
 function DropMenu({ label, children }: MenuProps) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
-
-  // Close when the user clicks outside or hits Escape. Using a document
-  // click listener instead of the trigger's onBlur avoids the
-  // mousedown→blur→click race that closed the menu before the item's
-  // click could land in some browsers.
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const onDoc = (e: MouseEvent) => {
-      if (
-        wrapRef.current &&
-        e.target instanceof Node &&
-        !wrapRef.current.contains(e.target)
-      ) {
-        setOpen(false);
-      }
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  useClickOutside(wrapRef, () => setOpen(false), open);
 
   return (
     <div className="btv-menu" ref={wrapRef}>
@@ -136,14 +108,6 @@ export function Toolbar() {
           onClick={() => doCopy("json")}
         >
           {l10n("Copy as JSON")}
-        </button>
-        <button
-          type="button"
-          className="btv-menu-item"
-          disabled={!hasSelection}
-          onClick={() => doCopy("tsv")}
-        >
-          {l10n("Copy as TSV")}
         </button>
       </DropMenu>
 

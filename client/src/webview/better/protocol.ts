@@ -61,8 +61,7 @@ export type CopyFormat =
   | "with-headers" // headers + tab-separated cells
   | "headers-only" // just the column headers
   | "csv"
-  | "json"
-  | "tsv";
+  | "json";
 
 export type ExportFormat = "csv" | "json" | "xlsx";
 export type ExportScope = "visible" | "selection" | "all";

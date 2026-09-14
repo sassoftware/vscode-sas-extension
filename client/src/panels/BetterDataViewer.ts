@@ -91,7 +91,6 @@ class BetterDataViewer extends WebView {
       Copy: l10n.t("Copy"),
       "Copy as CSV": l10n.t("Copy as CSV"),
       "Copy as JSON": l10n.t("Copy as JSON"),
-      "Copy as TSV": l10n.t("Copy as TSV"),
       "Copy headers only": l10n.t("Copy headers only"),
       "Copy with headers": l10n.t("Copy with headers"),
       Distinct: l10n.t("Distinct"),

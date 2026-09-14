@@ -15,11 +15,9 @@ export interface Stats {
   /** Distinct non-null loaded values. */
   distinctCount: number;
   nullCount: number;
-  /** Sum of numerically-parseable loaded values. */
-  sum: number | null;
-  avg: number | null;
-  min: number | null;
-  max: number | null;
+  /** Aggregates over the numerically-parseable loaded values. Present only
+   *  when every loaded non-null cell parses as a number. */
+  numeric: { sum: number; avg: number; min: number; max: number } | null;
 }
 
 interface Source {
@@ -76,9 +74,6 @@ export function computeStats({ ranges, columns, getCell }: Source): Stats {
     nonNullCount,
     distinctCount: distinct.size,
     nullCount,
-    sum: numeric ? sum : null,
-    avg: numeric ? sum / count : null,
-    min: numeric ? min : null,
-    max: numeric ? max : null,
+    numeric: numeric ? { sum, avg: sum / count, min, max } : null,
   };
 }

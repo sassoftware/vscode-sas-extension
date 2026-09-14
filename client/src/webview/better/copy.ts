@@ -101,7 +101,6 @@ export function buildCopyText(format: CopyFormat, src: CopySource): string {
       return m.rows.map(joinTabRow).join("\n");
 
     case "with-headers":
-    case "tsv":
       return [header, ...m.rows.map(joinTabRow)].join("\n");
 
     case "csv":

@@ -58,22 +58,6 @@ describe("better copy", () => {
     assert.strictEqual(text, 'Alpha,Beta\n"a,b","say ""hi"""');
   });
 
-  it("tsv escapes tabs/newlines/quotes in cells", () => {
-    store
-      .set("0|0", "tab\there")
-      .set("0|1", "line\nbreak")
-      .set("1|0", "multi\nline")
-      .set("1|1", "");
-    const text = buildCopyText(
-      "tsv",
-      src([{ fromRow: 0, toRow: 1, fromCol: 0, toCol: 1 }]),
-    );
-    assert.strictEqual(
-      text,
-      'Alpha\tBeta\n"tab\there"\t"line\nbreak"\n"multi\nline"\t',
-    );
-  });
-
   it("json emits an array of objects keyed by column name", () => {
     store.set("0|0", "x").set("0|1", "y").set("1|0", "m");
     const text = buildCopyText(
