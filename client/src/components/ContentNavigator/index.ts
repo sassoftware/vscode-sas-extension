@@ -678,8 +678,7 @@ class ContentNavigator implements SubscriptionProvider {
     );
 
     function getProfileWithFileRootOptions():
-      | ProfileWithFileRootOptions
-      | undefined {
+      ProfileWithFileRootOptions | undefined {
       switch (activeProfile.connectionType) {
         case ConnectionType.Rest:
         case ConnectionType.IOM:
