@@ -15,25 +15,6 @@ function safeRequire(paths: string[]): AnyModule {
   assert.fail(`Unable to load module.\nTried:\n${errors.join("\n")}`);
 }
 
-function toSet(value: unknown): Set<string> | undefined {
-  if (value instanceof Set) return value as Set<string>;
-  if (Array.isArray(value)) return new Set(value.map((v) => String(v)));
-  return undefined;
-}
-
-function pickFormat(value: unknown, fallback: string): string {
-  const s = toSet(value);
-  if (!s || s.size === 0) return fallback;
-  return String(Array.from(s)[0]);
-}
-
-function normalizeLikeViewer(format?: string): string {
-  return (format || "")
-    .trim()
-    .toUpperCase()
-    .replace(/[0-9_]*\.?[0-9]*$/, "");
-}
-
 function getViewerCtor(mod: AnyModule): AnyCtor {
   const ctor = (mod.default || mod.TablePropertiesViewer) as
     AnyCtor | undefined;
@@ -68,10 +49,6 @@ function loadTablePropertiesViewerModule(): AnyModule {
   return safeRequire(["../../src/panels/TablePropertiesViewer"]);
 }
 
-function loadFormatCategoriesModule(): AnyModule {
-  return safeRequire(["../../src/panels/columnFormatCategories"]);
-}
-
 function renderBody(
   columns: any[],
   showColumns = true,
@@ -92,82 +69,172 @@ function renderBody(
 }
 
 describe("TablePropertiesViewer rendering tests", () => {
-  const cats = loadFormatCategoriesModule();
+  // Viya reports FLOAT/CHAR and SAS 9 reports num/char; both must render the same icon.
+  [
+    { format: "DATE9.", category: "date", icon: "date" },
+    { format: "TIME8.", category: "time", icon: "time" },
+    { format: "DATETIME20.", category: "datetime", icon: "date-time" },
+    { format: "DOLLAR15.2", category: "curr", icon: "currency" },
+    { format: "COMMA12.", category: "num", icon: "float" },
+    { format: "$CHAR20.", category: "char", icon: "char" },
+  ].forEach(({ format, category, icon }) => {
+    const isChar = category === "char";
 
-  it("renders date icon in Name column for normalized date format", () => {
-    const dateBase = normalizeLikeViewer(
-      pickFormat(cats.dateFormatSet, "DATE"),
-    );
+    it(`renders the ${icon} icon for ${format} on Viya`, () => {
+      const html = renderBody([
+        {
+          name: "col",
+          type: isChar ? "CHAR" : "FLOAT",
+          length: 8,
+          format: { name: format },
+          formatCategory: category,
+        },
+      ]);
+      assert.include(html, `class="header-icon ${icon}"`);
+    });
+
+    it(`renders the ${icon} icon for ${format} on SAS 9`, () => {
+      const html = renderBody([
+        {
+          name: "col",
+          type: isChar ? "char" : "num",
+          length: 8,
+          format,
+          formatCategory: category,
+        },
+      ]);
+      assert.include(html, `class="header-icon ${icon}"`);
+    });
+  });
+
+  it("renders the date icon for the date category", () => {
     const html = renderBody([
-      { name: "dcol", type: "float", length: 8, format: `${dateBase}9.` },
+      {
+        name: "dcol",
+        type: "float",
+        length: 8,
+        format: "DATE9.",
+        formatCategory: "date",
+      },
     ]);
     assert.include(html, 'class="header-icon date"');
+    // The Type column always uses the type based icon.
     assert.include(html, 'class="header-icon float"');
   });
 
-  it("renders time icon for lowercase + precision format", () => {
-    const timeBase = normalizeLikeViewer(
-      pickFormat(cats.timeFormatSet, "TIME"),
-    );
+  it("renders the time icon for the time category", () => {
     const html = renderBody([
       {
         name: "tcol",
         type: "numeric",
         length: 8,
-        format: `${timeBase.toLowerCase()}12.2`,
+        format: "TIME8.",
+        formatCategory: "time",
       },
     ]);
     assert.include(html, 'class="header-icon time"');
   });
 
-  it("renders date-time icon with precedence for datetime formats", () => {
-    const dtBase = normalizeLikeViewer(
-      pickFormat(cats.dateTimeFormatSet, "DATETIME"),
-    );
+  it("renders the date-time icon for the datetime category", () => {
     const html = renderBody([
-      { name: "dtcol", type: "float", length: 8, format: `${dtBase}20.3` },
+      {
+        name: "dtcol",
+        type: "float",
+        length: 8,
+        format: "DATETIME20.",
+        formatCategory: "datetime",
+      },
     ]);
     assert.include(html, 'class="header-icon date-time"');
   });
 
-  it("renders currency icon for currency format", () => {
-    const curBase = normalizeLikeViewer(
-      pickFormat(cats.currencyFormatSet, "DOLLAR"),
-    );
+  it("renders the currency icon for the curr category", () => {
     const html = renderBody([
-      { name: "ccol", type: "float", length: 8, format: `${curBase}12.2` },
+      {
+        name: "ccol",
+        type: "float",
+        length: 8,
+        format: "DOLLAR15.2",
+        formatCategory: "curr",
+      },
     ]);
     assert.include(html, 'class="header-icon currency"');
   });
 
-  it("falls back to float icon when format is unknown for numeric type", () => {
+  it("renders the numeric icon for the num category", () => {
     const html = renderBody([
-      { name: "ncol", type: "FLOAT", length: 8, format: "UNKNOWN12.2" },
+      {
+        name: "pcol",
+        type: "float",
+        length: 8,
+        format: "PERCENT8.2",
+        formatCategory: "num",
+      },
     ]);
     assert.include(html, 'class="header-icon float"');
+    assert.notInclude(html, 'class="header-icon currency"');
   });
 
-  it("uses char icon for character type in Type column", () => {
+  it("renders the character icon for the char category", () => {
     const html = renderBody([
-      { name: "scol", type: "CHAR", length: 20, format: "" },
+      {
+        name: "scol",
+        type: "char",
+        length: 20,
+        format: "$CHAR20.",
+        formatCategory: "char",
+      },
     ]);
     assert.include(html, 'class="header-icon char"');
   });
 
-  it("supports format object with name property", () => {
-    const dateBase = normalizeLikeViewer(
-      pickFormat(cats.dateFormatSet, "DATE"),
-    );
+  it("ignores category casing and surrounding whitespace", () => {
+    const html = renderBody([
+      {
+        name: "dcol",
+        type: "FLOAT",
+        length: 8,
+        format: "DATE9.",
+        formatCategory: " DATE ",
+      },
+    ]);
+    assert.include(html, 'class="header-icon date"');
+  });
+
+  it("falls back to the numeric icon for an unknown category", () => {
+    const html = renderBody([
+      {
+        name: "ncol",
+        type: "FLOAT",
+        length: 8,
+        format: "MYFMT12.2",
+        formatCategory: "somethingelse",
+      },
+    ]);
+    assert.include(html, 'class="header-icon float"');
+  });
+
+  it("falls back to the type icon when no category was resolved", () => {
+    const html = renderBody([
+      { name: "ncol", type: "FLOAT", length: 8, format: "MYFMT12.2" },
+      { name: "ccol", type: "CHAR", length: 20, format: "" },
+    ]);
+    assert.include(html, 'class="header-icon float"');
+    assert.include(html, 'class="header-icon char"');
+  });
+
+  it("still displays the raw format name", () => {
     const html = renderBody([
       {
         name: "objfmt",
         type: "NUMERIC",
         length: 8,
-        format: { name: `${dateBase}9.` },
+        format: { name: "DATE9." },
+        formatCategory: "date",
       },
     ]);
     assert.include(html, 'class="header-icon date"');
-    assert.ok(html.includes(`${dateBase}9.`));
+    assert.ok(html.includes("DATE9."));
   });
 
   it("applies active row class to focused column", () => {
@@ -210,12 +277,7 @@ describe("TablePropertiesViewer rendering tests", () => {
 
   it("displays Numeric for FLOAT type", () => {
     const html = renderBody([
-      {
-        name: "ncol",
-        type: "FLOAT",
-        length: 8,
-        format: "",
-      },
+      { name: "ncol", type: "FLOAT", length: 8, format: "" },
     ]);
 
     assert.include(html, "Numeric");
@@ -223,12 +285,7 @@ describe("TablePropertiesViewer rendering tests", () => {
 
   it("displays Character for CHAR type", () => {
     const html = renderBody([
-      {
-        name: "ccol",
-        type: "CHAR",
-        length: 8,
-        format: "",
-      },
+      { name: "ccol", type: "CHAR", length: 8, format: "" },
     ]);
 
     assert.include(html, "Character");
@@ -236,40 +293,9 @@ describe("TablePropertiesViewer rendering tests", () => {
 
   it("supports CHARACTER type", () => {
     const html = renderBody([
-      {
-        name: "ccol",
-        type: "CHARACTER",
-        length: 20,
-        format: "",
-      },
+      { name: "ccol", type: "CHARACTER", length: 20, format: "" },
     ]);
 
     assert.include(html, "header-icon char");
-  });
-
-  it("falls back to char icon when format is unknown for character type", () => {
-    const html = renderBody([
-      {
-        name: "ccol",
-        type: "CHAR",
-        length: 20,
-        format: "UNKNOWN",
-      },
-    ]);
-
-    assert.include(html, "header-icon char");
-  });
-
-  it("ignores surrounding whitespace in formats", () => {
-    const html = renderBody([
-      {
-        name: "dcol",
-        type: "FLOAT",
-        length: 8,
-        format: " DATE9. ",
-      },
-    ]);
-
-    assert.include(html, "header-icon date");
   });
 });

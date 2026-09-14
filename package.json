@@ -912,7 +912,7 @@
       "webview/context": [
         {
           "command": "SAS.saveHTML",
-          "when": "webviewId =~ /SASResultPanel/"
+          "when": "webviewId =~ /SASResultPanel/ && SAS.allowDownload"
         }
       ],
       "view/title": [
@@ -1022,7 +1022,7 @@
         },
         {
           "command": "SAS.content.downloadResource",
-          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && SAS.allowDownload",
           "group": "uploaddownloadgroup@0"
         },
         {
@@ -1092,7 +1092,7 @@
         },
         {
           "command": "SAS.server.downloadResource",
-          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == serverdataprovider",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == serverdataprovider && SAS.allowDownload",
           "group": "uploaddownloadgroup@0"
         },
         {

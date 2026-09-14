@@ -1,13 +1,14 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri, l10n } from "vscode";
+import { Uri, l10n, window } from "vscode";
 
-import { Column, TableInfo } from "../connection/rest/api/compute";
+import { TableColumn } from "../components/LibraryNavigator/types";
+import { TableInfo } from "../connection/rest/api/compute";
 import { WebView } from "./WebviewManager";
 import {
-  classifyFormatIcon,
   extractFormatName,
   getIconLabel,
+  iconForColumn,
 } from "./columnIconClassifier";
 
 class TablePropertiesViewer extends WebView {
@@ -16,10 +17,12 @@ class TablePropertiesViewer extends WebView {
   constructor(
     extensionUri: Uri,
     private readonly tableName: string,
-    private readonly tableInfo: TableInfo,
-    private readonly columns: Column[],
+    private tableInfo: TableInfo,
+    private columns: TableColumn[],
     private readonly showColumns: boolean = false,
     private readonly focusedColumn: string = "",
+    private readonly refreshTableInfo: () => Promise<TableInfo>,
+    private readonly refreshColumns: () => Promise<TableColumn[]>,
   ) {
     super(extensionUri, l10n.t("Table Properties"));
   }
@@ -52,6 +55,20 @@ class TablePropertiesViewer extends WebView {
 
   public processMessage(): void {
     // No messages to process for this static viewer
+  }
+
+  public async refreshData() {
+    try {
+      const [tableInfo, columns] = await Promise.all([
+        this.refreshTableInfo(),
+        this.refreshColumns(),
+      ]);
+      this.tableInfo = tableInfo;
+      this.columns = columns;
+      this.render();
+    } catch (error) {
+      window.showErrorMessage(error.message);
+    }
   }
 
   private generatePropertiesContent(): string {
@@ -168,37 +185,6 @@ class TablePropertiesViewer extends WebView {
   }
 
   private generateColumnsContent(): string {
-    const getIconForColumn = (
-      type: string,
-      format?: string,
-      useFormat = true,
-    ): string => {
-      if (useFormat) {
-        const formatIcon = classifyFormatIcon(format);
-        if (formatIcon) {
-          return formatIcon;
-        }
-      }
-
-      switch (type?.toUpperCase()) {
-        case "CHAR":
-        case "CHARACTER":
-          return "char";
-
-        case "FLOAT":
-        case "NUMERIC":
-        case "NUM":
-        case "CURRENCY":
-        case "DATE":
-        case "TIME":
-        case "DATETIME":
-          return "float";
-
-        default:
-          return "";
-      }
-    };
-
     const getDisplayType = (type: string): string => {
       switch (type?.toUpperCase()) {
         case "CHAR":
@@ -232,9 +218,9 @@ class TablePropertiesViewer extends WebView {
 
         const columnType = formatValue(column.type);
 
-        const nameIconClass = getIconForColumn(columnType, formatName, true);
+        const nameIconClass = iconForColumn(columnType, column.formatCategory);
 
-        const typeIconClass = getIconForColumn(columnType, undefined, false);
+        const typeIconClass = iconForColumn(columnType);
 
         const nameIconTitle = getIconLabel(nameIconClass);
 

@@ -18,11 +18,10 @@ import { AgGridReact } from "ag-grid-react";
 import { v4 } from "uuid";
 
 import type {
+  TableColumn,
   TableData,
   TableQuery,
 } from "../components/LibraryNavigator/types";
-import { Column } from "../connection/rest/api/compute";
-import { extractFormatName } from "../panels/columnIconClassifier";
 import ColumnHeader from "./ColumnHeader";
 import { ColumnMenuProps, getColumnMenu } from "./ColumnMenu";
 import localize from "./localize";
@@ -91,7 +90,7 @@ let fetchColumnsTimeoutId: ReturnType<typeof setTimeout> | null = null;
 const clearFetchColumnsTimeout = () =>
   fetchColumnsTimeoutId && clearTimeout(fetchColumnsTimeoutId);
 const fetchColumns = (): Promise<{
-  columns: Column[];
+  columns: TableColumn[];
 }> => {
   const requestKey = v4();
   vscode.postMessage({ command: "request:loadColumns", key: requestKey });
@@ -233,7 +232,7 @@ const useDataViewer = () => {
         headerComponent: ColumnHeader,
         headerComponentParams: {
           columnType: column.type || "",
-          columnFormat: extractFormatName(column.format),
+          columnFormatCategory: column.formatCategory,
           currentColumn: () => columnMenuRef.current?.column,
           displayMenuForColumn,
         },
