@@ -7,10 +7,7 @@ import { l10n, window } from "vscode";
 
 import * as path from "path";
 
-import { InMemorySource } from "./inMemorySource";
-import { inferColumns } from "./typeInfer";
-
-const TYPE_INFER_SAMPLE = 200;
+import { buildInMemorySource, InMemorySource } from "./inMemorySource";
 
 /** Build an `InMemorySource` from an .xlsx file. Returns `undefined` if
  *  the user cancels the sheet picker. */
@@ -62,25 +59,11 @@ export async function xlsxSource(
     return new InMemorySource(sheet.name || path.basename(fsPath), uid, [], []);
   }
 
-  const headers = matrix[0];
-  const dataRows = matrix.slice(1);
-  const sample = dataRows.slice(0, TYPE_INFER_SAMPLE);
-  const columns = inferColumns(headers, sample);
-
-  const cellRows: (string | null)[][] = dataRows.map((r) => {
-    const out: (string | null)[] = [""];
-    for (let i = 0; i < headers.length; i++) {
-      const v = r[i];
-      out.push(v === undefined ? null : v);
-    }
-    return out;
-  });
-
   const title =
     sheets.length > 1
       ? `${path.basename(fsPath)} (${sheet.name})`
       : path.basename(fsPath);
-  return new InMemorySource(title, uid, columns, cellRows);
+  return buildInMemorySource(matrix[0], matrix.slice(1), title, uid);
 }
 
 /** exceljs cell values can be strings, numbers, Dates, booleans,

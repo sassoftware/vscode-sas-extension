@@ -19,6 +19,7 @@ import type {
   TableRow,
 } from "../LibraryNavigator/types";
 import { tryBuildColValueFilter } from "./colValueFilter";
+import { inferColumns } from "./typeInfer";
 import type { FileTableSource } from "./types";
 
 export class InMemorySource implements FileTableSource {
@@ -114,6 +115,33 @@ export class InMemorySource implements FileTableSource {
   }
 }
 
+/** Rows sampled per column when inferring types. */
+const TYPE_INFER_SAMPLE = 200;
+
+/**
+ * Build an `InMemorySource` from a header row + data rows (each aligned to the
+ * headers; missing cells become null). Infers column types from a sample and
+ * prepends the leading index placeholder cell the panel strips — the shared
+ * tail of the csv / tsv / xlsx readers.
+ */
+export function buildInMemorySource(
+  headers: string[],
+  dataRows: (string | null | undefined)[][],
+  title: string,
+  uid: string,
+): InMemorySource {
+  const columns = inferColumns(headers, dataRows.slice(0, TYPE_INFER_SAMPLE));
+  const cellRows: (string | null)[][] = dataRows.map((r) => {
+    const out: (string | null)[] = [""];
+    for (let i = 0; i < headers.length; i++) {
+      const v = r[i];
+      out.push(v === undefined ? null : v);
+    }
+    return out;
+  });
+  return new InMemorySource(title, uid, columns, cellRows);
+}
+
 type Cmp = (a: number, b: number) => number;
 
 function compileSort(
@@ -166,16 +194,9 @@ function compileSort(
 
 function isNumericKind(type: string | undefined): boolean {
   const t = (type || "").toLowerCase();
-  return (
-    t === "num" ||
-    t === "numeric" ||
-    t === "double" ||
-    t === "integer" ||
-    t === "currency" ||
-    t === "date" ||
-    t === "time" ||
-    t === "datetime"
-  );
+  // Local sources only ever produce "num" (sas7bdat) and
+  // num/date/datetime (typeInfer), so those are the kinds we sort numerically.
+  return t === "num" || t === "date" || t === "datetime";
 }
 
 function signature(

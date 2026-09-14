@@ -7,7 +7,7 @@ import {
   delimiterForExt,
   parseCsv,
 } from "../../../src/components/FileTableViewer/csvParser";
-import { InMemorySource } from "../../../src/components/FileTableViewer/inMemorySource";
+import { buildInMemorySource } from "../../../src/components/FileTableViewer/inMemorySource";
 import { inferColumns } from "../../../src/components/FileTableViewer/typeInfer";
 import { FileTableSource } from "../../../src/components/FileTableViewer/types";
 
@@ -16,25 +16,11 @@ function csvStream(text: string): Readable {
 }
 
 /** Build a minimal in-memory source whose first row is the header, the
- *  rest data — mirroring what `csvSource` does (columns from the header,
- *  data rows padded/truncated to the header width with the leading index
- *  placeholder). */
+ *  rest data — the shared `buildInMemorySource` path `csvSource`/`xlsxSource`
+ *  use. */
 function source(rowsWithHeader: (string | null)[][]): FileTableSource {
   const headers = rowsWithHeader[0] ?? [];
-  const dataRows = rowsWithHeader.slice(1);
-  const cellRows = dataRows.map((r) => {
-    const out: (string | null)[] = [""];
-    for (let i = 0; i < headers.length; i++) {
-      out.push(r[i] === undefined ? null : r[i]);
-    }
-    return out;
-  });
-  return new InMemorySource(
-    "t",
-    "uid",
-    inferColumns(headers, dataRows),
-    cellRows,
-  );
+  return buildInMemorySource(headers, rowsWithHeader.slice(1), "t", "uid");
 }
 
 describe("FileTableViewer", () => {

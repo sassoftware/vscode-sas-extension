@@ -40,6 +40,25 @@ export const SUPPORTED = new Set([".csv", ".tsv", ".xlsx", ".sas7bdat"]);
  *  `SAS.*` command declared in `contributes.commands` shows up here. */
 export const REGISTERED_COMMANDS: readonly string[] = ["SAS.openTableFile"];
 
+/**
+ * Which table viewer to open for a local file.
+ *
+ * Honors the `sas.betterTables.tableViewer` setting — but only when the user
+ * has *explicitly* configured it. Absent setting → classic ag-grid, so nobody
+ * is forced onto a viewer they never asked for (the mssql-style "better" viewer
+ * ships as a separate feature). Returns "better" only when the user set it.
+ */
+function configuredViewerKind(): "better" | "classic" {
+  const inspected = workspace
+    .getConfiguration("sas.betterTables")
+    .inspect<"better" | "classic">("tableViewer");
+  const explicit =
+    inspected?.globalValue ??
+    inspected?.workspaceValue ??
+    inspected?.workspaceFolderValue;
+  return explicit === "better" ? "better" : "classic";
+}
+
 class FileTableViewer implements SubscriptionProvider {
   private readonly webviewManager = new WebViewManager();
 
@@ -130,6 +149,19 @@ class FileTableViewer implements SubscriptionProvider {
         };
       }
     });
+
+    // This branch bundles only the classic ag-grid viewer, so a "better"
+    // request can't be satisfied here — surface it rather than silently
+    // ignoring the user's configured choice. (The combined build routes this
+    // same decision through DataViewerFactory, which can open the better
+    // viewer.) The default remains classic.
+    if (configuredViewerKind() === "better") {
+      void window.showInformationMessage(
+        l10n.t(
+          "The \"better\" table viewer is not bundled in this build; opening the classic viewer instead.",
+        ),
+      );
+    }
 
     this.webviewManager.render(
       new DataViewer(

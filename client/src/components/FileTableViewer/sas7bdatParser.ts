@@ -5,16 +5,11 @@
 // SAS-9 binary format with no SAS server, no external dependencies and no
 // native modules, so it bundles to both the node and the web build targets.
 //
-// Two access modes share one source of truth:
-//   - ``parseSas7bdat(buffer)`` — eager: loads the whole file into a Buffer and
-//     returns every row. Used for small tables and unit tests.
-//   - The lazy path (``sas7bdatParser``'s page-level API) backs the
-//     ``sas7bdatLazySource`` below: it reads only the column metadata up front,
-//     then reads each page on demand so browsing tables of tens of millions of
-//     rows stays memory-bounded and instant.
-//
-// Both go through a ``PageSource`` that turns a page index into a Buffer, so
-// the page-walk code never assumes the whole file is resident.
+// One access mode: the page-level API reads only the column metadata up
+// front, then decodes each page on demand so browsing tables of tens of
+// millions of rows stays memory-bounded and instant. It goes through a
+// ``PageSource`` that turns a page index into a Buffer, so the page-walk code
+// never assumes the whole file is resident.
 //
 // File layout (the same layout the canonical BSD-licensed ReadStat library
 // documents and reads):
@@ -46,13 +41,6 @@ export interface SasColumn {
   /** On-disk byte width. */
   length: number;
   format: string;
-}
-
-/** Result of eagerly parsing a sas7bdat buffer. `rows[i][j]` lines up with
- *  `columns[j]`. Missing numeric values are `null`. */
-export interface SasParsedTable {
-  columns: SasColumn[];
-  rows: (string | null)[][];
 }
 
 /** On-disk byte geometry of a single column (needed to decode a row without
@@ -225,8 +213,8 @@ interface SubheaderPointer {
 }
 
 /** Parse context: geometry + the column metadata collected from the leading
- *  meta pages. Shared by the eager and lazy paths. `rows`/`columns` are the
- *  (reused) working buffers for a single page decode. */
+ *  meta pages. `rows`/`columns` are the (reused) working buffers for a single
+ *  page decode. */
 interface Parse {
   source: PageSource;
   meta: SasMetadata;
@@ -1327,20 +1315,10 @@ function resolveColumnsOn(p: Parse): void {
   submitColumns(p);
 }
 
-/** Fill `meta.columns`/`meta.layouts` from a geometry-known `source`. Returns
- *  `meta`. */
-export function parseSasColumns(
-  source: PageSource,
-  meta: SasMetadata,
-): SasMetadata {
-  resolveColumnsOn(pOf(source, meta));
-  return meta;
-}
-
 /** Decode the rows of a single page into `out.rows` (returned). The caller
  *  must provide a Parse whose column metadata is already resolved; `out.rows`
- *  is cleared first. Mirrors the eager pass-2 walk so a page decodes exactly
- *  the slot count reported by countRowsInPage. */
+ *  is cleared first. A page decodes exactly the slot count reported by
+ *  countRowsInPage. */
 function decodePageParse(p: Parse, pageIndex: number): (string | null)[][] {
   const page = p.source.read(pageIndex, p.meta.pageSize);
   p.rows.length = 0;
@@ -1376,48 +1354,4 @@ export class Sas7bdatPageReader {
   public decodeRowsInPage(pageIndex: number): (string | null)[][] {
     return decodePageParse(this.p, pageIndex);
   }
-}
-
-// ---------------------------------------------------------------------------
-// Eager (whole-buffer) access
-// ---------------------------------------------------------------------------
-
-/** A PageSource over an already-loaded, geometry-known whole-file Buffer. */
-class WholePageSource implements PageSource {
-  public readonly fileSize: number;
-  public constructor(
-    private readonly buf: Buffer,
-    private readonly headerSize: number,
-    private readonly pageSize: number,
-  ) {
-    this.fileSize = buf.length;
-  }
-  public read(pageIndex: number, length: number): Buffer {
-    const start = this.headerSize + pageIndex * this.pageSize;
-    return this.buf.subarray(start, start + length);
-  }
-}
-
-/**
- * Parse a sas7bdat buffer into columns and rows. Throws a plain Error for
- * malformed file layouts and a {@link Sas7bdatUnsupportedError} for valid
- * files using features the local reader doesn't implement yet. Reads the whole
- * buffer eagerly — prefer the lazy path (sas7bdatLazySource) for large files.
- */
-export function parseSas7bdat(buffer: Buffer): SasParsedTable {
-  const meta = parseSasHeaderRegion(
-    buffer.subarray(0, Math.min(buffer.length, 65536)),
-    buffer.length,
-  );
-  const source = new WholePageSource(buffer, meta.headerSize, meta.pageSize);
-  const reader = new Sas7bdatPageReader(source, meta);
-
-  const rows: (string | null)[][] = [];
-  for (let i = 0; i < meta.pageCount; i++) {
-    const pageRows = reader.decodeRowsInPage(i);
-    for (let r = 0; r < pageRows.length; r++) {
-      rows.push(pageRows[r]);
-    }
-  }
-  return { columns: meta.columns, rows };
 }

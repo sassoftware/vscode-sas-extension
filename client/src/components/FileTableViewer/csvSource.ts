@@ -4,10 +4,7 @@ import { createReadStream } from "fs";
 import * as path from "path";
 
 import { delimiterForExt, parseCsv } from "./csvParser";
-import { InMemorySource } from "./inMemorySource";
-import { inferColumns } from "./typeInfer";
-
-const TYPE_INFER_SAMPLE = 200;
+import { buildInMemorySource, InMemorySource } from "./inMemorySource";
 
 /** Build an `InMemorySource` from a delimited text file (csv / tsv). */
 export async function csvSource(
@@ -31,19 +28,10 @@ export async function csvSource(
   const headers = rows[0];
   const dataRows = rows.slice(1);
 
-  const sample = dataRows.slice(0, TYPE_INFER_SAMPLE);
-  const columns = inferColumns(headers, sample);
-
-  // Pad/truncate every row to exactly `headers.length` cells, then
-  // prepend the leading index placeholder the panel strips.
-  const cellRows: (string | null)[][] = dataRows.map((r) => {
-    const out: (string | null)[] = [""];
-    for (let i = 0; i < headers.length; i++) {
-      const v = r[i];
-      out.push(v === undefined ? null : v);
-    }
-    return out;
-  });
-
-  return new InMemorySource(path.basename(fsPath), uid, columns, cellRows);
+  return buildInMemorySource(
+    headers,
+    dataRows,
+    path.basename(fsPath),
+    uid,
+  );
 }
