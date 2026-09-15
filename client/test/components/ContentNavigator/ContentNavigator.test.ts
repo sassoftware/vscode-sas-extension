@@ -145,6 +145,34 @@ describe("ContentNavigator confirmDelete", () => {
     expect(args[2]).to.equal(Messages.MoveToRecycleBinLabel);
   });
 
+  it("shows one shared dirty warning for multiple dirty folders", async () => {
+    const showWarningMessageStub = sinon
+      .stub(window, "showWarningMessage")
+      .callsFake(async () => ({ title: Messages.MoveToRecycleBinLabel }));
+
+    const confirmed = await callConfirmDelete([
+      {
+        hasUnsavedFiles: true,
+        isContainer: true,
+        moveToRecycleBin: true,
+        resource: createItem("testD"),
+      },
+      {
+        hasUnsavedFiles: true,
+        isContainer: true,
+        moveToRecycleBin: true,
+        resource: createItem("NotEmptyFolder"),
+      },
+    ]);
+
+    expect(confirmed).to.equal(true);
+    expect(showWarningMessageStub.calledOnce).to.equal(true);
+    const args = showWarningMessageStub.getCall(0).args;
+    expect(args[0]).to.equal(l10n.t(Messages.DirtyFolderWarning));
+    expect(args[1]).to.deep.equal({ modal: true });
+    expect(args[2]).to.equal(Messages.MoveToRecycleBinLabel);
+  });
+
   it("shows dirty warning with Delete action when selection includes permanent delete", async () => {
     const showWarningMessageStub = sinon
       .stub(window, "showWarningMessage")
@@ -212,5 +240,29 @@ describe("ContentNavigator confirmDelete", () => {
     ]);
 
     expect(confirmed).to.equal(false);
+  });
+
+  it("returns false and does not continue when user cancels dirty warning", async () => {
+    const showWarningMessageStub = sinon
+      .stub(window, "showWarningMessage")
+      .resolves(undefined);
+
+    const confirmed = await callConfirmDelete([
+      {
+        hasUnsavedFiles: true,
+        isContainer: true,
+        moveToRecycleBin: true,
+        resource: createItem("dirty-folder"),
+      },
+      {
+        hasUnsavedFiles: true,
+        isContainer: true,
+        moveToRecycleBin: true,
+        resource: createItem("another-dirty-folder"),
+      },
+    ]);
+
+    expect(confirmed).to.equal(false);
+    expect(showWarningMessageStub.calledOnce).to.equal(true);
   });
 });
