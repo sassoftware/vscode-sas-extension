@@ -381,7 +381,7 @@ export class Lexer {
                 /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;))/;
               match = new RegExp(
                 `${stringReg.source}|${commentReg.source}|${secReg.source}`,
-                "m",
+                "im",
               ).exec(lineContent.substring(pos));
               if (match) {
                 const matchedText = match[0];
@@ -437,7 +437,7 @@ export class Lexer {
               /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;))/;
             match = new RegExp(
               `${stringReg.source}|${commentReg.source}|${secReg.source}`,
-              "m",
+              "im",
             ).exec(lineContent.substring(pos));
             if (match) {
               const matchedText = match[0];
@@ -500,7 +500,7 @@ export class Lexer {
                 /(\b((endsubmit|endinteractive)(\s+|\/\*.*?\*\/)*;|(data|proc|%macro)\b[^'";]*;))/;
               const reg = new RegExp(
                 `${stringReg.source}|${commentReg.source}|${secReg.source}`,
-                "m",
+                "im",
               );
               match = reg.exec(lineContent.substring(pos));
               if (match) {
