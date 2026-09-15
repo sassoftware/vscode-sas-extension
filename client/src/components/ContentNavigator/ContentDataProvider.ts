@@ -38,7 +38,7 @@ import { promisify } from "util";
 import { profileConfig } from "../../commands/profile";
 import { getResourceId } from "../../connection/rest/util";
 import { SubscriptionProvider } from "../SubscriptionProvider";
-import { ViyaProfile } from "../profile";
+import { ConnectionType } from "../profile";
 import { ContentModel } from "./ContentModel";
 import {
   FAVORITES_FOLDER_TYPE,
@@ -119,10 +119,15 @@ class ContentDataProvider
     );
 
     this._treeView.onDidChangeVisibility(async () => {
-      if (this._treeView.visible) {
-        const activeProfile: ViyaProfile = profileConfig.getProfileByName(
-          profileConfig.getActiveProfile(),
-        );
+      if (!this._treeView.visible) {
+        return;
+      }
+
+      const activeProfile = profileConfig.getProfileByName(
+        profileConfig.getActiveProfile(),
+      );
+
+      if (activeProfile?.connectionType === ConnectionType.Rest) {
         await this.connect(activeProfile.endpoint);
       }
     });
