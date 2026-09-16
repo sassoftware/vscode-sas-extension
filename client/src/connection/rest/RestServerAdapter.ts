@@ -35,7 +35,10 @@ import {
   sortedContentItems,
 } from "../../components/ContentNavigator/utils";
 import { appendSessionLogFn } from "../../components/logViewer";
-import { ProfileWithFileRootOptions } from "../../components/profile";
+import {
+  DisplayOptions,
+  ProfileWithFileRootOptions,
+} from "../../components/profile";
 import { FileProperties, FileSystemApi } from "./api/compute";
 import { getApiConfig } from "./common";
 import {
@@ -63,6 +66,7 @@ class RestServerAdapter implements ContentAdapter {
     protected fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
     protected fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
     protected globalShortcuts: ProfileWithFileRootOptions["globalShortcuts"],
+    protected display?: DisplayOptions["display"],
   ) {
     this.rootFolders = {};
     this.fileMetadataMap = {};
@@ -334,6 +338,7 @@ class RestServerAdapter implements ContentAdapter {
           ).replace("/members", ""),
           limit,
           start,
+          showAll: this.display?.showHiddenItems ?? false,
         });
       } catch (error) {
         // If this error is specifically related to file nav root settings, provide

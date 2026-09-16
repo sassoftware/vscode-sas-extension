@@ -306,6 +306,18 @@
                               "USER",
                               "SYSTEM"
                             ]
+                          },
+                          "display": {
+                            "type": "object",
+                            "default": {},
+                            "description": "%configuration.SAS.connectionProfiles.profiles.display%",
+                            "properties": {
+                              "showHiddenItems": {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "%configuration.SAS.connectionProfiles.profiles.display.showHiddenItems%"
+                              }
+                            }
                           }
                         }
                       }
