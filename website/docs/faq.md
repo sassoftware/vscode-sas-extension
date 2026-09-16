@@ -30,6 +30,46 @@ VS Code provides a default word-based autocompletion for any programming languag
 
 A new session must be created the first time you run SAS code. Connection time varies depending on the server connection. Subsequent runs within the session should be quicker.
 
+### I receive `Error: Cannot create a string longer than 0x1fffffe8 characters` when displaying graphs in a Python notebook cell
+
+Large visualizations generated from Python notebook cells can produce extremely large SVG output. In some cases, this can lead to notebook rendering issues, slow performance, or errors such as:
+
+```text
+Error: Cannot create a string longer than 0x1fffffe8 characters
+```
+
+**Solution**
+
+As a workaround, generate the graph in a lighter-weight format, such as PNG, instead of using the default SVG output format.
+
+If you are using `SAS.show()`:
+
+```sas
+SAS.show(fig, filetype="png")
+```
+
+If you are using `SAS.pyplot()`:
+
+```sas
+SAS.pyplot(fig, filetype="png")
+```
+
+**Example**
+
+Instead of:
+
+```sas
+SAS.show(fig)
+```
+
+use:
+
+```sas
+SAS.show(fig, filetype="png")
+```
+
+Using PNG output can significantly reduce the size of the generated graph output and help avoid notebook rendering and performance issues when working with large matplotlib or seaborn visualizations.
+
 ## Connection issues
 
 ### How do I get my client ID and secret?
@@ -107,3 +147,7 @@ If the options on the Problems panel toolbar are not visible, you can display th
 ### Can I control whether errors and warnings from my SAS log are displayed in the Problems panel?
 
 Yes. The `SAS.problems.log` setting controls whether problems from the SAS log are displayed in the Problems panel. This option is enabled by default. To access this option, select `File > Preferences > Settings`, and search for "sas problems".
+
+```
+
+```
