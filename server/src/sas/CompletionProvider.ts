@@ -293,7 +293,14 @@ export class CompletionProvider {
           start: { line: position.line, column: start },
           end: { line: position.line, column: end },
         });
-        this._getZone(position);
+        // zone resolution looks one column to the left of the given position,
+        // so hovering on the very first character of a token (e.g. the "%" of
+        // "%SCAN") must be nudged forward to stay within the token's range.
+        this._getZone(
+          position.character <= start
+            ? { line: position.line, character: start + 1 }
+            : position,
+        );
         const zone = this.popupContext.zone;
         return new Promise((resolve) => {
           if (keyword.trim() === "") {
