@@ -8,7 +8,12 @@ import {
   authentication,
 } from "vscode";
 
-import axios, { AxiosInstance, HeadersDefaults } from "axios";
+import axios, {
+  AxiosHeaders,
+  AxiosInstance,
+  AxiosResponse,
+  HeadersDefaults,
+} from "axios";
 import { expect } from "chai";
 import { mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
@@ -32,6 +37,8 @@ import {
   ContentSourceType,
 } from "../../../src/components/ContentNavigator/types";
 import RestContentAdapter from "../../../src/connection/rest/RestContentAdapter";
+import RestServerAdapter from "../../../src/connection/rest/RestServerAdapter";
+import { FileSystemApi } from "../../../src/connection/rest/api/compute";
 import { getSasContentUri as getUri } from "../../../src/connection/rest/util";
 import { getUri as getTestUri } from "../../utils";
 
@@ -1061,5 +1068,181 @@ describe("ContentDataProvider", async function () {
     expect(await model.getFileFolderPath(item2)).to.equal(
       "/grandparent/parent",
     );
+  });
+});
+
+// showHiddenItems (Issue #1511)
+
+const SERVER_SESSION_ID = "test-session-id";
+
+const selfLinkFor = (name: string) => [
+  {
+    method: "GET",
+    rel: "self",
+    href: `/id/${name}`,
+    uri: `/compute/sessions/${SERVER_SESSION_ID}/files/parent-folder/${name}`,
+    type: "test",
+  },
+];
+
+const mockFileProperties = (overrides: Record<string, unknown> = {}) => ({
+  links: selfLinkFor("child.sas"),
+  name: "child.sas",
+  type: "file",
+  modifiedTimeStamp: "2024-01-01T00:00:00Z",
+  readOnly: false,
+  isDirectory: false,
+  ...overrides,
+});
+
+const mockAxiosResponse = <T>(data: T): AxiosResponse<T> => ({
+  data,
+  status: 200,
+  statusText: "OK",
+  headers: {},
+  config: { headers: new AxiosHeaders() },
+});
+
+class TestableRestServerAdapter extends RestServerAdapter {
+  public setFileSystemApiForTest(
+    fileSystemApi: ReturnType<typeof FileSystemApi>,
+  ): void {
+    this.fileSystemApi = fileSystemApi;
+  }
+
+  public setSessionIdForTest(sessionId: string): void {
+    this.sessionId = sessionId;
+  }
+}
+
+describe("RestServerAdapter - getChildItems (showHiddenItems)", function () {
+  const buildAdapter = (
+    display?: { showHiddenItems?: boolean } | null,
+  ): TestableRestServerAdapter => {
+    const adapter = new TestableRestServerAdapter(
+      undefined, // fileNavigationCustomRootPath
+      "USER", // fileNavigationRoot
+      {}, // globalShortcuts
+      display,
+    );
+    adapter.setSessionIdForTest(SERVER_SESSION_ID);
+    return adapter;
+  };
+
+  const buildFileSystemApiStub = (): StubbedInstance<
+    ReturnType<typeof FileSystemApi>
+  > => stubInterface<ReturnType<typeof FileSystemApi>>();
+
+  const buildParentItem = (): ContentItem =>
+    mockContentItem({
+      id: "/id/parent-folder",
+      uid: "parent-uid",
+      type: "folder",
+      uri: `/compute/sessions/${SERVER_SESSION_ID}/files/parent-folder`,
+      links: [
+        {
+          rel: "getDirectoryMembers",
+          uri: `/compute/sessions/${SERVER_SESSION_ID}/files/parent-folder/members`,
+          method: "GET",
+          href: `/compute/sessions/${SERVER_SESSION_ID}/files/parent-folder/members`,
+          type: "test",
+        },
+      ],
+    });
+
+  const emptyResponse = () => mockAxiosResponse({ count: 0, items: [] });
+
+  it("passes showAll: true when display.showHiddenItems is true", async () => {
+    const adapter = buildAdapter({ showHiddenItems: true });
+    const fileSystemApi = buildFileSystemApiStub();
+    fileSystemApi.getDirectoryMembers.resolves(emptyResponse());
+    adapter.setFileSystemApiForTest(fileSystemApi);
+
+    await adapter.getChildItems(buildParentItem());
+
+    expect(fileSystemApi.getDirectoryMembers.calledOnce).to.be.true;
+    expect(fileSystemApi.getDirectoryMembers.firstCall.args[0]).to.deep.equal({
+      sessionId: SERVER_SESSION_ID,
+      directoryPath: "parent-folder",
+      limit: 100,
+      start: 0,
+      showAll: true,
+    });
+  });
+
+  it("passes showAll: false when display.showHiddenItems is explicitly false", async () => {
+    const adapter = buildAdapter({ showHiddenItems: false });
+    const fileSystemApi = buildFileSystemApiStub();
+    fileSystemApi.getDirectoryMembers.resolves(emptyResponse());
+    adapter.setFileSystemApiForTest(fileSystemApi);
+
+    await adapter.getChildItems(buildParentItem());
+
+    expect(fileSystemApi.getDirectoryMembers.firstCall.args[0]).to.deep.include(
+      { showAll: false },
+    );
+  });
+
+  it("defaults showAll to false when display is undefined", async () => {
+    const adapter = buildAdapter(undefined);
+    const fileSystemApi = buildFileSystemApiStub();
+    fileSystemApi.getDirectoryMembers.resolves(emptyResponse());
+    adapter.setFileSystemApiForTest(fileSystemApi);
+
+    await adapter.getChildItems(buildParentItem());
+
+    expect(fileSystemApi.getDirectoryMembers.firstCall.args[0]).to.deep.include(
+      { showAll: false },
+    );
+  });
+
+  it("defaults showAll to false when display is an empty object", async () => {
+    const adapter = buildAdapter({});
+    const fileSystemApi = buildFileSystemApiStub();
+    fileSystemApi.getDirectoryMembers.resolves(emptyResponse());
+    adapter.setFileSystemApiForTest(fileSystemApi);
+
+    await adapter.getChildItems(buildParentItem());
+
+    expect(fileSystemApi.getDirectoryMembers.firstCall.args[0]).to.deep.include(
+      { showAll: false },
+    );
+  });
+
+  it("does not throw and defaults showAll to false when display is null", async () => {
+    const adapter = buildAdapter(null);
+    const fileSystemApi = buildFileSystemApiStub();
+    fileSystemApi.getDirectoryMembers.resolves(emptyResponse());
+    adapter.setFileSystemApiForTest(fileSystemApi);
+
+    await adapter.getChildItems(buildParentItem());
+
+    expect(fileSystemApi.getDirectoryMembers.firstCall.args[0]).to.deep.include(
+      { showAll: false },
+    );
+  });
+
+  it("includes hidden items in the returned list when showHiddenItems is true", async () => {
+    const adapter = buildAdapter({ showHiddenItems: true });
+    const fileSystemApi = buildFileSystemApiStub();
+    const hiddenFile = mockFileProperties({
+      name: ".hidden-file.sas",
+      links: selfLinkFor(".hidden-file.sas"),
+    });
+    const visibleFile = mockFileProperties({
+      name: "visible.sas",
+      links: selfLinkFor("visible.sas"),
+    });
+    fileSystemApi.getDirectoryMembers.resolves(
+      mockAxiosResponse({ count: 2, items: [hiddenFile, visibleFile] }),
+    );
+    adapter.setFileSystemApiForTest(fileSystemApi);
+
+    const children = await adapter.getChildItems(buildParentItem());
+    const names = children.map((child) => child.name);
+
+    expect(children.length).to.equal(2);
+    expect(names).to.include(".hidden-file.sas");
+    expect(names).to.include("visible.sas");
   });
 });

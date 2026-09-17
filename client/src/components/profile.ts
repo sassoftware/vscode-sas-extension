@@ -73,7 +73,8 @@ export enum ConnectionType {
  * value. Normally this option should not be set by the user since it is most likely
  * being set by an automated process.
  */
-export interface ViyaProfile extends BaseProfile, ProfileWithFileRootOptions {
+export interface ViyaProfile
+  extends BaseProfile, ProfileWithFileRootOptions, DisplayOptions {
   connectionType: ConnectionType.Rest;
   endpoint: string;
   clientId?: string;
@@ -131,6 +132,14 @@ interface GlobalShortcuts {
   // key -> what you would like to name the shortcut
   // value -> the folder uri
   [key: string]: string;
+}
+
+export interface DisplayOptions {
+  display?: Display;
+}
+
+export interface Display {
+  showHiddenItems?: boolean;
 }
 
 export interface ProfileWithFileRootOptions {
