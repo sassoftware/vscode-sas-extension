@@ -807,8 +807,6 @@ describe("ContentDataProvider", async function () {
     } finally {
       if (originalTabGroupsDescriptor) {
         Object.defineProperty(window, "tabGroups", originalTabGroupsDescriptor);
-      } else {
-        delete (window as { tabGroups?: unknown }).tabGroups;
       }
     }
   });
@@ -889,8 +887,6 @@ describe("ContentDataProvider", async function () {
     } finally {
       if (originalTabGroupsDescriptor) {
         Object.defineProperty(window, "tabGroups", originalTabGroupsDescriptor);
-      } else {
-        delete (window as { tabGroups?: unknown }).tabGroups;
       }
     }
   });
