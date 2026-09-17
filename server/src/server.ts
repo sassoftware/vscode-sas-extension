@@ -4,13 +4,19 @@ import {
   CancellationToken,
   CodeActionKind,
   CompletionItemKind,
+  CompletionRegistrationOptions,
   CompletionTriggerKind,
   Connection,
   DidChangeConfigurationParams,
   DidChangeWatchedFilesParams,
+  DocumentFormattingRegistrationOptions,
   DocumentHighlightParams,
+  DocumentOnTypeFormattingRegistrationOptions,
+  DocumentSelector,
   DocumentSymbol,
+  DocumentSymbolRegistrationOptions,
   ExecuteCommandParams,
+  HoverRegistrationOptions,
   InitializeResult,
   Location,
   Position,
@@ -22,6 +28,7 @@ import {
   RenameParams,
   ResultProgressReporter,
   SemanticTokensRequest,
+  SignatureHelpRegistrationOptions,
   TextDocumentPositionParams,
   TextDocumentSyncKind,
   Unregistration,
@@ -69,37 +76,56 @@ export const runServer = (
     }
     _pyrightLanguageProvider.initialize(params, [], []);
 
+    const sasSel: DocumentSelector = [{ language: "sas" }];
+    const formattingOpts: DocumentFormattingRegistrationOptions = {
+      documentSelector: sasSel,
+    };
+    const onTypeFormattingOpts: DocumentOnTypeFormattingRegistrationOptions = {
+      documentSelector: sasSel,
+      firstTriggerCharacter: "\n",
+      moreTriggerCharacter: [";"],
+    };
+    const docSymbolOpts: DocumentSymbolRegistrationOptions = {
+      documentSelector: sasSel,
+      workDoneProgress: true,
+    };
+    const hoverOpts: HoverRegistrationOptions = {
+      documentSelector: sasSel,
+      workDoneProgress: true,
+    };
+    const completionOpts: CompletionRegistrationOptions = {
+      documentSelector: sasSel,
+      triggerCharacters: _pyrightLanguageProvider.getClientCapabilities()
+        .hasVisualStudioExtensionsCapability
+        ? [".", "[", "@", '"', "'", " "]
+        : [".", "[", '"', "'", " "],
+      resolveProvider: true,
+      workDoneProgress: true,
+      completionItem: {
+        labelDetailsSupport: true,
+      },
+    };
+    const sigHelpOpts: SignatureHelpRegistrationOptions = {
+      documentSelector: sasSel,
+      triggerCharacters: ["(", ",", ")"],
+      workDoneProgress: true,
+    };
     const result: InitializeResult = {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Incremental,
         semanticTokensProvider: {
+          documentSelector: sasSel,
           legend,
           full: true,
         },
-        documentFormattingProvider: true,
-        foldingRangeProvider: true,
-        documentOnTypeFormattingProvider: {
-          firstTriggerCharacter: "\n",
-          moreTriggerCharacter: [";"],
-        },
-        documentSymbolProvider: { workDoneProgress: true },
+        documentFormattingProvider: formattingOpts,
+        foldingRangeProvider: { documentSelector: sasSel },
+        documentOnTypeFormattingProvider: onTypeFormattingOpts,
+        documentSymbolProvider: docSymbolOpts,
         workspaceSymbolProvider: { workDoneProgress: true },
-        hoverProvider: { workDoneProgress: true },
-        completionProvider: {
-          triggerCharacters: _pyrightLanguageProvider.getClientCapabilities()
-            .hasVisualStudioExtensionsCapability
-            ? [".", "[", "@", '"', "'", " "]
-            : [".", "[", '"', "'", " "],
-          resolveProvider: true,
-          workDoneProgress: true,
-          completionItem: {
-            labelDetailsSupport: true,
-          },
-        },
-        signatureHelpProvider: {
-          triggerCharacters: ["(", ",", ")"],
-          workDoneProgress: true,
-        },
+        hoverProvider: hoverOpts,
+        completionProvider: completionOpts,
+        signatureHelpProvider: sigHelpOpts,
         workspace: {
           workspaceFolders: {
             supported: true,
