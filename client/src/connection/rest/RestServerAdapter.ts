@@ -6,11 +6,18 @@ import { AxiosResponse } from "axios";
 
 import { getSession } from "..";
 import {
+  FOLDER_SHORTCUT_ID,
   FOLDER_TYPES,
+  GLOBAL_SHORTCUTS,
+  GLOBAL_SHORTCUT_ID,
+  GLOBAL_SHORTCUT_TYPE,
   Messages,
   SAS_SERVER_ROOT_FOLDER,
   SAS_SERVER_ROOT_FOLDERS,
   SERVER_FOLDER_ID,
+  SERVER_FOLDER_SHORTCUTS,
+  SERVER_SHORTCUT_FOLDER_TYPE,
+  SHORTCUTS_FOLDER_TYPE,
 } from "../../components/ContentNavigator/const";
 import {
   AddChildItemProperties,
@@ -55,6 +62,7 @@ class RestServerAdapter implements ContentAdapter {
   public constructor(
     protected fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
     protected fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
+    protected globalShortcuts: ProfileWithFileRootOptions["globalShortcuts"],
   ) {
     this.rootFolders = {};
     this.fileMetadataMap = {};
@@ -68,7 +76,10 @@ class RestServerAdapter implements ContentAdapter {
         ContextMenuAction.AllowDownload,
       ],
       {
-        [ContextMenuAction.CopyPath]: (item) => item.id !== SERVER_FOLDER_ID,
+        [ContextMenuAction.CopyPath]: (item) =>
+          ![SERVER_FOLDER_ID, FOLDER_SHORTCUT_ID, GLOBAL_SHORTCUT_ID].includes(
+            item.id,
+          ),
       },
     );
   }
@@ -279,6 +290,36 @@ class RestServerAdapter implements ContentAdapter {
       ];
     }
 
+    if (parentItem.uri === "FOLDER_SHORTCUTS_ID") {
+      return [this.filePropertiesToContentItem(GLOBAL_SHORTCUTS)];
+    }
+
+    if (parentItem.uri === "GLOBAL_SHORTCUTS_ID") {
+      // loop here creating a folder for each of the global paths
+      const globals = [];
+      const globalShortcuts = Object.keys(this.globalShortcuts ?? {});
+      if (!!globalShortcuts && globalShortcuts.length > 0) {
+        globalShortcuts.forEach((shortcutName) => {
+          const shortcutUri = this.globalShortcuts[shortcutName];
+          if (!!shortcutUri && !shortcutUri.startsWith("sascontent")) {
+            const navPath = shortcutUri.split("/").join("~fs~");
+            globals.push(
+              this.filePropertiesToContentItem(
+                createStaticFolder(
+                  shortcutUri,
+                  shortcutName,
+                  SHORTCUTS_FOLDER_TYPE,
+                  navPath,
+                  "getDirectoryMembers",
+                ),
+              ),
+            );
+          }
+        });
+      }
+      return globals;
+    }
+
     const allItems = [];
     const limit = 100;
     let start = 0;
@@ -410,13 +451,18 @@ class RestServerAdapter implements ContentAdapter {
       const result =
         delegateFolderName === "@sasServerRoot"
           ? { data: SAS_SERVER_ROOT_FOLDER }
-          : { data: {} };
+          : delegateFolderName === "@myShortcuts" &&
+              this.fileNavigationRoot !== "CUSTOM"
+            ? { data: SERVER_FOLDER_SHORTCUTS }
+            : { data: undefined };
 
-      this.rootFolders[delegateFolderName] = {
-        ...result.data,
-        uid: `${index}`,
-        ...this.filePropertiesToContentItem(result.data),
-      };
+      if (result.data) {
+        this.rootFolders[delegateFolderName] = {
+          ...result.data,
+          uid: `${index}`,
+          ...this.filePropertiesToContentItem(result.data),
+        };
+      }
     }
 
     return this.rootFolders;
@@ -548,6 +594,11 @@ class RestServerAdapter implements ContentAdapter {
     const isRootFolder = [SERVER_FOLDER_ID, SAS_SERVER_HOME_DIRECTORY].includes(
       id,
     );
+    const isShortcutFolder = [
+      SHORTCUTS_FOLDER_TYPE,
+      SERVER_SHORTCUT_FOLDER_TYPE,
+      GLOBAL_SHORTCUT_TYPE,
+    ].includes(fileProperties.type);
     const item = {
       id,
       uri: id,
@@ -556,8 +607,8 @@ class RestServerAdapter implements ContentAdapter {
       modifiedTimeStamp: new Date(fileProperties.modifiedTimeStamp).getTime(),
       links,
       permission: {
-        write: !isRootFolder && !fileProperties.readOnly,
-        delete: !isRootFolder && !fileProperties.readOnly,
+        write: !isRootFolder && !isShortcutFolder && !fileProperties.readOnly,
+        delete: !isRootFolder && !isShortcutFolder && !fileProperties.readOnly,
         addMember:
           !!getLink(links, "POST", "makeDirectory") ||
           !!getLink(links, "POST", "createFile") ||

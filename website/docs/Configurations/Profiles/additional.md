@@ -231,3 +231,30 @@ The following demonstrates how to setup `fileNavigationCustomRootPath`/`fileNavi
     }
   }
   ```
+
+## Global Shortcuts
+
+Global Shortcuts can be configured for Viya connections. Currently there is one setting available:
+
+- `globalShortcuts`: JSON object where the key is the custom name of your shortcut, and the value is the shortcut uri.
+
+You can locate your Global Shortcuts in both SAS Content and SAS Server under "Folder Shortcuts".
+The following demonstrates how to setup `globalShortcuts` in user settings:
+
+- SAS Viya:
+
+  ```json
+  {
+    "profiles": {
+      "viya4": {
+        "endpoint": "https://example-endpoint.com",
+        "connectionType": "rest",
+        "sasOptions": ["NONEWS", "ECHOAUTO", "PAGESIZE=MAX"],
+        "globalShortcuts": {
+          "contentShortcut": "sascontent:/folders/folders/0ab24a50-4bbf-4f00-93f1-4b62919abadc",
+          "serverShortcut": "/path/to/folder"
+        }
+      }
+    }
+  }
+  ```

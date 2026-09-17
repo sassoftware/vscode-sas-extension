@@ -1,6 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri, l10n } from "vscode";
+import { Uri, l10n, window } from "vscode";
 
 import { TableColumn } from "../components/LibraryNavigator/types";
 import { TableInfo } from "../connection/rest/api/compute";
@@ -17,10 +17,12 @@ class TablePropertiesViewer extends WebView {
   constructor(
     extensionUri: Uri,
     private readonly tableName: string,
-    private readonly tableInfo: TableInfo,
-    private readonly columns: TableColumn[],
+    private tableInfo: TableInfo,
+    private columns: TableColumn[],
     private readonly showColumns: boolean = false,
     private readonly focusedColumn: string = "",
+    private readonly refreshTableInfo: () => Promise<TableInfo>,
+    private readonly refreshColumns: () => Promise<TableColumn[]>,
   ) {
     super(extensionUri, l10n.t("Table Properties"));
   }
@@ -53,6 +55,20 @@ class TablePropertiesViewer extends WebView {
 
   public processMessage(): void {
     // No messages to process for this static viewer
+  }
+
+  public async refreshData() {
+    try {
+      const [tableInfo, columns] = await Promise.all([
+        this.refreshTableInfo(),
+        this.refreshColumns(),
+      ]);
+      this.tableInfo = tableInfo;
+      this.columns = columns;
+      this.render();
+    } catch (error) {
+      window.showErrorMessage(error.message);
+    }
   }
 
   private generatePropertiesContent(): string {

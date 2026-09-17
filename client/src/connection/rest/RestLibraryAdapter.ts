@@ -36,7 +36,7 @@ class RestLibraryAdapter implements LibraryAdapter {
     (formatNames) => this.fetchFormatCategories(formatNames),
   );
 
-  public constructor() {}
+  public constructor(private readonly onConnect?: () => void) {}
 
   public async connect(): Promise<void> {
     const session = getSession();
@@ -50,6 +50,10 @@ class RestLibraryAdapter implements LibraryAdapter {
     this.FormatsApi = FormatsApi(getApiConfig());
     // Format definitions are session scoped, so previously resolved categories no longer apply.
     this.formatCategories.clear();
+
+    if (this.onConnect) {
+      this.onConnect();
+    }
   }
 
   public async setup(): Promise<void> {
