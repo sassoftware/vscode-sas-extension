@@ -35,16 +35,25 @@ import {
 } from "./types";
 import { isContainer as getIsContainer } from "./utils";
 
-const fileValidator = (value: string): string | null =>
-  /^([^/<>;\\{}]+)\.\w+$/.test(
-    // file service does not allow /, <, >, ;, \, {, }
-    value,
-  )
+const fileValidator = (
+  value: string,
+  sourceType: ContentSourceType = ContentSourceType.SASContent,
+): string | null => {
+  const invalidChars =
+    sourceType === ContentSourceType.SASServer
+      ? /[?\/\\*"|:<>]/g
+      : /[;\/\\{}<>]/g;
+
+  return !invalidChars.test(value) && /^([^/<>;\\{}]+)\.\w+$/.test(value)
     ? null
     : Messages.FileValidationError;
+};
 
-const flowFileValidator = (value: string): string | null => {
-  let res = fileValidator(value);
+const flowFileValidator = (
+  value: string,
+  sourceType: ContentSourceType = ContentSourceType.SASContent,
+): string | null => {
+  let res = fileValidator(value, sourceType);
   if (!value.endsWith(".flw")) {
     res = Messages.InvalidFlowFileNameError;
   }
@@ -263,7 +272,8 @@ class ContentNavigator implements SubscriptionProvider {
           const fileName = await window.showInputBox({
             prompt: Messages.NewFilePrompt,
             title: Messages.NewFileTitle,
-            validateInput: fileValidator,
+            validateInput: (fileName) =>
+              fileValidator(fileName, this.sourceType),
           });
           if (!fileName) {
             return;
@@ -321,7 +331,7 @@ class ContentNavigator implements SubscriptionProvider {
             value: resource.name,
             validateInput: isContainer
               ? (value) => folderValidator(value, this.sourceType)
-              : fileValidator,
+              : (value) => fileValidator(value, this.sourceType),
           });
           if (!name || name === resource.name) {
             return;
@@ -395,7 +405,7 @@ class ContentNavigator implements SubscriptionProvider {
           const outputName = await window.showInputBox({
             prompt: Messages.ConvertNotebookToFlowPrompt,
             value: inputName.replace(".sasnb", ".flw"),
-            validateInput: flowFileValidator,
+            validateInput: (value) => flowFileValidator(value, this.sourceType),
           });
 
           if (!outputName) {
