@@ -297,6 +297,7 @@ const useDataViewer = () => {
   return {
     columnMenu,
     columns,
+    setColumns,
     dismissMenu,
     gridRef,
     onGridReady,
