@@ -63,6 +63,10 @@ export class ITCSession extends Session {
     CancellationTokenSource | undefined;
   private _errorParser: LineParser;
   private _workDirectoryParser: LineParser;
+  private _customAutoExecState = {
+    executed: false,
+    running: false,
+  };
 
   constructor() {
     super();
@@ -287,9 +291,14 @@ export class ITCSession extends Session {
         this._shellProcess.kill();
         this._shellProcess = undefined;
 
+        // ensure next connection runs the custom autoexec again
+        this._customAutoExecState.executed = false;
+        this._customAutoExecState.running = false;
         this._workDirectory = undefined;
         this._runReject = undefined;
         this._runResolve = undefined;
+        // Clear sessionInstance so the next connection creates a new IOM session instance.
+        sessionInstance = undefined;
       }
       this.clearPassword();
       resolve();
@@ -376,6 +385,8 @@ export class ITCSession extends Session {
 
       this._shellProcess.kill();
       this._workDirectory = undefined;
+      this._customAutoExecState.executed = false;
+      this._customAutoExecState.running = false;
     }
   };
 
@@ -464,7 +475,37 @@ export class ITCSession extends Session {
 
           if (foundWorkDirectory) {
             this._workDirectory = foundWorkDirectory.trim();
-            this._runResolve();
+
+            // Execute the profile autoexec once after the IOM session has been created and the WORK
+            // directory is available. Start polling the SAS log so the autoexec output is captured,
+            // and wait for the existing RunEndCode before marking the session setup as complete.
+            if (
+              !this._customAutoExecState.executed &&
+              this._config?.autoExecLines?.length
+            ) {
+              this._customAutoExecState.executed = true;
+              this._customAutoExecState.running = true;
+              this._pollingForLogResults = true;
+
+              const autoexecCode = this._config.autoExecLines.join("\n");
+
+              const code = `
+%put /** VSCODE_AUTO_EXEC_START **/;
+${autoexecCode}
+%put /** VSCODE_AUTO_EXEC_END **/;
+%put ${LineCodes.RunEndCode};
+`;
+
+              this._shellProcess.stdin.write(
+                `$code = @'\n${code}\n'@\n$runner.Run($code)\n`,
+                this.onWriteComplete,
+              );
+
+              this.fetchLog(true);
+              return;
+            }
+
+            this._runResolve?.();
             updateStatusBarItem(true);
             return;
           }
@@ -486,6 +527,16 @@ export class ITCSession extends Session {
 
   private processLineCodes(line: string): boolean {
     if (line.endsWith(LineCodes.RunEndCode)) {
+      // Custom autoexec has completed. Stop autoexec log polling, mark setup as complete,
+      // and prevent the RunEndCode from being handled as a normal program execution.
+      if (this._customAutoExecState.running) {
+        this._customAutoExecState.running = false;
+        this._pollingForLogResults = false;
+        this._runResolve?.();
+        updateStatusBarItem(true);
+        return true;
+      }
+
       // run completed
       this.fetchResults();
       return true;
