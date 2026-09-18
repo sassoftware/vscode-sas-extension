@@ -2,6 +2,39 @@
 ## [Unreleased]
  
 
+<a name="v1.21.0"></a>
+## [v1.21.0] - 2026-09-18
+### Added
+- add global shortcuts ([#2007](https://github.com/sassoftware/vscode-sas-extension/issues/2007))
+- restrict download of files, folders, and results ([#2029](https://github.com/sassoftware/vscode-sas-extension/issues/2029))
+- restrict downloading tables ([#1998](https://github.com/sassoftware/vscode-sas-extension/issues/1998))
+- added icons in column name and type of column property
+- _SASPROGRAMFILE for sas content ([#1975](https://github.com/sassoftware/vscode-sas-extension/issues/1975))
+
+### Fixed
+- should not show additional server node for IOM ([#2056](https://github.com/sassoftware/vscode-sas-extension/issues/2056))
+- Incorrect Syntax Highlighting for Uppercase ENSUBMIT ([#2047](https://github.com/sassoftware/vscode-sas-extension/issues/2047))
+- table refresh ([#2052](https://github.com/sassoftware/vscode-sas-extension/issues/2052))
+- don't auto-indent run; on same line as proc statement ([#1951](https://github.com/sassoftware/vscode-sas-extension/issues/1951))
+- updated readme with alternatives for large plots display
+- refresh table properties after code runs ([#2039](https://github.com/sassoftware/vscode-sas-extension/issues/2039))
+- sas notebook filename ([#2037](https://github.com/sassoftware/vscode-sas-extension/issues/2037))
+- library cache refresh ([#2030](https://github.com/sassoftware/vscode-sas-extension/issues/2030))
+- fetch category for getting icons
+- temp image clean up ([#2015](https://github.com/sassoftware/vscode-sas-extension/issues/2015))
+- pass buffer directly to updateContentOfItemAtPath without TextDecoder conversion
+- preserve focus when opening table ([#1963](https://github.com/sassoftware/vscode-sas-extension/issues/1963))
+- It cannot rename a file under a folder having character semicolon(;) in its name
+- outline for dataset not respect '&' in dataset name ([#1942](https://github.com/sassoftware/vscode-sas-extension/issues/1942))
+- syntax errors causes no libraries to display ([#1934](https://github.com/sassoftware/vscode-sas-extension/issues/1934))
+- catch invalid query filters and escape single quotes ([#1937](https://github.com/sassoftware/vscode-sas-extension/issues/1937))
+
+### Chore
+- README update ([#2010](https://github.com/sassoftware/vscode-sas-extension/issues/2010))
+- update website deps ([#1969](https://github.com/sassoftware/vscode-sas-extension/issues/1969))
+- update README.md ([#1939](https://github.com/sassoftware/vscode-sas-extension/issues/1939))
+
+
 <a name="v1.20.0"></a>
 ## [v1.20.0] - 2026-06-29
 ### Added
@@ -657,7 +690,8 @@
 - blank error in some cases doc: update README.md to link to wiki, add CHANGELOG.md
 
 
-[Unreleased]: https://github.com/sassoftware/vscode-sas-extension/compare/v1.20.0...HEAD
+[Unreleased]: https://github.com/sassoftware/vscode-sas-extension/compare/v1.21.0...HEAD
+[v1.21.0]: https://github.com/sassoftware/vscode-sas-extension/compare/v1.20.0...v1.21.0
 [v1.20.0]: https://github.com/sassoftware/vscode-sas-extension/compare/v1.19.1...v1.20.0
 [v1.19.1]: https://github.com/sassoftware/vscode-sas-extension/compare/v1.19.0...v1.19.1
 [v1.19.0]: https://github.com/sassoftware/vscode-sas-extension/compare/v1.18.0...v1.19.0
