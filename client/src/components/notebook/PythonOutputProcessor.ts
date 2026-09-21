@@ -35,12 +35,6 @@ export interface PythonProcessedOutput {
    * PythonErrorRenderer.
    */
   errorLines: string[];
-  /**
-   * Raw HTML from a `_repr_html_()` call, ready to be wrapped and shown via
-   * the HTML renderer.  Null when the auto-print expression did not produce
-   * an HTML representation.
-   */
-  htmlRepr: string | null;
 }
 
 /**
@@ -55,19 +49,22 @@ export interface PythonProcessedOutput {
  * silently discarded.
  */
 export function processPythonLog(logs: LogLine[]): PythonProcessedOutput {
-  const isPythonError = logs.some(
-    (l) => l.type === "error" && l.line.includes(UNHANDLED_PYTHON_EXCEPTION),
-  );
+  let isPythonError = false;
+  let isSASError = false;
 
-  // A SAS-level error is any error that is NOT the "Unhandled Python exception"
-  // sentinel – meaning something went wrong before or outside the Python code
-  // itself (e.g. Python not installed, syntax error in PROC PYTHON statement).
-  const isSASError =
-    !isPythonError &&
-    logs.some(
-      (l) => l.type === "error" && !l.line.includes(UNHANDLED_PYTHON_EXCEPTION),
-    );
+  for (const log of logs) {
+    if (log.type !== "error") {
+      continue;
+    }
 
+    if (log.line.includes(UNHANDLED_PYTHON_EXCEPTION)) {
+      isPythonError = true;
+    } else {
+      isSASError = true;
+    }
+  }
+
+  // Python exceptions take precedence over SAS errors.
   if (isPythonError) {
     const errorLines = extractPythonOutputText(logs);
     return {
@@ -75,7 +72,6 @@ export function processPythonLog(logs: LogLine[]): PythonProcessedOutput {
       isSASError: false,
       outputLines: [],
       errorLines,
-      htmlRepr: null,
     };
   }
 
@@ -88,14 +84,12 @@ export function processPythonLog(logs: LogLine[]): PythonProcessedOutput {
       isSASError: true,
       outputLines,
       errorLines: [],
-      htmlRepr: null,
     };
   }
 
   // Success path – extract Python stdout and any _repr_html_() payload.
   const outputText = extractPythonOutputText(logs);
-  const { html: htmlRepr, remaining } = extractHtmlRepr(outputText);
-  const outputLines: LogLine[] = remaining.map((text) => ({
+  const outputLines: LogLine[] = outputText.map((text) => ({
     type: "normal" as const,
     line: text,
   }));
@@ -105,7 +99,6 @@ export function processPythonLog(logs: LogLine[]): PythonProcessedOutput {
     isSASError: false,
     outputLines,
     errorLines: [],
-    htmlRepr,
   };
 }
 
@@ -196,47 +189,6 @@ export function buildPythonError(plainLines: string[]): PythonError {
     message: errorMessage,
     stack: ansiLines.join("\n"),
   };
-}
-
-/**
- * Scans `outputLines` for the `__SAS_EXT_HTML_START__` / `__SAS_EXT_HTML_END__`
- * markers emitted by the auto-print `_repr_html_()` injection.  When found,
- * the base64-encoded HTML between the markers is decoded and returned as
- * `html`; lines outside the markers are returned as `remaining`.
- */
-function extractHtmlRepr(outputLines: string[]): {
-  html: string | null;
-  remaining: string[];
-} {
-  const startIdx = outputLines.findIndex(
-    (l) => l.trim() === "__SAS_EXT_HTML_START__",
-  );
-  const endIdx = outputLines.findIndex(
-    (l) => l.trim() === "__SAS_EXT_HTML_END__",
-  );
-
-  if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
-    return { html: null, remaining: outputLines };
-  }
-
-  const b64 = outputLines
-    .slice(startIdx + 1, endIdx)
-    .map((l) => l.trim())
-    .join("");
-
-  let html: string | null = null;
-  try {
-    html = Buffer.from(b64, "base64").toString("utf-8");
-  } catch {
-    // Decoding failure → treat as no HTML repr
-  }
-
-  const remaining = [
-    ...outputLines.slice(0, startIdx),
-    ...outputLines.slice(endIdx + 1),
-  ];
-
-  return { html, remaining };
 }
 
 /**
