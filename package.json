@@ -581,8 +581,22 @@
             "default": false,
             "description": "%configuration.SAS.notebook.export.includeLog%"
           },
-          "SAS.notebook.python.autoPrintMethod": {
+          "SAS.notebook.outputVisibility": {
             "order": 11,
+            "type": "string",
+            "default": "clean",
+            "enum": [
+              "clean",
+              "raw"
+            ],
+            "enumDescriptions": [
+              "%configuration.SAS.notebook.outputVisibility.clean%",
+              "%configuration.SAS.notebook.outputVisibility.raw%"
+            ],
+            "description": "%configuration.SAS.notebook.outputVisibility%"
+          },
+          "SAS.notebook.python.autoPrintMethod": {
+            "order": 12,
             "type": "string",
             "default": "(auto)",
             "enum": [

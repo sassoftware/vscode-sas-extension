@@ -2,86 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 import * as vscode from "vscode";
 
-import { LogLine } from "../../connection";
+import { LogLine, RunResult } from "../../connection";
 import { getSession } from "../../connection";
 import { SASCodeDocument } from "../utils/SASCodeDocument";
 import { getCodeDocumentConstructionParameters } from "../utils/SASCodeDocumentHelper";
 import { Deferred, deferred } from "../utils/deferred";
+import { getNotebookOutputVisibility } from "../utils/settings";
 import { buildPythonError, processPythonLog } from "./PythonOutputProcessor";
-
-/**
- * Wraps a bare HTML fragment (e.g. from `_repr_html_()`) in a minimal HTML
- * document
- *
- * sklearn models embed their own `<style>` tags and render correctly as-is.
- */
-function wrapHtmlFragment(fragment: string): string {
-  return `<!DOCTYPE html>
-<html>
-<head>
-<style>
-body {
-  margin: 0;
-  padding: 4px;
-  background: transparent;
-  color: var(--vscode-editor-foreground);
-  font-size: var(--vscode-editor-font-size);
-  font-family: var(--vscode-editor-font-family);
-}
-
-table {
-  border-collapse: collapse;
-  border-spacing: 0;
-  border: none;
-  color: var(--vscode-editor-foreground);
-  font-size: var(--vscode-editor-font-size);
-  table-layout: fixed;
-  /* outputarea/base.css: margin-left/right 0 for output-area tables */
-  margin-left: 0;
-  margin-right: 0;
-  margin-bottom: 1em;
-}
-
-thead {
-  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
-  vertical-align: bottom;
-}
-
-td,
-th,
-tr {
-  vertical-align: middle;
-  padding: 0.5em;
-  line-height: normal;
-  white-space: normal;
-  max-width: none;
-  border: none;
-  text-align: right;
-}
-
-th {
-  font-weight: bold;
-}
-
-tbody tr:nth-child(odd) {
-  background: transparent;
-}
-
-tbody tr:nth-child(even) {
-  background: var(
-    --vscode-list-inactiveSelectionBackground,
-    rgba(128, 128, 128, 0.08)
-  );
-}
-
-tbody tr:hover {
-  background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.12));
-}
-</style>
-</head>
-<body>${fragment}</body>
-</html>`;
-}
 
 export class NotebookController {
   readonly controllerId = "sas-notebook-controller-id";
@@ -148,6 +75,7 @@ export class NotebookController {
     const codeDoc = new SASCodeDocument(parameters);
 
     const isPythonCell = cell.document.languageId === "python";
+    const outputVisibility = getNotebookOutputVisibility();
 
     try {
       const result = await session.run(codeDoc.getWrappedCode(), {
@@ -157,7 +85,9 @@ export class NotebookController {
       const outputItems: vscode.NotebookCellOutputItem[] = [];
       let success = true;
 
-      if (isPythonCell) {
+      if (isPythonCell && outputVisibility !== "raw") {
+        // Existing Python cleanup logic
+
         const pythonOutput = processPythonLog(logs);
 
         // ODS output (from SAS.show(), SAS.pyplot(), etc.) is always shown
@@ -172,9 +102,9 @@ export class NotebookController {
 
         if (pythonOutput.isPythonError) {
           success = false;
-          // Use VS Code's built-in error renderer (application/vnd.code.notebook.error)
-          // with ANSI-coded stack
+
           const pyErr = buildPythonError(pythonOutput.errorLines);
+
           outputItems.push(
             vscode.NotebookCellOutputItem.error({
               name: pyErr.name,
@@ -184,6 +114,7 @@ export class NotebookController {
           );
         } else if (pythonOutput.isSASError) {
           success = false;
+
           outputItems.push(
             vscode.NotebookCellOutputItem.json(
               pythonOutput.outputLines,
@@ -191,16 +122,6 @@ export class NotebookController {
             ),
           );
         } else {
-          // Show _repr_html_() output (DataFrames, sklearn models, etc.)
-          if (pythonOutput.htmlRepr) {
-            outputItems.push(
-              vscode.NotebookCellOutputItem.text(
-                wrapHtmlFragment(pythonOutput.htmlRepr),
-                "application/vnd.sas.ods.html5",
-              ),
-            );
-          }
-          // Show any remaining plain-text stdout
           if (pythonOutput.outputLines.length > 0) {
             outputItems.push(
               vscode.NotebookCellOutputItem.json(
@@ -210,24 +131,9 @@ export class NotebookController {
             );
           }
         }
-        // When success === true and no outputItems were added (beyond HTML),
-        // the cell renders with just the green checkmark – no log noise.
       } else {
-        // Original behavior for SAS / SQL / R cells
-        if (result.html5?.length) {
-          outputItems.push(
-            vscode.NotebookCellOutputItem.text(
-              result.html5,
-              "application/vnd.sas.ods.html5",
-            ),
-          );
-        }
-        outputItems.push(
-          vscode.NotebookCellOutputItem.json(
-            logs,
-            "application/vnd.sas.compute.log.lines",
-          ),
-        );
+        // Existing SAS / SQL / R behavior
+        this.appendRawOutput(result, logs, outputItems);
       }
 
       // Only create a NotebookCellOutput when there is something to show.
@@ -253,6 +159,28 @@ export class NotebookController {
     if (this._interrupted) {
       this._interrupted.resolve();
     }
+  }
+
+  private appendRawOutput(
+    result: RunResult,
+    logs: LogLine[],
+    outputItems: vscode.NotebookCellOutputItem[],
+  ): void {
+    if (result.html5?.length) {
+      outputItems.push(
+        vscode.NotebookCellOutputItem.text(
+          result.html5,
+          "application/vnd.sas.ods.html5",
+        ),
+      );
+    }
+
+    outputItems.push(
+      vscode.NotebookCellOutputItem.json(
+        logs,
+        "application/vnd.sas.compute.log.lines",
+      ),
+    );
   }
 
   private _interrupt() {

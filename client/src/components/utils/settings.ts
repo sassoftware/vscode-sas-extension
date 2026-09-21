@@ -38,10 +38,10 @@ export function includeLogInNotebookExport(): boolean {
   return workspace.getConfiguration("SAS").get("notebook.export.includeLog");
 }
 
-export function getPythonAutoPrintMethod(): string {
+export function getNotebookOutputVisibility(): "clean" | "raw" {
   return (
     workspace
       .getConfiguration("SAS")
-      .get<string>("notebook.python.autoPrintMethod") ?? "(auto)"
+      .get<"clean" | "raw">("notebook.outputVisibility") ?? "clean"
   );
 }

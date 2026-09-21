@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { ActivationFunction } from "vscode-notebook-renderer";
 
-const COLOR_RED = "#e75c58"; // ansi-red-fg  (separator, error type name)
-const COLOR_GRAY = "#808080"; // dimmed text  (file refs, "Traceback…" label, ":" + message)
+const COLOR_RED = "var(--vscode-editorError-foreground)"; // ansi-red-fg  (separator, error type name)
+const COLOR_GRAY = "var(--vscode-descriptionForeground)"; // dimmed text  (file refs, "Traceback…" label, ":" + message)
 
 /** Width of the separator line */
 const SEPARATOR = "-".repeat(75);
