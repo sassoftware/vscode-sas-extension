@@ -7,6 +7,7 @@ import {
   ExtensionContext,
   OpenDialogOptions,
   ProgressLocation,
+  TabInputCustom,
   Uri,
   commands,
   env,
@@ -16,6 +17,7 @@ import {
 } from "vscode";
 
 import { profileConfig } from "../../commands/profile";
+import { getGlobalStorageUri } from "../ExtensionContext";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
 import { treeViewSelections } from "../utils/treeViewSelections";
@@ -76,6 +78,7 @@ class ContentNavigator implements SubscriptionProvider {
   private contentModel: ContentModel;
   private registrationSubscriptions: Disposable[];
   private sourceType: ContentNavigatorConfig["sourceType"];
+  private temporaryImageUris = new Map<string, Uri>();
   private treeIdentifier: ContentNavigatorConfig["treeIdentifier"];
 
   constructor(context: ExtensionContext, config: ContentNavigatorConfig) {
@@ -108,9 +111,72 @@ class ContentNavigator implements SubscriptionProvider {
 
   public getSubscriptions(): Disposable[] {
     const SAS = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}`;
+    const imageExtensions = [
+      "png",
+      "jpg",
+      "jpeg",
+      "gif",
+      "bmp",
+      "tiff",
+      "webp",
+      "svg",
+    ];
     return [
       ...this.registrationSubscriptions,
       ...this.contentDataProvider.getSubscriptions(),
+      window.tabGroups.onDidChangeTabs(async ({ closed }) => {
+        await Promise.all(
+          closed.map((tab) => this.deleteTemporaryImageUri(tab.input)),
+        );
+      }),
+      new Disposable(() => {
+        void this.purgeImagePreviewCache();
+      }),
+      commands.registerCommand(
+        `${SAS}.openResource`,
+        async (resource: ContentItem) => {
+          if (!resource) {
+            return;
+          }
+          const extension =
+            resource.name?.split(".").pop()?.toLowerCase() || "";
+          const isImage = imageExtensions.includes(extension);
+
+          if (!isImage) {
+            await this.defaultOpenResource(resource);
+            return;
+          }
+
+          const imagePreviewCacheUri = this.imagePreviewCacheUri();
+          try {
+            await workspace.fs.readDirectory(imagePreviewCacheUri);
+          } catch {
+            await workspace.fs.createDirectory(imagePreviewCacheUri);
+          }
+
+          const safeName =
+            resource.name?.replace(/[\\/:*?"<>|]/g, "_") || "image.png";
+          const localUri = Uri.joinPath(
+            imagePreviewCacheUri,
+            `${Date.now()}-${safeName}`,
+          );
+
+          const bytes = await this.contentModel.getContentByUri(
+            resource.vscUri,
+          );
+          await workspace.fs.writeFile(localUri, bytes);
+          this.temporaryImageUris.set(localUri.toString(), localUri);
+          try {
+            await commands.executeCommand(
+              "vscode.openWith",
+              localUri,
+              "imagePreview.previewEditor",
+            );
+          } catch {
+            await this.deleteTemporaryImageUri(localUri);
+          }
+        },
+      ),
       commands.registerCommand(
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
@@ -460,6 +526,52 @@ class ContentNavigator implements SubscriptionProvider {
     ];
   }
 
+  private async defaultOpenResource(item: ContentItem): Promise<void> {
+    const itemUri = await this.contentModel.getUri(item, false);
+    await commands.executeCommand("vscode.open", itemUri);
+  }
+
+  private imagePreviewCacheUri(): Uri {
+    return Uri.joinPath(getGlobalStorageUri(), "imagePreviewCache");
+  }
+
+  private async deleteTemporaryImageUri(input: unknown): Promise<void> {
+    const uri =
+      input instanceof Uri
+        ? input
+        : input instanceof TabInputCustom
+          ? input.uri
+          : undefined;
+    if (!uri) {
+      return;
+    }
+
+    const key = uri.toString();
+    const temporaryUri = this.temporaryImageUris.get(key);
+    if (!temporaryUri) {
+      return;
+    }
+
+    this.temporaryImageUris.delete(key);
+    try {
+      await workspace.fs.delete(temporaryUri);
+    } catch {
+      // Ignore cleanup failures for preview cache files.
+    }
+  }
+
+  private async purgeImagePreviewCache(): Promise<void> {
+    this.temporaryImageUris.clear();
+    try {
+      await workspace.fs.delete(this.imagePreviewCacheUri(), {
+        recursive: true,
+        useTrash: false,
+      });
+    } catch {
+      // Nothing to clean up if the cache directory does not exist.
+    }
+  }
+
   private async collapseAllContent() {
     const collapeAllCmd = `workbench.actions.treeView.${this.treeIdentifier}.collapseAll`;
     const commandExists = (await commands.getCommands()).find(
@@ -532,12 +644,12 @@ class ContentNavigator implements SubscriptionProvider {
       activeProfile.connectionType,
       profileWithFileRootOptions?.fileNavigationCustomRootPath,
       profileWithFileRootOptions?.fileNavigationRoot,
+      profileWithFileRootOptions?.globalShortcuts,
       this.sourceType,
     );
 
     function getProfileWithFileRootOptions():
-      | ProfileWithFileRootOptions
-      | undefined {
+      ProfileWithFileRootOptions | undefined {
       switch (activeProfile.connectionType) {
         case ConnectionType.Rest:
         case ConnectionType.IOM:

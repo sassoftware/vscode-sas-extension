@@ -1,4 +1,6 @@
 import { expect } from "chai";
+import { readFileSync } from "fs";
+import { join } from "path";
 import proxyquire from "proxyquire";
 import sinon from "sinon";
 
@@ -16,8 +18,8 @@ const mockOutput = () => ({
 class DatasetMockSession extends MockSession {
   private outputs: Array<string>;
   private calls = 0;
-  public constructor(outputs: Array<string>) {
-    super();
+  public constructor(outputs: Array<string>, runMap?: Record<string, string>) {
+    super(runMap);
     this.outputs = outputs;
   }
   protected async execute(): Promise<void> {
@@ -68,28 +70,106 @@ describe("ItcLibraryAdapter tests", () => {
       {
         name: "first",
         type: "char",
-        format: "$8.",
+        format: "$CHAR8.",
         index: 1,
+        formatCategory: "char",
       },
       {
         name: "date",
-        type: "date",
+        type: "num",
         format: "YYMMDD10.",
         index: 2,
+        formatCategory: "date",
       },
     ];
 
     const mockOutput = JSON.stringify([
-      { index: 1, name: "first", type: "char", format: "$8." },
+      { index: 1, name: "first", type: "char", format: "$CHAR8." },
       { index: 2, name: "date", type: "num", format: "YYMMDD10." },
     ]);
 
-    sessionStub.returns(new DatasetMockSession([mockOutput]));
+    sessionStub.returns(
+      new DatasetMockSession([mockOutput], {
+        fmtinfo:
+          "<FormatCategories>\n[$CHAR=char]\n[YYMMDD=date]\n</FormatCategories>",
+      }),
+    );
 
     const response = await libraryAdapter.getColumns(item);
 
     expect(response.items).to.eql(expectedColumns);
     expect(response.count).to.equal(-1);
+  });
+
+  it("parses every fmtinfo category from a concatenated log", async () => {
+    const item: LibraryItem = {
+      uid: "test",
+      type: "table",
+      id: "test",
+      name: "test",
+      readOnly: true,
+    };
+
+    const libraryAdapter = new ItcLibraryAdapter();
+    const mockOutput = JSON.stringify([
+      { index: 1, name: "d", type: "num", format: "DATE9." },
+      { index: 2, name: "t", type: "num", format: "TIME8." },
+      { index: 3, name: "dt", type: "num", format: "DATETIME20." },
+      { index: 4, name: "amt", type: "num", format: "DOLLAR15.2" },
+      { index: 5, name: "s", type: "char", format: "$CHAR20." },
+    ]);
+
+    // SAS log lines arrive concatenated without separators, hence the bracketed entries.
+    sessionStub.returns(
+      new DatasetMockSession([mockOutput], {
+        fmtinfo:
+          "<FormatCategories>[DATE=date][TIME=time][DATETIME=datetime]" +
+          "[DOLLAR=curr][$CHAR=char]</FormatCategories>",
+      }),
+    );
+
+    const response = await libraryAdapter.getColumns(item);
+
+    expect(response.items.map((column) => column.formatCategory)).to.eql([
+      "date",
+      "time",
+      "datetime",
+      "curr",
+      "char",
+    ]);
+  });
+
+  it("leaves the format category empty when fmtinfo reports nothing", async () => {
+    const item: LibraryItem = {
+      uid: "test",
+      type: "table",
+      id: "test",
+      name: "test",
+      readOnly: true,
+    };
+
+    const libraryAdapter = new ItcLibraryAdapter();
+    const mockOutput = JSON.stringify([
+      { index: 1, name: "mystery", type: "num", format: "MYFMT12.2" },
+    ]);
+
+    sessionStub.returns(
+      new DatasetMockSession([mockOutput], {
+        fmtinfo: "<FormatCategories>\n[MYFMT=]\n</FormatCategories>",
+      }),
+    );
+
+    const response = await libraryAdapter.getColumns(item);
+
+    expect(response.items).to.eql([
+      {
+        index: 1,
+        name: "mystery",
+        type: "num",
+        format: "MYFMT12.2",
+        formatCategory: "",
+      },
+    ]);
   });
 
   it("loads libraries", async () => {
@@ -158,6 +238,112 @@ describe("ItcLibraryAdapter tests", () => {
     const tableData = await libraryAdapter.getRows(item, 0, 100, []);
 
     expect(tableData).to.eql(expectedTableData);
+  });
+
+  it("drops temporary filtered views regardless of sort criteria", () => {
+    const scriptPath = join(
+      __dirname,
+      "../../../../src/connection/itc/script/itc.ps1",
+    );
+    const script = readFileSync(scriptPath, "utf8");
+
+    expect(script).to.match(/if \(\$sortCriteria -ne ""\)/);
+    expect(script).to.match(/DROP VIEW \$tableName/);
+  });
+
+  it("sanitizes single quotes in filters before sending them to PowerShell", async () => {
+    const item: LibraryItem = {
+      uid: "test",
+      type: "table",
+      id: "test",
+      name: "TEST",
+      readOnly: true,
+    };
+
+    const allRowsOutput = JSON.stringify({
+      rows: [
+        ["Peter", "Parker"],
+        ["Tony", "Stark"],
+      ],
+      count: 2,
+    });
+
+    const filteredRowsOutput = JSON.stringify({
+      rows: [["Peter", "Parker"]],
+      count: 1,
+    });
+
+    const executeRawCodeStub = sinon
+      .stub()
+      .onFirstCall()
+      .resolves(allRowsOutput)
+      .onSecondCall()
+      .resolves(filteredRowsOutput);
+    const codeRunner = {
+      executeRawCode: executeRawCodeStub,
+      runCode: sinon.stub(),
+    };
+    const ItcLibraryAdapterWithStub = proxyquire(
+      "../../../src/connection/itc/ItcLibraryAdapter",
+      {
+        "./CodeRunner": codeRunner,
+      },
+    ).default;
+
+    const libraryAdapter = new ItcLibraryAdapterWithStub();
+
+    const unfilteredTableData = await libraryAdapter.getRows(item, 0, 100, []);
+
+    const filteredTableData = await libraryAdapter.getRows(item, 0, 100, [], {
+      filterValue: "first='Peter'",
+    });
+
+    expect(unfilteredTableData).to.eql({
+      rows: [
+        { cells: ["1", "Peter", "Parker"] },
+        { cells: ["2", "Tony", "Stark"] },
+      ],
+      count: 2,
+    });
+
+    expect(executeRawCodeStub.secondCall.args[0]).to.match(/first.*Peter/);
+
+    expect(filteredTableData).to.eql({
+      rows: [{ cells: ["1", "Peter", "Parker"] }],
+      count: 1,
+    });
+  });
+
+  it("returns an empty dataset when ITC script errors occur for filters", async () => {
+    const item: LibraryItem = {
+      uid: "test",
+      type: "table",
+      id: "test",
+      name: "TEST",
+      readOnly: true,
+    };
+
+    const executeRawCodeStub = sinon
+      .stub()
+      .resolves("<ITCError>GetDatasetRecords error: invalid filter</ITCError>");
+    const codeRunner = {
+      executeRawCode: executeRawCodeStub,
+      runCode: sinon.stub(),
+    };
+    const ItcLibraryAdapterWithStub = proxyquire(
+      "../../../src/connection/itc/ItcLibraryAdapter",
+      {
+        "./CodeRunner": codeRunner,
+      },
+    ).default;
+
+    const libraryAdapter = new ItcLibraryAdapterWithStub();
+
+    const tableData = await libraryAdapter.getRows(item, 0, 100, [], {
+      filterValue: "I_KNOW_THIS_WONT_WORK=1",
+    });
+
+    expect(tableData).to.eql({ rows: [], count: 0 });
   });
 
   it("loads table data for csv output", async () => {
@@ -255,5 +441,74 @@ describe("ItcLibraryAdapter tests", () => {
 
     expect(response.items).to.eql(expectedTables);
     expect(response.count).to.equal(-1);
+  });
+
+  it("returns no results for invalid filter and all results when filter is cleared", async () => {
+    const item: LibraryItem = {
+      uid: "test",
+      type: "table",
+      id: "test",
+      name: "TEST",
+      readOnly: true,
+    };
+
+    const allRowsOutput = JSON.stringify({
+      rows: [
+        ["Peter", "Parker"],
+        ["Tony", "Stark"],
+        ["Bruce", "Banner"],
+      ],
+      count: 3,
+    });
+
+    const noRowsOutput = JSON.stringify({
+      rows: [],
+      count: 0,
+    });
+
+    const executeRawCodeStub = sinon
+      .stub()
+      .onFirstCall()
+      .resolves(noRowsOutput)
+      .onSecondCall()
+      .resolves(allRowsOutput);
+
+    const codeRunner = {
+      executeRawCode: executeRawCodeStub,
+      runCode: sinon.stub(),
+    };
+
+    const ItcLibraryAdapterWithStub = proxyquire(
+      "../../../src/connection/itc/ItcLibraryAdapter",
+      {
+        "./CodeRunner": codeRunner,
+      },
+    ).default;
+
+    const libraryAdapter = new ItcLibraryAdapterWithStub();
+
+    // Test 1: Invalid filter returns no results
+    const tableDataWithFilter = await libraryAdapter.getRows(item, 0, 100, [], {
+      filterValue: "TEST=1",
+    });
+
+    expect(tableDataWithFilter).to.eql({ rows: [], count: 0 });
+
+    // Test 2: Clearing filter returns all rows
+    const tableDataWithoutFilter = await libraryAdapter.getRows(
+      item,
+      0,
+      100,
+      [],
+    );
+
+    expect(tableDataWithoutFilter).to.eql({
+      rows: [
+        { cells: ["1", "Peter", "Parker"] },
+        { cells: ["2", "Tony", "Stark"] },
+        { cells: ["3", "Bruce", "Banner"] },
+      ],
+      count: 3,
+    });
   });
 });

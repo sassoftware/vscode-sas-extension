@@ -226,6 +226,75 @@ cas; caslib _all_ assign;
     );
   });
 
+  it("wrapCodeWithSASProgramFileName with no fileName or uri", () => {
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "data test; run;",
+      selectedCode: "",
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      !wrappedCode.includes("_SASPROGRAMFILE"),
+      "wrapped code should not include _SASPROGRAMFILE when fileName and uri are not provided",
+    );
+    assert(
+      wrappedCode.includes("data test; run;"),
+      "wrapped code should include the original code",
+    );
+  });
+
+  it("wrapCodeWithSASProgramFileName with sasContent URI", () => {
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "this is the code",
+      selectedCode: "",
+      uri: "sasContent:/test.sas?id%3D%2Ffiles%2Ffiles%2F349be085-146d-4e0e-9fdc-99d330fa18d1",
+      fileName: "filename.sas",
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(sascontent:/files/files/349be085-146d-4e0e-9fdc-99d330fa18d1));",
+      ),
+      "wrapped code should include _SASPROGRAMFILE with sascontent: prefix from sasContent URI",
+    );
+  });
+
+  it("wrapCodeWithSASProgramFileName with sas notebook URI", () => {
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "this is the code",
+      selectedCode: "",
+      uri: "vscode-notebook-cell:/testContent.sasnb?id%3D%2Ffiles%2Ffiles%2F916e7678-a1c9-4f5b-9d72-5af9f19fae87#W0sc2FzQ29udGVudA%3D%3D",
+      fileName: "filename.sas",
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(sascontent:/files/files/916e7678-a1c9-4f5b-9d72-5af9f19fae87));",
+      ),
+      "wrapped code should include _SASPROGRAMFILE with sascontent: prefix from sasContent URI",
+    );
+  });
+
   it("getProblemLocationInRawCode", async () => {
     const parameters: SASCodeDocumentParameters = {
       languageId: "sas",

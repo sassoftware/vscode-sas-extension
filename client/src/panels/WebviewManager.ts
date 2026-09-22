@@ -16,10 +16,15 @@ export class WebViewManager {
       return;
     }
 
-    const panel = window.createWebviewPanel("webView", uid, ViewColumn.One, {
-      enableScripts: true,
-      retainContextWhenHidden: true,
-    });
+    const panel = window.createWebviewPanel(
+      "webView",
+      uid,
+      { viewColumn: ViewColumn.One, preserveFocus: true },
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+      },
+    );
 
     webview.onDispose = () => delete this.panels[uid];
     this.panels[uid] = webview.withPanel(panel).render();
@@ -123,7 +128,7 @@ export abstract class WebView {
   }
 
   public display() {
-    this.panel.reveal(ViewColumn.One);
+    this.panel.reveal(ViewColumn.One, true);
   }
 
   public webviewUri(extensionUri: Uri, name: string): Uri {

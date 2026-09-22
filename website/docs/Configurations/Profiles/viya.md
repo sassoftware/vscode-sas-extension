@@ -24,3 +24,17 @@ Depending on your SAS Viya version, the values for the prompts differ slightly.
 - For SAS Viya 2022.10 and before (including SAS Viya 3.5), you need to provide a Client ID and secret.
 
 For more information about Client IDs and the authentication process, please see the blog post [Authentication to SAS Viya: a couple of approaches](https://blogs.sas.com/content/sgf/2021/09/24/authentication-to-sas-viya/). A SAS administrator can follow the Steps 1 and 2 in the post to register a new client.
+
+## Context Properties
+
+In Viya environments, SAS Administrators have the option to specify the `allowDownload` property on the context definition for the SAS Compute Server. This property determines the appearance of the `Download` menu item in these areas:
+
+- Tables in the Libraries pane.
+
+- Files and folders in the SAS Content and SAS Server panes.
+
+- The Results pane.
+
+The following screenshot provides an example context definition setup:
+
+![context definition for allowDownload setting](/images/context-allow-download.png)

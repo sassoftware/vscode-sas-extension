@@ -86,3 +86,72 @@ body {
   margin: 20px 0 10px 0;
   color: var(--vscode-foreground);
 }
+
+.header-icon.float,
+.header-icon.char,
+.header-icon.date,
+.header-icon.time,
+.header-icon.date-time,
+.header-icon.currency {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  background-repeat: no-repeat;
+  background-size: contain;
+  vertical-align: middle;
+}
+
+.header-icon.float {
+  background: url(../../../icons/light/numericTypeLight.svg) center no-repeat;
+}
+
+.header-icon.char {
+  background: url(../../../icons/light/characterTypeLight.svg) center no-repeat;
+}
+
+.header-icon.date {
+  background: url(../../../icons/light/DateLight.svg) center no-repeat;
+}
+
+.header-icon.time {
+  background: url(../../../icons/light/timeLight.svg) center no-repeat;
+}
+
+.header-icon.date-time {
+  background: url(../../../icons/light/dateTimeLight.svg) center no-repeat;
+}
+
+.header-icon.currency {
+  background: url(../../../icons/light/currencyLight.svg) center no-repeat;
+}
+
+.vscode-dark .header-icon.float,
+.vscode-high-contrast .header-icon.float {
+  background: url(../../../icons/dark/numericTypeDark.svg) center no-repeat;
+}
+
+.vscode-dark .header-icon.char,
+.vscode-high-contrast .header-icon.char {
+  background: url(../../../icons/dark/characterTypeDark.svg) center no-repeat;
+}
+
+.vscode-dark .header-icon.date,
+.vscode-high-contrast .header-icon.date {
+  background: url(../../../icons/dark/DateDark.svg) center no-repeat;
+}
+
+.vscode-dark .header-icon.date-time,
+.vscode-high-contrast .header-icon.date-time {
+  background: url(../../../icons/dark/dateTimeDark.svg) center no-repeat;
+}
+
+.vscode-dark .header-icon.time,
+.vscode-high-contrast .header-icon.time {
+  background: url(../../../icons/dark/timeDark.svg) center no-repeat;
+}
+
+.vscode-dark .header-icon.currency,
+.vscode-high-contrast .header-icon.currency {
+  background: url(../../../icons/dark/currencyDark.svg) center no-repeat;
+}

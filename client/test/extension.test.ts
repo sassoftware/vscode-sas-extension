@@ -4,7 +4,8 @@ import * as assert from "assert";
 
 import { getUri, openDoc } from "./utils";
 
-let docUri;
+// Fix: to resolve implicit 'any' type error
+let docUri: vscode.Uri;
 
 describe("lsp", () => {
   before(async () => {
@@ -55,5 +56,50 @@ describe("lsp", () => {
         docUri,
       );
     assert.ok(actualDocumentSymbol.length > 0);
+  });
+
+  it("provides full DATA step names in document symbol", async () => {
+    const docUri3 = getUri("OutlineDataStepNames.sas");
+    await openDoc(docUri3);
+
+    let actualDocumentSymbol: Array<
+      vscode.DocumentSymbol | vscode.SymbolInformation
+    > = [];
+
+    for (let i = 0; i < 20; i++) {
+      actualDocumentSymbol =
+        (await vscode.commands.executeCommand<
+          Array<vscode.DocumentSymbol | vscode.SymbolInformation>
+        >("vscode.executeDocumentSymbolProvider", docUri3)) ?? [];
+
+      if (actualDocumentSymbol.length > 0) {
+        break;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
+    assert.ok(
+      actualDocumentSymbol.length > 0,
+      "No document symbols returned for OutlineDataStepNames.sas",
+    );
+
+    const names = actualDocumentSymbol.map((symbol) =>
+      symbol.name.toLowerCase(),
+    );
+
+    assert.ok(
+      names.includes("data ___&danal."),
+      `Expected outline item "DATA ___&danal.", got: ${actualDocumentSymbol
+        .map((symbol) => symbol.name)
+        .join(", ")}`,
+    );
+
+    assert.ok(
+      names.includes("data _null_"),
+      `Expected outline item "DATA _null_", got: ${actualDocumentSymbol
+        .map((symbol) => symbol.name)
+        .join(", ")}`,
+    );
   });
 });

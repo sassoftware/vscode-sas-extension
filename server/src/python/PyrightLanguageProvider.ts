@@ -4,5 +4,4 @@ import type { PyrightLanguageProviderBrowser } from "./browser/PyrightLanguagePr
 import type { PyrightLanguageProviderNode } from "./node/PyrightLanguageProviderNode";
 
 export type PyrightLanguageProvider =
-  | PyrightLanguageProviderNode
-  | PyrightLanguageProviderBrowser;
+  PyrightLanguageProviderNode | PyrightLanguageProviderBrowser;

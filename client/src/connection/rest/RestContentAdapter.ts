@@ -13,9 +13,12 @@ import { SASAuthProvider } from "../../components/AuthProvider";
 import {
   DEFAULT_FILE_CONTENT_TYPE,
   FILE_TYPES,
+  FOLDER_SHORTCUTS,
   FOLDER_TYPES,
+  GLOBAL_SHORTCUTS,
   ROOT_FOLDER,
   SAS_CONTENT_ROOT_FOLDERS,
+  SHORTCUTS_FOLDER_TYPE,
   TRASH_FOLDER_TYPE,
 } from "../../components/ContentNavigator/const";
 import {
@@ -28,12 +31,14 @@ import {
 import {
   ContextMenuAction,
   ContextMenuProvider,
+  createStaticFolder,
   getFileContentType,
   getTypeName,
   isContainer,
   isItemInRecycleBin,
   isReference,
 } from "../../components/ContentNavigator/utils";
+import { ProfileWithFileRootOptions } from "../../components/profile";
 import {
   getItemContentType,
   getLink,
@@ -53,7 +58,9 @@ class RestContentAdapter implements ContentAdapter {
   };
   private contextMenuProvider: ContextMenuProvider;
 
-  public constructor() {
+  public constructor(
+    protected globalShortcuts?: ProfileWithFileRootOptions["globalShortcuts"],
+  ) {
     this.rootFolders = {};
     this.fileMetadataMap = {};
     this.contextMenuProvider = new ContextMenuProvider([
@@ -123,11 +130,37 @@ class RestContentAdapter implements ContentAdapter {
   }
 
   public async getChildItems(parentItem: ContentItem): Promise<ContentItem[]> {
-    const { data: result } = await this.connection.get(
-      await this.generatedMembersUrlForParentItem(parentItem),
-    );
+    let resultItems;
+    if (parentItem.uri === "FOLDER_SHORTCUTS_ID") {
+      resultItems = [GLOBAL_SHORTCUTS];
+    } else if (parentItem.uri === "GLOBAL_SHORTCUTS_ID") {
+      const globals = [];
+      const globalShortcuts = Object.keys(this.globalShortcuts ?? {});
+      if (!!globalShortcuts && globalShortcuts.length > 0) {
+        globalShortcuts.forEach((shortcutName) => {
+          const shortcutUri = this.globalShortcuts[shortcutName];
+          if (!!shortcutUri && shortcutUri.startsWith("sascontent")) {
+            const navPath = shortcutUri.replace("sascontent:", "");
+            globals.push(
+              createStaticFolder(
+                navPath,
+                shortcutName,
+                SHORTCUTS_FOLDER_TYPE,
+                navPath + "/members",
+              ),
+            );
+          }
+        });
+      }
+      resultItems = globals;
+    } else {
+      const response = await this.connection.get(
+        await this.generatedMembersUrlForParentItem(parentItem),
+      );
+      resultItems = response.data.items;
+    }
 
-    if (!result.items) {
+    if (!resultItems) {
       return Promise.reject();
     }
 
@@ -142,7 +175,7 @@ class RestContentAdapter implements ContentAdapter {
       ? []
       : await this.getChildItems(myFavoritesFolder);
 
-    const items = result.items.map(
+    const items = resultItems.map(
       (childItem: ContentItem, index): ContentItem => {
         const favoriteUri = fetchFavoriteUri(childItem);
         return {
@@ -303,7 +336,11 @@ class RestContentAdapter implements ContentAdapter {
       const result =
         delegateFolderName === "@sasRoot"
           ? { data: ROOT_FOLDER }
-          : await this.connection.get(`/folders/folders/${delegateFolderName}`);
+          : delegateFolderName === "@myShortcuts"
+            ? { data: FOLDER_SHORTCUTS }
+            : await this.connection.get(
+                `/folders/folders/${delegateFolderName}`,
+              );
 
       this.rootFolders[delegateFolderName] = {
         ...result.data,
@@ -327,7 +364,7 @@ class RestContentAdapter implements ContentAdapter {
     return await this.getItemOfId(resourceId);
   }
 
-  public async getContentOfUri(uri: Uri): Promise<string> {
+  public async getContentOfUri(uri: Uri): Promise<Uint8Array> {
     const resourceId = getResourceId(uri);
     const { data } = await this.connection.get(resourceId + "/content", {
       responseType: "arraybuffer",
@@ -336,7 +373,7 @@ class RestContentAdapter implements ContentAdapter {
     return data;
   }
 
-  public async getContentOfItem(item: ContentItem): Promise<string> {
+  public async getContentOfItem(item: ContentItem): Promise<Uint8Array> {
     return await this.getContentOfUri(item.vscUri);
   }
 
@@ -514,7 +551,10 @@ class RestContentAdapter implements ContentAdapter {
     return true;
   }
 
-  public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
+  public async updateContentOfItem(
+    uri: Uri,
+    content: Uint8Array,
+  ): Promise<void> {
     const resourceId = getResourceId(uri);
     const { etag, lastModified, contentType } = this.getFileInfo(resourceId);
     const headers = {

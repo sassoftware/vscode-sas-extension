@@ -379,7 +379,9 @@ export class NotebookToFlowConverter {
 
   public async content() {
     return isContentItem(this.resource)
-      ? await this.contentModel.getContentByUri(this.resource.vscUri)
+      ? (
+          await this.contentModel.getContentByUri(this.resource.vscUri)
+        ).toString()
       : (await workspace.fs.readFile(this.resource)).toString();
   }
 

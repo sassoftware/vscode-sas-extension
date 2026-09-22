@@ -40,11 +40,17 @@ body,
     no-repeat;
 }
 
-.header-icon.time,
-.header-icon.date-time,
 .header-icon.date {
   background: url(../../../icons/light/tableHeaderDateLight.svg) center
     no-repeat;
+}
+
+.header-icon.time {
+  background: url(../../../icons/light/timeLight.svg) center no-repeat;
+}
+
+.header-icon.date-time {
+  background: url(../../../icons/light/dateTimeLight.svg) center no-repeat;
 }
 
 .header-icon.currency {
@@ -65,11 +71,19 @@ body,
     no-repeat;
 }
 
-.header-icon.time,
-.header-icon.date-time,
 .vscode-dark .header-icon.date,
 .vscode-high-contrast .header-icon.date {
   background: url(../../../icons/dark/tableHeaderDateDark.svg) center no-repeat;
+}
+
+.vscode-dark .header-icon.date-time,
+.vscode-high-contrast .header-icon.date-time {
+  background: url(../../../icons/dark/dateTimeDark.svg) center no-repeat;
+}
+
+.vscode-dark .header-icon.time,
+.vscode-high-contrast .header-icon.time {
+  background: url(../../../icons/dark/timeDark.svg) center no-repeat;
 }
 
 .vscode-dark .header-icon.currency,

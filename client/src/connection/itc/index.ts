@@ -60,8 +60,7 @@ export class ITCSession extends Session {
   private _pollingForLogResults: boolean;
   private _logLineType = 0;
   private _passwordInputCancellationTokenSource:
-    | CancellationTokenSource
-    | undefined;
+    CancellationTokenSource | undefined;
   private _errorParser: LineParser;
   private _workDirectoryParser: LineParser;
 

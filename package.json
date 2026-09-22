@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
-  "version": "1.20.0",
+  "version": "1.21.0",
   "categories": [
     "Programming Languages",
     "Data Science",
@@ -912,7 +912,7 @@
       "webview/context": [
         {
           "command": "SAS.saveHTML",
-          "when": "webviewId =~ /SASResultPanel/"
+          "when": "webviewId =~ /SASResultPanel/ && SAS.allowDownload"
         }
       ],
       "view/title": [
@@ -962,7 +962,7 @@
         },
         {
           "command": "SAS.downloadTable",
-          "when": "viewItem =~ /table-/ && view == librarydataprovider",
+          "when": "viewItem =~ /table-/ && view == librarydataprovider && SAS.allowDownload",
           "group": "download@0"
         },
         {
@@ -1022,7 +1022,7 @@
         },
         {
           "command": "SAS.content.downloadResource",
-          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == contentdataprovider && SAS.allowDownload",
           "group": "uploaddownloadgroup@0"
         },
         {
@@ -1092,7 +1092,7 @@
         },
         {
           "command": "SAS.server.downloadResource",
-          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == serverdataprovider",
+          "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == serverdataprovider && SAS.allowDownload",
           "group": "uploaddownloadgroup@0"
         },
         {
@@ -1515,24 +1515,24 @@
     "@vscode/l10n-dev": "^0.0.35",
     "buffer": "6.0.3",
     "chai": "^4.4.1",
-    "concurrently": "^10.0.3",
+    "concurrently": "^10.0.5",
     "cross-env": "^10.1.0",
-    "esbuild": "^0.28.0",
+    "esbuild": "^0.28.1",
     "eslint": "^9.39.2",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "glob": "^13.0.3",
-    "mocha": "^11.7.5",
-    "papaparse": "^5.5.3",
+    "mocha": "^11.8.0",
+    "papaparse": "^5.7.0",
     "path-browserify": "^1.0.1",
-    "prettier": "^3.8.3",
+    "prettier": "^3.9.6",
     "proxyquire": "^2.1.3",
     "sinon": "^21.0.3",
-    "ts-loader": "^9.5.4",
+    "ts-loader": "^9.6.2",
     "ts-node": "^10.9.2",
     "ts-sinon": "^2.0.2",
     "typescript": "^5.5.3",
-    "webpack": "^5.106.2",
-    "webpack-cli": "^7.0.3"
+    "webpack": "^5.109.2",
+    "webpack-cli": "^7.2.2"
   }
 }
