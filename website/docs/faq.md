@@ -70,9 +70,9 @@ SAS.show(fig, filetype="png")
 
 Using PNG output can significantly reduce the size of the generated graph output and help avoid notebook rendering and performance issues when working with large matplotlib or seaborn visualizations.
 
-### What is the SAS Notebook alternative for the “Refresh Kernal” option in Python Notebooks?
+### What is the SAS Notebook alternative for the “Refresh Kernel” option in Python Notebooks?
 
-When hovering over your profile (in the footer of VS Code), you should see a "Close Session" option. This will close your current compute session, clear all on-going processes, and reset any macro variables/function that may have been defined in prior cells. You should then be able to re-run the cell, and it will automatically connect you to a brand new session.
+When hovering over your profile (in the footer of VS Code), you should see a "Close Session" option. This will close your current compute session, clear all ongoing processes, and reset any macro variables/function that may have been defined in prior cells. You should then be able to re-run the cell, and it will automatically connect you to a brand new session.
 
 ## Connection issues
 
