@@ -39,9 +39,8 @@ const fileValidator = (
 ): string | null => {
   const invalidChars =
     sourceType === ContentSourceType.SASServer
-      ? /[?\/\\*"|:<>]/g
-      : /[;\/\\{}<>]/g;
-
+      ? /[?/\\*"|:<>]/g
+      : /[;/\\{}<>]/g;
   return !invalidChars.test(value) && /^([^/<>;\\{}]+)\.\w+$/.test(value)
     ? null
     : Messages.FileValidationError;
@@ -75,6 +74,7 @@ const folderValidator = (
 class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
   private contentModel: ContentModel;
+  private registrationSubscriptions: Disposable[];
   private sourceType: ContentNavigatorConfig["sourceType"];
   private treeIdentifier: ContentNavigatorConfig["treeIdentifier"];
 
@@ -90,14 +90,16 @@ class ContentNavigator implements SubscriptionProvider {
       config,
     );
 
-    workspace.registerFileSystemProvider(
-      config.sourceType,
-      this.contentDataProvider,
-    );
-    workspace.registerTextDocumentContentProvider(
-      `${config.sourceType}ReadOnly`,
-      this.contentDataProvider,
-    );
+    this.registrationSubscriptions = [
+      workspace.registerFileSystemProvider(
+        config.sourceType,
+        this.contentDataProvider,
+      ),
+      workspace.registerTextDocumentContentProvider(
+        `${config.sourceType}ReadOnly`,
+        this.contentDataProvider,
+      ),
+    ];
   }
 
   get onDidManipulateFile(): Event<FileManipulationEvent> {
@@ -107,6 +109,7 @@ class ContentNavigator implements SubscriptionProvider {
   public getSubscriptions(): Disposable[] {
     const SAS = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}`;
     return [
+      ...this.registrationSubscriptions,
       ...this.contentDataProvider.getSubscriptions(),
       commands.registerCommand(
         `${SAS}.deleteResource`,

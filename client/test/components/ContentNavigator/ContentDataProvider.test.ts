@@ -141,8 +141,8 @@ describe("ContentNavigator validation", () => {
         treeIdentifier: "test-server",
       },
     );
+    const navSubscriptions = nav.getSubscriptions();
 
-    nav.getSubscriptions();
     const serverHandler = registerCommandStub.withArgs(
       "SAS.server.addFileResource",
       sinon.match.func,
@@ -169,8 +169,8 @@ describe("ContentNavigator validation", () => {
         treeIdentifier: "test-content",
       },
     );
+    const contentNavSubscriptions = contentNav.getSubscriptions();
 
-    contentNav.getSubscriptions();
     const contentHandler = registerCommandStub.withArgs(
       "SAS.content.addFileResource",
       sinon.match.func,
@@ -183,6 +183,13 @@ describe("ContentNavigator validation", () => {
     expect(contentValidate("bad;name.sas")).to.equal("Invalid file name.");
     expect(contentValidate("bad{name.sas")).to.equal("Invalid file name.");
     expect(contentValidate("goodname.sas")).to.equal(null);
+
+    navSubscriptions
+      .filter((subscription) => Boolean(subscription))
+      .forEach((subscription) => subscription.dispose());
+    contentNavSubscriptions
+      .filter((subscription) => Boolean(subscription))
+      .forEach((subscription) => subscription.dispose());
 
     registerCommandStub.restore();
     showInputBoxStub.restore();
