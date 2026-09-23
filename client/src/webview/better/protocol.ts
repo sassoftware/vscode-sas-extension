@@ -78,10 +78,7 @@ export interface ViewState {
 // --------------------------------------------------------------------------
 
 export type HostMessage =
-  | InitMessage
-  | RowsResponseMessage
-  | ErrorMessage
-  | RefreshMessage;
+  InitMessage | RowsResponseMessage | ErrorMessage | RefreshMessage;
 
 export interface InitMessage {
   kind: "init";
