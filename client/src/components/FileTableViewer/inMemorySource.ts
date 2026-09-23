@@ -82,7 +82,9 @@ export class InMemorySource implements FileTableSource {
     // sends a per-column `in ("a","b")` WHERE clause — parse that into
     // real set-membership filters when we recognise it, so local files
     // filter like the server-backed tables they mirror.
-    const colFilter = hasFilter ? tryBuildColValueFilter(raw, this.columns) : null;
+    const colFilter = hasFilter
+      ? tryBuildColValueFilter(raw, this.columns)
+      : null;
     const needle = raw.toLowerCase();
 
     const indices: number[] = [];

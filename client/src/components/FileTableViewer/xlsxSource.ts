@@ -7,7 +7,7 @@ import { l10n, window } from "vscode";
 
 import * as path from "path";
 
-import { buildInMemorySource, InMemorySource } from "./inMemorySource";
+import { InMemorySource, buildInMemorySource } from "./inMemorySource";
 
 /** Build an `InMemorySource` from an .xlsx file. Returns `undefined` if
  *  the user cancels the sheet picker. */

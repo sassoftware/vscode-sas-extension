@@ -158,7 +158,7 @@ class FileTableViewer implements SubscriptionProvider {
     if (configuredViewerKind() === "better") {
       void window.showInformationMessage(
         l10n.t(
-          "The \"better\" table viewer is not bundled in this build; opening the classic viewer instead.",
+          'The "better" table viewer is not bundled in this build; opening the classic viewer instead.',
         ),
       );
     }

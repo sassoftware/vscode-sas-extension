@@ -24,12 +24,12 @@ import * as fs from "fs";
 import * as path from "path";
 
 import type { Column } from "../../connection/rest/api/compute";
-import { tryBuildColValueFilter } from "./colValueFilter";
 import type {
   TableData,
   TableQuery,
   TableRow,
 } from "../LibraryNavigator/types";
+import { tryBuildColValueFilter } from "./colValueFilter";
 import {
   type PageSource,
   Sas7bdatPageReader,

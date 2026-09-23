@@ -194,11 +194,7 @@ describe("FileTableViewer", () => {
     });
 
     it("decodes escaped quotes in checklist values", async () => {
-      const src = source([
-        ["a"],
-        ['say "hi"'],
-        ["plain"],
-      ]);
+      const src = source([["a"], ['say "hi"'], ["plain"]]);
       const { rows } = await src.getRows(0, 10, [], {
         filterValue: '(a in ("say ""hi"""))',
       });
@@ -209,7 +205,7 @@ describe("FileTableViewer", () => {
     it("falls back to substring when the filter is not a checklist expression", async () => {
       const src = source([["a"], ["Alpha"], ["AL"], ["gamma"]]);
       const { rows } = await src.getRows(0, 10, [], {
-        filterValue: "(foo in (\"x\"))",
+        filterValue: '(foo in ("x"))',
       });
       // Unknown column in the `in` form → not an in-memory checklist,
       // so no rows survive the substring lookup.

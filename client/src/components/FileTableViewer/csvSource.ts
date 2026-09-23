@@ -4,7 +4,7 @@ import { createReadStream } from "fs";
 import * as path from "path";
 
 import { delimiterForExt, parseCsv } from "./csvParser";
-import { buildInMemorySource, InMemorySource } from "./inMemorySource";
+import { InMemorySource, buildInMemorySource } from "./inMemorySource";
 
 /** Build an `InMemorySource` from a delimited text file (csv / tsv). */
 export async function csvSource(
@@ -28,10 +28,5 @@ export async function csvSource(
   const headers = rows[0];
   const dataRows = rows.slice(1);
 
-  return buildInMemorySource(
-    headers,
-    dataRows,
-    path.basename(fsPath),
-    uid,
-  );
+  return buildInMemorySource(headers, dataRows, path.basename(fsPath), uid);
 }

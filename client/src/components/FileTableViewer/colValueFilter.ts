@@ -32,16 +32,12 @@ export function tryBuildColValueFilter(
     if (!m) {
       return null;
     }
-    const dataIdx = columns.findIndex(
-      (c) => c.id === m[1] || c.name === m[1],
-    );
+    const dataIdx = columns.findIndex((c) => c.id === m[1] || c.name === m[1]);
     if (dataIdx < 0) {
       return null;
     }
     const values = parseQuotedList(m[2]).map((v) => v.toLowerCase());
-    matchers.push((row) =>
-      values.includes((row[dataIdx] ?? "").toLowerCase()),
-    );
+    matchers.push((row) => values.includes((row[dataIdx] ?? "").toLowerCase()));
   }
   return (dataRow) => matchers.every((f) => f(dataRow));
 }
