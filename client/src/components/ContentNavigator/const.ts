@@ -101,6 +101,9 @@ export const Messages = {
   DeleteWarningMessage: l10n.t(
     'Are you sure you want to permanently delete the item "{name}"?',
   ),
+  DirtyFolderWarningSingle: l10n.t(
+    "The selected folder contains unsaved files, are you sure you want to delete?",
+  ),
   DirtyFolderWarning: l10n.t(
     "The selected folders contain unsaved files, are you sure you want to delete?",
   ),

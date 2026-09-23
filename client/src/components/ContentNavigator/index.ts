@@ -581,11 +581,18 @@ class ContentNavigator implements SubscriptionProvider {
     const hasDirtyFolders = deleteStates.some(
       ({ hasUnsavedFiles }) => hasUnsavedFiles,
     );
+    const selectedFolderCount = deleteStates.filter(
+      ({ isContainer }) => isContainer,
+    ).length;
 
     let confirmed = true;
     if (hasDirtyFolders) {
       confirmed = !!(await window.showWarningMessage(
-        l10n.t(Messages.DirtyFolderWarning),
+        l10n.t(
+          selectedFolderCount === 1
+            ? Messages.DirtyFolderWarningSingle
+            : Messages.DirtyFolderWarning,
+        ),
         { modal: true },
         requiresPermanentDelete
           ? Messages.DeleteButtonLabel

@@ -140,7 +140,7 @@ describe("ContentNavigator confirmDelete", () => {
     expect(confirmed).to.equal(true);
     expect(showWarningMessageStub.calledOnce).to.equal(true);
     const args = showWarningMessageStub.getCall(0).args;
-    expect(args[0]).to.equal(l10n.t(Messages.DirtyFolderWarning));
+    expect(args[0]).to.equal(l10n.t(Messages.DirtyFolderWarningSingle));
     expect(args[1]).to.deep.equal({ modal: true });
     expect(args[2]).to.equal(Messages.MoveToRecycleBinLabel);
   });
@@ -196,7 +196,7 @@ describe("ContentNavigator confirmDelete", () => {
     expect(confirmed).to.equal(true);
     expect(showWarningMessageStub.calledOnce).to.equal(true);
     const args = showWarningMessageStub.getCall(0).args;
-    expect(args[0]).to.equal(l10n.t(Messages.DirtyFolderWarning));
+    expect(args[0]).to.equal(l10n.t(Messages.DirtyFolderWarningSingle));
     expect(args[1]).to.deep.equal({ modal: true });
     expect(args[2]).to.equal(Messages.DeleteButtonLabel);
   });
