@@ -34,6 +34,7 @@ import {
   SERVER_SHORTCUT_FOLDER_TYPE,
   TRASH_FOLDER_TYPE,
 } from "../../../src/components/ContentNavigator/const";
+import ContentNavigator from "../../../src/components/ContentNavigator/index";
 import {
   ContentItem,
   ContentSourceType,
@@ -136,6 +137,75 @@ const createDataProvider = () => {
     defaultConfig,
   );
 };
+
+describe("ContentNavigator validation", () => {
+  it("rejects invalid file names for SAS Server and SAS Content through the actual input validation", async () => {
+    const registerCommandStub = sinon.stub(commands, "registerCommand");
+    const showInputBoxStub = sinon.stub(window, "showInputBox");
+    showInputBoxStub.resolves(undefined);
+
+    const nav = new ContentNavigator(
+      { extensionUri: Uri.file("/tmp") } as any,
+      {
+        mimeType: "application/json",
+        sourceType: ContentSourceType.SASServer,
+        treeIdentifier: "test-server",
+      },
+    );
+    const navSubscriptions = nav.getSubscriptions();
+
+    const serverHandler = registerCommandStub.withArgs(
+      "SAS.server.addFileResource",
+      sinon.match.func,
+    ).firstCall.args[1] as (resource: any) => Promise<void>;
+
+    await serverHandler({} as ContentItem);
+    const serverValidate = showInputBoxStub.firstCall.args[0].validateInput as (
+      value: string,
+    ) => string | null;
+
+    expect(serverValidate("bad?name.sas")).to.equal("Invalid file name.");
+    expect(serverValidate("bad:name.sas")).to.equal("Invalid file name.");
+    expect(serverValidate("goodname.sas")).to.equal(null);
+
+    registerCommandStub.resetHistory();
+    showInputBoxStub.resetHistory();
+    showInputBoxStub.resolves(undefined);
+
+    const contentNav = new ContentNavigator(
+      { extensionUri: Uri.file("/tmp") } as any,
+      {
+        mimeType: "application/json",
+        sourceType: ContentSourceType.SASContent,
+        treeIdentifier: "test-content",
+      },
+    );
+    const contentNavSubscriptions = contentNav.getSubscriptions();
+
+    const contentHandler = registerCommandStub.withArgs(
+      "SAS.content.addFileResource",
+      sinon.match.func,
+    ).firstCall.args[1] as (resource: any) => Promise<void>;
+
+    await contentHandler({} as ContentItem);
+    const contentValidate = showInputBoxStub.firstCall.args[0]
+      .validateInput as (value: string) => string | null;
+
+    expect(contentValidate("bad;name.sas")).to.equal("Invalid file name.");
+    expect(contentValidate("bad{name.sas")).to.equal("Invalid file name.");
+    expect(contentValidate("goodname.sas")).to.equal(null);
+
+    navSubscriptions
+      .filter((subscription) => Boolean(subscription))
+      .forEach((subscription) => subscription.dispose());
+    contentNavSubscriptions
+      .filter((subscription) => Boolean(subscription))
+      .forEach((subscription) => subscription.dispose());
+
+    registerCommandStub.restore();
+    showInputBoxStub.restore();
+  });
+});
 
 describe("ContentDataProvider", async function () {
   beforeEach(() => {
