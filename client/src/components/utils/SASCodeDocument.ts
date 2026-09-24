@@ -153,7 +153,7 @@ export class SASCodeDocument {
     }
 
     if (fileName !== undefined) {
-      fileName = fileName.replace(/[('\")]/g, "%$&");
+      fileName = fileName.replace(/[()'"]/g, "%$&");
       return (
         "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + fileName + "));\n" + code
       );
@@ -174,7 +174,7 @@ export class SASCodeDocument {
       return code;
     }
 
-    const baseDirectory = this.getBaseDirectory().replace(/[('")]/g, "%$&");
+    const baseDirectory = this.getBaseDirectory().replace(/[()'"]/g, "%$&");
     return (
       "%let _SASPROGRAMDIR = %nrquote(%nrstr(" + baseDirectory + "));\n" + code
     );
