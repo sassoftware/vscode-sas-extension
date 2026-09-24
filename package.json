@@ -152,6 +152,9 @@
     ],
     "configuration": [
       {
+        "title": "%configuration.title.SAS.general%",
+        "order": 0,
+        "type": "object",
         "properties": {
           "SAS.connectionProfiles": {
             "order": 0,
@@ -465,6 +468,63 @@
               "type": "string"
             }
           },
+          "SAS.notebook.export.includeLog": {
+            "order": 10,
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.SAS.notebook.export.includeLog%"
+          },
+          "SAS.flowConversionMode": {
+            "order": 6,
+            "type": "string",
+            "default": "Swimlane",
+            "enum": [
+              "Swimlane",
+              "Node"
+            ],
+            "description": "%configuration.SAS.flowConversionMode%",
+            "enumDescriptions": [
+              "%configuration.SAS.flowConversionModeSwimlane%",
+              "%configuration.SAS.flowConversionModeNode%"
+            ]
+          }
+        }
+      },
+      {
+        "title": "%configuration.title.SAS.codeAndLog%",
+        "order": 1,
+        "type": "object",
+        "properties": {
+          "SAS.log.showOnExecutionStart": {
+            "order": 7,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.showOnExecutionStart%"
+          },
+          "SAS.log.showOnExecutionFinish": {
+            "order": 8,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.showOnExecutionFinish%"
+          },
+          "SAS.log.clearOnExecutionStart": {
+            "order": 9,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.clearOnExecutionStart%"
+          },
+          "SAS.problems.log.enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.problems.log.enabled%"
+          }
+        }
+      },
+      {
+        "title": "%configuration.title.SAS.results%",
+        "order": 2,
+        "type": "object",
+        "properties": {
           "SAS.results.sideBySide": {
             "order": 2,
             "type": "boolean",
@@ -537,49 +597,6 @@
                 "description": "%configuration.SAS.results.html.custom.style.highContrastLight%"
               }
             }
-          },
-          "SAS.problems.log.enabled": {
-            "type": "boolean",
-            "default": true,
-            "description": "%configuration.SAS.problems.log.enabled%"
-          },
-          "SAS.flowConversionMode": {
-            "order": 6,
-            "type": "string",
-            "default": "Swimlane",
-            "enum": [
-              "Swimlane",
-              "Node"
-            ],
-            "description": "%configuration.SAS.flowConversionMode%",
-            "enumDescriptions": [
-              "%configuration.SAS.flowConversionModeSwimlane%",
-              "%configuration.SAS.flowConversionModeNode%"
-            ]
-          },
-          "SAS.log.showOnExecutionStart": {
-            "order": 7,
-            "type": "boolean",
-            "default": true,
-            "description": "%configuration.SAS.log.showOnExecutionStart%"
-          },
-          "SAS.log.showOnExecutionFinish": {
-            "order": 8,
-            "type": "boolean",
-            "default": true,
-            "description": "%configuration.SAS.log.showOnExecutionFinish%"
-          },
-          "SAS.log.clearOnExecutionStart": {
-            "order": 9,
-            "type": "boolean",
-            "default": true,
-            "description": "%configuration.SAS.log.clearOnExecutionStart%"
-          },
-          "SAS.notebook.export.includeLog": {
-            "order": 10,
-            "type": "boolean",
-            "default": false,
-            "description": "%configuration.SAS.notebook.export.includeLog%"
           }
         }
       }
