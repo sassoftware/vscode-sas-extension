@@ -3,11 +3,16 @@ import {
   DataTransferItem,
   FileStat,
   FileType,
+  Tab,
+  TabGroup,
+  TabInputText,
+  TextDocument,
   TreeItem,
   Uri,
   authentication,
   commands,
   window,
+  workspace,
 } from "vscode";
 
 import axios, { AxiosInstance, HeadersDefaults } from "axios";
@@ -38,7 +43,6 @@ import RestContentAdapter from "../../../src/connection/rest/RestContentAdapter"
 import { getSasContentUri as getUri } from "../../../src/connection/rest/util";
 import { getUri as getTestUri } from "../../utils";
 
-let stub;
 let axiosInstance: StubbedInstance<AxiosInstance>;
 
 const defaultConfig = {
@@ -204,9 +208,8 @@ describe("ContentNavigator validation", () => {
 });
 
 describe("ContentDataProvider", async function () {
-  let authStub;
   beforeEach(() => {
-    authStub = sinon.stub(authentication, "getSession").resolves({
+    sinon.stub(authentication, "getSession").resolves({
       accessToken: "12345",
       account: { id: "id", label: "label" },
       id: "id",
@@ -235,14 +238,11 @@ describe("ContentDataProvider", async function () {
       headers: defaultHeader as AxiosInstance["defaults"]["headers"],
     };
 
-    stub = sinon.stub(axios, "create").returns(axiosInstance);
+    sinon.stub(axios, "create").returns(axiosInstance);
   });
 
   afterEach(() => {
-    if (stub) {
-      stub.restore();
-    }
-    authStub.restore();
+    sinon.restore();
     axiosInstance = undefined;
   });
 
@@ -756,6 +756,209 @@ describe("ContentDataProvider", async function () {
     const recycled = await dataProvider.recycleResource(item);
 
     expect(recycled).to.equal(true);
+  });
+
+  it("recycleResource - closes direct and nested descendant tabs", async function () {
+    const folder = mockContentItem({
+      fileStat: {
+        type: FileType.Directory,
+        ctime: 1234,
+        mtime: 1234,
+        size: 0,
+      },
+      name: "testD",
+      type: "folder",
+      uri: "uri://testD",
+      links: [
+        {
+          rel: "update",
+          uri: "uri://update-folder",
+          method: "PUT",
+          href: "uri://update-folder",
+          type: "test",
+        },
+      ],
+    });
+    const nestedFolder = mockContentItem({
+      fileStat: {
+        type: FileType.Directory,
+        ctime: 1234,
+        mtime: 1234,
+        size: 0,
+      },
+      name: "nested",
+      type: "folder",
+      uri: "uri://nested",
+      parentFolderUri: folder.uri,
+    });
+    const directFile = mockContentItem({
+      name: "test1.sas",
+      uri: "uri://test1",
+      parentFolderUri: folder.uri,
+    });
+    const nestedFile = mockContentItem({
+      name: "test2.sas",
+      uri: "uri://test2",
+      parentFolderUri: nestedFolder.uri,
+    });
+    sinon
+      .stub(ContentModel.prototype, "getChildren")
+      .callsFake(async (item) => {
+        if (item?.uri === folder.uri) {
+          return [directFile, nestedFolder];
+        }
+        if (item?.uri === nestedFolder.uri) {
+          return [nestedFile];
+        }
+        return [];
+      });
+
+    const directDocument = stubInterface<TextDocument>();
+    Object.defineProperty(directDocument, "uri", {
+      value: getUri(directFile),
+    });
+    Object.defineProperty(directDocument, "isDirty", { value: true });
+    const nestedDocument = stubInterface<TextDocument>();
+    Object.defineProperty(nestedDocument, "uri", {
+      value: getUri(nestedFile),
+    });
+    Object.defineProperty(nestedDocument, "isDirty", { value: true });
+    sinon
+      .stub(workspace, "textDocuments")
+      .value([directDocument, nestedDocument]);
+
+    const directTab = stubInterface<Tab>();
+    Object.defineProperty(directTab, "input", {
+      value: new TabInputText(getUri(directFile)),
+    });
+    const nestedTab = stubInterface<Tab>();
+    Object.defineProperty(nestedTab, "input", {
+      value: new TabInputText(getUri(nestedFile)),
+    });
+    const unrelatedTab = stubInterface<Tab>();
+    Object.defineProperty(unrelatedTab, "input", {
+      value: new TabInputText(getUri(mockContentItem({ uri: "uri://other" }))),
+    });
+    const tabs = [directTab, nestedTab, unrelatedTab];
+    const tabGroup = stubInterface<TabGroup>();
+    Object.defineProperty(tabGroup, "tabs", { value: tabs });
+    const originalTabGroupsDescriptor = Object.getOwnPropertyDescriptor(
+      window,
+      "tabGroups",
+    );
+    Object.defineProperty(window, "tabGroups", {
+      configurable: true,
+      value: { all: [tabGroup] },
+    });
+    sinon.stub(window, "showTextDocument").resolves(undefined);
+    const executeCommandStub = sinon
+      .stub(commands, "executeCommand")
+      .callsFake(async (command) => {
+        if (command === "workbench.action.revertAndCloseActiveEditor") {
+          tabs.shift();
+        }
+      });
+
+    const dataProvider = createDataProvider();
+
+    axiosInstance.put.withArgs("uri://update-folder").resolves({ data: {} });
+
+    try {
+      await dataProvider.connect("http://test.io");
+      const recycled = await dataProvider.recycleResource(folder);
+
+      expect(recycled).to.equal(true);
+      expect(
+        executeCommandStub.withArgs(
+          "workbench.action.revertAndCloseActiveEditor",
+        ).callCount,
+      ).to.equal(2);
+      expect(tabs).to.deep.equal([unrelatedTab]);
+    } finally {
+      if (originalTabGroupsDescriptor) {
+        Object.defineProperty(window, "tabGroups", originalTabGroupsDescriptor);
+      }
+    }
+  });
+
+  it("recycleResource - discards and closes dirty descendant tabs", async function () {
+    const folder = mockContentItem({
+      fileStat: {
+        type: FileType.Directory,
+        ctime: 1234,
+        mtime: 1234,
+        size: 0,
+      },
+      name: "NotEmptyFolder",
+      type: "folder",
+      uri: "uri://NotEmptyFolder",
+      links: [
+        {
+          rel: "update",
+          uri: "uri://update-dirty-folder",
+          method: "PUT",
+          href: "uri://update-dirty-folder",
+          type: "test",
+        },
+      ],
+    });
+    const file = mockContentItem({
+      name: "docForDelete.sas",
+      uri: "uri://docForDelete",
+      parentFolderUri: folder.uri,
+    });
+    sinon.stub(ContentModel.prototype, "getChildren").resolves([file]);
+
+    const dirtyDocument = stubInterface<TextDocument>();
+    Object.defineProperty(dirtyDocument, "uri", { value: getUri(file) });
+    Object.defineProperty(dirtyDocument, "isDirty", { value: true });
+    sinon.stub(workspace, "textDocuments").value([dirtyDocument]);
+
+    const dirtyTab = stubInterface<Tab>();
+    Object.defineProperty(dirtyTab, "input", {
+      value: new TabInputText(getUri(file)),
+    });
+    const tabs = [dirtyTab];
+    const tabGroup = stubInterface<TabGroup>();
+    Object.defineProperty(tabGroup, "tabs", { value: tabs });
+    const originalTabGroupsDescriptor = Object.getOwnPropertyDescriptor(
+      window,
+      "tabGroups",
+    );
+    Object.defineProperty(window, "tabGroups", {
+      configurable: true,
+      value: { all: [tabGroup] },
+    });
+    sinon.stub(window, "showTextDocument").resolves(undefined);
+    const executeCommandStub = sinon
+      .stub(commands, "executeCommand")
+      .callsFake(async (command) => {
+        if (command === "workbench.action.revertAndCloseActiveEditor") {
+          tabs.splice(0, 1);
+        }
+      });
+
+    const dataProvider = createDataProvider();
+    axiosInstance.put
+      .withArgs("uri://update-dirty-folder")
+      .resolves({ data: {} });
+
+    try {
+      await dataProvider.connect("http://test.io");
+      const recycled = await dataProvider.recycleResource(folder);
+
+      expect(recycled).to.equal(true);
+      expect(
+        executeCommandStub.calledWith(
+          "workbench.action.revertAndCloseActiveEditor",
+        ),
+      ).to.equal(true);
+      expect(tabs).to.have.length(0);
+    } finally {
+      if (originalTabGroupsDescriptor) {
+        Object.defineProperty(window, "tabGroups", originalTabGroupsDescriptor);
+      }
+    }
   });
 
   it("restoreResource - restore item to the previous parent folder", async function () {
