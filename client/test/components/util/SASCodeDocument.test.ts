@@ -310,6 +310,12 @@ cas; caslib _all_ assign;
       ),
       "wrapped code should include _SASPROGRAMDIR with the directory of fileName",
     );
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)/Parkinson%'s Disease example.sas));",
+      ),
+      "wrapped code should include _SASPROGRAMFILE with the full fileName",
+    );
   });
 
   it("wrapCodeWithSASProgramDir is skipped for sasContent URI", () => {
@@ -382,6 +388,10 @@ cas; caslib _all_ assign;
         "%let _SASPROGRAMFILE = %nrquote(%nrstr(sascontent:/files/files/916e7678-a1c9-4f5b-9d72-5af9f19fae87));",
       ),
       "wrapped code should include _SASPROGRAMFILE with sascontent: prefix from sasContent URI",
+    );
+    assert(
+      !wrappedCode.includes("_SASPROGRAMDIR"),
+      "wrapped code should not include _SASPROGRAMDIR for sasContent notebook URIs",
     );
   });
 

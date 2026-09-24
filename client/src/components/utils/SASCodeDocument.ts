@@ -135,25 +135,28 @@ export class SASCodeDocument {
     return code.trim() === "";
   }
 
+  private isSasContentUri(uri: string | undefined): boolean {
+    return (
+      uri !== undefined && Uri.parse(uri).query.startsWith("id=/files/files")
+    );
+  }
+
   private wrapCodeWithSASProgramFileName(code: string): string {
     let fileName = this.parameters.fileName;
     let uri = this.parameters.uri;
 
-    if (uri !== undefined) {
+    if (this.isSasContentUri(uri)) {
       const uriObj = Uri.parse(uri);
-      if (uriObj.query.startsWith("id=/files/files")) {
-        // check if a uri is available, and if it is coming from sasContent.
-        // if so, parse out our service representation and add the sascontent prefix.
-        // should look like this at the end: "sascontent:/files/files/<uuid>"
-        uri = uriObj.query.replace("id=", "sascontent:");
-        return "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + uri + "));\n" + code;
-      } else if (fileName !== undefined) {
-        // if we are not in sasContent, we want to use the fileName instead
-        fileName = fileName.replace(/[('")]/g, "%$&");
-        return (
-          "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + fileName + "));\n" + code
-        );
-      }
+      // Preserve the SAS Content URI as sascontent:/files/files/<uuid>.
+      uri = uriObj.query.replace("id=", "sascontent:");
+      return "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + uri + "));\n" + code;
+    }
+
+    if (fileName !== undefined) {
+      fileName = fileName.replace(/[('\")]/g, "%$&");
+      return (
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + fileName + "));\n" + code
+      );
     }
 
     // if a fileName was not found, just return the raw code
@@ -161,11 +164,9 @@ export class SASCodeDocument {
   }
 
   private wrapCodeWithSASProgramDir(code: string): string {
-    const uri = this.parameters.uri;
-
     // SAS Content files have no readable parent folder without an extra
     // service call, which isn't possible during session init (LOCKDOWN);
-    if (uri !== undefined && uri.startsWith("sasContent")) {
+    if (this.isSasContentUri(this.parameters.uri)) {
       return code;
     }
 
