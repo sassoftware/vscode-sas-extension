@@ -45,7 +45,7 @@ const LogLineTypes: LogLineTypeEnum[] = [
 
 const SECRET_STORAGE_NAMESPACE = "ITC_SECRET_STORAGE";
 
-let sessionInstance: ITCSession;
+let sessionInstance: ITCSession | undefined;
 
 export class ITCSession extends Session {
   private _config: Config;
@@ -63,6 +63,10 @@ export class ITCSession extends Session {
     CancellationTokenSource | undefined;
   private _errorParser: LineParser;
   private _workDirectoryParser: LineParser;
+  private _customAutoExecState = {
+    executed: false,
+    running: false,
+  };
 
   constructor() {
     super();
@@ -279,6 +283,9 @@ export class ITCSession extends Session {
    */
   protected _close = async (): Promise<void> => {
     return new Promise((resolve) => {
+      // Autoexec can start log polling during session setup. Stop polling before
+      // closing the shell process in case the session is closed while autoexec is running.
+      this._pollingForLogResults = false;
       if (this._shellProcess) {
         this._shellProcess.stdin.write(
           "$runner.Close()\n",
@@ -287,9 +294,14 @@ export class ITCSession extends Session {
         this._shellProcess.kill();
         this._shellProcess = undefined;
 
+        // ensure next connection runs the custom autoexec again
+        this._customAutoExecState.executed = false;
+        this._customAutoExecState.running = false;
         this._workDirectory = undefined;
         this._runReject = undefined;
         this._runResolve = undefined;
+        // Clear sessionInstance so the next connection creates a new IOM session instance.
+        sessionInstance = undefined;
       }
       this.clearPassword();
       resolve();
@@ -330,6 +342,12 @@ export class ITCSession extends Session {
     const pollingInterval = setInterval(() => {
       if (!this._pollingForLogResults) {
         clearInterval(pollingInterval);
+      }
+
+      // The shell process may already be disposed if the session was closed
+      // while autoexec log polling was still active.
+      if (!this._shellProcess) {
+        return;
       }
       const skipPageHeadersValue = skipPageHeaders ? "$true" : "$false";
       this._shellProcess.stdin.write(
@@ -376,6 +394,8 @@ export class ITCSession extends Session {
 
       this._shellProcess.kill();
       this._workDirectory = undefined;
+      this._customAutoExecState.executed = false;
+      this._customAutoExecState.running = false;
     }
   };
 
@@ -464,7 +484,37 @@ export class ITCSession extends Session {
 
           if (foundWorkDirectory) {
             this._workDirectory = foundWorkDirectory.trim();
-            this._runResolve();
+
+            // Execute the profile autoexec once after the IOM session has been created and the WORK
+            // directory is available. Start polling the SAS log so the autoexec output is captured,
+            // and wait for the existing RunEndCode before marking the session setup as complete.
+            if (
+              !this._customAutoExecState.executed &&
+              this._config?.autoExecLines?.length
+            ) {
+              this._customAutoExecState.executed = true;
+              this._customAutoExecState.running = true;
+              this._pollingForLogResults = true;
+
+              const autoexecCode = this._config.autoExecLines.join("\n");
+
+              const code = `
+%put /** VSCODE_AUTO_EXEC_START **/;
+${autoexecCode}
+%put /** VSCODE_AUTO_EXEC_END **/;
+%put ${LineCodes.RunEndCode};
+`;
+
+              this._shellProcess.stdin.write(
+                `$code = @'\n${code}\n'@\n$runner.Run($code)\n`,
+                this.onWriteComplete,
+              );
+
+              this.fetchLog(true);
+              return;
+            }
+
+            this._runResolve?.();
             updateStatusBarItem(true);
             return;
           }
@@ -486,6 +536,16 @@ export class ITCSession extends Session {
 
   private processLineCodes(line: string): boolean {
     if (line.endsWith(LineCodes.RunEndCode)) {
+      // Autoexec has completed. Stop log polling, complete session setup,
+      // and prevent this RunEndCode from being handled as a normal program run.
+      if (this._customAutoExecState.running) {
+        this._customAutoExecState.running = false;
+        this._pollingForLogResults = false;
+        this._runResolve?.();
+        updateStatusBarItem(true);
+        return true;
+      }
+
       // run completed
       this.fetchResults();
       return true;
