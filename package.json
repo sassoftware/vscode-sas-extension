@@ -18,7 +18,8 @@
   "activationEvents": [
     "onWebviewPanel:SASResultPanel",
     "onLanguage:sas",
-    "onNotebook:sas-notebook"
+    "onNotebook:sas-notebook",
+    "onCommand:SAS.openTableFile"
   ],
   "main": "./client/dist/node/extension",
   "browser": "./client/dist/browser/extension",
@@ -878,6 +879,11 @@
         "command": "SAS.toggleLineComment",
         "title": "%commands.SAS.toggleLineComment%",
         "category": "SAS"
+      },
+      {
+        "command": "SAS.openTableFile",
+        "title": "%commands.SAS.openTableFile%",
+        "category": "SAS"
       }
     ],
     "keybindings": [
@@ -952,6 +958,11 @@
           "command": "SAS.content.convertNotebookToFlow",
           "when": "resourceExtname == .sasnb && SAS.connectionType == rest && !SAS.connection.direct",
           "group": "actionsgroup@0"
+        },
+        {
+          "command": "SAS.openTableFile",
+          "when": "resourceExtname =~ /\\.(csv|tsv|xlsx|sas7bdat)$/",
+          "group": "navigation@10"
         }
       ],
       "view/item/context": [

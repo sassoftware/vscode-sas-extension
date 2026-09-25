@@ -39,6 +39,7 @@ import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
 import { ContentSourceType } from "../components/ContentNavigator/types";
 import { setContext } from "../components/ExtensionContext";
+import FileTableViewer from "../components/FileTableViewer";
 import LibraryNavigator from "../components/LibraryNavigator";
 import {
   ResultPanelSubscriptionProvider,
@@ -106,6 +107,7 @@ export function activate(context: ExtensionContext) {
   setContext(context);
 
   const libraryNavigator = new LibraryNavigator(context);
+  const fileTableViewer = new FileTableViewer(context);
 
   // Below we have two content navigators. We'll have one to navigate
   // SAS Content and another to navigate SAS Server. Both of these will
@@ -183,6 +185,7 @@ export function activate(context: ExtensionContext) {
     ),
     getStatusBarItem(),
     ...libraryNavigator.getSubscriptions(),
+    ...fileTableViewer.getSubscriptions(),
     ...sasContentNavigator.getSubscriptions(),
     ...sasServerNavigator.getSubscriptions(),
     ...resultPanelSubscriptionProvider.getSubscriptions(),
