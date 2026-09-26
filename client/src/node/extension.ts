@@ -33,13 +33,14 @@ import {
 } from "../commands/profile";
 import { run, runRegion, runSelected } from "../commands/run";
 import { toggleLineComment } from "../commands/toggleLineComment";
-import { getRestAPIs } from "../components/APIProvider";
+import { getAPI, getRestAPIs } from "../components/APIProvider";
 import { SASAuthProvider } from "../components/AuthProvider";
 import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
 import { ContentSourceType } from "../components/ContentNavigator/types";
 import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
+import { LibraryItem } from "../components/LibraryNavigator/types";
 import {
   ResultPanelSubscriptionProvider,
   SAS_RESULT_PANEL,
@@ -88,6 +89,7 @@ export function activate(context: ExtensionContext) {
   const clientOptions: LanguageClientOptions = {
     // Register the server for sas file
     documentSelector: [{ language: "sas" }],
+    initializationOptions: { supportSASGetLibList: true },
   };
 
   // Create the language client and start the client.
@@ -100,6 +102,53 @@ export function activate(context: ExtensionContext) {
 
   // Start the client. This will also launch the server
   client.start();
+
+  client.onRequest(
+    "sas/getLibList",
+    async ({
+      libId,
+    }: {
+      libId: string | null;
+    }): Promise<{ id: string; name: string; type: string }[]> => {
+      try {
+        if (libId) {
+          const getTables = getAPI("getTables");
+          if (!getTables) {
+            return [];
+          }
+          const library: LibraryItem = {
+            uid: libId,
+            id: libId,
+            name: libId,
+            type: "library",
+            readOnly: true,
+          };
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const tables = (await getTables(library)) as LibraryItem[];
+          return tables.map((table) => ({
+            id: table.id,
+            name: table.name,
+            type: "DATA",
+          }));
+        }
+
+        const getLibraries = getAPI("getLibraries");
+        if (!getLibraries) {
+          return [];
+        }
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const libraries = (await getLibraries()) as LibraryItem[];
+        return libraries.map((library) => ({
+          id: library.id,
+          name: library.name,
+          type: "LIBRARY",
+        }));
+      } catch {
+        // no active connection, or the request failed - fall back to no library completions
+        return [];
+      }
+    },
+  );
 
   installCAs();
 

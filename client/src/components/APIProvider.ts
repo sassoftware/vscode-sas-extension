@@ -8,11 +8,14 @@ import { ConnectionType } from "./profile";
 
 /* only Rest APIs for now */
 
-const apis = {};
+const apis: Record<string, (...args: unknown[]) => unknown> = {};
 
 export const registerAPI = (name: string, fn) => {
   apis[name] = fn;
 };
+
+// used internally (e.g. by the language client) to invoke a registered API directly
+export const getAPI = (name: string) => apis[name];
 
 export const getRestAPIs = async (accessToken: string) => {
   const activeProfile = profileConfig.getProfileByName(
