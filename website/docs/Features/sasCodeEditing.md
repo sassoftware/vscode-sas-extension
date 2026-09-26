@@ -46,6 +46,23 @@ To use the autocomplete feature:
 
 - Start typing a valid SAS keyboard. Scroll through the pop-up list of suggested keywords by using your mouse or the up and down arrow keys.
 
+### Library and Dataset Completion
+
+When connected to SAS, press Ctrl+Space after a dataset option such as `proc print data=` to see available libraries. Enter a library name followed by a period, such as `data=SASHELP.`, to see its datasets. You can also request dataset suggestions after a library name in a SET statement, such as `set SASHELP.`.
+
+To show suggestions automatically while typing in SAS files, add the following optional settings to your VS Code `settings.json`:
+
+```json
+"[sas]": {
+  "editor.suggestOnTriggerCharacters": true,
+  "editor.quickSuggestions": {
+    "other": true
+  }
+}
+```
+
+These settings affect when VS Code opens suggestions throughout SAS files. The suggestion list can include other completions and snippets alongside library and dataset names.
+
 ## Pop-up Syntax Help
 
 The syntax help gets you started with a hint about the syntax or a brief description of the keyword. You can get additional help by clicking the links in the syntax help window.
