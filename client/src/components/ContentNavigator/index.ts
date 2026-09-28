@@ -682,6 +682,9 @@ class ContentNavigator implements SubscriptionProvider {
       profileWithFileRootOptions?.fileNavigationRoot,
       profileWithFileRootOptions?.globalShortcuts,
       this.sourceType,
+      activeProfile.connectionType === ConnectionType.Rest
+        ? activeProfile.display
+        : undefined,
     );
 
     function getProfileWithFileRootOptions():
