@@ -1,0 +1,29 @@
+name: Testing Complete
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+
+jobs:
+  testing-complete:
+    name: Testing Complete
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify test complete label
+        env:
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          echo "PR labels: $LABELS"
+
+          if jq -e --arg label "test complete" 'index($label) != null' <<< "$LABELS" > /dev/null; then
+            echo "Test complete label found."
+          else
+            echo "Test complete label is missing."
+            exit 1
+          fi
