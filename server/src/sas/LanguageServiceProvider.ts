@@ -12,6 +12,7 @@ import { CompletionProvider } from "./CompletionProvider";
 import { FormatOnTypeProvider } from "./FormatOnTypeProvider";
 import { FoldingBlock, LexerEx } from "./LexerEx";
 import { Model } from "./Model";
+import { SymbolProvider } from "./SymbolProvider";
 import type { LibService } from "./SyntaxDataProvider";
 import { SyntaxProvider } from "./SyntaxProvider";
 import { Formatter } from "./formatter";
@@ -61,6 +62,7 @@ export class LanguageServiceProvider {
   public completionProvider;
   public formatOnTypeProvider;
   public formatter;
+  public symbolProvider;
 
   constructor(doc: TextDocument) {
     this.model = new Model(doc);
@@ -74,6 +76,7 @@ export class LanguageServiceProvider {
       this.syntaxProvider,
     );
     this.formatter = new Formatter(this.model, this.syntaxProvider);
+    this.symbolProvider = new SymbolProvider(this.model, this.syntaxProvider);
 
     const lineCount = this.model.getLineCount();
 
