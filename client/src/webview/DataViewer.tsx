@@ -31,6 +31,7 @@ const DataViewer = () => {
   const {
     columnMenu,
     columns,
+    setColumns,
     dismissMenu,
     gridRef,
     onGridReady,
@@ -54,6 +55,7 @@ const DataViewer = () => {
     (event: MessageEvent) => {
       if (event.data.command === "panel:refreshData") {
         refreshResults(undefined);
+        setColumns([]);
       }
 
       if (
@@ -66,7 +68,7 @@ const DataViewer = () => {
         }
       }
     },
-    [gridRef, refreshResults],
+    [gridRef, refreshResults, setColumns],
   );
   useEffect(() => {
     document.addEventListener("keydown", handleKeydown);

@@ -3,12 +3,24 @@ import {
   DataTransferItem,
   FileStat,
   FileType,
+  Tab,
+  TabGroup,
+  TabInputText,
+  TextDocument,
   TreeItem,
   Uri,
   authentication,
+  commands,
+  window,
+  workspace,
 } from "vscode";
 
-import axios, { AxiosInstance, HeadersDefaults } from "axios";
+import axios, {
+  AxiosHeaders,
+  AxiosInstance,
+  AxiosResponse,
+  HeadersDefaults,
+} from "axios";
 import { expect } from "chai";
 import { mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
@@ -32,10 +44,11 @@ import {
   ContentSourceType,
 } from "../../../src/components/ContentNavigator/types";
 import RestContentAdapter from "../../../src/connection/rest/RestContentAdapter";
+import RestServerAdapter from "../../../src/connection/rest/RestServerAdapter";
+import { FileSystemApi } from "../../../src/connection/rest/api/compute";
 import { getSasContentUri as getUri } from "../../../src/connection/rest/util";
 import { getUri as getTestUri } from "../../utils";
 
-let stub;
 let axiosInstance: StubbedInstance<AxiosInstance>;
 
 const defaultConfig = {
@@ -132,9 +145,8 @@ const createDataProvider = () => {
 };
 
 describe("ContentDataProvider", async function () {
-  let authStub;
   beforeEach(() => {
-    authStub = sinon.stub(authentication, "getSession").resolves({
+    sinon.stub(authentication, "getSession").resolves({
       accessToken: "12345",
       account: { id: "id", label: "label" },
       id: "id",
@@ -163,14 +175,11 @@ describe("ContentDataProvider", async function () {
       headers: defaultHeader as AxiosInstance["defaults"]["headers"],
     };
 
-    stub = sinon.stub(axios, "create").returns(axiosInstance);
+    sinon.stub(axios, "create").returns(axiosInstance);
   });
 
   afterEach(() => {
-    if (stub) {
-      stub.restore();
-    }
-    authStub.restore();
+    sinon.restore();
     axiosInstance = undefined;
   });
 
@@ -686,6 +695,209 @@ describe("ContentDataProvider", async function () {
     expect(recycled).to.equal(true);
   });
 
+  it("recycleResource - closes direct and nested descendant tabs", async function () {
+    const folder = mockContentItem({
+      fileStat: {
+        type: FileType.Directory,
+        ctime: 1234,
+        mtime: 1234,
+        size: 0,
+      },
+      name: "testD",
+      type: "folder",
+      uri: "uri://testD",
+      links: [
+        {
+          rel: "update",
+          uri: "uri://update-folder",
+          method: "PUT",
+          href: "uri://update-folder",
+          type: "test",
+        },
+      ],
+    });
+    const nestedFolder = mockContentItem({
+      fileStat: {
+        type: FileType.Directory,
+        ctime: 1234,
+        mtime: 1234,
+        size: 0,
+      },
+      name: "nested",
+      type: "folder",
+      uri: "uri://nested",
+      parentFolderUri: folder.uri,
+    });
+    const directFile = mockContentItem({
+      name: "test1.sas",
+      uri: "uri://test1",
+      parentFolderUri: folder.uri,
+    });
+    const nestedFile = mockContentItem({
+      name: "test2.sas",
+      uri: "uri://test2",
+      parentFolderUri: nestedFolder.uri,
+    });
+    sinon
+      .stub(ContentModel.prototype, "getChildren")
+      .callsFake(async (item) => {
+        if (item?.uri === folder.uri) {
+          return [directFile, nestedFolder];
+        }
+        if (item?.uri === nestedFolder.uri) {
+          return [nestedFile];
+        }
+        return [];
+      });
+
+    const directDocument = stubInterface<TextDocument>();
+    Object.defineProperty(directDocument, "uri", {
+      value: getUri(directFile),
+    });
+    Object.defineProperty(directDocument, "isDirty", { value: true });
+    const nestedDocument = stubInterface<TextDocument>();
+    Object.defineProperty(nestedDocument, "uri", {
+      value: getUri(nestedFile),
+    });
+    Object.defineProperty(nestedDocument, "isDirty", { value: true });
+    sinon
+      .stub(workspace, "textDocuments")
+      .value([directDocument, nestedDocument]);
+
+    const directTab = stubInterface<Tab>();
+    Object.defineProperty(directTab, "input", {
+      value: new TabInputText(getUri(directFile)),
+    });
+    const nestedTab = stubInterface<Tab>();
+    Object.defineProperty(nestedTab, "input", {
+      value: new TabInputText(getUri(nestedFile)),
+    });
+    const unrelatedTab = stubInterface<Tab>();
+    Object.defineProperty(unrelatedTab, "input", {
+      value: new TabInputText(getUri(mockContentItem({ uri: "uri://other" }))),
+    });
+    const tabs = [directTab, nestedTab, unrelatedTab];
+    const tabGroup = stubInterface<TabGroup>();
+    Object.defineProperty(tabGroup, "tabs", { value: tabs });
+    const originalTabGroupsDescriptor = Object.getOwnPropertyDescriptor(
+      window,
+      "tabGroups",
+    );
+    Object.defineProperty(window, "tabGroups", {
+      configurable: true,
+      value: { all: [tabGroup] },
+    });
+    sinon.stub(window, "showTextDocument").resolves(undefined);
+    const executeCommandStub = sinon
+      .stub(commands, "executeCommand")
+      .callsFake(async (command) => {
+        if (command === "workbench.action.revertAndCloseActiveEditor") {
+          tabs.shift();
+        }
+      });
+
+    const dataProvider = createDataProvider();
+
+    axiosInstance.put.withArgs("uri://update-folder").resolves({ data: {} });
+
+    try {
+      await dataProvider.connect("http://test.io");
+      const recycled = await dataProvider.recycleResource(folder);
+
+      expect(recycled).to.equal(true);
+      expect(
+        executeCommandStub.withArgs(
+          "workbench.action.revertAndCloseActiveEditor",
+        ).callCount,
+      ).to.equal(2);
+      expect(tabs).to.deep.equal([unrelatedTab]);
+    } finally {
+      if (originalTabGroupsDescriptor) {
+        Object.defineProperty(window, "tabGroups", originalTabGroupsDescriptor);
+      }
+    }
+  });
+
+  it("recycleResource - discards and closes dirty descendant tabs", async function () {
+    const folder = mockContentItem({
+      fileStat: {
+        type: FileType.Directory,
+        ctime: 1234,
+        mtime: 1234,
+        size: 0,
+      },
+      name: "NotEmptyFolder",
+      type: "folder",
+      uri: "uri://NotEmptyFolder",
+      links: [
+        {
+          rel: "update",
+          uri: "uri://update-dirty-folder",
+          method: "PUT",
+          href: "uri://update-dirty-folder",
+          type: "test",
+        },
+      ],
+    });
+    const file = mockContentItem({
+      name: "docForDelete.sas",
+      uri: "uri://docForDelete",
+      parentFolderUri: folder.uri,
+    });
+    sinon.stub(ContentModel.prototype, "getChildren").resolves([file]);
+
+    const dirtyDocument = stubInterface<TextDocument>();
+    Object.defineProperty(dirtyDocument, "uri", { value: getUri(file) });
+    Object.defineProperty(dirtyDocument, "isDirty", { value: true });
+    sinon.stub(workspace, "textDocuments").value([dirtyDocument]);
+
+    const dirtyTab = stubInterface<Tab>();
+    Object.defineProperty(dirtyTab, "input", {
+      value: new TabInputText(getUri(file)),
+    });
+    const tabs = [dirtyTab];
+    const tabGroup = stubInterface<TabGroup>();
+    Object.defineProperty(tabGroup, "tabs", { value: tabs });
+    const originalTabGroupsDescriptor = Object.getOwnPropertyDescriptor(
+      window,
+      "tabGroups",
+    );
+    Object.defineProperty(window, "tabGroups", {
+      configurable: true,
+      value: { all: [tabGroup] },
+    });
+    sinon.stub(window, "showTextDocument").resolves(undefined);
+    const executeCommandStub = sinon
+      .stub(commands, "executeCommand")
+      .callsFake(async (command) => {
+        if (command === "workbench.action.revertAndCloseActiveEditor") {
+          tabs.splice(0, 1);
+        }
+      });
+
+    const dataProvider = createDataProvider();
+    axiosInstance.put
+      .withArgs("uri://update-dirty-folder")
+      .resolves({ data: {} });
+
+    try {
+      await dataProvider.connect("http://test.io");
+      const recycled = await dataProvider.recycleResource(folder);
+
+      expect(recycled).to.equal(true);
+      expect(
+        executeCommandStub.calledWith(
+          "workbench.action.revertAndCloseActiveEditor",
+        ),
+      ).to.equal(true);
+      expect(tabs).to.have.length(0);
+    } finally {
+      if (originalTabGroupsDescriptor) {
+        Object.defineProperty(window, "tabGroups", originalTabGroupsDescriptor);
+      }
+    }
+  });
+
   it("restoreResource - restore item to the previous parent folder", async function () {
     const item = mockContentItem({
       type: "file",
@@ -1061,5 +1273,181 @@ describe("ContentDataProvider", async function () {
     expect(await model.getFileFolderPath(item2)).to.equal(
       "/grandparent/parent",
     );
+  });
+});
+
+// showHiddenItems (Issue #1511)
+
+const SERVER_SESSION_ID = "test-session-id";
+
+const selfLinkFor = (name: string) => [
+  {
+    method: "GET",
+    rel: "self",
+    href: `/id/${name}`,
+    uri: `/compute/sessions/${SERVER_SESSION_ID}/files/parent-folder/${name}`,
+    type: "test",
+  },
+];
+
+const mockFileProperties = (overrides: Record<string, unknown> = {}) => ({
+  links: selfLinkFor("child.sas"),
+  name: "child.sas",
+  type: "file",
+  modifiedTimeStamp: "2024-01-01T00:00:00Z",
+  readOnly: false,
+  isDirectory: false,
+  ...overrides,
+});
+
+const mockAxiosResponse = <T>(data: T): AxiosResponse<T> => ({
+  data,
+  status: 200,
+  statusText: "OK",
+  headers: {},
+  config: { headers: new AxiosHeaders() },
+});
+
+class TestableRestServerAdapter extends RestServerAdapter {
+  public setFileSystemApiForTest(
+    fileSystemApi: ReturnType<typeof FileSystemApi>,
+  ): void {
+    this.fileSystemApi = fileSystemApi;
+  }
+
+  public setSessionIdForTest(sessionId: string): void {
+    this.sessionId = sessionId;
+  }
+}
+
+describe("RestServerAdapter - getChildItems (showHiddenItems)", function () {
+  const buildAdapter = (
+    display?: { showHiddenItems?: boolean } | null,
+  ): TestableRestServerAdapter => {
+    const adapter = new TestableRestServerAdapter(
+      undefined, // fileNavigationCustomRootPath
+      "USER", // fileNavigationRoot
+      {}, // globalShortcuts
+      display,
+    );
+    adapter.setSessionIdForTest(SERVER_SESSION_ID);
+    return adapter;
+  };
+
+  const buildFileSystemApiStub = (): StubbedInstance<
+    ReturnType<typeof FileSystemApi>
+  > => stubInterface<ReturnType<typeof FileSystemApi>>();
+
+  const buildParentItem = (): ContentItem =>
+    mockContentItem({
+      id: "/id/parent-folder",
+      uid: "parent-uid",
+      type: "folder",
+      uri: `/compute/sessions/${SERVER_SESSION_ID}/files/parent-folder`,
+      links: [
+        {
+          rel: "getDirectoryMembers",
+          uri: `/compute/sessions/${SERVER_SESSION_ID}/files/parent-folder/members`,
+          method: "GET",
+          href: `/compute/sessions/${SERVER_SESSION_ID}/files/parent-folder/members`,
+          type: "test",
+        },
+      ],
+    });
+
+  const emptyResponse = () => mockAxiosResponse({ count: 0, items: [] });
+
+  it("passes showAll: true when display.showHiddenItems is true", async () => {
+    const adapter = buildAdapter({ showHiddenItems: true });
+    const fileSystemApi = buildFileSystemApiStub();
+    fileSystemApi.getDirectoryMembers.resolves(emptyResponse());
+    adapter.setFileSystemApiForTest(fileSystemApi);
+
+    await adapter.getChildItems(buildParentItem());
+
+    expect(fileSystemApi.getDirectoryMembers.calledOnce).to.be.true;
+    expect(fileSystemApi.getDirectoryMembers.firstCall.args[0]).to.deep.equal({
+      sessionId: SERVER_SESSION_ID,
+      directoryPath: "parent-folder",
+      limit: 100,
+      start: 0,
+      showAll: true,
+    });
+  });
+
+  it("passes showAll: false when display.showHiddenItems is explicitly false", async () => {
+    const adapter = buildAdapter({ showHiddenItems: false });
+    const fileSystemApi = buildFileSystemApiStub();
+    fileSystemApi.getDirectoryMembers.resolves(emptyResponse());
+    adapter.setFileSystemApiForTest(fileSystemApi);
+
+    await adapter.getChildItems(buildParentItem());
+
+    expect(fileSystemApi.getDirectoryMembers.firstCall.args[0]).to.deep.include(
+      { showAll: false },
+    );
+  });
+
+  it("defaults showAll to false when display is undefined", async () => {
+    const adapter = buildAdapter(undefined);
+    const fileSystemApi = buildFileSystemApiStub();
+    fileSystemApi.getDirectoryMembers.resolves(emptyResponse());
+    adapter.setFileSystemApiForTest(fileSystemApi);
+
+    await adapter.getChildItems(buildParentItem());
+
+    expect(fileSystemApi.getDirectoryMembers.firstCall.args[0]).to.deep.include(
+      { showAll: false },
+    );
+  });
+
+  it("defaults showAll to false when display is an empty object", async () => {
+    const adapter = buildAdapter({});
+    const fileSystemApi = buildFileSystemApiStub();
+    fileSystemApi.getDirectoryMembers.resolves(emptyResponse());
+    adapter.setFileSystemApiForTest(fileSystemApi);
+
+    await adapter.getChildItems(buildParentItem());
+
+    expect(fileSystemApi.getDirectoryMembers.firstCall.args[0]).to.deep.include(
+      { showAll: false },
+    );
+  });
+
+  it("does not throw and defaults showAll to false when display is null", async () => {
+    const adapter = buildAdapter(null);
+    const fileSystemApi = buildFileSystemApiStub();
+    fileSystemApi.getDirectoryMembers.resolves(emptyResponse());
+    adapter.setFileSystemApiForTest(fileSystemApi);
+
+    await adapter.getChildItems(buildParentItem());
+
+    expect(fileSystemApi.getDirectoryMembers.firstCall.args[0]).to.deep.include(
+      { showAll: false },
+    );
+  });
+
+  it("includes hidden items in the returned list when showHiddenItems is true", async () => {
+    const adapter = buildAdapter({ showHiddenItems: true });
+    const fileSystemApi = buildFileSystemApiStub();
+    const hiddenFile = mockFileProperties({
+      name: ".hidden-file.sas",
+      links: selfLinkFor(".hidden-file.sas"),
+    });
+    const visibleFile = mockFileProperties({
+      name: "visible.sas",
+      links: selfLinkFor("visible.sas"),
+    });
+    fileSystemApi.getDirectoryMembers.resolves(
+      mockAxiosResponse({ count: 2, items: [hiddenFile, visibleFile] }),
+    );
+    adapter.setFileSystemApiForTest(fileSystemApi);
+
+    const children = await adapter.getChildItems(buildParentItem());
+    const names = children.map((child) => child.name);
+
+    expect(children.length).to.equal(2);
+    expect(names).to.include(".hidden-file.sas");
+    expect(names).to.include("visible.sas");
   });
 });

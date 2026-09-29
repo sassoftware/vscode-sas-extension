@@ -269,6 +269,9 @@ class ItcServerAdapter implements ContentAdapter {
   public async getRootItems(): Promise<RootFolderMap> {
     for (let index = 0; index < SAS_SERVER_ROOT_FOLDERS.length; ++index) {
       const delegateFolderName = SAS_SERVER_ROOT_FOLDERS[index];
+      if (delegateFolderName === "@myShortcuts") {
+        continue;
+      }
       this.rootFolders[delegateFolderName] = {
         uid: `${index}`,
         ...convertStaticFolderToContentItem(SAS_SERVER_ROOT_FOLDER, {

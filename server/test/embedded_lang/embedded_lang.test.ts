@@ -49,6 +49,38 @@ describe("Test code zone for embedded language", () => {
     assert.equal(zoneList[11], CodeZoneManager.ZONE_TYPE.PROC_STMT);
   });
 
+  for (const endSubmit of ["endsubmit", "ENDSUBMIT", "EndSubmit"]) {
+    it(`proc python recognizes ${endSubmit} case-insensitively`, () => {
+      const doc = TextDocument.create(
+        `proc-python-${endSubmit}`,
+        "sas",
+        1,
+        [
+          "proc python;",
+          "submit;",
+          'print("Hello")',
+          `${endSubmit};`,
+          "run;",
+        ].join("\n"),
+      );
+      const languageServer = new LanguageServiceProvider(doc);
+      const codeZoneManager = languageServer.getCodeZoneManager();
+
+      assert.equal(
+        codeZoneManager.getCurrentZone(2, 1),
+        CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG,
+      );
+      assert.equal(
+        codeZoneManager.getCurrentZone(3, 1),
+        CodeZoneManager.ZONE_TYPE.PROC_STMT,
+      );
+      assert.equal(
+        codeZoneManager.getCurrentZone(4, 1),
+        CodeZoneManager.ZONE_TYPE.PROC_STMT,
+      );
+    });
+  }
+
   it("proc lua", () => {
     const doc = openDoc("server/testFixture/embedded_lang/proc_lua.sas");
     const languageServer = new LanguageServiceProvider(doc);

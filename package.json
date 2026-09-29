@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
-  "version": "1.20.0",
+  "version": "1.21.0",
   "categories": [
     "Programming Languages",
     "Data Science",
@@ -306,6 +306,18 @@
                               "USER",
                               "SYSTEM"
                             ]
+                          },
+                          "display": {
+                            "type": "object",
+                            "default": {},
+                            "description": "%configuration.SAS.connectionProfiles.profiles.display%",
+                            "properties": {
+                              "showHiddenItems": {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "%configuration.SAS.connectionProfiles.profiles.display.showHiddenItems%"
+                              }
+                            }
                           }
                         }
                       }
