@@ -16,10 +16,12 @@ import { createWriteStream } from "fs";
 import * as path from "path";
 
 import { profileConfig } from "../../commands/profile";
+import { reopenCodeRunnerQueue } from "../../connection/itc/CodeRunner";
 import DataViewer from "../../panels/DataViewer";
 import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
+import { ConnectionType } from "../profile";
 import { treeViewSelections } from "../utils/treeViewSelections";
 import LibraryAdapterFactory from "./LibraryAdapterFactory";
 import LibraryDataProvider from "./LibraryDataProvider";
@@ -66,7 +68,20 @@ class LibraryNavigator implements SubscriptionProvider {
           );
         },
       ),
-      commands.registerCommand("SAS.refreshLibraries", () => this.refresh()),
+      commands.registerCommand("SAS.refreshLibraries", () => {
+        const activeProfile = profileConfig.getProfileByName(
+          profileConfig.getActiveProfile(),
+        );
+
+        if (
+          activeProfile?.connectionType === ConnectionType.IOM ||
+          activeProfile?.connectionType === ConnectionType.COM
+        ) {
+          reopenCodeRunnerQueue();
+        }
+
+        return this.refresh();
+      }),
       commands.registerCommand("SAS.deleteTable", async (item: LibraryItem) => {
         const selectedItems = treeViewSelections(
           this.libraryDataProvider.treeView,
