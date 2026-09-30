@@ -141,21 +141,32 @@ export class SASCodeDocument {
     );
   }
 
+  private quoteSasMacroValue(value: string): string {
+    return value.replace(/%/g, "%%").replace(/[()'"]/g, "%$&");
+  }
+
   private wrapCodeWithSASProgramFileName(code: string): string {
-    let fileName = this.parameters.fileName;
+    const fileName = this.parameters.fileName;
     let uri = this.parameters.uri;
 
     if (this.isSasContentUri(uri)) {
       const uriObj = Uri.parse(uri);
       // Preserve the SAS Content URI as sascontent:/files/files/<uuid>.
       uri = uriObj.query.replace("id=", "sascontent:");
-      return "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + uri + "));\n" + code;
+      return (
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(" +
+        this.quoteSasMacroValue(uri) +
+        "));\n" +
+        code
+      );
     }
 
     if (fileName !== undefined) {
-      fileName = fileName.replace(/[()'"]/g, "%$&");
       return (
-        "%let _SASPROGRAMFILE = %nrquote(%nrstr(" + fileName + "));\n" + code
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(" +
+        this.quoteSasMacroValue(fileName) +
+        "));\n" +
+        code
       );
     }
 
@@ -167,14 +178,14 @@ export class SASCodeDocument {
     // SAS Content files have no readable parent folder without an extra
     // service call, which isn't possible during session init (LOCKDOWN);
     if (this.isSasContentUri(this.parameters.uri)) {
-      return code;
+      return "%symdel _SASPROGRAMDIR / nowarn;\n" + code;
     }
 
     if (this.parameters.fileName === undefined) {
-      return code;
+      return "%symdel _SASPROGRAMDIR / nowarn;\n" + code;
     }
 
-    const baseDirectory = this.getBaseDirectory().replace(/[()'"]/g, "%$&");
+    const baseDirectory = this.quoteSasMacroValue(this.getBaseDirectory());
     return (
       "%let _SASPROGRAMDIR = %nrquote(%nrstr(" + baseDirectory + "));\n" + code
     );

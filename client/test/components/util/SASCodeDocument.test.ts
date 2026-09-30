@@ -35,6 +35,7 @@ selected python code`,
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
+%symdel _SASPROGRAMDIR / nowarn;
 proc python;
 submit;
 python code
@@ -67,6 +68,7 @@ print("test")`,
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
+%symdel _SASPROGRAMDIR / nowarn;
 proc r;
 submit;
 for (x in 1:6) {
@@ -98,6 +100,7 @@ run;
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
+%symdel _SASPROGRAMDIR / nowarn;
 proc sql;
 SELECT * FROM issues WHERE issue.developer = 'scnjdl'
 ;quit;
@@ -176,8 +179,8 @@ run;
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
-%let _SASPROGRAMDIR = %nrquote(%nrstr(c:\\temp\\My Test\\R&D\\mean%(95%CI%)));
-%let _SASPROGRAMFILE = %nrquote(%nrstr(c:\\temp\\My Test\\R&D\\mean%(95%CI%)\\Parkinson%'s Disease example.sas));
+%let _SASPROGRAMDIR = %nrquote(%nrstr(c:\\temp\\My Test\\R&D\\mean%(95%%CI%)));
+%let _SASPROGRAMFILE = %nrquote(%nrstr(c:\\temp\\My Test\\R&D\\mean%(95%%CI%)\\Parkinson%'s Disease example.sas));
 %put &=_SASPROGRAMFILE;
 ;*';*";*/;run;quit;ods html5(id=vscode) close;
 `;
@@ -210,8 +213,8 @@ ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inl
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
-%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)));
-%let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)/Parkinson%'s Disease example.sas));
+%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)));
+%let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)/Parkinson%'s Disease example.sas));
 %put &=_SASPROGRAMFILE;
 ;*';*";*/;run;quit;ods html5(id=vscode) close;
 `;
@@ -244,8 +247,8 @@ ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inl
     const expected = `/** LOG_START_INDICATOR **/
 title;footnote;ods _all_ close;\nods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
-%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)));
-%let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)/Parkinson%'s Disease example.sas));
+%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)));
+%let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)/Parkinson%'s Disease example.sas));
 cas; caslib _all_ assign;
 
   data casuser.cascars; set sashelp.cars; run;
@@ -279,8 +282,8 @@ cas; caslib _all_ assign;
       "wrapped code should not include _SASPROGRAMFILE when fileName and uri are not provided",
     );
     assert(
-      !wrappedCode.includes("_SASPROGRAMDIR"),
-      "wrapped code should not include _SASPROGRAMDIR when fileName and uri are not provided",
+      wrappedCode.includes("%symdel _SASPROGRAMDIR / nowarn;"),
+      "wrapped code should clear _SASPROGRAMDIR when fileName and uri are not provided",
     );
     assert(
       wrappedCode.includes("data test; run;"),
@@ -306,15 +309,37 @@ cas; caslib _all_ assign;
 
     assert(
       wrappedCode.includes(
-        "%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)));",
+        "%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)));",
       ),
       "wrapped code should include _SASPROGRAMDIR with the directory of fileName",
     );
     assert(
       wrappedCode.includes(
-        "%let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)/Parkinson%'s Disease example.sas));",
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)/Parkinson%'s Disease example.sas));",
       ),
       "wrapped code should include _SASPROGRAMFILE with the full fileName",
+    );
+  });
+
+  it("escapes a percent at the end of a directory", () => {
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "%put &=_SASPROGRAMDIR;",
+      selectedCode: "",
+      fileName: "/tmp/100%/macro_test.sas",
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/100%%));",
+      ),
+      "wrapped code should escape a trailing percent in the directory",
     );
   });
 
@@ -334,8 +359,8 @@ cas; caslib _all_ assign;
     const wrappedCode = sasCodeDoc.getWrappedCode();
 
     assert(
-      !wrappedCode.includes("_SASPROGRAMDIR"),
-      "wrapped code should not include _SASPROGRAMDIR for sasContent URIs, since the readable parent folder cannot be resolved during session init",
+      wrappedCode.includes("%symdel _SASPROGRAMDIR / nowarn;"),
+      "wrapped code should clear _SASPROGRAMDIR for sasContent URIs",
     );
     assert(
       wrappedCode.includes(
@@ -390,8 +415,8 @@ cas; caslib _all_ assign;
       "wrapped code should include _SASPROGRAMFILE with sascontent: prefix from sasContent URI",
     );
     assert(
-      !wrappedCode.includes("_SASPROGRAMDIR"),
-      "wrapped code should not include _SASPROGRAMDIR for sasContent notebook URIs",
+      wrappedCode.includes("%symdel _SASPROGRAMDIR / nowarn;"),
+      "wrapped code should clear _SASPROGRAMDIR for sasContent notebook URIs",
     );
   });
 
