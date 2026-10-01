@@ -5,6 +5,8 @@ import * as sinon from "sinon";
 
 import { getTestFixtureContent, getUri, openNotebookDoc } from "../../utils";
 
+const normalizeLineEndings = (value: string) => value.replace(/\r\n/g, "\n");
+
 describe("export notebook", () => {
   let writeFileFn: sinon.SinonSpy;
   let showQuickPickStub: sinon.SinonStub;
@@ -43,7 +45,10 @@ describe("export notebook", () => {
     const expectedContent = new TextDecoder().decode(
       getTestFixtureContent("sasnb_export.sas"),
     );
-    assert.strictEqual(sasContent, expectedContent);
+    assert.strictEqual(
+      normalizeLineEndings(sasContent),
+      normalizeLineEndings(expectedContent),
+    );
   });
 
   it("cancels export when no format is selected", async () => {

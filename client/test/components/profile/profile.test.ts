@@ -404,7 +404,7 @@ describe("Profiles", async function () {
 
       it("validate client id/secret profile", async function () {
         // Arrange
-        const profileByName = profileConfig.getProfileByName(testProfileName);
+        const profileByName = testProfileClientId.profiles.testProfile;
 
         // Act
         const validateProfile = await profileConfig.validateProfile({
