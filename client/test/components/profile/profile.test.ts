@@ -1,9 +1,13 @@
 import { ConfigurationTarget, workspace } from "vscode";
 
 import { assert, expect } from "chai";
+import { unlinkSync, writeFileSync } from "fs";
+import { join } from "path";
 
 import {
   AuthType,
+  AutoExec,
+  AutoExecType,
   COMProfile,
   ConnectionType,
   EXTENSION_CONFIG_KEY,
@@ -13,6 +17,7 @@ import {
   SSHProfile,
   ViyaProfile,
   getProfilePrompt,
+  toAutoExecLines,
 } from "../../../src/components/profile";
 
 let testProfileName: string;
@@ -999,5 +1004,70 @@ describe("Profiles", async function () {
         );
       });
     });
+  });
+});
+
+describe("toAutoExecLines", () => {
+  it("converts line autoexec entries to autoexec lines", () => {
+    const autoExec: AutoExec[] = [
+      {
+        type: AutoExecType.Line,
+        line: "%put LINE_AUTOEXEC;",
+      },
+    ];
+
+    expect(toAutoExecLines(autoExec)).to.deep.equal(["%put LINE_AUTOEXEC;"]);
+  });
+
+  it("converts file autoexec entries to autoexec lines", () => {
+    const filePath = join(__dirname, "autoexec.sas");
+    writeFileSync(filePath, "%put FILE_AUTOEXEC1;\n%put FILE_AUTOEXEC2;");
+
+    try {
+      const autoExec: AutoExec[] = [
+        {
+          type: AutoExecType.File,
+          filePath,
+        },
+      ];
+
+      expect(toAutoExecLines(autoExec)).to.deep.equal([
+        "%put FILE_AUTOEXEC1;",
+        "%put FILE_AUTOEXEC2;",
+      ]);
+    } finally {
+      unlinkSync(filePath);
+    }
+  });
+
+  it("preserves the order of line and file autoexec entries", () => {
+    const filePath = join(__dirname, "autoexec-order.sas");
+    writeFileSync(filePath, "%put FILE_AUTOEXEC1;\n%put FILE_AUTOEXEC2;");
+
+    try {
+      const autoExec: AutoExec[] = [
+        {
+          type: AutoExecType.Line,
+          line: "%put LINE_BEFORE;",
+        },
+        {
+          type: AutoExecType.File,
+          filePath,
+        },
+        {
+          type: AutoExecType.Line,
+          line: "%put LINE_AFTER;",
+        },
+      ];
+
+      expect(toAutoExecLines(autoExec)).to.deep.equal([
+        "%put LINE_BEFORE;",
+        "%put FILE_AUTOEXEC1;",
+        "%put FILE_AUTOEXEC2;",
+        "%put LINE_AFTER;",
+      ]);
+    } finally {
+      unlinkSync(filePath);
+    }
   });
 });
