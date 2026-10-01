@@ -20,6 +20,7 @@ import {
 import { updateStatusBarItem } from "../../components/StatusBarItem";
 import { Session } from "../session";
 import { extractOutputHtmlFileName } from "../util";
+import { closeCodeRunnerQueue } from "./CodeRunnerQueue";
 import { LineParser } from "./LineParser";
 import { getScript } from "./script";
 import { LineCodes, Tags } from "./script/env.json";
@@ -137,7 +138,14 @@ export class ITCSession extends Session {
       this._shellProcess.stdin.write(
         `$username = "${escapePowershellString(username)}"\n`,
       );
-      const password = await this.fetchPassword();
+      let password: string;
+
+      try {
+        password = await this.fetchPassword();
+      } catch (error) {
+        this.resetFailedConnection();
+        throw error;
+      }
       this._shellProcess.stdin.write(
         `$password = "${escapePowershellString(password)}"\n`,
       );
@@ -198,18 +206,26 @@ export class ITCSession extends Session {
 
     const source = new CancellationTokenSource();
     this._passwordInputCancellationTokenSource = source;
-    this._password =
-      (await window.showInputBox(
-        {
-          ignoreFocusOut: true,
-          password: true,
-          prompt: l10n.t("Enter your password for this connection."),
-          title: l10n.t("Enter your password"),
-        },
-        this._passwordInputCancellationTokenSource.token,
-      )) || "";
+    const password = await window.showInputBox(
+      {
+        ignoreFocusOut: true,
+        password: true,
+        prompt: l10n.t("Enter your password for this connection."),
+        title: l10n.t("Enter your password"),
+      },
+      this._passwordInputCancellationTokenSource.token,
+    );
 
-    return this._password;
+    this._passwordInputCancellationTokenSource = undefined;
+
+    if (password === undefined) {
+      this._connectionPromise = undefined;
+
+      throw new Error(l10n.t("Authentication cancelled."));
+    }
+
+    this._password = password;
+    return password;
   };
 
   /**
@@ -279,6 +295,17 @@ export class ITCSession extends Session {
    */
   protected _close = async (): Promise<void> => {
     return new Promise((resolve) => {
+      // this._pollingForLogResults = false;
+
+      // Prevent any new Library/Server ITC work from starting after Close.
+      closeCodeRunnerQueue();
+
+      this._runReject?.(new Error(l10n.t("The SAS session has closed.")));
+
+      // Cancel an IOM password prompt if setup is still waiting for it.
+      this._passwordInputCancellationTokenSource?.cancel();
+      this._passwordInputCancellationTokenSource = undefined;
+
       if (this._shellProcess) {
         this._shellProcess.stdin.write(
           "$runner.Close()\n",
@@ -344,6 +371,29 @@ export class ITCSession extends Session {
     }, 2 * 1000);
   };
 
+  private resetFailedConnection = (): void => {
+    this._pollingForLogResults = false;
+
+    // If we can't even run the shell script (i.e. powershell.exe not found),
+    // we'll also need to dismiss the password prompt
+    this._passwordInputCancellationTokenSource?.cancel();
+    this._passwordInputCancellationTokenSource = undefined;
+
+    this._shellProcess?.kill();
+    this._shellProcess = undefined;
+
+    this._workDirectory = undefined;
+
+    this._connectionPromise = undefined;
+
+    this._runReject = undefined;
+    this._runResolve = undefined;
+
+    sessionInstance = undefined;
+
+    this.clearPassword();
+  };
+
   /**
    * Handles stderr output from the powershell child process.
    * @param chunk a buffer of stderr output from the child process.
@@ -356,26 +406,19 @@ export class ITCSession extends Session {
       return;
     }
 
-    this._runReject(
-      new Error(this.fetchHumanReadableErrorMessage(errorMessage)),
-    );
+    const error = new Error(this.fetchHumanReadableErrorMessage(errorMessage));
 
     // If we encountered an error in setup, we need to go through everything again
+    this._runReject?.(error);
+
     const fatalErrors = [
       /Setup error/,
       /powershell\.exe/,
       /LoadingInterop error/,
     ];
-    if (fatalErrors.find((regex) => regex.test(errorMessage))) {
-      // If we can't even run the shell script (i.e. powershell.exe not found),
-      // we'll also need to dismiss the password prompt
-      this._passwordInputCancellationTokenSource &&
-        this._passwordInputCancellationTokenSource.cancel();
 
-      this.clearPassword();
-
-      this._shellProcess.kill();
-      this._workDirectory = undefined;
+    if (fatalErrors.some((regex) => regex.test(errorMessage))) {
+      this.resetFailedConnection();
     }
   };
 

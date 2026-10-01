@@ -17,6 +17,7 @@ import {
 } from "vscode";
 
 import { profileConfig } from "../../commands/profile";
+import { reopenCodeRunnerQueue } from "../../connection/itc/CodeRunner";
 import { getGlobalStorageUri } from "../ExtensionContext";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
@@ -247,9 +248,21 @@ class ContentNavigator implements SubscriptionProvider {
           window.showErrorMessage(Messages.EmptyRecycleBinError);
         }
       }),
-      commands.registerCommand(`${SAS}.refreshContent`, () =>
-        this.contentDataProvider.refresh(),
-      ),
+      commands.registerCommand(`${SAS}.refreshContent`, () => {
+        const activeProfile = profileConfig.getProfileByName(
+          profileConfig.getActiveProfile(),
+        );
+
+        if (
+          this.sourceType === ContentSourceType.SASServer &&
+          (activeProfile?.connectionType === ConnectionType.IOM ||
+            activeProfile?.connectionType === ConnectionType.COM)
+        ) {
+          reopenCodeRunnerQueue();
+        }
+
+        return this.contentDataProvider.refresh();
+      }),
       commands.registerCommand(
         `${SAS}.addFileResource`,
         async (resource: ContentItem) => {
