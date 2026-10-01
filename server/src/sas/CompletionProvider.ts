@@ -819,6 +819,11 @@ export class CompletionProvider {
           stmtName,
           optName,
           (data) => {
+            if (data && this.loader.isDataSetType(data.type)) {
+              this._notifyOptValue(cb, data, optName);
+              return;
+            }
+
             if (data && data.values && data.values.length > 0) {
               this._notifyOptValue(cb, data, optName);
               return;
@@ -1080,7 +1085,9 @@ export class CompletionProvider {
         );
         break;
       case ZONE_TYPE.LIB:
-        //TODO:
+        this.loader.getLibraryList((data: OptionValues) => {
+          this._notifyOptValue(cb, data, optName);
+        }, "DV");
         break;
       case ZONE_TYPE.MACRO_FUNC:
         this.loader.getMacroFunctions(cb);
