@@ -103,6 +103,7 @@ export class ITCSession extends Session {
       return; // manually terminate to avoid executing the code below
     }
 
+    this.notifySessionChanged("creating");
     this._shellProcess = spawn(
       "chcp 65001 >NUL & powershell.exe -NonInteractive -NoProfile -Command -",
       {

@@ -16,6 +16,7 @@ import { createWriteStream } from "fs";
 import * as path from "path";
 
 import { profileConfig } from "../../commands/profile";
+import { onDidChangeSession } from "../../connection/session";
 import DataViewer from "../../panels/DataViewer";
 import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
@@ -45,6 +46,13 @@ class LibraryNavigator implements SubscriptionProvider {
   public getSubscriptions(): Disposable[] {
     return [
       ...this.libraryDataProvider.getSubscriptions(),
+      onDidChangeSession((reason) => {
+        Object.values(this.webviewManager.panels).forEach((viewer) => {
+          if (viewer instanceof DataViewer) {
+            viewer.invalidateColumns(reason);
+          }
+        });
+      }),
       commands.registerCommand(
         "SAS.viewTable",
         async (
