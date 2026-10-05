@@ -68,7 +68,7 @@ export const DataViewer = () => {
     // },
     getRowData: (rowIndex: string) => gridRef.current?.api.getRowNode(rowIndex),
     enabled: !gridDragging,
-    scrollContainer: ".ag-body-viewport",
+    scrollContainer: ".ag-grid-scrolling-container",
     scrollBoundaries: ".ag-root",
   });
 

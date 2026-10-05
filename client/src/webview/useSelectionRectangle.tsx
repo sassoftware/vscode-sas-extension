@@ -218,7 +218,7 @@ export const useSelectionRectangle = ({
 
   const getClosestRow = (target: Target) => {
     const firstCell = target.closest(".ag-cell");
-    const firstRow = firstCell && firstCell.parentElement;
+    const firstRow = firstCell && firstCell.parentElement.parentElement;
     if (!firstCell || !firstRow) {
       return { row: -1, column: -1 };
     }
@@ -231,7 +231,7 @@ export const useSelectionRectangle = ({
   };
 
   /**
-   * Initializes a rectangular selection using a point and sets ofur first
+   * Initializes a rectangular selection using a point and sets our first
    * selected grid cell
    */
   const initRectangularSelection = (target: Target) => {
