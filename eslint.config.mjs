@@ -53,6 +53,7 @@ export default [
           "./tsconfig.json",
           "./client/tsconfig.json",
           "./server/tsconfig.json",
+          "./tsconfig.vitest.json",
         ],
       },
     },

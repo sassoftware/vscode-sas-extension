@@ -25,7 +25,7 @@ const gridStyles = {
   width: "100%",
 };
 
-const DataViewer = () => {
+export const DataViewer = () => {
   const title = document
     .querySelector("[data-title]")
     .getAttribute("data-title");
