@@ -116,10 +116,11 @@ Here is the testing process proposal for this project (Code is merged in pull re
   - If the issues are not fixed in topic branch code, testers add comments in the pull request. Testers wait for developer's investigation and retest updated topic branch build. Once all the issues are fixed in new topic branch build, testers approve the pull request. Testers remove label "testing" and add label "test complete", then change assignee to developer.
 - Developers merge code to main branch and change assignee to tester.
 - Testers remove label "test complete" and verify the pull request in main branch. Testers verify readme content is changed and correct if label "doc needed" exists in this PR.
-  - If the issues are fixed in main branch, testers add label "verified" in pull request.
+  - If the issues are fixed in main branch, testers add label "verified" to the pull request and update the GitHub issue status to 'Done'. The pull request stays assigned to the tester until the release check.
   - If the issues are not fixed in main branch, testers add comments in the pull request, reopen the pull request and assign it to developer.
-- If no issues are found in the final validation, testers remove label "verified", add label "ready for release" in PRs, and assign the PR back to developer.
-- Developer marks the status of the GitHub issue to 'Done' and assigns the issue to David Bailey (davidbaileync)
+- Before each release, testers re-verify every pull request still assigned to them with label "verified", using the release candidate build.
+  - If no issues are found, testers remove label "verified", add label "ready for release", and assign the pull request and its GitHub issue to David Bailey (davidbaileync).
+  - If an issue is found, testers add comments in the pull request, open a new issue or reopen the existing one, and assign it to the developer.
 - The manager adds the milestone and close the GitHub issue.
 
 ![Testing process diagram](img/test-process-diagram.png)
