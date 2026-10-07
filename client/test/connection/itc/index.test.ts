@@ -13,7 +13,7 @@ import { getSession } from "../../../src/connection/itc";
 import * as scripts from "../../../src/connection/itc/script";
 import { LineCodes, Tags } from "../../../src/connection/itc/script/env.json";
 import { ITCProtocol } from "../../../src/connection/itc/types";
-import { Session } from "../../../src/connection/session";
+import { Session, onDidChangeSession } from "../../../src/connection/session";
 import { extensionContext } from "../../../src/node/extension";
 
 describe("ITC connection", () => {
@@ -128,6 +128,25 @@ describe("ITC connection", () => {
       expect(stdinStub.args[12][0]).to.deep.equal(
         `$runner.SetOptions($sasOpts)\n`,
       );
+    });
+
+    it("notifies session change when a new session is created", async () => {
+      const sessionChanged = sandbox.spy();
+      const subscription = onDidChangeSession(sessionChanged);
+
+      const setupPromise = session.setup();
+
+      expect(sessionChanged.calledOnce).to.equal(true);
+
+      onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
+      onDataCallback(Buffer.from(`/work/dir`));
+      onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
+
+      await setupPromise;
+
+      expect(sessionChanged.calledOnce).to.equal(true);
+
+      subscription.dispose();
     });
   });
 

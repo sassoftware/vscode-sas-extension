@@ -18,6 +18,7 @@ export interface ColumnMenuProps {
   removeFromSort: () => void;
   sortColumn: (direction: "asc" | "desc") => void;
   top: number;
+  onManageColumns?: () => void | Promise<void>;
 }
 
 // Lets pick off only the column properties we care about.
@@ -33,6 +34,7 @@ export const getColumnMenu = (
   { height, top, left }: DOMRect,
   dismissMenu: () => void,
   loadColumnProperties: (columnName: string) => void,
+  onManageColumns?: () => void | Promise<void>,
 ): ColumnMenuProps => ({
   column,
   dismissMenu,
@@ -92,6 +94,7 @@ export const getColumnMenu = (
   loadColumnProperties: () => {
     loadColumnProperties(column.colId);
   },
+  onManageColumns: () => onManageColumns?.(),
 });
 
 const ColumnMenu = ({
@@ -100,6 +103,7 @@ const ColumnMenu = ({
   hasSort,
   left,
   loadColumnProperties,
+  onManageColumns,
   pinColumn,
   removeAllSorting,
   removeFromSort,
@@ -188,6 +192,13 @@ const ColumnMenu = ({
     {
       name: localize("Properties"),
       onPress: loadColumnProperties,
+    },
+    "separator",
+    {
+      name: localize("Manage Columns"),
+      onPress: () => {
+        void onManageColumns?.();
+      },
     },
   ];
 

@@ -5,6 +5,8 @@ import * as sinon from "sinon";
 
 import LibraryNavigator from "../../../src/components/LibraryNavigator";
 import PaginatedResultSet from "../../../src/components/LibraryNavigator/PaginatedResultSet";
+import type { RunResult } from "../../../src/connection";
+import { Session } from "../../../src/connection/session";
 import DataViewer from "../../../src/panels/DataViewer";
 import TablePropertiesViewer from "../../../src/panels/TablePropertiesViewer";
 
@@ -16,6 +18,21 @@ interface WebviewMessagePanel {
 
 class RefreshTrackingPanel {
   public readonly refreshData = sinon.spy();
+  public readonly invalidateColumns = sinon.spy();
+}
+
+class MockSession extends Session {
+  protected async establishConnection(): Promise<void> {}
+
+  protected _run(): Promise<RunResult> {
+    throw new Error("Method not implemented.");
+  }
+
+  protected _close(): Promise<void> | void {}
+
+  public sessionId(): string | undefined {
+    return;
+  }
 }
 
 const createDataViewer = () =>
@@ -57,6 +74,26 @@ const createTablePropertiesViewer = () =>
       },
     ],
   );
+
+const createNavigatorForSessionChange = (
+  panels: Record<string, unknown>,
+): LibraryNavigator => {
+  const navigator: LibraryNavigator = Object.create(LibraryNavigator.prototype);
+
+  Object.defineProperty(navigator, "libraryDataProvider", {
+    value: {
+      getSubscriptions: () => [],
+    },
+  });
+
+  Object.defineProperty(navigator, "webviewManager", {
+    value: {
+      panels,
+    },
+  });
+
+  return navigator;
+};
 
 describe("LibraryNavigator refresh flow", async function () {
   it("DataViewer.refreshData posts panel refresh message", () => {
@@ -112,5 +149,47 @@ describe("LibraryNavigator refresh flow", async function () {
     expect(tableViewerRefresh.calledOnce).to.equal(true);
     expect(tablePropertiesViewerRefresh.calledOnce).to.equal(true);
     expect(nonTablePanel.refreshData.called).to.equal(false);
+  });
+
+  it("invalidates an open DataViewer when the session changes", () => {
+    const tableViewer = createDataViewer();
+    const invalidateColumns = sinon.stub(tableViewer, "invalidateColumns");
+
+    const navigator = createNavigatorForSessionChange({
+      table: tableViewer,
+    });
+
+    const subscriptions = navigator.getSubscriptions();
+
+    const session = new MockSession();
+
+    session.close();
+
+    expect(invalidateColumns.calledOnce).to.equal(true);
+
+    subscriptions.forEach((subscription) => subscription.dispose());
+  });
+
+  it("does not invalidate non-DataViewer panels when the session changes", () => {
+    const tableViewer = createDataViewer();
+    const invalidateColumns = sinon.stub(tableViewer, "invalidateColumns");
+
+    const nonDataViewer = new RefreshTrackingPanel();
+
+    const navigator = createNavigatorForSessionChange({
+      table: tableViewer,
+      other: nonDataViewer,
+    });
+
+    const subscriptions = navigator.getSubscriptions();
+
+    const session = new MockSession();
+
+    session.close();
+
+    expect(invalidateColumns.calledOnce).to.equal(true);
+    expect(nonDataViewer.invalidateColumns.called).to.equal(false);
+
+    subscriptions.forEach((subscription) => subscription.dispose());
   });
 });

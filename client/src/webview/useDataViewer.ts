@@ -25,6 +25,7 @@ import type {
 import ColumnHeader from "./ColumnHeader";
 import { ColumnMenuProps, getColumnMenu } from "./ColumnMenu";
 import localize from "./localize";
+import useManageColumns from "./useManageColumns";
 
 declare const acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
@@ -86,15 +87,10 @@ const queryTableData = (
   });
 };
 
-let fetchColumnsTimeoutId: ReturnType<typeof setTimeout> | null = null;
-const clearFetchColumnsTimeout = () =>
-  fetchColumnsTimeoutId && clearTimeout(fetchColumnsTimeoutId);
 const fetchColumns = (): Promise<{
   columns: TableColumn[];
 }> => {
   const requestKey = v4();
-  vscode.postMessage({ command: "request:loadColumns", key: requestKey });
-
   return new Promise((resolve, reject) => {
     const commandHandler = (event) => {
       const { data } = event.data;
@@ -103,36 +99,63 @@ const fetchColumns = (): Promise<{
       }
       if (event.data.command === "response:loadColumns") {
         window.removeEventListener("message", commandHandler);
-        clearFetchColumnsTimeout();
-        resolve(data);
+        clearTimeout(fetchColumnsTimeoutId);
+        if (event.data.error !== undefined) {
+          reject(new Error(event.data.error));
+        } else {
+          resolve(data);
+        }
       }
     };
 
-    clearFetchColumnsTimeout();
-    fetchColumnsTimeoutId = setTimeout(() => {
+    const fetchColumnsTimeoutId = setTimeout(() => {
       window.removeEventListener("message", commandHandler);
       reject(new Error("Timeout exceeded"));
     }, defaultTimeout);
 
     window.addEventListener("message", commandHandler);
+    vscode.postMessage({ command: "request:loadColumns", key: requestKey });
   });
 };
 
-const useDataViewer = () => {
+const useDataViewer = (
+  setColumnState?: (state: ColumnState[]) => void,
+  resetColumnState?: () => void,
+) => {
   const gridRef = useRef<AgGridReact>(null);
   const [columns, setColumns] = useState<ColDef[]>([]);
   const [columnMenu, setColumnMenu] = useState<ColumnMenuProps | undefined>();
   const [queryParams, setQueryParamsState] = useState<TableQuery | undefined>(
     undefined,
   );
-  const setQueryParams = (query: TableQuery | undefined) => {
-    setQueryParamsState(query);
-  };
+  const [columnsLoadFailed, setColumnsLoadFailed] = useState(false);
+  const [reloadVersion, setReloadVersion] = useState(0);
 
   const columnMenuRef = useRef<ColumnMenuProps | undefined>(columnMenu);
+
   useEffect(() => {
     columnMenuRef.current = columnMenu;
   }, [columnMenu]);
+
+  /*
+   * Reset the Table Viewer columns.
+   *
+   * reloadVersion ensures that a reload is also triggered when the
+   * columns are already empty.
+   */
+  const resetColumns = useCallback(() => {
+    setColumnsLoadFailed(false);
+    resetColumnState?.();
+    setColumns([]);
+    setReloadVersion((value) => value + 1);
+  }, [resetColumnState]);
+
+  const { manageColumnsOpen, setManageColumnsOpen, openManageColumns } =
+    useManageColumns({
+      gridRef,
+      fetchColumns,
+      setColumnState,
+    });
 
   const dataSource = useCallback(
     (incomingQueryParams?: TableQuery) => ({
@@ -182,7 +205,7 @@ const useDataViewer = () => {
     [dataSource],
   );
 
-  const dismissMenu = (focusColumn: boolean = true) => {
+  const dismissMenu = useCallback((focusColumn: boolean = true) => {
     if (focusColumn && columnMenuRef.current?.column.colId) {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const headerElement = document.querySelector(
@@ -193,32 +216,64 @@ const useDataViewer = () => {
       }
     }
     setColumnMenu(undefined);
-  };
+  }, []);
 
   const refreshResults = useCallback(
     (query: TableQuery | undefined) => {
-      const params = queryParams ? { ...queryParams, ...(query || {}) } : query;
-      setQueryParams(params);
-      gridRef.current.api.setGridOption("datasource", dataSource(params));
+      const params = queryParams
+        ? {
+            ...queryParams,
+            ...(query || {}),
+          }
+        : query;
+
+      setQueryParamsState(params);
+
+      gridRef.current?.api.setGridOption("datasource", dataSource(params));
     },
     [dataSource, queryParams],
   );
 
+  const retryColumns = useCallback(() => {
+    setQueryParamsState(undefined);
+    setColumnMenu(undefined);
+    resetColumns();
+  }, [resetColumns]);
+
   const displayMenuForColumn = useCallback(
     (api: GridApi, column: AgColumn, rect: DOMRect) => {
       if (columnMenuRef.current?.column) {
-        return setColumnMenu(undefined);
+        setColumnMenu(undefined);
+        return;
       }
       setColumnMenu(
-        getColumnMenu(api, column, rect, dismissMenu, (columnName: string) => {
-          vscode.postMessage({
-            command: "request:loadColumnProperties",
-            data: { columnName },
-          });
-        }),
+        getColumnMenu(
+          api,
+          column,
+          rect,
+          dismissMenu,
+          (columnName: string) => {
+            vscode.postMessage({
+              command: "request:loadColumnProperties",
+              data: { columnName },
+            });
+          },
+          async () => {
+            const opened = await openManageColumns();
+
+            /*
+             * Like Properties, leave the menu visible while the request
+             * is waiting for a session. Only dismiss it after Manage
+             * Columns successfully opens.
+             */
+            if (opened) {
+              dismissMenu(false);
+            }
+          },
+        ),
       );
     },
-    [],
+    [dismissMenu, openManageColumns],
   );
 
   useEffect(() => {
@@ -226,65 +281,73 @@ const useDataViewer = () => {
       return;
     }
 
-    fetchColumns().then(({ columns: columnsData }) => {
-      const columns: ColDef[] = columnsData.map((column) => ({
-        field: column.name,
-        headerComponent: ColumnHeader,
-        headerComponentParams: {
-          columnType: column.type || "",
-          columnFormatCategory: column.formatCategory,
-          currentColumn: () => columnMenuRef.current?.column,
-          displayMenuForColumn,
-        },
-        suppressHeaderKeyboardEvent: (
-          params: SuppressHeaderKeyboardEventParams,
-        ) => {
-          // If a user tabs to a different column, dismiss the column menu
-          if (params.event.key === "Tab") {
-            setColumnMenu(undefined);
-            return false;
-          }
-          if (
-            params.event.key === "Enter" ||
-            (params.event.key === "F10" && params.event.shiftKey)
-          ) {
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            const dropdown = (params.event.target as HTMLElement).querySelector(
-              ".dropdown",
-            );
-            if (!dropdown) {
+    fetchColumns()
+      .then(({ columns: columnsData }) => {
+        const columns: ColDef[] = columnsData.map((column) => ({
+          field: column.name,
+          headerComponent: ColumnHeader,
+          headerComponentParams: {
+            columnType: column.type || "",
+            columnFormatCategory: column.formatCategory,
+            currentColumn: () => columnMenuRef.current?.column,
+            displayMenuForColumn,
+          },
+          suppressHeaderKeyboardEvent: (
+            params: SuppressHeaderKeyboardEventParams,
+          ) => {
+            // If a user tabs to a different column, dismiss the column menu
+            if (params.event.key === "Tab") {
+              setColumnMenu(undefined);
+              return false;
+            }
+            if (
+              params.event.key === "Enter" ||
+              (params.event.key === "F10" && params.event.shiftKey)
+            ) {
+              const target = params.event.target;
+              if (!(target instanceof HTMLElement)) {
+                return true;
+              }
+              const dropdown = target.querySelector(".dropdown");
+
+              if (!dropdown) {
+                return true;
+              }
+              if (!dropdown.classList.contains("active")) {
+                dropdown.classList.add("active");
+              }
+              const dropdownButton = dropdown.querySelector("button");
+              displayMenuForColumn(
+                params.api,
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                params.column as AgColumn,
+                dropdownButton.getBoundingClientRect(),
+              );
+              params.event.stopPropagation();
               return true;
             }
-            if (!dropdown.classList.contains("active")) {
-              dropdown.classList.add("active");
-            }
-            const dropdownButton = dropdown.querySelector("button");
-            displayMenuForColumn(
-              params.api,
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-              params.column as AgColumn,
-              dropdownButton.getBoundingClientRect(),
-            );
-            params.event.stopPropagation();
-            return true;
-          }
-          return false;
-        },
-      }));
+            return false;
+          },
+        }));
 
-      columns.unshift({
-        field: "#",
-        headerTooltip: localize("Row number"),
-        pinned: "left",
-        lockPinned: true,
-        lockPosition: true,
-        sortable: false,
-        suppressMovable: true,
+        columns.unshift({
+          field: "#",
+          headerTooltip: localize("Row number"),
+          pinned: "left",
+          lockPinned: true,
+          lockPosition: true,
+          sortable: false,
+          suppressMovable: true,
+        });
+
+        setColumns(columns);
+      })
+      .catch((error) => {
+        // The extension-side loadColumns handler displays server errors.
+        console.error(error);
+        setColumnsLoadFailed(true);
       });
-
-      setColumns(columns);
-    });
-  }, [columns.length, displayMenuForColumn]);
+  }, [columns.length, displayMenuForColumn, reloadVersion]);
 
   useEffect(() => {
     window.addEventListener("contextmenu", contextMenuHandler, true);
@@ -297,11 +360,16 @@ const useDataViewer = () => {
   return {
     columnMenu,
     columns,
-    setColumns,
     dismissMenu,
     gridRef,
+    openManageColumns,
+    columnsLoadFailed,
+    retryColumns,
+    manageColumnsOpen,
     onGridReady,
     refreshResults,
+    resetColumns,
+    setManageColumnsOpen,
   };
 };
 
