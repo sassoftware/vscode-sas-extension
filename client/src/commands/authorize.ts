@@ -5,6 +5,7 @@ import { authentication, commands, window } from "vscode";
 import { SASAuthProvider } from "../components/AuthProvider";
 import LibraryNavigator from "../components/LibraryNavigator";
 import { ConnectionType } from "../components/profile";
+import { reopenCodeRunnerQueue } from "../connection/itc/CodeRunner";
 import { profileConfig, switchProfile } from "./profile";
 
 const finishAuthorization = (profileConfig): boolean => {
@@ -40,6 +41,7 @@ export const checkProfileAndAuthorize =
         return finishAuthorization(profileConfig);
       case ConnectionType.IOM:
       case ConnectionType.COM:
+        reopenCodeRunnerQueue();
         commands.executeCommand("setContext", "SAS.librariesDisplayed", true);
         commands.executeCommand("setContext", "SAS.serverDisplayed", true);
         libraryNavigator.refresh();

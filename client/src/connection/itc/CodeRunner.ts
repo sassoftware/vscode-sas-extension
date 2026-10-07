@@ -1,6 +1,6 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { commands } from "vscode";
+import { commands, l10n } from "vscode";
 
 import { v4 } from "uuid";
 
@@ -9,10 +9,22 @@ import { LogLine, getSession } from "..";
 import { useRunStore } from "../../store";
 import { Session } from "../session";
 import { extractTextBetweenTags } from "../util";
+import {
+  isCodeRunnerQueueClosed,
+  resetCodeRunnerQueue,
+} from "./CodeRunnerQueue";
 
 let wait: Promise<string> | undefined;
 
+export const reopenCodeRunnerQueue = (): void => {
+  wait = undefined;
+  resetCodeRunnerQueue();
+};
+
 export async function executeRawCode(code: string): Promise<string> {
+  if (isCodeRunnerQueueClosed()) {
+    throw new Error(l10n.t("The SAS session has closed."));
+  }
   const randomId = v4();
   const startTag = `<${randomId}>`;
   const endTag = `</${randomId}>`;
@@ -37,6 +49,10 @@ export async function runCode(
   startTag: string = "",
   endTag: string = "",
 ): Promise<string> {
+  if (isCodeRunnerQueueClosed()) {
+    throw new Error(l10n.t("The SAS session has closed."));
+  }
+
   const task = () =>
     _runCode(
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
