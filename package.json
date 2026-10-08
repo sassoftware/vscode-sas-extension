@@ -2,7 +2,7 @@
   "name": "sas-lsp",
   "displayName": "SAS",
   "description": "Official SAS Language Extension for VS Code",
-  "version": "1.20.0",
+  "version": "1.21.0",
   "categories": [
     "Programming Languages",
     "Data Science",
@@ -152,6 +152,9 @@
     ],
     "configuration": [
       {
+        "title": "%configuration.title.SAS.general%",
+        "order": 0,
+        "type": "object",
         "properties": {
           "SAS.connectionProfiles": {
             "order": 0,
@@ -306,6 +309,18 @@
                               "USER",
                               "SYSTEM"
                             ]
+                          },
+                          "display": {
+                            "type": "object",
+                            "default": {},
+                            "description": "%configuration.SAS.connectionProfiles.profiles.display%",
+                            "properties": {
+                              "showHiddenItems": {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "%configuration.SAS.connectionProfiles.profiles.display.showHiddenItems%"
+                              }
+                            }
                           }
                         }
                       }
@@ -465,6 +480,91 @@
               "type": "string"
             }
           },
+          "SAS.notebook.export.includeLog": {
+            "order": 10,
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.SAS.notebook.export.includeLog%"
+          },
+          "SAS.flowConversionMode": {
+            "order": 6,
+            "type": "string",
+            "default": "Swimlane",
+            "enum": [
+              "Swimlane",
+              "Node"
+            ],
+            "description": "%configuration.SAS.flowConversionMode%",
+            "enumDescriptions": [
+              "%configuration.SAS.flowConversionModeSwimlane%",
+              "%configuration.SAS.flowConversionModeNode%"
+            ]
+          },
+          "SAS.notebook.outputVisibility": {
+            "order": 11,
+            "type": "string",
+            "default": "clean",
+            "enum": [
+              "clean",
+              "raw"
+            ],
+            "enumDescriptions": [
+              "%configuration.SAS.notebook.outputVisibility.clean%",
+              "%configuration.SAS.notebook.outputVisibility.raw%"
+            ],
+            "description": "%configuration.SAS.notebook.outputVisibility%"
+          },
+          "SAS.notebook.python.autoPrintMethod": {
+            "order": 12,
+            "type": "string",
+            "default": "(auto)",
+            "enum": [
+              "(auto)",
+              "SAS.show"
+            ],
+            "enumDescriptions": [
+              "%configuration.SAS.notebook.python.autoPrintMethod.auto%",
+              "%configuration.SAS.notebook.python.autoPrintMethod.SAS.show%"
+            ],
+            "description": "%configuration.SAS.notebook.python.autoPrintMethod%"
+          }
+        }
+      },
+      {
+        "title": "%configuration.title.SAS.codeAndLog%",
+        "order": 1,
+        "type": "object",
+        "properties": {
+          "SAS.log.showOnExecutionStart": {
+            "order": 7,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.showOnExecutionStart%"
+          },
+          "SAS.log.showOnExecutionFinish": {
+            "order": 8,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.showOnExecutionFinish%"
+          },
+          "SAS.log.clearOnExecutionStart": {
+            "order": 9,
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.log.clearOnExecutionStart%"
+          },
+          "SAS.problems.log.enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "%configuration.SAS.problems.log.enabled%"
+          }
+        }
+      },
+      {
+        "title": "%configuration.title.SAS.results%",
+        "order": 2,
+        "type": "object",
+        "properties": {
           "SAS.results.sideBySide": {
             "order": 2,
             "type": "boolean",
@@ -537,77 +637,6 @@
                 "description": "%configuration.SAS.results.html.custom.style.highContrastLight%"
               }
             }
-          },
-          "SAS.problems.log.enabled": {
-            "type": "boolean",
-            "default": true,
-            "description": "%configuration.SAS.problems.log.enabled%"
-          },
-          "SAS.flowConversionMode": {
-            "order": 6,
-            "type": "string",
-            "default": "Swimlane",
-            "enum": [
-              "Swimlane",
-              "Node"
-            ],
-            "description": "%configuration.SAS.flowConversionMode%",
-            "enumDescriptions": [
-              "%configuration.SAS.flowConversionModeSwimlane%",
-              "%configuration.SAS.flowConversionModeNode%"
-            ]
-          },
-          "SAS.log.showOnExecutionStart": {
-            "order": 7,
-            "type": "boolean",
-            "default": true,
-            "description": "%configuration.SAS.log.showOnExecutionStart%"
-          },
-          "SAS.log.showOnExecutionFinish": {
-            "order": 8,
-            "type": "boolean",
-            "default": true,
-            "description": "%configuration.SAS.log.showOnExecutionFinish%"
-          },
-          "SAS.log.clearOnExecutionStart": {
-            "order": 9,
-            "type": "boolean",
-            "default": true,
-            "description": "%configuration.SAS.log.clearOnExecutionStart%"
-          },
-          "SAS.notebook.export.includeLog": {
-            "order": 10,
-            "type": "boolean",
-            "default": false,
-            "description": "%configuration.SAS.notebook.export.includeLog%"
-          },
-          "SAS.notebook.outputVisibility": {
-            "order": 11,
-            "type": "string",
-            "default": "clean",
-            "enum": [
-              "clean",
-              "raw"
-            ],
-            "enumDescriptions": [
-              "%configuration.SAS.notebook.outputVisibility.clean%",
-              "%configuration.SAS.notebook.outputVisibility.raw%"
-            ],
-            "description": "%configuration.SAS.notebook.outputVisibility%"
-          },
-          "SAS.notebook.python.autoPrintMethod": {
-            "order": 12,
-            "type": "string",
-            "default": "(auto)",
-            "enum": [
-              "(auto)",
-              "SAS.show"
-            ],
-            "enumDescriptions": [
-              "%configuration.SAS.notebook.python.autoPrintMethod.auto%",
-              "%configuration.SAS.notebook.python.autoPrintMethod.SAS.show%"
-            ],
-            "description": "%configuration.SAS.notebook.python.autoPrintMethod%"
           }
         }
       }
@@ -1532,7 +1561,7 @@
     "locale": "npx @vscode/l10n-dev export -o ./l10n ./client/src && node ./tools/locale.mjs"
   },
   "devDependencies": {
-    "@eslint/compat": "2.1.0",
+    "@eslint/compat": "2.1.1",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.10",
@@ -1553,14 +1582,14 @@
     "mocha": "^11.8.0",
     "papaparse": "^5.7.0",
     "path-browserify": "^1.0.1",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.9",
     "proxyquire": "^2.1.3",
     "sinon": "^21.0.3",
     "ts-loader": "^9.6.2",
     "ts-node": "^10.9.2",
     "ts-sinon": "^2.0.2",
     "typescript": "^5.5.3",
-    "webpack": "^5.109.2",
-    "webpack-cli": "^7.2.2"
+    "webpack": "^5.111.1",
+    "webpack-cli": "^7.2.3"
   }
 }
