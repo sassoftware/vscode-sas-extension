@@ -87,6 +87,97 @@ describe("SAS symbol provider", () => {
     );
   });
 
+  it("separates global and local macro variables with the same name", () => {
+    const { document, provider } = createProvider(
+      "%global scopeFlag;\n%let scopeFlag=GLOBAL;\n%macro firstScope;\n  %local scopeFlag;\n  %let scopeFlag=FIRST;\n  %put first=&scopeFlag;\n%mend firstScope;\n%macro secondScope;\n  %local scopeFlag;\n  %let scopeFlag=SECOND;\n  %put second=&scopeFlag;\n%mend secondScope;\n%macro readsGlobal;\n  %put inherited=&scopeFlag;\n%mend readsGlobal;\n%put outside=&scopeFlag;",
+    );
+
+    const globalReferences = provider.getReferences(
+      document.uri,
+      { line: 1, character: 8 },
+      true,
+    );
+    const firstLocalReferences = provider.getReferences(
+      document.uri,
+      { line: 3, character: 11 },
+      true,
+    );
+    const firstLocalEdit = provider.rename(
+      document.uri,
+      { line: 3, character: 11 },
+      "firstFlag",
+    );
+    const secondLocalEdit = provider.rename(
+      document.uri,
+      { line: 8, character: 11 },
+      "secondFlag",
+    );
+
+    assert.deepEqual(
+      globalReferences.map((reference) => reference.range.start.line),
+      [0, 1, 13, 15],
+    );
+    assert.deepEqual(
+      firstLocalReferences.map((reference) => reference.range.start.line),
+      [3, 4, 5],
+    );
+    assert.deepEqual(
+      firstLocalEdit?.changes?.[document.uri]?.map(
+        (edit) => edit.range.start.line,
+      ),
+      [3, 4, 5],
+    );
+    assert.deepEqual(
+      secondLocalEdit?.changes?.[document.uri]?.map(
+        (edit) => edit.range.start.line,
+      ),
+      [8, 9, 10],
+    );
+  });
+
+  it("treats a macro %LET as local when no global variable exists", () => {
+    const { document, provider } = createProvider(
+      "%macro localByLet;\n  %let generatedFlag=LOCAL;\n  %put &generatedFlag;\n%mend localByLet;\n%put &generatedFlag;",
+    );
+
+    const localReferences = provider.getReferences(
+      document.uri,
+      { line: 1, character: 8 },
+      true,
+    );
+
+    assert.deepEqual(
+      localReferences.map((reference) => reference.range.start.line),
+      [1, 2],
+    );
+  });
+
+  it("renames macro parameters together with their references", () => {
+    const { document, provider } = createProvider(
+      "%macro parameterScope(paramFlag);\n  %put parameter=&paramFlag;\n%mend parameterScope;\n%parameterScope(VALUE);",
+    );
+
+    const references = provider.getReferences(
+      document.uri,
+      { line: 0, character: 23 },
+      true,
+    );
+    const edit = provider.rename(
+      document.uri,
+      { line: 1, character: 20 },
+      "inputFlag",
+    );
+
+    assert.deepEqual(
+      references.map((reference) => reference.range.start.line),
+      [0, 1],
+    );
+    assert.deepEqual(
+      edit?.changes?.[document.uri]?.map((item) => item.newText),
+      ["inputFlag", "inputFlag"],
+    );
+  });
+
   it("finds macro program definitions and invocations", () => {
     const { document, provider } = createProvider(
       "%macro report;\n%mend report;\n%report;",
@@ -161,6 +252,32 @@ describe("SAS symbol provider", () => {
     assert.deepEqual(
       edit?.changes?.[document.uri]?.map((item) => item.newText),
       ["sales_amount", "sales_amount"],
+    );
+  });
+
+  it("scopes ordinary variables to the enclosing DATA step", () => {
+    const { document, provider } = createProvider(
+      "data a;\n  testVar = 1;\n  result = testVar + 1;\nrun;\ndata b;\n  testVar = 2;\n  result = testVar + 2;\nrun;",
+    );
+
+    const references = provider.getReferences(
+      document.uri,
+      { line: 1, character: 3 },
+      true,
+    );
+    const edit = provider.rename(
+      document.uri,
+      { line: 2, character: 12 },
+      "firstTestVar",
+    );
+
+    assert.deepEqual(
+      references.map((reference) => reference.range.start.line),
+      [1, 2],
+    );
+    assert.deepEqual(
+      edit?.changes?.[document.uri]?.map((item) => item.range.start.line),
+      [1, 2],
     );
   });
 

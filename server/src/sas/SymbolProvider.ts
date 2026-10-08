@@ -8,6 +8,7 @@ import {
   WorkspaceEdit,
 } from "vscode-languageserver";
 
+import { LexerEx } from "./LexerEx";
 import { Model } from "./Model";
 import { SyntaxProvider } from "./SyntaxProvider";
 
@@ -18,6 +19,15 @@ interface SasSymbol {
   kind: SymbolKind;
   range: Range;
   declaration: boolean;
+  dataStepScope?: { startLine: number; endLine: number };
+  macroScopeKey?: string;
+}
+
+interface MacroVariableDeclaration {
+  name: string;
+  start: number;
+  end: number;
+  scope: "global" | "local" | "let" | "symput" | "parameter";
 }
 
 const identifier = "[A-Za-z_][A-Za-z0-9_]*";
@@ -94,13 +104,33 @@ export class SymbolProvider {
     const range = this.range(position.line, start, end);
     const marker = line.charAt(start - 1);
     if (marker === "&") {
-      return { name, kind: "macroVariable", range, declaration: false };
+      return {
+        name,
+        kind: "macroVariable",
+        range,
+        declaration: false,
+        macroScopeKey: this.resolveMacroVariableScope(name, position),
+      };
     }
     if (marker === "%") {
       return { name, kind: "macroProgram", range, declaration: false };
     }
-    if (this.isMacroVariableDeclaration(line, start)) {
-      return { name, kind: "macroVariable", range, declaration: true };
+    const macroDeclaration = this.getMacroVariableDeclarationAt(
+      position.line,
+      start,
+    );
+    if (macroDeclaration) {
+      return {
+        name,
+        kind: "macroVariable",
+        range,
+        declaration: true,
+        macroScopeKey: this.resolveMacroVariableScope(
+          name,
+          position,
+          macroDeclaration.scope,
+        ),
+      };
     }
     if (this.isMacroProgramDeclaration(line, start, name)) {
       return { name, kind: "macroProgram", range, declaration: true };
@@ -119,23 +149,32 @@ export class SymbolProvider {
         declaration: this.isDataSetDeclaration(line, start),
       };
     }
-    return { name, kind: "variable", range, declaration: false };
+    return {
+      name,
+      kind: "variable",
+      range,
+      declaration: false,
+      dataStepScope: this.getDataStepScope(position),
+    };
   }
 
   private findSymbols(symbol: SasSymbol): SasSymbol[] {
     switch (symbol.kind) {
       case "macroVariable":
-        return this.findMacroVariables(symbol.name);
+        return this.findMacroVariables(symbol.name, symbol.macroScopeKey);
       case "macroProgram":
         return this.findMacroPrograms(symbol.name);
       case "dataSet":
         return this.findDataSets(symbol.name);
       default:
-        return this.findVariables(symbol.name);
+        return this.findVariables(symbol.name, symbol.dataStepScope);
     }
   }
 
-  private findMacroVariables(name: string): SasSymbol[] {
+  private findMacroVariables(
+    name: string,
+    macroScopeKey?: string,
+  ): SasSymbol[] {
     const result: SasSymbol[] = [];
     const reference = new RegExp(`&(${name})(?:\\.)?\\b`, "gi");
     for (
@@ -148,7 +187,11 @@ export class SymbolProvider {
         const start = match.index! + 1;
         if (
           !this.isComment(lineNumber, start) &&
-          !this.isInSingleQuotedString(line, start)
+          !this.isInSingleQuotedString(line, start) &&
+          this.resolveMacroVariableScope(name, {
+            line: lineNumber,
+            character: start,
+          }) === macroScopeKey
         ) {
           result.push({
             name,
@@ -158,11 +201,21 @@ export class SymbolProvider {
           });
         }
       }
-      for (const declaration of this.findMacroVariableDeclarations(
-        line,
-        name,
-      )) {
-        if (this.isComment(lineNumber, declaration.start)) {
+      for (const declaration of this.getMacroVariableDeclarations(line)) {
+        if (
+          declaration.name.toLowerCase() !== name.toLowerCase() ||
+          this.isComment(lineNumber, declaration.start) ||
+          (declaration.scope !== "symput" &&
+            this.isString(lineNumber, declaration.start))
+        ) {
+          continue;
+        }
+        const scopeKey = this.resolveMacroVariableScope(
+          name,
+          { line: lineNumber, character: declaration.start },
+          declaration.scope,
+        );
+        if (scopeKey !== macroScopeKey) {
           continue;
         }
         result.push({
@@ -170,6 +223,7 @@ export class SymbolProvider {
           kind: "macroVariable",
           range: this.range(lineNumber, declaration.start, declaration.end),
           declaration: true,
+          macroScopeKey: scopeKey,
         });
       }
     }
@@ -245,21 +299,28 @@ export class SymbolProvider {
       }));
   }
 
-  private findVariables(name: string): SasSymbol[] {
-    return this.findCodeIdentifiers(name).filter((item) => {
+  private findVariables(
+    name: string,
+    dataStepScope?: { startLine: number; endLine: number },
+  ): SasSymbol[] {
+    return this.findCodeIdentifiers(
+      name,
+      dataStepScope?.startLine,
+      dataStepScope?.endLine,
+    ).filter((item) => {
       const line = this.model.getLine(item.range.start.line);
       return !this.isDataSetReference(line, item.range.start.character);
     });
   }
 
-  private findCodeIdentifiers(name: string): SasSymbol[] {
+  private findCodeIdentifiers(
+    name: string,
+    startLine = 0,
+    endLine = this.model.getLineCount() - 1,
+  ): SasSymbol[] {
     const result: SasSymbol[] = [];
     const matcher = new RegExp(`\\b${name}\\b`, "gi");
-    for (
-      let lineNumber = 0;
-      lineNumber < this.model.getLineCount();
-      lineNumber++
-    ) {
+    for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++) {
       const line = this.model.getLine(lineNumber);
       for (const match of line.matchAll(matcher)) {
         const start = match.index!;
@@ -282,32 +343,208 @@ export class SymbolProvider {
     return result;
   }
 
-  private findMacroVariableDeclarations(line: string, name: string) {
-    const declarations: Array<{ start: number; end: number }> = [];
-    const letDeclaration = new RegExp(`%let\\s+(${name})\\b`, "i").exec(line);
+  private getMacroVariableDeclarationAt(
+    lineNumber: number,
+    start: number,
+  ): MacroVariableDeclaration | undefined {
+    return this.getMacroVariableDeclarations(
+      this.model.getLine(lineNumber),
+    ).find((item) => item.start === start);
+  }
+
+  private getMacroVariableDeclarations(
+    line: string,
+  ): MacroVariableDeclaration[] {
+    const declarations: MacroVariableDeclaration[] = [];
+    const addNames = (
+      source: string,
+      sourceOffset: number,
+      scope: MacroVariableDeclaration["scope"],
+    ) => {
+      const matcher = new RegExp(identifier, "g");
+      for (const match of source.matchAll(matcher)) {
+        declarations.push({
+          name: match[0],
+          start: sourceOffset + match.index!,
+          end: sourceOffset + match.index! + match[0].length,
+          scope,
+        });
+      }
+    };
+
+    const letDeclaration = new RegExp(`%let\\s+(${identifier})\\b`, "i").exec(
+      line,
+    );
     if (letDeclaration) {
       const start =
         letDeclaration.index + letDeclaration[0].lastIndexOf(letDeclaration[1]);
-      declarations.push({ start, end: start + letDeclaration[1].length });
+      declarations.push({
+        name: letDeclaration[1],
+        start,
+        end: start + letDeclaration[1].length,
+        scope: "let",
+      });
     }
+
+    for (const match of line.matchAll(/%(global|local)\s+([^;]+);/gi)) {
+      const listStart = match.index! + match[0].indexOf(match[2]);
+      const scope = match[1].toLowerCase();
+      if (scope === "global" || scope === "local") {
+        addNames(match[2], listStart, scope);
+      }
+    }
+
+    const macroHeader = /%macro\s+[A-Za-z_][A-Za-z0-9_]*\s*\(([^)]*)\)/i.exec(
+      line,
+    );
+    if (macroHeader) {
+      const parametersOffset =
+        macroHeader.index + macroHeader[0].indexOf(macroHeader[1]);
+      for (const parameter of macroHeader[1].split(",")) {
+        const parameterName = new RegExp(`^\\s*(${identifier})`).exec(
+          parameter,
+        );
+        if (parameterName) {
+          const start = parametersOffset + macroHeader[1].indexOf(parameter);
+          const nameStart =
+            start + parameterName[0].lastIndexOf(parameterName[1]);
+          declarations.push({
+            name: parameterName[1],
+            start: nameStart,
+            end: nameStart + parameterName[1].length,
+            scope: "parameter",
+          });
+        }
+      }
+    }
+
     const symputDeclaration = new RegExp(
-      `\\bsymput(?:x|n)?\\s*\\(\\s*['"](${name})['"]`,
+      `\\bsymput(?:x|n)?\\s*\\(\\s*['"](${identifier})['"]`,
       "i",
     ).exec(line);
     if (symputDeclaration) {
       const start =
         symputDeclaration.index +
         symputDeclaration[0].lastIndexOf(symputDeclaration[1]);
-      declarations.push({ start, end: start + symputDeclaration[1].length });
+      declarations.push({
+        name: symputDeclaration[1],
+        start,
+        end: start + symputDeclaration[1].length,
+        scope: "symput",
+      });
     }
+
     return declarations;
   }
 
-  private isMacroVariableDeclaration(line: string, start: number): boolean {
-    return this.findMacroVariableDeclarations(
-      line,
-      line.slice(start).match(new RegExp(`^${identifier}`))?.[0] ?? "",
-    ).some((item) => item.start === start);
+  private resolveMacroVariableScope(
+    name: string,
+    position: Position,
+    declarationScope?: MacroVariableDeclaration["scope"],
+  ): string {
+    const macroBlock = this.getMacroBlock(position);
+    if (declarationScope === "global") {
+      return "global";
+    }
+    if (declarationScope === "local" || declarationScope === "parameter") {
+      return macroBlock
+        ? this.macroScopeKey(macroBlock.startLine, name)
+        : "global";
+    }
+    if (!macroBlock) {
+      return "global";
+    }
+
+    const localScopeExists = this.hasMacroDeclaration(name, macroBlock, [
+      "local",
+      "parameter",
+    ]);
+    if (localScopeExists) {
+      return this.macroScopeKey(macroBlock.startLine, name);
+    }
+
+    const globalScopeExists =
+      this.hasMacroDeclaration(name, undefined, ["global"]) ||
+      this.hasTopLevelMacroLet(name);
+    if (globalScopeExists) {
+      return "global";
+    }
+
+    if (this.hasMacroDeclaration(name, macroBlock, ["let", "symput"])) {
+      return this.macroScopeKey(macroBlock.startLine, name);
+    }
+    return "global";
+  }
+
+  private hasMacroDeclaration(
+    name: string,
+    scope: { startLine: number; endLine: number } | undefined,
+    kinds: MacroVariableDeclaration["scope"][],
+  ): boolean {
+    for (
+      let lineNumber = 0;
+      lineNumber < this.model.getLineCount();
+      lineNumber++
+    ) {
+      if (
+        scope &&
+        (lineNumber < scope.startLine || lineNumber > scope.endLine)
+      ) {
+        continue;
+      }
+      const line = this.model.getLine(lineNumber);
+      for (const declaration of this.getMacroVariableDeclarations(line)) {
+        if (
+          declaration.name.toLowerCase() === name.toLowerCase() &&
+          kinds.includes(declaration.scope) &&
+          !this.isComment(lineNumber, declaration.start) &&
+          (declaration.scope === "symput" ||
+            !this.isString(lineNumber, declaration.start))
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private hasTopLevelMacroLet(name: string): boolean {
+    for (
+      let lineNumber = 0;
+      lineNumber < this.model.getLineCount();
+      lineNumber++
+    ) {
+      if (this.getMacroBlock({ line: lineNumber, character: 0 })) {
+        continue;
+      }
+      const line = this.model.getLine(lineNumber);
+      if (
+        this.getMacroVariableDeclarations(line).some(
+          (declaration) =>
+            declaration.scope === "let" &&
+            declaration.name.toLowerCase() === name.toLowerCase() &&
+            !this.isComment(lineNumber, declaration.start),
+        )
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private getMacroBlock(position: Position) {
+    let block = this.syntaxProvider.getFoldingBlock(
+      position.line,
+      position.character,
+    );
+    while (block && block.type !== LexerEx.SEC_TYPE.MACRO) {
+      block = block.outerBlock ?? null;
+    }
+    return block;
+  }
+
+  private macroScopeKey(startLine: number, name: string): string {
+    return `macro:${startLine}:${name.toLowerCase()}`;
   }
 
   private isMacroProgramDeclaration(
@@ -343,6 +580,23 @@ export class SymbolProvider {
 
   private isDataSetDeclaration(line: string, start: number): boolean {
     return /(?:^|;)\s*data\s+[^;]*$/i.test(line.slice(0, start));
+  }
+
+  private getDataStepScope(position: Position) {
+    let block = this.syntaxProvider.getFoldingBlock(
+      position.line,
+      position.character,
+    );
+    while (block && block.type !== LexerEx.SEC_TYPE.DATA) {
+      block = block.outerBlock ?? null;
+    }
+    if (!block) {
+      return undefined;
+    }
+    return {
+      startLine: block.startLine,
+      endLine: block.endFoldingLine,
+    };
   }
 
   private isComment(line: number, character: number): boolean {
