@@ -18,6 +18,7 @@ import {
 
 import { profileConfig } from "../../commands/profile";
 import { getGlobalStorageUri } from "../ExtensionContext";
+import { getGlobalStorageUri } from "../ExtensionContext";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
 import { treeViewSelections } from "../utils/treeViewSelections";
@@ -103,6 +104,11 @@ class ContentNavigator implements SubscriptionProvider {
         this.contentDataProvider,
       ),
     ];
+
+    // Remove any image preview cache files left behind by a previous session
+    // (e.g. VS Code was force-closed or the extension host crashed/timed-out
+    // before the dispose cleanup could run).
+    void this.purgeImagePreviewCache();
   }
 
   get onDidManipulateFile(): Event<FileManipulationEvent> {
