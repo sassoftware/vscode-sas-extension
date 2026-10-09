@@ -1,0 +1,536 @@
+/* Manage Columns Dialog Styles */
+
+.manage-columns-dialog {
+  --manage-columns-content-min-width: 400px;
+  --manage-columns-content-padding: 20px;
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: 0;
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  width: 70%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 1000px;
+  height: 70vh;
+  max-height: calc(100% - 32px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  overflow: auto;
+  resize: both;
+  box-sizing: border-box;
+}
+
+.dialog-header {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  color: var(--vscode-foreground);
+  font-size: 1.2em;
+}
+
+.dialog-close-btn {
+  background: none;
+  border: none;
+  color: var(--vscode-foreground);
+  font-size: 1.5em;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog-close-btn:hover {
+  color: var(--vscode-button-hoverBackground);
+}
+
+/* Hidden panel | splitter | Displayed panel */
+
+.dialog-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 8px minmax(0, 1fr);
+  padding: var(--manage-columns-content-padding);
+  flex: 1 0 240px;
+  overflow: hidden;
+  min-height: 240px;
+  min-width: var(--manage-columns-content-min-width);
+  box-sizing: border-box;
+}
+
+.columns-panel {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.columns-section {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--vscode-panel-border);
+  background-color: var(--vscode-editor-background);
+  overflow: hidden;
+}
+
+.columns-section-outer {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--vscode-editor-background);
+  overflow: hidden;
+}
+
+.section-header {
+  margin-bottom: 12px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1em;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+.manage-columns-dialog .filter-wrapper .filter-input {
+  position: relative;
+  margin-bottom: 0;
+}
+
+.manage-columns-dialog .filter-wrapper .manage-column-filter-input {
+  display: block;
+  margin-bottom: 0;
+  padding-left: calc(2rem + 8px);
+  padding-right: calc(2rem + 8px);
+}
+
+.manage-columns-dialog .filter-wrapper .filter-input button.search {
+  left: 0;
+  right: auto;
+}
+
+.manage-column-filter-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background-color: var(--vscode-input-background);
+  background-image: linear-gradient(
+    to right,
+    transparent 10px,
+    var(--vscode-editorGroup-border) 10px,
+    var(--vscode-editorGroup-border) calc(100% - 10px),
+    transparent calc(100% - 10px)
+  );
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 1px;
+  color: var(--vscode-input-foreground);
+  font-family: inherit;
+  font-size: inherit;
+  box-sizing: border-box;
+}
+
+.manage-column-filter-input:focus {
+  outline: none;
+  background-image: linear-gradient(
+    to right,
+    transparent 10px,
+    var(--vscode-inputOption-activeBorder) 10px,
+    var(--vscode-inputOption-activeBorder) calc(100% - 10px),
+    transparent calc(100% - 10px)
+  );
+}
+
+.manage-column-filter-input::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+
+.manage-column-filter-input:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.manage-columns-dialog .filter-input .search:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.manage-columns-dialog .filter-input .filter-clear {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.manage-columns-dialog .filter-input .filter-clear:hover {
+  background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.columns-list {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  background-color: var(--vscode-list-background);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.displayed-columns-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.column-item {
+  flex: 0 0 auto;
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  transition: background-color 0.1s;
+}
+
+.column-item:last-child {
+  border-bottom: none;
+}
+
+.column-item:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.column-item.selected {
+  background-color: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 12px;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* Control buttons */
+
+.control-buttons {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  flex: 0 0 auto;
+}
+
+.control-buttons button {
+  padding: 8px 12px;
+  border: 1px solid var(--vscode-button-border);
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 0.9em;
+  min-width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.control-buttons button:hover:not(:disabled) {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.control-buttons button:active:not(:disabled) {
+  background-color: var(--vscode-button-secondaryBackground);
+}
+
+.control-buttons button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Footer */
+
+.dialog-footer {
+  flex-shrink: 0;
+  min-width: var(--manage-columns-content-min-width);
+  box-sizing: border-box;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px var(--manage-columns-content-padding);
+}
+
+.btn-ok,
+.btn-cancel {
+  padding: 8px 24px;
+  border: 1px solid var(--vscode-button-border);
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  transition: background-color 0.2s;
+  min-width: 80px;
+}
+
+.btn-ok {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.btn-ok:hover:not(:disabled) {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.btn-ok:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn-cancel {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.btn-cancel:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Splitter */
+
+.columns-resizer {
+  width: 8px;
+  min-width: 8px;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  touch-action: none;
+  background: transparent;
+}
+
+.columns-resizer::before {
+  content: "";
+  width: 4px;
+  height: 32px;
+  border: 2px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  background: var(--vscode-editor-background);
+}
+
+/* Icons */
+
+.control-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.control-icon.disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Light theme */
+
+.undo {
+  background-image: url("../../../../icons/light/undo.svg");
+}
+
+.add-all {
+  background-image: url("../../../../icons/light/arrowRightAddAllDualSelector.svg");
+}
+
+.remove-all {
+  background-image: url("../../../../icons/light/arrowLeftRemoveAllDualSelector.svg");
+}
+
+.up {
+  background-image: url("../../../../icons/light/arrowSmallUp.svg");
+}
+
+.down {
+  background-image: url("../../../../icons/light/arrowSmallDown.svg");
+}
+
+.remove {
+  background-image: url("../../../../icons/light/arrowLeftRemoveDualSelector.svg");
+}
+
+.add {
+  background-image: url("../../../../icons/light/arrowRightAddDualSelector.svg");
+}
+
+.down-end {
+  background-image: url("../../../../icons/light/arrowSmallDownEnd.svg");
+}
+
+.up-end {
+  background-image: url("../../../../icons/light/arrowSmallUpEnd.svg");
+}
+
+.close {
+  background-image: url("../../../../icons/light/close.svg");
+}
+
+/* Dark and high-contrast themes */
+
+.vscode-dark .undo,
+.vscode-high-contrast .undo {
+  background-image: url("../../../../icons/dark/undo.svg");
+}
+
+.vscode-dark .add-all,
+.vscode-high-contrast .add-all {
+  background-image: url("../../../../icons/dark/arrowRightAddAllDualSelector.svg");
+}
+
+.vscode-dark .remove-all,
+.vscode-high-contrast .remove-all {
+  background-image: url("../../../../icons/dark/arrowLeftRemoveAllDualSelector.svg");
+}
+
+.vscode-dark .up,
+.vscode-high-contrast .up {
+  background-image: url("../../../../icons/dark/arrowSmallUp.svg");
+}
+
+.vscode-dark .down,
+.vscode-high-contrast .down {
+  background-image: url("../../../../icons/dark/arrowSmallDown.svg");
+}
+
+.vscode-dark .remove,
+.vscode-high-contrast .remove {
+  background-image: url("../../../../icons/dark/arrowLeftRemoveDualSelector.svg");
+}
+
+.vscode-dark .add,
+.vscode-high-contrast .add {
+  background-image: url("../../../../icons/dark/arrowRightAddDualSelector.svg");
+}
+
+.vscode-dark .down-end,
+.vscode-high-contrast .down-end {
+  background-image: url("../../../../icons/dark/arrowSmallDownEnd.svg");
+}
+
+.vscode-dark .up-end,
+.vscode-high-contrast .up-end {
+  background-image: url("../../../../icons/dark/arrowSmallUpEnd.svg");
+}
+
+.vscode-dark .close,
+.vscode-high-contrast .close {
+  background-image: url("../../../../icons/dark/close.svg");
+}
+
+.manage-columns-dialog:not([open]) {
+  display: none;
+}
+
+.manage-columns-dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.manage-columns-dialog .control-buttons button {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 5px;
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+/* Keyboard focus */
+
+.manage-columns-dialog button:focus-visible,
+.manage-columns-dialog .columns-resizer:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+/*
+ * The primary OK button can have a background close to the VS Code
+ * focus-border color. Add a separator between the button and focus ring
+ * so keyboard focus remains visible across themes.
+ */
+.manage-columns-dialog .btn-ok:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 1px var(--vscode-editor-background),
+    0 0 0 3px var(--vscode-focusBorder);
+}
+
+/* Focus belongs to the active row or empty text, never the list box. */
+
+.manage-columns-dialog .columns-list:focus,
+.manage-columns-dialog .columns-list:focus-visible {
+  outline: none;
+}
+
+.manage-columns-dialog .empty-state-text:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.manage-columns-dialog .column-item:focus,
+.manage-columns-dialog .column-item:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--vscode-focusBorder);
+}
+
+.manage-columns-dialog .empty-state-text {
+  padding: 2px 4px;
+}
