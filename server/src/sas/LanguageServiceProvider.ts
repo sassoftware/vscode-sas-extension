@@ -120,8 +120,10 @@ export class LanguageServiceProvider {
       const tokens = this.syntaxProvider.getSyntax(i);
       for (let j = 0; j < tokens.length; j++) {
         const type = getType(tokens[j].style);
-        const end =
-          j === tokens.length - 1 ? lineContentLength : tokens[j + 1].start;
+        const end = Math.min(
+          j === tokens.length - 1 ? lineContentLength : tokens[j + 1].start,
+          lineContentLength,
+        );
         if (type < 0) {
           continue;
         }
