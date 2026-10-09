@@ -44,7 +44,13 @@ The SAS extension includes automatic code completion and pop-up syntax help for 
 
 To use the autocomplete feature:
 
-- Start typing a valid SAS keyboard. Scroll through the pop-up list of suggested keywords by using your mouse or the up and down arrow keys.
+- Start typing a valid SAS keyword. Scroll through the pop-up list of suggested keywords by using your mouse or the up and down arrow keys.
+
+### Library and Dataset Completion
+
+When connected to SAS, code completion also supports existing libraries and datasets. Press `Ctrl+Space` after a dataset option, such as `proc print data=`, to see available libraries. Enter a library name followed by a period, such as `data=SASHELP.`, to see its datasets. You can also request dataset suggestions after a library name in a SET statement, such as `set SASHELP.`.
+
+![Library and Dataset Completion](/images/libraryDatasetCompletion.gif)
 
 ## Pop-up Syntax Help
 
