@@ -258,11 +258,87 @@ export class LanguageServiceProvider {
     );
   }
 
+  /**
+   * Detects whether a selected line is already wrapped as a single-line SAS block comment.
+   */
+  private isSingleLineComment(line: string): boolean {
+    return /^\s*\/\*.*\*\/\s*$/.test(line);
+  }
+
+  /**
+   * Wraps a single SAS statement in a block comment while preserving leading indentation.
+   */
+  private wrapSingleLine(line: string): string {
+    const trimmed = line.trim();
+    if (!trimmed || this.isSingleLineComment(line)) {
+      return line;
+    }
+
+    const indentation = line.match(/^\s*/)?.[0] ?? "";
+    return `${indentation}/*${trimmed}*/`;
+  }
+
+  /**
+   * Removes a single-line SAS block comment wrapper while preserving the original indentation.
+   */
+  private unwrapSingleLine(line: string): string {
+    const trimmed = line.trim();
+    if (!trimmed || !trimmed.startsWith("/*") || !trimmed.includes("*/")) {
+      return line;
+    }
+
+    const match = line.match(/^(\s*)\/\*\s*(.*?)\s*\*\/(\s*)$/);
+    if (!match) {
+      return line;
+    }
+
+    return `${match[1]}${match[2]}${match[3]}`;
+  }
+
+  /**
+   * Returns true when a single selected line is a real embedded Python statement that should
+   * defer to the editor's native comment command instead of SAS block-comment syntax.
+   */
+  private isSingleEmbeddedLine(range: Range, singleLineText: string): boolean {
+    const normalizedText = this.isSingleLineComment(singleLineText)
+      ? this.unwrapSingleLine(singleLineText)
+      : singleLineText;
+
+    return (
+      range.start.line === range.end.line &&
+      !/^(?:submit|endsubmit|run)\s*;?$/i.test(normalizedText.trim()) &&
+      this.syntaxProvider.getSyntax(range.start.line)[0]?.style ===
+        "embedded-code"
+    );
+  }
+
+  /**
+   * Toggles SAS block comments for the selected range.
+   *
+   * For SAS statements we comment each non-blank line independently, while single embedded
+   * Python lines are left alone so the editor's native # comment handling can take over.
+   */
   toggleLineComment(range: Range) {
-    const token = this.syntaxProvider.getSyntax(range.start.line)[0];
-    if (token?.style === "embedded-code") {
+    const singleLineText =
+      range.start.line === range.end.line
+        ? this.model
+            .getText({
+              start: {
+                line: range.start.line,
+                column: 0,
+              },
+              end: {
+                line: range.end.line,
+                column: range.end.character,
+              },
+            })
+            .trim()
+        : "";
+
+    if (this.isSingleEmbeddedLine(range, singleLineText)) {
       return null;
     }
+
     const lines = this.model
       .getText({
         start: {
@@ -274,18 +350,65 @@ export class LanguageServiceProvider {
           column: range.end.character,
         },
       })
-      .split(/\n|\r\n/);
-    const shouldAdd = lines.some(
-      (line) => line.trim() !== "" && !/^\s*\/\*.*\*\/\s*$/.test(line),
-    );
+      .split(/\r\n|\r|\n/);
+
+    // Decide if the selection is in "add comment" mode or "remove comment" mode.
+    // Any non-empty, non-comment line means we should wrap with SAS block comments.
+    let insideBlockComment = false;
+    const shouldAdd = lines.some((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        return false;
+      }
+
+      if (insideBlockComment) {
+        if (trimmed.includes("*/")) {
+          insideBlockComment = false;
+        }
+        return false;
+      }
+
+      if (trimmed.startsWith("/*")) {
+        if (this.isSingleLineComment(line)) {
+          return false;
+        }
+        insideBlockComment = true;
+        return false;
+      }
+
+      return true;
+    });
+
     if (shouldAdd) {
+      insideBlockComment = false;
       return lines
-        .map((line) => (line.trim() !== "" ? `/* ${line} */` : line))
+        .map((line) => {
+          const trimmed = line.trim();
+          if (!trimmed) {
+            return line;
+          }
+
+          if (insideBlockComment) {
+            if (trimmed.includes("*/")) {
+              insideBlockComment = false;
+            }
+            return line;
+          }
+
+          if (trimmed.startsWith("/*")) {
+            if (this.isSingleLineComment(line)) {
+              return line;
+            }
+            insideBlockComment = true;
+            return line;
+          }
+
+          return this.wrapSingleLine(line);
+        })
         .join("\n");
     }
-    return lines
-      .map((line) => line.replace(/^(\s*)\/\* ?| ?\*\/(\s*)$/g, "$1"))
-      .join("\n");
+
+    return lines.map((line) => this.unwrapSingleLine(line)).join("\n");
   }
 
   setLibService(fn: LibService): void {
