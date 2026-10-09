@@ -30,22 +30,20 @@ export async function toggleLineComment(
       document.lineAt(endLine).range.end.character,
     );
 
-    if (!fullSelection.isSingleLine) {
-      const result = await client.sendRequest<string | null>(
-        "sas/toggleLineComment",
-        {
-          textDocument:
-            client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-          range: client.code2ProtocolConverter.asRange(fullSelection),
-        },
-      );
-      if (result) {
-        editor.selection = fullSelection;
-        await editor.edit((editBuilder) => {
-          editBuilder.replace(fullSelection, result);
-        });
-        return;
-      }
+    const result = await client.sendRequest<string | null>(
+      "sas/toggleLineComment",
+      {
+        textDocument:
+          client.code2ProtocolConverter.asTextDocumentIdentifier(document),
+        range: client.code2ProtocolConverter.asRange(fullSelection),
+      },
+    );
+    if (result !== null) {
+      editor.selection = fullSelection;
+      await editor.edit((editBuilder) => {
+        editBuilder.replace(fullSelection, result);
+      });
+      return;
     }
   }
   commands.executeCommand("editor.action.commentLine");
