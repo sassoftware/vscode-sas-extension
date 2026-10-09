@@ -9,5 +9,6 @@ export default defineConfig({
     globals: true,
     include: ["client/test/**/*.test.tsx"],
     setupFiles: ["./client/test/react/setup.ts"],
+    reporters: ["default"],
   },
 });
