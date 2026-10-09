@@ -291,85 +291,6 @@ cas; caslib _all_ assign;
     );
   });
 
-  it("wrapCodeWithSASProgramDir with local fileName", () => {
-    const fileName =
-      "/tmp/My Test/R&D/mean(95%CI)/Parkinson's Disease example.sas";
-    const parameters: SASCodeDocumentParameters = {
-      languageId: "sas",
-      code: "data test; run;",
-      selectedCode: "",
-      fileName,
-      htmlStyle: "Illuminate",
-      outputHtml: false,
-      checkKeyword: async () => false,
-    };
-
-    const sasCodeDoc = new SASCodeDocument(parameters);
-    const wrappedCode = sasCodeDoc.getWrappedCode();
-
-    assert(
-      wrappedCode.includes(
-        "%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)));",
-      ),
-      "wrapped code should include _SASPROGRAMDIR with the directory of fileName",
-    );
-    assert(
-      wrappedCode.includes(
-        "%let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)/Parkinson%'s Disease example.sas));",
-      ),
-      "wrapped code should include _SASPROGRAMFILE with the full fileName",
-    );
-  });
-
-  it("escapes a percent at the end of a directory", () => {
-    const parameters: SASCodeDocumentParameters = {
-      languageId: "sas",
-      code: "%put &=_SASPROGRAMDIR;",
-      selectedCode: "",
-      fileName: "/tmp/100%/macro_test.sas",
-      htmlStyle: "Illuminate",
-      outputHtml: false,
-      checkKeyword: async () => false,
-    };
-
-    const sasCodeDoc = new SASCodeDocument(parameters);
-    const wrappedCode = sasCodeDoc.getWrappedCode();
-
-    assert(
-      wrappedCode.includes(
-        "%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/100%%));",
-      ),
-      "wrapped code should escape a trailing percent in the directory",
-    );
-  });
-
-  it("wrapCodeWithSASProgramDir is skipped for sasContent URI", () => {
-    const parameters: SASCodeDocumentParameters = {
-      languageId: "sas",
-      code: "this is the code",
-      selectedCode: "",
-      uri: "sasContent:/test.sas?id%3D%2Ffiles%2Ffiles%2F349be085-146d-4e0e-9fdc-99d330fa18d1",
-      fileName: "filename.sas",
-      htmlStyle: "Illuminate",
-      outputHtml: false,
-      checkKeyword: async () => false,
-    };
-
-    const sasCodeDoc = new SASCodeDocument(parameters);
-    const wrappedCode = sasCodeDoc.getWrappedCode();
-
-    assert(
-      wrappedCode.includes("%symdel _SASPROGRAMDIR / nowarn;"),
-      "wrapped code should clear _SASPROGRAMDIR for sasContent URIs",
-    );
-    assert(
-      wrappedCode.includes(
-        "%let _SASPROGRAMFILE = %nrquote(%nrstr(sascontent:/files/files/349be085-146d-4e0e-9fdc-99d330fa18d1));",
-      ),
-      "wrapped code should include _SASPROGRAMFILE for sasContent URIs",
-    );
-  });
-
   it("wrapCodeWithSASProgramFileName with sasContent URI", () => {
     const parameters: SASCodeDocumentParameters = {
       languageId: "sas",
@@ -450,6 +371,85 @@ cas; caslib _all_ assign;
       codeLinesInLog,
     );
     assert.equal(problemLocationInRawCode.lineNumber, 66);
+  });
+
+  it("wrapCodeWithSASProgramDir with local fileName", () => {
+    const fileName =
+      "/tmp/My Test/R&D/mean(95%CI)/Parkinson's Disease example.sas";
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "data test; run;",
+      selectedCode: "",
+      fileName,
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)));",
+      ),
+      "wrapped code should include _SASPROGRAMDIR with the directory of fileName",
+    );
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)/Parkinson%'s Disease example.sas));",
+      ),
+      "wrapped code should include _SASPROGRAMFILE with the full fileName",
+    );
+  });
+
+  it("escapes a percent at the end of a directory", () => {
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "%put &=_SASPROGRAMDIR;",
+      selectedCode: "",
+      fileName: "/tmp/100%/macro_test.sas",
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/100%%));",
+      ),
+      "wrapped code should escape a trailing percent in the directory",
+    );
+  });
+
+  it("wrapCodeWithSASProgramDir is skipped for sasContent URI", () => {
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "this is the code",
+      selectedCode: "",
+      uri: "sasContent:/test.sas?id%3D%2Ffiles%2Ffiles%2F349be085-146d-4e0e-9fdc-99d330fa18d1",
+      fileName: "filename.sas",
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      wrappedCode.includes("%symdel _SASPROGRAMDIR / nowarn;"),
+      "wrapped code should clear _SASPROGRAMDIR for sasContent URIs",
+    );
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(sascontent:/files/files/349be085-146d-4e0e-9fdc-99d330fa18d1));",
+      ),
+      "wrapped code should include _SASPROGRAMFILE for sasContent URIs",
+    );
   });
 
   it("getBaseDirectory handles POSIX paths", function () {
