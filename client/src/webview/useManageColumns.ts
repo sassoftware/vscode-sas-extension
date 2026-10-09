@@ -19,13 +19,21 @@ const useManageColumns = (options: Options) => {
   current.current = options;
 
   const loading = useRef(false);
+  const stale = useRef(false);
 
   const [manageColumnsOpen, setManageColumnsOpen] = useState(false);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      if (event.data.command === "panel:invalidateColumns") {
+        // A session change may make the current column state stale,
+        // so close Manage Columns now and reset the table after the next successful reconnect/fetch.
+        stale.current = true;
+        setManageColumnsOpen(false);
+        return;
+      }
+
       if (
-        event.data.command === "panel:invalidateColumns" ||
         event.data.command === "panel:refreshData" ||
         (event.data.command === "panel:changeFocus" &&
           !event.data.data?.focused)
@@ -52,9 +60,9 @@ const useManageColumns = (options: Options) => {
       /*
        * Always fetch before opening.
        *
-       * Besides validating the current column metadata, this also
-       * establishes a new SAS session when the previous session has
-       * expired.
+       * If the previous SAS session was closed or expired, this allows
+       * the connection/session to be re-established before the dialog
+       * is shown.
        */
       await current.current.fetchColumns();
 
@@ -62,6 +70,13 @@ const useManageColumns = (options: Options) => {
 
       if (!api || api.isDestroyed()) {
         return false;
+      }
+
+      if (stale.current) {
+        // Reset the grid only after a successful fresh fetch so the disconnected view
+        // stays unchanged and stale hide/order state is cleared after reconnection.
+        api.resetColumnState();
+        stale.current = false;
       }
 
       current.current.setColumnState?.(api.getColumnState());
