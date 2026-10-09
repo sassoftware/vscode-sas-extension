@@ -801,6 +801,13 @@ class ContentDataProvider
     if (closing !== true) {
       commands.executeCommand("vscode.open", newUri);
     }
+    if (newUri && typeof newUri !== "boolean" && item.vscUri) {
+      this._onDidManipulateFile.fire({
+        type: "rename",
+        uri: item.vscUri,
+        newUri,
+      });
+    }
 
     return !!newUri;
   }
