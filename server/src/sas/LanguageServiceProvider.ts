@@ -116,10 +116,14 @@ export class LanguageServiceProvider {
 
     for (let i = 0; i < lineCount; i++) {
       const line = this.model.getLine(i);
+const lineContentLength = line.replace(/\r?\n$|\r$/, "").length;
       const tokens = this.syntaxProvider.getSyntax(i);
       for (let j = 0; j < tokens.length; j++) {
         const type = getType(tokens[j].style);
-        const end = j === tokens.length - 1 ? line.length : tokens[j + 1].start;
+        const end = Math.min(
+j === tokens.length - 1 ? lineContentLength : tokens[j + 1].start,
+          lineContentLength,
+        );
         if (type < 0) {
           continue;
         }
@@ -259,12 +263,17 @@ export class LanguageServiceProvider {
   }
 
   toggleLineComment(range: Range) {
-    const token = this.syntaxProvider.getSyntax(range.start.line)[0];
-    if (token?.style === "embedded-code") {
+    if (
+      range.start.line === range.end.line &&
+      this.getCodeZoneManager().getCurrentZone(
+        range.start.line,
+        Math.max(range.start.character, 1),
+      ) === CodeZoneManager.ZONE_TYPE.EMBEDDED_LANG
+    ) {
       return null;
     }
-    const lines = this.model
-      .getText({
+
+    const text = this.model      .getText({
         start: {
           line: range.start.line,
           column: 0,
@@ -273,19 +282,46 @@ export class LanguageServiceProvider {
           line: range.end.line,
           column: range.end.character,
         },
-      })
-      .split(/\n|\r\n/);
-    const shouldAdd = lines.some(
-      (line) => line.trim() !== "" && !/^\s*\/\*.*\*\/\s*$/.test(line),
-    );
-    if (shouldAdd) {
-      return lines
-        .map((line) => (line.trim() !== "" ? `/* ${line} */` : line))
-        .join("\n");
+      });
+    const lineEnding = text.match(/\r\n|\r|\n/)?.[0] ?? "\n";
+    const lines = text      .split(/\r\n|\r|\n/);
+    const nonBlankLines = lines.filter(      (line) => line.trim() !== "");
+    const unwrapLine = (line: string): string | undefined => {
+      const match = /^(\s*)\/\*(.*?)\*\/([ \t]*)$/.exec(line    );
+    if (!match || match[2].includes("/*") || match[2].includes("*/")) {
+      return undefined;
+      }
+      return match[1] + match[2] + match[3];
+    };
+
+    if (
+      nonBlankLines.length > 0 &&
+      nonBlankLines.every((line) => unwrapLine(line) !== undefined)
+    ) {
+      return lines.map((line) => unwrapLine(line) ?? line).join(lineEnding);
     }
+
     return lines
-      .map((line) => line.replace(/^(\s*)\/\* ?| ?\*\/(\s*)$/g, "$1"))
-      .join("\n");
+      .map((line, index) => {
+        if (line.trim() === "" || line.includes("/*") || line.includes("*/")) {
+          return line;
+        }
+
+        const syntax = this.syntaxProvider.getSyntax(range.start.line + index);
+        if (
+          syntax.some(
+            (item) =>
+              item.style === "comment" ||
+              item.style === "macro-comment",
+          )
+        ) {
+          return line;
+        }
+
+        const indentation = line.match(/^\s*/)?.[0] ?? "";
+        return `${indentation}/*${line.slice(indentation.length)}*/`;
+      })
+      .join(lineEnding);
   }
 
   setLibService(fn: LibService): void {
