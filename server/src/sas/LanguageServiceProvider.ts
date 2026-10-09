@@ -121,9 +121,7 @@ export class LanguageServiceProvider {
       for (let j = 0; j < tokens.length; j++) {
         const type = getType(tokens[j].style);
         const end =
-          j === tokens.length - 1
-            ? lineContentLength
-            : tokens[j + 1].start;
+          j === tokens.length - 1 ? lineContentLength : tokens[j + 1].start;
         if (type < 0) {
           continue;
         }
