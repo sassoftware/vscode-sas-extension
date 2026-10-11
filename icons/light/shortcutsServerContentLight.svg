@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="ShortcutsServerContent" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14">
+  <rect id="svgToolTipPane" width="14" height="14" fill="none"/>
+  <path fill="#33A3FF" id="iconColor" d="M13,13v-6c0-.552-.448-1-1-1h-4c-.552,0-1,.448-1,1v6h-1v1h8v-1h-1ZM12,13h-4v-6h4v6ZM9,9h2v1h-2v-1ZM9,11h2v1h-2v-1ZM11,2v3h-1v-2H1s-.001,6,0,6h4.999v1H.999C.449,10,0,9.55,0,9,0,9.366,0,1.5,0,1.5L1,0h3l1,1h5c.552,0,.999.448.999,1ZM4,9c-1.333,0-3.333-2.333-.575-4.095l-1.425-.905h4l-.667,4-.786-2.055c-1.137.913-1.881,1.722-.547,3.055Z"/>
+</svg>

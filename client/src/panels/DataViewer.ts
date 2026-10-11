@@ -5,8 +5,11 @@ import { Uri, l10n, window } from "vscode";
 import type { SortModelItem } from "ag-grid-community";
 
 import PaginatedResultSet from "../components/LibraryNavigator/PaginatedResultSet";
-import { TableData, TableQuery } from "../components/LibraryNavigator/types";
-import { Column } from "../connection/rest/api/compute";
+import {
+  TableColumn,
+  TableData,
+  TableQuery,
+} from "../components/LibraryNavigator/types";
 import { WebView } from "./WebviewManager";
 
 class DataViewer extends WebView {
@@ -17,7 +20,7 @@ class DataViewer extends WebView {
       data: TableData;
       error?: Error;
     }>,
-    protected readonly fetchColumns: () => Column[],
+    protected readonly fetchColumns: () => TableColumn[],
     protected readonly loadColumnProperties: (columnName: string) => void,
   ) {
     super(extensionUri, uid);
@@ -104,15 +107,17 @@ class DataViewer extends WebView {
         }
         break;
       }
-      case "request:loadColumns":
+      case "request:loadColumns": {
+        const columns = await this.fetchColumns();
         this.panel.webview.postMessage({
           key: event.key,
           command: "response:loadColumns",
           data: {
-            columns: await this.fetchColumns(),
+            columns,
           },
         });
         break;
+      }
       case "request:loadColumnProperties":
         if (event.data.columnName) {
           this.loadColumnProperties(event.data.columnName);

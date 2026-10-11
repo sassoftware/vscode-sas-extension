@@ -1,16 +1,23 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { FileType, Uri } from "vscode";
+import { FileType, Uri, commands } from "vscode";
 
 import { AxiosResponse } from "axios";
 
 import { getSession } from "..";
 import {
+  FOLDER_SHORTCUT_ID,
   FOLDER_TYPES,
+  GLOBAL_SHORTCUTS,
+  GLOBAL_SHORTCUT_ID,
+  GLOBAL_SHORTCUT_TYPE,
   Messages,
   SAS_SERVER_ROOT_FOLDER,
   SAS_SERVER_ROOT_FOLDERS,
   SERVER_FOLDER_ID,
+  SERVER_FOLDER_SHORTCUTS,
+  SERVER_SHORTCUT_FOLDER_TYPE,
+  SHORTCUTS_FOLDER_TYPE,
 } from "../../components/ContentNavigator/const";
 import {
   AddChildItemProperties,
@@ -28,7 +35,10 @@ import {
   sortedContentItems,
 } from "../../components/ContentNavigator/utils";
 import { appendSessionLogFn } from "../../components/logViewer";
-import { ProfileWithFileRootOptions } from "../../components/profile";
+import {
+  DisplayOptions,
+  ProfileWithFileRootOptions,
+} from "../../components/profile";
 import { FileProperties, FileSystemApi } from "./api/compute";
 import { getApiConfig } from "./common";
 import {
@@ -55,6 +65,8 @@ class RestServerAdapter implements ContentAdapter {
   public constructor(
     protected fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
     protected fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
+    protected globalShortcuts: ProfileWithFileRootOptions["globalShortcuts"],
+    protected display?: DisplayOptions["display"],
   ) {
     this.rootFolders = {};
     this.fileMetadataMap = {};
@@ -68,7 +80,10 @@ class RestServerAdapter implements ContentAdapter {
         ContextMenuAction.AllowDownload,
       ],
       {
-        [ContextMenuAction.CopyPath]: (item) => item.id !== SERVER_FOLDER_ID,
+        [ContextMenuAction.CopyPath]: (item) =>
+          ![SERVER_FOLDER_ID, FOLDER_SHORTCUT_ID, GLOBAL_SHORTCUT_ID].includes(
+            item.id,
+          ),
       },
     );
   }
@@ -90,15 +105,25 @@ class RestServerAdapter implements ContentAdapter {
     // Overwrite file nav settings with data coming from the compute context
     if (session.contextAttributes) {
       const attributes = await session.contextAttributes();
-      if (
-        attributes &&
-        (attributes.fileNavigationCustomRootPath ||
-          attributes.fileNavigationRoot)
-      ) {
-        this.fileNavigationSetByAdmin = true;
-        this.fileNavigationCustomRootPath =
-          attributes.fileNavigationCustomRootPath ?? "";
-        this.fileNavigationRoot = attributes.fileNavigationRoot ?? "USER";
+      if (attributes) {
+        if (
+          attributes.fileNavigationCustomRootPath ||
+          attributes.fileNavigationRoot
+        ) {
+          this.fileNavigationSetByAdmin = true;
+          this.fileNavigationCustomRootPath =
+            attributes.fileNavigationCustomRootPath ?? "";
+          this.fileNavigationRoot = attributes.fileNavigationRoot ?? "USER";
+        }
+        // What we get from the compute context is a string, so we'll make sure it is a valid boolean
+        const allowDownload = attributes.allowDownload?.toLowerCase();
+        if (allowDownload === "true" || allowDownload === "false") {
+          commands.executeCommand(
+            "setContext",
+            "SAS.allowDownload",
+            allowDownload === "true",
+          );
+        }
       }
     }
 
@@ -269,6 +294,36 @@ class RestServerAdapter implements ContentAdapter {
       ];
     }
 
+    if (parentItem.uri === "FOLDER_SHORTCUTS_ID") {
+      return [this.filePropertiesToContentItem(GLOBAL_SHORTCUTS)];
+    }
+
+    if (parentItem.uri === "GLOBAL_SHORTCUTS_ID") {
+      // loop here creating a folder for each of the global paths
+      const globals = [];
+      const globalShortcuts = Object.keys(this.globalShortcuts ?? {});
+      if (!!globalShortcuts && globalShortcuts.length > 0) {
+        globalShortcuts.forEach((shortcutName) => {
+          const shortcutUri = this.globalShortcuts[shortcutName];
+          if (!!shortcutUri && !shortcutUri.startsWith("sascontent")) {
+            const navPath = shortcutUri.split("/").join("~fs~");
+            globals.push(
+              this.filePropertiesToContentItem(
+                createStaticFolder(
+                  shortcutUri,
+                  shortcutName,
+                  SHORTCUTS_FOLDER_TYPE,
+                  navPath,
+                  "getDirectoryMembers",
+                ),
+              ),
+            );
+          }
+        });
+      }
+      return globals;
+    }
+
     const allItems = [];
     const limit = 100;
     let start = 0;
@@ -283,6 +338,7 @@ class RestServerAdapter implements ContentAdapter {
           ).replace("/members", ""),
           limit,
           start,
+          showAll: this.display?.showHiddenItems ?? false,
         });
       } catch (error) {
         // If this error is specifically related to file nav root settings, provide
@@ -315,17 +371,17 @@ class RestServerAdapter implements ContentAdapter {
     return sortedContentItems(allItems);
   }
 
-  public async getContentOfItem(item: ContentItem): Promise<string> {
+  public async getContentOfItem(item: ContentItem): Promise<Uint8Array> {
     const path = this.trimComputePrefix(item.uri);
     return await this.getContentOfItemAtPath(path);
   }
 
-  public async getContentOfUri(uri: Uri): Promise<string> {
+  public async getContentOfUri(uri: Uri): Promise<Uint8Array> {
     const path = this.trimComputePrefix(getResourceId(uri));
     return await this.getContentOfItemAtPath(path);
   }
 
-  private async getContentOfItemAtPath(path: string) {
+  private async getContentOfItemAtPath(path: string): Promise<Uint8Array> {
     const response = await this.fileSystemApi.getFileContentFromSystem(
       {
         sessionId: this.sessionId,
@@ -340,9 +396,9 @@ class RestServerAdapter implements ContentAdapter {
 
     // Disabling typescript checks on this line as this function is typed
     // to return AxiosResponse<void,any>. However, it appears to return
-    // AxiosResponse<string,>.
+    // AxiosResponse<Uint8Array,>.
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return response.data as unknown as string;
+    return response.data as unknown as Uint8Array;
   }
 
   public async getFolderPathForItem(): Promise<string> {
@@ -400,13 +456,18 @@ class RestServerAdapter implements ContentAdapter {
       const result =
         delegateFolderName === "@sasServerRoot"
           ? { data: SAS_SERVER_ROOT_FOLDER }
-          : { data: {} };
+          : delegateFolderName === "@myShortcuts" &&
+              this.fileNavigationRoot !== "CUSTOM"
+            ? { data: SERVER_FOLDER_SHORTCUTS }
+            : { data: undefined };
 
-      this.rootFolders[delegateFolderName] = {
-        ...result.data,
-        uid: `${index}`,
-        ...this.filePropertiesToContentItem(result.data),
-      };
+      if (result.data) {
+        this.rootFolders[delegateFolderName] = {
+          ...result.data,
+          uid: `${index}`,
+          ...this.filePropertiesToContentItem(result.data),
+        };
+      }
     }
 
     return this.rootFolders;
@@ -488,14 +549,17 @@ class RestServerAdapter implements ContentAdapter {
     }
   }
 
-  public async updateContentOfItem(uri: Uri, content: string): Promise<void> {
+  public async updateContentOfItem(
+    uri: Uri,
+    content: Uint8Array,
+  ): Promise<void> {
     const filePath = this.trimComputePrefix(getResourceId(uri));
     return await this.updateContentOfItemAtPath(filePath, content);
   }
 
   private async updateContentOfItemAtPath(
     filePath: string,
-    content: string | ArrayBufferLike,
+    content: Uint8Array | ArrayBufferLike,
   ): Promise<void> {
     const { etag } = await this.getFileInfo(filePath);
     const data = {
@@ -535,6 +599,11 @@ class RestServerAdapter implements ContentAdapter {
     const isRootFolder = [SERVER_FOLDER_ID, SAS_SERVER_HOME_DIRECTORY].includes(
       id,
     );
+    const isShortcutFolder = [
+      SHORTCUTS_FOLDER_TYPE,
+      SERVER_SHORTCUT_FOLDER_TYPE,
+      GLOBAL_SHORTCUT_TYPE,
+    ].includes(fileProperties.type);
     const item = {
       id,
       uri: id,
@@ -543,8 +612,8 @@ class RestServerAdapter implements ContentAdapter {
       modifiedTimeStamp: new Date(fileProperties.modifiedTimeStamp).getTime(),
       links,
       permission: {
-        write: !isRootFolder && !fileProperties.readOnly,
-        delete: !isRootFolder && !fileProperties.readOnly,
+        write: !isRootFolder && !isShortcutFolder && !fileProperties.readOnly,
+        delete: !isRootFolder && !isShortcutFolder && !fileProperties.readOnly,
         addMember:
           !!getLink(links, "POST", "makeDirectory") ||
           !!getLink(links, "POST", "createFile") ||

@@ -455,8 +455,7 @@ class SASRunner {
       $fileRefName = ""
       $objFile = $this.objSAS.FileService.AssignFileref("", "DISK", $filePath, "", [ref] $fileRefName)
       $objStream = $objFile.OpenBinaryStream([SAS.StreamOpenMode]::StreamOpenModeForWriting);
-      $encoding = [System.Text.Encoding]::UTF8
-      $objStream.Write($encoding.GetBytes($content));
+      $objStream.Write([System.Convert]::FromBase64String($content));
 
       $objStream.Close()
       $this.objSAS.FileService.DeassignFileref($objFile.FilerefName)

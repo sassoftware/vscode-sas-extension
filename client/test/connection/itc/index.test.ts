@@ -131,6 +131,328 @@ describe("ITC connection", () => {
     });
   });
 
+  describe("autoexec", () => {
+    describe("COM", () => {
+      afterEach(async () => {
+        await session.close();
+      });
+
+      it("runs the custom autoexec after the WORK directory is available", async () => {
+        sandbox.useFakeTimers();
+
+        session = getSession(
+          {
+            host: "localhost",
+            autoExecLines: ["%put AUTOEXEC_TEST;"],
+          },
+          ITCProtocol.COM,
+        );
+
+        let setupResolved = false;
+        const setupPromise = session.setup().then(() => {
+          setupResolved = true;
+        });
+
+        onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
+        onDataCallback(Buffer.from(`/work/dir`));
+        onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
+
+        const autoexecCalls = stdinStub.args.filter(
+          (args) =>
+            typeof args[0] === "string" &&
+            args[0].includes("/** VSCODE_AUTO_EXEC_START **/"),
+        );
+
+        expect(autoexecCalls).to.have.lengthOf(1);
+        expect(autoexecCalls[0][0]).to.contain(
+          "/** VSCODE_AUTO_EXEC_START **/",
+        );
+        expect(autoexecCalls[0][0]).to.contain("%put AUTOEXEC_TEST;");
+        expect(autoexecCalls[0][0]).to.contain("/** VSCODE_AUTO_EXEC_END **/");
+        expect(autoexecCalls[0][0]).to.contain(LineCodes.RunEndCode);
+        expect(autoexecCalls[0][0]).to.contain("$runner.Run($code)");
+        expect(setupResolved).to.be.false;
+
+        onDataCallback(Buffer.from(LineCodes.RunEndCode));
+        await setupPromise;
+
+        expect(setupResolved).to.be.true;
+      });
+
+      it("does not run the custom autoexec again for the same session", async () => {
+        sandbox.useFakeTimers();
+
+        session = getSession(
+          {
+            host: "localhost",
+            autoExecLines: ["%put AUTOEXEC_TEST;"],
+          },
+          ITCProtocol.COM,
+        );
+
+        const setupPromise = session.setup();
+
+        onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
+        onDataCallback(Buffer.from(`/work/dir`));
+        onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
+        onDataCallback(Buffer.from(LineCodes.RunEndCode));
+
+        await setupPromise;
+
+        await session.setup();
+
+        const autoexecCalls = stdinStub.args.filter(
+          (args) =>
+            typeof args[0] === "string" &&
+            args[0].includes("/** VSCODE_AUTO_EXEC_START **/"),
+        );
+
+        expect(autoexecCalls).to.have.lengthOf(1);
+      });
+
+      it("runs the custom autoexec again after reconnect", async () => {
+        sandbox.useFakeTimers();
+
+        session = getSession(
+          {
+            host: "localhost",
+            autoExecLines: ["%put AUTOEXEC_TEST;"],
+          },
+          ITCProtocol.COM,
+        );
+
+        let setupPromise = session.setup();
+
+        onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
+        onDataCallback(Buffer.from(`/work/dir`));
+        onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
+        onDataCallback(Buffer.from(LineCodes.RunEndCode));
+
+        await setupPromise;
+
+        expect(
+          stdinStub.args.filter(
+            (args) =>
+              typeof args[0] === "string" &&
+              args[0].includes("/** VSCODE_AUTO_EXEC_START **/"),
+          ),
+        ).to.have.lengthOf(1);
+
+        const firstSession = session;
+
+        await session.close();
+
+        session = getSession(
+          {
+            host: "localhost",
+            autoExecLines: ["%put AUTOEXEC_TEST;"],
+          },
+          ITCProtocol.COM,
+        );
+
+        // Closing an ITC session should cause reconnect to create a fresh instance.
+        expect(session).to.not.equal(firstSession);
+
+        setupPromise = session.setup();
+
+        onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
+        onDataCallback(Buffer.from(`/work/dir`));
+        onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
+        onDataCallback(Buffer.from(LineCodes.RunEndCode));
+
+        await setupPromise;
+
+        const autoexecCalls = stdinStub.args.filter(
+          (args) =>
+            typeof args[0] === "string" &&
+            args[0].includes("/** VSCODE_AUTO_EXEC_START **/"),
+        );
+
+        expect(autoexecCalls).to.have.lengthOf(2);
+      });
+    });
+
+    describe("IOM", () => {
+      beforeEach(() => {
+        sandbox.stub(vscode.window, "showInputBox").resolves("password");
+      });
+      afterEach(async () => {
+        await session.close();
+      });
+
+      it("runs the custom autoexec after the WORK directory is available", async () => {
+        sandbox.useFakeTimers();
+
+        session = getSession(
+          {
+            host: "localhost",
+            autoExecLines: ["%put AUTOEXEC_TEST;"],
+          },
+          ITCProtocol.IOMBridge,
+        );
+
+        let setupResolved = false;
+        const setupPromise = session.setup().then(() => {
+          setupResolved = true;
+        });
+
+        onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
+        onDataCallback(Buffer.from(`/work/dir`));
+        onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
+
+        const autoexecCalls = stdinStub.args.filter(
+          (args) =>
+            typeof args[0] === "string" &&
+            args[0].includes("/** VSCODE_AUTO_EXEC_START **/"),
+        );
+
+        expect(autoexecCalls).to.have.lengthOf(1);
+        expect(autoexecCalls[0][0]).to.contain(
+          "/** VSCODE_AUTO_EXEC_START **/",
+        );
+        expect(autoexecCalls[0][0]).to.contain("%put AUTOEXEC_TEST;");
+        expect(autoexecCalls[0][0]).to.contain("/** VSCODE_AUTO_EXEC_END **/");
+        expect(autoexecCalls[0][0]).to.contain(LineCodes.RunEndCode);
+        expect(autoexecCalls[0][0]).to.contain("$runner.Run($code)");
+        expect(setupResolved).to.be.false;
+
+        onDataCallback(Buffer.from(LineCodes.RunEndCode));
+        await setupPromise;
+
+        expect(setupResolved).to.be.true;
+      });
+
+      it("does not run the custom autoexec again for the same session", async () => {
+        sandbox.useFakeTimers();
+
+        session = getSession(
+          {
+            host: "localhost",
+            autoExecLines: ["%put AUTOEXEC_TEST;"],
+          },
+          ITCProtocol.IOMBridge,
+        );
+
+        const setupPromise = session.setup();
+
+        onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
+        onDataCallback(Buffer.from(`/work/dir`));
+        onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
+        onDataCallback(Buffer.from(LineCodes.RunEndCode));
+
+        await setupPromise;
+
+        await session.setup();
+
+        const autoexecCalls = stdinStub.args.filter(
+          (args) =>
+            typeof args[0] === "string" &&
+            args[0].includes("/** VSCODE_AUTO_EXEC_START **/"),
+        );
+
+        expect(autoexecCalls).to.have.lengthOf(1);
+      });
+
+      it("runs the custom autoexec again after reconnect", async () => {
+        sandbox.useFakeTimers();
+
+        session = getSession(
+          {
+            host: "localhost",
+            autoExecLines: ["%put AUTOEXEC_TEST;"],
+          },
+          ITCProtocol.IOMBridge,
+        );
+
+        let setupPromise = session.setup();
+
+        onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
+        onDataCallback(Buffer.from(`/work/dir`));
+        onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
+        onDataCallback(Buffer.from(LineCodes.RunEndCode));
+
+        await setupPromise;
+
+        expect(
+          stdinStub.args.filter(
+            (args) =>
+              typeof args[0] === "string" &&
+              args[0].includes("/** VSCODE_AUTO_EXEC_START **/"),
+          ),
+        ).to.have.lengthOf(1);
+
+        const firstSession = session;
+
+        await session.close();
+
+        session = getSession(
+          {
+            host: "localhost",
+            autoExecLines: ["%put AUTOEXEC_TEST;"],
+          },
+          ITCProtocol.IOMBridge,
+        );
+
+        // Closing an ITC session should cause reconnect to create a fresh instance.
+        expect(session).to.not.equal(firstSession);
+
+        setupPromise = session.setup();
+
+        onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
+        onDataCallback(Buffer.from(`/work/dir`));
+        onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
+        onDataCallback(Buffer.from(LineCodes.RunEndCode));
+
+        await setupPromise;
+
+        const autoexecCalls = stdinStub.args.filter(
+          (args) =>
+            typeof args[0] === "string" &&
+            args[0].includes("/** VSCODE_AUTO_EXEC_START **/"),
+        );
+
+        expect(autoexecCalls).to.have.lengthOf(2);
+      });
+
+      it("closes safely while custom autoexec is still running", async () => {
+        const clock = sandbox.useFakeTimers();
+
+        session = getSession(
+          {
+            host: "localhost",
+            autoExecLines: ["%put AUTOEXEC_TEST;"],
+          },
+          ITCProtocol.IOMBridge,
+        );
+
+        // Start setup, but do not send RunEndCode so autoexec remains running.
+        void session.setup();
+
+        onDataCallback(Buffer.from(`${Tags.WorkDirStartTag}`));
+        onDataCallback(Buffer.from(`/work/dir`));
+        onDataCallback(Buffer.from(`${Tags.WorkDirEndTag}`));
+
+        const autoexecCalls = stdinStub.args.filter(
+          (args) =>
+            typeof args[0] === "string" &&
+            args[0].includes("/** VSCODE_AUTO_EXEC_START **/"),
+        );
+
+        expect(autoexecCalls).to.have.lengthOf(1);
+
+        // Close while autoexec log polling is still active.
+        await session.close();
+
+        const writeCountAfterClose = stdinStub.callCount;
+
+        // The pending polling callback should not attempt to write to the
+        // disposed shell process.
+        expect(() => clock.tick(2 * 1000)).to.not.throw();
+        expect(stdinStub.callCount).to.equal(writeCountAfterClose);
+      });
+    });
+  });
+
   describe("run", () => {
     const html5 = '<div id="IDX">';
     const htmlLocation = v4();
