@@ -18,7 +18,6 @@ import {
 
 import { profileConfig } from "../../commands/profile";
 import { getGlobalStorageUri } from "../ExtensionContext";
-import { getGlobalStorageUri } from "../ExtensionContext";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
 import { treeViewSelections } from "../utils/treeViewSelections";
@@ -699,7 +698,8 @@ class ContentNavigator implements SubscriptionProvider {
     );
 
     function getProfileWithFileRootOptions():
-      ProfileWithFileRootOptions | undefined {
+      | ProfileWithFileRootOptions
+      | undefined {
       switch (activeProfile.connectionType) {
         case ConnectionType.Rest:
         case ConnectionType.IOM:
