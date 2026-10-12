@@ -42,16 +42,20 @@ import { ViyaProfile } from "../profile";
 import { ContentModel } from "./ContentModel";
 import {
   FAVORITES_FOLDER_TYPE,
+  GLOBAL_SHORTCUT_TYPE,
   Messages,
   ROOT_FOLDER_TYPE,
+  ROOT_SHORTCUT_FOLDER_TYPE,
   SERVER_HOME_FOLDER_TYPE,
   SERVER_ROOT_FOLDER_TYPE,
+  SERVER_SHORTCUT_FOLDER_TYPE,
   STOP_SIGN,
   TRASH_FOLDER_TYPE,
 } from "./const";
 import {
   ContentItem,
   ContentNavigatorConfig,
+  ContentSourceType,
   FileManipulationEvent,
 } from "./types";
 import {
@@ -77,6 +81,7 @@ class ContentDataProvider
   private model: ContentModel;
   private extensionUri: Uri;
   private mimeType: string;
+  private sourceType: ContentSourceType;
 
   public dropMimeTypes: string[];
   public dragMimeTypes: string[];
@@ -90,7 +95,7 @@ class ContentDataProvider
   constructor(
     model: ContentModel,
     extensionUri: Uri,
-    { mimeType, treeIdentifier }: ContentNavigatorConfig,
+    { mimeType, treeIdentifier, sourceType }: ContentNavigatorConfig,
   ) {
     this._onDidManipulateFile = new EventEmitter<FileManipulationEvent>();
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
@@ -101,6 +106,7 @@ class ContentDataProvider
     this.dropMimeTypes = [mimeType, "text/uri-list"];
     this.dragMimeTypes = [mimeType];
     this.mimeType = mimeType;
+    this.sourceType = sourceType;
 
     this._treeView = window.createTreeView(treeIdentifier, {
       treeDataProvider: this,
@@ -224,6 +230,8 @@ class ContentDataProvider
       item.parentFolderUri ? item.parentFolderUri : STOP_SIGN,
     );
 
+    const openResourceCommand = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}.openResource`;
+
     return {
       collapsibleState: isContainer
         ? TreeItemCollapsibleState.Collapsed
@@ -231,8 +239,8 @@ class ContentDataProvider
       command: isContainer
         ? undefined
         : {
-            command: "vscode.open",
-            arguments: [uri],
+            command: openResourceCommand,
+            arguments: [item],
             title: "Open SAS File",
           },
       contextValue: item.contextValue || undefined,
@@ -245,7 +253,7 @@ class ContentDataProvider
 
   public async provideTextDocumentContent(uri: Uri): Promise<string> {
     // use text document content provider to display the readonly editor for the files in the recycle bin
-    return await this.model.getContentByUri(uri);
+    return (await this.model.getContentByUri(uri)).toString();
   }
 
   public getChildren(item?: ContentItem): ProviderResult<ContentItem[]> {
@@ -264,9 +272,7 @@ class ContentDataProvider
   }
 
   public async readFile(uri: Uri): Promise<Uint8Array> {
-    return await this.model
-      .getContentByUri(uri)
-      .then((content) => new TextEncoder().encode(content));
+    return await this.model.getContentByUri(uri);
   }
 
   public async createFolder(
@@ -359,11 +365,11 @@ class ContentDataProvider
   }
 
   public writeFile(uri: Uri, content: Uint8Array): void | Promise<void> {
-    return this.model.saveContentToUri(uri, new TextDecoder().decode(content));
+    return this.model.saveContentToUri(uri, content);
   }
 
   public async deleteResource(item: ContentItem): Promise<boolean> {
-    if (!(await closeFileIfOpen(item))) {
+    if (!(await this.closeItemAndDescendantTabs(item))) {
       return false;
     }
     const success = await this.model.delete(item);
@@ -374,12 +380,113 @@ class ContentDataProvider
     return success;
   }
 
+  private async closeItemAndDescendantTabs(
+    item: ContentItem,
+  ): Promise<boolean> {
+    const resourceIds = await this.getItemAndDescendantResourceIds(item);
+    const allTabs = window.tabGroups.all
+      .flatMap((tg) => tg.tabs)
+      .filter(
+        (tab) =>
+          tab.input instanceof TabInputText ||
+          tab.input instanceof TabInputNotebook,
+      );
+
+    const tabsToClose: (typeof allTabs)[number][] = [];
+    for (const tab of allTabs) {
+      if (
+        tab.input instanceof TabInputText ||
+        tab.input instanceof TabInputNotebook
+      ) {
+        const resourceId = getResourceId(tab.input.uri);
+        if (resourceIds.has(resourceId)) {
+          tabsToClose.push(tab);
+        }
+      }
+    }
+
+    if (!tabsToClose.length) {
+      return true;
+    }
+
+    const results: boolean[] = [];
+    for (const tab of tabsToClose) {
+      results.push(await this.closeTab(tab));
+    }
+    return results.every((r) => r !== false);
+  }
+
+  private async getItemAndDescendantResourceIds(
+    item: ContentItem,
+  ): Promise<Set<string>> {
+    const resourceIds = new Set<string>([item.uri]);
+    if (!getIsContainer(item)) {
+      return resourceIds;
+    }
+
+    const pendingItems = [item];
+    while (pendingItems.length > 0) {
+      const currentItem = pendingItems.pop();
+      if (!currentItem) {
+        continue;
+      }
+
+      const children = await this.model.getChildren(currentItem);
+      for (const child of children ?? []) {
+        if (!resourceIds.has(child.uri)) {
+          resourceIds.add(child.uri);
+          if (getIsContainer(child)) {
+            pendingItems.push(child);
+          }
+        }
+      }
+    }
+
+    return resourceIds;
+  }
+
+  private async closeTab(
+    tab: (typeof window.tabGroups.all)[number]["tabs"][number],
+  ): Promise<boolean> {
+    const input = tab.input;
+    const textDocument =
+      input instanceof TabInputText
+        ? workspace.textDocuments.find(
+            (doc) => doc.uri.toString() === input.uri.toString(),
+          )
+        : undefined;
+    const notebookDocument =
+      input instanceof TabInputNotebook
+        ? workspace.notebookDocuments.find(
+            (notebook) => notebook.uri.toString() === input.uri.toString(),
+          )
+        : undefined;
+
+    if (textDocument?.isDirty) {
+      await window.showTextDocument(textDocument, { preview: false });
+      await commands.executeCommand(
+        "workbench.action.revertAndCloseActiveEditor",
+      );
+      return !window.tabGroups.all.some((group) => group.tabs.includes(tab));
+    }
+
+    if (notebookDocument?.isDirty) {
+      await window.showNotebookDocument(notebookDocument, { preview: false });
+      await commands.executeCommand(
+        "workbench.action.revertAndCloseActiveEditor",
+      );
+      return !window.tabGroups.all.some((group) => group.tabs.includes(tab));
+    }
+
+    return (await window.tabGroups.close(tab)) !== false;
+  }
+
   public canRecycleResource(item: ContentItem): boolean {
     return this.model.canRecycleResource(item);
   }
 
   public async recycleResource(item: ContentItem): Promise<boolean> {
-    if (!(await closeFileIfOpen(item))) {
+    if (!(await this.closeItemAndDescendantTabs(item))) {
       return false;
     }
 
@@ -840,6 +947,15 @@ class ContentDataProvider
           break;
         case FAVORITES_FOLDER_TYPE:
           icon = "favoritesFolder";
+          break;
+        case ROOT_SHORTCUT_FOLDER_TYPE:
+          icon = "shortcutsFolder";
+          break;
+        case SERVER_SHORTCUT_FOLDER_TYPE:
+          icon = "shortcutsServerContent";
+          break;
+        case GLOBAL_SHORTCUT_TYPE:
+          icon = "webDAVRepository";
           break;
         case SERVER_HOME_FOLDER_TYPE:
           icon = "userWorkspace";

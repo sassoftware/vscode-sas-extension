@@ -4,13 +4,15 @@ import { l10n } from "vscode";
 
 import {
   AuthType,
+  COMProfile,
   ConnectionType,
+  IOMProfile,
   ProfileConfig,
   ViyaProfile,
   toAutoExecLines,
 } from "../components/profile";
 import { getSession as getITCSession } from "./itc";
-import { ITCProtocol } from "./itc/types";
+import { Config as ITCConfig, ITCProtocol } from "./itc/types";
 import { Config as RestConfig, getSession as getRestSession } from "./rest";
 import {
   Error2 as ComputeError,
@@ -55,9 +57,12 @@ export function getSession(): Session {
     case ConnectionType.SSH:
       return getSSHSession(validProfile.profile);
     case ConnectionType.COM:
-      return getITCSession(validProfile.profile, ITCProtocol.COM);
+      return getITCSession(toITCConfig(validProfile.profile), ITCProtocol.COM);
     case ConnectionType.IOM:
-      return getITCSession(validProfile.profile, ITCProtocol.IOMBridge);
+      return getITCSession(
+        toITCConfig(validProfile.profile),
+        ITCProtocol.IOMBridge,
+      );
     default:
       throw new Error(
         l10n.t("Invalid connectionType. Check Profile settings."),
@@ -75,5 +80,21 @@ function toRestConfig(profile: ViyaProfile): RestConfig {
   if (profile.autoExec) {
     mapped.autoExecLines = toAutoExecLines(profile.autoExec);
   }
+  return mapped;
+}
+
+/**
+ * Translates a {@link COMProfile} or {@link IOMProfile} interface to a {@link ITCConfig} interface.
+ * @param profile an input {@link COMProfile} or {@link IOMProfile} to translate.
+ * @returns ITCConfig instance derived from the input profile.
+ */
+
+function toITCConfig(profile: COMProfile | IOMProfile): Partial<ITCConfig> {
+  const mapped: Partial<ITCConfig> = profile;
+
+  if (profile.autoExec) {
+    mapped.autoExecLines = toAutoExecLines(profile.autoExec);
+  }
+
   return mapped;
 }
