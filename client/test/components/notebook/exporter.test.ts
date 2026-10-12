@@ -43,7 +43,11 @@ describe("export notebook", () => {
     const expectedContent = new TextDecoder().decode(
       getTestFixtureContent("sasnb_export.sas"),
     );
-    assert.strictEqual(sasContent, expectedContent);
+    const normalizeLineEndings = (text: string) => text.replace(/\r\n/g, "\n");
+    assert.strictEqual(
+      normalizeLineEndings(sasContent),
+      normalizeLineEndings(expectedContent),
+    );
   });
 
   it("cancels export when no format is selected", async () => {

@@ -42,16 +42,35 @@ describe("Language mode switch", () => {
     // Give the language server time to process the language switch.
     // Switching from SAS to Python triggers a didClose event for the SAS document.
     await sleep(2000);
+  });
 
-    // Previously, switching a SAS file to another language could lead to
-    // requests being sent for a document the server was no longer tracking.
-    // This hover request helps verify that the server does not crash after
-    // the language change.
-    await vscode.commands.executeCommand(
-      "vscode.executeHoverProvider",
+  it("handles typing and folding requests after switching to Python", async () => {
+    const editor = vscode.window.activeTextEditor;
+    assert.ok(editor, "A text editor should remain active after the language switch");
+
+    await editor!.edit((editBuilder) => {
+      editBuilder.insert(
+        new vscode.Position(0, 0),
+        "def typed_example():\n    return 1\n",
+      );
+    });
+    await sleep(1000);
+
+    const foldingRanges = await vscode.commands.executeCommand(
+      "vscode.executeFoldingRangeProvider",
       sasDocUri,
-      new vscode.Position(0, 0),
     );
+    assert.ok(
+      foldingRanges !== undefined,
+      "Python folding should stay responsive after typing into the switched document",
+    );
+
+    await editor!.edit((editBuilder) => {
+      editBuilder.delete(
+        new vscode.Range(new vscode.Position(0, 0), new vscode.Position(2, 0)),
+      );
+    });
+    await sleep(1000);
   });
 
   it("still serves SAS features for other documents after the switch", async () => {

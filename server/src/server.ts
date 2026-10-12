@@ -9,14 +9,10 @@ import {
   Connection,
   DidChangeConfigurationParams,
   DidChangeWatchedFilesParams,
-  DocumentFormattingRegistrationOptions,
   DocumentHighlightParams,
-  DocumentOnTypeFormattingRegistrationOptions,
   DocumentSelector,
   DocumentSymbol,
-  DocumentSymbolRegistrationOptions,
   ExecuteCommandParams,
-  HoverRegistrationOptions,
   InitializeResult,
   Location,
   Position,
@@ -28,7 +24,6 @@ import {
   RenameParams,
   ResultProgressReporter,
   SemanticTokensRequest,
-  SignatureHelpRegistrationOptions,
   TextDocumentPositionParams,
   TextDocumentSyncKind,
   Unregistration,
@@ -61,6 +56,7 @@ export const runServer = (
   _pyrightLanguageProvider: PyrightLanguageProvider,
 ) => {
   const documentPool: Record<string, DocumentInfo> = {};
+  const sasSel: DocumentSelector = [{ language: "sas" }];
 
   let supportSASGetLibList = false;
   let registeredAdvancedCapabilities = false;
@@ -76,23 +72,6 @@ export const runServer = (
     }
     _pyrightLanguageProvider.initialize(params, [], []);
 
-    const sasSel: DocumentSelector = [{ language: "sas" }];
-    const formattingOpts: DocumentFormattingRegistrationOptions = {
-      documentSelector: sasSel,
-    };
-    const onTypeFormattingOpts: DocumentOnTypeFormattingRegistrationOptions = {
-      documentSelector: sasSel,
-      firstTriggerCharacter: "\n",
-      moreTriggerCharacter: [";"],
-    };
-    const docSymbolOpts: DocumentSymbolRegistrationOptions = {
-      documentSelector: sasSel,
-      workDoneProgress: true,
-    };
-    const hoverOpts: HoverRegistrationOptions = {
-      documentSelector: sasSel,
-      workDoneProgress: true,
-    };
     const completionOpts: CompletionRegistrationOptions = {
       documentSelector: sasSel,
       triggerCharacters: _pyrightLanguageProvider.getClientCapabilities()
@@ -105,11 +84,6 @@ export const runServer = (
         labelDetailsSupport: true,
       },
     };
-    const sigHelpOpts: SignatureHelpRegistrationOptions = {
-      documentSelector: sasSel,
-      triggerCharacters: ["(", ",", ")"],
-      workDoneProgress: true,
-    };
     const result: InitializeResult = {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Incremental,
@@ -118,14 +92,25 @@ export const runServer = (
           legend,
           full: true,
         },
-        documentFormattingProvider: formattingOpts,
+        documentFormattingProvider: { documentSelector: sasSel },
         foldingRangeProvider: { documentSelector: sasSel },
-        documentOnTypeFormattingProvider: onTypeFormattingOpts,
-        documentSymbolProvider: docSymbolOpts,
+        documentOnTypeFormattingProvider: {
+          documentSelector: sasSel,
+          firstTriggerCharacter: "\n",
+          moreTriggerCharacter: [";"],
+        },
+        documentSymbolProvider: {
+          documentSelector: sasSel,
+          workDoneProgress: true,
+        },
         workspaceSymbolProvider: { workDoneProgress: true },
-        hoverProvider: hoverOpts,
+        hoverProvider: { documentSelector: sasSel, workDoneProgress: true },
         completionProvider: completionOpts,
-        signatureHelpProvider: sigHelpOpts,
+        signatureHelpProvider: {
+          documentSelector: sasSel,
+          triggerCharacters: ["(", ",", ")"],
+          workDoneProgress: true,
+        },
         workspace: {
           workspaceFolders: {
             supported: true,
@@ -299,6 +284,9 @@ export const runServer = (
 
   // todo
   connection.onFoldingRanges((params) => {
+    if (!documentPool[params.textDocument.uri]) {
+      return [];
+    }
     syncIfDocChange(params.textDocument.uri);
     const languageService = getLanguageService(params.textDocument.uri);
     return languageService.getFoldingRanges();
@@ -714,15 +702,14 @@ export const runServer = (
       return;
     }
     registeredAdvancedCapabilities = true;
-    const registerOptions = {
-      documentSelector: [{ language: "sas" }],
-    };
     const registrations: Registration[] = [];
     for (const capability of advancedCapabilities) {
       registrations.push({
         id: capability,
         method: capability,
-        registerOptions,
+        registerOptions: {
+          documentSelector: sasSel,
+        },
       });
     }
     await conn.sendRequest(RegistrationRequest.type, { registrations });
