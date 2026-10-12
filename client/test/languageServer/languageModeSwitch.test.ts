@@ -46,7 +46,10 @@ describe("Language mode switch", () => {
 
   it("handles typing and folding requests after switching to Python", async () => {
     const editor = vscode.window.activeTextEditor;
-    assert.ok(editor, "A text editor should remain active after the language switch");
+    assert.ok(
+      editor,
+      "A text editor should remain active after the language switch",
+    );
 
     await editor!.edit((editBuilder) => {
       editBuilder.insert(
