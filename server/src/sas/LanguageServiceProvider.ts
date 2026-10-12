@@ -262,7 +262,7 @@ export class LanguageServiceProvider {
    * Detects whether a selected line is already wrapped as a single-line SAS block comment.
    */
   private isSingleLineComment(line: string): boolean {
-    return /^\s*\/\*.*\*\/\s*$/.test(line);
+    return /^\s*\/\*[\s\S]*\*\/\s*$/.test(line);
   }
 
   /**
@@ -318,7 +318,7 @@ export class LanguageServiceProvider {
    * For SAS statements we comment each non-blank line independently, while single embedded
    * Python lines are left alone so the editor's native # comment handling can take over.
    */
-  toggleLineComment(range: Range) {
+  toggleLineComment(range: Range): string | null {
     const singleLineText =
       range.start.line === range.end.line
         ? this.model
@@ -339,76 +339,59 @@ export class LanguageServiceProvider {
       return null;
     }
 
-    const lines = this.model
-      .getText({
-        start: {
-          line: range.start.line,
-          column: 0,
-        },
-        end: {
-          line: range.end.line,
-          column: range.end.character,
-        },
-      })
-      .split(/\r\n|\r|\n/);
+    const selectedText = this.model.getText({
+      start: {
+        line: range.start.line,
+        column: 0,
+      },
+      end: {
+        line: range.end.line,
+        column: range.end.character,
+      },
+    });
+    const lineSeparator = selectedText.includes("\r\n")
+      ? "\r\n"
+      : selectedText.includes("\r")
+        ? "\r"
+        : "\n";
+    const lines = selectedText.split(/\r\n|\r|\n/);
+    // Cache only selected comment lines so both passes can use constant-time membership checks.
+    const multilineCommentLines = new Set<number>();
+    for (const comment of this.syntaxProvider.getMultilineComments()) {
+      const firstLine = Math.max(comment.startLine, range.start.line);
+      const lastLine = Math.min(comment.endLine, range.end.line);
+      for (let line = firstLine; line <= lastLine; line++) {
+        multilineCommentLines.add(line);
+      }
+    }
 
     // Decide if the selection is in "add comment" mode or "remove comment" mode.
     // Any non-empty, non-comment line means we should wrap with SAS block comments.
-    let insideBlockComment = false;
-    const shouldAdd = lines.some((line) => {
+    const shouldAdd = lines.some((line, index) => {
       const trimmed = line.trim();
-      if (!trimmed) {
-        return false;
-      }
-
-      if (insideBlockComment) {
-        if (trimmed.includes("*/")) {
-          insideBlockComment = false;
-        }
-        return false;
-      }
-
-      if (trimmed.startsWith("/*")) {
-        if (this.isSingleLineComment(line)) {
-          return false;
-        }
-        insideBlockComment = true;
-        return false;
-      }
-
-      return true;
+      const lineNumber = range.start.line + index;
+      return (
+        trimmed !== "" &&
+        !this.isSingleLineComment(line) &&
+        !multilineCommentLines.has(lineNumber)
+      );
     });
 
     if (shouldAdd) {
-      insideBlockComment = false;
       return lines
-        .map((line) => {
+        .map((line, index) => {
           const trimmed = line.trim();
-          if (!trimmed) {
-            return line;
-          }
-
-          if (insideBlockComment) {
-            if (trimmed.includes("*/")) {
-              insideBlockComment = false;
-            }
-            return line;
-          }
-
-          if (trimmed.startsWith("/*")) {
-            if (this.isSingleLineComment(line)) {
-              return line;
-            }
-            insideBlockComment = true;
-            return line;
-          }
-
-          return this.wrapSingleLine(line);
+          const lineNumber = range.start.line + index;
+          return trimmed === "" ||
+            this.isSingleLineComment(line) ||
+            multilineCommentLines.has(lineNumber)
+            ? line
+            : this.wrapSingleLine(line);
         })
-        .join("\n");
+        .join(lineSeparator);
     }
 
-    return lines.map((line) => this.unwrapSingleLine(line)).join("\n");
+    return lines.map((line) => this.unwrapSingleLine(line)).join(lineSeparator);
   }
 
   setLibService(fn: LibService): void {

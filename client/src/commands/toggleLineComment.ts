@@ -30,21 +30,30 @@ export async function toggleLineComment(
       document.lineAt(endLine).range.end.character,
     );
 
-    const result = await client.sendRequest<string | null>(
-      "sas/toggleLineComment",
-      {
-        textDocument:
-          client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-        range: client.code2ProtocolConverter.asRange(fullSelection),
-      },
-    );
-    if (result !== null) {
-      editor.selection = fullSelection;
-      await editor.edit((editBuilder) => {
-        editBuilder.replace(fullSelection, result);
-      });
-      return;
+    try {
+      const result = await client.sendRequest<string | null>(
+        "sas/toggleLineComment",
+        {
+          textDocument:
+            client.code2ProtocolConverter.asTextDocumentIdentifier(document),
+          range: client.code2ProtocolConverter.asRange(fullSelection),
+        },
+      );
+      if (result !== null) {
+        const applied = await editor.edit((editBuilder) => {
+          editBuilder.replace(fullSelection, result);
+        });
+        if (applied) {
+          editor.selection = fullSelection;
+          return;
+        }
+      }
+    } catch (error) {
+      console.error(
+        "[SAS] sas/toggleLineComment failed; falling back to VS Code comments.",
+        error,
+      );
     }
   }
-  commands.executeCommand("editor.action.commentLine");
+  await commands.executeCommand("editor.action.commentLine");
 }
