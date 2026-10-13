@@ -12,6 +12,8 @@ The SAS extension includes many [features](https://sassoftware.github.io/vscode-
 - Navigate SAS Content and libraries, including table viewer
 - Create notebooks for SAS, SQL, Python, R, and other languages
 
+When `SAS.notebook.cleanOutput` is enabled, Python notebooks display cleaned output and automatically display the final Python expression when possible. When disabled, the original SAS and Python execution output is preserved.
+
 <img src="website/static/images/featuresGlance.png"/>
 
 ## Support

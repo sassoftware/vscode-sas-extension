@@ -48,7 +48,10 @@ export interface PythonProcessedOutput {
  * All SAS boilerplate (NOTE lines, source-code echo, timing info, etc.) is
  * silently discarded.
  */
-export function processPythonLog(logs: LogLine[]): PythonProcessedOutput {
+export function processPythonLog(
+  logs: LogLine[],
+  autodisplayId?: string,
+): PythonProcessedOutput {
   let isPythonError = false;
   let isSASError = false;
 
@@ -89,10 +92,26 @@ export function processPythonLog(logs: LogLine[]): PythonProcessedOutput {
 
   // Success path – extract Python stdout and any _repr_html_() payload.
   const outputText = extractPythonOutputText(logs);
-  const outputLines: LogLine[] = outputText.map((text) => ({
-    type: "normal" as const,
-    line: text,
-  }));
+  const frameMarkers =
+    autodisplayId && /^[a-f0-9]{32}$/.test(autodisplayId)
+      ? {
+          begin: `__SAS_AUTODISPLAY_${autodisplayId}_BEGIN__`,
+          end: `__SAS_AUTODISPLAY_${autodisplayId}_END__`,
+        }
+      : undefined;
+  const decodedText = frameMarkers
+    ? decodeAutodisplayFrames(
+        outputText.join("\n"),
+        frameMarkers.begin,
+        frameMarkers.end,
+      )
+    : outputText.join("\n");
+  const outputLines: LogLine[] =
+    outputText.length === 0
+      ? []
+      : decodedText
+          .split("\n")
+          .map((line) => ({ type: "normal" as const, line }));
 
   return {
     isPythonError: false,
@@ -100,6 +119,69 @@ export function processPythonLog(logs: LogLine[]): PythonProcessedOutput {
     outputLines,
     errorLines: [],
   };
+}
+
+function decodeAutodisplayFrames(
+  text: string,
+  beginMarker: string,
+  endMarker: string,
+): string {
+  let decoded = "";
+  let offset = 0;
+
+  while (offset < text.length) {
+    const begin = findWrappedMarker(text, beginMarker, offset);
+    if (!begin) {
+      return decoded + text.slice(offset);
+    }
+
+    decoded += text.slice(offset, begin.start);
+    const end = findWrappedMarker(text, endMarker, begin.end);
+    if (!end) {
+      return decoded + text.slice(begin.start);
+    }
+
+    const frame = text.slice(begin.start, end.end);
+    const payload = text.slice(begin.end, end.start).replace(/\r?\n/g, "");
+    try {
+      const value: unknown = JSON.parse(payload);
+      decoded += typeof value === "string" ? value : frame;
+    } catch {
+      decoded += frame;
+    }
+    offset = end.end;
+  }
+
+  return decoded;
+}
+
+function findWrappedMarker(
+  text: string,
+  marker: string,
+  offset: number,
+): { start: number; end: number } | undefined {
+  for (
+    let start = text.indexOf(marker[0], offset);
+    start >= 0;
+    start = text.indexOf(marker[0], start + 1)
+  ) {
+    let cursor = start;
+    let matched = true;
+    for (const character of marker) {
+      while (text[cursor] === "\r" || text[cursor] === "\n") {
+        cursor++;
+      }
+      if (text[cursor] !== character) {
+        matched = false;
+        break;
+      }
+      cursor++;
+    }
+    if (matched) {
+      return { start, end: cursor };
+    }
+  }
+  return undefined;
 }
 
 /**

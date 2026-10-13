@@ -199,7 +199,7 @@ export function activate(context: ExtensionContext) {
       "sas-notebook",
       new NotebookSerializer(),
     ),
-    new NotebookController(),
+    new NotebookController(client),
     commands.registerCommand("SAS.notebook.new", newSASNotebook),
     commands.registerCommand("SAS.file.new", newSASFile),
     commands.registerCommand("SAS.notebook.export", () =>
