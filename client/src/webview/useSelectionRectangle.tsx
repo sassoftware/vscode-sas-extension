@@ -29,15 +29,15 @@ export const useSelectionRectangle = ({
   scrollBoundaries,
   scrollContainer,
   getRowData,
-  // onSelectionStarted,
-  // onSelectionEnded,
+  onSelectionStarted,
+  onSelectionEnded,
 }: {
   enabled: boolean;
   scrollContainer: string;
   scrollBoundaries: string;
   getRowData: (rowIndex: string) => IRowNode | undefined;
-  // onSelectionStarted: () => void;
-  // onSelectionEnded: () => void;
+  onSelectionStarted: () => void;
+  onSelectionEnded: () => void;
 }) => {
   const rectangleRef = useRef<HTMLDivElement>(undefined!);
 
@@ -96,7 +96,7 @@ export const useSelectionRectangle = ({
     clearInterval(timeout);
 
   const resetStyles = () => {
-    // onSelectionEnded();
+    onSelectionEnded();
     stopScrolling(scrollDownInterval);
     stopScrolling(scrollUpInterval);
     rectangleRef.current.style.display = "none";
@@ -181,44 +181,55 @@ export const useSelectionRectangle = ({
     }
   };
 
-  // const handleKeyboardBasedRectangularSelection = (event: KeyboardEvent) => {
-  //   const targetRect = div(event.target).getBoundingClientRect();
+  const handleKeyboardBasedRectangularSelection = (event: KeyboardEvent) => {
+    const targetRect = div(event.target).getBoundingClientRect();
 
-  //   if (
-  //     !rectangleRef.current ||
-  //     rectangleRef.current.style.display !== "block"
-  //   ) {
-  //     mouseHasMoved.current = false;
-  //     mouseSelectionEnabled.current = false;
-  //     // Lets initialize our rectangle
-  //     selection.lastItemSelected = undefined;
-  //     selection.start = relativePoint({ x: targetRect.x, y: targetRect.y });
-  //     selection.end = relativePoint({
-  //       x: targetRect.x + targetRect.width,
-  //       y: targetRect.y + targetRect.height,
-  //     });
-  //     initRectangularSelection(div(event.target));
-  //     // onSelectionStarted();
-  //   } else if (rectangleRef.current) {
-  //     const rectangleRect = rectangleRef.current.getBoundingClientRect();
-  //     const xShift =
-  //       event.key === "ArrowRight" ? 25 : event.key === "ArrowLeft" ? -25 : 0;
-  //     const yShift =
-  //       event.key === "ArrowDown" ? 25 : event.key === "ArrowUp" ? -25 : 0;
-  //     selection.end = relativePoint({
-  //       // It looks like the width needs to be adjusted by 2 due to the
-  //       // 2px border, although this could be a red herring.
-  //       x: rectangleRect.x + rectangleRect.width - 2 + xShift,
-  //       y: rectangleRect.y + rectangleRect.height - 2 + yShift,
-  //     });
-  //   }
+    if (
+      !rectangleRef.current ||
+      rectangleRef.current.style.display !== "block"
+    ) {
+      mouseHasMoved.current = false;
+      mouseSelectionEnabled.current = false;
 
-  //   drawRectangle();
-  // };
+      // Lets initialize our rectangle
+      selection.lastItemSelected = getClosestRow(div(event.target));
+      selection.start = relativePoint({ x: targetRect.x + 2, y: targetRect.y });
+      selection.end = relativePoint({
+        x: targetRect.x + targetRect.width - 2,
+        y: targetRect.y + targetRect.height,
+      });
+
+      initRectangularSelection(div(event.target));
+    } else if (rectangleRef.current) {
+      const rectangleRect = rectangleRef.current.getBoundingClientRect();
+      const xShift =
+        event.key === "ArrowRight" ? 25 : event.key === "ArrowLeft" ? -25 : 0;
+      const yShift =
+        event.key === "ArrowDown" ? 25 : event.key === "ArrowUp" ? -25 : 0;
+      selection.end = relativePoint({
+        // It looks like the width needs to be adjusted by 2 due to the
+        // 2px border, although this could be a red herring.
+        x: rectangleRect.x + rectangleRect.width - 2 + xShift,
+        y: rectangleRect.y + rectangleRect.height - 2 + yShift,
+      });
+
+      const bottomRightX = rectangleRect.right - 1;
+      const bottomRightY = rectangleRect.bottom - 1;
+
+      rectangleRef.current.style.display = "none";
+      const el = document.elementFromPoint(bottomRightX, bottomRightY);
+      rectangleRef.current.style.display = "block";
+
+      selection.lastItemSelected = getClosestRow(div(el));
+    }
+
+    drawRectangle();
+    rectangleRef.current.classList.remove("active");
+  };
 
   const getClosestRow = (target: Target) => {
     const firstCell = target.closest(".ag-cell");
-    const firstRow = firstCell && firstCell.parentElement.parentElement;
+    const firstRow = firstCell && firstCell.closest("[row-index]");
     if (!firstCell || !firstRow) {
       return { row: -1, column: -1 };
     }
@@ -248,6 +259,7 @@ export const useSelectionRectangle = ({
       return;
     }
     selection.firstItemSelected = getClosestRow(target);
+    onSelectionStarted();
 
     function createSelectionRectangle() {
       const divEl = div(document.createElement("div"));
@@ -285,9 +297,9 @@ export const useSelectionRectangle = ({
       resetStyles();
       return;
     }
-    // if (event.shiftKey && event.key.match(/^Arrow.*$/)) {
-    //   handleKeyboardBasedRectangularSelection(event);
-    // }
+    if (event.shiftKey && event.key.match(/^Arrow.*$/)) {
+      handleKeyboardBasedRectangularSelection(event);
+    }
   };
 
   const onMouseDown: HTMLAttributes<HTMLDivElement>["onMouseDown"] = (e) => {
