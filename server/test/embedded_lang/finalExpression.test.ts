@@ -214,11 +214,11 @@ describe("Python final expression request", () => {
     const toServer = new PassThrough();
     const toClient = new PassThrough();
     const server = createConnection(
-      new StreamMessageReader(toServer),
+      new StreamMessageReader(toServer as unknown as NodeJS.ReadableStream),
       new StreamMessageWriter(toClient),
     );
     const client = createProtocolConnection(
-      new StreamMessageReader(toClient),
+      new StreamMessageReader(toClient as unknown as NodeJS.ReadableStream),
       new StreamMessageWriter(toServer),
     );
     const provider = sinon.createStubInstance(PyrightLanguageProviderNode);
