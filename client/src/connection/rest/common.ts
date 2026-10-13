@@ -4,7 +4,7 @@ import { AxiosRequestConfig, AxiosResponse } from "axios";
 import {
   format as formatMediaType,
   parse as parseMediaType,
-} from "media-typer";
+} from "media-typer/dist";
 
 import { RequestArgs, createRequestFunction } from "./api/common";
 import { Link } from "./api/compute";
