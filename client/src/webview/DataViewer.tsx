@@ -39,15 +39,29 @@ const DataViewer = () => {
     refreshResults,
   } = useDataViewer();
   const [gridDragging, setGridDragging] = useState(false);
-  // const [suppressNavigable, setSuppressNavigable] = useState(false);
+  const [focusedCell, setFocusedCell] = useState(null);
   const { onKeyDown, ...selectionRectangleHooks } = useSelectionRectangle({
-    // onSelectionStarted: () => {
-    //   setSuppressNavigable(true);
-    //   gridRef.current?.api.clearFocusedCell();
-    // },
-    // onSelectionEnded: () => {
-    //   setSuppressNavigable(false);
-    // },
+    onSelectionStarted: () => {
+      setFocusedCell(gridRef.current?.api.getFocusedCell());
+      gridRef.current?.api.clearFocusedCell();
+      gridRef.current?.api.updateGridOptions({
+        suppressCellFocus: true,
+        suppressHeaderFocus: true,
+      });
+    },
+    onSelectionEnded: () => {
+      gridRef.current?.api.updateGridOptions({
+        suppressCellFocus: false,
+        suppressHeaderFocus: false,
+      });
+      if (focusedCell) {
+        gridRef.current?.api.setFocusedCell(
+          focusedCell?.rowIndex,
+          focusedCell?.column,
+        );
+        setFocusedCell(null);
+      }
+    },
     getRowData: (rowIndex: string) => gridRef.current?.api.getRowNode(rowIndex),
     enabled: !gridDragging,
     scrollContainer: ".ag-grid-scrolling-container",
