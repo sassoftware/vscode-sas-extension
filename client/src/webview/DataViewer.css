@@ -225,3 +225,46 @@ button,
   background: url(../../../icons/light/search.svg) center no-repeat;
   background-size: 16px 16px;
 }
+
+/* All columns hidden */
+
+.ag-grid-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.all-columns-hidden-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background-color: var(--vscode-editor-background);
+}
+
+.all-columns-hidden-message {
+  color: var(--vscode-foreground);
+  text-align: center;
+}
+
+.all-columns-hidden-button {
+  padding: 6px 16px;
+  border: 1px solid var(--vscode-button-border);
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.all-columns-hidden-button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.all-columns-hidden-button:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 1px var(--vscode-editor-background),
+    0 0 0 3px var(--vscode-button-background);
+}

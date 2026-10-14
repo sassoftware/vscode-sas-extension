@@ -15,6 +15,7 @@ When viewing table data, you have the following options available for each colum
 - Column pinning: Each column can be pinned to the left or the right of the data viewer to have an always on-screen view of important columns.
 - Sort: Each column can be sorted ascending or descending. To add multiple columns to a sort, click the menu for each column and select the sort type. Sort priority will be displayed next to each column's direction icon.
 - Properties: Clicking properties will reveal the properties for the specific column chosen.
+- Manage columns: Select **Manage Columns** to choose which columns are displayed and change their order.
 - Filtering results: Results can be filtered by specifying where conditions in the filter bar and pressing enter. To reset the filter, click the clear (X) button.
 
 ![Table Viewing](/images/tableViewing.gif)
