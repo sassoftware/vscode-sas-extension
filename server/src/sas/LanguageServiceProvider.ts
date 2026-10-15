@@ -306,11 +306,9 @@ export class LanguageServiceProvider {
 
     return (
       range.start.line === range.end.line &&
-      !/^(?:(?:submit|endsubmit|run)\s*;?\s*)+$/i.test(
-        normalizedText.trim(),
-      ) &&
+      !/^(?:(?:submit|endsubmit|run)\s*;?\s*)+$/i.test(normalizedText.trim()) &&
       this.syntaxProvider.getSyntax(range.start.line)[0]?.style ===
-      "embedded-code"
+        "embedded-code"
     );
   }
 
@@ -324,17 +322,17 @@ export class LanguageServiceProvider {
     const singleLineText =
       range.start.line === range.end.line
         ? this.model
-          .getText({
-            start: {
-              line: range.start.line,
-              column: 0,
-            },
-            end: {
-              line: range.end.line,
-              column: range.end.character,
-            },
-          })
-          .trim()
+            .getText({
+              start: {
+                line: range.start.line,
+                column: 0,
+              },
+              end: {
+                line: range.end.line,
+                column: range.end.character,
+              },
+            })
+            .trim()
         : "";
 
     if (this.isSingleEmbeddedLine(range, singleLineText)) {

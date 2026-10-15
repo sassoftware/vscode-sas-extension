@@ -155,12 +155,9 @@ describe("SAS toggle line comment", () => {
 
     assert.equal(
       toggleComment(content, 1, 4),
-      [
-        "/*submit;*/",
-        '/*print("test")*/',
-        "/*endsubmit;*/",
-        "/*run;*/",
-      ].join("\n"),
+      ["/*submit;*/", '/*print("test")*/', "/*endsubmit;*/", "/*run;*/"].join(
+        "\n",
+      ),
     );
 
     const commentedContent = [
