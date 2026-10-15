@@ -92,6 +92,13 @@ describe("SAS toggle line comment", () => {
     assert.equal(toggleComment(content, 3, 3), "/*endsubmit;*/");
   });
 
+  it("uses a SAS block comment for multiple embedded-block delimiters on one line", () => {
+    const content = ["proc python;", "submit;", "endsubmit;run;"].join("\n");
+
+    assert.equal(toggleComment(content, 2, 2), "/*endsubmit;run;*/");
+    assert.equal(toggleComment("/*endsubmit;run;*/"), "endsubmit;run;");
+  });
+
   it("removes a single SAS block comment around ENDSUBMIT without falling back to native comments", () => {
     const content = [
       "proc python;",
@@ -134,6 +141,38 @@ describe("SAS toggle line comment", () => {
         "/*endsubmit;*/",
         "/*run;*/",
       ].join("\n"),
+    );
+  });
+
+  it("uses SAS block comments for every line in a mixed PROC PYTHON selection", () => {
+    const content = [
+      "proc python;",
+      "submit;",
+      'print("test")',
+      "endsubmit;",
+      "run;",
+    ].join("\n");
+
+    assert.equal(
+      toggleComment(content, 1, 4),
+      [
+        "/*submit;*/",
+        '/*print("test")*/',
+        "/*endsubmit;*/",
+        "/*run;*/",
+      ].join("\n"),
+    );
+
+    const commentedContent = [
+      "proc python;",
+      "/*submit;*/",
+      '/*print("test")*/',
+      "/*endsubmit;*/",
+      "/*run;*/",
+    ].join("\n");
+    assert.equal(
+      toggleComment(commentedContent, 1, 4),
+      ["submit;", 'print("test")', "endsubmit;", "run;"].join("\n"),
     );
   });
 });
