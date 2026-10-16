@@ -319,11 +319,12 @@ export const useSelectionRectangle = ({
   };
 
   const onMouseDown: HTMLAttributes<HTMLDivElement>["onMouseDown"] = (e) => {
-    if (e.target && div(e.target).classList.contains("copy-button")) {
-      copySelection();
+    // If this isn't the left mouse button or selection isn't enabled, ignore the action
+    if (e.button !== 0 || !enabled) {
       return;
     }
-    if (!enabled) {
+    if (e.target && div(e.target).classList.contains("copy-button")) {
+      copySelection();
       return;
     }
 
@@ -376,6 +377,10 @@ export const useSelectionRectangle = ({
   };
 
   const onMouseUp: HTMLAttributes<HTMLDivElement>["onMouseUp"] = (e) => {
+    // If this isn't the left mouse button, ignore the action
+    if (e.button !== 0) {
+      return;
+    }
     stopScrolling(scrollDownInterval);
     stopScrolling(scrollUpInterval);
     rectangleRef.current.classList.remove("active");
