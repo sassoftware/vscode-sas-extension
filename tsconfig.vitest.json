@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "vitest/globals"]
+  },
+  "include": [
+    "vitest.config.mts",
+    "client/test/**/*.test.tsx",
+    "client/test/react/**/*.ts"
+  ]
+}

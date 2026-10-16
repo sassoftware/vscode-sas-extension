@@ -1,6 +1,6 @@
 // Copyright © 2022-2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { ProgressLocation, l10n, window } from "vscode";
+import { EventEmitter, ProgressLocation, l10n, window } from "vscode";
 
 import type { OnLogFn, RunResult } from ".";
 
@@ -12,7 +12,14 @@ export type SessionContextAttributes =
     }
   | undefined;
 
+const sessionChanged = new EventEmitter<void>();
+export const onDidChangeSession = sessionChanged.event;
+
 export abstract class Session {
+  protected notifySessionChanged(): void {
+    sessionChanged.fire();
+  }
+
   protected _rejectRun: (reason?: unknown) => void | undefined;
   protected _connectionPromise: Promise<void> | undefined;
 
@@ -69,6 +76,7 @@ export abstract class Session {
       this._rejectRun = undefined;
     }
     this._connectionPromise = undefined;
+    this.notifySessionChanged();
     return this._close();
   }
   protected abstract _close(): Promise<void> | void;
