@@ -58,37 +58,35 @@ export const DataViewer = () => {
   } = useDataViewer();
   const [gridDragging, setGridDragging] = useState(false);
   const [focusedCell, setFocusedCell] = useState(null);
-  const {
-    onKeyDown,
-    resetSelection,
-    ...selectionRectangleHooks
-  } = useSelectionRectangle({
-    onSelectionStarted: () => {
-      setFocusedCell(gridRef.current?.api.getFocusedCell());
-      gridRef.current?.api.clearFocusedCell();
-      gridRef.current?.api.updateGridOptions({
-        suppressCellFocus: true,
-        suppressHeaderFocus: true,
-      });
-    },
-    onSelectionEnded: () => {
-      gridRef.current?.api.updateGridOptions({
-        suppressCellFocus: false,
-        suppressHeaderFocus: false,
-      });
-      if (focusedCell) {
-        gridRef.current?.api.setFocusedCell(
-          focusedCell?.rowIndex,
-          focusedCell?.column,
-        );
-        setFocusedCell(null);
-      }
-    },
-    getRowData: (rowIndex: string) => gridRef.current?.api.getRowNode(rowIndex),
-    enabled: !gridDragging,
-    scrollContainer: ".ag-grid-scrolling-container",
-    scrollViewport: ".ag-grid-viewport",
-  });
+  const { onKeyDown, resetSelection, ...selectionRectangleHooks } =
+    useSelectionRectangle({
+      onSelectionStarted: () => {
+        setFocusedCell(gridRef.current?.api.getFocusedCell());
+        gridRef.current?.api.clearFocusedCell();
+        gridRef.current?.api.updateGridOptions({
+          suppressCellFocus: true,
+          suppressHeaderFocus: true,
+        });
+      },
+      onSelectionEnded: () => {
+        gridRef.current?.api.updateGridOptions({
+          suppressCellFocus: false,
+          suppressHeaderFocus: false,
+        });
+        if (focusedCell) {
+          gridRef.current?.api.setFocusedCell(
+            focusedCell?.rowIndex,
+            focusedCell?.column,
+          );
+          setFocusedCell(null);
+        }
+      },
+      getRowData: (rowIndex: string) =>
+        gridRef.current?.api.getRowNode(rowIndex),
+      enabled: !gridDragging,
+      scrollContainer: ".ag-grid-scrolling-container",
+      scrollViewport: ".ag-grid-viewport",
+    });
 
   const handleKeydown = useCallback(
     (event: KeyboardEvent) => {
