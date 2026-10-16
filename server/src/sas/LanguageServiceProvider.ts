@@ -262,34 +262,140 @@ export class LanguageServiceProvider {
     );
   }
 
-  toggleLineComment(range: Range) {
-    const token = this.syntaxProvider.getSyntax(range.start.line)[0];
-    if (token?.style === "embedded-code") {
+  /**
+   * Detects whether a selected line is already wrapped as a single-line SAS block comment.
+   */
+  private isSingleLineComment(line: string): boolean {
+    return /^\s*\/\*[\s\S]*\*\/\s*$/.test(line);
+  }
+
+  /**
+   * Wraps a single SAS statement in a block comment while preserving leading indentation.
+   */
+  private wrapSingleLine(line: string): string {
+    const trimmed = line.trim();
+    if (!trimmed || this.isSingleLineComment(line)) {
+      return line;
+    }
+
+    const indentation = line.match(/^\s*/)?.[0] ?? "";
+    return `${indentation}/*${trimmed}*/`;
+  }
+
+  /**
+   * Removes a single-line SAS block comment wrapper while preserving the original indentation.
+   */
+  private unwrapSingleLine(line: string): string {
+    const trimmed = line.trim();
+    if (!trimmed || !trimmed.startsWith("/*") || !trimmed.includes("*/")) {
+      return line;
+    }
+
+    const match = line.match(/^(\s*)\/\*\s*(.*?)\s*\*\/(\s*)$/);
+    if (!match) {
+      return line;
+    }
+
+    return `${match[1]}${match[2]}${match[3]}`;
+  }
+
+  /**
+   * Returns true when a single selected line is a real embedded Python statement that should
+   * defer to the editor's native comment command instead of SAS block-comment syntax.
+   */
+  private isSingleEmbeddedLine(range: Range, singleLineText: string): boolean {
+    const normalizedText = this.isSingleLineComment(singleLineText)
+      ? this.unwrapSingleLine(singleLineText)
+      : singleLineText;
+
+    return (
+      range.start.line === range.end.line &&
+      !/^(?:(?:submit|endsubmit|run)\s*;?\s*)+$/i.test(normalizedText.trim()) &&
+      this.syntaxProvider.getSyntax(range.start.line)[0]?.style ===
+        "embedded-code"
+    );
+  }
+
+  /**
+   * Toggles SAS block comments for the selected range.
+   *
+   * For SAS statements we comment each non-blank line independently, while single embedded
+   * Python lines are left alone so the editor's native # comment handling can take over.
+   */
+  toggleLineComment(range: Range): string | null {
+    const singleLineText =
+      range.start.line === range.end.line
+        ? this.model
+            .getText({
+              start: {
+                line: range.start.line,
+                column: 0,
+              },
+              end: {
+                line: range.end.line,
+                column: range.end.character,
+              },
+            })
+            .trim()
+        : "";
+
+    if (this.isSingleEmbeddedLine(range, singleLineText)) {
       return null;
     }
-    const lines = this.model
-      .getText({
-        start: {
-          line: range.start.line,
-          column: 0,
-        },
-        end: {
-          line: range.end.line,
-          column: range.end.character,
-        },
-      })
-      .split(/\n|\r\n/);
-    const shouldAdd = lines.some(
-      (line) => line.trim() !== "" && !/^\s*\/\*.*\*\/\s*$/.test(line),
-    );
+
+    const selectedText = this.model.getText({
+      start: {
+        line: range.start.line,
+        column: 0,
+      },
+      end: {
+        line: range.end.line,
+        column: range.end.character,
+      },
+    });
+    const lineSeparator = selectedText.includes("\r\n")
+      ? "\r\n"
+      : selectedText.includes("\r")
+        ? "\r"
+        : "\n";
+    const lines = selectedText.split(/\r\n|\r|\n/);
+    // Cache only selected comment lines so both passes can use constant-time membership checks.
+    const multilineCommentLines = new Set<number>();
+    for (const comment of this.syntaxProvider.getMultilineComments()) {
+      const firstLine = Math.max(comment.startLine, range.start.line);
+      const lastLine = Math.min(comment.endLine, range.end.line);
+      for (let line = firstLine; line <= lastLine; line++) {
+        multilineCommentLines.add(line);
+      }
+    }
+
+    // Decide if the selection is in "add comment" mode or "remove comment" mode.
+    // Any non-empty, non-comment line means we should wrap with SAS block comments.
+    const shouldAdd = lines.some((line, index) => {
+      const trimmed = line.trim();
+      const lineNumber = range.start.line + index;
+      return (
+        trimmed !== "" &&
+        !this.isSingleLineComment(line) &&
+        !multilineCommentLines.has(lineNumber)
+      );
+    });
+
     if (shouldAdd) {
       return lines
-        .map((line) => (line.trim() !== "" ? `/* ${line} */` : line))
-        .join("\n");
+        .map((line, index) => {
+          const trimmed = line.trim();
+          const lineNumber = range.start.line + index;
+          return trimmed === "" ||
+            this.isSingleLineComment(line) ||
+            multilineCommentLines.has(lineNumber)
+            ? line
+            : this.wrapSingleLine(line);
+        })
+        .join(lineSeparator);
     }
-    return lines
-      .map((line) => line.replace(/^(\s*)\/\* ?| ?\*\/(\s*)$/g, "$1"))
-      .join("\n");
+
+    return lines.map((line) => this.unwrapSingleLine(line)).join(lineSeparator);
   }
 
   setLibService(fn: LibService): void {
