@@ -17,24 +17,26 @@ const div = (el: HTMLDivElement | HTMLUnknownElement | EventTarget | null) =>
 type Point = { x: number; y: number };
 type Target = HTMLDivElement;
 type SelectedItem = { row: number; column: number };
+type CellInRow = { colId: string; index: number; rect: DOMRect };
 type Selection = {
   start?: Point;
   end?: Point;
   firstItemSelected?: SelectedItem;
   lastItemSelected?: SelectedItem;
+  cellsInRow: CellInRow[];
 };
 
 export const useSelectionRectangle = ({
   enabled,
-  scrollBoundaries,
   scrollContainer,
+  scrollViewport,
   getRowData,
   onSelectionStarted,
   onSelectionEnded,
 }: {
   enabled: boolean;
   scrollContainer: string;
-  scrollBoundaries: string;
+  scrollViewport: string;
   getRowData: (rowIndex: string) => IRowNode | undefined;
   onSelectionStarted: () => void;
   onSelectionEnded: () => void;
@@ -46,27 +48,20 @@ export const useSelectionRectangle = ({
     end: undefined,
     firstItemSelected: undefined,
     lastItemSelected: undefined,
+    cellsInRow: [],
   });
   const selection = selectionRef.current;
 
-  const boundariesRef = useRef<
-    Pick<DOMRect, "top" | "bottom" | "left" | "right">
-  >(undefined!);
   const getScrollBoundaries = () => {
-    if (boundariesRef.current) {
-      return boundariesRef.current;
-    }
     const gridRoot = document
-      .querySelector(scrollBoundaries)!
+      .querySelector(scrollViewport)!
       .getBoundingClientRect();
-    boundariesRef.current = {
+    return {
       top: gridRoot.top + 15,
       bottom: gridRoot.bottom - 15,
       left: gridRoot.left + 15,
       right: gridRoot.right - 15,
     };
-
-    return boundariesRef.current;
   };
 
   const mouseSelectionEnabled = useRef<boolean>(false);
@@ -99,7 +94,9 @@ export const useSelectionRectangle = ({
     onSelectionEnded();
     stopScrolling(scrollDownInterval);
     stopScrolling(scrollUpInterval);
-    rectangleRef.current.style.display = "none";
+    if (rectangleRef.current) {
+      rectangleRef.current.style.display = "none";
+    }
   };
 
   const copySelection = () => {
@@ -112,20 +109,7 @@ export const useSelectionRectangle = ({
     const rectangleRect = rectangleRef.current.getBoundingClientRect();
 
     // 1. Get column headers for selection
-    const cellsInRow = Array.from(
-      document.querySelectorAll(
-        `.ag-row[row-index="${selection.firstItemSelected!.row}"]`,
-      ),
-    )
-      .map((row) => Array.from(row.querySelectorAll(".ag-cell")))
-      .flat()
-      .map((cell) => ({
-        colId: cell.getAttribute("col-id") || "",
-        index: parseInt(cell.getAttribute("aria-colindex") ?? "-1", 10),
-        rect: cell.getBoundingClientRect(),
-      }))
-      .sort((a, b) => a.rect.x - b.rect.x);
-    const cellNames = cellsInRow
+    const cellNames = selection.cellsInRow
       .filter((cell) => intersects(rectangleRect, cell.rect))
       .map((cell) => cell.colId);
     const csvLines = [stringArrayToCsvString(cellNames)];
@@ -192,7 +176,7 @@ export const useSelectionRectangle = ({
       mouseSelectionEnabled.current = false;
 
       // Lets initialize our rectangle
-      selection.lastItemSelected = getClosestRow(div(event.target));
+      handleSelectionUpdate(div(event.target));
       selection.start = relativePoint({ x: targetRect.x + 2, y: targetRect.y });
       selection.end = relativePoint({
         x: targetRect.x + targetRect.width - 2,
@@ -206,11 +190,26 @@ export const useSelectionRectangle = ({
         event.key === "ArrowRight" ? 25 : event.key === "ArrowLeft" ? -25 : 0;
       const yShift =
         event.key === "ArrowDown" ? 25 : event.key === "ArrowUp" ? -25 : 0;
+      const viewportRect = document
+        .querySelector(scrollViewport)!
+        .getBoundingClientRect();
       selection.end = relativePoint({
-        // It looks like the width needs to be adjusted by 2 due to the
-        // 2px border, although this could be a red herring.
-        x: rectangleRect.x + rectangleRect.width - 2 + xShift,
-        y: rectangleRect.y + rectangleRect.height - 2 + yShift,
+        // Keep the corner inside the viewport. It looks like the width needs to be adjusted by
+        // 2 due to the 2px border, although this could be a red herring.
+        x: Math.max(
+          viewportRect.left,
+          Math.min(
+            rectangleRect.x + rectangleRect.width - 2 + xShift,
+            viewportRect.right - 2,
+          ),
+        ),
+        y: Math.max(
+          viewportRect.top,
+          Math.min(
+            rectangleRect.y + rectangleRect.height - 2 + yShift,
+            viewportRect.bottom - 2,
+          ),
+        ),
       });
 
       const bottomRightX = rectangleRect.right - 1;
@@ -220,7 +219,7 @@ export const useSelectionRectangle = ({
       const el = document.elementFromPoint(bottomRightX, bottomRightY);
       rectangleRef.current.style.display = "block";
 
-      selection.lastItemSelected = getClosestRow(div(el));
+      handleSelectionUpdate(div(el));
     }
 
     drawRectangle();
@@ -239,6 +238,23 @@ export const useSelectionRectangle = ({
       column: parseInt(firstCell.getAttribute("aria-colindex") ?? "-1", 10),
       row: parseInt(firstRow.getAttribute("row-index") ?? "-1", 10),
     };
+  };
+
+  const handleSelectionUpdate = (target: Target) => {
+    selection.lastItemSelected = getClosestRow(target);
+    selection.cellsInRow = Array.from(
+      document.querySelectorAll(
+        `.ag-row[row-index="${selection.lastItemSelected.row}"]`,
+      ),
+    )
+      .map((row) => Array.from(row.querySelectorAll(".ag-cell")))
+      .flat()
+      .map((cell) => ({
+        colId: cell.getAttribute("col-id") || "",
+        index: parseInt(cell.getAttribute("aria-colindex") ?? "-1", 10),
+        rect: cell.getBoundingClientRect(),
+      }))
+      .sort((a, b) => a.rect.x - b.rect.x);
   };
 
   /**
@@ -314,6 +330,7 @@ export const useSelectionRectangle = ({
     mouseHasMoved.current = false;
     mouseSelectionEnabled.current = true;
     selection.lastItemSelected = undefined;
+    selection.cellsInRow = [];
     selection.start = relativePoint({ x: e.clientX, y: e.clientY });
     initRectangularSelection(div(e.target));
   };
@@ -349,9 +366,9 @@ export const useSelectionRectangle = ({
         clearInterval(interval);
       }
       return setInterval(() => {
-        const container = div(document.querySelector(scrollContainer));
+        const viewport = document.querySelector(scrollViewport);
         const scrollDistance = dir === "down" ? 25 : -25;
-        container.scrollBy(0, scrollDistance);
+        viewport.scrollBy(0, scrollDistance);
         selection.end!.y += scrollDistance;
         drawRectangle();
       }, 50);
@@ -372,7 +389,7 @@ export const useSelectionRectangle = ({
       rectangleRef.current.style.display = "none";
       const el = document.elementFromPoint(e.clientX, e.clientY);
       rectangleRef.current.style.display = "block";
-      selection.lastItemSelected = getClosestRow(div(el));
+      handleSelectionUpdate(div(el));
     }
 
     if (!mouseHasMoved.current) {
@@ -382,6 +399,7 @@ export const useSelectionRectangle = ({
   // #endregion: event handlers
 
   return {
+    resetSelection: resetStyles,
     onKeyDown,
     onMouseDown,
     onMouseMove,

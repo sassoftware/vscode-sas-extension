@@ -32,7 +32,6 @@ class DataViewer extends WebView {
         "An error was encountered when copying data.",
       ),
       "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
-      Copy: l10n.t("Copy"),
       "Descending (add to sorting)": l10n.t("Descending (add to sorting)"),
       "Enter expression": l10n.t("Enter expression"),
       "No data matches the current filters.": l10n.t(
@@ -49,6 +48,7 @@ class DataViewer extends WebView {
       Ascending: l10n.t("Ascending"),
       Character: l10n.t("Character"),
       Clear: l10n.t("Clear"),
+      Copy: l10n.t("Copy"),
       Currency: l10n.t("Currency"),
       Date: l10n.t("Date"),
       Datetime: l10n.t("Datetime"),
