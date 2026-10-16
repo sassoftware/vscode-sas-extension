@@ -58,7 +58,11 @@ export const DataViewer = () => {
   } = useDataViewer();
   const [gridDragging, setGridDragging] = useState(false);
   const [focusedCell, setFocusedCell] = useState(null);
-  const { onKeyDown, ...selectionRectangleHooks } = useSelectionRectangle({
+  const {
+    onKeyDown,
+    resetSelection,
+    ...selectionRectangleHooks
+  } = useSelectionRectangle({
     onSelectionStarted: () => {
       setFocusedCell(gridRef.current?.api.getFocusedCell());
       gridRef.current?.api.clearFocusedCell();
@@ -83,7 +87,7 @@ export const DataViewer = () => {
     getRowData: (rowIndex: string) => gridRef.current?.api.getRowNode(rowIndex),
     enabled: !gridDragging,
     scrollContainer: ".ag-grid-scrolling-container",
-    scrollBoundaries: ".ag-root",
+    scrollViewport: ".ag-grid-viewport",
   });
 
   const handleKeydown = useCallback(
@@ -140,6 +144,7 @@ export const DataViewer = () => {
       <h1>{title}</h1>
       <TableFilter
         onCommit={(value) => {
+          resetSelection();
           refreshResults({ filterValue: value });
         }}
         initialValue={""}
