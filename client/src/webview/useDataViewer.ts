@@ -25,9 +25,7 @@ import type {
 import ColumnHeader from "./ColumnHeader";
 import { ColumnMenuProps, getColumnMenu } from "./ColumnMenu";
 import localize from "./localize";
-
-declare const acquireVsCodeApi;
-const vscode = acquireVsCodeApi();
+import vscode from "./vscode";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 

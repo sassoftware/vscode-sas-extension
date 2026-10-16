@@ -28,6 +28,9 @@ class DataViewer extends WebView {
 
   public l10nMessages() {
     return {
+      "An error was encountered when copying data.": l10n.t(
+        "An error was encountered when copying data.",
+      ),
       "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
       "Descending (add to sorting)": l10n.t("Descending (add to sorting)"),
       "Enter expression": l10n.t("Enter expression"),
@@ -45,6 +48,7 @@ class DataViewer extends WebView {
       Ascending: l10n.t("Ascending"),
       Character: l10n.t("Character"),
       Clear: l10n.t("Clear"),
+      Copy: l10n.t("Copy"),
       Currency: l10n.t("Currency"),
       Date: l10n.t("Date"),
       Datetime: l10n.t("Datetime"),
@@ -86,6 +90,7 @@ class DataViewer extends WebView {
         sortModel?: SortModelItem[];
         columnName?: string;
         query: TableQuery | undefined;
+        error?: string;
       };
     },
   ): Promise<void> {
@@ -119,8 +124,13 @@ class DataViewer extends WebView {
         break;
       }
       case "request:loadColumnProperties":
-        if (event.data.columnName) {
+        if (event.data && event.data.columnName) {
           this.loadColumnProperties(event.data.columnName);
+        }
+        break;
+      case "displayError":
+        if (event.data && event.data.error) {
+          window.showErrorMessage(event.data.error);
         }
         break;
       default:
