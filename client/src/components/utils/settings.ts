@@ -37,3 +37,10 @@ export function isShowProblemsFromSASLogEnabled(): boolean {
 export function includeLogInNotebookExport(): boolean {
   return workspace.getConfiguration("SAS").get("notebook.export.includeLog");
 }
+
+export function getNotebookCleanOutput(): boolean {
+  return (
+    workspace.getConfiguration("SAS").get<boolean>("notebook.cleanOutput") ??
+    false
+  );
+}
