@@ -1,12 +1,14 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 
+import type { ColumnState } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
 import ".";
 import ColumnMenu from "./ColumnMenu";
+import ManageColumns from "./ManageColumns";
 import TableFilter from "./TableFilter";
 import localize from "./localize";
 import useDataViewer from "./useDataViewer";
@@ -23,20 +25,34 @@ const gridStyles = {
   width: "100%",
 };
 
-const DataViewer = () => {
+export const DataViewer = () => {
   const title = document
     .querySelector("[data-title]")
     .getAttribute("data-title");
   const theme = useTheme();
+  const [columnState, setColumnState] = useState<ColumnState[]>([]);
+
+  const managedColumnState = useMemo(
+    () => columnState.filter((column) => column.colId !== "#"),
+    [columnState],
+  );
+
+  const allColumnsHidden =
+    managedColumnState.length > 0 &&
+    managedColumnState.every((column) => column.hide === true);
+
   const {
     columnMenu,
     columns,
-    setColumns,
     dismissMenu,
     gridRef,
+    openManageColumns,
+    manageColumnsOpen,
     onGridReady,
     refreshResults,
-  } = useDataViewer();
+    setColumns,
+    setManageColumnsOpen,
+  } = useDataViewer(setColumnState);
 
   const handleKeydown = useCallback(
     (event) => {
@@ -56,6 +72,7 @@ const DataViewer = () => {
       if (event.data.command === "panel:refreshData") {
         refreshResults(undefined);
         setColumns([]);
+        setColumnState([]);
       }
 
       if (
@@ -118,6 +135,50 @@ const DataViewer = () => {
           }
           suppressDragLeaveHidesColumns
         />
+
+        {allColumnsHidden && (
+          <div className="all-columns-hidden-overlay">
+            <div className="all-columns-hidden-message">
+              {localize("All columns are hidden.")}
+            </div>
+
+            <button
+              type="button"
+              className="all-columns-hidden-button"
+              onClick={() => void openManageColumns()}
+            >
+              {localize("Manage Columns")}
+            </button>
+          </div>
+        )}
+
+        {manageColumnsOpen && (
+          <ManageColumns
+            columnState={columnState}
+            onClose={() => setManageColumnsOpen(false)}
+            onApply={(updatedColumnState) => {
+              const api = gridRef.current?.api;
+              if (api) {
+                api.applyColumnState({
+                  state: [
+                    {
+                      colId: "#",
+                    },
+                    ...updatedColumnState.map((column) => ({
+                      colId: column.colId,
+                      hide: column.hide,
+                    })),
+                  ],
+                  applyOrder: true,
+                });
+              }
+
+              setColumnState(updatedColumnState);
+
+              setManageColumnsOpen(false);
+            }}
+          />
+        )}
       </div>
     </div>
   );
