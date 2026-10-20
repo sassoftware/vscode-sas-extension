@@ -27,6 +27,10 @@ export const checkProfileAndAuthorize =
       profileConfig.getActiveProfile(),
     );
 
+    if (!activeProfile) {
+      return finishAuthorization(profileConfig);
+    }
+
     switch (activeProfile.connectionType) {
       case ConnectionType.Rest:
         try {
