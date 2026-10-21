@@ -1,5 +1,7 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { l10n } from "vscode";
+
 import type { SortModelItem } from "ag-grid-community";
 import { AxiosResponse } from "axios";
 
@@ -22,6 +24,7 @@ import {
   TableInfo,
 } from "./api/compute";
 import { getApiConfig } from "./common";
+import { ComputeFile } from "./file";
 
 const requestOptions = {
   headers: { Accept: "application/vnd.sas.collection+json" },
@@ -36,7 +39,10 @@ class RestLibraryAdapter implements LibraryAdapter {
     (formatNames) => this.fetchFormatCategories(formatNames),
   );
 
-  public constructor(private readonly onConnect?: () => void) {}
+  public constructor(
+    private readonly onConnect?: () => void,
+    public readonly supportsTableExport = true,
+  ) {}
 
   public async connect(): Promise<void> {
     const session = getSession();
@@ -62,6 +68,28 @@ class RestLibraryAdapter implements LibraryAdapter {
     }
 
     await this.connect();
+  }
+
+  public async createTableExport(item: LibraryItem, signal: AbortSignal) {
+    if (!this.supportsTableExport) {
+      throw new Error(
+        l10n.t("This table download is not supported by this connection."),
+      );
+    }
+    signal.throwIfAborted();
+    const setupSignal = AbortSignal.any([signal, AbortSignal.timeout(30_000)]);
+    let abort: () => void;
+    const cancelled = new Promise<never>((_resolve, reject) => {
+      abort = () => reject(setupSignal.reason);
+      setupSignal.addEventListener("abort", abort, { once: true });
+    });
+    try {
+      await Promise.race([this.setup(), cancelled]);
+      setupSignal.throwIfAborted();
+    } finally {
+      setupSignal.removeEventListener("abort", abort);
+    }
+    return new ComputeFile(this.sessionId).createTableExport(item, signal);
   }
 
   public async getRows(

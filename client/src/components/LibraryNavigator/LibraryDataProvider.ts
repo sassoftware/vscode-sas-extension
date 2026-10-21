@@ -22,13 +22,17 @@ import {
   window,
 } from "vscode";
 
-import { Writable } from "stream";
-
 import { registerAPI } from "../APIProvider";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import LibraryModel from "./LibraryModel";
 import { Icons, Messages, WorkLibraryId } from "./const";
-import { LibraryAdapter, LibraryItem, LibraryType, TableType } from "./types";
+import {
+  LibraryAdapter,
+  LibraryItem,
+  LibraryType,
+  TableExport,
+  TableType,
+} from "./types";
 
 export const libraryItemMimeType =
   "application/vnd.code.tree.librarydataprovider";
@@ -165,8 +169,23 @@ class LibraryDataProvider
     return this.model.getChildren(item);
   }
 
-  public writeTableContentsToStream(stream: Writable, item: LibraryItem) {
-    return this.model.writeTableContentsToStream(stream, item);
+  public writeTableContents(
+    item: LibraryItem,
+    writeChunk: (chunk: Uint8Array, signal: AbortSignal) => Promise<void>,
+    signal?: AbortSignal,
+  ): Promise<boolean> {
+    return this.model.writeTableContents(item, writeChunk, signal);
+  }
+
+  public createTableExport(
+    item: LibraryItem,
+    signal: AbortSignal,
+  ): Promise<TableExport> {
+    return this.model.createTableExport(item, signal);
+  }
+
+  public assertTableExportSupported(): void {
+    this.model.assertTableExportSupported();
   }
 
   public async deleteTables(items: LibraryItem[]): Promise<void> {
