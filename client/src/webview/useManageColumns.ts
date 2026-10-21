@@ -11,17 +11,20 @@ import type { TableColumn } from "../components/LibraryNavigator/types";
 type Options = {
   gridRef: RefObject<AgGridReact | null>;
   fetchColumns: () => Promise<{ columns: TableColumn[] }>;
-  setColumnState?: (state: ColumnState[]) => void;
 };
 
 const useManageColumns = (options: Options) => {
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
-  const isLoading = useRef(false);
-  const needsReset = useRef(false);
+  const isLoading = useRef(false); // Prevent duplicate requests
+  const needsReset = useRef(false); // Reset stale AG Grid state
+  const openCancelled = useRef(false); // Prevent a pending request from opening the dialog
 
   const [manageColumnsOpen, setManageColumnsOpen] = useState(false);
+  const [initialColumnState, setInitialColumnState] = useState<ColumnState[]>(
+    [],
+  );
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -38,6 +41,7 @@ const useManageColumns = (options: Options) => {
         (event.data.command === "panel:changeFocus" &&
           !event.data.data?.focused)
       ) {
+        openCancelled.current = true;
         setManageColumnsOpen(false);
       }
     };
@@ -45,6 +49,7 @@ const useManageColumns = (options: Options) => {
     window.addEventListener("message", handleMessage);
 
     return () => {
+      openCancelled.current = true;
       window.removeEventListener("message", handleMessage);
     };
   }, []);
@@ -54,11 +59,16 @@ const useManageColumns = (options: Options) => {
       return false;
     }
 
+    openCancelled.current = false;
     isLoading.current = true;
 
     try {
       // Fetch columns first to ensure the SAS session is available.
       await optionsRef.current.fetchColumns();
+
+      if (openCancelled.current) {
+        return false;
+      }
 
       const api = optionsRef.current.gridRef.current?.api;
 
@@ -71,7 +81,7 @@ const useManageColumns = (options: Options) => {
         needsReset.current = false;
       }
 
-      optionsRef.current.setColumnState?.(api.getColumnState());
+      setInitialColumnState(api.getColumnState());
       setManageColumnsOpen(true);
 
       return true;
@@ -84,6 +94,7 @@ const useManageColumns = (options: Options) => {
   }, []);
 
   return {
+    initialColumnState,
     manageColumnsOpen,
     setManageColumnsOpen,
     openManageColumns,

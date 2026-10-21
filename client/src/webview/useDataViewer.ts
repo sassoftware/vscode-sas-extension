@@ -119,7 +119,7 @@ const fetchColumns = (): Promise<{
   });
 };
 
-const useDataViewer = (setColumnState?: (state: ColumnState[]) => void) => {
+const useDataViewer = () => {
   const gridRef = useRef<AgGridReact>(null);
   const [columns, setColumns] = useState<ColDef[]>([]);
   const [columnMenu, setColumnMenu] = useState<ColumnMenuProps | undefined>();
@@ -135,12 +135,15 @@ const useDataViewer = (setColumnState?: (state: ColumnState[]) => void) => {
     columnMenuRef.current = columnMenu;
   }, [columnMenu]);
 
-  const { manageColumnsOpen, setManageColumnsOpen, openManageColumns } =
-    useManageColumns({
-      gridRef,
-      fetchColumns,
-      setColumnState,
-    });
+  const {
+    initialColumnState,
+    manageColumnsOpen,
+    setManageColumnsOpen,
+    openManageColumns,
+  } = useManageColumns({
+    gridRef,
+    fetchColumns,
+  });
 
   const dataSource = useCallback(
     (incomingQueryParams?: TableQuery) => ({
@@ -319,6 +322,7 @@ const useDataViewer = (setColumnState?: (state: ColumnState[]) => void) => {
     setColumns,
     dismissMenu,
     gridRef,
+    initialColumnState,
     openManageColumns,
     manageColumnsOpen,
     onGridReady,

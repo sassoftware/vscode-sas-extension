@@ -37,7 +37,6 @@ type ColumnFilterProps = {
   disabled: boolean;
   onChange: (value: string) => void;
   onClear: () => void;
-  nav?: string;
 };
 
 const ColumnFilter = ({
@@ -45,14 +44,12 @@ const ColumnFilter = ({
   disabled,
   onChange,
   onClear,
-  nav,
 }: ColumnFilterProps) => (
   <div className="filter-wrapper">
     <div className="filter-input">
       <input
         type="text"
         className="manage-column-filter-input"
-        data-nav={nav}
         placeholder={localize("Filter")}
         aria-label={localize("Filter")}
         disabled={disabled}
@@ -109,7 +106,6 @@ type ToolbarAction = {
 const ToolbarButton = ({ label, icon, disabled, onClick }: ToolbarAction) => (
   <button
     type="button"
-    tabIndex={-1}
     title={label}
     aria-label={label}
     disabled={disabled}
@@ -126,7 +122,6 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
 }) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const initialHiddenVisit = useRef(true);
 
   const [hiddenActiveId, setHiddenActiveId] = useState<string>();
   const [displayedActiveId, setDisplayedActiveId] = useState<string>();
@@ -167,7 +162,6 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
     }
 
     const previousFocus = document.activeElement;
-    initialHiddenVisit.current = true;
     dialog.showModal();
     titleRef.current?.focus();
 
@@ -219,15 +213,6 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
 
   const hasChanges = !isColumnStateSame(tempColumnState, columnState);
 
-  const focusNavigationStop = (element: HTMLElement) => {
-    const target =
-      element.getAttribute("role") === "toolbar"
-        ? element.querySelector<HTMLButtonElement>("button:not(:disabled)")
-        : element;
-
-    target?.focus();
-  };
-
   const handleToolbarKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (!["ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) {
       return;
@@ -261,71 +246,6 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
     buttons[next].focus();
   };
 
-  const handleDialogKeyDown = (
-    event: React.KeyboardEvent<HTMLDialogElement>,
-  ) => {
-    event.stopPropagation();
-
-    if (event.key !== "Tab") {
-      return;
-    }
-
-    event.preventDefault();
-
-    const stops = Array.from(
-      event.currentTarget.querySelectorAll<HTMLElement>("[data-nav]"),
-    )
-      .filter(
-        (element) =>
-          !element.matches(":disabled") &&
-          element.getClientRects().length > 0 &&
-          (element.getAttribute("role") !== "toolbar" ||
-            element.querySelector("button:not(:disabled)")),
-      )
-      .sort((a, b) => Number(a.dataset.nav) - Number(b.dataset.nav));
-
-    if (!stops.length) {
-      return;
-    }
-
-    const active = document.activeElement;
-
-    if (active === titleRef.current) {
-      const target = event.shiftKey
-        ? stops[stops.length - 1]
-        : (stops.find((element) => element.dataset.nav === "10") ?? stops[0]);
-
-      focusNavigationStop(target);
-      return;
-    }
-
-    const index = stops.findIndex(
-      (element) => element === active || element.contains(active),
-    );
-
-    if (initialHiddenVisit.current && stops[index]?.dataset.nav === "10") {
-      initialHiddenVisit.current = false;
-
-      const filter = stops.find((element) => element.dataset.nav === "0");
-
-      if (!event.shiftKey && filter) {
-        focusNavigationStop(filter);
-        return;
-      }
-    }
-
-    initialHiddenVisit.current = false;
-
-    const nextIndex =
-      index < 0
-        ? event.shiftKey
-          ? stops.length - 1
-          : 0
-        : (index + (event.shiftKey ? -1 : 1) + stops.length) % stops.length;
-
-    focusNavigationStop(stops[nextIndex]);
-  };
-
   const toggleSelection = (
     name: string,
     event: React.MouseEvent | React.KeyboardEvent,
@@ -353,7 +273,6 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
     );
 
     const setActiveId = hidden ? setHiddenActiveId : setDisplayedActiveId;
-    const nav = hidden ? "10" : "50";
     const label = hidden
       ? localize("Hidden columns")
       : localize("Displayed columns");
@@ -365,7 +284,6 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
             <span
               className="empty-state-text"
               tabIndex={0}
-              data-nav={nav}
               aria-label={`${label}: ${localize("No items are available.")}`}
             >
               {localize("No items are available.")}
@@ -414,7 +332,6 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
             id={`${prefix}-${index}`}
             role="option"
             tabIndex={index === activeIndex ? 0 : -1}
-            data-nav={index === activeIndex ? nav : undefined}
             onFocus={() => setActiveId(column.colId)}
             aria-selected={selectedItems.has(column.colId)}
             className={`column-item ${
@@ -423,7 +340,6 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
             onClick={(event) => {
               setActiveId(column.colId);
               event.currentTarget.focus();
-              initialHiddenVisit.current = false;
               toggleSelection(column.colId, event);
             }}
           >
@@ -525,7 +441,6 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
       ref={dialogRef}
       className="manage-columns-dialog"
       aria-labelledby="manage-columns-title"
-      onKeyDown={handleDialogKeyDown}
       onCancel={(event) => {
         event.preventDefault();
         onClose();
@@ -550,7 +465,6 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
         <button
           type="button"
           className="dialog-close-btn"
-          data-nav="100"
           aria-label={localize("Close")}
           title={localize("Close")}
           onClick={onClose}
@@ -567,7 +481,6 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
             })}
             value={filterHidden}
             disabled={hiddenColumns.length === 0}
-            nav="0"
             onChange={(value) => {
               setFilterHidden(value);
               setSelectedItems(new Set());
@@ -586,7 +499,6 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
             role="toolbar"
             aria-label={localize("Column visibility controls")}
             aria-orientation="vertical"
-            data-nav="20"
             onKeyDown={handleToolbarKeyDown}
           >
             {visibilityActions.map((action) => (
@@ -597,7 +509,6 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
 
         <div
           className="columns-resizer"
-          data-nav="40"
           onPointerDown={handleResizeStart}
           onPointerMove={handleResize}
           onPointerUp={handleResizeEnd}
@@ -634,7 +545,6 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
             role="toolbar"
             aria-label={localize("Column order controls")}
             aria-orientation="vertical"
-            data-nav="60"
             onKeyDown={handleToolbarKeyDown}
           >
             {orderActions.map((action) => (
@@ -648,19 +558,13 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
         <button
           type="button"
           className="btn-ok"
-          data-nav="80"
           onClick={() => onApply(tempColumnState)}
           disabled={!hasChanges}
         >
           {localize("OK")}
         </button>
 
-        <button
-          type="button"
-          className="btn-cancel"
-          data-nav="90"
-          onClick={onClose}
-        >
+        <button type="button" className="btn-cancel" onClick={onClose}>
           {localize("Cancel")}
         </button>
       </div>

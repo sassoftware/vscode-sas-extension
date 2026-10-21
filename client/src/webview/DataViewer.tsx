@@ -1,9 +1,9 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import type { ColumnState } from "ag-grid-community";
+import type { GridApi } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
 import ".";
@@ -30,29 +30,31 @@ export const DataViewer = () => {
     .querySelector("[data-title]")
     .getAttribute("data-title");
   const theme = useTheme();
-  const [columnState, setColumnState] = useState<ColumnState[]>([]);
+  const [allColumnsHidden, setAllColumnsHidden] = useState(false);
 
-  const managedColumnState = useMemo(
-    () => columnState.filter((column) => column.colId !== "#"),
-    [columnState],
-  );
+  const updateAllColumnsHidden = useCallback((api: GridApi) => {
+    const columns = api
+      .getColumnState()
+      .filter((column) => column.colId !== "#");
 
-  const allColumnsHidden =
-    managedColumnState.length > 0 &&
-    managedColumnState.every((column) => column.hide === true);
+    setAllColumnsHidden(
+      columns.length > 0 && columns.every((column) => column.hide === true),
+    );
+  }, []);
 
   const {
     columnMenu,
     columns,
     dismissMenu,
     gridRef,
+    initialColumnState,
     openManageColumns,
     manageColumnsOpen,
     onGridReady,
     refreshResults,
     setColumns,
     setManageColumnsOpen,
-  } = useDataViewer(setColumnState);
+  } = useDataViewer();
 
   const handleKeydown = useCallback(
     (event) => {
@@ -72,7 +74,7 @@ export const DataViewer = () => {
       if (event.data.command === "panel:refreshData") {
         refreshResults(undefined);
         setColumns([]);
-        setColumnState([]);
+        setAllColumnsHidden(false);
       }
 
       if (
@@ -128,6 +130,7 @@ export const DataViewer = () => {
           infiniteInitialRowCount={100}
           maxBlocksInCache={10}
           onGridReady={onGridReady}
+          onColumnVisible={(event) => updateAllColumnsHidden(event.api)}
           rowModelType="infinite"
           theme="legacy"
           noRowsOverlayComponent={() =>
@@ -154,7 +157,7 @@ export const DataViewer = () => {
 
         {manageColumnsOpen && (
           <ManageColumns
-            columnState={columnState}
+            columnState={initialColumnState}
             onClose={() => setManageColumnsOpen(false)}
             onApply={(updatedColumnState) => {
               const api = gridRef.current?.api;
@@ -171,9 +174,8 @@ export const DataViewer = () => {
                   ],
                   applyOrder: true,
                 });
+                updateAllColumnsHidden(api);
               }
-
-              setColumnState(updatedColumnState);
 
               setManageColumnsOpen(false);
             }}
