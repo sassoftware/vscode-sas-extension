@@ -18,7 +18,8 @@
   "activationEvents": [
     "onWebviewPanel:SASResultPanel",
     "onLanguage:sas",
-    "onNotebook:sas-notebook"
+    "onNotebook:sas-notebook",
+    "onDebugResolve:sas"
   ],
   "main": "./client/dist/node/extension",
   "browser": "./client/dist/browser/extension",
@@ -30,6 +31,43 @@
     "virtualWorkspaces": true
   },
   "contributes": {
+    "breakpoints": [
+      {
+        "language": "sas"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "sas",
+        "label": "%debuggers.sas.label%",
+        "languages": [
+          "sas"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "properties": {}
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "sas",
+            "request": "launch",
+            "name": "%debuggers.sas.launch.name%"
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "%debuggers.sas.snippet.label%",
+            "description": "%debuggers.sas.snippet.description%",
+            "body": {
+              "type": "sas",
+              "request": "launch",
+              "name": "%debuggers.sas.launch.name%"
+            }
+          }
+        ]
+      }
+    ],
     "authentication": [
       {
         "id": "SAS",
@@ -652,6 +690,12 @@
         "category": "SAS"
       },
       {
+        "command": "SAS.debugDataStep",
+        "title": "%commands.SAS.debugDataStep%",
+        "enablement": "!SAS.running",
+        "category": "SAS"
+      },
+      {
         "command": "SAS.close",
         "title": "%commands.SAS.close%",
         "icon": {
@@ -1176,6 +1220,10 @@
         }
       ],
       "commandPalette": [
+        {
+          "when": "!isWeb",
+          "command": "SAS.debugDataStep"
+        },
         {
           "when": "(editorLangId == sas || (editorLangId =~ /^(python|r|sql)$/ && resourceScheme =~ /^sas(Content|Server).*/)) && !SAS.hideRunMenuItem",
           "command": "SAS.run"

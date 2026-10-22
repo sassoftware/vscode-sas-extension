@@ -9,6 +9,7 @@
     "vscode": "^1.89.0"
   },
   "dependencies": {
+    "@vscode/debugadapter": "^1.68.0",
     "ag-grid-community": "^36.2.0",
     "ag-grid-react": "^36.2.0",
     "axios": "^1.20.0",
@@ -31,6 +32,7 @@
     "@types/uuid": "^11.0.0",
     "@types/vscode": "1.82.0",
     "@types/vscode-notebook-renderer": "^1.72.4",
+    "@vscode/debugprotocol": "^1.68.0",
     "@vscode/test-electron": "^2.5.2"
   }
 }

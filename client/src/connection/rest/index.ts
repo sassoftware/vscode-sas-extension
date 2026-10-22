@@ -208,6 +208,14 @@ class RestSession extends Session {
     return res;
   };
 
+  public executeDebuggerCode = async (): Promise<string> => {
+    if (!this._computeSession?.sessionId) {
+      throw new Error(l10n.t("No SAS session is available."));
+    }
+
+    return this._computeSession.executeDebuggerCode();
+  };
+
   protected _close = async () => {
     this._cachedContext = undefined;
     if (this.sessionId()) {

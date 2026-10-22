@@ -23,6 +23,53 @@ import {
 } from "./common";
 import { ComputeJob } from "./job";
 
+export const DEBUGGER_SAMPLE_CODE = `options dsoptions=ldebug notes source;
+
+data _null_;
+    /* Test */
+    a=(1 + 2) + 3;
+    b=1 + (2 + 3);
+
+    c=(0.1 + 0.2) + 0.3;
+    d=0.1 + (0.2 + 0.3);
+
+    e=0.6;
+    f=0.6;
+
+    r1=cats("a=", a);
+    r2=cats("b=", b);
+
+    r3=cats("c=", c);
+    r4=cats("d=", d);
+    r5=cats("e=", e);
+    r6=cats("f=", f);
+
+    /* case 1 */
+    c1="false";
+    if a eq b then do;
+        c1="true";
+    end;
+
+    /* case 2 */
+    c2="false";
+    if c eq d then do;
+        c2="true";
+    end;
+
+    /* case 3 */
+    c3="false";
+    if e eq f then do;
+        c3="true";
+    end;
+
+    put "RESULTS";
+    put c1;
+    put c2;
+    put c3;
+run;
+
+describe _all_;`;
+
 export class ComputeSession extends Compute {
   api; //Session api
   logs; //Logs api
@@ -179,6 +226,26 @@ export class ComputeSession extends Compute {
 
     //Now create the job object
     return ComputeJob.fromResponse(resp);
+  }
+
+  async executeDebuggerCode(): Promise<string> {
+    const code = DEBUGGER_SAMPLE_CODE;
+
+    return this.executeAndWait(code.split("\n"));
+  }
+
+  /**
+   * Run code and resolve with the job ID once the job has finished.
+   */
+  private async executeAndWait(code: string[]): Promise<string> {
+    const job = await this.execute({ code });
+
+    let state = await job.getState();
+    while (!(await job.isDone(state))) {
+      state = await job.getState({ wait: 5, onChange: true });
+    }
+
+    return job.id;
   }
 
   /**
