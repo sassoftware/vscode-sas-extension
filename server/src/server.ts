@@ -4,11 +4,13 @@ import {
   CancellationToken,
   CodeActionKind,
   CompletionItemKind,
+  CompletionRegistrationOptions,
   CompletionTriggerKind,
   Connection,
   DidChangeConfigurationParams,
   DidChangeWatchedFilesParams,
   DocumentHighlightParams,
+  DocumentSelector,
   DocumentSymbol,
   ExecuteCommandParams,
   InitializeResult,
@@ -54,6 +56,7 @@ export const runServer = (
   _pyrightLanguageProvider: PyrightLanguageProvider,
 ) => {
   const documentPool: Record<string, DocumentInfo> = {};
+  const sasSel: DocumentSelector = [{ language: "sas" }];
 
   let supportSASGetLibList = false;
   let registeredAdvancedCapabilities = false;
@@ -69,33 +72,38 @@ export const runServer = (
     }
     _pyrightLanguageProvider.initialize(params, [], []);
 
+    const completionOpts: CompletionRegistrationOptions = {
+      documentSelector: sasSel,
+      triggerCharacters: _pyrightLanguageProvider.getClientCapabilities()
+        .hasVisualStudioExtensionsCapability
+        ? [".", "[", "@", '"', "'", " "]
+        : [".", "[", '"', "'", " "],
+      resolveProvider: true,
+      workDoneProgress: true,
+      completionItem: {
+        labelDetailsSupport: true,
+      },
+    };
     const result: InitializeResult = {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Incremental,
         semanticTokensProvider: {
+          documentSelector: sasSel,
           legend,
           full: true,
         },
         documentFormattingProvider: true,
-        foldingRangeProvider: true,
+        foldingRangeProvider: { documentSelector: sasSel },
         documentOnTypeFormattingProvider: {
           firstTriggerCharacter: "\n",
           moreTriggerCharacter: [";"],
         },
-        documentSymbolProvider: { workDoneProgress: true },
+        documentSymbolProvider: {
+          workDoneProgress: true,
+        },
         workspaceSymbolProvider: { workDoneProgress: true },
         hoverProvider: { workDoneProgress: true },
-        completionProvider: {
-          triggerCharacters: _pyrightLanguageProvider.getClientCapabilities()
-            .hasVisualStudioExtensionsCapability
-            ? [".", "[", "@", '"', "'", " "]
-            : [".", "[", '"', "'", " "],
-          resolveProvider: true,
-          workDoneProgress: true,
-          completionItem: {
-            labelDetailsSupport: true,
-          },
-        },
+        completionProvider: completionOpts,
         signatureHelpProvider: {
           triggerCharacters: ["(", ",", ")"],
           workDoneProgress: true,
@@ -273,6 +281,9 @@ export const runServer = (
 
   // todo
   connection.onFoldingRanges((params) => {
+    if (!documentPool[params.textDocument.uri]) {
+      return [];
+    }
     syncIfDocChange(params.textDocument.uri);
     const languageService = getLanguageService(params.textDocument.uri);
     return languageService.getFoldingRanges();
@@ -688,15 +699,14 @@ export const runServer = (
       return;
     }
     registeredAdvancedCapabilities = true;
-    const registerOptions = {
-      documentSelector: [{ language: "sas" }],
-    };
     const registrations: Registration[] = [];
     for (const capability of advancedCapabilities) {
       registrations.push({
         id: capability,
         method: capability,
-        registerOptions,
+        registerOptions: {
+          documentSelector: sasSel,
+        },
       });
     }
     await conn.sendRequest(RegistrationRequest.type, { registrations });
