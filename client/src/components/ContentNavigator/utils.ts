@@ -201,7 +201,7 @@ export enum ContextMenuAction {
   AddToFavorites = "addToFavorites", // Item can be added to favorites
   RemoveFromFavorites = "removeFromFavorites", // Item can be removed from favorites
   ConvertNotebookToFlow = "convertNotebookToFlow", // Allows sasnb files to be converted to flows
-  AllowDownload = "allowDownload", // Allows downloading files / folders
+  AllowDownload = "allowDownload", // Allows downloading files/folders
 }
 export class ContextMenuProvider {
   constructor(
