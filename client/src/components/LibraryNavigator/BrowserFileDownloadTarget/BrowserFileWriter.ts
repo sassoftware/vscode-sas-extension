@@ -1,5 +1,6 @@
 // Copyright © 2026, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES } from "./constants";
 
 export interface BrowserFileWriterMessages {
   unsupportedFilePicker: string;
@@ -152,7 +153,7 @@ export function createBrowserFileWriterScript(
                     !(message.data instanceof Uint8Array) ||
                     message.byteLength !== message.data.byteLength ||
                     message.data.byteLength === 0 ||
-                    message.data.byteLength > 192 * 1024 ||
+                    message.data.byteLength > ${MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES} ||
                     message.data.byteOffset !== 0 ||
                     message.data.buffer.byteLength !== message.data.byteLength
                   ) {

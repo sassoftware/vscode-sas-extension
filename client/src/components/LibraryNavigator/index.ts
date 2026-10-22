@@ -21,7 +21,9 @@ import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { treeViewSelections } from "../utils/treeViewSelections";
+import { BrowserDownloadChunkBuffer } from "./BrowserFileDownloadTarget/BrowserDownloadChunkBuffer";
 import { BrowserFileDownloadTarget } from "./BrowserFileDownloadTarget/BrowserFileDownloadTarget";
+import { MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES } from "./BrowserFileDownloadTarget/constants";
 import { HostAttachmentDownloadTarget } from "./HostAttachmentDownloadTarget";
 import LibraryAdapterFactory from "./LibraryAdapterFactory";
 import LibraryDataProvider from "./LibraryDataProvider";
@@ -309,14 +311,21 @@ class LibraryNavigator implements SubscriptionProvider {
       await this.browserFileDownloadTarget.setStatus(
         l10n.t("Streaming the CSV to your computer..."),
       );
-      const completed = await this.libraryDataProvider.writeTableContents(
-        item,
+      const chunkBuffer = new BrowserDownloadChunkBuffer(
+        MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES,
         async (chunk, signal) => {
           await this.browserFileDownloadTarget.waitUntilVisible(signal);
           await this.browserFileDownloadTarget.write(transferId, chunk, signal);
         },
+      );
+      const completed = await this.libraryDataProvider.writeTableContents(
+        item,
+        (chunk, signal) => chunkBuffer.write(chunk, signal),
         controller.signal,
       );
+      if (completed) {
+        await chunkBuffer.flush(controller.signal);
+      }
       await this.browserFileDownloadTarget.finish(transferId, completed);
       finished = true;
       if (!completed) {

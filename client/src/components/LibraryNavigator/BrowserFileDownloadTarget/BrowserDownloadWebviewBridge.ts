@@ -5,6 +5,7 @@ import { Disposable, ViewColumn, WebviewPanel, l10n, window } from "vscode";
 import { randomBytes, randomUUID } from "crypto";
 
 import { createBrowserDownloadWebview } from "./BrowserDownloadWebview";
+import { MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES } from "./constants";
 import type { BrowserDownloadChoice } from "./types";
 
 interface PendingRequest {
@@ -79,7 +80,7 @@ export class BrowserDownloadWebviewBridge implements Disposable {
     data: Uint8Array,
     signal: AbortSignal,
   ): Promise<void> {
-    const maximumChunkSize = 192 * 1024;
+    const maximumChunkSize = MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES;
     for (let offset = 0; offset < data.byteLength; offset += maximumChunkSize) {
       await this.waitUntilVisible(signal);
       const byteLength = Math.min(maximumChunkSize, data.byteLength - offset);

@@ -6,8 +6,10 @@ import { join } from "path";
 import * as sinon from "sinon";
 import { runInNewContext } from "vm";
 
+import { BrowserDownloadChunkBuffer } from "../../../src/components/LibraryNavigator/BrowserFileDownloadTarget/BrowserDownloadChunkBuffer";
 import { BrowserFileDownloadTarget } from "../../../src/components/LibraryNavigator/BrowserFileDownloadTarget/BrowserFileDownloadTarget";
 import { createBrowserFileWriterScript } from "../../../src/components/LibraryNavigator/BrowserFileDownloadTarget/BrowserFileWriter";
+import { MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES } from "../../../src/components/LibraryNavigator/BrowserFileDownloadTarget/constants";
 
 interface MockPanel {
   visible: boolean;
@@ -162,7 +164,7 @@ describe("BrowserFileDownloadTarget", () => {
     await target.open(destination.token, "transfer", destination.fileName);
 
     const source = Uint8Array.from(
-      { length: 500 * 1024 },
+      { length: 2 * MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES + 500 * 1024 },
       (_value, index) => index % 256,
     );
     await target.write("transfer", source, new AbortController().signal);
@@ -177,19 +179,64 @@ describe("BrowserFileDownloadTarget", () => {
       }
       const chunk = message.data;
       expect(message.byteLength).to.equal(chunk.byteLength);
-      expect(chunk.byteLength).to.be.at.most(192 * 1024);
+      expect(chunk.byteLength).to.be.at.most(
+        MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES,
+      );
       expect(chunk.byteOffset).to.equal(0);
       expect(chunk.buffer.byteLength).to.equal(chunk.byteLength);
       return chunk;
     });
     expect(chunks.map((chunk) => chunk.byteLength)).to.deep.equal([
-      192 * 1024,
-      192 * 1024,
-      116 * 1024,
+      MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES,
+      MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES,
+      500 * 1024,
     ]);
     expect(
       Buffer.concat(chunks.map((chunk) => Buffer.from(chunk))),
     ).to.deep.equal(Buffer.from(source));
+  });
+
+  it("coalesces stream chunks and flushes the final partial chunk", async () => {
+    const chunks: Uint8Array[] = [];
+    const buffer = new BrowserDownloadChunkBuffer(4, async (chunk) => {
+      chunks.push(new Uint8Array(chunk));
+    });
+    const signal = new AbortController().signal;
+
+    await buffer.write(Uint8Array.of(1, 2), signal);
+    expect(chunks).to.have.length(0);
+    await buffer.write(Uint8Array.of(3, 4, 5), signal);
+    await buffer.write(Uint8Array.of(6, 7, 8, 9, 10), signal);
+    expect(chunks.map((chunk) => [...chunk])).to.deep.equal([
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+    ]);
+
+    await buffer.flush(signal);
+    expect(chunks.map((chunk) => [...chunk])).to.deep.equal([
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+      [9, 10],
+    ]);
+  });
+
+  it("does not flush buffered data after cancellation", async () => {
+    const chunks: Uint8Array[] = [];
+    const buffer = new BrowserDownloadChunkBuffer(4, async (chunk) => {
+      chunks.push(new Uint8Array(chunk));
+    });
+    const controller = new AbortController();
+    await buffer.write(Uint8Array.of(1, 2), controller.signal);
+    controller.abort(new Error("cancelled"));
+
+    let failure: unknown;
+    try {
+      await buffer.flush(controller.signal);
+    } catch (error) {
+      failure = error;
+    }
+    expect(failure).to.equal(controller.signal.reason);
+    expect(chunks).to.have.length(0);
   });
 
   it("pauses writes while hidden and resumes when the panel is shown", async () => {
