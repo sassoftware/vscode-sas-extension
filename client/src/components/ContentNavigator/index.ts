@@ -35,16 +35,24 @@ import {
 } from "./types";
 import { isContainer as getIsContainer, isItemInRecycleBin } from "./utils";
 
-const fileValidator = (value: string): string | null =>
-  /^([^/<>;\\{}]+)\.\w+$/.test(
-    // file service does not allow /, <, >, ;, \, {, }
-    value,
-  )
+const fileValidator = (
+  value: string,
+  sourceType: ContentSourceType = ContentSourceType.SASContent,
+): string | null => {
+  const invalidChars =
+    sourceType === ContentSourceType.SASServer
+      ? /[?/\\*"|:<>]/g
+      : /[;/\\{}<>]/g;
+  return !invalidChars.test(value) && /^([^/<>;\\{}]+)\.\w+$/.test(value)
     ? null
     : Messages.FileValidationError;
+};
 
-const flowFileValidator = (value: string): string | null => {
-  let res = fileValidator(value);
+const flowFileValidator = (
+  value: string,
+  sourceType: ContentSourceType = ContentSourceType.SASContent,
+): string | null => {
+  let res = fileValidator(value, sourceType);
   if (!value.endsWith(".flw")) {
     res = Messages.InvalidFlowFileNameError;
   }
@@ -68,6 +76,7 @@ const folderValidator = (
 class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
   private contentModel: ContentModel;
+  private registrationSubscriptions: Disposable[];
   private sourceType: ContentNavigatorConfig["sourceType"];
   private temporaryImageUris = new Map<string, Uri>();
   private treeIdentifier: ContentNavigatorConfig["treeIdentifier"];
@@ -84,18 +93,20 @@ class ContentNavigator implements SubscriptionProvider {
       config,
     );
 
-    workspace.registerFileSystemProvider(
-      config.sourceType,
-      this.contentDataProvider,
-    );
-    workspace.registerTextDocumentContentProvider(
-      `${config.sourceType}ReadOnly`,
-      this.contentDataProvider,
-    );
+    this.registrationSubscriptions = [
+      workspace.registerFileSystemProvider(
+        config.sourceType,
+        this.contentDataProvider,
+      ),
+      workspace.registerTextDocumentContentProvider(
+        `${config.sourceType}ReadOnly`,
+        this.contentDataProvider,
+      ),
+    ];
 
     // Remove any image preview cache files left behind by a previous session
     // (e.g. VS Code was force-closed or the extension host crashed/timed-out
-    // before the tab-close/dispose cleanup could run).
+    // before the dispose cleanup could run).
     void this.purgeImagePreviewCache();
   }
 
@@ -116,6 +127,7 @@ class ContentNavigator implements SubscriptionProvider {
       "svg",
     ];
     return [
+      ...this.registrationSubscriptions,
       ...this.contentDataProvider.getSubscriptions(),
       window.tabGroups.onDidChangeTabs(async ({ closed }) => {
         await Promise.all(
@@ -256,7 +268,8 @@ class ContentNavigator implements SubscriptionProvider {
           const fileName = await window.showInputBox({
             prompt: Messages.NewFilePrompt,
             title: Messages.NewFileTitle,
-            validateInput: fileValidator,
+            validateInput: (fileName) =>
+              fileValidator(fileName, this.sourceType),
           });
           if (!fileName) {
             return;
@@ -314,7 +327,7 @@ class ContentNavigator implements SubscriptionProvider {
             value: resource.name,
             validateInput: isContainer
               ? (value) => folderValidator(value, this.sourceType)
-              : fileValidator,
+              : (value) => fileValidator(value, this.sourceType),
           });
           if (!name || name === resource.name) {
             return;
@@ -388,7 +401,7 @@ class ContentNavigator implements SubscriptionProvider {
           const outputName = await window.showInputBox({
             prompt: Messages.ConvertNotebookToFlowPrompt,
             value: inputName.replace(".sasnb", ".flw"),
-            validateInput: flowFileValidator,
+            validateInput: (value) => flowFileValidator(value, this.sourceType),
           });
 
           if (!outputName) {
