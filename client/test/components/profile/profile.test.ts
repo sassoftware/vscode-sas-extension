@@ -429,7 +429,13 @@ describe("Profiles", async function () {
 
       it("validate client id/secret profile", async function () {
         // Arrange
-        const profileByName = testProfileClientId.profiles.testProfile;
+        const profileByName: ViyaProfile = {
+          connectionType: ConnectionType.Rest,
+          endpoint: "https://test-host.sas.com",
+          clientId: "sas.test",
+          clientSecret: "",
+          context: "SAS Studio context",
+        };
 
         // Act
         const validateProfile = await profileConfig.validateProfile({
