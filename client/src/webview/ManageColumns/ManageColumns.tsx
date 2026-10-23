@@ -204,9 +204,12 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
     .filter((index) => index !== -1);
 
   const canMoveUp =
-    selectedDisplayedIndices.length > 0 && selectedDisplayedIndices[0] > 0;
+    !filterDisplayed.trim() &&
+    selectedDisplayedIndices.length > 0 &&
+    selectedDisplayedIndices[0] > 0;
 
   const canMoveDown =
+    !filterDisplayed.trim() &&
     selectedDisplayedIndices.length > 0 &&
     selectedDisplayedIndices[selectedDisplayedIndices.length - 1] <
       displayedColumns.length - 1;
