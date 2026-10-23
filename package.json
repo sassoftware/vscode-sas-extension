@@ -609,6 +609,12 @@
                 "description": "%configuration.SAS.results.html.custom.style.highContrastLight%"
               }
             }
+          },
+          "SAS.notebook.cleanOutput": {
+            "order": 11,
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.SAS.notebook.cleanOutput%"
           }
         }
       }
