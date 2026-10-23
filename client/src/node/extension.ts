@@ -56,7 +56,7 @@ import { sasDiagnostic } from "../components/logViewer/sasDiagnostics";
 import { NotebookController } from "../components/notebook/Controller";
 import { NotebookSerializer } from "../components/notebook/Serializer";
 import { exportNotebook, saveOutput } from "../components/notebook/exporters";
-import { ConnectionType } from "../components/profile";
+import { ConnectionType, hasActiveProfileChanged } from "../components/profile";
 import { SasTaskProvider } from "../components/tasks/SasTaskProvider";
 import { SAS_TASK_TYPE } from "../components/tasks/SasTasks";
 
@@ -191,6 +191,8 @@ export function activate(context: ExtensionContext) {
     deserializeWebviewPanel,
   });
 
+  let previousActiveProfile = profileConfig.getActiveProfileSnapshot();
+
   context.subscriptions.push(
     commands.registerCommand("SAS.run", async () => {
       await run();
@@ -240,7 +242,20 @@ export function activate(context: ExtensionContext) {
     // If configFile setting is changed, update watcher to watch new configuration file
     workspace.onDidChangeConfiguration(
       async (event: ConfigurationChangeEvent) => {
-        if (event.affectsConfiguration("SAS.connectionProfiles")) {
+        if (!event.affectsConfiguration("SAS.connectionProfiles")) {
+          return;
+        }
+
+        const currentActiveProfile = profileConfig.getActiveProfileSnapshot();
+
+        const activeProfileChanged = hasActiveProfileChanged(
+          previousActiveProfile,
+          currentActiveProfile,
+        );
+
+        previousActiveProfile = currentActiveProfile;
+
+        if (activeProfileChanged) {
           await triggerProfileUpdate();
           updateViewSettings();
         }
