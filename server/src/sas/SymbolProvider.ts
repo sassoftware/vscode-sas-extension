@@ -21,6 +21,7 @@ interface SasSymbol {
   declaration: boolean;
   dataStepScope?: { startLine: number; endLine: number };
   macroScopeKey?: string;
+  dataSetLibref?: string;
 }
 
 interface MacroVariableDeclaration {
@@ -142,12 +143,22 @@ export class SymbolProvider {
       return undefined;
     }
     if (this.isDataSetReference(line, start)) {
+      if (/^\s*\./.test(line.slice(end))) {
+        return undefined;
+      }
       return {
         name,
         kind: "dataSet",
         range,
         declaration: this.isDataSetDeclaration(line, start),
+        dataSetLibref: this.getDataSetLibref(line, start),
       };
+    }
+    if (
+      this.isNonVariableToken(position.line, start) ||
+      this.isFunctionCall(line, start, end, name)
+    ) {
+      return undefined;
     }
     return {
       name,
@@ -165,7 +176,7 @@ export class SymbolProvider {
       case "macroProgram":
         return this.findMacroPrograms(symbol.name);
       case "dataSet":
-        return this.findDataSets(symbol.name);
+        return this.findDataSets(symbol.name, symbol.dataSetLibref);
       default:
         return this.findVariables(symbol.name, symbol.dataStepScope);
     }
@@ -281,14 +292,18 @@ export class SymbolProvider {
     return result;
   }
 
-  private findDataSets(name: string): SasSymbol[] {
+  private findDataSets(name: string, libref?: string): SasSymbol[] {
     return this.findCodeIdentifiers(name)
-      .filter((item) =>
-        this.isDataSetReference(
-          this.model.getLine(item.range.start.line),
-          item.range.start.character,
-        ),
-      )
+      .filter((item) => {
+        const line = this.model.getLine(item.range.start.line);
+        const start = item.range.start.character;
+        return (
+          this.isDataSetReference(line, start) &&
+          !/^\s*\./.test(line.slice(start + name.length)) &&
+          this.getDataSetLibref(line, start)?.toLowerCase() ===
+            libref?.toLowerCase()
+        );
+      })
       .map((item) => ({
         ...item,
         kind: "dataSet",
@@ -309,7 +324,19 @@ export class SymbolProvider {
       dataStepScope?.endLine,
     ).filter((item) => {
       const line = this.model.getLine(item.range.start.line);
-      return !this.isDataSetReference(line, item.range.start.character);
+      return (
+        !this.isDataSetReference(line, item.range.start.character) &&
+        !this.isNonVariableToken(
+          item.range.start.line,
+          item.range.start.character,
+        ) &&
+        !this.isFunctionCall(
+          line,
+          item.range.start.character,
+          item.range.end.character,
+          name,
+        )
+      );
     });
   }
 
@@ -580,6 +607,42 @@ export class SymbolProvider {
 
   private isDataSetDeclaration(line: string, start: number): boolean {
     return /(?:^|;)\s*data\s+[^;]*$/i.test(line.slice(0, start));
+  }
+
+  private getDataSetLibref(line: string, start: number): string | undefined {
+    return new RegExp(`(${identifier})\\s*\\.\\s*$`, "i").exec(
+      line.slice(0, start),
+    )?.[1];
+  }
+
+  private isNonVariableToken(line: number, character: number): boolean {
+    return [
+      "keyword",
+      "sec-keyword",
+      "proc-name",
+      "macro-keyword",
+      "macro-sec-keyword",
+      "macro-keyword-param",
+    ].includes(this.getTokenStyle(line, character) ?? "");
+  }
+
+  private isFunctionCall(
+    line: string,
+    start: number,
+    end: number,
+    name: string,
+  ): boolean {
+    let next = end;
+    while (/\s/.test(line.charAt(next))) {
+      next++;
+    }
+    if (line.charAt(next) !== "(") {
+      return false;
+    }
+    const functions = this.syntaxProvider.lexer.syntaxDb.getFunctions() ?? [];
+    return functions.some(
+      (functionName) => functionName.toLowerCase() === name.toLowerCase(),
+    );
   }
 
   private getDataStepScope(position: Position) {

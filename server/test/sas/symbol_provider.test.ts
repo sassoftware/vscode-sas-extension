@@ -229,6 +229,33 @@ describe("SAS symbol provider", () => {
     );
   });
 
+  it("keeps datasets with the same member name in different libraries separate", () => {
+    const { document, provider } = createProvider(
+      "data work.sales;\nrun;\ndata prod.sales;\nrun;\nproc print data=work.sales;\nrun;\nproc print data=prod.sales;\nrun;",
+    );
+
+    const workReferences = provider.getReferences(
+      document.uri,
+      { line: 0, character: 12 },
+      true,
+    );
+    const prodEdit = provider.rename(
+      document.uri,
+      { line: 2, character: 12 },
+      "orders",
+    );
+
+    assert.deepEqual(
+      workReferences.map((location) => location.range.start.line),
+      [0, 4],
+    );
+    assert.deepEqual(
+      prodEdit?.changes?.[document.uri]?.map((edit) => edit.range.start.line),
+      [2, 6],
+    );
+    assert.isUndefined(provider.prepareRename({ line: 0, character: 6 }));
+  });
+
   it("finds and renames ordinary DATA step variables", () => {
     const { document, provider } = createProvider(
       'data example;\n  amount = 1;\n  total = amount * 2;\n  label = "amount";\nrun;',
@@ -278,6 +305,34 @@ describe("SAS symbol provider", () => {
     assert.deepEqual(
       edit?.changes?.[document.uri]?.map((item) => item.range.start.line),
       [1, 2],
+    );
+  });
+
+  it("does not treat SAS keywords or function calls as variables", () => {
+    const { document, provider } = createProvider(
+      "data example;\n  if value > 0 then result = sum(value, 1);\n  sum = 2;\n  result = sum + 1;\nrun;",
+    );
+
+    const sumReferences = provider.getReferences(
+      document.uri,
+      { line: 2, character: 3 },
+      true,
+    );
+    const sumEdit = provider.rename(
+      document.uri,
+      { line: 2, character: 3 },
+      "total",
+    );
+
+    assert.isUndefined(provider.prepareRename({ line: 1, character: 3 }));
+    assert.isUndefined(provider.prepareRename({ line: 1, character: 39 }));
+    assert.deepEqual(
+      sumReferences.map((location) => location.range.start.line),
+      [2, 3],
+    );
+    assert.deepEqual(
+      sumEdit?.changes?.[document.uri]?.map((edit) => edit.range.start.line),
+      [2, 3],
     );
   });
 
