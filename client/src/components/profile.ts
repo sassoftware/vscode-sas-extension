@@ -211,6 +211,20 @@ export interface ProfileDetail {
   name: string;
   profile: Profile;
 }
+export interface ActiveProfileSnapshot {
+  name: string;
+  profile?: Profile;
+}
+
+export function hasActiveProfileChanged(
+  previous: ActiveProfileSnapshot,
+  current: ActiveProfileSnapshot,
+): boolean {
+  return (
+    previous.name !== current.name ||
+    JSON.stringify(previous.profile) !== JSON.stringify(current.profile)
+  );
+}
 
 /**
  * A {@link ProfileDetail} built from an unverified lookup, where the named
@@ -634,6 +648,16 @@ export class ProfileConfig {
       return profileList[name] as T;
     }
     return undefined;
+  }
+
+  getActiveProfileSnapshot(): ActiveProfileSnapshot {
+    const name = this.getActiveProfile();
+    const profile = this.getProfileByName(name);
+
+    return {
+      name,
+      profile: profile ? JSON.parse(JSON.stringify(profile)) : undefined,
+    };
   }
 
   /**
