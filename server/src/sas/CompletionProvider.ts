@@ -111,6 +111,22 @@ const possibleFuncZones = [
   ZONE_TYPE.SUB_OPT_VALUE,
 ];
 
+const optionNameZones = new Set([
+  ZONE_TYPE.PROC_OPT,
+  ZONE_TYPE.PROC_SUB_OPT_NAME,
+  ZONE_TYPE.PROC_STMT_OPT,
+  ZONE_TYPE.PROC_STMT_OPT_REQ,
+  ZONE_TYPE.PROC_STMT_SUB_OPT,
+  ZONE_TYPE.DATA_STEP_DEF_OPT,
+  ZONE_TYPE.DATA_STEP_OPT_NAME,
+  ZONE_TYPE.DATA_SET_OPT_NAME,
+  ZONE_TYPE.DATA_STEP_STMT_OPT,
+  ZONE_TYPE.GBL_STMT_OPT,
+  ZONE_TYPE.GBL_STMT_SUB_OPT_NAME,
+  ZONE_TYPE.MACRO_DEF_OPT,
+  ZONE_TYPE.MACRO_STMT_OPT,
+]);
+
 function _distinctList(list: string[]) {
   const newList = [],
     obj: Record<string, true> = {};
@@ -628,8 +644,14 @@ export class CompletionProvider {
     return new Promise((resolve) => {
       this._getZone(params.position);
       const prefix = this.popupContext.prefix;
+      const zone = this.popupContext.zone;
 
-      this._loadAutoCompleteItems(this.popupContext.zone, (data) => {
+      this._loadAutoCompleteItems(zone, (loadedData) => {
+        const data = this._filterSelectedOptions(
+          loadedData,
+          zone,
+          params.position,
+        );
         if (
           params.context?.triggerCharacter === "." &&
           data &&
@@ -2019,6 +2041,53 @@ export class CompletionProvider {
       zone !== ZONE_TYPE.DATALINES
         ? ZONE_TYPE.MACRO_VAR
         : zone;
+  }
+
+  private _filterSelectedOptions(
+    items: (string | LibCompleteItem)[] | undefined,
+    zone: number,
+    position: Position,
+  ): (string | LibCompleteItem)[] | undefined {
+    if (!items || !optionNameZones.has(zone)) {
+      return items;
+    }
+
+    const text = this._buildRelevantTextWindow(position);
+    let statement = "";
+    let quote: "'" | '"' | undefined;
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (quote) {
+        if (char === quote) {
+          if (text[i + 1] === quote) {
+            i++;
+          } else {
+            quote = undefined;
+          }
+        }
+        statement += " ";
+      } else if (char === "'" || char === '"') {
+        quote = char;
+        statement += " ";
+      } else if (char === ";") {
+        statement = "";
+      } else {
+        statement += char;
+      }
+    }
+
+    const selectedOptions = new Set<string>();
+    const assignments = /([A-Za-z_][\w.]*)\s*=/g;
+    let match;
+    while ((match = assignments.exec(statement)) !== null) {
+      selectedOptions.add(match[1].toUpperCase());
+    }
+
+    return items.filter((item) => {
+      const name = typeof item === "string" ? item : item.name;
+      return !selectedOptions.has(name.replace(/=$/, "").toUpperCase());
+    });
   }
 
   private _getPrefix(position: Position) {
