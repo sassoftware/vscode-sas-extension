@@ -127,6 +127,7 @@ class RestSession extends Session {
     }
 
     //Start a new session
+    this.notifySessionChanged();
     if (this._config.serverId) {
       const server1 = new ComputeServer(this._config.serverId);
       server1.options = formattedOpts;
