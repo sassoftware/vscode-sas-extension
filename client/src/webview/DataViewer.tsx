@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import { AgGridReact } from "ag-grid-react";
@@ -10,6 +10,7 @@ import ColumnMenu from "./ColumnMenu";
 import TableFilter from "./TableFilter";
 import localize from "./localize";
 import useDataViewer from "./useDataViewer";
+import useSelectionRectangle from "./useSelectionRectangle";
 import useTheme from "./useTheme";
 
 import "./DataViewer.css";
@@ -25,7 +26,7 @@ const gridStyles = {
 
 const DataViewer = () => {
   const title = document
-    .querySelector("[data-title]")
+    .querySelector("[data-title]")!
     .getAttribute("data-title");
   const theme = useTheme();
   const {
@@ -37,14 +38,46 @@ const DataViewer = () => {
     onGridReady,
     refreshResults,
   } = useDataViewer();
+  const [gridDragging, setGridDragging] = useState(false);
+  const [focusedCell, setFocusedCell] = useState(null);
+  const { onKeyDown, resetSelection, ...selectionRectangleHooks } =
+    useSelectionRectangle({
+      onSelectionStarted: () => {
+        setFocusedCell(gridRef.current?.api.getFocusedCell());
+        gridRef.current?.api.clearFocusedCell();
+        gridRef.current?.api.updateGridOptions({
+          suppressCellFocus: true,
+          suppressHeaderFocus: true,
+        });
+      },
+      onSelectionEnded: () => {
+        gridRef.current?.api.updateGridOptions({
+          suppressCellFocus: false,
+          suppressHeaderFocus: false,
+        });
+        if (focusedCell) {
+          gridRef.current?.api.setFocusedCell(
+            focusedCell?.rowIndex,
+            focusedCell?.column,
+          );
+          setFocusedCell(null);
+        }
+      },
+      getRowData: (rowIndex: string) =>
+        gridRef.current?.api.getRowNode(rowIndex),
+      enabled: !gridDragging,
+      scrollContainer: ".ag-grid-scrolling-container",
+      scrollViewport: ".ag-grid-viewport",
+    });
 
   const handleKeydown = useCallback(
-    (event) => {
+    (event: KeyboardEvent) => {
+      onKeyDown(event);
       if (event.key === "Escape" && columnMenu) {
         dismissMenu();
       }
     },
-    [columnMenu, dismissMenu],
+    [columnMenu, dismissMenu, onKeyDown],
   );
   const dismissMenuWithoutFocus = useCallback(
     () => dismissMenu(false),
@@ -90,6 +123,7 @@ const DataViewer = () => {
       <h1>{title}</h1>
       <TableFilter
         onCommit={(value) => {
+          resetSelection();
           refreshResults({ filterValue: value });
         }}
         initialValue={""}
@@ -99,14 +133,13 @@ const DataViewer = () => {
         className={`ag-grid-wrapper ${theme}`}
         style={gridStyles}
         onClick={() => columnMenu && dismissMenuWithoutFocus()}
+        {...selectionRectangleHooks}
       >
         <AgGridReact
           ref={gridRef}
           cacheBlockSize={100}
           columnDefs={columns}
-          defaultColDef={{
-            sortable: true,
-          }}
+          defaultColDef={{ sortable: true }}
           maintainColumnOrder
           infiniteInitialRowCount={100}
           maxBlocksInCache={10}
@@ -116,6 +149,9 @@ const DataViewer = () => {
           noRowsOverlayComponent={() =>
             localize("No data matches the current filters.")
           }
+          onDragStarted={() => setGridDragging(true)}
+          onDragCancelled={() => setGridDragging(false)}
+          onDragStopped={() => setGridDragging(false)}
           suppressDragLeaveHidesColumns
         />
       </div>
