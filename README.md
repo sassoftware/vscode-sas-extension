@@ -14,6 +14,34 @@ The SAS extension includes many [features](https://sassoftware.github.io/vscode-
 
 <img src="website/static/images/featuresGlance.png"/>
 
+## DATA Step Debugger (Experimental)
+
+In desktop VS Code, select a SAS Viya connection profile, open a SAS file, and
+run **SAS: Debug DATA Step** from the Command Palette. The debugger submits the
+entire active document, including unsaved edits, rather than a built-in sample.
+It does not yet select the DATA step at the cursor.
+
+To choose a different file, use a launch configuration:
+
+```json
+{
+  "type": "sas",
+  "request": "launch",
+  "name": "Debug SAS DATA Step",
+  "program": "${workspaceFolder}/example.sas"
+}
+```
+
+`program` accepts a file path or document URI; omit it to use the active editor.
+The extension adds the debugger options and initial `describe _all_;` command
+without modifying the source document. The code runs on your Viya session and
+can modify data. Stepping, verified breakpoints, and variable inspection are not
+implemented yet.
+
+After each debugger Compute job finishes, its complete log is fetched and shown
+in the Debug Console, including all paginated log entries. Logs are not streamed
+while a job is running.
+
 ## Support
 
 ### FAQs

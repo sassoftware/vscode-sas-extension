@@ -1,6 +1,6 @@
 // Copyright © 2026, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { ViewColumn, commands, l10n, window, workspace } from "vscode";
+import { Uri, ViewColumn, commands, l10n, window, workspace } from "vscode";
 
 import {
   DebugSession,
@@ -13,12 +13,16 @@ import type { DebugProtocol } from "@vscode/debugprotocol";
 
 import { profileConfig } from "../../commands/profile";
 import { getSession } from "../../connection";
-import { DEBUGGER_SAMPLE_CODE } from "../../connection/rest/session";
 import { useRunStore } from "../../store";
 import { appendSessionLogFn } from "../logViewer";
 
 const DATA_STEP_THREAD_ID = 1;
 const CONFIGURATION_DONE_TIMEOUT_MS = 1000;
+
+export interface SasLaunchRequestArguments
+  extends DebugProtocol.LaunchRequestArguments {
+  program?: string;
+}
 
 /**
  * Debug Adapter Protocol implementation for the SAS DATA step debugger.
@@ -77,6 +81,7 @@ export class SasDebugSession extends DebugSession {
 
   protected async launchRequest(
     response: DebugProtocol.LaunchResponse,
+    args: SasLaunchRequestArguments,
   ): Promise<void> {
     await Promise.race([
       this.configurationDone,
@@ -117,14 +122,44 @@ export class SasDebugSession extends DebugSession {
       );
     }
 
-    const document = await workspace.openTextDocument({
-      language: "sas",
-      content: DEBUGGER_SAMPLE_CODE,
-    });
-    await window.showTextDocument(document, {
-      viewColumn: ViewColumn.Active,
-      preview: false,
-    });
+    let code: string;
+    try {
+      const program = args.program;
+      if (
+        program !== undefined &&
+        (typeof program !== "string" || !program.trim())
+      ) {
+        throw new Error(
+          l10n.t("The debug program must be a file path or URI."),
+        );
+      }
+      const uri = program
+        ? /^[a-z][a-z0-9+.-]*:/i.test(program) && !/^[a-z]:[\\/]/i.test(program)
+          ? Uri.parse(program)
+          : Uri.file(program)
+        : window.activeTextEditor?.document.uri;
+      if (!uri) {
+        throw new Error(
+          l10n.t(
+            "Open a SAS file or set program in the debug launch configuration.",
+          ),
+        );
+      }
+      const document = await workspace.openTextDocument(uri);
+      if (document.languageId !== "sas") {
+        throw new Error(l10n.t("The debug program must be a SAS document."));
+      }
+      code = document.getText();
+      if (!code.trim()) {
+        throw new Error(l10n.t("The debug program is empty."));
+      }
+      await window.showTextDocument(document, {
+        viewColumn: ViewColumn.Active,
+        preview: false,
+      });
+    } catch (error) {
+      return this.sendLaunchError(response, error?.message ?? String(error));
+    }
 
     this.sendResponse(response);
 
@@ -138,7 +173,11 @@ export class SasDebugSession extends DebugSession {
       await session.setup();
 
       this.log(l10n.t("Starting DATA step debugger..."));
-      const jobId = await session.executeDebuggerCode();
+      const jobId = await session.executeDebuggerCode(code, (lines) => {
+        for (const entry of lines) {
+          this.log(entry.line, entry.type === "error" ? "stderr" : "console");
+        }
+      });
       this.log(l10n.t("DATA step debugger started (job {jobId}).", { jobId }));
     } catch (error) {
       this.log(

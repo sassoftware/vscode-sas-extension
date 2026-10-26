@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { authentication, l10n } from "vscode";
 
-import { BaseConfig, RunResult } from "..";
+import { BaseConfig, OnLogFn, RunResult } from "..";
 import { SASAuthProvider } from "../../components/AuthProvider";
 import {
   getContextValue,
@@ -208,12 +208,15 @@ class RestSession extends Session {
     return res;
   };
 
-  public executeDebuggerCode = async (): Promise<string> => {
+  public executeDebuggerCode = async (
+    code: string,
+    onLog: OnLogFn,
+  ): Promise<string> => {
     if (!this._computeSession?.sessionId) {
       throw new Error(l10n.t("No SAS session is available."));
     }
 
-    return this._computeSession.executeDebuggerCode();
+    return this._computeSession.executeDebuggerCode(code, onLog);
   };
 
   protected _close = async () => {

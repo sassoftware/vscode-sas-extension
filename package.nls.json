@@ -88,6 +88,7 @@
   "configuration.title.SAS.results": "SAS Results",
   "debuggers.sas.label": "SAS",
   "debuggers.sas.launch.name": "Debug SAS DATA Step",
+  "debuggers.sas.program.description": "SAS file path or document URI to debug. Defaults to the active SAS document when omitted.",
   "debuggers.sas.snippet.description": "Start an interactive DATA step debugging session on SAS Viya.",
   "debuggers.sas.snippet.label": "SAS: Debug DATA Step",
   "notebooks.SAS.htmlRenderer": "SAS HTML Renderer",

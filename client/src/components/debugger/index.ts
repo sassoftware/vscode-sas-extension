@@ -10,6 +10,7 @@ import {
   commands,
   debug,
   l10n,
+  window,
 } from "vscode";
 
 import { SasDebugSession } from "./SasDebugSession";
@@ -20,6 +21,7 @@ const getDefaultConfiguration = (): DebugConfiguration => ({
   type: SAS_DEBUG_TYPE,
   request: "launch",
   name: l10n.t("Debug SAS DATA Step"),
+  program: window.activeTextEditor?.document.uri.toString(),
 });
 
 class SasDebugConfigurationProvider implements DebugConfigurationProvider {

@@ -4,7 +4,9 @@ import { l10n } from "vscode";
 
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 
+import type { OnLogFn } from "..";
 import {
+  JobLogCollection,
   JobRequest,
   JobsApiAxiosParamCreator,
   Link,
@@ -228,21 +230,43 @@ export class ComputeSession extends Compute {
     return ComputeJob.fromResponse(resp);
   }
 
-  async executeDebuggerCode(): Promise<string> {
-    const code = DEBUGGER_SAMPLE_CODE;
-
-    return this.executeAndWait(code.split("\n"));
+  async executeDebuggerCode(code: string, onLog: OnLogFn): Promise<string> {
+    return this.executeAndWait(
+      [
+        "options dsoptions=ldebug notes source;",
+        ...code.split(/\r?\n/),
+        "describe _all_;",
+      ],
+      onLog,
+    );
   }
 
   /**
    * Run code and resolve with the job ID once the job has finished.
    */
-  private async executeAndWait(code: string[]): Promise<string> {
+  private async executeAndWait(
+    code: string[],
+    onLog: OnLogFn,
+  ): Promise<string> {
     const job = await this.execute({ code });
 
     let state = await job.getState();
     while (!(await job.isDone(state))) {
       state = await job.getState({ wait: 5, onChange: true });
+    }
+
+    let response = await job.logs.getJobLog({
+      sessionId: this.sessionId,
+      jobId: job.id,
+      start: 0,
+    });
+    while (true) {
+      onLog(response.data.items);
+      const nextLink = response.data.links?.find((link) => link.rel === "next");
+      if (!nextLink) {
+        break;
+      }
+      response = await job.requestLink<JobLogCollection>(nextLink);
     }
 
     return job.id;

@@ -45,14 +45,21 @@
         ],
         "configurationAttributes": {
           "launch": {
-            "properties": {}
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "%debuggers.sas.program.description%",
+                "default": "${file}"
+              }
+            }
           }
         },
         "initialConfigurations": [
           {
             "type": "sas",
             "request": "launch",
-            "name": "%debuggers.sas.launch.name%"
+            "name": "%debuggers.sas.launch.name%",
+            "program": "${file}"
           }
         ],
         "configurationSnippets": [
@@ -62,7 +69,8 @@
             "body": {
               "type": "sas",
               "request": "launch",
-              "name": "%debuggers.sas.launch.name%"
+              "name": "%debuggers.sas.launch.name%",
+              "program": "${file}"
             }
           }
         ]

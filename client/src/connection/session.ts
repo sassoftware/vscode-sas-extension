@@ -68,7 +68,7 @@ export abstract class Session {
    * Only implemented by connection types that support the DATA step debugger.
    * @returns the id of the job that started the debugger.
    */
-  executeDebuggerCode?(): Promise<string>;
+  executeDebuggerCode?(code: string, onLog: OnLogFn): Promise<string>;
 
   close(): Promise<void> | void {
     if (this._rejectRun) {
