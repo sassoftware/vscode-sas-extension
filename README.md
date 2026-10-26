@@ -33,14 +33,21 @@ To choose a different file, use a launch configuration:
 ```
 
 `program` accepts a file path or document URI; omit it to use the active editor.
-The extension adds the debugger options and initial `describe _all_;` command
-without modifying the source document. The code runs on your Viya session and
-can modify data. Stepping, verified breakpoints, and variable inspection are not
-implemented yet.
+The extension adds the debugger options and initial `describe _all_;` and
+`examine _all_;` commands without modifying the source document. The code runs
+on your Viya session and can modify data. Stepping and verified breakpoints are
+not implemented yet.
 
 After each debugger Compute job finishes, its complete log is fetched and shown
 in the Debug Console, including all paginated log entries. Logs are not streamed
 while a job is running.
+
+The log is then parsed, and the debugger pauses at the last statement where SAS
+stopped. The **Variables** view shows the values `examine` reported at that
+stop, with types and lengths from `describe`, and SAS automatic variables such
+as `_N_` and `_ERROR_` are listed under **Automatic Variables**. If the stop
+cannot be matched to a line in the document, it is shown without a source
+location.
 
 ## Support
 

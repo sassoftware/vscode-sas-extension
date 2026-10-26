@@ -72,6 +72,10 @@ run;
 
 describe _all_;`;
 
+/** First line of every debugger submission; the user's code follows it */
+export const DEBUGGER_OPTIONS_STATEMENT =
+  "options dsoptions=ldebug notes source;";
+
 export class ComputeSession extends Compute {
   api; //Session api
   logs; //Logs api
@@ -233,9 +237,10 @@ export class ComputeSession extends Compute {
   async executeDebuggerCode(code: string, onLog: OnLogFn): Promise<string> {
     return this.executeAndWait(
       [
-        "options dsoptions=ldebug notes source;",
+        DEBUGGER_OPTIONS_STATEMENT,
         ...code.split(/\r?\n/),
         "describe _all_;",
+        "examine _all_;",
       ],
       onLog,
     );
