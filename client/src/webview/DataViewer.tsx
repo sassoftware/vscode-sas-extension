@@ -27,6 +27,10 @@ const gridStyles = {
 };
 
 export const DataViewer = () => {
+  const allowDownload =
+    document
+      .querySelector(".data-viewer-container")
+      ?.getAttribute("data-allow-download") === "true";
   const title = document
     .querySelector("[data-title]")!
     .getAttribute("data-title");
@@ -83,7 +87,7 @@ export const DataViewer = () => {
       },
       getRowData: (rowIndex: string) =>
         gridRef.current?.api.getRowNode(rowIndex),
-      enabled: !gridDragging,
+      enabled: !gridDragging && allowDownload,
       scrollContainer: ".ag-grid-scrolling-container",
       scrollViewport: ".ag-grid-viewport",
     });
@@ -101,6 +105,10 @@ export const DataViewer = () => {
     () => dismissMenu(false),
     [dismissMenu],
   );
+  const handleWindowBlur = useCallback(() => {
+    dismissMenuWithoutFocus();
+    resetSelection();
+  }, [dismissMenuWithoutFocus, resetSelection]);
 
   const panelMessageHandler = useCallback(
     (event: MessageEvent) => {
@@ -110,28 +118,29 @@ export const DataViewer = () => {
         setAllColumnsHidden(false);
       }
 
-      if (
-        event.data.command === "panel:changeFocus" &&
-        event.data.data.focused
-      ) {
-        const cell = gridRef.current?.api.getFocusedCell();
-        if (cell) {
-          gridRef.current?.api.setFocusedCell(cell.rowIndex, cell.column);
+      if (event.data.command === "panel:changeFocus") {
+        if (event.data.data.focused) {
+          const cell = gridRef.current?.api.getFocusedCell();
+          if (cell) {
+            gridRef.current?.api.setFocusedCell(cell.rowIndex, cell.column);
+          }
+        } else {
+          resetSelection();
         }
       }
     },
-    [gridRef, refreshResults, setColumns],
+    [gridRef, refreshResults, resetSelection, setColumns],
   );
   useEffect(() => {
     document.addEventListener("keydown", handleKeydown);
-    window.addEventListener("blur", dismissMenuWithoutFocus);
+    window.addEventListener("blur", handleWindowBlur);
     window.addEventListener("message", panelMessageHandler);
     return () => {
       document.removeEventListener("keydown", handleKeydown);
-      window.removeEventListener("blur", dismissMenuWithoutFocus);
+      window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("message", panelMessageHandler);
     };
-  }, [handleKeydown, dismissMenuWithoutFocus, panelMessageHandler]);
+  }, [handleKeydown, handleWindowBlur, panelMessageHandler]);
 
   if (columns.length === 0) {
     return null;
