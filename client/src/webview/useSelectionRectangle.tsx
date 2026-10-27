@@ -347,7 +347,7 @@ export const useSelectionRectangle = ({
     }
     selection.end = relativePoint({ x: e.clientX, y: e.clientY });
 
-    // Set a minimum drag distance before we start drawing the rectangle
+    // Set a minimum drag distance before we start drawing the selection rectangle
     if (
       !mouseHasMoved.current &&
       Math.max(
