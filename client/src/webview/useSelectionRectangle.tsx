@@ -305,6 +305,9 @@ export const useSelectionRectangle = ({
 
   // #region: event handlers
   const onKeyDown = (event: KeyboardEvent) => {
+    if (!enabled) {
+      return;
+    }
     if (event.key === "c" && (event.metaKey || event.ctrlKey)) {
       copySelection();
       return;
@@ -342,8 +345,19 @@ export const useSelectionRectangle = ({
     if (!enabled || !mouseSelectionStarted) {
       return;
     }
-    mouseHasMoved.current = true;
     selection.end = relativePoint({ x: e.clientX, y: e.clientY });
+
+    // Set a minimum drag distance before we start drawing the rectangle
+    if (
+      !mouseHasMoved.current &&
+      Math.max(
+        Math.abs(selection.end.x - selection.start!.x),
+        Math.abs(selection.end.y - selection.start!.y),
+      ) < 5
+    ) {
+      return;
+    }
+    mouseHasMoved.current = true;
 
     drawRectangle();
 
@@ -386,6 +400,11 @@ export const useSelectionRectangle = ({
     rectangleRef.current.classList.remove("active");
     mouseSelectionEnabled.current = false;
 
+    if (!mouseHasMoved.current) {
+      resetStyles();
+      return;
+    }
+
     if (!selection.lastItemSelected) {
       // This is cumbersome, but what we have to do here is get the
       // target _under_ the selection rectangle, so we're going to hide the
@@ -395,10 +414,6 @@ export const useSelectionRectangle = ({
       const el = document.elementFromPoint(e.clientX, e.clientY);
       rectangleRef.current.style.display = "block";
       handleSelectionUpdate(div(el));
-    }
-
-    if (!mouseHasMoved.current) {
-      resetStyles();
     }
   };
   // #endregion: event handlers

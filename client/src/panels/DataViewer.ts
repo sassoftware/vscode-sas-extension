@@ -22,6 +22,7 @@ class DataViewer extends WebView {
     }>,
     protected readonly fetchColumns: () => TableColumn[],
     protected readonly loadColumnProperties: (columnName: string) => void,
+    protected readonly allowDownload: boolean = true,
   ) {
     super(extensionUri, uid);
   }
@@ -94,7 +95,7 @@ class DataViewer extends WebView {
   }
 
   public body() {
-    return `<div class="data-viewer-container" data-title="${this.title}"></div>`;
+    return `<div class="data-viewer-container" data-title="${this.title}" data-allow-download="${this.allowDownload}"></div>`;
   }
 
   public invalidateColumns(): void {
