@@ -2619,8 +2619,12 @@ export class SyntaxDataProvider {
   getDocumentVariables() {
     //TODO:
   }
-  getMacroDefinitions() {
-    //TODO:
+  getMacroDefinitions(cb?: (data: string[]) => void) {
+    // The name after %MACRO is a new identifier, so there is nothing to
+    // suggest. The callback must still be notified, otherwise completion
+    // in the MACRO_DEF zone never resolves.
+    _notify(cb, []);
+    return [];
   }
   getMacroVariables() {
     //TODO:
