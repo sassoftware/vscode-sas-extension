@@ -164,6 +164,7 @@ class ContentNavigator implements SubscriptionProvider {
               "vscode.openWith",
               localUri,
               "imagePreview.previewEditor",
+              { preserveFocus: true },
             );
           } catch {
             await this.deleteTemporaryImageUri(localUri);
@@ -513,7 +514,9 @@ class ContentNavigator implements SubscriptionProvider {
 
   private async defaultOpenResource(item: ContentItem): Promise<void> {
     const itemUri = await this.contentModel.getUri(item, false);
-    await commands.executeCommand("vscode.open", itemUri);
+    await commands.executeCommand("vscode.open", itemUri, {
+      preserveFocus: true,
+    });
   }
 
   private imagePreviewCacheUri(): Uri {

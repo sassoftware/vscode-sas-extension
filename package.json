@@ -933,6 +933,16 @@
         "when": "editorTextFocus && editorLangId == 'sas'"
       },
       {
+        "when": "focusedView == librarydataprovider",
+        "command": "SAS.deleteTable",
+        "key": "delete"
+      },
+      {
+        "when": "focusedView == serverdataprovider",
+        "command": "SAS.server.deleteResource",
+        "key": "backspace"
+      },
+      {
         "when": "focusedView == contentdataprovider",
         "command": "SAS.content.deleteResource",
         "key": "delete"
