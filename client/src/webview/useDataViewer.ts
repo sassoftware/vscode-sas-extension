@@ -25,6 +25,7 @@ import type {
 import ColumnHeader from "./ColumnHeader";
 import { ColumnMenuProps, getColumnMenu } from "./ColumnMenu";
 import localize from "./localize";
+import useManageColumns from "./useManageColumns";
 
 declare const acquireVsCodeApi;
 const vscode = acquireVsCodeApi();
@@ -134,6 +135,16 @@ const useDataViewer = () => {
     columnMenuRef.current = columnMenu;
   }, [columnMenu]);
 
+  const {
+    initialColumnState,
+    manageColumnsOpen,
+    setManageColumnsOpen,
+    openManageColumns,
+  } = useManageColumns({
+    gridRef,
+    fetchColumns,
+  });
+
   const dataSource = useCallback(
     (incomingQueryParams?: TableQuery) => ({
       rowCount: undefined,
@@ -182,7 +193,7 @@ const useDataViewer = () => {
     [dataSource],
   );
 
-  const dismissMenu = (focusColumn: boolean = true) => {
+  const dismissMenu = useCallback((focusColumn: boolean = true) => {
     if (focusColumn && columnMenuRef.current?.column.colId) {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const headerElement = document.querySelector(
@@ -193,7 +204,7 @@ const useDataViewer = () => {
       }
     }
     setColumnMenu(undefined);
-  };
+  }, []);
 
   const refreshResults = useCallback(
     (query: TableQuery | undefined) => {
@@ -210,15 +221,27 @@ const useDataViewer = () => {
         return setColumnMenu(undefined);
       }
       setColumnMenu(
-        getColumnMenu(api, column, rect, dismissMenu, (columnName: string) => {
-          vscode.postMessage({
-            command: "request:loadColumnProperties",
-            data: { columnName },
-          });
-        }),
+        getColumnMenu(
+          api,
+          column,
+          rect,
+          dismissMenu,
+          (columnName: string) => {
+            vscode.postMessage({
+              command: "request:loadColumnProperties",
+              data: { columnName },
+            });
+          },
+          async () => {
+            const opened = await openManageColumns();
+            if (opened) {
+              dismissMenu(false);
+            }
+          },
+        ),
       );
     },
-    [],
+    [dismissMenu, openManageColumns],
   );
 
   useEffect(() => {
@@ -248,10 +271,9 @@ const useDataViewer = () => {
             params.event.key === "Enter" ||
             (params.event.key === "F10" && params.event.shiftKey)
           ) {
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            const dropdown = (params.event.target as HTMLElement).querySelector(
-              ".dropdown",
-            );
+            const dropdown =
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              (params.event.target as HTMLElement).querySelector(".dropdown");
             if (!dropdown) {
               return true;
             }
@@ -300,8 +322,12 @@ const useDataViewer = () => {
     setColumns,
     dismissMenu,
     gridRef,
+    initialColumnState,
+    openManageColumns,
+    manageColumnsOpen,
     onGridReady,
     refreshResults,
+    setManageColumnsOpen,
   };
 };
 

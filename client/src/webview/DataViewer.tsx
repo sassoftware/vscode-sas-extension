@@ -1,12 +1,14 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
+import type { GridApi } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
 import ".";
 import ColumnMenu from "./ColumnMenu";
+import ManageColumns from "./ManageColumns";
 import TableFilter from "./TableFilter";
 import localize from "./localize";
 import useDataViewer from "./useDataViewer";
@@ -23,19 +25,35 @@ const gridStyles = {
   width: "100%",
 };
 
-const DataViewer = () => {
+export const DataViewer = () => {
   const title = document
     .querySelector("[data-title]")
     .getAttribute("data-title");
   const theme = useTheme();
+  const [allColumnsHidden, setAllColumnsHidden] = useState(false);
+
+  const updateAllColumnsHidden = useCallback((api: GridApi) => {
+    const columns = api
+      .getColumnState()
+      .filter((column) => column.colId !== "#");
+
+    setAllColumnsHidden(
+      columns.length > 0 && columns.every((column) => column.hide === true),
+    );
+  }, []);
+
   const {
     columnMenu,
     columns,
-    setColumns,
     dismissMenu,
     gridRef,
+    initialColumnState,
+    openManageColumns,
+    manageColumnsOpen,
     onGridReady,
     refreshResults,
+    setColumns,
+    setManageColumnsOpen,
   } = useDataViewer();
 
   const handleKeydown = useCallback(
@@ -56,6 +74,7 @@ const DataViewer = () => {
       if (event.data.command === "panel:refreshData") {
         refreshResults(undefined);
         setColumns([]);
+        setAllColumnsHidden(false);
       }
 
       if (
@@ -111,6 +130,7 @@ const DataViewer = () => {
           infiniteInitialRowCount={100}
           maxBlocksInCache={10}
           onGridReady={onGridReady}
+          onColumnVisible={(event) => updateAllColumnsHidden(event.api)}
           rowModelType="infinite"
           theme="legacy"
           noRowsOverlayComponent={() =>
@@ -118,6 +138,49 @@ const DataViewer = () => {
           }
           suppressDragLeaveHidesColumns
         />
+
+        {allColumnsHidden && (
+          <div className="all-columns-hidden-overlay">
+            <div className="all-columns-hidden-message">
+              {localize("All columns are hidden.")}
+            </div>
+
+            <button
+              type="button"
+              className="all-columns-hidden-button"
+              onClick={() => void openManageColumns()}
+            >
+              {localize("Manage Columns")}
+            </button>
+          </div>
+        )}
+
+        {manageColumnsOpen && (
+          <ManageColumns
+            columnState={initialColumnState}
+            onClose={() => setManageColumnsOpen(false)}
+            onApply={(updatedColumnState) => {
+              const api = gridRef.current?.api;
+              if (api) {
+                api.applyColumnState({
+                  state: [
+                    {
+                      colId: "#",
+                    },
+                    ...updatedColumnState.map((column) => ({
+                      colId: column.colId,
+                      hide: column.hide,
+                    })),
+                  ],
+                  applyOrder: true,
+                });
+                updateAllColumnsHidden(api);
+              }
+
+              setManageColumnsOpen(false);
+            }}
+          />
+        )}
       </div>
     </div>
   );
