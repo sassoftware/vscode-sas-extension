@@ -2,10 +2,31 @@
 // SPDX-License-Identifier: Apache-2.0
 import { Disposable, Uri, ViewColumn, WebviewPanel, window } from "vscode";
 
+const escapeHtmlAttribute = (value: string): string =>
+  value.replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+    return entities[character];
+  });
+
 export class WebViewManager {
   public panels: Record<string, WebView> = {};
 
-  public render(webview: WebView, uid: string, forceReRender: boolean = false) {
+  public render(
+    webview: WebView,
+    uid: string,
+    forceReRender: boolean = false,
+    options: {
+      viewType?: string;
+      viewColumn?: ViewColumn;
+      preserveFocus?: boolean;
+    } = {},
+  ) {
     if (this.panels[uid]) {
       if (forceReRender) {
         this.panels[uid] = webview
@@ -17,15 +38,26 @@ export class WebViewManager {
     }
 
     const panel = window.createWebviewPanel(
-      "webView",
+      options.viewType ?? "webView",
       uid,
-      { viewColumn: ViewColumn.One, preserveFocus: true },
+      {
+        viewColumn: options.viewColumn ?? ViewColumn.One,
+        preserveFocus: options.preserveFocus ?? true,
+      },
       {
         enableScripts: true,
         retainContextWhenHidden: true,
       },
     );
 
+    this.attach(webview, uid, panel);
+  }
+
+  public attach(webview: WebView, uid: string, panel: WebviewPanel): void {
+    panel.webview.options = {
+      ...panel.webview.options,
+      enableScripts: true,
+    };
     webview.onDispose = () => delete this.panels[uid];
     this.panels[uid] = webview.withPanel(panel).render();
   }
@@ -85,9 +117,9 @@ export abstract class WebView {
             " ",
           )}" />
           ${styles}
-          <title>${this.title}</title>
+          <title>${escapeHtmlAttribute(this.title)}</title>
         </head>
-        <body data-l10n='${JSON.stringify(this.l10nMessages ? this.l10nMessages() : {})}'>
+        <body data-l10n='${escapeHtmlAttribute(JSON.stringify(this.l10nMessages ? this.l10nMessages() : {}))}'>
           ${this.body()}
           ${scripts}
         </body>

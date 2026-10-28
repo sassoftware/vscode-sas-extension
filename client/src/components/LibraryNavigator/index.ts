@@ -4,6 +4,7 @@ import {
   ConfigurationChangeEvent,
   Disposable,
   ExtensionContext,
+  UIKind,
   Uri,
   commands,
   env,
@@ -12,8 +13,7 @@ import {
   workspace,
 } from "vscode";
 
-import { createWriteStream } from "fs";
-import * as path from "path";
+import { randomUUID } from "crypto";
 
 import { profileConfig } from "../../commands/profile";
 import { onDidChangeSession } from "../../connection/session";
@@ -22,9 +22,14 @@ import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { treeViewSelections } from "../utils/treeViewSelections";
+import { BrowserDownloadChunkBuffer } from "./BrowserFileDownloadTarget/BrowserDownloadChunkBuffer";
+import { BrowserFileDownloadTarget } from "./BrowserFileDownloadTarget/BrowserFileDownloadTarget";
+import { MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES } from "./BrowserFileDownloadTarget/constants";
+import { HostAttachmentDownloadTarget } from "./HostAttachmentDownloadTarget";
 import LibraryAdapterFactory from "./LibraryAdapterFactory";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
+import { NodeFileDownloadTarget } from "./NodeFileDownloadTarget";
 import PaginatedResultSet from "./PaginatedResultSet";
 import { Messages } from "./const";
 import { LibraryAdapter, LibraryItem, TableColumn, TableData } from "./types";
@@ -33,6 +38,10 @@ class LibraryNavigator implements SubscriptionProvider {
   private libraryDataProvider: LibraryDataProvider;
   private extensionUri: Uri;
   private webviewManager: WebViewManager;
+  private browserFileDownloadTarget: BrowserFileDownloadTarget;
+  private hostAttachmentDownloadTarget: HostAttachmentDownloadTarget;
+  private nodeFileDownloadTarget: NodeFileDownloadTarget;
+  private browserFileExportInProgress = false;
 
   constructor(context: ExtensionContext) {
     this.extensionUri = context.extensionUri;
@@ -41,11 +50,57 @@ class LibraryNavigator implements SubscriptionProvider {
       context.extensionUri,
     );
     this.webviewManager = new WebViewManager();
+    this.browserFileDownloadTarget = new BrowserFileDownloadTarget(
+      this.extensionUri,
+      this.webviewManager,
+    );
+    this.hostAttachmentDownloadTarget = new HostAttachmentDownloadTarget();
+    this.nodeFileDownloadTarget = new NodeFileDownloadTarget();
   }
 
   public getSubscriptions(): Disposable[] {
     return [
       ...this.libraryDataProvider.getSubscriptions(),
+      this.browserFileDownloadTarget,
+      this.hostAttachmentDownloadTarget,
+      commands.registerCommand(
+        "SAS.downloadTableRemoteWorkspace",
+        async (item: LibraryItem) => {
+          if (env.uiKind === UIKind.Web) {
+            try {
+              this.libraryDataProvider.assertTableExportSupported();
+            } catch (error) {
+              await window.showErrorMessage(
+                error instanceof Error ? error.message : String(error),
+              );
+              return;
+            }
+            if (!workspace.workspaceFolders?.length) {
+              await window.showErrorMessage(
+                l10n.t(
+                  "Remote Workspace table download requires an open workspace.",
+                ),
+              );
+              return;
+            }
+          }
+          await commands.executeCommand("SAS.downloadTable", item);
+        },
+      ),
+      commands.registerCommand(
+        "SAS.downloadTableToComputer",
+        async (item: LibraryItem) => {
+          try {
+            await this.runSingleBrowserFileExport(() =>
+              this.downloadTableToComputer(item),
+            );
+          } catch (error) {
+            await window.showErrorMessage(
+              error instanceof Error ? error.message : String(error),
+            );
+          }
+        },
+      ),
       onDidChangeSession(() => {
         Object.values(this.webviewManager.panels).forEach((viewer) => {
           if (viewer instanceof DataViewer) {
@@ -104,34 +159,37 @@ class LibraryNavigator implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.downloadTable",
         async (item: LibraryItem) => {
-          let dataFilePath: string = "";
-          if (
-            env.remoteName !== undefined &&
-            workspace.workspaceFolders &&
-            workspace.workspaceFolders.length > 0
-          ) {
-            // start from 'rootPath' workspace folder
-            dataFilePath = workspace.workspaceFolders[0].uri.fsPath;
+          if (env.uiKind === UIKind.Web) {
+            try {
+              this.libraryDataProvider.assertTableExportSupported();
+            } catch (error) {
+              await window.showErrorMessage(
+                error instanceof Error ? error.message : String(error),
+              );
+              return;
+            }
           }
-          dataFilePath = path.join(
-            dataFilePath,
-            `${item.library}.${item.name}.csv`.toLocaleLowerCase(),
-          );
+          try {
+            const fileName =
+              `${item.library}.${item.name}.csv`.toLocaleLowerCase();
+            const uri = await window.showSaveDialog({
+              defaultUri: this.defaultDownloadUri(fileName),
+            });
+            if (!uri) {
+              return;
+            }
+            if (await this.redirectLocalComputerDestination(uri)) {
+              return;
+            }
 
-          // display save file dialog
-          const uri = await window.showSaveDialog({
-            defaultUri: Uri.file(dataFilePath),
-          });
-
-          if (!uri) {
-            return;
+            await this.nodeFileDownloadTarget.write(uri, (writeChunk) =>
+              this.libraryDataProvider.writeTableContents(item, writeChunk),
+            );
+          } catch (error) {
+            await window.showErrorMessage(
+              error instanceof Error ? error.message : String(error),
+            );
           }
-
-          const stream = createWriteStream(uri.fsPath);
-          await this.libraryDataProvider.writeTableContentsToStream(
-            stream,
-            item,
-          );
         },
       ),
       commands.registerCommand(
@@ -196,6 +254,174 @@ class LibraryNavigator implements SubscriptionProvider {
         `Failed to load table properties: ${error.message}`,
       );
     }
+  }
+
+  private async redirectLocalComputerDestination(destination: Uri) {
+    const isRemoteWorkspace =
+      env.remoteName !== undefined ||
+      workspace.workspaceFolders?.some(
+        (folder) => folder.uri.scheme !== "file",
+      ) === true;
+    if (
+      env.uiKind !== UIKind.Web ||
+      destination.scheme !== "file" ||
+      !isRemoteWorkspace
+    ) {
+      return false;
+    }
+
+    await window.showInformationMessage(
+      l10n.t(
+        'To download this table locally, cancel this dialog and choose "This Computer" from the Download menu.',
+      ),
+    );
+    return true;
+  }
+
+  private async runSingleBrowserFileExport(
+    exportTable: () => Promise<void>,
+  ): Promise<void> {
+    if (this.browserFileExportInProgress) {
+      await window.showInformationMessage(
+        l10n.t(
+          "A browser file export is already in progress. Wait for it to finish before starting another.",
+        ),
+      );
+      return;
+    }
+
+    this.browserFileExportInProgress = true;
+    try {
+      await exportTable();
+    } finally {
+      this.browserFileExportInProgress = false;
+    }
+  }
+
+  private async downloadTableToComputer(item: LibraryItem): Promise<void> {
+    const defaultFileName =
+      `${item.library}.${item.name}.csv`.toLocaleLowerCase();
+
+    if (env.uiKind !== UIKind.Web) {
+      throw new Error(
+        l10n.t(
+          "This Computer table download is only supported in VS Code for the Web.",
+        ),
+      );
+    }
+    this.libraryDataProvider.assertTableExportSupported();
+
+    const choice = await this.browserFileDownloadTarget.chooseLocalFile(
+      defaultFileName,
+      `${item.library}.${item.name}`,
+    );
+    if (choice.kind === "cancelled") {
+      return;
+    }
+    if (choice.kind === "unsupported") {
+      await this.hostAttachmentDownloadTarget.download(
+        defaultFileName,
+        (signal) => this.libraryDataProvider.createTableExport(item, signal),
+      );
+      return;
+    }
+    const destination = choice;
+
+    const transferId = randomUUID();
+    const controller = new AbortController();
+    const panelClosed = this.browserFileDownloadTarget.onDidClose(() =>
+      controller.abort(new Error(l10n.t("The download panel was closed."))),
+    );
+    let opened = false;
+    let finished = false;
+    try {
+      await this.browserFileDownloadTarget.setStatus(
+        l10n.t("Preparing the CSV export..."),
+        "notStarted",
+      );
+      await this.browserFileDownloadTarget.open(
+        destination.token,
+        transferId,
+        destination.fileName,
+      );
+      opened = true;
+      await this.browserFileDownloadTarget.setStatus(
+        l10n.t("Streaming the CSV to your computer..."),
+        "inProgress",
+      );
+      const chunkBuffer = new BrowserDownloadChunkBuffer(
+        MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES,
+        async (chunk, signal) => {
+          await this.browserFileDownloadTarget.waitUntilVisible(signal);
+          await this.browserFileDownloadTarget.write(transferId, chunk, signal);
+        },
+      );
+      const completed = await this.libraryDataProvider.writeTableContents(
+        item,
+        (chunk, signal) => chunkBuffer.write(chunk, signal),
+        controller.signal,
+      );
+      if (completed) {
+        await chunkBuffer.flush(controller.signal);
+      }
+      await this.browserFileDownloadTarget.finish(transferId, completed);
+      finished = true;
+      if (!completed) {
+        await this.browserFileDownloadTarget.setStatus(
+          l10n.t("Download canceled."),
+          "canceled",
+        );
+        return;
+      }
+      await this.browserFileDownloadTarget.setStatus(
+        l10n.t("Download complete. You can close this tab."),
+        "completed",
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (opened && !finished) {
+        try {
+          await this.browserFileDownloadTarget.finish(transferId, false);
+          finished = true;
+        } catch {
+          // Closing the panel also closes the browser writer.
+        }
+      }
+      if (!controller.signal.aborted) {
+        await this.browserFileDownloadTarget.setStatus(
+          l10n.t("Export failed: {message}", { message }),
+          "failed",
+        );
+        throw error;
+      }
+    } finally {
+      panelClosed.dispose();
+      if (opened && !finished) {
+        try {
+          await this.browserFileDownloadTarget.finish(transferId, false);
+        } catch {
+          // The panel may have been closed while the export was running.
+        }
+      }
+      try {
+        await this.browserFileDownloadTarget.discardDestination(
+          destination.token,
+        );
+      } catch {
+        // The panel was already disposed.
+      }
+    }
+  }
+
+  private defaultDownloadUri(fileName: string): Uri {
+    if (
+      (env.remoteName !== undefined || env.uiKind === UIKind.Web) &&
+      workspace.workspaceFolders &&
+      workspace.workspaceFolders.length > 0
+    ) {
+      return Uri.joinPath(workspace.workspaceFolders[0].uri, fileName);
+    }
+    return Uri.file(fileName);
   }
 
   private libraryAdapterForConnectionType(): LibraryAdapter | undefined {

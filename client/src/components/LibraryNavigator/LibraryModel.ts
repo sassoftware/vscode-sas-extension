@@ -3,7 +3,7 @@
 import { ProgressLocation, l10n, window } from "vscode";
 
 import type { SortModelItem } from "ag-grid-community";
-import { Writable } from "stream";
+import { Readable } from "stream";
 
 import PaginatedResultSet from "./PaginatedResultSet";
 import { DefaultRecordLimit, Messages } from "./const";
@@ -12,8 +12,8 @@ import {
   LibraryItem,
   LibraryItemType,
   TableData,
+  TableExport,
   TableQuery,
-  TableRow,
 } from "./types";
 
 const sortById = (a: LibraryItem, b: LibraryItem) => a.id.localeCompare(b.id);
@@ -23,6 +23,97 @@ class LibraryModel {
 
   public useAdapter(adapter: LibraryAdapter): void {
     this.libraryAdapter = adapter;
+  }
+
+  public assertTableExportSupported(): void {
+    if (
+      !this.libraryAdapter?.createTableExport ||
+      this.libraryAdapter.supportsTableExport === false
+    ) {
+      throw new Error(
+        l10n.t("This table download is not supported by this connection."),
+      );
+    }
+  }
+
+  public async createTableExport(
+    item: LibraryItem,
+    signal: AbortSignal,
+  ): Promise<TableExport> {
+    this.assertTableExportSupported();
+    return this.libraryAdapter.createTableExport(item, signal);
+  }
+
+  private createPagedTableExport(
+    item: LibraryItem,
+    signal: AbortSignal,
+  ): TableExport {
+    const adapter = this.libraryAdapter;
+    const waitFor = async <T>(operation: () => Promise<T>): Promise<T> => {
+      signal.throwIfAborted();
+      let abort: () => void;
+      const cancelled = new Promise<never>((_resolve, reject) => {
+        abort = () => reject(signal.reason);
+        signal.addEventListener("abort", abort, { once: true });
+      });
+      try {
+        return await Promise.race([operation(), cancelled]);
+      } finally {
+        signal.removeEventListener("abort", abort);
+      }
+    };
+    const csv = (values: string[]) =>
+      `"${values.map((value) => (value ?? "").toString().replace(/"/g, '""')).join('","')}"`;
+    async function* contents() {
+      await waitFor(() => adapter.setup());
+      const { rowCount, maxNumberOfRowsToRead } = await waitFor(() =>
+        adapter.getTableRowCount(item),
+      );
+      if (
+        !Number.isSafeInteger(rowCount) ||
+        rowCount < 0 ||
+        !Number.isSafeInteger(maxNumberOfRowsToRead) ||
+        maxNumberOfRowsToRead <= 0
+      ) {
+        throw new Error(l10n.t("Unable to read the table row count."));
+      }
+      const limit = Math.min(maxNumberOfRowsToRead, DefaultRecordLimit);
+      let offset = 0;
+      do {
+        const data = await waitFor(() =>
+          adapter.getRowsAsCSV(item, offset, limit),
+        );
+        signal.throwIfAborted();
+        const [headers, ...rows] = data.rows;
+        if (
+          (offset === 0 && !headers?.columns) ||
+          rows.length !== Math.min(limit, rowCount - offset) ||
+          rows.some((row) => !row.cells)
+        ) {
+          throw new Error(l10n.t("Unable to read the table rows."));
+        }
+        if (offset === 0) {
+          yield csv(headers.columns);
+        }
+        for (const row of rows) {
+          signal.throwIfAborted();
+          yield "\n" + csv(row.cells);
+        }
+        offset += limit;
+      } while (offset < rowCount);
+    }
+    signal.throwIfAborted();
+    const stream = Readable.from(contents(), {
+      highWaterMark: 1,
+      objectMode: false,
+      signal,
+    });
+    return {
+      stream,
+      dispose: async () => {
+        stream.destroy();
+      },
+    };
   }
 
   public getTableResultSet(
@@ -58,23 +149,12 @@ class LibraryModel {
     );
   }
 
-  public async writeTableContentsToStream(
-    fileStream: Writable,
+  public async writeTableContents(
     item: LibraryItem,
-  ) {
-    await this.libraryAdapter.setup();
-    let offset = 0;
-    const { rowCount: totalItemCount, maxNumberOfRowsToRead: limit } =
-      await this.libraryAdapter.getTableRowCount(item);
-    let hasWrittenHeader: boolean = false;
-    const stringArrayToCsvString = (strings: string[]): string =>
-      `"${strings
-        .map((item: string | number) =>
-          (item ?? "").toString().replace(/"/g, '""'),
-        )
-        .join('","')}"`;
-
-    await window.withProgress(
+    writeChunk: (chunk: Uint8Array, signal: AbortSignal) => Promise<void>,
+    signal?: AbortSignal,
+  ): Promise<boolean> {
+    return window.withProgress(
       {
         location: ProgressLocation.Notification,
         title: l10n.t("Saving {itemName}.", {
@@ -82,32 +162,49 @@ class LibraryModel {
         }),
         cancellable: true,
       },
-      async (_progress, cancellationToken) => {
-        cancellationToken.onCancellationRequested(() => {
-          fileStream.destroy();
-          return;
-        });
-        do {
-          const data = await this.libraryAdapter.getRowsAsCSV(
-            item,
-            offset,
-            limit,
-          );
-
-          const headers = data.rows.shift();
-          if (!hasWrittenHeader) {
-            fileStream.write(stringArrayToCsvString(headers.columns));
-            hasWrittenHeader = true;
+      async (_progress, cancellationToken): Promise<boolean> => {
+        const controller = new AbortController();
+        const abort = () => controller.abort(signal?.reason);
+        signal?.addEventListener("abort", abort, { once: true });
+        if (signal?.aborted) {
+          abort();
+        }
+        const cancellation = cancellationToken.onCancellationRequested(() =>
+          controller.abort(),
+        );
+        if (cancellationToken.isCancellationRequested) {
+          controller.abort();
+        }
+        let exported: TableExport | undefined;
+        try {
+          exported =
+            this.libraryAdapter?.createTableExport &&
+            this.libraryAdapter.supportsTableExport !== false
+              ? await this.createTableExport(item, controller.signal)
+              : this.createPagedTableExport(item, controller.signal);
+          for await (const chunk of exported.stream) {
+            controller.signal.throwIfAborted();
+            await writeChunk(
+              chunk instanceof Uint8Array
+                ? chunk
+                : new TextEncoder().encode(String(chunk)),
+              controller.signal,
+            );
           }
-
-          data.rows.forEach((item: TableRow) =>
-            fileStream.write("\n" + stringArrayToCsvString(item.cells)),
-          );
-
-          offset += limit;
-        } while (offset < totalItemCount);
-
-        fileStream.end();
+          return !cancellationToken.isCancellationRequested;
+        } catch (error) {
+          if (cancellationToken.isCancellationRequested) {
+            return false;
+          }
+          throw error;
+        } finally {
+          try {
+            await exported?.dispose();
+          } finally {
+            cancellation.dispose();
+            signal?.removeEventListener("abort", abort);
+          }
+        }
       },
     );
   }

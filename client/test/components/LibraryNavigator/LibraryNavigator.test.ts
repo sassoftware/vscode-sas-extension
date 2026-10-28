@@ -1,10 +1,23 @@
-import { Uri } from "vscode";
+import {
+  Disposable,
+  UIKind,
+  Uri,
+  commands,
+  env,
+  window,
+  workspace,
+} from "vscode";
 
 import { expect } from "chai";
 import * as sinon from "sinon";
+import { Readable } from "stream";
 
 import LibraryNavigator from "../../../src/components/LibraryNavigator";
 import PaginatedResultSet from "../../../src/components/LibraryNavigator/PaginatedResultSet";
+import type {
+  LibraryItem,
+  TableExport,
+} from "../../../src/components/LibraryNavigator/types";
 import type { RunResult } from "../../../src/connection";
 import { Session } from "../../../src/connection/session";
 import DataViewer from "../../../src/panels/DataViewer";
@@ -91,6 +104,12 @@ const createNavigatorForSessionChange = (
       panels,
     },
   });
+  Object.defineProperty(navigator, "browserFileDownloadTarget", {
+    value: new Disposable(() => {}),
+  });
+  Object.defineProperty(navigator, "hostAttachmentDownloadTarget", {
+    value: new Disposable(() => {}),
+  });
 
   return navigator;
 };
@@ -152,6 +171,10 @@ describe("LibraryNavigator refresh flow", async function () {
   });
 
   it("invalidates an open DataViewer when the session changes", () => {
+    const sandbox = sinon.createSandbox();
+    sandbox
+      .stub(commands, "registerCommand")
+      .callsFake(() => new Disposable(() => {}));
     const tableViewer = createDataViewer();
     const invalidateColumns = sinon.stub(tableViewer, "invalidateColumns");
 
@@ -161,16 +184,22 @@ describe("LibraryNavigator refresh flow", async function () {
 
     const subscriptions = navigator.getSubscriptions();
 
-    const session = new MockSession();
+    try {
+      const session = new MockSession();
+      session.close();
 
-    session.close();
-
-    expect(invalidateColumns.calledOnce).to.equal(true);
-
-    subscriptions.forEach((subscription) => subscription.dispose());
+      expect(invalidateColumns.calledOnce).to.equal(true);
+    } finally {
+      subscriptions.forEach((subscription) => subscription.dispose());
+      sandbox.restore();
+    }
   });
 
   it("does not invalidate non-DataViewer panels when the session changes", () => {
+    const sandbox = sinon.createSandbox();
+    sandbox
+      .stub(commands, "registerCommand")
+      .callsFake(() => new Disposable(() => {}));
     const tableViewer = createDataViewer();
     const invalidateColumns = sinon.stub(tableViewer, "invalidateColumns");
 
@@ -183,13 +212,227 @@ describe("LibraryNavigator refresh flow", async function () {
 
     const subscriptions = navigator.getSubscriptions();
 
-    const session = new MockSession();
+    try {
+      const session = new MockSession();
+      session.close();
 
-    session.close();
+      expect(invalidateColumns.calledOnce).to.equal(true);
+      expect(nonDataViewer.invalidateColumns.called).to.equal(false);
+    } finally {
+      subscriptions.forEach((subscription) => subscription.dispose());
+      sandbox.restore();
+    }
+  });
+});
 
-    expect(invalidateColumns.calledOnce).to.equal(true);
-    expect(nonDataViewer.invalidateColumns.called).to.equal(false);
+describe("LibraryNavigator browser-file export guard", () => {
+  it("allows one export at a time and reports when another is already active", async () => {
+    const sandbox = sinon.createSandbox();
+    // Exercise the private guard without constructing VS Code-dependent collaborators.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const navigator = Object.create(
+      LibraryNavigator.prototype,
+    ) as LibraryNavigator;
+    const showInformationMessage = sandbox.stub(
+      window,
+      "showInformationMessage",
+    );
+    const runExport = async (exportTable: () => Promise<void>) => {
+      await Reflect.apply(
+        Reflect.get(navigator, "runSingleBrowserFileExport"),
+        navigator,
+        [exportTable],
+      );
+    };
+    let finishExport!: () => void;
+    const activeExport = new Promise<void>((resolve) => {
+      finishExport = resolve;
+    });
+    const duplicateExport = sinon.spy(async () => {});
 
-    subscriptions.forEach((subscription) => subscription.dispose());
+    try {
+      const firstExport = runExport(() => activeExport);
+      await runExport(duplicateExport);
+
+      expect(duplicateExport.called).to.equal(false);
+      expect(showInformationMessage.calledOnce).to.equal(true);
+      expect(showInformationMessage.firstCall.args[0]).to.equal(
+        "A browser file export is already in progress. Wait for it to finish before starting another.",
+      );
+
+      finishExport();
+      await firstExport;
+
+      const nextExport = sinon.spy(async () => {});
+      await runExport(nextExport);
+      expect(nextExport.calledOnce).to.equal(true);
+    } finally {
+      sandbox.restore();
+    }
+  });
+});
+
+describe("LibraryNavigator remote workspace download destination", () => {
+  it("directs local destinations to This Computer instead of streaming remotely", async () => {
+    const sandbox = sinon.createSandbox();
+    // Exercise the destination guard without constructing VS Code-dependent collaborators.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const navigator = Object.create(
+      LibraryNavigator.prototype,
+    ) as LibraryNavigator;
+    const showInformationMessage = sandbox.stub(
+      window,
+      "showInformationMessage",
+    );
+    sandbox.stub(env, "uiKind").value(UIKind.Web);
+    const workspaceFoldersDescriptor = Object.getOwnPropertyDescriptor(
+      workspace,
+      "workspaceFolders",
+    );
+    Object.defineProperty(workspace, "workspaceFolders", {
+      configurable: true,
+      value: [{ uri: Uri.parse("vscode-remote://ssh-remote+host/workspace") }],
+    });
+
+    try {
+      const shouldRedirect = await Reflect.apply(
+        Reflect.get(navigator, "redirectLocalComputerDestination"),
+        navigator,
+        [Uri.file("/local/work.table.csv")],
+      );
+
+      expect(shouldRedirect).to.equal(true);
+      expect(showInformationMessage.calledOnce).to.equal(true);
+      expect(showInformationMessage.firstCall.args[0]).to.equal(
+        'To download this table locally, cancel this dialog and choose "This Computer" from the Download menu.',
+      );
+    } finally {
+      if (workspaceFoldersDescriptor) {
+        Object.defineProperty(
+          workspace,
+          "workspaceFolders",
+          workspaceFoldersDescriptor,
+        );
+      } else {
+        Reflect.deleteProperty(workspace, "workspaceFolders");
+      }
+      sandbox.restore();
+    }
+  });
+
+  it("keeps remote workspace destinations on the existing streaming path", async () => {
+    const sandbox = sinon.createSandbox();
+    // Exercise the destination guard without constructing VS Code-dependent collaborators.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const navigator = Object.create(
+      LibraryNavigator.prototype,
+    ) as LibraryNavigator;
+    const showInformationMessage = sandbox.stub(
+      window,
+      "showInformationMessage",
+    );
+    sandbox.stub(env, "uiKind").value(UIKind.Web);
+    const workspaceFoldersDescriptor = Object.getOwnPropertyDescriptor(
+      workspace,
+      "workspaceFolders",
+    );
+    Object.defineProperty(workspace, "workspaceFolders", {
+      configurable: true,
+      value: [{ uri: Uri.parse("vscode-remote://ssh-remote+host/workspace") }],
+    });
+
+    try {
+      const shouldRedirect = await Reflect.apply(
+        Reflect.get(navigator, "redirectLocalComputerDestination"),
+        navigator,
+        [Uri.parse("vscode-remote://ssh-remote+host/work.table.csv")],
+      );
+
+      expect(shouldRedirect).to.equal(false);
+      expect(showInformationMessage.called).to.equal(false);
+    } finally {
+      if (workspaceFoldersDescriptor) {
+        Object.defineProperty(
+          workspace,
+          "workspaceFolders",
+          workspaceFoldersDescriptor,
+        );
+      } else {
+        Reflect.deleteProperty(workspace, "workspaceFolders");
+      }
+      sandbox.restore();
+    }
+  });
+});
+
+describe("LibraryNavigator unsupported picker fallback", () => {
+  it("automatically downloads through the Node host when file picking is unsupported", async () => {
+    const sandbox = sinon.createSandbox();
+    // Exercise the download handoff without constructing VS Code-dependent collaborators.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const navigator = Object.create(
+      LibraryNavigator.prototype,
+    ) as LibraryNavigator;
+    const item: LibraryItem = {
+      uid: "WORK.TABLE",
+      id: "TABLE",
+      library: "WORK",
+      name: "TABLE",
+      type: "table",
+      readOnly: false,
+    };
+    const exportResult: TableExport = {
+      stream: Readable.from([]),
+      dispose: async () => {},
+    };
+    const createTableExport = sinon.stub().resolves(exportResult);
+    const chooseLocalFile = sinon.stub().resolves({ kind: "unsupported" });
+    const download = sinon
+      .stub()
+      .callsFake(
+        async (
+          fileName: string,
+          createExport: (signal: AbortSignal) => Promise<TableExport>,
+        ) => {
+          expect(fileName).to.equal("work.table.csv");
+          const exported = await createExport(new AbortController().signal);
+          await exported.dispose();
+        },
+      );
+    Object.defineProperties(navigator, {
+      libraryDataProvider: {
+        value: {
+          assertTableExportSupported: () => {},
+          createTableExport,
+        },
+      },
+      browserFileDownloadTarget: {
+        value: { chooseLocalFile },
+      },
+      hostAttachmentDownloadTarget: { value: { download } },
+    });
+    sandbox.stub(env, "uiKind").value(UIKind.Web);
+
+    try {
+      await Reflect.apply(
+        Reflect.get(navigator, "downloadTableToComputer"),
+        navigator,
+        [item],
+      );
+
+      expect(download.calledOnce).to.equal(true);
+      expect(createTableExport.calledOnce).to.equal(true);
+      expect(createTableExport.firstCall.args[0]).to.equal(item);
+
+      chooseLocalFile.resolves({ kind: "cancelled" });
+      await Reflect.apply(
+        Reflect.get(navigator, "downloadTableToComputer"),
+        navigator,
+        [item],
+      );
+      expect(download.calledOnce).to.equal(true);
+    } finally {
+      sandbox.restore();
+    }
   });
 });
