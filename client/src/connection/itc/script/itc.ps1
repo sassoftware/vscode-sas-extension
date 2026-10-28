@@ -354,24 +354,25 @@ class SASRunner {
       1  # adCmdText
     )
 
-    $rows = $objRecordSet.GetRows()
+    $parsedRows = @()
+    if (-not $objRecordSet.EOF) {
+      $rows = $objRecordSet.GetRows()
+      for ($i = 0; $i -lt $rows.GetLength(1); $i++) {
+        $parsedRow = [PSCustomObject]@{
+          index  = $i + 1
+          name   = $rows[0, $i]
+          type   = $rows[1, $i]
+          format = $rows[2, $i]
+          informat = $rows[3, $i]
+          label  = $rows[4, $i]
+          length = $rows[5, $i]
+          varnum = $rows[6, $i]
+        }
+        $parsedRows += $parsedRow
+      }
+    }
 
     $objRecordSet.Close()
-
-    $parsedRows = @()
-    for ($i = 0; $i -lt $rows.GetLength(1); $i++) {
-      $parsedRow = [PSCustomObject]@{
-        index  = $i + 1
-        name   = $rows[0, $i]
-        type   = $rows[1, $i]
-        format = $rows[2, $i]
-        informat = $rows[3, $i]
-        label  = $rows[4, $i]
-        length = $rows[5, $i]
-        varnum = $rows[6, $i]
-      }
-      $parsedRows += $parsedRow
-    }
 
     Write-Host $(ConvertTo-Json -Depth 10 -InputObject $parsedRows -Compress)
   }
