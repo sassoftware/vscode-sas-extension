@@ -51,6 +51,7 @@ import {
   resetStatusBarItem,
   updateStatusBarItem,
 } from "../components/StatusBarItem";
+import { registerDebugger } from "../components/debugger";
 import { LogTokensProvider, legend } from "../components/logViewer";
 import { sasDiagnostic } from "../components/logViewer/sasDiagnostics";
 import { NotebookController } from "../components/notebook/Controller";
@@ -192,6 +193,7 @@ export function activate(context: ExtensionContext) {
   });
 
   context.subscriptions.push(
+    ...registerDebugger(),
     commands.registerCommand("SAS.run", async () => {
       await run();
       await libraryNavigator.refresh();
