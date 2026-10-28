@@ -15,7 +15,10 @@ type Options = {
 
 const useManageColumns = (options: Options) => {
   const optionsRef = useRef(options);
-  optionsRef.current = options;
+
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
   const isLoading = useRef(false); // Prevent duplicate requests
   const needsReset = useRef(false); // Reset stale AG Grid state
