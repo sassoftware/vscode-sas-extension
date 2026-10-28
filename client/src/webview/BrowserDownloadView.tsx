@@ -6,19 +6,19 @@ import type { BrowserDownloadViewModel } from "./BrowserDownloadState";
 import localize from "./localize";
 import { useBrowserDownload } from "./useBrowserDownload";
 
-interface BrowserDownloadViewProps {
+interface BrowserDownloadContentProps {
   state: BrowserDownloadViewModel;
   onChooseFile: () => void;
   onCancel: () => void;
   localizeMessage?: BrowserDownloadMessageLocalizer;
 }
 
-export function BrowserDownloadView({
+export function BrowserDownloadContent({
   state,
   onChooseFile,
   onCancel,
   localizeMessage = localize,
-}: BrowserDownloadViewProps) {
+}: BrowserDownloadContentProps) {
   const tableName = "tableName" in state ? state.tableName : undefined;
   const fileName = "fileName" in state ? state.fileName : undefined;
   const status =
@@ -101,10 +101,10 @@ export function BrowserDownloadView({
   );
 }
 
-export default function BrowserDownloadApp() {
+export default function BrowserDownloadView() {
   const { state, chooseFile, cancel } = useBrowserDownload();
   return (
-    <BrowserDownloadView
+    <BrowserDownloadContent
       state={state}
       onChooseFile={() => void chooseFile()}
       onCancel={cancel}

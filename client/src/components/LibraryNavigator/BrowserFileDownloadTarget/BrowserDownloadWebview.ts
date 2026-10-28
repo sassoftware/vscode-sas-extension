@@ -30,11 +30,11 @@ export class BrowserDownloadWebview extends WebView {
   }
 
   public scripts(): string[] {
-    return ["BrowserDownloadApp.js"];
+    return ["BrowserDownloadView.js"];
   }
 
   public styles(): string[] {
-    return ["BrowserDownloadApp.css"];
+    return ["BrowserDownloadView.css"];
   }
 
   public processMessage(event: Event): void {

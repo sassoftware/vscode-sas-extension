@@ -578,8 +578,8 @@ describe("BrowserFileDownloadTarget", () => {
     await chooseFile();
 
     expect(panel.webview.html).to.include('id="browser-download-root"');
-    expect(panel.webview.html).to.include("BrowserDownloadApp.js");
-    expect(panel.webview.html).to.include("BrowserDownloadApp.css");
+    expect(panel.webview.html).to.include("BrowserDownloadView.js");
+    expect(panel.webview.html).to.include("BrowserDownloadView.css");
     expect(panel.webview.html).to.include(
       "script-src vscode-webview-resource:",
     );

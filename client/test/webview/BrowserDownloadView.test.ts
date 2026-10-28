@@ -12,7 +12,7 @@ import {
   type BrowserFileWriterMessages,
   type BrowserWritableFile,
 } from "../../src/components/LibraryNavigator/BrowserFileDownloadTarget/BrowserFileWriter";
-import { BrowserDownloadView } from "../../src/webview/BrowserDownloadApp";
+import { BrowserDownloadContent } from "../../src/webview/BrowserDownloadView";
 import {
   type BrowserDownloadMessageLocalizer,
   browserDownloadMessages,
@@ -55,7 +55,7 @@ const browser = (
   showSaveFilePicker,
 });
 
-describe("BrowserDownload React view", () => {
+describe("BrowserDownload content view", () => {
   it("renders shared localized labels and accessible status without markup", () => {
     const state = browserDownloadReducer(initialBrowserDownloadState, {
       type: "choose",
@@ -64,7 +64,7 @@ describe("BrowserDownload React view", () => {
       fileName: "table.csv",
     });
     const html = renderToStaticMarkup(
-      createElement(BrowserDownloadView, {
+      createElement(BrowserDownloadContent, {
         state,
         onChooseFile: () => undefined,
         onCancel: () => undefined,
@@ -136,7 +136,7 @@ describe("BrowserDownload React view", () => {
         guidance: status,
       });
       const html = renderToStaticMarkup(
-        createElement(BrowserDownloadView, {
+        createElement(BrowserDownloadContent, {
           state,
           onChooseFile: () => undefined,
           onCancel: () => undefined,

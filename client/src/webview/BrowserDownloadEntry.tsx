@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { createRoot } from "react-dom/client";
 
-import BrowserDownloadApp from "./BrowserDownloadApp";
+import BrowserDownloadView from "./BrowserDownloadView";
 
 import "./BrowserDownload.css";
 
@@ -11,4 +11,4 @@ if (!container) {
   throw new Error("Browser download webview root element is missing.");
 }
 
-createRoot(container).render(<BrowserDownloadApp />);
+createRoot(container).render(<BrowserDownloadView />);
