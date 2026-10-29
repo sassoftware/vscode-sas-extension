@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useCallback, useEffect, useReducer, useRef } from "react";
 
-import { isRecord } from "../components/LibraryNavigator/BrowserFileDownloadTarget/BrowserDownloadGuards";
+import { isRecord } from "../../components/LibraryNavigator/BrowserFileDownloadTarget/BrowserDownloadGuards";
 import {
   type BrowserDownloadResult,
   deserializeBrowserDownloadWebviewState,
-} from "../components/LibraryNavigator/BrowserFileDownloadTarget/BrowserDownloadWebviewState";
+} from "../../components/LibraryNavigator/BrowserFileDownloadTarget/BrowserDownloadWebviewState";
 import {
   type BrowserDownloadClientApi,
   BrowserFileWriter,
   type BrowserFileWriterMessages,
-} from "../components/LibraryNavigator/BrowserFileDownloadTarget/BrowserFileWriter";
+} from "../../components/LibraryNavigator/BrowserFileDownloadTarget/BrowserFileWriter";
 import {
   type BrowserDownloadMessageLocalizer,
   browserDownloadMessages,
@@ -22,7 +22,7 @@ import {
   browserDownloadReducer,
   initialBrowserDownloadState,
 } from "./BrowserDownloadState";
-import localize from "./localize";
+import localize from "../localize";
 
 interface VsCodeApi extends BrowserDownloadClientApi {
   setState(state: {

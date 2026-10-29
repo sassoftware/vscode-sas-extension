@@ -49,7 +49,7 @@ const browserBuildOptions = {
   entryPoints: {
     "./client/dist/webview/DataViewer": "./client/src/webview/DataViewer.tsx",
     "./client/dist/webview/BrowserDownloadView":
-      "./client/src/webview/BrowserDownloadEntry.tsx",
+      "./client/src/webview/BrowserDownload/BrowserDownloadEntry.tsx",
     "./client/dist/webview/TablePropertiesViewer":
       "./client/src/webview/TablePropertiesViewer.ts",
     "./client/dist/notebook/LogRenderer":

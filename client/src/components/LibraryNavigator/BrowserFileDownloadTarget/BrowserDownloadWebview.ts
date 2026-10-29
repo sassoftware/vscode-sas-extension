@@ -6,7 +6,7 @@ import { WebView } from "../../../panels/WebviewManager";
 import {
   browserDownloadMessages,
   createBrowserDownloadLocalizedMessages,
-} from "../../../webview/BrowserDownloadMessages";
+} from "../../../webview/BrowserDownload/BrowserDownloadMessages";
 import { isRecord } from "./BrowserDownloadGuards";
 
 type WebviewMessageHandler = (message: Record<string, unknown>) => void;

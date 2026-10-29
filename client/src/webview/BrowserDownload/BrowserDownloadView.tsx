@@ -3,7 +3,7 @@
 import { browserDownloadMessages } from "./BrowserDownloadMessages";
 import type { BrowserDownloadMessageLocalizer } from "./BrowserDownloadMessages";
 import type { BrowserDownloadViewModel } from "./BrowserDownloadState";
-import localize from "./localize";
+import localize from "../localize";
 import { useBrowserDownload } from "./useBrowserDownload";
 
 interface BrowserDownloadContentProps {

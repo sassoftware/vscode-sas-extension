@@ -23,7 +23,7 @@ import { WebView, WebViewManager } from "../../../src/panels/WebviewManager";
 import {
   type BrowserDownloadLocalizedMessages,
   browserDownloadMessages,
-} from "../../../src/webview/BrowserDownloadMessages";
+} from "../../../src/webview/BrowserDownload/BrowserDownloadMessages";
 
 interface MockPanel {
   visible: boolean;

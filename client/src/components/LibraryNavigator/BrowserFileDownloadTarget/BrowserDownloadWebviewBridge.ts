@@ -12,7 +12,7 @@ import {
 import { randomUUID } from "crypto";
 
 import { WebViewManager } from "../../../panels/WebviewManager";
-import { browserDownloadMessages } from "../../../webview/BrowserDownloadMessages";
+import { browserDownloadMessages } from "../../../webview/BrowserDownload/BrowserDownloadMessages";
 import { BrowserDownloadWebview } from "./BrowserDownloadWebview";
 import {
   type BrowserDownloadResult,
