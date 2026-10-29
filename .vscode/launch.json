@@ -44,12 +44,12 @@
       "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceRoot}",
-        "--extensionTestsPath=${workspaceRoot}/client/out/test",
+        "--extensionTestsPath=${workspaceRoot}/client/out/client/test",
         "${workspaceRoot}/client/testFixture",
         "--disable-extensions"
       ],
       "env": { "testFile": "${relativeFile}" },
-      "outFiles": ["${workspaceRoot}/client/out/test/**/*.js"],
+      "outFiles": ["${workspaceRoot}/client/out/client/test/**/*.js"],
       "preLaunchTask": {
         "type": "npm",
         "script": "pretest"

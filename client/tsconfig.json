@@ -6,7 +6,7 @@
     "lib": ["ES2019", "DOM"],
     "module": "commonjs",
     "outDir": "out",
-    "rootDir": ".",
+    "rootDir": "..",
     "sourceMap": true,
     "target": "es2019"
   },
