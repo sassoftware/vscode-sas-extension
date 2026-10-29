@@ -1636,48 +1636,6 @@ describe("hasActiveProfileChanged", () => {
     expect(hasActiveProfileChanged(previous, current)).to.be.false;
   });
 
-  it("returns false when an inactive profile is added", () => {
-    // D2 is active; adding D1 does not change the D2 snapshot.
-    const previous = {
-      name: "D2",
-      profile: { ...activeProfile },
-    };
-    const current = {
-      name: "D2",
-      profile: { ...activeProfile },
-    };
-
-    expect(hasActiveProfileChanged(previous, current)).to.be.false;
-  });
-
-  it("returns false when an inactive profile is updated", () => {
-    // D2 is active; updating D1 does not change the D2 snapshot.
-    const previous = {
-      name: "D2",
-      profile: { ...activeProfile },
-    };
-    const current = {
-      name: "D2",
-      profile: { ...activeProfile },
-    };
-
-    expect(hasActiveProfileChanged(previous, current)).to.be.false;
-  });
-
-  it("returns false when an inactive profile is deleted", () => {
-    // D2 is active; deleting D1 does not change the D2 snapshot.
-    const previous = {
-      name: "D2",
-      profile: { ...activeProfile },
-    };
-    const current = {
-      name: "D2",
-      profile: { ...activeProfile },
-    };
-
-    expect(hasActiveProfileChanged(previous, current)).to.be.false;
-  });
-
   it("returns true when the active profile endpoint changes", () => {
     const previous = {
       name: "D2",
