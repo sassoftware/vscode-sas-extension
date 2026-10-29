@@ -68,6 +68,10 @@ function sanitizeMacro(value: unknown): CustomMacro | undefined {
   if (sourceLabel) {
     macro.sourceLabel = sourceLabel;
   }
+  const sourceUri = optionalText(value.sourceUri);
+  if (sourceUri) {
+    macro.sourceUri = sourceUri;
+  }
   return macro;
 }
 

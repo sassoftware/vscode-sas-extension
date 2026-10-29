@@ -7,6 +7,10 @@ import { TextRange } from "./utils";
 export class Model {
   constructor(private doc: TextDocument) {}
 
+  getUri(): string {
+    return this.doc.uri;
+  }
+
   getLine(line: number): string {
     return this.doc.getText({
       start: { line, character: 0 },
