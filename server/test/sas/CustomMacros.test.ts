@@ -107,6 +107,7 @@ describe("custom macro store", () => {
           parmbuff: "true",
           description: 42,
           sourceLabel: "My Folder/a.sas",
+          sourceUri: "file:///workspace/a.sas",
           extra: "dropped",
         },
       ],
@@ -119,6 +120,7 @@ describe("custom macro store", () => {
           { name: "k", keyword: true, defaultValue: "1" },
         ],
         sourceLabel: "My Folder/a.sas",
+        sourceUri: "file:///workspace/a.sas",
       },
     ]);
   });
@@ -329,13 +331,43 @@ describe("custom macro completion", () => {
     assert.equal(item?.insertText, "%report(${1:ds}, ${2:var})");
   });
 
-  it("does not offer a renamed macro after the client snapshot is replaced", async () => {
-    setClientCustomMacros([{ name: "addition1", sourceLabel: "add1.sas" }]);
-    setClientCustomMacros([{ name: "additionA1", sourceLabel: "add1.sas" }]);
+  it("suggests custom macros from other SAS files", async () => {
+    setClientCustomMacros([
+      {
+        name: "addition1",
+        sourceLabel: "add1.sas",
+        sourceUri: "file:///add1.sas",
+      },
+      {
+        name: "addition2",
+        sourceLabel: "add2.sas",
+        sourceUri: "file:///add2.sas",
+      },
+    ]);
 
     const result = await complete("%addi|");
     const labels = result?.items.map((item) => item.label) ?? [];
+    assert.includeMembers(labels, ["%addition1", "%addition2"]);
+  });
+
+  it("does not offer the stale name while the client snapshot refreshes", async () => {
+    setClientCustomMacros([
+      {
+        name: "addition1",
+        sourceLabel: "custom-macro.sas",
+        sourceUri: "file:///custom-macro.sas",
+      },
+      {
+        name: "addition2",
+        sourceLabel: "add2.sas",
+        sourceUri: "file:///add2.sas",
+      },
+    ]);
+
+    const result = await complete("%macro additionA1; %mend;\n%addi|");
+    const labels = result?.items.map((item) => item.label) ?? [];
     assert.include(labels, "%additionA1");
+    assert.include(labels, "%addition2");
     assert.notInclude(labels, "%addition1");
   });
 
