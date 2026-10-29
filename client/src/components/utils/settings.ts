@@ -38,10 +38,9 @@ export function includeLogInNotebookExport(): boolean {
   return workspace.getConfiguration("SAS").get("notebook.export.includeLog");
 }
 
-export function getNotebookOutputVisibility(): "clean" | "raw" {
+export function getNotebookCleanOutput(): boolean {
   return (
-    workspace
-      .getConfiguration("SAS")
-      .get<"clean" | "raw">("notebook.outputVisibility") ?? "clean"
+    workspace.getConfiguration("SAS").get<boolean>("notebook.cleanOutput") ??
+    false
   );
 }

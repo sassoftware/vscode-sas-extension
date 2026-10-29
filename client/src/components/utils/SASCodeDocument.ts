@@ -1,13 +1,28 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri } from "vscode";
+import {
+  CancellationToken,
+  CancellationTokenSource,
+  Disposable,
+  Uri,
+} from "vscode";
+import type { BaseLanguageClient } from "vscode-languageclient";
 
 import { dirname } from "path";
+import { v4 } from "uuid";
 
 import {
   ProblemLocation,
   decomposeCodeLogLine,
 } from "../logViewer/ProblemProcessor";
+
+export interface PythonFinalExpression {
+  isExpression: boolean;
+  expressionText?: string;
+  startOffset?: number;
+  endOffset?: number;
+  isModuleDocstring?: boolean;
+}
 
 export interface SASCodeDocumentParameters {
   languageId: string;
@@ -29,17 +44,39 @@ export interface SASCodeDocumentParameters {
 
 type LineNumber = number;
 type Offset = { lineOffset: number; columnOffset: number };
+const pendingDetectionClients = new WeakSet<object>();
 
 export class SASCodeDocument {
   // there may be many selected raw code and they can be not continuous in editor.
   // this field provides a offset map for selected raw code in wrapped code and in whole raw code.
   private offsetMap: Map<LineNumber, Offset>;
+  private pythonAutodisplayId: string | undefined;
 
   public constructor(private parameters: SASCodeDocumentParameters) {}
 
   public getWrappedCode(): string {
     const code = this.getRawCode();
     return this.codeIsEmpty(code) ? "" : this.wrapCode(code);
+  }
+
+  public async getWrappedNotebookCode(
+    client?: Pick<BaseLanguageClient, "isRunning" | "sendRequest">,
+    token?: CancellationToken,
+  ): Promise<string> {
+    const code = this.getRawCode();
+    if (this.codeIsEmpty(code)) {
+      return "";
+    }
+    if (this.parameters.languageId !== "python") {
+      return this.wrapCode(code);
+    }
+    return this.wrapCode(
+      await this.preparePythonNotebookCode(code, client, token),
+    );
+  }
+
+  public getPythonAutodisplayId(): string | undefined {
+    return this.pythonAutodisplayId;
   }
 
   public getUri(): string {
@@ -222,6 +259,121 @@ ${code}
     return `proc sql;
 ${code}
 ;quit;`;
+  }
+
+  private async preparePythonNotebookCode(
+    code: string,
+    client?: Pick<BaseLanguageClient, "isRunning" | "sendRequest">,
+    token?: CancellationToken,
+  ): Promise<string> {
+    this.pythonAutodisplayId = undefined;
+    const cancellation = new CancellationTokenSource();
+    const parentListener = token?.onCancellationRequested(() =>
+      cancellation.cancel(),
+    );
+    if (token?.isCancellationRequested) {
+      cancellation.cancel();
+    }
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let listener: Disposable | undefined;
+    try {
+      if (
+        !client?.isRunning() ||
+        cancellation.token.isCancellationRequested ||
+        pendingDetectionClients.has(client) ||
+        code.length > 100_000 ||
+        (code.match(/[()[\]{}]/g)?.length ?? 0) > 256 ||
+        (code.match(/[;+=*/%&|^<>,:-]/g)?.length ?? 0) > 1024 ||
+        (code.match(/\S+/g)?.length ?? 0) > 2000
+      ) {
+        return code;
+      }
+      pendingDetectionClients.add(client);
+      let request: Promise<PythonFinalExpression>;
+      try {
+        request = Promise.resolve(
+          (async () => {
+            const result = await client.sendRequest<PythonFinalExpression>(
+              "sas/pythonFinalExpression",
+              { code },
+              cancellation.token,
+            );
+            return result;
+          })(),
+        ).finally(() => pendingDetectionClients.delete(client));
+      } catch (error) {
+        pendingDetectionClients.delete(client);
+        throw error;
+      }
+      const expression = await Promise.race([
+        request,
+        new Promise<undefined>((resolve) => {
+          listener = cancellation.token.onCancellationRequested(() =>
+            resolve(undefined),
+          );
+          timer = setTimeout(() => {
+            cancellation.cancel();
+            resolve(undefined);
+          }, 1000);
+        }),
+      ]);
+      if (
+        !expression?.isExpression ||
+        cancellation.token.isCancellationRequested
+      ) {
+        return code;
+      }
+      const { startOffset, endOffset, expressionText } = expression;
+      if (
+        typeof startOffset !== "number" ||
+        typeof endOffset !== "number" ||
+        !Number.isInteger(startOffset) ||
+        !Number.isInteger(endOffset) ||
+        startOffset < 0 ||
+        endOffset <= startOffset ||
+        endOffset > code.length ||
+        !expressionText ||
+        code.slice(startOffset, endOffset) !== expressionText
+      ) {
+        return code;
+      }
+      const id = v4().replace(/-/g, "");
+      const resultName = `__sas_${id}_result`;
+      const builtinsName = `__sas_${id}_builtins`;
+      const jsonName = `__sas_${id}_json`;
+      const display = expression.isModuleDocstring
+        ? `${expressionText}\n${resultName} = ((${expressionText}))`
+        : `${resultName} = ((${expressionText}))`;
+      const cleanup = [resultName, builtinsName, jsonName]
+        .map((name) => `try:\n    del ${name}\nexcept:\n    pass`)
+        .join("\n");
+      this.pythonAutodisplayId = id;
+      return (
+        code.slice(0, startOffset) +
+        display +
+        code.slice(endOffset) +
+        `
+try:
+    if ${resultName} is not None:
+        import builtins as ${builtinsName}
+        import json as ${jsonName}
+        ${builtinsName}.print("__SAS_AUTODISPLAY_${id}_BEGIN__" + ${jsonName}.dumps(${builtinsName}.repr(${resultName}), ensure_ascii=True) + "__SAS_AUTODISPLAY_${id}_END__")
+except:
+    pass
+${cleanup}
+`
+      );
+    } catch (error) {
+      if (!cancellation.token.isCancellationRequested) {
+        console.error("Failed to prepare Python notebook autodisplay:", error);
+      }
+      return code;
+    } finally {
+      clearTimeout(timer);
+      listener?.dispose();
+      parentListener?.dispose();
+      cancellation.dispose();
+    }
   }
 
   private wrapPython(code: string) {
