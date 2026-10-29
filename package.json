@@ -300,6 +300,11 @@
                             "default": "",
                             "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationCustomRootPath%"
                           },
+                          "globalShortcuts": {
+                            "type": "object",
+                            "default": {},
+                            "description": "%configuration.SAS.connectionProfiles.profiles.globalShortcuts%"
+                          },
                           "fileNavigationRoot": {
                             "type": "string",
                             "default": "USER",
