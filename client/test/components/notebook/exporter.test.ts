@@ -43,6 +43,7 @@ describe("export notebook", () => {
     const expectedContent = new TextDecoder().decode(
       getTestFixtureContent("sasnb_export.sas"),
     );
+    
     const normalizeLineEndings = (text: string) => text.replace(/\r\n/g, "\n");
     assert.strictEqual(
       normalizeLineEndings(sasContent),
