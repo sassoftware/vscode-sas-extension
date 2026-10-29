@@ -21,6 +21,10 @@ import DataViewer from "../../panels/DataViewer";
 import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
+import {
+  type ActiveProfileSnapshot,
+  hasActiveProfileChanged,
+} from "../profile";
 import { treeViewSelections } from "../utils/treeViewSelections";
 import LibraryAdapterFactory from "./LibraryAdapterFactory";
 import LibraryDataProvider from "./LibraryDataProvider";
@@ -33,6 +37,7 @@ class LibraryNavigator implements SubscriptionProvider {
   private libraryDataProvider: LibraryDataProvider;
   private extensionUri: Uri;
   private webviewManager: WebViewManager;
+  private previousActiveProfile: ActiveProfileSnapshot;
 
   constructor(context: ExtensionContext) {
     this.extensionUri = context.extensionUri;
@@ -41,6 +46,7 @@ class LibraryNavigator implements SubscriptionProvider {
       context.extensionUri,
     );
     this.webviewManager = new WebViewManager();
+    this.previousActiveProfile = profileConfig.getActiveProfileSnapshot();
   }
 
   public getSubscriptions(): Disposable[] {
@@ -146,7 +152,20 @@ class LibraryNavigator implements SubscriptionProvider {
         );
       }),
       workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-        if (event.affectsConfiguration("SAS.connectionProfiles")) {
+        if (!event.affectsConfiguration("SAS.connectionProfiles")) {
+          return;
+        }
+
+        const currentActiveProfile = profileConfig.getActiveProfileSnapshot();
+
+        const activeProfileChanged = hasActiveProfileChanged(
+          this.previousActiveProfile,
+          currentActiveProfile,
+        );
+
+        this.previousActiveProfile = currentActiveProfile;
+
+        if (activeProfileChanged) {
           this.refresh();
         }
       }),

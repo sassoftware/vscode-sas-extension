@@ -13,7 +13,8 @@ import {
 } from "vscode";
 
 import { profileConfig } from "../commands/profile";
-import { ConnectionType } from "../components/profile";
+import { ConnectionType, hasActiveProfileChanged } from "../components/profile";
+import type { ActiveProfileSnapshot } from "../components/profile";
 import { getTokens, refreshToken } from "../connection/rest/auth";
 import { getCurrentUser } from "../connection/rest/identities";
 import { getSecretStorage } from "./ExtensionContext";
@@ -30,6 +31,7 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
   private readonly secretStorage;
   private _disposables: Disposable[];
   private _lastSession: SASAuthSession | undefined;
+  private _previousActiveProfile: ActiveProfileSnapshot;
   private _onDidChangeSessions =
     new EventEmitter<AuthenticationProviderAuthenticationSessionsChangeEvent>();
   get onDidChangeSessions(): Event<AuthenticationProviderAuthenticationSessionsChangeEvent> {
@@ -37,13 +39,24 @@ export class SASAuthProvider implements AuthenticationProvider, Disposable {
   }
 
   constructor() {
+    this._previousActiveProfile = profileConfig.getActiveProfileSnapshot();
     this._disposables = [
       this._onDidChangeSessions,
       workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-        if (
-          event.affectsConfiguration("SAS.connectionProfiles") &&
-          this._lastSession
-        ) {
+        if (!event.affectsConfiguration("SAS.connectionProfiles")) {
+          return;
+        }
+
+        const currentActiveProfile = profileConfig.getActiveProfileSnapshot();
+
+        const activeProfileChanged = hasActiveProfileChanged(
+          this._previousActiveProfile,
+          currentActiveProfile,
+        );
+
+        this._previousActiveProfile = currentActiveProfile;
+
+        if (activeProfileChanged && this._lastSession) {
           this._onDidChangeSessions.fire({
             added: [],
             changed: [],
