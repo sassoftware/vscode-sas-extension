@@ -27,7 +27,13 @@ import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
 import PaginatedResultSet from "./PaginatedResultSet";
 import { Messages } from "./const";
-import { LibraryAdapter, LibraryItem, TableColumn, TableData } from "./types";
+import {
+  LibraryAdapter,
+  LibraryItem,
+  TableColumn,
+  TableData,
+  TableType,
+} from "./types";
 
 class LibraryNavigator implements SubscriptionProvider {
   private libraryDataProvider: LibraryDataProvider;
@@ -79,7 +85,7 @@ class LibraryNavigator implements SubscriptionProvider {
         const selectedItems = treeViewSelections(
           this.libraryDataProvider.treeView,
           item,
-        );
+        ).filter((item) => item.type === TableType && !item.readOnly);
 
         if (selectedItems.length === 0) {
           return;
