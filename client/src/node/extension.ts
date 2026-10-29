@@ -38,6 +38,7 @@ import { SASAuthProvider } from "../components/AuthProvider";
 import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
 import { ContentSourceType } from "../components/ContentNavigator/types";
+import { CustomMacroProvider } from "../components/CustomMacros";
 import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
 import { LibraryItem } from "../components/LibraryNavigator/types";
@@ -89,7 +90,10 @@ export function activate(context: ExtensionContext) {
   const clientOptions: LanguageClientOptions = {
     // Register the server for sas file
     documentSelector: [{ language: "sas" }],
-    initializationOptions: { supportSASGetLibList: true },
+    initializationOptions: {
+      supportSASGetLibList: true,
+      supportSASCustomMacros: true,
+    },
   };
 
   // Create the language client and start the client.
@@ -98,6 +102,13 @@ export function activate(context: ExtensionContext) {
     "SAS Language Server",
     serverOptions,
     clientOptions,
+  );
+
+  const customMacroProvider = new CustomMacroProvider(() => {
+    client.sendNotification("sas/customMacrosChanged").catch(() => {});
+  });
+  client.onRequest("sas/getCustomMacros", () =>
+    customMacroProvider.getCustomMacros(),
   );
 
   // Start the client. This will also launch the server
@@ -262,6 +273,7 @@ export function activate(context: ExtensionContext) {
     commands.registerTextEditorCommand("SAS.toggleLineComment", (editor) => {
       toggleLineComment(editor, client);
     }),
+    customMacroProvider,
   );
 
   // Reset first to set "No Active Profiles"
@@ -274,6 +286,7 @@ export function activate(context: ExtensionContext) {
   triggerProfileUpdate().then(() => {
     updateViewSettings();
   });
+  customMacroProvider.start();
 
   return {
     getRestAPIs,

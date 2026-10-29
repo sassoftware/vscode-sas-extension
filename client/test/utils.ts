@@ -5,7 +5,7 @@ import { readFileSync } from "fs";
 import * as path from "path";
 
 export function getUri(name: string): vscode.Uri {
-  return vscode.Uri.file(path.resolve(__dirname, "../../testFixture", name));
+  return vscode.Uri.file(path.resolve(__dirname, "../../../testFixture", name));
 }
 
 export async function openDoc(docUri: vscode.Uri): Promise<void> {
@@ -24,7 +24,7 @@ async function sleep(ms: number) {
 }
 
 export function getTestFixtureContent(name: string): Buffer {
-  return readFileSync(path.resolve(__dirname, "../../testFixture", name));
+  return readFileSync(path.resolve(__dirname, "../../../testFixture", name));
 }
 
 export const assertThrowsAsync = async (fn, expectedMsg?: string) => {
