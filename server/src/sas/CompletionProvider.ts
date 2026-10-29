@@ -2055,15 +2055,25 @@ export class CompletionProvider {
     if (!isValidMacroName(bareName) || this._isBuiltinMacro(bareName)) {
       return undefined;
     }
-    return (
-      this._getFileMacros().get(bareName.toUpperCase()) ??
-      getClientCustomMacro(bareName)
-    );
+    const fileMacro = this._getFileMacros().get(bareName.toUpperCase());
+    if (fileMacro) {
+      return fileMacro;
+    }
+    const clientMacro = getClientCustomMacro(bareName);
+    return clientMacro?.sourceUri === this.model.getUri()
+      ? undefined
+      : clientMacro;
   }
 
   private _getCustomMacros(): CustomMacro[] {
     const macros = new Map<string, CustomMacro>();
     for (const macro of getClientCustomMacros()) {
+      // The client snapshot can briefly lag behind unsaved edits. The open
+      // document is authoritative for its own file, so don't surface stale
+      // names from that file while its next workspace scan is pending.
+      if (macro.sourceUri === this.model.getUri()) {
+        continue;
+      }
       macros.set(macro.name.toUpperCase(), macro);
     }
     for (const [key, macro] of this._getFileMacros()) {

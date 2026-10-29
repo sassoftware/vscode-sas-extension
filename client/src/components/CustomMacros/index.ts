@@ -118,7 +118,11 @@ export class CustomMacroProvider implements Disposable {
         if (Buffer.byteLength(text, "utf8") > MAX_FILE_SIZE) {
           continue;
         }
-        macros.push(...parseMacroDefinitions(text, this.getSourceLabel(uri)));
+        macros.push(
+          ...parseMacroDefinitions(text, this.getSourceLabel(uri)).map(
+            (macro) => ({ ...macro, sourceUri: uri.toString() }),
+          ),
+        );
       } catch {
         // Ignore inaccessible files; they will be retried on the next change.
       }

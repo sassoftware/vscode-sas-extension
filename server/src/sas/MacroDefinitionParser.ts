@@ -18,6 +18,7 @@ export interface CustomMacro {
   parmbuff?: boolean; // %macro ... / PARMBUFF (or /PBUFF)
   description?: string; // e.g. leading comment or /DES= text
   sourceLabel?: string; // display text only, e.g. "My Folder/util/dates.sas"
+  sourceUri?: string; // stable identity used to exclude stale entries for the open file
 }
 
 export interface GetCustomMacrosResult {
