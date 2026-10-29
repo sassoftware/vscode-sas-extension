@@ -12,6 +12,7 @@ import ManageColumns from "./ManageColumns";
 import TableFilter from "./TableFilter";
 import localize from "./localize";
 import useDataViewer from "./useDataViewer";
+import useSelectionRectangle from "./useSelectionRectangle";
 import useTheme from "./useTheme";
 
 import "./DataViewer.css";
@@ -26,8 +27,12 @@ const gridStyles = {
 };
 
 export const DataViewer = () => {
+  const allowDownload =
+    document
+      .querySelector(".data-viewer-container")
+      ?.getAttribute("data-allow-download") === "true";
   const title = document
-    .querySelector("[data-title]")
+    .querySelector("[data-title]")!
     .getAttribute("data-title");
   const theme = useTheme();
   const [allColumnsHidden, setAllColumnsHidden] = useState(false);
@@ -55,19 +60,55 @@ export const DataViewer = () => {
     setColumns,
     setManageColumnsOpen,
   } = useDataViewer();
+  const [gridDragging, setGridDragging] = useState(false);
+  const [focusedCell, setFocusedCell] = useState(null);
+  const { onKeyDown, resetSelection, ...selectionRectangleHooks } =
+    useSelectionRectangle({
+      onSelectionStarted: () => {
+        setFocusedCell(gridRef.current?.api.getFocusedCell());
+        gridRef.current?.api.clearFocusedCell();
+        gridRef.current?.api.updateGridOptions({
+          suppressCellFocus: true,
+          suppressHeaderFocus: true,
+        });
+      },
+      onSelectionEnded: () => {
+        gridRef.current?.api.updateGridOptions({
+          suppressCellFocus: false,
+          suppressHeaderFocus: false,
+        });
+        if (focusedCell) {
+          gridRef.current?.api.setFocusedCell(
+            focusedCell?.rowIndex,
+            focusedCell?.column,
+          );
+          setFocusedCell(null);
+        }
+      },
+      getRowData: (rowIndex: string) =>
+        gridRef.current?.api.getRowNode(rowIndex),
+      enabled: !gridDragging && allowDownload,
+      scrollContainer: ".ag-grid-scrolling-container",
+      scrollViewport: ".ag-grid-viewport",
+    });
 
   const handleKeydown = useCallback(
-    (event) => {
+    (event: KeyboardEvent) => {
+      onKeyDown(event);
       if (event.key === "Escape" && columnMenu) {
         dismissMenu();
       }
     },
-    [columnMenu, dismissMenu],
+    [columnMenu, dismissMenu, onKeyDown],
   );
   const dismissMenuWithoutFocus = useCallback(
     () => dismissMenu(false),
     [dismissMenu],
   );
+  const handleWindowBlur = useCallback(() => {
+    dismissMenuWithoutFocus();
+    resetSelection();
+  }, [dismissMenuWithoutFocus, resetSelection]);
 
   const panelMessageHandler = useCallback(
     (event: MessageEvent) => {
@@ -77,28 +118,29 @@ export const DataViewer = () => {
         setAllColumnsHidden(false);
       }
 
-      if (
-        event.data.command === "panel:changeFocus" &&
-        event.data.data.focused
-      ) {
-        const cell = gridRef.current?.api.getFocusedCell();
-        if (cell) {
-          gridRef.current?.api.setFocusedCell(cell.rowIndex, cell.column);
+      if (event.data.command === "panel:changeFocus") {
+        if (event.data.data.focused) {
+          const cell = gridRef.current?.api.getFocusedCell();
+          if (cell) {
+            gridRef.current?.api.setFocusedCell(cell.rowIndex, cell.column);
+          }
+        } else {
+          resetSelection();
         }
       }
     },
-    [gridRef, refreshResults, setColumns],
+    [gridRef, refreshResults, resetSelection, setColumns],
   );
   useEffect(() => {
     document.addEventListener("keydown", handleKeydown);
-    window.addEventListener("blur", dismissMenuWithoutFocus);
+    window.addEventListener("blur", handleWindowBlur);
     window.addEventListener("message", panelMessageHandler);
     return () => {
       document.removeEventListener("keydown", handleKeydown);
-      window.removeEventListener("blur", dismissMenuWithoutFocus);
+      window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("message", panelMessageHandler);
     };
-  }, [handleKeydown, dismissMenuWithoutFocus, panelMessageHandler]);
+  }, [handleKeydown, handleWindowBlur, panelMessageHandler]);
 
   if (columns.length === 0) {
     return null;
@@ -109,6 +151,7 @@ export const DataViewer = () => {
       <h1>{title}</h1>
       <TableFilter
         onCommit={(value) => {
+          resetSelection();
           refreshResults({ filterValue: value });
         }}
         initialValue={""}
@@ -118,14 +161,13 @@ export const DataViewer = () => {
         className={`ag-grid-wrapper ${theme}`}
         style={gridStyles}
         onClick={() => columnMenu && dismissMenuWithoutFocus()}
+        {...selectionRectangleHooks}
       >
         <AgGridReact
           ref={gridRef}
           cacheBlockSize={100}
           columnDefs={columns}
-          defaultColDef={{
-            sortable: true,
-          }}
+          defaultColDef={{ sortable: true }}
           maintainColumnOrder
           infiniteInitialRowCount={100}
           maxBlocksInCache={10}
@@ -136,6 +178,9 @@ export const DataViewer = () => {
           noRowsOverlayComponent={() =>
             localize("No data matches the current filters.")
           }
+          onDragStarted={() => setGridDragging(true)}
+          onDragCancelled={() => setGridDragging(false)}
+          onDragStopped={() => setGridDragging(false)}
           suppressDragLeaveHidesColumns
         />
 

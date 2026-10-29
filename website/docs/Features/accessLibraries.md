@@ -20,6 +20,16 @@ When viewing table data, you have the following options available for each colum
 
 ![Table Viewing](/images/tableViewing.gif)
 
+## Copying Table Data
+
+When viewing table data, you have the ability to copy/paste cells as needed. You can do this by dragging your selection across multiple cells and pressing "Copy" or Ctrl + C (Cmd + C on Mac). You can also do this by holding Shift and using the Arrow keys to make your selection. This will copy the headers along with selected columns/rows. There are a few things to note about copy/paste functionality:
+
+- At the moment, you cannot scroll left to right to select more columns.
+- You can drag up/down to select offscreen rows.
+- You can only make contiguous selections.
+
+![Table Copy/Paste](/images/tableCopyPaste.gif)
+
 ## Managing Columns
 
 To open Manage Columns, hover over a column header in the Table Viewer, click the menu button, and select "Manage Columns".

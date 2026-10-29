@@ -22,6 +22,7 @@ class DataViewer extends WebView {
     }>,
     protected readonly fetchColumns: () => TableColumn[],
     protected readonly loadColumnProperties: (columnName: string) => void,
+    protected readonly allowDownload: boolean = true,
   ) {
     super(extensionUri, uid);
   }
@@ -29,6 +30,9 @@ class DataViewer extends WebView {
   public l10nMessages() {
     return {
       "All columns are hidden.": l10n.t("All columns are hidden."),
+      "An error was encountered when copying data.": l10n.t(
+        "An error was encountered when copying data.",
+      ),
       "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
       "Column order controls": l10n.t("Column order controls"),
       "Column visibility controls": l10n.t("Column visibility controls"),
@@ -61,6 +65,7 @@ class DataViewer extends WebView {
       Character: l10n.t("Character"),
       Clear: l10n.t("Clear"),
       Close: l10n.t("Close"),
+      Copy: l10n.t("Copy"),
       Currency: l10n.t("Currency"),
       Date: l10n.t("Date"),
       Datetime: l10n.t("Datetime"),
@@ -90,7 +95,7 @@ class DataViewer extends WebView {
   }
 
   public body() {
-    return `<div class="data-viewer-container" data-title="${this.title}"></div>`;
+    return `<div class="data-viewer-container" data-title="${this.title}" data-allow-download="${this.allowDownload}"></div>`;
   }
 
   public invalidateColumns(): void {
@@ -115,6 +120,7 @@ class DataViewer extends WebView {
         sortModel?: SortModelItem[];
         columnName?: string;
         query: TableQuery | undefined;
+        error?: string;
       };
     },
   ): Promise<void> {
@@ -148,8 +154,13 @@ class DataViewer extends WebView {
         break;
       }
       case "request:loadColumnProperties":
-        if (event.data.columnName) {
+        if (event.data && event.data.columnName) {
           this.loadColumnProperties(event.data.columnName);
+        }
+        break;
+      case "displayError":
+        if (event.data && event.data.error) {
+          window.showErrorMessage(event.data.error);
         }
         break;
       default:
