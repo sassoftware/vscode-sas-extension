@@ -50,6 +50,7 @@ class LibraryNavigator implements SubscriptionProvider {
         Object.values(this.webviewManager.panels).forEach((viewer) => {
           if (viewer instanceof DataViewer) {
             viewer.invalidateColumns();
+            viewer.invalidateSession();
           }
         });
       }),
@@ -60,18 +61,24 @@ class LibraryNavigator implements SubscriptionProvider {
           paginator: PaginatedResultSet<{ data: TableData; error?: Error }>,
           fetchColumns: () => TableColumn[],
         ) => {
-          this.webviewManager.render(
-            new DataViewer(
-              this.extensionUri,
-              item.uid,
-              paginator,
-              fetchColumns,
-              (columnName: string) => {
-                this.displayTableProperties(item, true, columnName);
-              },
-            ),
+          const viewer = new DataViewer(
+            this.extensionUri,
             item.uid,
+            paginator,
+            fetchColumns,
+            (columnName: string) => {
+              this.displayTableProperties(item, true, columnName);
+            },
+            () => this.libraryDataProvider.getTableInfo(item),
           );
+
+          try {
+            await viewer.initializeModifiedTimeStamp();
+          } catch {
+            // Allow the Table Viewer to open if metadata retrieval fails.
+          }
+
+          this.webviewManager.render(viewer, item.uid);
         },
       ),
       commands.registerCommand("SAS.refreshLibraries", () => this.refresh()),
