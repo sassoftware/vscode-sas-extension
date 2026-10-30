@@ -1,0 +1,167 @@
+/* Copyright © 2026, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+:root {
+  color-scheme: light dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 32px 24px;
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+main {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.85em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.6em;
+  font-weight: 600;
+}
+
+.intro {
+  margin: 8px 0 24px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.file-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  background: var(--vscode-sideBar-background, transparent);
+}
+
+.file-type {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 4px;
+  color: var(--vscode-badge-foreground);
+  background: var(--vscode-badge-background);
+  font-size: 0.75em;
+  font-weight: 700;
+}
+
+.file-label {
+  display: block;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.85em;
+}
+
+.file-value {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.choices {
+  display: grid;
+  gap: 10px;
+}
+
+.destination-choice {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  color: var(--vscode-foreground);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.destination-choice:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.destination-choice:focus-visible,
+.cancel:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 2px;
+}
+
+.destination-choice:disabled {
+  cursor: wait;
+}
+
+.choice-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 4px;
+  color: var(--vscode-button-foreground);
+  background: var(--vscode-button-background);
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.choice-copy {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+}
+
+.choice-description {
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+}
+
+.choice-arrow {
+  color: var(--vscode-descriptionForeground);
+  font-size: 1.2em;
+}
+
+.footer {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+#status {
+  margin: 0;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+}
+
+.cancel {
+  padding: 6px 10px;
+  border: 0;
+  color: var(--vscode-textLink-foreground);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}

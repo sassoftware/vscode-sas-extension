@@ -1,6 +1,7 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import type { SortModelItem } from "ag-grid-community";
+import { Readable } from "stream";
 
 import { Column, TableInfo } from "../../connection/rest/api/compute";
 
@@ -44,6 +45,11 @@ export interface TableQuery {
 }
 
 export interface LibraryAdapter {
+  readonly supportsTableExport?: boolean;
+  createTableExport?(
+    item: LibraryItem,
+    signal: AbortSignal,
+  ): Promise<TableExport>;
   connect(): Promise<void>;
   deleteTable(item: LibraryItem): Promise<void>;
   getColumns(
@@ -83,4 +89,9 @@ export interface LibraryAdapter {
   }>;
   getTableInfo?(item: LibraryItem): Promise<TableInfo>;
   setup(): Promise<void>;
+}
+
+export interface TableExport {
+  stream: Readable;
+  dispose(): Promise<void>;
 }
