@@ -243,7 +243,7 @@ describe("ItcLibraryAdapter tests", () => {
   it("drops temporary filtered views regardless of sort criteria", () => {
     const scriptPath = join(
       __dirname,
-      "../../../../src/connection/itc/script/itc.ps1",
+      "../../../../../src/connection/itc/script/itc.ps1",
     );
     const script = readFileSync(scriptPath, "utf8");
 

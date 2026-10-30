@@ -39,7 +39,6 @@ export class SyntaxProvider {
     this.lexer = new LexerEx(model);
   }
 
-  // private functions
   private _push(change: Change) {
     this.parsingQueue.push(change);
   }
@@ -47,8 +46,8 @@ export class SyntaxProvider {
     let startLine = 0;
     this.currTokenIndex = 0;
     this.lastToken = null;
-    this._multilineComments = []; // Clear previous comments
-    this.parsingState = 1; //LanguageService.ParsingState.STARTING;
+    this._multilineComments = [];
+    this.parsingState = 1;
     this.parsedRange = this.lexer.start(change);
 
     startLine = this.parsedRange.endLine + 1;
@@ -61,25 +60,9 @@ export class SyntaxProvider {
       startLine - this.parsedRange.startLine,
     );
 
-    /*
-      (1) ^ removed
-      -----^^^^^     //keep the head part
-      ^^^^^^^^^^
-      ^^^-------   //keep the tail part
-      (2)
-      ---^^^^---    //keep the tail part and the head part
-      (3)
-      ----|-----   //no removed. keep the head part and tail part
-      (4)
-      --------
-      ~~~~~~~~  // parsed
-      ~~~~~~~~
-      --------
-      */
     const syntaxLine: SyntaxToken[] = [];
     let i = 0;
     const tmpSyntaxLine = this.removedSyntaxTable[0];
-    // keep the head part
     if (this.parsedRange.startCol > 0 && tmpSyntaxLine) {
       while (
         tmpSyntaxLine[i] &&
@@ -88,7 +71,7 @@ export class SyntaxProvider {
         syntaxLine.push(tmpSyntaxLine[i]);
         i++;
       }
-      tmpSyntaxLine.splice(0, i); //remove
+      tmpSyntaxLine.splice(0, i);
 
       let endCol = this.parsedRange.startCol;
       if (tmpSyntaxLine.length) {
@@ -104,7 +87,6 @@ export class SyntaxProvider {
       this.syntaxTable[this.parsedRange.startLine] = syntaxLine;
     }
 
-    // remove changed (middle part)
     i = 0;
     if (
       this.parsedRange.startLine === this.parsedRange.endLine &&
@@ -118,19 +100,14 @@ export class SyntaxProvider {
       }
       tmpSyntaxLine.splice(0, i);
     }
-    // for multiple lines, keep the last line for late usage, we handle it in _parse
     this._parse(change);
   }
   private _endParse(change: Change) {
-    this.parsingState = 2; //LanguageService.ParsingState.ENDED;
-
+    this.parsingState = 2;
     this._schedule();
   }
   private _schedule() {
-    if (
-      this.parsingState === 2 /*LanguageService.ParsingState.ENDED*/ &&
-      this.parsingQueue.length
-    ) {
+    if (this.parsingState === 2 && this.parsingQueue.length) {
       const change = this.parsingQueue.shift()!;
       this._startParse(change);
     }
@@ -156,11 +133,8 @@ export class SyntaxProvider {
             start: { line: 0, column: 0 },
             end: { line: 0, column: 0 },
           };
-        } else {
-          //ignored
         }
 
-        // merge tokens
         let tailPart,
           validPos = 0;
         const len = this.removedSyntaxTable.length,
@@ -178,23 +152,11 @@ export class SyntaxProvider {
           });
           tailPart.splice(0, validPos);
           if (this.syntaxTable[line]) {
-            //add blank token.
             this._tryToAddBlank(line, this.syntaxTable[line], tailPart);
-            //
             this.syntaxTable[line] = this.syntaxTable[line].concat(tailPart);
           }
-        } /*else if (parsedRange.startLine === parsedRange.endLine) {
-          tailPart = removedSyntaxTable[0];
-          tailPart.forEach(function(item) {
-            item.start += e.changedColCount;
-          });
-          if (syntaxTable[parsedRange.startLine]) {//FIXID S1159519
-           syntaxTable[parsedRange.startLine] = syntaxTable[parsedRange.startLine].concat(tailPart);
-          }
-        }*/
+        }
 
-        // merge syntax table
-        //_addEndMarkForSkippedLines(token, e.token.start.line);
         this.syntaxTable = this.syntaxTable.concat(
           this.tailUnchangedSyntaxTable,
         );
@@ -242,9 +204,8 @@ export class SyntaxProvider {
           syntaxLine.splice(
             this.currTokenIndex,
             syntaxLine.length - this.currTokenIndex,
-          ); //clear the garbages
+          );
         }
-        //add end marks
         syntaxLine.push({ start: column, state: 0, style: "text" });
         line++;
         column = 0;
@@ -259,8 +220,6 @@ export class SyntaxProvider {
       addRange = false,
       addStartTag = true;
     if (this.lastToken) {
-      // (1) line changed, handle the end marks
-      // (2) end all, add marks for all skipped lines
       this._addEndMarkForSkippedLines(
         this.lastToken,
         token ? token.start.line : this.model.getLineCount(),
@@ -269,11 +228,7 @@ export class SyntaxProvider {
     if (!token) {
       return;
     }
-    // handle new token
     line = token.start.line;
-    //add blank to the head for old format requirement
-    //(1) there are space(s) before the first token
-    //(2) the token is a middle token,
     if (
       (this.lastToken === null && token.start.column > 0) ||
       (this.lastToken &&
@@ -294,15 +249,12 @@ export class SyntaxProvider {
       });
       this.currTokenIndex++;
     }
-    // ATTENTION: multiple lines condition
     if (token.end.line !== token.start.line) {
       addRange = true;
     }
     do {
       syntaxLine = this.syntaxTable[line] = this.syntaxTable[line] || [];
-      //add the token
       if (this.currTokenIndex < syntaxLine.length) {
-        //clear the unused elements
         syntaxLine.splice(
           this.currTokenIndex,
           syntaxLine.length - this.currTokenIndex,
@@ -320,9 +272,7 @@ export class SyntaxProvider {
       this.currTokenIndex++;
       addRange = false;
       addStartTag = false;
-      //next line
       if (line < token.end.line) {
-        //add end marks, ignore the last line
         syntaxLine.push({
           start: this.model.getLine(line).length,
           state: 0,
@@ -331,14 +281,13 @@ export class SyntaxProvider {
         this.currTokenIndex = 0;
       }
       line++;
-    } while (line <= token.end.line); //end do
+    } while (line <= token.end.line);
 
-    //currTokenIndex++;
     this.lastToken = {
       type: token.type,
       start: { line: token.start.line, column: token.start.column },
       end: { line: token.end.line, column: token.end.column },
-    }; // jpnjfk
+    };
 
     if (this._tokenCallback) {
       this._tokenCallback({
@@ -349,7 +298,6 @@ export class SyntaxProvider {
       });
     }
 
-    // Collect multiline comments as they're processed by the lexer
     if (
       (token.type === "comment" || token.type === "macro-comment") &&
       token.end.line > token.start.line
@@ -361,7 +309,6 @@ export class SyntaxProvider {
     }
   }
 
-  // public functions
   getSyntax(line: number): SyntaxToken[] {
     return this.syntaxTable[line] ? this.syntaxTable[line] : [];
   }
@@ -391,7 +338,6 @@ export class SyntaxProvider {
     const syntax = this.getSyntax(line),
       len = syntax.length;
     for (let i = 1; i < len; i++) {
-      // TODO: improve algorithm
       if (syntax[i].start >= col) {
         if (syntax[i - 1].start <= col) {
           return syntax[i - 1].style;
@@ -399,7 +345,7 @@ export class SyntaxProvider {
           return "text";
         }
       }
-    } //try our best to get real type
+    }
     return syntax &&
       syntax.length === 2 &&
       syntax[0].start === 0 &&
