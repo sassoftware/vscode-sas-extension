@@ -11,7 +11,7 @@ import ColumnMenu from "./ColumnMenu";
 import ManageColumns from "./ManageColumns";
 import TableFilter from "./TableFilter";
 import localize from "./localize";
-import useDataViewer from "./useDataViewer";
+import useDataViewer, { requestRefreshData } from "./useDataViewer";
 import useTheme from "./useTheme";
 
 import "./DataViewer.css";
@@ -54,6 +54,7 @@ export const DataViewer = () => {
     refreshResults,
     setColumns,
     setManageColumnsOpen,
+    resetViewerState,
   } = useDataViewer();
 
   const handleKeydown = useCallback(
@@ -72,9 +73,13 @@ export const DataViewer = () => {
   const panelMessageHandler = useCallback(
     (event: MessageEvent) => {
       if (event.data.command === "panel:refreshData") {
-        refreshResults(undefined);
-        setColumns([]);
-        setAllColumnsHidden(false);
+        const { hasChanged } = event.data.data;
+
+        if (hasChanged) {
+          resetViewerState();
+          setAllColumnsHidden(false);
+          setColumns([]);
+        }
       }
 
       if (
@@ -87,7 +92,7 @@ export const DataViewer = () => {
         }
       }
     },
-    [gridRef, refreshResults, setColumns],
+    [gridRef, resetViewerState, setColumns],
   );
   useEffect(() => {
     document.addEventListener("keydown", handleKeydown);
@@ -107,12 +112,21 @@ export const DataViewer = () => {
   return (
     <div className="data-viewer">
       <h1>{title}</h1>
-      <TableFilter
-        onCommit={(value) => {
-          refreshResults({ filterValue: value });
-        }}
-        initialValue={""}
-      />
+      <div className="filter-refresh-container">
+        <TableFilter
+          onCommit={(value) => {
+            refreshResults({ filterValue: value });
+          }}
+          initialValue=""
+        />
+        <button
+          type="button"
+          className="refresh-data-button"
+          title={localize("Refresh Data")}
+          aria-label={localize("Refresh Data")}
+          onClick={requestRefreshData}
+        />
+      </div>
       {columnMenu && <ColumnMenu {...columnMenu} />}
       <div
         className={`ag-grid-wrapper ${theme}`}
@@ -144,7 +158,6 @@ export const DataViewer = () => {
             <div className="all-columns-hidden-message">
               {localize("All columns are hidden.")}
             </div>
-
             <button
               type="button"
               className="all-columns-hidden-button"

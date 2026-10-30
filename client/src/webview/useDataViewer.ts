@@ -41,6 +41,12 @@ export const applyColumnState = (api: GridApi, state: ColumnState[]) => {
   api.ensureIndexVisible(0);
 };
 
+export const requestRefreshData = () => {
+  vscode.postMessage({
+    command: "request:refreshData",
+  });
+};
+
 const defaultTimeout = 60 * 1000; // 60 seconds (accounting for compute session expiration)
 
 let queryTableDataTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -207,13 +213,33 @@ const useDataViewer = () => {
   }, []);
 
   const refreshResults = useCallback(
-    (query: TableQuery | undefined) => {
-      const params = queryParams ? { ...queryParams, ...(query || {}) } : query;
+    (query: TableQuery | undefined, reset = false) => {
+      const params = reset
+        ? undefined
+        : queryParams
+          ? { ...queryParams, ...(query || {}) }
+          : query;
+
       setQueryParams(params);
-      gridRef.current.api.setGridOption("datasource", dataSource(params));
+
+      gridRef.current?.api.setGridOption("datasource", dataSource(params));
     },
     [dataSource, queryParams],
   );
+
+  const resetViewerState = useCallback(() => {
+    const api = gridRef.current?.api;
+
+    if (!api) {
+      return;
+    }
+
+    api.resetColumnState();
+    api.setFilterModel(null);
+
+    setColumnMenu(undefined);
+    setManageColumnsOpen(false);
+  }, [setManageColumnsOpen]);
 
   const displayMenuForColumn = useCallback(
     (api: GridApi, column: AgColumn, rect: DOMRect) => {
@@ -328,6 +354,7 @@ const useDataViewer = () => {
     onGridReady,
     refreshResults,
     setManageColumnsOpen,
+    resetViewerState,
   };
 };
 

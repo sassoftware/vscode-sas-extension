@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { Uri, l10n, window } from "vscode";
+import { Uri, commands, l10n, window } from "vscode";
 
 import type { SortModelItem } from "ag-grid-community";
 
@@ -13,6 +13,9 @@ import {
 import { WebView } from "./WebviewManager";
 
 class DataViewer extends WebView {
+  private previousModifiedTimeStamp?: string;
+  private isRefreshing = false;
+  private forceRefresh = false;
   public constructor(
     extensionUri: Uri,
     uid: string,
@@ -22,6 +25,9 @@ class DataViewer extends WebView {
     }>,
     protected readonly fetchColumns: () => TableColumn[],
     protected readonly loadColumnProperties: (columnName: string) => void,
+    protected readonly getTableInfo: () => Promise<{
+      modifiedTimeStamp?: string;
+    }>,
   ) {
     super(extensionUri, uid);
   }
@@ -78,6 +84,7 @@ class DataViewer extends WebView {
       Undo: l10n.t("Undo"),
       "Move down": l10n.t("Move down"),
       "Move up": l10n.t("Move up"),
+      "Refresh Data": l10n.t("Refresh Data"),
     };
   }
 
@@ -99,10 +106,47 @@ class DataViewer extends WebView {
     });
   }
 
-  public refreshData() {
-    this.panel.webview.postMessage({
-      command: "panel:refreshData",
-    });
+  public async initializeModifiedTimeStamp(): Promise<void> {
+    const tableInfo = await this.getTableInfo();
+    this.previousModifiedTimeStamp = tableInfo.modifiedTimeStamp;
+  }
+
+  public invalidateSession(): void {
+    this.forceRefresh = true;
+  }
+
+  public async refreshData(): Promise<void> {
+    if (this.isRefreshing) {
+      return;
+    }
+
+    this.isRefreshing = true;
+
+    try {
+      const tableInfo = await this.getTableInfo();
+      const modifiedTimeStamp = tableInfo.modifiedTimeStamp;
+
+      const hasChanged =
+        this.forceRefresh ||
+        this.previousModifiedTimeStamp !== modifiedTimeStamp;
+
+      this.previousModifiedTimeStamp = modifiedTimeStamp;
+      this.forceRefresh = false;
+
+      this.panel.webview.postMessage({
+        command: "panel:refreshData",
+        data: {
+          hasChanged,
+          modifiedTimeStamp,
+        },
+      });
+    } catch (error) {
+      await window.showErrorMessage(
+        error instanceof Error ? error.message : String(error),
+      );
+    } finally {
+      this.isRefreshing = false;
+    }
   }
 
   public async processMessage(
@@ -119,6 +163,10 @@ class DataViewer extends WebView {
     },
   ): Promise<void> {
     switch (event.command) {
+      case "request:refreshData": {
+        await this.refreshData();
+        break;
+      }
       case "request:loadData": {
         const { data, error } = await this.paginator.getData(
           event.data!.start!,
