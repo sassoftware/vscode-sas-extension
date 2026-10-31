@@ -129,6 +129,16 @@ export const runServer = (
 
   connection.onInitialized(() => _pyrightLanguageProvider.onInitialized());
 
+  connection.onRequest(
+    "sas/pythonFinalExpression",
+    (params: { code: string }, token) => {
+      return _pyrightLanguageProvider.analyzePythonFinalExpression(
+        params?.code,
+        token,
+      );
+    },
+  );
+
   connection.onRequest(SemanticTokensRequest.type, (params) => {
     syncIfDocChange(params.textDocument.uri);
     const languageService = getLanguageService(params.textDocument.uri);
