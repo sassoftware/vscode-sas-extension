@@ -55,7 +55,6 @@ interface DocumentInfo {
   service?: LanguageServiceProvider;
 }
 
-const GET_LIB_LIST_TIMEOUT = 30000;
 const GET_CUSTOM_MACROS_TIMEOUT = 10000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -636,12 +635,9 @@ export const runServer = (
 
       if (supportSASGetLibList) {
         docInfo.service.setLibService((libId, resolve) =>
-          withTimeout(
-            connection.sendRequest<LibCompleteItem[]>("sas/getLibList", {
-              libId: libId,
-            }),
-            GET_LIB_LIST_TIMEOUT,
-          ).then(resolve, () => resolve([])),
+          connection
+            .sendRequest<LibCompleteItem[]>("sas/getLibList", { libId: libId })
+            .then(resolve),
         );
       }
     }
