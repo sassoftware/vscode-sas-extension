@@ -25,7 +25,7 @@ When viewing table data, you have the following options available for each colum
 When viewing table data, you have the ability to copy/paste cells as needed. You can do this by dragging your selection across multiple cells and pressing "Copy" or Ctrl + C (Cmd + C on Mac). You can also do this by holding Shift and using the Arrow keys to make your selection. This will copy the headers along with selected columns/rows. There are a few things to note about copy/paste functionality:
 
 - At the moment, you cannot scroll left to right to select more columns.
-- You can drag up/down to select offscreen rows.
+- You can drag up or down to select offscreen rows, up to 800. Going beyond this number may result in an error when attempting to copy.
 - You can only make contiguous selections.
 
 ![Table Copy/Paste](/images/tableCopyPaste.gif)

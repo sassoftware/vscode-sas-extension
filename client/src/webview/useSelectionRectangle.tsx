@@ -133,7 +133,12 @@ export const useSelectionRectangle = ({
 
     // 3. Extract relevant row data
     for (let i = firstRowIndex; i <= lastRowIndex; ++i) {
-      csvLines.push(extractDataFromRow(i, cellNames));
+      const csvLine = extractDataFromRow(i, cellNames);
+      if (csvLine === undefined) {
+        displayClipboardError();
+        return;
+      }
+      csvLines.push(csvLine);
     }
 
     // 4. Copy data to clipboard
@@ -150,7 +155,10 @@ export const useSelectionRectangle = ({
     }
 
     function extractDataFromRow(rowIndex: number, cellNames: string[]) {
-      const row = getRowData(`${rowIndex}`)!;
+      const row = getRowData(`${rowIndex}`);
+      if (!row?.data) {
+        return undefined;
+      }
       const strings = cellNames.map((cellName) => row.data[cellName]);
       return stringArrayToCsvString(strings);
     }
