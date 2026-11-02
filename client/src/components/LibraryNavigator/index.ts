@@ -16,6 +16,7 @@ import { createWriteStream } from "fs";
 import * as path from "path";
 
 import { profileConfig } from "../../commands/profile";
+import { getSession } from "../../connection";
 import { onDidChangeSession } from "../../connection/session";
 import DataViewer from "../../panels/DataViewer";
 import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
@@ -60,6 +61,9 @@ class LibraryNavigator implements SubscriptionProvider {
           paginator: PaginatedResultSet<{ data: TableData; error?: Error }>,
           fetchColumns: () => TableColumn[],
         ) => {
+          const attributes = await getSession().contextAttributes?.();
+          const allowDownload =
+            attributes?.allowDownload?.toLowerCase() !== "false";
           this.webviewManager.render(
             new DataViewer(
               this.extensionUri,
@@ -69,6 +73,7 @@ class LibraryNavigator implements SubscriptionProvider {
               (columnName: string) => {
                 this.displayTableProperties(item, true, columnName);
               },
+              allowDownload,
             ),
             item.uid,
           );
