@@ -19,7 +19,12 @@ import {
 import { profileConfig } from "../../commands/profile";
 import { getGlobalStorageUri } from "../ExtensionContext";
 import { SubscriptionProvider } from "../SubscriptionProvider";
-import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
+import {
+  type ActiveProfileSnapshot,
+  ConnectionType,
+  ProfileWithFileRootOptions,
+  hasActiveProfileChanged,
+} from "../profile";
 import { treeViewSelections } from "../utils/treeViewSelections";
 import ContentAdapterFactory from "./ContentAdapterFactory";
 import ContentDataProvider from "./ContentDataProvider";
@@ -71,6 +76,7 @@ class ContentNavigator implements SubscriptionProvider {
   private sourceType: ContentNavigatorConfig["sourceType"];
   private temporaryImageUris = new Map<string, Uri>();
   private treeIdentifier: ContentNavigatorConfig["treeIdentifier"];
+  private previousActiveProfile: ActiveProfileSnapshot;
 
   constructor(context: ExtensionContext, config: ContentNavigatorConfig) {
     this.sourceType = config.sourceType;
@@ -83,6 +89,7 @@ class ContentNavigator implements SubscriptionProvider {
       context.extensionUri,
       config,
     );
+    this.previousActiveProfile = profileConfig.getActiveProfileSnapshot();
 
     workspace.registerFileSystemProvider(
       config.sourceType,
@@ -492,19 +499,34 @@ class ContentNavigator implements SubscriptionProvider {
       ),
       workspace.onDidChangeConfiguration(
         async (event: ConfigurationChangeEvent) => {
-          if (event.affectsConfiguration("SAS.connectionProfiles")) {
-            const endpoint = this.viyaEndpoint();
-            this.collapseAllContent();
-            const contentModel = new ContentModel(
-              this.contentAdapterForConnectionType(),
-            );
-            this.contentDataProvider.useModel(contentModel);
-            this.contentModel = contentModel;
-            if (endpoint) {
-              await this.contentDataProvider.connect(endpoint);
-            } else {
-              await this.contentDataProvider.refresh();
-            }
+          if (!event.affectsConfiguration("SAS.connectionProfiles")) {
+            return;
+          }
+
+          const currentActiveProfile = profileConfig.getActiveProfileSnapshot();
+
+          const activeProfileChanged = hasActiveProfileChanged(
+            this.previousActiveProfile,
+            currentActiveProfile,
+          );
+
+          this.previousActiveProfile = currentActiveProfile;
+
+          if (!activeProfileChanged) {
+            return;
+          }
+
+          const endpoint = this.viyaEndpoint();
+          this.collapseAllContent();
+          const contentModel = new ContentModel(
+            this.contentAdapterForConnectionType(),
+          );
+          this.contentDataProvider.useModel(contentModel);
+          this.contentModel = contentModel;
+          if (endpoint) {
+            await this.contentDataProvider.connect(endpoint);
+          } else {
+            await this.contentDataProvider.refresh();
           }
         },
       ),

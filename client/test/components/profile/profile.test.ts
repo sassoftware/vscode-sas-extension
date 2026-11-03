@@ -6,6 +6,7 @@ import { join } from "path";
 import { SinonSandbox, SinonStub, createSandbox } from "sinon";
 
 import {
+  ActiveProfileSnapshot,
   AuthType,
   AutoExec,
   AutoExecType,
@@ -19,6 +20,7 @@ import {
   SSHProfile,
   ViyaProfile,
   getProfilePrompt,
+  hasActiveProfileChanged,
   toAutoExecLines,
 } from "../../../src/components/profile";
 
@@ -1611,5 +1613,116 @@ describe("toAutoExecLines", () => {
     } finally {
       unlinkSync(filePath);
     }
+  });
+});
+
+describe("hasActiveProfileChanged", () => {
+  const activeProfile: ViyaProfile = {
+    connectionType: ConnectionType.Rest,
+    endpoint: "https://viya.example.com",
+    context: "SAS Studio context",
+  };
+
+  it("returns false when the active profile is unchanged", () => {
+    const previous = {
+      name: "D2",
+      profile: { ...activeProfile },
+    };
+    const current = {
+      name: "D2",
+      profile: { ...activeProfile },
+    };
+
+    expect(hasActiveProfileChanged(previous, current)).to.be.false;
+  });
+
+  it("returns true when the active profile endpoint changes", () => {
+    const previous = {
+      name: "D2",
+      profile: { ...activeProfile },
+    };
+    const current = {
+      name: "D2",
+      profile: {
+        ...activeProfile,
+        endpoint: "https://another-viya.example.com",
+      },
+    };
+
+    expect(hasActiveProfileChanged(previous, current)).to.be.true;
+  });
+
+  it("returns true when switching active profiles", () => {
+    const previous = {
+      name: "D1",
+      profile: { ...activeProfile },
+    };
+    const current = {
+      name: "D2",
+      profile: { ...activeProfile },
+    };
+
+    expect(hasActiveProfileChanged(previous, current)).to.be.true;
+  });
+
+  it("returns true when the active profile is deleted", () => {
+    const previous = {
+      name: "D2",
+      profile: { ...activeProfile },
+    };
+    const current = {
+      name: "",
+      profile: undefined,
+    };
+
+    expect(hasActiveProfileChanged(previous, current)).to.be.true;
+  });
+
+  it("returns true when the active profile configuration is removed", () => {
+    const previous = {
+      name: "D2",
+      profile: { ...activeProfile },
+    };
+    const current = {
+      name: "D2",
+      profile: undefined,
+    };
+
+    expect(hasActiveProfileChanged(previous, current)).to.be.true;
+  });
+
+  it("returns false when no active profile exists in either snapshot", () => {
+    const previous = {
+      name: "",
+      profile: undefined,
+    };
+    const current = {
+      name: "",
+      profile: undefined,
+    };
+
+    expect(hasActiveProfileChanged(previous, current)).to.be.false;
+  });
+
+  it("returns true when a newly created profile becomes active", () => {
+    const previous: ActiveProfileSnapshot = {
+      name: "D2",
+      profile: {
+        connectionType: ConnectionType.Rest,
+        endpoint: "https://viya-d2.example.com",
+        context: "SAS Studio context",
+      },
+    };
+
+    const current: ActiveProfileSnapshot = {
+      name: "D3",
+      profile: {
+        connectionType: ConnectionType.Rest,
+        endpoint: "https://viya-d3.example.com",
+        context: "SAS Studio context",
+      },
+    };
+
+    expect(hasActiveProfileChanged(previous, current)).to.be.true;
   });
 });
