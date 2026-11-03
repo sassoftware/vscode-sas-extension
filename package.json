@@ -1533,7 +1533,7 @@
     "test-client": "node ./client/out/test/runTest.js",
     "test-server": "cross-env TS_NODE_PROJECT=./server/tsconfig.json mocha -r ts-node/register ./server/test/**/*.test.ts",
     "test": "npm run test-server && npm run test-client",
-    "l10n:export": "npx @vscode/l10n-dev export -o ./l10n ./client/src && prettier --write l10n/bundle.l10n.json",
+    "l10n:export": "npx @vscode/l10n-dev export -o ./l10n ./client/src && node ./tools/sort-l10n-bundle.mjs && prettier --write l10n/bundle.l10n.json",
     "l10n:check": "npm run l10n:export && git diff --exit-code -- l10n/bundle.l10n.json",
     "pseudoLocalize": "npm run l10n:export && npx @vscode/l10n-dev generate-pseudo -o ./l10n/ ./l10n/bundle.l10n.json ./package.nls.json",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
