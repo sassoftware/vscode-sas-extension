@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { ProgressLocation, Uri, env, l10n, window } from "vscode";
+import { ProgressLocation, Uri, env, l10n, window, workspace } from "vscode";
 import type { Disposable } from "vscode";
 
 import { randomUUID } from "crypto";
@@ -11,6 +11,107 @@ import { pipeline } from "stream/promises";
 import type { TableExport } from "./types";
 
 const timeoutMs = 5 * 60 * 1000;
+
+export type HostAttachmentDownloadMode = "external-uri" | "fixed-proxy";
+
+export interface HostAttachmentDownloadConfiguration {
+  mode: HostAttachmentDownloadMode;
+  listenHost: string;
+  listenPort: number;
+  externalBaseUrl: string;
+  authentication: "deployment" | "none";
+}
+
+const defaultConfiguration: HostAttachmentDownloadConfiguration = {
+  mode: "external-uri",
+  listenHost: "127.0.0.1",
+  listenPort: 0,
+  externalBaseUrl: "",
+  authentication: "none",
+};
+
+function readConfiguration(): HostAttachmentDownloadConfiguration {
+  const configuration = workspace.getConfiguration("SAS.tableDownload");
+  return {
+    mode: configuration.get("hostAttachment.mode", "external-uri"),
+    listenHost: configuration.get("hostAttachment.listenHost", "127.0.0.1"),
+    listenPort: configuration.get("hostAttachment.listenPort", 0),
+    externalBaseUrl: configuration.get("hostAttachment.externalBaseUrl", ""),
+    authentication: configuration.get("hostAttachment.authentication", "none"),
+  };
+}
+
+function validateConfiguration(
+  configuration: HostAttachmentDownloadConfiguration,
+): HostAttachmentDownloadConfiguration {
+  if (!Number.isInteger(configuration.listenPort)) {
+    throw new Error("The table download listener port must be an integer.");
+  }
+  if (
+    configuration.listenPort < 0 ||
+    configuration.listenPort > 65535 ||
+    (configuration.mode === "fixed-proxy" && configuration.listenPort === 0)
+  ) {
+    throw new Error("The table download listener port is invalid.");
+  }
+  if (!configuration.listenHost) {
+    throw new Error("The table download listener host is required.");
+  }
+  if (
+    configuration.mode !== "external-uri" &&
+    configuration.mode !== "fixed-proxy"
+  ) {
+    throw new Error("The table download route mode is invalid.");
+  }
+  if (
+    configuration.authentication !== "deployment" &&
+    configuration.authentication !== "none"
+  ) {
+    throw new Error("The table download authentication mode is invalid.");
+  }
+  if (configuration.mode === "fixed-proxy") {
+    if (configuration.authentication !== "deployment") {
+      throw new Error(
+        "The fixed-proxy table download route requires deployment authentication.",
+      );
+    }
+    if (!configuration.externalBaseUrl) {
+      throw new Error(
+        "A public HTTPS base URL is required for the fixed-proxy table download route.",
+      );
+    }
+    let url: URL;
+    try {
+      url = new URL(configuration.externalBaseUrl);
+    } catch {
+      throw new Error("The fixed-proxy table download URL is invalid.");
+    }
+    if (url.protocol !== "https:") {
+      throw new Error("The fixed-proxy table download URL must use HTTPS.");
+    }
+    if (url.username || url.password || url.hash) {
+      throw new Error(
+        "The fixed-proxy table download URL cannot contain credentials or a fragment.",
+      );
+    }
+    if (url.search) {
+      throw new Error(
+        "The fixed-proxy table download URL cannot contain query parameters.",
+      );
+    }
+    if (
+      url.pathname
+        .split("/")
+        .some((segment) => /^[0-9a-f]{8}-[0-9a-f]{4}-/.test(segment))
+    ) {
+      throw new Error(
+        "The fixed-proxy table download URL cannot contain a transfer token.",
+      );
+    }
+    return { ...configuration, externalBaseUrl: url.toString() };
+  }
+  return configuration;
+}
 
 function waitFor<T>(
   operation: PromiseLike<T>,
@@ -55,6 +156,17 @@ function closeServer(server: Server): Promise<void> {
 export class HostAttachmentDownloadTarget implements Disposable {
   private servers = new Set<Server>();
   private controllers = new Set<AbortController>();
+  private readonly configuration: HostAttachmentDownloadConfiguration;
+
+  public constructor(
+    configuration: Partial<HostAttachmentDownloadConfiguration> = {},
+  ) {
+    this.configuration = validateConfiguration({
+      ...defaultConfiguration,
+      ...readConfiguration(),
+      ...configuration,
+    });
+  }
 
   public async download(
     fileName: string,
@@ -143,17 +255,27 @@ export class HostAttachmentDownloadTarget implements Disposable {
           });
           await new Promise<void>((resolve, reject) => {
             server?.once("error", reject);
-            server?.listen(0, "127.0.0.1", resolve);
+            const { listenHost, listenPort } = this.configuration;
+            server?.listen(
+              this.configuration.mode === "fixed-proxy" ? listenPort : 0,
+              listenHost,
+              resolve,
+            );
           });
 
           const address = server.address();
           if (!address || typeof address === "string") {
             throw new Error("The download server did not start correctly.");
           }
-          const externalBase = await waitFor(
-            env.asExternalUri(Uri.parse(`http://localhost:${address.port}/`)),
-            controller.signal,
-          );
+          const externalBase =
+            this.configuration.mode === "fixed-proxy"
+              ? Uri.parse(this.configuration.externalBaseUrl)
+              : await waitFor(
+                  env.asExternalUri(
+                    Uri.parse(`http://localhost:${address.port}/`),
+                  ),
+                  controller.signal,
+                );
           const query = new URLSearchParams(externalBase.query);
           query.set("token", downloadToken);
           const externalUri = externalBase.with({

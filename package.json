@@ -481,6 +481,46 @@
               "type": "string"
             }
           },
+          "SAS.tableDownload.hostAttachment.mode": {
+            "order": 2,
+            "type": "string",
+            "enum": [
+              "external-uri",
+              "fixed-proxy"
+            ],
+            "default": "external-uri",
+            "description": "%configuration.SAS.tableDownload.hostAttachment.mode%"
+          },
+          "SAS.tableDownload.hostAttachment.listenHost": {
+            "order": 3,
+            "type": "string",
+            "default": "127.0.0.1",
+            "description": "%configuration.SAS.tableDownload.hostAttachment.listenHost%"
+          },
+          "SAS.tableDownload.hostAttachment.listenPort": {
+            "order": 4,
+            "type": "number",
+            "default": 0,
+            "minimum": 0,
+            "maximum": 65535,
+            "description": "%configuration.SAS.tableDownload.hostAttachment.listenPort%"
+          },
+          "SAS.tableDownload.hostAttachment.externalBaseUrl": {
+            "order": 5,
+            "type": "string",
+            "default": "",
+            "description": "%configuration.SAS.tableDownload.hostAttachment.externalBaseUrl%"
+          },
+          "SAS.tableDownload.hostAttachment.authentication": {
+            "order": 6,
+            "type": "string",
+            "enum": [
+              "none",
+              "deployment"
+            ],
+            "default": "none",
+            "description": "%configuration.SAS.tableDownload.hostAttachment.authentication%"
+          },
           "SAS.notebook.export.includeLog": {
             "order": 10,
             "type": "boolean",
