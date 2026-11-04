@@ -3,8 +3,12 @@
 import * as vscode from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
+import { isAxiosError } from "axios";
+
 import { LogLine, RunResult } from "../../connection";
 import { getSession } from "../../connection";
+import { useRunStore } from "../../store";
+import { appendExecutionLogFn, appendSessionLogFn } from "../logViewer";
 import { SASCodeDocument } from "../utils/SASCodeDocument";
 import { getCodeDocumentConstructionParameters } from "../utils/SASCodeDocumentHelper";
 import { Deferred, deferred } from "../utils/deferred";
@@ -58,12 +62,20 @@ export class NotebookController {
   }
 
   private async _executeCells(cells: vscode.NotebookCell[]): Promise<void> {
+    if (cells.length === 0 || useRunStore.getState().isExecutingCode) {
+      return;
+    }
+
     this._interrupted = undefined;
     const cancellation = new vscode.CancellationTokenSource();
     this._cancellation = cancellation;
 
+    const { setIsExecutingCode } = useRunStore.getState();
     try {
+      setIsExecutingCode(true);
+      vscode.commands.executeCommand("setContext", "SAS.running", true);
       const session = getSession();
+      session.onSessionLogFn = appendSessionLogFn;
       await session.setup();
       for (const cell of cells) {
         await this._doExecution(cell);
@@ -78,6 +90,8 @@ export class NotebookController {
       this._interrupted?.resolve();
       this._cancellation = undefined;
       cancellation.dispose();
+      setIsExecutingCode(false);
+      vscode.commands.executeCommand("setContext", "SAS.running", false);
     }
   }
 
@@ -119,6 +133,7 @@ export class NotebookController {
       session.onExecutionLogFn = (logLines) => {
         if (collecting) {
           logs = logs.concat(logLines);
+          appendExecutionLogFn(logLines);
         }
       };
       this._running = true;
@@ -188,28 +203,72 @@ export class NotebookController {
           }
         }
       } else {
-        // Existing SAS / SQL / R behavior
-        this.appendRawOutput(result, logs, outputItems);
+        this.appendRawOutput(result, isPythonCell ? logs : [], outputItems);
+        if (!isPythonCell) {
+          success = !logs.some((line) => line.type === "error");
+        }
       }
 
-      // Only create a NotebookCellOutput when there is something to show.
-      // Passing an empty array to replaceOutput removes all output and avoids
-      // the blank gap that VS Code renders when a cell has an empty output item.
-      if (outputItems.length > 0) {
-        execution.replaceOutput([new vscode.NotebookCellOutput(outputItems)]);
-      } else {
-        execution.replaceOutput([]);
-      }
+      execution.replaceOutput(
+        outputItems.map((item) => new vscode.NotebookCellOutput([item])),
+      );
       execution.end(success, Date.now());
     } catch (error) {
       if (this.endInterruptedExecution(execution)) {
         return;
       }
-      execution.replaceOutput([
-        new vscode.NotebookCellOutput([
-          vscode.NotebookCellOutputItem.error(error),
-        ]),
-      ]);
+      if (isPythonCell) {
+        const outputs: vscode.NotebookCellOutput[] = [];
+        if (logs.length > 0) {
+          outputs.push(
+            new vscode.NotebookCellOutput([
+              vscode.NotebookCellOutputItem.json(
+                logs,
+                "application/vnd.sas.compute.log.lines",
+              ),
+            ]),
+          );
+        }
+        outputs.push(
+          new vscode.NotebookCellOutput([
+            vscode.NotebookCellOutputItem.error(error),
+          ]),
+        );
+        execution.replaceOutput(outputs);
+      } else {
+        const context = [
+          error instanceof Error
+            ? error.message
+            : vscode.l10n.t("Execution failed."),
+        ];
+        if (isAxiosError(error)) {
+          if (error.response?.status) {
+            context.push(`HTTP ${error.response.status}`);
+          }
+          const data = error.response?.data;
+          if (typeof data?.errorCode === "number") {
+            context.push(`Compute error ${data.errorCode}`);
+          }
+          if (typeof data?.message === "string") {
+            context.push(data.message);
+          }
+          if (Array.isArray(data?.details)) {
+            context.push(
+              ...data.details.filter(
+                (detail: unknown) => typeof detail === "string",
+              ),
+            );
+          }
+        }
+        appendExecutionLogFn([{ type: "error", line: context.join("\n") }]);
+        execution.appendOutput(
+          new vscode.NotebookCellOutput([
+            vscode.NotebookCellOutputItem.text(
+              vscode.l10n.t("Execution failed. See SAS Log for details."),
+            ),
+          ]),
+        );
+      }
       execution.end(false, Date.now());
       if (!this._interrupted) {
         this._interrupted = deferred();
@@ -249,12 +308,14 @@ export class NotebookController {
       );
     }
 
-    outputItems.push(
-      vscode.NotebookCellOutputItem.json(
-        logs,
-        "application/vnd.sas.compute.log.lines",
-      ),
-    );
+    if (logs.length > 0) {
+      outputItems.push(
+        vscode.NotebookCellOutputItem.json(
+          logs,
+          "application/vnd.sas.compute.log.lines",
+        ),
+      );
+    }
   }
 
   private _interrupt() {

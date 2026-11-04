@@ -1,6 +1,7 @@
 // Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import {
+  Disposable,
   EventEmitter,
   Position,
   ProgressLocation,
@@ -186,15 +187,12 @@ export async function runTask(
   closeEmitter?: EventEmitter<number>,
   taskLabel?: string,
 ): Promise<void> {
-  return _runTask(codeDoc, messageEmitter, closeEmitter, taskLabel)
-    .catch((err) => {
+  return _runTask(codeDoc, messageEmitter, closeEmitter, taskLabel).catch(
+    (err) => {
       onRunError(err);
       throw err;
-    })
-    .finally(() => {
-      setIsExecutingCode(false);
-      commands.executeCommand("setContext", "SAS.running", false);
-    });
+    },
+  );
 }
 
 async function _runTask(
@@ -213,52 +211,56 @@ async function _runTask(
   }
 
   setIsExecutingCode(true);
-  commands.executeCommand("setContext", "SAS.running", true);
+  let closeSubscription: Disposable | undefined;
+  try {
+    commands.executeCommand("setContext", "SAS.running", true);
 
-  let cancelled = false;
-  const session = getSession();
-  closeEmitter.event(async (e) => {
-    if (e > 0) {
-      cancelled = true;
-      await session.cancel();
-    }
+    let cancelled = false;
+    const session = getSession();
+    closeSubscription = closeEmitter.event(async (e) => {
+      if (e > 0) {
+        cancelled = true;
+        await session.cancel();
+      }
+    });
 
+    session.onExecutionLogFn = sasDiagnostic.generateLogFn(
+      codeDoc,
+      appendExecutionLogFn,
+    );
+    session.onSessionLogFn = appendSessionLogFn;
+
+    const fullPath = codeDoc.getFileName();
+    const fileName = basename(fullPath, extname(fullPath));
+    setFileName(fileName);
+
+    messageEmitter.fire(`${l10n.t("Connecting to SAS session...")}\r\n`);
+    !cancelled && (await session.setup(true));
+
+    messageEmitter.fire(`${l10n.t("SAS code running...")}\r\n`);
+    return cancelled
+      ? undefined
+      : await session
+          .run(codeDoc.getWrappedCode(), {
+            baseDirectory: codeDoc.getBaseDirectory(),
+          })
+          .then((results) => {
+            const outputHtml = isOutputHtmlEnabled();
+
+            if (outputHtml && results.html5) {
+              messageEmitter.fire(l10n.t("Show results...") + "\r\n");
+              showResult(
+                results.html5,
+                undefined,
+                l10n.t("Result: {result}", { result: taskLabel }),
+              );
+            }
+          });
+  } finally {
+    closeSubscription?.dispose();
     setIsExecutingCode(false);
     commands.executeCommand("setContext", "SAS.running", false);
-  });
-
-  session.onExecutionLogFn = sasDiagnostic.generateLogFn(
-    codeDoc,
-    appendExecutionLogFn,
-  );
-  session.onSessionLogFn = appendSessionLogFn;
-
-  const fullPath = codeDoc.getFileName();
-  const fileName = basename(fullPath, extname(fullPath));
-  setFileName(fileName);
-
-  messageEmitter.fire(`${l10n.t("Connecting to SAS session...")}\r\n`);
-  !cancelled && (await session.setup(true));
-
-  messageEmitter.fire(`${l10n.t("SAS code running...")}\r\n`);
-  return cancelled
-    ? undefined
-    : session
-        .run(codeDoc.getWrappedCode(), {
-          baseDirectory: codeDoc.getBaseDirectory(),
-        })
-        .then((results) => {
-          const outputHtml = isOutputHtmlEnabled();
-
-          if (outputHtml && results.html5) {
-            messageEmitter.fire(l10n.t("Show results...") + "\r\n");
-            showResult(
-              results.html5,
-              undefined,
-              l10n.t("Result: {result}", { result: taskLabel }),
-            );
-          }
-        });
+  }
 }
 
 const isErrorRep = (err: unknown): err is ErrorRepresentation => {
