@@ -13,8 +13,6 @@ import {
   workspace,
 } from "vscode";
 
-import { randomUUID } from "crypto";
-
 import { profileConfig } from "../../commands/profile";
 import { onDidChangeSession } from "../../connection/session";
 import DataViewer from "../../panels/DataViewer";
@@ -22,14 +20,13 @@ import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import { treeViewSelections } from "../utils/treeViewSelections";
-import { BrowserDownloadChunkBuffer } from "./BrowserFileDownloadTarget/BrowserDownloadChunkBuffer";
 import { BrowserFileDownloadTarget } from "./BrowserFileDownloadTarget/BrowserFileDownloadTarget";
-import { MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES } from "./BrowserFileDownloadTarget/constants";
+import { BrowserFileTableDownloadTarget } from "./BrowserFileTableDownloadTarget";
+import { FileSystemTableDownloadTarget } from "./FileSystemTableDownloadTarget";
 import { HostAttachmentDownloadTarget } from "./HostAttachmentDownloadTarget";
 import LibraryAdapterFactory from "./LibraryAdapterFactory";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
-import { NodeFileDownloadTarget } from "./NodeFileDownloadTarget";
 import PaginatedResultSet from "./PaginatedResultSet";
 import { Messages } from "./const";
 import { LibraryAdapter, LibraryItem, TableColumn, TableData } from "./types";
@@ -40,7 +37,6 @@ class LibraryNavigator implements SubscriptionProvider {
   private webviewManager: WebViewManager;
   private browserFileDownloadTarget: BrowserFileDownloadTarget;
   private hostAttachmentDownloadTarget: HostAttachmentDownloadTarget;
-  private nodeFileDownloadTarget: NodeFileDownloadTarget;
   private browserFileExportInProgress = false;
 
   constructor(context: ExtensionContext) {
@@ -55,7 +51,6 @@ class LibraryNavigator implements SubscriptionProvider {
       this.webviewManager,
     );
     this.hostAttachmentDownloadTarget = new HostAttachmentDownloadTarget();
-    this.nodeFileDownloadTarget = new NodeFileDownloadTarget();
   }
 
   public getSubscriptions(): Disposable[] {
@@ -182,8 +177,10 @@ class LibraryNavigator implements SubscriptionProvider {
               return;
             }
 
-            await this.nodeFileDownloadTarget.write(uri, (writeChunk) =>
-              this.libraryDataProvider.writeTableContents(item, writeChunk),
+            await new FileSystemTableDownloadTarget(uri).download(
+              fileName,
+              (signal) =>
+                this.libraryDataProvider.createTableExport(item, signal),
             );
           } catch (error) {
             await window.showErrorMessage(
@@ -327,90 +324,12 @@ class LibraryNavigator implements SubscriptionProvider {
     }
     const destination = choice;
 
-    const transferId = randomUUID();
-    const controller = new AbortController();
-    const panelClosed = this.browserFileDownloadTarget.onDidClose(() =>
-      controller.abort(new Error(l10n.t("The download panel was closed."))),
+    await new BrowserFileTableDownloadTarget(
+      this.browserFileDownloadTarget,
+      destination,
+    ).download(defaultFileName, (signal) =>
+      this.libraryDataProvider.createTableExport(item, signal),
     );
-    let opened = false;
-    let finished = false;
-    try {
-      await this.browserFileDownloadTarget.setStatus(
-        l10n.t("Preparing the CSV export..."),
-        "notStarted",
-      );
-      await this.browserFileDownloadTarget.open(
-        destination.token,
-        transferId,
-        destination.fileName,
-      );
-      opened = true;
-      await this.browserFileDownloadTarget.setStatus(
-        l10n.t("Streaming the CSV to your computer..."),
-        "inProgress",
-      );
-      const chunkBuffer = new BrowserDownloadChunkBuffer(
-        MAX_BROWSER_DOWNLOAD_CHUNK_SIZE_BYTES,
-        async (chunk, signal) => {
-          await this.browserFileDownloadTarget.waitUntilVisible(signal);
-          await this.browserFileDownloadTarget.write(transferId, chunk, signal);
-        },
-      );
-      const completed = await this.libraryDataProvider.writeTableContents(
-        item,
-        (chunk, signal) => chunkBuffer.write(chunk, signal),
-        controller.signal,
-      );
-      if (completed) {
-        await chunkBuffer.flush(controller.signal);
-      }
-      await this.browserFileDownloadTarget.finish(transferId, completed);
-      finished = true;
-      if (!completed) {
-        await this.browserFileDownloadTarget.setStatus(
-          l10n.t("Download canceled."),
-          "canceled",
-        );
-        return;
-      }
-      await this.browserFileDownloadTarget.setStatus(
-        l10n.t("Download complete. You can close this tab."),
-        "completed",
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (opened && !finished) {
-        try {
-          await this.browserFileDownloadTarget.finish(transferId, false);
-          finished = true;
-        } catch {
-          // Closing the panel also closes the browser writer.
-        }
-      }
-      if (!controller.signal.aborted) {
-        await this.browserFileDownloadTarget.setStatus(
-          l10n.t("Export failed: {message}", { message }),
-          "failed",
-        );
-        throw error;
-      }
-    } finally {
-      panelClosed.dispose();
-      if (opened && !finished) {
-        try {
-          await this.browserFileDownloadTarget.finish(transferId, false);
-        } catch {
-          // The panel may have been closed while the export was running.
-        }
-      }
-      try {
-        await this.browserFileDownloadTarget.discardDestination(
-          destination.token,
-        );
-      } catch {
-        // The panel was already disposed.
-      }
-    }
   }
 
   private defaultDownloadUri(fileName: string): Uri {

@@ -6,8 +6,10 @@ import type { Disposable } from "vscode";
 import { randomUUID } from "crypto";
 import { createServer } from "http";
 import type { Server } from "http";
+import type { RequestListener } from "http";
 import { pipeline } from "stream/promises";
 
+import type { TableDownloadTarget } from "./TableDownloadTarget";
 import type { TableExport } from "./types";
 
 const timeoutMs = 5 * 60 * 1000;
@@ -153,7 +155,86 @@ function closeServer(server: Server): Promise<void> {
   });
 }
 
-export class HostAttachmentDownloadTarget implements Disposable {
+interface PublishedRoute {
+  server: Server;
+  url: Uri;
+}
+
+interface RoutePublication {
+  publish(token: string, handler: RequestListener): Promise<PublishedRoute>;
+}
+
+class ExternalUriRoutePublication implements RoutePublication {
+  public constructor(
+    private readonly configuration: HostAttachmentDownloadConfiguration,
+    private readonly signal: AbortSignal,
+  ) {}
+
+  public async publish(
+    token: string,
+    handler: RequestListener,
+  ): Promise<PublishedRoute> {
+    const server = createServer(handler);
+    await new Promise<void>((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, this.configuration.listenHost, resolve);
+    });
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("The download server did not start correctly.");
+    }
+    const base = await waitFor(
+      env.asExternalUri(Uri.parse(`http://localhost:${address.port}/`)),
+      this.signal,
+    );
+    return {
+      server,
+      url: base.with({
+        path: `${base.path.replace(/\/+$/, "")}/${token}`,
+        query: addTokenQuery(base.query, token),
+      }),
+    };
+  }
+}
+
+class FixedProxyRoutePublication implements RoutePublication {
+  public constructor(
+    private readonly configuration: HostAttachmentDownloadConfiguration,
+  ) {}
+
+  public async publish(
+    token: string,
+    handler: RequestListener,
+  ): Promise<PublishedRoute> {
+    const server = createServer(handler);
+    await new Promise<void>((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(
+        this.configuration.listenPort,
+        this.configuration.listenHost,
+        resolve,
+      );
+    });
+    const base = Uri.parse(this.configuration.externalBaseUrl);
+    return {
+      server,
+      url: base.with({
+        path: `${base.path.replace(/\/+$/, "")}/${token}`,
+        query: addTokenQuery(base.query, token),
+      }),
+    };
+  }
+}
+
+function addTokenQuery(query: string, token: string): string {
+  const parameters = new URLSearchParams(query);
+  parameters.set("token", token);
+  return parameters.toString();
+}
+
+export class HostAttachmentDownloadTarget
+  implements Disposable, TableDownloadTarget
+{
   private servers = new Set<Server>();
   private controllers = new Set<AbortController>();
   private readonly configuration: HostAttachmentDownloadConfiguration;
@@ -206,7 +287,17 @@ export class HostAttachmentDownloadTarget implements Disposable {
         try {
           const downloadToken = randomUUID();
           let claimed = false;
-          server = createServer((request, response) => {
+          const route =
+            this.configuration.mode === "fixed-proxy"
+              ? new FixedProxyRoutePublication(this.configuration)
+              : new ExternalUriRoutePublication(
+                  this.configuration,
+                  controller.signal,
+                );
+          const routeHandler = (
+            request: Parameters<RequestListener>[0],
+            response: Parameters<RequestListener>[1],
+          ) => {
             const requestUrl = new URL(request.url ?? "/", "http://localhost");
             const pathToken = requestUrl.pathname
               .split("/")
@@ -247,41 +338,15 @@ export class HostAttachmentDownloadTarget implements Disposable {
               signal: controller.signal,
             });
             void transfer.then(resolveCompleted, rejectCompleted);
-          });
+          };
+          const published = await route.publish(downloadToken, routeHandler);
+          server = published.server;
           this.servers.add(server);
           server.on("error", (error) => {
             controller.abort(error);
             rejectCompleted(error);
           });
-          await new Promise<void>((resolve, reject) => {
-            server?.once("error", reject);
-            const { listenHost, listenPort } = this.configuration;
-            server?.listen(
-              this.configuration.mode === "fixed-proxy" ? listenPort : 0,
-              listenHost,
-              resolve,
-            );
-          });
-
-          const address = server.address();
-          if (!address || typeof address === "string") {
-            throw new Error("The download server did not start correctly.");
-          }
-          const externalBase =
-            this.configuration.mode === "fixed-proxy"
-              ? Uri.parse(this.configuration.externalBaseUrl)
-              : await waitFor(
-                  env.asExternalUri(
-                    Uri.parse(`http://localhost:${address.port}/`),
-                  ),
-                  controller.signal,
-                );
-          const query = new URLSearchParams(externalBase.query);
-          query.set("token", downloadToken);
-          const externalUri = externalBase.with({
-            path: `${externalBase.path.replace(/\/+$/, "")}/${downloadToken}`,
-            query: query.toString(),
-          });
+          const externalUri = published.url;
 
           exported = await waitFor(
             createExport(controller.signal),

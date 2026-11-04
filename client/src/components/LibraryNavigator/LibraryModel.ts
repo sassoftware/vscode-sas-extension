@@ -40,8 +40,13 @@ class LibraryModel {
     item: LibraryItem,
     signal: AbortSignal,
   ): Promise<TableExport> {
-    this.assertTableExportSupported();
-    return this.libraryAdapter.createTableExport(item, signal);
+    if (
+      this.libraryAdapter?.createTableExport &&
+      this.libraryAdapter.supportsTableExport !== false
+    ) {
+      return this.libraryAdapter.createTableExport(item, signal);
+    }
+    return this.createPagedTableExport(item, signal);
   }
 
   private createPagedTableExport(
