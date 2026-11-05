@@ -88,7 +88,7 @@ class LibraryNavigator implements SubscriptionProvider {
             item.uid,
           );
           // if we are opening a .sas7bdat file, we want the tab label
-          // to match the file name that was just openend, not our
+          // to match the file name that was just opened, not our
           // temp table that we create on the fly
           if (options?.fileName) {
             this.webviewManager.panels[item.uid].getPanel().title =
