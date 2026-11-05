@@ -97,6 +97,12 @@ export class BrowserFileWriter {
       if (errorName(error) === "AbortError") {
         return { kind: "canceled" };
       }
+      if (errorName(error) === "SecurityError") {
+        return {
+          kind: "unsupported",
+          error: this.messages.unsupportedFilePicker,
+        };
+      }
       return {
         kind: "failed",
         error: this.messages.selectionFailed.replace("{error}", () =>

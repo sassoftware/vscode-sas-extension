@@ -308,6 +308,18 @@ class LibraryNavigator implements SubscriptionProvider {
     }
     this.libraryDataProvider.assertTableExportSupported();
 
+    if (
+      workspace
+        .getConfiguration("SAS.tableDownload")
+        .get("hostAttachment.force", false)
+    ) {
+      await this.hostAttachmentDownloadTarget.download(
+        defaultFileName,
+        (signal) => this.libraryDataProvider.createTableExport(item, signal),
+      );
+      return;
+    }
+
     const choice = await this.browserFileDownloadTarget.chooseLocalFile(
       defaultFileName,
       `${item.library}.${item.name}`,

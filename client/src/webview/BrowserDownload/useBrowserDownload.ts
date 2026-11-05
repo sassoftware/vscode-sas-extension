@@ -235,14 +235,12 @@ export function useBrowserDownload(): {
     }
     if (choice.kind === "failed" || choice.kind === "unsupported") {
       dispatch({ type: "picker-notice", message: choice.error });
-      if (choice.kind === "unsupported") {
-        api.postMessage({
-          type: "destination",
-          choiceId: current.choiceId,
-          kind: "unsupported",
-          error: choice.error,
-        });
-      }
+      api.postMessage({
+        type: "destination",
+        choiceId: current.choiceId,
+        kind: "unsupported",
+        error: choice.error,
+      });
       return;
     }
 
