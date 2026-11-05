@@ -1,13 +1,22 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { l10n, window } from "vscode";
+import { commands, l10n, window } from "vscode";
 
 import { expect } from "chai";
 import * as sinon from "sinon";
 
+import { profileConfig } from "../../../src/commands/profile";
 import ContentNavigator from "../../../src/components/ContentNavigator";
 import { Messages } from "../../../src/components/ContentNavigator/const";
-import { ContentItem } from "../../../src/components/ContentNavigator/types";
+import {
+  ContentItem,
+  ContentSourceType,
+} from "../../../src/components/ContentNavigator/types";
+import LibraryAdapterFactory from "../../../src/components/LibraryNavigator/LibraryAdapterFactory";
+import LibraryModel from "../../../src/components/LibraryNavigator/LibraryModel";
+import { LibraryItem } from "../../../src/components/LibraryNavigator/types";
+import { ConnectionType } from "../../../src/components/profile";
+import RestLibraryAdapter from "../../../src/connection/rest/RestLibraryAdapter";
 
 interface DeleteState {
   resource: ContentItem;
@@ -34,6 +43,87 @@ const callConfirmDelete = (deleteStates: DeleteState[]) => {
   const navigator = Object.create(ContentNavigator.prototype);
   return navigator.confirmDelete(deleteStates);
 };
+
+describe("ContentNavigator dataset opening", () => {
+  let navigator: ReturnType<typeof Object.create>;
+  let acquire: sinon.SinonStub;
+  let execute: sinon.SinonStub;
+  let getTables: sinon.SinonStub;
+  let showError: sinon.SinonStub;
+  let deleteLibrary: sinon.SinonStub;
+  const table: LibraryItem = {
+    uid: "_XTMP000.CLASS",
+    id: "CLASS",
+    name: "CLASS",
+    library: "_XTMP000",
+    type: "table",
+    readOnly: true,
+  };
+
+  beforeEach(() => {
+    sinon.stub(profileConfig, "getActiveProfile").returns("test");
+    sinon.stub(profileConfig, "getProfileByName").returns({
+      connectionType: ConnectionType.Rest,
+      endpoint: "https://example.test",
+    });
+    const adapter = new RestLibraryAdapter();
+    sinon.stub(LibraryAdapterFactory.prototype, "create").returns(adapter);
+    acquire = sinon.stub(adapter, "acquireTemporaryLibrary");
+    deleteLibrary = sinon.stub().resolves();
+    acquire.resolves({ name: "_TEMP1", delete: deleteLibrary });
+    getTables = sinon
+      .stub(LibraryModel.prototype, "getTables")
+      .resolves([table]);
+    execute = sinon.stub(commands, "executeCommand").resolves();
+    showError = sinon.stub(window, "showErrorMessage");
+    navigator = Object.create(ContentNavigator.prototype);
+    navigator.sourceType = ContentSourceType.SASServer;
+    navigator.contentDataProvider = {
+      getPathOfItem: sinon.stub().resolves("/data/class.SAS7BDAT"),
+    };
+  });
+
+  afterEach(() => sinon.restore());
+
+  it("opens the matching dataset through the existing Data Viewer", async () => {
+    await navigator.openDataset(createItem("class.SAS7BDAT"));
+    expect(acquire.calledOnceWithExactly("/data")).to.equal(true);
+    expect(execute.firstCall.args[0]).to.equal("SAS.viewTable");
+    expect(execute.firstCall.args[1]).to.deep.equal(table);
+    expect(execute.firstCall.args[3]).to.be.a("function");
+    expect(execute.firstCall.args[4].fileName).to.equal("class.SAS7BDAT");
+    expect(showError.called).to.equal(false);
+    expect(deleteLibrary.called).to.equal(false);
+    await execute.firstCall.args[4].onClose();
+    expect(deleteLibrary.calledOnce).to.equal(true);
+  });
+
+  it("reports missing datasets", async () => {
+    getTables.resolves([]);
+    await navigator.openDataset(createItem("class.sas7bdat"));
+    expect(showError.calledOnce).to.equal(true);
+    expect(showError.firstCall.args[0]).to.contain("was not found");
+    expect(execute.called).to.equal(false);
+  });
+
+  it("reports table lookup or opening failures", async () => {
+    getTables.rejects(new Error("Cannot list tables"));
+    await navigator.openDataset(createItem("class.sas7bdat"));
+    expect(showError.firstCall.args[0]).to.contain("Cannot list tables");
+
+    getTables.resolves([table]);
+    execute.rejects(new Error("Cannot open viewer"));
+    await navigator.openDataset(createItem("class.sas7bdat"));
+    expect(showError.secondCall.args[0]).to.contain("Cannot open viewer");
+  });
+
+  it("does not interpret a SAS Content URI as a server filesystem path", async () => {
+    navigator.sourceType = ContentSourceType.SASContent;
+    await navigator.openDataset(createItem("class.sas7bdat"));
+    expect(acquire.called).to.equal(false);
+    expect(showError.calledOnce).to.equal(true);
+  });
+});
 
 describe("ContentNavigator confirmDelete", () => {
   afterEach(() => {
