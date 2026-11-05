@@ -13,15 +13,28 @@ table exports:
 
 ## Configuration
 
-Set these extension settings in the deployment that uses a fixed proxy:
+Set these deployment environment variables to select fixed-proxy mode:
+
+```text
+SAS_EXT_PROXY_HOST=127.0.0.1
+SAS_EXT_PROXY_PORT=46005
+SAS_EXT_PROXY_BASE_URL=https://ide.example.invalid/sas-download/
+```
+
+All three variables are required and must be non-empty. If none are set, the
+extension uses the normal `external-uri` route and the settings below remain
+available as the workspace fallback. Partial or empty environment configuration
+fails with an actionable error. The environment values take precedence over
+workspace settings.
+
+The equivalent extension settings are:
 
 ```json
 {
   "SAS.tableDownload.hostAttachment.mode": "fixed-proxy",
   "SAS.tableDownload.hostAttachment.listenHost": "127.0.0.1",
   "SAS.tableDownload.hostAttachment.listenPort": 46005,
-  "SAS.tableDownload.hostAttachment.externalBaseUrl": "https://ide.example.invalid/sas-download/",
-  "SAS.tableDownload.hostAttachment.authentication": "deployment"
+  "SAS.tableDownload.hostAttachment.externalBaseUrl": "https://ide.example.invalid/sas-download/"
 }
 ```
 
@@ -29,11 +42,6 @@ The external base URL must use HTTPS and must not contain credentials, a query,
 fragment, or a transfer token. The extension appends an opaque, short-lived,
 single-use transfer token to the path and query used by the attachment route.
 The public URL must not be derived from the workbench origin.
-
-Fixed-proxy mode requires `authentication: "deployment"`. This is an explicit
-administrator declaration that the proxy preserves the same user/session
-boundary as the workbench or provides an equivalent authorization boundary. The
-extension cannot infer that guarantee from the URL or listener itself.
 
 ## Proxy Contract
 

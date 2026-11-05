@@ -1,4 +1,4 @@
-import { CancellationTokenSource, env, window } from "vscode";
+import { CancellationTokenSource, env, window, workspace } from "vscode";
 
 import { expect } from "chai";
 import { get } from "http";
@@ -6,7 +6,10 @@ import { createServer } from "net";
 import * as sinon from "sinon";
 import { Readable } from "stream";
 
-import { HostAttachmentDownloadTarget } from "../../../src/components/LibraryNavigator/HostAttachmentDownloadTarget";
+import {
+  HostAttachmentDownloadTarget,
+  readHostAttachmentDownloadConfiguration,
+} from "../../../src/components/LibraryNavigator/HostAttachmentDownloadTarget";
 
 async function getAvailablePort(): Promise<number> {
   const server = createServer();
@@ -35,6 +38,131 @@ describe("HostAttachmentDownloadTarget", () => {
   });
 
   afterEach(() => sandbox.restore());
+
+  it("selects fixed-proxy mode when all proxy environment variables are set", () => {
+    sandbox.stub(workspace, "getConfiguration").returns({
+      get: (_key: string, defaultValue: unknown) => defaultValue,
+    } as ReturnType<typeof workspace.getConfiguration>);
+
+    expect(
+      readHostAttachmentDownloadConfiguration({
+        SAS_EXT_PROXY_HOST: "0.0.0.0",
+        SAS_EXT_PROXY_PORT: "46005",
+        SAS_EXT_PROXY_BASE_URL: "https://ide.example.test/download/",
+      }),
+    ).to.deep.equal({
+      mode: "fixed-proxy",
+      listenHost: "0.0.0.0",
+      listenPort: 46005,
+      externalBaseUrl: "https://ide.example.test/download/",
+    });
+  });
+
+  it("rejects the legacy mode environment variable", () => {
+    sandbox.stub(workspace, "getConfiguration").returns({
+      get: (_key: string, defaultValue: unknown) => defaultValue,
+    } as ReturnType<typeof workspace.getConfiguration>);
+
+    expect(() =>
+      readHostAttachmentDownloadConfiguration({
+        SAS_TABLE_DOWNLOAD_HOST_ATTACHMENT_MODE: "fixed-proxy",
+      }),
+    ).to.throw("is no longer supported");
+  });
+
+  for (const [name, environment] of [
+    [
+      "host",
+      {
+        SAS_EXT_PROXY_PORT: "46005",
+        SAS_EXT_PROXY_BASE_URL: "https://ide.example.test/download/",
+      },
+    ],
+    [
+      "port",
+      {
+        SAS_EXT_PROXY_HOST: "0.0.0.0",
+        SAS_EXT_PROXY_BASE_URL: "https://ide.example.test/download/",
+      },
+    ],
+    [
+      "base URL",
+      { SAS_EXT_PROXY_HOST: "0.0.0.0", SAS_EXT_PROXY_PORT: "46005" },
+    ],
+  ] as const) {
+    it(`rejects incomplete proxy environment configuration without ${name}`, () => {
+      sandbox.stub(workspace, "getConfiguration").returns({
+        get: (_key: string, defaultValue: unknown) => defaultValue,
+      } as ReturnType<typeof workspace.getConfiguration>);
+
+      expect(() =>
+        readHostAttachmentDownloadConfiguration(environment),
+      ).to.throw("must be configured together");
+    });
+  }
+
+  it("rejects empty proxy environment values", () => {
+    sandbox.stub(workspace, "getConfiguration").returns({
+      get: (_key: string, defaultValue: unknown) => defaultValue,
+    } as ReturnType<typeof workspace.getConfiguration>);
+
+    expect(() =>
+      readHostAttachmentDownloadConfiguration({
+        SAS_EXT_PROXY_HOST: "",
+        SAS_EXT_PROXY_PORT: "46005",
+        SAS_EXT_PROXY_BASE_URL: "https://ide.example.test/download/",
+      }),
+    ).to.throw("non-empty values");
+  });
+
+  it("keeps settings as the fallback when environment variables are absent", () => {
+    sandbox.stub(workspace, "getConfiguration").returns({
+      get: (key: string, defaultValue: unknown) =>
+        key === "hostAttachment.listenPort" ? 46005 : defaultValue,
+    } as ReturnType<typeof workspace.getConfiguration>);
+
+    expect(readHostAttachmentDownloadConfiguration({})).to.include({
+      mode: "external-uri",
+      listenHost: "127.0.0.1",
+      listenPort: 46005,
+      externalBaseUrl: "",
+    });
+  });
+
+  it("overrides conflicting settings with complete deployment environment variables", () => {
+    sandbox.stub(workspace, "getConfiguration").returns({
+      get: (key: string, defaultValue: unknown) =>
+        ({
+          "hostAttachment.mode": "external-uri",
+          "hostAttachment.listenHost": "127.0.0.1",
+          "hostAttachment.listenPort": 1234,
+          "hostAttachment.externalBaseUrl": "",
+        })[key] ?? defaultValue,
+    } as ReturnType<typeof workspace.getConfiguration>);
+
+    expect(
+      readHostAttachmentDownloadConfiguration({
+        SAS_EXT_PROXY_HOST: "0.0.0.0",
+        SAS_EXT_PROXY_PORT: "46005",
+        SAS_EXT_PROXY_BASE_URL: "https://ide.example.test/download/",
+      }),
+    ).to.include({
+      mode: "fixed-proxy",
+      listenHost: "0.0.0.0",
+      listenPort: 46005,
+    });
+  });
+
+  it("rejects an invalid configured route mode", () => {
+    sandbox.stub(workspace, "getConfiguration").returns({
+      get: (key: string, defaultValue: unknown) =>
+        key === "hostAttachment.mode" ? "invalid" : defaultValue,
+    } as ReturnType<typeof workspace.getConfiguration>);
+
+    expect(() => readHostAttachmentDownloadConfiguration({})).to.throw(
+      "route mode is invalid",
+    );
+  });
 
   it("prepares the export before opening the attachment URL", async () => {
     const events: string[] = [];
@@ -106,7 +234,6 @@ describe("HostAttachmentDownloadTarget", () => {
       listenHost: "127.0.0.1",
       listenPort: port,
       externalBaseUrl: `https://download.example.test:${port}/sas-download/`,
-      authentication: "deployment",
     });
     await target.download("WORK.TABLE.csv", async () => ({
       stream: Readable.from(["header\n", "value\n"]),
@@ -129,9 +256,20 @@ describe("HostAttachmentDownloadTarget", () => {
           mode: "fixed-proxy",
           listenPort: 0,
           externalBaseUrl: "https://download.example.test/sas-download/",
-          authentication: "deployment",
         }),
     ).to.throw("listener port is invalid");
+  });
+
+  it("rejects invalid fixed proxy listener hosts", () => {
+    expect(
+      () =>
+        new HostAttachmentDownloadTarget({
+          mode: "fixed-proxy",
+          listenHost: "invalid host",
+          listenPort: 46005,
+          externalBaseUrl: "https://download.example.test/sas-download/",
+        }),
+    ).to.throw("listener host is required");
   });
 
   it("rejects public URLs that contain credentials or query parameters", () => {
@@ -142,19 +280,7 @@ describe("HostAttachmentDownloadTarget", () => {
           listenPort: 46005,
           externalBaseUrl:
             "https://user:password@download.example.test/sas-download/?token=secret",
-          authentication: "deployment",
         }),
     ).to.throw("credentials or a fragment");
-  });
-
-  it("rejects fixed proxy mode without deployment authentication", () => {
-    expect(
-      () =>
-        new HostAttachmentDownloadTarget({
-          mode: "fixed-proxy",
-          listenPort: 46005,
-          externalBaseUrl: "https://download.example.test/sas-download/",
-        }),
-    ).to.throw("requires deployment authentication");
   });
 });

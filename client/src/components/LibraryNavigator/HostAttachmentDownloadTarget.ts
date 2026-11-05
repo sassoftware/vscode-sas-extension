@@ -7,6 +7,7 @@ import { randomUUID } from "crypto";
 import { createServer } from "http";
 import type { Server } from "http";
 import type { RequestListener } from "http";
+import { isIP } from "net";
 import { pipeline } from "stream/promises";
 
 import type { TableDownloadTarget } from "./TableDownloadTarget";
@@ -21,7 +22,6 @@ export interface HostAttachmentDownloadConfiguration {
   listenHost: string;
   listenPort: number;
   externalBaseUrl: string;
-  authentication: "deployment" | "none";
 }
 
 const defaultConfiguration: HostAttachmentDownloadConfiguration = {
@@ -29,17 +29,73 @@ const defaultConfiguration: HostAttachmentDownloadConfiguration = {
   listenHost: "127.0.0.1",
   listenPort: 0,
   externalBaseUrl: "",
-  authentication: "none",
 };
 
-function readConfiguration(): HostAttachmentDownloadConfiguration {
+const environmentVariables = {
+  listenHost: "SAS_EXT_PROXY_HOST",
+  listenPort: "SAS_EXT_PROXY_PORT",
+  externalBaseUrl: "SAS_EXT_PROXY_BASE_URL",
+} as const;
+const legacyModeEnvironmentVariable = "SAS_TABLE_DOWNLOAD_HOST_ATTACHMENT_MODE";
+
+type ConfigurationEnvironment = Record<string, string | undefined>;
+
+function readMode(value: string): HostAttachmentDownloadMode {
+  if (value === "external-uri" || value === "fixed-proxy") {
+    return value;
+  }
+  throw new Error("The table download route mode is invalid.");
+}
+
+export function readHostAttachmentDownloadConfiguration(
+  environment: ConfigurationEnvironment = typeof process === "undefined"
+    ? {}
+    : process.env,
+): HostAttachmentDownloadConfiguration {
   const configuration = workspace.getConfiguration("SAS.tableDownload");
+  if (environment[legacyModeEnvironmentVariable] !== undefined) {
+    throw new Error(
+      `${legacyModeEnvironmentVariable} is no longer supported; configure all three SAS_EXT_PROXY_* variables instead.`,
+    );
+  }
+  const proxyValues = [
+    environment[environmentVariables.listenHost],
+    environment[environmentVariables.listenPort],
+    environment[environmentVariables.externalBaseUrl],
+  ];
+  const configuredProxyValues = proxyValues.filter(
+    (value) => value !== undefined,
+  );
+  if (
+    configuredProxyValues.length > 0 &&
+    (configuredProxyValues.length !== proxyValues.length ||
+      proxyValues.some((value) => value === ""))
+  ) {
+    throw new Error(
+      "SAS_EXT_PROXY_HOST, SAS_EXT_PROXY_PORT, and SAS_EXT_PROXY_BASE_URL must be configured together with non-empty values.",
+    );
+  }
+  const fixedProxyConfigured =
+    configuredProxyValues.length === proxyValues.length;
   return {
-    mode: configuration.get("hostAttachment.mode", "external-uri"),
-    listenHost: configuration.get("hostAttachment.listenHost", "127.0.0.1"),
-    listenPort: configuration.get("hostAttachment.listenPort", 0),
-    externalBaseUrl: configuration.get("hostAttachment.externalBaseUrl", ""),
-    authentication: configuration.get("hostAttachment.authentication", "none"),
+    mode: fixedProxyConfigured
+      ? "fixed-proxy"
+      : readMode(
+          configuration.get<HostAttachmentDownloadMode>(
+            "hostAttachment.mode",
+            "external-uri",
+          ),
+        ),
+    listenHost:
+      environment[environmentVariables.listenHost] ??
+      configuration.get("hostAttachment.listenHost", "127.0.0.1"),
+    listenPort: Number(
+      environment[environmentVariables.listenPort] ??
+        configuration.get("hostAttachment.listenPort", 0),
+    ),
+    externalBaseUrl:
+      environment[environmentVariables.externalBaseUrl] ??
+      configuration.get("hostAttachment.externalBaseUrl", ""),
   };
 }
 
@@ -56,7 +112,14 @@ function validateConfiguration(
   ) {
     throw new Error("The table download listener port is invalid.");
   }
-  if (!configuration.listenHost) {
+  if (
+    !configuration.listenHost ||
+    /\s/.test(configuration.listenHost) ||
+    (isIP(configuration.listenHost) === 0 &&
+      !/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(
+        configuration.listenHost,
+      ))
+  ) {
     throw new Error("The table download listener host is required.");
   }
   if (
@@ -65,18 +128,7 @@ function validateConfiguration(
   ) {
     throw new Error("The table download route mode is invalid.");
   }
-  if (
-    configuration.authentication !== "deployment" &&
-    configuration.authentication !== "none"
-  ) {
-    throw new Error("The table download authentication mode is invalid.");
-  }
   if (configuration.mode === "fixed-proxy") {
-    if (configuration.authentication !== "deployment") {
-      throw new Error(
-        "The fixed-proxy table download route requires deployment authentication.",
-      );
-    }
     if (!configuration.externalBaseUrl) {
       throw new Error(
         "A public HTTPS base URL is required for the fixed-proxy table download route.",
@@ -244,7 +296,7 @@ export class HostAttachmentDownloadTarget
   ) {
     this.configuration = validateConfiguration({
       ...defaultConfiguration,
-      ...readConfiguration(),
+      ...readHostAttachmentDownloadConfiguration(),
       ...configuration,
     });
   }
