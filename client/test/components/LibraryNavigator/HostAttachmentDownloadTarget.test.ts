@@ -58,18 +58,6 @@ describe("HostAttachmentDownloadTarget", () => {
     });
   });
 
-  it("rejects the legacy mode environment variable", () => {
-    sandbox.stub(workspace, "getConfiguration").returns({
-      get: (_key: string, defaultValue: unknown) => defaultValue,
-    } as ReturnType<typeof workspace.getConfiguration>);
-
-    expect(() =>
-      readHostAttachmentDownloadConfiguration({
-        SAS_TABLE_DOWNLOAD_HOST_ATTACHMENT_MODE: "fixed-proxy",
-      }),
-    ).to.throw("is no longer supported");
-  });
-
   for (const [name, environment] of [
     [
       "host",
@@ -115,18 +103,21 @@ describe("HostAttachmentDownloadTarget", () => {
     ).to.throw("non-empty values");
   });
 
-  it("keeps settings as the fallback when environment variables are absent", () => {
-    sandbox.stub(workspace, "getConfiguration").returns({
-      get: (key: string, defaultValue: unknown) =>
-        key === "hostAttachment.listenPort" ? 46005 : defaultValue,
-    } as ReturnType<typeof workspace.getConfiguration>);
+  it("uses built-in defaults when environment variables are absent", () => {
+    const getConfiguration = sandbox
+      .stub(workspace, "getConfiguration")
+      .returns({
+        get: (key: string, defaultValue: unknown) =>
+          key === "hostAttachment.listenPort" ? 46005 : defaultValue,
+      } as ReturnType<typeof workspace.getConfiguration>);
 
     expect(readHostAttachmentDownloadConfiguration({})).to.include({
       mode: "external-uri",
       listenHost: "127.0.0.1",
-      listenPort: 46005,
+      listenPort: 0,
       externalBaseUrl: "",
     });
+    expect(getConfiguration.called).to.equal(false);
   });
 
   it("overrides conflicting settings with complete deployment environment variables", () => {
@@ -153,15 +144,18 @@ describe("HostAttachmentDownloadTarget", () => {
     });
   });
 
-  it("rejects an invalid configured route mode", () => {
-    sandbox.stub(workspace, "getConfiguration").returns({
-      get: (key: string, defaultValue: unknown) =>
-        key === "hostAttachment.mode" ? "invalid" : defaultValue,
-    } as ReturnType<typeof workspace.getConfiguration>);
+  it("ignores the removed VS Code route mode setting", () => {
+    const getConfiguration = sandbox
+      .stub(workspace, "getConfiguration")
+      .returns({
+        get: (key: string, defaultValue: unknown) =>
+          key === "hostAttachment.mode" ? "invalid" : defaultValue,
+      } as ReturnType<typeof workspace.getConfiguration>);
 
-    expect(() => readHostAttachmentDownloadConfiguration({})).to.throw(
-      "route mode is invalid",
+    expect(readHostAttachmentDownloadConfiguration({}).mode).to.equal(
+      "external-uri",
     );
+    expect(getConfiguration.called).to.equal(false);
   });
 
   it("prepares the export before opening the attachment URL", async () => {

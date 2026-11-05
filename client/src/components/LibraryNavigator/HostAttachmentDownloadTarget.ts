@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { ProgressLocation, Uri, env, l10n, window, workspace } from "vscode";
+import { ProgressLocation, Uri, env, l10n, window } from "vscode";
 import type { Disposable } from "vscode";
 
 import { randomUUID } from "crypto";
@@ -36,28 +36,14 @@ const environmentVariables = {
   listenPort: "SAS_EXT_PROXY_PORT",
   externalBaseUrl: "SAS_EXT_PROXY_BASE_URL",
 } as const;
-const legacyModeEnvironmentVariable = "SAS_TABLE_DOWNLOAD_HOST_ATTACHMENT_MODE";
 
 type ConfigurationEnvironment = Record<string, string | undefined>;
-
-function readMode(value: string): HostAttachmentDownloadMode {
-  if (value === "external-uri" || value === "fixed-proxy") {
-    return value;
-  }
-  throw new Error("The table download route mode is invalid.");
-}
 
 export function readHostAttachmentDownloadConfiguration(
   environment: ConfigurationEnvironment = typeof process === "undefined"
     ? {}
     : process.env,
 ): HostAttachmentDownloadConfiguration {
-  const configuration = workspace.getConfiguration("SAS.tableDownload");
-  if (environment[legacyModeEnvironmentVariable] !== undefined) {
-    throw new Error(
-      `${legacyModeEnvironmentVariable} is no longer supported; configure all three SAS_EXT_PROXY_* variables instead.`,
-    );
-  }
   const proxyValues = [
     environment[environmentVariables.listenHost],
     environment[environmentVariables.listenPort],
@@ -78,24 +64,17 @@ export function readHostAttachmentDownloadConfiguration(
   const fixedProxyConfigured =
     configuredProxyValues.length === proxyValues.length;
   return {
-    mode: fixedProxyConfigured
-      ? "fixed-proxy"
-      : readMode(
-          configuration.get<HostAttachmentDownloadMode>(
-            "hostAttachment.mode",
-            "external-uri",
-          ),
-        ),
+    mode: fixedProxyConfigured ? "fixed-proxy" : "external-uri",
     listenHost:
       environment[environmentVariables.listenHost] ??
-      configuration.get("hostAttachment.listenHost", "127.0.0.1"),
+      defaultConfiguration.listenHost,
     listenPort: Number(
       environment[environmentVariables.listenPort] ??
-        configuration.get("hostAttachment.listenPort", 0),
+        defaultConfiguration.listenPort,
     ),
     externalBaseUrl:
       environment[environmentVariables.externalBaseUrl] ??
-      configuration.get("hostAttachment.externalBaseUrl", ""),
+      defaultConfiguration.externalBaseUrl,
   };
 }
 
