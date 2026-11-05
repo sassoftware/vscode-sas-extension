@@ -16,11 +16,16 @@ import { createWriteStream } from "fs";
 import * as path from "path";
 
 import { profileConfig } from "../../commands/profile";
+import { getSession } from "../../connection";
 import { onDidChangeSession } from "../../connection/session";
 import DataViewer from "../../panels/DataViewer";
 import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
+import {
+  type ActiveProfileSnapshot,
+  hasActiveProfileChanged,
+} from "../profile";
 import { treeViewSelections } from "../utils/treeViewSelections";
 import LibraryAdapterFactory from "./LibraryAdapterFactory";
 import LibraryDataProvider from "./LibraryDataProvider";
@@ -33,6 +38,7 @@ class LibraryNavigator implements SubscriptionProvider {
   private libraryDataProvider: LibraryDataProvider;
   private extensionUri: Uri;
   private webviewManager: WebViewManager;
+  private previousActiveProfile: ActiveProfileSnapshot;
 
   constructor(context: ExtensionContext) {
     this.extensionUri = context.extensionUri;
@@ -41,6 +47,7 @@ class LibraryNavigator implements SubscriptionProvider {
       context.extensionUri,
     );
     this.webviewManager = new WebViewManager();
+    this.previousActiveProfile = profileConfig.getActiveProfileSnapshot();
   }
 
   public getSubscriptions(): Disposable[] {
@@ -60,6 +67,9 @@ class LibraryNavigator implements SubscriptionProvider {
           paginator: PaginatedResultSet<{ data: TableData; error?: Error }>,
           fetchColumns: () => TableColumn[],
         ) => {
+          const attributes = await getSession().contextAttributes?.();
+          const allowDownload =
+            attributes?.allowDownload?.toLowerCase() !== "false";
           this.webviewManager.render(
             new DataViewer(
               this.extensionUri,
@@ -69,6 +79,7 @@ class LibraryNavigator implements SubscriptionProvider {
               (columnName: string) => {
                 this.displayTableProperties(item, true, columnName);
               },
+              allowDownload,
             ),
             item.uid,
           );
@@ -146,7 +157,20 @@ class LibraryNavigator implements SubscriptionProvider {
         );
       }),
       workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-        if (event.affectsConfiguration("SAS.connectionProfiles")) {
+        if (!event.affectsConfiguration("SAS.connectionProfiles")) {
+          return;
+        }
+
+        const currentActiveProfile = profileConfig.getActiveProfileSnapshot();
+
+        const activeProfileChanged = hasActiveProfileChanged(
+          this.previousActiveProfile,
+          currentActiveProfile,
+        );
+
+        this.previousActiveProfile = currentActiveProfile;
+
+        if (activeProfileChanged) {
           this.refresh();
         }
       }),
