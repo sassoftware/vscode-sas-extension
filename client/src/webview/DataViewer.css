@@ -172,12 +172,25 @@ button,
   background-size: 16px 16px;
 }
 
+.filter-refresh-container {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.filter-refresh-container .filter-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
 .filter-wrapper .filter-input {
   background: var(--vscode-input-background);
-  margin-bottom: 1rem;
+  margin-bottom: 0;
   position: relative;
 }
 .filter-wrapper .filter-input input {
+  display: block;
   color: var(--vscode-input-foreground);
   background: transparent;
   border: none;
@@ -224,6 +237,40 @@ button,
 .vscode-light .filter-wrapper .filter-input button.search {
   background: url(../../../icons/light/search.svg) center no-repeat;
   background-size: 16px 16px;
+}
+
+/* Refresh Data */
+
+.refresh-data-button {
+  width: 32px;
+  flex-shrink: 0;
+  align-self: stretch;
+  padding: 0;
+  border: none;
+  outline: 1px solid var(--vscode-editorGroup-border);
+  background-color: var(--vscode-input-background);
+  cursor: pointer;
+}
+
+.vscode-light .refresh-data-button {
+  background: var(--vscode-input-background)
+    url(../../../icons/light/refreshDataLight.svg) center no-repeat;
+  background-size: 16px 16px;
+}
+
+.vscode-dark .refresh-data-button,
+.vscode-high-contrast .refresh-data-button {
+  background: var(--vscode-input-background)
+    url(../../../icons/dark/refreshDataDark.svg) center no-repeat;
+  background-size: 16px 16px;
+}
+
+.refresh-data-button:hover {
+  background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.refresh-data-button:focus-visible {
+  outline: 1px solid var(--vscode-inputOption-activeBorder);
 }
 
 .vscode-dark .selection-rectangle {
