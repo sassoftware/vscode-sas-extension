@@ -101,27 +101,48 @@ One thing to keep in mind is that webviews have no built-in concept of localizat
 > When making changes to files in `client/src/webview`, there is no need to reload the entire extension to see changes take effect. Instead, you can simply close and re-open the webview to see changes.
 
 ## Procedure For Bugfixes And Features
-
-Here is the testing process proposal for this project (Code is merged in pull requests only, so testers only need to test "pull request"):
-
-- Developers add label "doc needed" and document content in readme in pull request if it needs document changes.
-- Developers link GitHub issues which are to be fixed in the pull request.
+ 
+Here is the testing process for this project. Code is merged through pull requests only, so testers only need to test pull requests.
+ 
+### Label Quick Reference
+ 
+| Label                    | Stage                                  | Added by  | When                                 |
+| ------------------------ | -------------------------------------- | --------- | ------------------------------------ |
+| `Ready for Test`         | PR is ready for testing (before merge) | Developer | Code review is approved              |
+| `In Test`                | Tester is testing the PR branch        | Tester    | Testing on the topic branch starts   |
+| `Ready for Merge`        | PR branch testing is done              | Tester    | All issues pass on the topic branch  |
+| `Ready for Verification` | Merged, needs checking on main         | Developer | The PR is merged to main             |
+| `In Verification`        | Tester is verifying on the main branch | Tester    | Verification on main starts          |
+| `Verified`               | Confirmed on main                      | Tester    | All issues pass on main              |
+| `Ready for Release`      | Release check passed                   | Tester    | Re-verified on the release candidate |
+ 
+Only one of these labels should be on a pull request at a time. When you add the next label, remove the previous one.
+ 
+### 1. Before Merge: Review and Testing
+ 
+- **Developers** add label `doc needed` and document content in readme in the pull request if it needs document changes.
+- **Developers** link GitHub issues which are to be fixed in the pull request.
 - Generally, we like to get two approvals on a pull request. A code review from a development contributor is required before the change can move to testing.
-- After code review is complete and approved, developers add label "verification-needed" in the pull request which are ready for testing.
-- Developers change assignee to David Bailey (davidbaileync) in the pull request.
-- David Bailey assigns it to the correct tester.
-- Developers or testers add acceptance criteria tests in the pull request and start testing.
-- Testers remove label "verification-needed" and add label "testing" in the pull request. Testers make sure readme is changed if label "doc needed" exists in this PR.
-  - If the issues are fixed in topic branch code, testers approve the pull request. Testers remove label "testing" and add label "test complete", then change assignee to developer.
-  - If the issues are not fixed in topic branch code, testers add comments in the pull request. Testers wait for developer's investigation and retest updated topic branch build. Once all the issues are fixed in new topic branch build, testers approve the pull request. Testers remove label "testing" and add label "test complete", then change assignee to developer.
-- Developers merge code to main branch and change assignee to tester.
-- Testers remove label "test complete" and verify the pull request in main branch. Testers verify readme content is changed and correct if label "doc needed" exists in this PR.
-  - If the issues are fixed in main branch, testers add label "verified" to the pull request, update the GitHub issue status to 'Done', and update the GitHub PR status to 'Done'. The pull request stays assigned to the tester until the release check.
+- **Developers** add `Ready for Test` after the code review is complete and approved, then change assignee to David Bailey (davidbaileync).
+- **David Bailey** assigns it to the correct tester.
+- **Developers or testers** add acceptance criteria tests in the pull request.
+- **Testers** replace `Ready for Test` with `In Test` and start testing. Testers make sure readme is changed if label `doc needed` exists in this PR.
+  - If the issues are fixed in topic branch code, testers approve the pull request, replace `In Test` with `Ready for Merge`, then change assignee to developer.
+  - If the issues are not fixed in topic branch code, testers add comments in the pull request, wait for the developer's investigation, and retest the updated topic branch build. Once all the issues are fixed, testers approve the pull request, replace `In Test` with `Ready for Merge`, then change assignee to developer.
+
+### 2. After Merge: Verification on Main
+ 
+- **Developers** merge code to main branch, replace `Ready for Merge` with `Ready for Verification`, and change assignee to tester.
+- **Testers** replace `Ready for Verification` with `In Verification` and verify the pull request in main branch. Testers verify readme content is changed and correct if label `doc needed` exists in this PR.
+  - If the issues are fixed in main branch, testers replace `In Verification` with `Verified`, update the GitHub issue status to 'Done', and update the GitHub PR status to 'Done'. The pull request stays assigned to the tester until the release check.
   - If the issues are not fixed in main branch, testers add comments in the pull request, reopen the pull request and assign it to developer.
-- Before each release, testers re-verify every pull request still assigned to them with label "verified", using the release candidate build.
-  - If no issues are found, testers remove label "verified", add label "ready for release", and assign the pull request and its GitHub issue to David Bailey (davidbaileync).
+
+### 3. Before Release: Release Check
+ 
+- **Testers** re-verify every pull request still assigned to them with label `Verified`, using the release candidate build.
+  - If no issues are found, testers replace `Verified` with `Ready for Release`, and assign the pull request and its GitHub issue to David Bailey (davidbaileync).
   - If an issue is found, testers add comments in the pull request, open a new issue or reopen the existing one, and assign it to the developer.
-- The manager adds the milestone and close the GitHub issue.
+- **The manager** adds the milestone and closes the GitHub issue.
 
 ![Testing process diagram](img/test-process-diagram.png)
 
