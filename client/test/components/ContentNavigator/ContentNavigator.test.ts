@@ -78,6 +78,7 @@ describe("ContentNavigator dataset opening", () => {
     showError = sinon.stub(window, "showErrorMessage");
     navigator = Object.create(ContentNavigator.prototype);
     navigator.sourceType = ContentSourceType.SASServer;
+    navigator.openDatasetViewers = new Map<string, string>();
     navigator.contentDataProvider = {
       getPathOfItem: sinon.stub().resolves("/data/class.SAS7BDAT"),
     };
