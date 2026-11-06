@@ -77,6 +77,8 @@ class ContentNavigator implements SubscriptionProvider {
   private contentModel: ContentModel;
   private sourceType: ContentNavigatorConfig["sourceType"];
   private temporaryImageUris = new Map<string, Uri>();
+  // Maps a dataset's server path to the uid of its open DataViewer panel.
+  private openDatasetViewers = new Map<string, string>();
   private treeIdentifier: ContentNavigatorConfig["treeIdentifier"];
   private previousActiveProfile: ActiveProfileSnapshot;
 
@@ -566,6 +568,19 @@ class ContentNavigator implements SubscriptionProvider {
       if (separator < 0) {
         throw new Error(l10n.t("Unable to determine the dataset folder."));
       }
+
+      const openViewerUid = this.openDatasetViewers.get(normalizedPath);
+      if (
+        openViewerUid &&
+        (await commands.executeCommand<boolean>(
+          "SAS.revealTable",
+          openViewerUid,
+        ))
+      ) {
+        return;
+      }
+      this.openDatasetViewers.delete(normalizedPath);
+
       const folderPath =
         separator === 0 ? "/" : normalizedPath.slice(0, separator);
       const adapter = new LibraryAdapterFactory().create(
@@ -592,12 +607,21 @@ class ContentNavigator implements SubscriptionProvider {
         );
       }
 
+      this.openDatasetViewers.set(normalizedPath, table.uid);
       await commands.executeCommand(
         "SAS.viewTable",
         table,
         model.getTableResultSet(table),
         () => model.fetchColumns(table),
-        { fileName: item.name, onClose: () => library.delete() },
+        {
+          fileName: item.name,
+          onClose: async () => {
+            if (this.openDatasetViewers.get(normalizedPath) === table.uid) {
+              this.openDatasetViewers.delete(normalizedPath);
+            }
+            await library.delete();
+          },
+        },
       );
     } catch (error) {
       void window.showErrorMessage(
