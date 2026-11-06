@@ -30,16 +30,19 @@ export async function refreshToken(
   await rootApi.headersForRoot().catch((err) => {
     if (err.response?.status === 401) {
       // token expired, try refresh token
+
+      const tokenParams = new URLSearchParams({
+        client_id: clientId,
+        grant_type: "refresh_token",
+        refresh_token: tokens?.refresh_token,
+      });
+
+      if (clientSecret) {
+        tokenParams.set("client_secret", clientSecret);
+      }
+
       return axios
-        .post(
-          `${config.endpoint}/SASLogon/oauth/token`,
-          new URLSearchParams({
-            client_id: clientId,
-            client_secret: clientSecret,
-            grant_type: "refresh_token",
-            refresh_token: tokens?.refresh_token,
-          }).toString(),
-        )
+        .post(`${config.endpoint}/SASLogon/oauth/token`, tokenParams.toString())
         .then(
           (res) => {
             tokens = res.data;
@@ -109,16 +112,21 @@ export async function getTokens(
     throw new Error(l10n.t("No authorization code"));
   }
 
+  const tokenParams = new URLSearchParams({
+    client_id: clientId,
+    grant_type: "authorization_code",
+    code: authCode,
+    code_verifier: codeVerifier,
+  });
+
+  if (clientSecret) {
+    tokenParams.set("client_secret", clientSecret);
+  }
+
   tokens = (
     await axios.post(
       `${config.endpoint}/SASLogon/oauth/token`,
-      new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        grant_type: "authorization_code",
-        code: authCode,
-        code_verifier: codeVerifier,
-      }).toString(),
+      tokenParams.toString(),
     )
   ).data;
   return tokens;
