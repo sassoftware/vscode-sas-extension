@@ -3,6 +3,7 @@
 import { expect } from "chai";
 import { SinonSandbox, createSandbox } from "sinon";
 
+import * as extensionContext from "../../../src/components/ExtensionContext";
 import { getSession } from "../../../src/connection/rest";
 import { ComputeServer } from "../../../src/connection/rest/server";
 import { ComputeSession } from "../../../src/connection/rest/session";
@@ -13,6 +14,7 @@ describe("REST connection", () => {
 
   beforeEach(() => {
     sandbox = createSandbox();
+    sandbox.stub(extensionContext, "setContextValue").resolves();
   });
 
   afterEach(() => {

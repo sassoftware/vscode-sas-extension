@@ -16,6 +16,7 @@ import {
   ProviderResult,
   TabInputNotebook,
   TabInputText,
+  TabInputWebview,
   TextDocument,
   TextDocumentContentProvider,
   TreeDataProvider,
@@ -318,54 +319,61 @@ class ContentDataProvider
       return;
     }
 
-    const newUri = newItem.vscUri;
-    const oldUriToNewUriMap = [[item.vscUri, newUri]];
-    const newItemIsContainer = getIsContainer(newItem);
-    if (closing !== true && !newItemIsContainer) {
-      await commands.executeCommand("vscode.open", newUri);
-    }
-    if (closing !== true && newItemIsContainer) {
-      const urisToOpen = getPreviouslyOpenedChildItems(
-        await this.getChildren(newItem),
-      );
-      for (const [, newUri] of urisToOpen) {
+    if (isDatasetFile(item.name)) {
+      await closeDatasetTabsIfOpen(item);
+      const commandPrefix = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}`;
+      await commands.executeCommand(`${commandPrefix}.openResource`, newItem);
+      return newItem.vscUri;
+    } else {
+      const newUri = newItem.vscUri;
+      const oldUriToNewUriMap = [[item.vscUri, newUri]];
+      const newItemIsContainer = getIsContainer(newItem);
+      if (closing !== true && !newItemIsContainer) {
         await commands.executeCommand("vscode.open", newUri);
       }
-      oldUriToNewUriMap.push(...urisToOpen);
-    }
-    oldUriToNewUriMap.forEach(([uri, newUri]) =>
-      this._onDidManipulateFile.fire({
-        type: "rename",
-        uri,
-        newUri,
-      }),
-    );
-    return newUri;
-
-    function getPreviouslyOpenedChildItems(childItems: ContentItem[]) {
-      const loadChildItems = closing !== true && newItemIsContainer;
-      if (!Array.isArray(removedTabUris) || !loadChildItems) {
-        return [];
+      if (closing !== true && newItemIsContainer) {
+        const urisToOpen = getPreviouslyOpenedChildItems(
+          await this.getChildren(newItem),
+        );
+        for (const [, newUri] of urisToOpen) {
+          await commands.executeCommand("vscode.open", newUri);
+        }
+        oldUriToNewUriMap.push(...urisToOpen);
       }
-      // Here's where things get a little weird. When we rename folders in
-      // sas content, we _don't_ close those files. It doesn't matter since
-      // their path isn't hierarchical. In sas file system, the path is hierarchical,
-      // thus we need to re-open all the closed files. This does that by getting
-      // children and comparing the removedTabUris
-      const filteredChildItems = childItems
-        .map((childItem) => {
-          const matchingUri = removedTabUris.find((uri) =>
-            uri.path.endsWith(childItem.name),
-          );
-          if (!matchingUri) {
-            return;
-          }
+      oldUriToNewUriMap.forEach(([uri, newUri]) =>
+        this._onDidManipulateFile.fire({
+          type: "rename",
+          uri,
+          newUri,
+        }),
+      );
+      return newUri;
 
-          return [matchingUri, childItem.vscUri];
-        })
-        .filter((exists) => exists);
+      function getPreviouslyOpenedChildItems(childItems: ContentItem[]) {
+        const loadChildItems = closing !== true && newItemIsContainer;
+        if (!Array.isArray(removedTabUris) || !loadChildItems) {
+          return [];
+        }
+        // Here's where things get a little weird. When we rename folders in
+        // sas content, we _don't_ close those files. It doesn't matter since
+        // their path isn't hierarchical. In sas file system, the path is hierarchical,
+        // thus we need to re-open all the closed files. This does that by getting
+        // children and comparing the removedTabUris
+        const filteredChildItems = childItems
+          .map((childItem) => {
+            const matchingUri = removedTabUris.find((uri) =>
+              uri.path.endsWith(childItem.name),
+            );
+            if (!matchingUri) {
+              return;
+            }
 
-      return filteredChildItems;
+            return [matchingUri, childItem.vscUri];
+          })
+          .filter((exists) => exists);
+
+        return filteredChildItems;
+      }
     }
   }
 
@@ -987,6 +995,25 @@ class ContentDataProvider
 }
 
 export default ContentDataProvider;
+
+const isDatasetFile = (name: string | undefined): boolean =>
+  !!name?.toLowerCase().endsWith(".sas7bdat");
+
+// Dataset files open in a data viewer webview whose tab label is the file name.
+const closeDatasetTabsIfOpen = async (item: ContentItem): Promise<boolean> => {
+  const tabs = window.tabGroups.all
+    .flatMap((tabGroup) => tabGroup.tabs)
+    .filter(
+      (tab) =>
+        tab.input instanceof TabInputWebview &&
+        tab.label.toLowerCase() === item.name.toLowerCase(),
+    );
+  if (tabs.length === 0) {
+    return false;
+  }
+  await window.tabGroups.close(tabs);
+  return true;
+};
 
 const closeFileIfOpen = (item: ContentItem): Promise<Uri[]> | boolean => {
   const tabs = getEditorTabsForItem(item);

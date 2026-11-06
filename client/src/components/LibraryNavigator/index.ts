@@ -55,7 +55,9 @@ class LibraryNavigator implements SubscriptionProvider {
       ...this.libraryDataProvider.getSubscriptions(),
       onDidChangeSession(() => {
         Object.values(this.webviewManager.panels).forEach((viewer) => {
-          if (viewer instanceof DataViewer) {
+          if (viewer.getPanel()?.title.toLowerCase().endsWith(".sas7bdat")) {
+            viewer.dispose();
+          } else if (viewer instanceof DataViewer) {
             viewer.invalidateColumns();
           }
         });
@@ -66,10 +68,12 @@ class LibraryNavigator implements SubscriptionProvider {
           item: LibraryItem,
           paginator: PaginatedResultSet<{ data: TableData; error?: Error }>,
           fetchColumns: () => TableColumn[],
+          options?: { fileName?: string; onClose?: () => Promise<void> },
         ) => {
           const attributes = await getSession().contextAttributes?.();
           const allowDownload =
             attributes?.allowDownload?.toLowerCase() !== "false";
+          const existing = this.webviewManager.panels[item.uid];
           this.webviewManager.render(
             new DataViewer(
               this.extensionUri,
@@ -83,8 +87,45 @@ class LibraryNavigator implements SubscriptionProvider {
             ),
             item.uid,
           );
+          // if we are opening a .sas7bdat file, we want the tab label
+          // to match the file name that was just opened, not our
+          // temp table that we create on the fly
+          if (options?.fileName) {
+            this.webviewManager.panels[item.uid].getPanel().title =
+              options.fileName;
+          }
+          if (
+            !existing &&
+            options?.onClose &&
+            options.fileName?.toLowerCase().endsWith(".sas7bdat")
+          ) {
+            const panel = this.webviewManager.panels[item.uid].getPanel();
+            panel.onDidDispose(async () => {
+              try {
+                await options.onClose();
+              } catch (error) {
+                void window.showErrorMessage(
+                  l10n.t(
+                    "Unable to delete temporary dataset library: {message}",
+                    {
+                      message:
+                        error instanceof Error ? error.message : String(error),
+                    },
+                  ),
+                );
+              }
+            });
+          }
         },
       ),
+      commands.registerCommand("SAS.revealTable", (uid: string): boolean => {
+        const viewer = this.webviewManager.panels[uid];
+        if (!viewer) {
+          return false;
+        }
+        viewer.display();
+        return true;
+      }),
       commands.registerCommand("SAS.refreshLibraries", () => this.refresh()),
       commands.registerCommand("SAS.deleteTable", async (item: LibraryItem) => {
         const selectedItems = treeViewSelections(

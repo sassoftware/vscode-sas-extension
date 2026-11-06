@@ -1,15 +1,17 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import type { SortModelItem } from "ag-grid-community";
-import { AxiosResponse } from "axios";
+import { AxiosResponse, isAxiosError } from "axios";
 
 import { getSession } from "..";
 import {
   LibraryAdapter,
   LibraryItem,
+  TEMP_TABLE_PREFIX,
   TableColumnCollection,
   TableData,
   TableQuery,
+  TemporaryLibrary,
 } from "../../components/LibraryNavigator/types";
 import { appendSessionLogFn } from "../../components/logViewer";
 import { baseFormatName } from "../../panels/columnIconClassifier";
@@ -62,6 +64,51 @@ class RestLibraryAdapter implements LibraryAdapter {
     }
 
     await this.connect();
+  }
+
+  public async acquireTemporaryLibrary(
+    path: string,
+  ): Promise<TemporaryLibrary> {
+    await this.setup();
+    const { data } = await this.dataAccessApi.getLibraries(
+      { sessionId: this.sessionId, start: 0, limit: 1000 },
+      {
+        ...requestOptions,
+        params: { filter: `startsWith($primary,name,'${TEMP_TABLE_PREFIX}')` },
+      },
+    );
+    const nextNumber =
+      data.items.reduce((greatest, library) => {
+        const match = /^_TEMP(\d+)$/i.exec(library.id || library.name);
+        return match ? Math.max(greatest, Number(match[1])) : greatest;
+      }, 0) + 1;
+
+    const name = `${TEMP_TABLE_PREFIX}${nextNumber}`;
+    await this.dataAccessApi.createLibrary({
+      sessionId: this.sessionId,
+      libraryRequest: {
+        name,
+        engine: "V9",
+        path,
+        options: ["ACCESS=READONLY"],
+      },
+    });
+    return {
+      name,
+      delete: async () => {
+        try {
+          await this.dataAccessApi.deleteLibrary({
+            sessionId: this.sessionId,
+            libref: name,
+          });
+        } catch (error) {
+          // A closed session or already released library needs no further cleanup.
+          if (!isAxiosError(error) || error.response?.status !== 404) {
+            throw error;
+          }
+        }
+      },
+    };
   }
 
   public async getRows(
