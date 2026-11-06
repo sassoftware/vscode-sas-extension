@@ -116,6 +116,45 @@ export class SymbolProvider {
     if (marker === "%") {
       return { name, kind: "macroProgram", range, declaration: false };
     }
+    const bareMacroVariableReference = this.getBareMacroVariableReferences(
+      line,
+    ).find((reference) => reference.start === start);
+    if (
+      bareMacroVariableReference &&
+      !this.isComment(position.line, bareMacroVariableReference.contextStart) &&
+      !this.isString(position.line, bareMacroVariableReference.contextStart)
+    ) {
+      return {
+        name: bareMacroVariableReference.name,
+        kind: "macroVariable",
+        range: this.range(
+          position.line,
+          start,
+          start + bareMacroVariableReference.name.length,
+        ),
+        declaration: false,
+        macroScopeKey: this.resolveMacroVariableScope(name, position),
+      };
+    }
+    const bareMacroProgramReference = this.getBareMacroProgramReferences(
+      line,
+    ).find((reference) => reference.start === start);
+    if (
+      bareMacroProgramReference &&
+      !this.isComment(position.line, bareMacroProgramReference.contextStart) &&
+      !this.isString(position.line, bareMacroProgramReference.contextStart)
+    ) {
+      return {
+        name: bareMacroProgramReference.name,
+        kind: "macroProgram",
+        range: this.range(
+          position.line,
+          start,
+          start + bareMacroProgramReference.name.length,
+        ),
+        declaration: false,
+      };
+    }
     const macroDeclaration = this.getMacroVariableDeclarationAt(
       position.line,
       start,
@@ -131,6 +170,26 @@ export class SymbolProvider {
           position,
           macroDeclaration.scope,
         ),
+      };
+    }
+    const macroFunctionReference = this.getMacroVariableFunctionReferences(
+      line,
+    ).find((reference) => reference.start === start);
+    if (
+      macroFunctionReference &&
+      !this.isComment(position.line, macroFunctionReference.functionStart) &&
+      !this.isString(position.line, macroFunctionReference.functionStart)
+    ) {
+      return {
+        name: macroFunctionReference.name,
+        kind: "macroVariable",
+        range: this.range(
+          position.line,
+          start,
+          start + macroFunctionReference.name.length,
+        ),
+        declaration: false,
+        macroScopeKey: this.resolveMacroVariableScope(name, position),
       };
     }
     if (this.isMacroProgramDeclaration(line, start, name)) {
@@ -212,6 +271,54 @@ export class SymbolProvider {
           });
         }
       }
+      for (const functionReference of this.getMacroVariableFunctionReferences(
+        line,
+      )) {
+        if (
+          functionReference.name.toLowerCase() !== name.toLowerCase() ||
+          this.isComment(lineNumber, functionReference.functionStart) ||
+          this.isString(lineNumber, functionReference.functionStart) ||
+          this.resolveMacroVariableScope(name, {
+            line: lineNumber,
+            character: functionReference.start,
+          }) !== macroScopeKey
+        ) {
+          continue;
+        }
+        result.push({
+          name,
+          kind: "macroVariable",
+          range: this.range(
+            lineNumber,
+            functionReference.start,
+            functionReference.start + functionReference.name.length,
+          ),
+          declaration: false,
+        });
+      }
+      for (const bareReference of this.getBareMacroVariableReferences(line)) {
+        if (
+          bareReference.name.toLowerCase() !== name.toLowerCase() ||
+          this.isComment(lineNumber, bareReference.contextStart) ||
+          this.isString(lineNumber, bareReference.contextStart) ||
+          this.resolveMacroVariableScope(name, {
+            line: lineNumber,
+            character: bareReference.start,
+          }) !== macroScopeKey
+        ) {
+          continue;
+        }
+        result.push({
+          name,
+          kind: "macroVariable",
+          range: this.range(
+            lineNumber,
+            bareReference.start,
+            bareReference.start + bareReference.name.length,
+          ),
+          declaration: false,
+        });
+      }
       for (const declaration of this.getMacroVariableDeclarations(line)) {
         if (
           declaration.name.toLowerCase() !== name.toLowerCase() ||
@@ -258,6 +365,24 @@ export class SymbolProvider {
             kind: "macroProgram",
             range: this.range(lineNumber, start, start + match[1].length),
             declaration: /^\s*%macro\b/i.test(line.slice(0, match.index)),
+          });
+        }
+      }
+      for (const bareReference of this.getBareMacroProgramReferences(line)) {
+        if (
+          bareReference.name.toLowerCase() === name.toLowerCase() &&
+          !this.isComment(lineNumber, bareReference.contextStart) &&
+          !this.isString(lineNumber, bareReference.contextStart)
+        ) {
+          result.push({
+            name,
+            kind: "macroProgram",
+            range: this.range(
+              lineNumber,
+              bareReference.start,
+              bareReference.start + bareReference.name.length,
+            ),
+            declaration: false,
           });
         }
       }
@@ -421,6 +546,21 @@ export class SymbolProvider {
       }
     }
 
+    const syslputRput = new RegExp(
+      `%(?:syslput|sysrput)\\s+(${identifier})\\s*=`,
+      "i",
+    ).exec(line);
+    if (syslputRput) {
+      const start =
+        syslputRput.index + syslputRput[0].lastIndexOf(syslputRput[1]);
+      declarations.push({
+        name: syslputRput[1],
+        start,
+        end: start + syslputRput[1].length,
+        scope: "symput",
+      });
+    }
+
     const macroHeader = /%macro\s+[A-Za-z_][A-Za-z0-9_]*\s*\(([^)]*)\)/i.exec(
       line,
     );
@@ -462,6 +602,97 @@ export class SymbolProvider {
     }
 
     return declarations;
+  }
+
+  private getMacroVariableFunctionReferences(
+    line: string,
+  ): Array<{ name: string; start: number; functionStart: number }> {
+    const references: Array<{
+      name: string;
+      start: number;
+      functionStart: number;
+    }> = [];
+    const matcher = new RegExp(
+      `\\b(?:symget|symexist)\\s*\\(\\s*(['"])(${identifier})\\1\\s*\\)`,
+      "gi",
+    );
+    for (const match of line.matchAll(matcher)) {
+      const nameStart = match.index! + match[0].lastIndexOf(match[2]);
+      references.push({
+        name: match[2],
+        start: nameStart,
+        functionStart: match.index!,
+      });
+    }
+    return references;
+  }
+
+  private getBareMacroVariableReferences(
+    line: string,
+  ): Array<{ name: string; start: number; contextStart: number }> {
+    const references: Array<{
+      name: string;
+      start: number;
+      contextStart: number;
+    }> = [];
+    const addNames = (source: string, sourceOffset: number) => {
+      for (const match of source.matchAll(new RegExp(identifier, "g"))) {
+        references.push({
+          name: match[0],
+          start: sourceOffset + match.index!,
+          contextStart: sourceOffset,
+        });
+      }
+    };
+
+    for (const match of line.matchAll(/%symdel\s+([^;/]+)/gi)) {
+      addNames(match[1], match.index! + match[0].indexOf(match[1]));
+    }
+    for (const match of line.matchAll(
+      /%(?:sysexist|symglobal|symlocal)\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)/gi,
+    )) {
+      const start = match.index! + match[0].lastIndexOf(match[1]);
+      references.push({
+        name: match[1],
+        start,
+        contextStart: match.index!,
+      });
+    }
+    return references;
+  }
+
+  private getBareMacroProgramReferences(
+    line: string,
+  ): Array<{ name: string; start: number; contextStart: number }> {
+    const references: Array<{
+      name: string;
+      start: number;
+      contextStart: number;
+    }> = [];
+    const addNames = (source: string, sourceOffset: number) => {
+      for (const match of source.matchAll(new RegExp(identifier, "g"))) {
+        references.push({
+          name: match[0],
+          start: sourceOffset + match.index!,
+          contextStart: sourceOffset,
+        });
+      }
+    };
+
+    for (const match of line.matchAll(/%sysmacdelete\s+([^;/]+)/gi)) {
+      addNames(match[1], match.index! + match[0].indexOf(match[1]));
+    }
+    for (const match of line.matchAll(
+      /%(?:sysmacexec|sysmacexist)\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)/gi,
+    )) {
+      const start = match.index! + match[0].lastIndexOf(match[1]);
+      references.push({
+        name: match[1],
+        start,
+        contextStart: match.index!,
+      });
+    }
+    return references;
   }
 
   private resolveMacroVariableScope(
