@@ -229,6 +229,7 @@
   "Unable to drag files from trash.": "Unable to drag files from trash.",
   "Unable to drop item \"{name}\".": "Unable to drop item \"{name}\".",
   "Unable to empty the recycle bin.": "Unable to empty the recycle bin.",
+  "Unable to fetch columns for table {tableName}.": "Unable to fetch columns for table {tableName}.",
   "Unable to load required libraries.": "Unable to load required libraries.",
   "Unable to open dataset: {message}": "Unable to open dataset: {message}",
   "Unable to rename \"{oldName}\" to \"{newName}\".": "Unable to rename \"{oldName}\" to \"{newName}\".",
