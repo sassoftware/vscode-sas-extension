@@ -37,6 +37,7 @@ import {
   isContainer,
   isItemInRecycleBin,
   isReference,
+  sortedContentItems,
 } from "../../components/ContentNavigator/utils";
 import { ProfileWithFileRootOptions } from "../../components/profile";
 import {
@@ -190,7 +191,7 @@ class RestContentAdapter implements ContentAdapter {
       },
     );
 
-    return items;
+    return sortedContentItems(items);
 
     function fetchFavoriteUri(childItem: ContentItem) {
       if (parentIdIsFavoritesFolder) {
