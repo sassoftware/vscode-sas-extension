@@ -1002,12 +1002,12 @@
         },
         {
           "command": "SAS.downloadTable",
-          "when": "viewItem =~ /table-/ && view == librarydataprovider && SAS.allowDownload",
+          "when": "viewItem =~ /table-/ && view == librarydataprovider && SAS.allowDownload && !listMultiSelection",
           "group": "download@0"
         },
         {
           "command": "SAS.showTableProperties",
-          "when": "viewItem =~ /table-/ && view == librarydataprovider",
+          "when": "viewItem =~ /table-/ && view == librarydataprovider && !listMultiSelection",
           "group": "properties@0"
         },
         {
