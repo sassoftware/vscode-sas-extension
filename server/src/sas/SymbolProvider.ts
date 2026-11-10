@@ -66,8 +66,8 @@ export class SymbolProvider {
     if (!symbol || !new RegExp(`^${identifier}$`).test(newName)) {
       return undefined;
     }
-    const edits = this.findSymbols(symbol).map((item) =>
-      TextEdit.replace(item.range, newName),
+    const edits = this.getReferences(uri, position, true).map((reference) =>
+      TextEdit.replace(reference.range, newName),
     );
     return { changes: { [uri]: edits } };
   }
@@ -215,7 +215,7 @@ export class SymbolProvider {
     }
     if (
       this.isNonVariableToken(position.line, start) ||
-      this.isFunctionCall(line, start, end, name)
+      this.isFunctionCall(line, end, name)
     ) {
       return undefined;
     }
@@ -254,7 +254,7 @@ export class SymbolProvider {
     ) {
       const line = this.model.getLine(lineNumber);
       for (const match of line.matchAll(reference)) {
-        const start = match.index! + 1;
+        const start = match.index + 1;
         if (
           !this.isComment(lineNumber, start) &&
           !this.isInSingleQuotedString(line, start) &&
@@ -358,7 +358,7 @@ export class SymbolProvider {
     ) {
       const line = this.model.getLine(lineNumber);
       for (const match of line.matchAll(reference)) {
-        const start = match.index! + 1;
+        const start = match.index + 1;
         if (!this.isComment(lineNumber, start)) {
           result.push({
             name,
@@ -455,12 +455,7 @@ export class SymbolProvider {
           item.range.start.line,
           item.range.start.character,
         ) &&
-        !this.isFunctionCall(
-          line,
-          item.range.start.character,
-          item.range.end.character,
-          name,
-        )
+        !this.isFunctionCall(line, item.range.end.character, name)
       );
     });
   }
@@ -475,7 +470,7 @@ export class SymbolProvider {
     for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++) {
       const line = this.model.getLine(lineNumber);
       for (const match of line.matchAll(matcher)) {
-        const start = match.index!;
+        const start = match.index;
         const marker = line.charAt(start - 1);
         if (
           marker !== "&" &&
@@ -517,8 +512,8 @@ export class SymbolProvider {
       for (const match of source.matchAll(matcher)) {
         declarations.push({
           name: match[0],
-          start: sourceOffset + match.index!,
-          end: sourceOffset + match.index! + match[0].length,
+          start: sourceOffset + match.index,
+          end: sourceOffset + match.index + match[0].length,
           scope,
         });
       }
@@ -539,7 +534,7 @@ export class SymbolProvider {
     }
 
     for (const match of line.matchAll(/%(global|local)\s+([^;]+);/gi)) {
-      const listStart = match.index! + match[0].indexOf(match[2]);
+      const listStart = match.index + match[0].indexOf(match[2]);
       const scope = match[1].toLowerCase();
       if (scope === "global" || scope === "local") {
         addNames(match[2], listStart, scope);
@@ -617,11 +612,11 @@ export class SymbolProvider {
       "gi",
     );
     for (const match of line.matchAll(matcher)) {
-      const nameStart = match.index! + match[0].lastIndexOf(match[2]);
+      const nameStart = match.index + match[0].lastIndexOf(match[2]);
       references.push({
         name: match[2],
         start: nameStart,
-        functionStart: match.index!,
+        functionStart: match.index,
       });
     }
     return references;
@@ -639,23 +634,23 @@ export class SymbolProvider {
       for (const match of source.matchAll(new RegExp(identifier, "g"))) {
         references.push({
           name: match[0],
-          start: sourceOffset + match.index!,
+          start: sourceOffset + match.index,
           contextStart: sourceOffset,
         });
       }
     };
 
     for (const match of line.matchAll(/%symdel\s+([^;/]+)/gi)) {
-      addNames(match[1], match.index! + match[0].indexOf(match[1]));
+      addNames(match[1], match.index + match[0].indexOf(match[1]));
     }
     for (const match of line.matchAll(
       /%(?:sysexist|symglobal|symlocal)\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)/gi,
     )) {
-      const start = match.index! + match[0].lastIndexOf(match[1]);
+      const start = match.index + match[0].lastIndexOf(match[1]);
       references.push({
         name: match[1],
         start,
-        contextStart: match.index!,
+        contextStart: match.index,
       });
     }
     return references;
@@ -673,23 +668,23 @@ export class SymbolProvider {
       for (const match of source.matchAll(new RegExp(identifier, "g"))) {
         references.push({
           name: match[0],
-          start: sourceOffset + match.index!,
+          start: sourceOffset + match.index,
           contextStart: sourceOffset,
         });
       }
     };
 
     for (const match of line.matchAll(/%sysmacdelete\s+([^;/]+)/gi)) {
-      addNames(match[1], match.index! + match[0].indexOf(match[1]));
+      addNames(match[1], match.index + match[0].indexOf(match[1]));
     }
     for (const match of line.matchAll(
       /%(?:sysmacexec|sysmacexist)\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)/gi,
     )) {
-      const start = match.index! + match[0].lastIndexOf(match[1]);
+      const start = match.index + match[0].lastIndexOf(match[1]);
       references.push({
         name: match[1],
         start,
-        contextStart: match.index!,
+        contextStart: match.index,
       });
     }
     return references;
@@ -857,12 +852,7 @@ export class SymbolProvider {
     ].includes(this.getTokenStyle(line, character) ?? "");
   }
 
-  private isFunctionCall(
-    line: string,
-    start: number,
-    end: number,
-    name: string,
-  ): boolean {
+  private isFunctionCall(line: string, end: number, name: string): boolean {
     let next = end;
     while (/\s/.test(line.charAt(next))) {
       next++;
