@@ -615,7 +615,7 @@
               }
             }
           },
-          "SAS.notebook.outputVisibility": {
+          "SAS.notebook.cleanOutput": {
             "order": 11,
             "type": "boolean",
             "default": false,
