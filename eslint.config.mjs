@@ -48,10 +48,10 @@ export default [
         ecmaFeatures: {
           jsx: true,
         },
-
         project: [
           "./tsconfig.json",
           "./client/tsconfig.json",
+          "./client/tsconfig.mocha.json",
           "./server/tsconfig.json",
         ],
       },

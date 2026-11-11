@@ -1,0 +1,189 @@
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+
+import { expect } from "chai";
+
+import useColumnPanelResize from "../../src/webview/ManageColumns/useColumnPanelResize";
+
+let capturedPointers = new WeakMap<HTMLElement, Set<number>>();
+
+const getCapturedPointers = (element: HTMLElement) => {
+  let pointers = capturedPointers.get(element);
+
+  if (!pointers) {
+    pointers = new Set<number>();
+    capturedPointers.set(element, pointers);
+  }
+
+  return pointers;
+};
+
+const TestComponent = () => {
+  const {
+    leftPanelRef,
+    rightPanelRef,
+    handleResizeStart,
+    handleResize,
+    handleResizeEnd,
+    handleResizeKeyDown,
+  } = useColumnPanelResize();
+
+  return (
+    <div data-testid="content">
+      <div ref={leftPanelRef} data-testid="left-panel" />
+
+      <div
+        data-testid="splitter"
+        role="separator"
+        tabIndex={0}
+        onPointerDown={handleResizeStart}
+        onPointerMove={handleResize}
+        onPointerUp={handleResizeEnd}
+        onPointerCancel={handleResizeEnd}
+        onKeyDown={handleResizeKeyDown}
+      />
+
+      <div ref={rightPanelRef} data-testid="right-panel" />
+    </div>
+  );
+};
+
+const setPanelWidths = (leftWidth: number, rightWidth: number) => {
+  const leftPanel = screen.getByTestId("left-panel");
+  const rightPanel = screen.getByTestId("right-panel");
+
+  leftPanel.getBoundingClientRect = () => new DOMRect(0, 0, leftWidth, 100);
+
+  rightPanel.getBoundingClientRect = () => new DOMRect(0, 0, rightWidth, 100);
+};
+
+describe("useColumnPanelResize", () => {
+  const pointerMethods = [
+    "setPointerCapture",
+    "hasPointerCapture",
+    "releasePointerCapture",
+  ] as const;
+
+  const originalDescriptors = new Map<string, PropertyDescriptor | undefined>();
+
+  before(() => {
+    for (const name of pointerMethods) {
+      originalDescriptors.set(
+        name,
+        Object.getOwnPropertyDescriptor(HTMLElement.prototype, name),
+      );
+    }
+
+    Object.defineProperty(HTMLElement.prototype, "setPointerCapture", {
+      configurable: true,
+      value: function (this: HTMLElement, pointerId: number) {
+        getCapturedPointers(this).add(pointerId);
+      },
+    });
+
+    Object.defineProperty(HTMLElement.prototype, "hasPointerCapture", {
+      configurable: true,
+      value: function (this: HTMLElement, pointerId: number) {
+        return getCapturedPointers(this).has(pointerId);
+      },
+    });
+
+    Object.defineProperty(HTMLElement.prototype, "releasePointerCapture", {
+      configurable: true,
+      value: function (this: HTMLElement, pointerId: number) {
+        getCapturedPointers(this).delete(pointerId);
+      },
+    });
+  });
+
+  beforeEach(() => {
+    capturedPointers = new WeakMap<HTMLElement, Set<number>>();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  after(() => {
+    for (const name of pointerMethods) {
+      const descriptor = originalDescriptors.get(name);
+
+      if (descriptor) {
+        Object.defineProperty(HTMLElement.prototype, name, descriptor);
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, name);
+      }
+    }
+  });
+
+  it("resizes the column panels with pointer movement", () => {
+    render(<TestComponent />);
+
+    setPanelWidths(400, 600);
+
+    const splitter = screen.getByTestId("splitter");
+    const content = screen.getByTestId("content");
+
+    fireEvent.pointerDown(splitter, {
+      pointerId: 1,
+      clientX: 400,
+    });
+
+    fireEvent.pointerMove(splitter, {
+      pointerId: 1,
+      clientX: 500,
+    });
+
+    expect(content.style.gridTemplateColumns).to.equal("50fr 8px 50fr");
+  });
+
+  it("limits pointer resize to the minimum panel ratio", () => {
+    render(<TestComponent />);
+
+    setPanelWidths(400, 600);
+
+    const splitter = screen.getByTestId("splitter");
+    const content = screen.getByTestId("content");
+
+    fireEvent.pointerDown(splitter, {
+      pointerId: 1,
+      clientX: 400,
+    });
+
+    fireEvent.pointerMove(splitter, {
+      pointerId: 1,
+      clientX: 0,
+    });
+
+    expect(content.style.gridTemplateColumns).to.equal("30fr 8px 70fr");
+  });
+
+  it("resizes the panels to the left with ArrowLeft", () => {
+    render(<TestComponent />);
+
+    setPanelWidths(400, 600);
+
+    const splitter = screen.getByTestId("splitter");
+    const content = screen.getByTestId("content");
+
+    fireEvent.keyDown(splitter, {
+      key: "ArrowLeft",
+    });
+
+    expect(content.style.gridTemplateColumns).to.equal("38.4fr 8px 61.6fr");
+  });
+
+  it("resizes the panels to the right with ArrowRight", () => {
+    render(<TestComponent />);
+
+    setPanelWidths(400, 600);
+
+    const splitter = screen.getByTestId("splitter");
+    const content = screen.getByTestId("content");
+
+    fireEvent.keyDown(splitter, {
+      key: "ArrowRight",
+    });
+
+    expect(content.style.gridTemplateColumns).to.equal("41.6fr 8px 58.4fr");
+  });
+});

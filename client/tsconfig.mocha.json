@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "out-react",
+    "jsx": "react-jsx",
+    "types": ["node", "mocha"]
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "test/react/**/*.ts",
+    "test/react/**/*.tsx"
+  ],
+  "exclude": ["node_modules", ".vscode-test"]
+}
