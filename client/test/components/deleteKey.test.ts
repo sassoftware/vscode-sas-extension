@@ -34,6 +34,7 @@ import {
   LibraryAdapter,
   LibraryItem,
 } from "../../src/components/LibraryNavigator/types";
+import { WebViewManager } from "../../src/panels/WebviewManager";
 
 interface Manifest {
   contributes: {
@@ -149,8 +150,9 @@ describe("Navigator Delete key routing", () => {
     const navigator: LibraryNavigator = Object.create(
       LibraryNavigator.prototype,
     );
-    Object.defineProperty(navigator, "libraryDataProvider", {
-      value: provider,
+    Object.defineProperties(navigator, {
+      libraryDataProvider: { value: provider },
+      webviewManager: { value: new WebViewManager() },
     });
     subscriptions = navigator.getSubscriptions();
     return adapter;
