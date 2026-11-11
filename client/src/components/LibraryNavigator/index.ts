@@ -127,6 +127,14 @@ class LibraryNavigator implements SubscriptionProvider {
         return true;
       }),
       commands.registerCommand("SAS.refreshLibraries", () => this.refresh()),
+      commands.registerCommand("SAS.closeTable", (uid: string): boolean => {
+        const viewer = this.webviewManager.panels[uid];
+        if (!viewer) {
+          return false;
+        }
+        viewer.getPanel().dispose();
+        return true;
+      }),
       commands.registerCommand("SAS.deleteTable", async (item: LibraryItem) => {
         const selectedItems = treeViewSelections(
           this.libraryDataProvider.treeView,

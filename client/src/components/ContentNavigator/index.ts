@@ -90,6 +90,7 @@ class ContentNavigator implements SubscriptionProvider {
     );
     this.contentDataProvider = new ContentDataProvider(
       this.contentModel,
+      this.openDatasetViewers,
       context.extensionUri,
       config,
     );
