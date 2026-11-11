@@ -158,7 +158,7 @@ export const DataViewer = () => {
       />
       {columnMenu && <ColumnMenu {...columnMenu} />}
       <div
-        className={`ag-grid-wrapper ${theme}`}
+        className={`ag-grid-wrapper ${theme} ${allColumnsHidden ? "all-columns-hidden" : ""}`}
         style={gridStyles}
         onClick={() => columnMenu && dismissMenuWithoutFocus()}
         {...selectionRectangleHooks}
@@ -176,7 +176,9 @@ export const DataViewer = () => {
           rowModelType="infinite"
           theme="legacy"
           noRowsOverlayComponent={() =>
-            localize("No data matches the current filters.")
+            allColumnsHidden
+              ? null
+              : localize("No data matches the current filters.")
           }
           onDragStarted={() => setGridDragging(true)}
           onDragCancelled={() => setGridDragging(false)}
