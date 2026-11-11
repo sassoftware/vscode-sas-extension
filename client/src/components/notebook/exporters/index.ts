@@ -5,6 +5,7 @@ import type { LanguageClient } from "vscode-languageclient/node";
 
 import path from "path";
 
+import { getStoredSasLog } from "../Serializer";
 import { exportToHTML } from "./toHTML";
 import { exportToSAS } from "./toSAS";
 
@@ -96,6 +97,7 @@ export const saveOutput = async () => {
 
   let odsItem = null;
   let logItem = null;
+  const storedLog = getStoredSasLog(cell);
 
   for (const output of cell.outputs) {
     if (!odsItem) {
@@ -126,7 +128,7 @@ export const saveOutput = async () => {
     });
   }
 
-  if (logItem) {
+  if (storedLog?.length || logItem) {
     choices.push({
       label: l10n.t("Save Log"),
       outputType: "log",
@@ -152,10 +154,13 @@ export const saveOutput = async () => {
       fileName = `${path.basename(notebook.uri.path, ".sasnb")}_${l10n.t("output")}_${
         activeCell + 1
       }.html`;
-    } else if (exportChoice.outputType === "log" && logItem) {
-      const logs: Array<{ line: string; type: string }> = JSON.parse(
-        logItem.data.toString(),
-      );
+    } else if (
+      exportChoice.outputType === "log" &&
+      (storedLog?.length || logItem)
+    ) {
+      const logs: Array<{ line: string; type: string }> = storedLog?.length
+        ? storedLog
+        : JSON.parse(logItem?.data.toString() ?? "[]");
       content = logs.map((log) => log.line).join("\n");
       fileExtension = "log";
       fileName = `${path.basename(notebook.uri.path, ".sasnb")}_${l10n.t("output")}_${
