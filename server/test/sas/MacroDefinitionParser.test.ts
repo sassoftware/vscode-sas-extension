@@ -76,6 +76,24 @@ describe("parseMacroDefinitions", () => {
     );
   });
 
+  it("ignores options inside block comments", () => {
+    const macros = parseMacroDefinitions(
+      [
+        "%macro a /* /parmbuff */;%mend;",
+        "%macro b /* des='from comment' */;%mend;",
+        "%macro c /* no options here */ / pbuff des='real';%mend;",
+      ].join("\n"),
+    );
+    assert.deepEqual(
+      macros.map((m) => [m.name, m.parmbuff, m.description]),
+      [
+        ["a", undefined, undefined],
+        ["b", undefined, undefined],
+        ["c", true, "real"],
+      ],
+    );
+  });
+
   it("uses an immediately preceding comment as description", () => {
     const macros = parseMacroDefinitions(
       [

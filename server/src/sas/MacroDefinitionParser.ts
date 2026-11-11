@@ -21,10 +21,6 @@ export interface CustomMacro {
   sourceUri?: string; // stable identity used to exclude stale entries for the open file
 }
 
-export interface GetCustomMacrosResult {
-  macros: CustomMacro[];
-}
-
 const MACRO_NAME_REGEX = /^[A-Za-z_][A-Za-z0-9_]{0,31}$/;
 
 export function isValidMacroName(name: unknown): name is string {
@@ -35,6 +31,9 @@ const WORD_CHAR = /[A-Za-z0-9_]/;
 const WHITESPACE = /\s/;
 // characters that can follow "%" as a macro quoting escape, e.g. %' %( %,
 const ESCAPED_AFTER_PERCENT = "'\"(),;%&";
+// how far to look past "%" when reading the keyword that follows it;
+// only needs to cover the longest macro keyword we care about ("macro")
+const MACRO_KEYWORD_LOOKAHEAD = 40;
 
 interface Comment {
   text: string;
@@ -104,6 +103,52 @@ function findStatementEnd(text: string, start: number): number {
     }
   }
   return i;
+}
+
+/**
+ * Finds the "/" that starts the option list, ignoring "/" in quoted strings
+ * and the "/" that opens a block comment. Returns its index (or -1).
+ */
+function findOptionSlash(text: string, start: number, end: number): number {
+  let i = start;
+  while (i < end) {
+    const ch = text[i];
+    if (ch === "'" || ch === '"') {
+      i = skipString(text, i);
+    } else if (ch === "/" && text[i + 1] === "*") {
+      i = skipBlockComment(text, i);
+    } else if (ch === "/") {
+      return i;
+    } else {
+      i++;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Replaces block comments with blanks, keeping quoted strings and the
+ * original length so that indexes still line up with the input.
+ */
+function blankBlockComments(text: string): string {
+  let result = "";
+  let i = 0;
+  while (i < text.length) {
+    const ch = text[i];
+    if (ch === "'" || ch === '"') {
+      const end = skipString(text, i);
+      result += text.substring(i, end);
+      i = end;
+    } else if (ch === "/" && text[i + 1] === "*") {
+      const end = skipBlockComment(text, i);
+      result += " ".repeat(end - i);
+      i = end;
+    } else {
+      result += ch;
+      i++;
+    }
+  }
+  return result;
 }
 
 function cleanComment(raw: string): string | undefined {
@@ -215,11 +260,14 @@ function parseParameters(
   return { parameters, end: i };
 }
 
-function parseOptions(options: string): {
+function parseOptions(rawOptions: string): {
   parmbuff: boolean;
   description?: string;
 } {
-  // remove quoted strings first so that e.g. DES='use /PARMBUFF' does not
+  // blank out block comments first so that e.g. "/* /PARMBUFF */" or
+  // "/* des='x' */" is not read as an option
+  const options = blankBlockComments(rawOptions);
+  // remove quoted strings next so that e.g. DES='use /PARMBUFF' does not
   // turn on the flag, but keep the DES= value
   let description: string | undefined;
   const desMatch = /\bDES\s*=\s*(['"])/i.exec(options);
@@ -285,10 +333,11 @@ function parseDefinition(
   }
 
   const stmtEnd = findStatementEnd(text, i);
-  const rest = text.substring(i, stmtEnd);
-  const slash = rest.indexOf("/");
+  const slash = findOptionSlash(text, i, stmtEnd);
   if (slash !== -1) {
-    const { parmbuff, description } = parseOptions(rest.substring(slash + 1));
+    const { parmbuff, description } = parseOptions(
+      text.substring(slash + 1, stmtEnd),
+    );
     if (parmbuff) {
       macro.parmbuff = true;
     }
@@ -367,7 +416,7 @@ export function parseMacroDefinitions(
         continue;
       }
       const word = /^[A-Za-z_][A-Za-z0-9_]*/.exec(
-        text.substring(i + 1, i + 40),
+        text.substring(i + 1, i + MACRO_KEYWORD_LOOKAHEAD),
       )?.[0];
       if (word && word.toLowerCase() === "macro") {
         const { macro, end } = parseDefinition(text, i + 1 + word.length);

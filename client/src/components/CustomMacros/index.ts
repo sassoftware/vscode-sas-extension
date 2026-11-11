@@ -117,9 +117,7 @@ export class CustomMacroProvider implements Disposable {
         } else {
           const uris = [...this.pendingUris.values()];
           this.pendingUris.clear();
-          for (const uri of uris) {
-            await this.refreshFile(uri);
-          }
+          await Promise.all(uris.map((uri) => this.refreshFile(uri)));
         }
       }
       if (!this.disposed) {

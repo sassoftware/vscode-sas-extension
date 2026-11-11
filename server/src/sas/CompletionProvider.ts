@@ -30,6 +30,7 @@ import {
 import { Model } from "./Model";
 import { HelpData, LibCompleteItem, OptionValues } from "./SyntaxDataProvider";
 import { SyntaxProvider } from "./SyntaxProvider";
+import { Token } from "./formatter/parser";
 import { arrayToMap, getText } from "./utils";
 
 const ZONE_TYPE = CodeZoneManager.ZONE_TYPE;
@@ -278,7 +279,7 @@ function processLabelCase(label: string, prefix: string): string {
 }
 
 // token styles whose text must not be read as code when scanning a call
-const NON_CODE_STYLES = [
+const NON_CODE_STYLES: Token["type"][] = [
   "comment",
   "macro-comment",
   "string",
@@ -2240,6 +2241,12 @@ export class CompletionProvider {
     const positional = parameters.filter((parameter) => !parameter.keyword);
     const label = "%" + macro.name;
     let insertText = label;
+    // Only positional parameters become snippet tab stops: they are required
+    // and must be given in order. Keyword parameters are optional and already
+    // have defaults, so pre-filling them would force the user to delete the
+    // ones they do not want. Macros with only keyword parameters (or
+    // PARMBUFF) get empty parentheses with the cursor inside, and signature
+    // help lists every parameter while the call is typed.
     if (positional.length > 0) {
       insertText +=
         "(" +
