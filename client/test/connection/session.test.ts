@@ -6,18 +6,16 @@ import { Session, onDidChangeSession } from "../../src/connection/session";
 
 class MockSession extends Session {
   constructor(
-    protected readonly connectionMock: () => void,
+    protected readonly connectionMock: () => void | Promise<void>,
     protected readonly closeMock: () => void = () => {},
   ) {
     super();
   }
   protected async establishConnection(): Promise<void> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        this.connectionMock();
-        resolve();
-      }, 100);
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 100);
     });
+    await this.connectionMock();
   }
   protected _run(code: string, ...args: any[]): Promise<RunResult> {
     throw new Error("Method not implemented.");
@@ -33,6 +31,25 @@ class MockSession extends Session {
 }
 
 describe("Session test", () => {
+  for (const silent of [true, false]) {
+    it(`retries rejected setup (silent: ${silent})`, async () => {
+      const failure = new Error("Connection failed");
+      const connectionMock = sinon.stub();
+      connectionMock.onFirstCall().rejects(failure);
+      connectionMock.onSecondCall().resolves();
+      const session = new MockSession(connectionMock);
+
+      const error = await session.setup(silent).then(
+        () => undefined,
+        (error) => error,
+      );
+      expect(error).to.equal(failure);
+
+      await session.setup(silent);
+      expect(connectionMock.callCount).to.equal(2);
+    });
+  }
+
   it("triggers establish connection only once", async () => {
     const mockConnectionFn = sinon.mock();
     const mockSession = new MockSession(mockConnectionFn);

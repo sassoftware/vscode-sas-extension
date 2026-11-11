@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import { authentication, l10n } from "vscode";
 
+import { isAxiosError } from "axios";
+
 import { BaseConfig, RunResult } from "..";
 import { SASAuthProvider } from "../../components/AuthProvider";
 import {
@@ -38,6 +40,28 @@ class RestSession extends Session {
 
   public set config(value: Config) {
     this._config = value;
+  }
+
+  public async setup(silent?: boolean): Promise<void> {
+    try {
+      await super.setup(silent);
+    } catch (error) {
+      if (isAxiosError(error) && error.response?.data?.errorCode === 5113) {
+        await this.close();
+      }
+      throw error;
+    }
+  }
+
+  public async run(code: string, ...args: unknown[]): Promise<RunResult> {
+    try {
+      return await super.run(code, ...args);
+    } catch (error) {
+      if (isAxiosError(error) && error.response?.data?.errorCode === 5113) {
+        await this.close();
+      }
+      throw error;
+    }
   }
 
   public async contextAttributes(): Promise<SessionContextAttributes> {
@@ -92,9 +116,12 @@ class RestSession extends Session {
     }
 
     if (this._computeSession && this._computeSession.sessionId) {
-      const state = await this._computeSession
-        .getState()
-        .catch(() => (this._computeSession = undefined));
+      const state = await this._computeSession.getState().catch((error) => {
+        if (isAxiosError(error) && error.response?.data?.errorCode === 5113) {
+          throw error;
+        }
+        this._computeSession = undefined;
+      });
       if (state === ComputeState.Error) {
         await this._computeSession.cancel();
       } else if (this._computeSession !== undefined) {
@@ -211,14 +238,12 @@ class RestSession extends Session {
 
   protected _close = async () => {
     this._cachedContext = undefined;
-    if (this.sessionId()) {
-      this._computeSession.delete();
-      this._computeSession = undefined;
+    void this._computeSession?.delete().catch(() => {});
+    this._computeSession = undefined;
 
-      //Since the session is being closed, remove the cached session id
-      setContextValue("SAS.sessionId", undefined);
-      updateStatusBarItem(false);
-    }
+    //Since the session is being closed, remove the cached session id
+    setContextValue("SAS.sessionId", undefined);
+    updateStatusBarItem(false);
   };
 
   public sessionId = (): string => {

@@ -79,6 +79,8 @@
   "Error getting server with ID {id} - {message}": "Error getting server with ID {id} - {message}",
   "Error getting session with ID {id} - {message}": "Error getting session with ID {id} - {message}",
   "Error reading private key file: {filePath}, error: {message}": "Error reading private key file: {filePath}, error: {message}",
+  "Execution failed.": "Execution failed.",
+  "Execution failed. See SAS Log for details.": "Execution failed. See SAS Log for details.",
   "Export as HTML file": "Export as HTML file",
   "Export as SAS program file": "Export as SAS program file",
   "Extended Type": "Extended Type",
