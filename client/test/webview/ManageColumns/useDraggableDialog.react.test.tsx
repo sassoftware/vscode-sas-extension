@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { expect } from "chai";
 
-import useDraggableDialog from "../../src/webview/ManageColumns/useDraggableDialog";
+import useDraggableDialog from "../../../src/webview/ManageColumns/useDraggableDialog";
 
 let capturedPointers = new WeakMap<HTMLElement, Set<number>>();
 

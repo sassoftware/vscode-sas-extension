@@ -6,4 +6,3 @@ node_modules
 *.node
 *.qps-ploc.json
 .history
-/client/out-react/

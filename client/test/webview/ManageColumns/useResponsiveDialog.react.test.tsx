@@ -5,7 +5,7 @@ import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { expect } from "chai";
 import sinon from "sinon";
 
-import useResponsiveDialog from "../../src/webview/ManageColumns/useResponsiveDialog";
+import useResponsiveDialog from "../../../src/webview/ManageColumns/useResponsiveDialog";
 
 class ResizeObserverMock implements ResizeObserver {
   static instances: ResizeObserverMock[] = [];

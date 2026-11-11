@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { expect } from "chai";
 
-import useColumnPanelResize from "../../src/webview/ManageColumns/useColumnPanelResize";
+import useColumnPanelResize from "../../../src/webview/ManageColumns/useColumnPanelResize";
 
 let capturedPointers = new WeakMap<HTMLElement, Set<number>>();
 

@@ -12,7 +12,6 @@ Thumbs.db
 **/test/**
 **/testFixture/**
 **/out/**
-**/out-react/**
 **/*.ts
 **/*.map
 **/node_modules/**

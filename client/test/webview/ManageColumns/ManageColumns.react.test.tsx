@@ -11,7 +11,7 @@ import { expect } from "chai";
 import proxyquire from "proxyquire";
 import sinon from "sinon";
 
-import type { ManageColumnsProps } from "../../src/webview/ManageColumns/ManageColumns";
+import type { ManageColumnsProps } from "../../../src/webview/ManageColumns/ManageColumns";
 
 // Mock the layout/drag/resize hooks so this suite can focus on
 // Manage Columns behavior rather than browser layout calculations.
@@ -36,8 +36,8 @@ const useColumnPanelResize = sinon.stub().callsFake(() => ({
 // __esModule ensures the compiled default imports resolve correctly.
 const {
   default: ManageColumns,
-}: typeof import("../../src/webview/ManageColumns/ManageColumns") =
-  proxyquire.noCallThru()("../../src/webview/ManageColumns/ManageColumns", {
+}: typeof import("../../../src/webview/ManageColumns/ManageColumns") =
+  proxyquire.noCallThru()("../../../src/webview/ManageColumns/ManageColumns", {
     "./useResponsiveDialog": {
       __esModule: true,
       default: useResponsiveDialog,

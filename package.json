@@ -1527,7 +1527,7 @@
   "qna": "https://marketplace.visualstudio.com/items?itemName=SAS.sas-lsp&ssr=false#qna",
   "scripts": {
     "vscode:prepublish": "npm run lint && npm run compile && npm run compile-browser",
-    "lint": "node node_modules/eslint/bin/eslint.js \"./client/src/**/*.ts\" \"./client/src/**/*.tsx\" \"./server/src/**/*.ts\"",
+    "lint": "node node_modules/eslint/bin/eslint.js \"./client/src/**/*.ts\" \"./client/src/**/*.tsx\" \"./client/test/**/*.react.test.tsx\" \"./server/src/**/*.ts\"",
     "compile": "node ./tools/build.mjs",
     "watch": "node ./tools/build.mjs dev",
     "compile-browser": "webpack --mode production",
@@ -1537,7 +1537,7 @@
     "pretest": "npm run compile && tsc -p ./client",
     "test-client": "node ./client/out/test/runTest.js",
     "test-server": "cross-env TS_NODE_PROJECT=./server/tsconfig.json mocha -r ts-node/register ./server/test/**/*.test.ts",
-    "test-react": "tsc -p ./client/tsconfig.mocha.json && mocha --require ./client/test/react/setup.cjs \"client/out-react/test/react/**/*.test.js\"",
+    "test-react": "tsc -p ./client/tsconfig.json && mocha --require ./client/test/react-setup.cjs \"client/out/test/webview/**/*.react.test.js\"",
     "test": "npm run test-server && npm run test-client && npm run test-react",
     "l10n:export": "npx @vscode/l10n-dev export -o ./l10n ./client/src && node ./tools/sort-l10n-bundle.mjs && prettier --write l10n/bundle.l10n.json",
     "l10n:check": "npm run l10n:export && git diff --exit-code -- l10n/bundle.l10n.json",
