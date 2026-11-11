@@ -25,6 +25,7 @@ import path from "path";
 
 import type { LogLine } from "../../../connection";
 import { includeLogInNotebookExport } from "../../utils/settings";
+import { getStoredSasLog } from "../Serializer";
 
 const templatesDir = path.resolve(__dirname, "../notebook/exporters/templates");
 
@@ -74,9 +75,13 @@ const exportCells = async (cells: NotebookCell[], client: LanguageClient) => {
       result += markdownToHTML(cell.document) + "\n";
     } else {
       result += (await codeToHTML(cell.document, client)) + "\n";
+      const storedLog = getStoredSasLog(cell);
+      if (includeLogInNotebookExport() && storedLog?.length) {
+        result += logLinesToHTML(storedLog) + "\n";
+      }
       if (cell.outputs.length > 0) {
         for (const output of cell.outputs) {
-          if (includeLogInNotebookExport()) {
+          if (includeLogInNotebookExport() && storedLog === undefined) {
             result += logToHTML(output) + "\n";
           }
           result += odsToHTML(output) + "\n";
@@ -215,13 +220,15 @@ const logToHTML = (output: NotebookCellOutput) => {
   );
   if (logItem) {
     const logs: LogLine[] = JSON.parse(logItem.data.toString());
-    return `<div class="cell-output">
+    return logLinesToHTML(logs);
+  }
+  return "";
+};
+
+const logLinesToHTML = (logs: LogLine[]) => `<div class="cell-output">
 ${logs
   .map(
     (line) => `<div class="log-line sas-log-${line.type}">${line.line}</div>`,
   )
   .join("\n")}
 </div>`;
-  }
-  return "";
-};
