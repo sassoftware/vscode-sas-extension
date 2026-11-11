@@ -18,7 +18,12 @@ export function run(): Promise<void> {
 
   return new Promise((resolve, reject) => {
     try {
-      const files = glob.sync(pattern, { cwd: testsRoot }).sort();
+      const files = glob
+        .sync(pattern, {
+          cwd: testsRoot,
+          ignore: ["**/*.react.test.js"],
+        })
+        .sort();
       // Add files to the test suite
       files.forEach((f) => mocha.addFile(path.resolve(testsRoot, f)));
 
