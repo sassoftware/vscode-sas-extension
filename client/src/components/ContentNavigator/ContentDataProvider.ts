@@ -16,7 +16,6 @@ import {
   ProviderResult,
   TabInputNotebook,
   TabInputText,
-  TabInputWebview,
   TextDocument,
   TextDocumentContentProvider,
   TreeDataProvider,
@@ -80,6 +79,7 @@ class ContentDataProvider
   private _treeView: TreeView<ContentItem>;
   private _dropEditProvider: Disposable;
   private model: ContentModel;
+  private openDatasets: Map<string, string>;
   private extensionUri: Uri;
   private mimeType: string;
   private sourceType: ContentSourceType;
@@ -95,6 +95,7 @@ class ContentDataProvider
 
   constructor(
     model: ContentModel,
+    openDatasets: Map<string, string>,
     extensionUri: Uri,
     { mimeType, treeIdentifier, sourceType }: ContentNavigatorConfig,
   ) {
@@ -103,6 +104,7 @@ class ContentDataProvider
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
     this._onDidChange = new EventEmitter<Uri>();
     this.model = model;
+    this.openDatasets = openDatasets;
     this.extensionUri = extensionUri;
     this.dropMimeTypes = [mimeType, "text/uri-list"];
     this.dragMimeTypes = [mimeType];
@@ -320,9 +322,19 @@ class ContentDataProvider
     }
 
     if (isDatasetFile(item.name)) {
-      await closeDatasetTabsIfOpen(item);
-      const commandPrefix = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}`;
-      await commands.executeCommand(`${commandPrefix}.openResource`, newItem);
+      // check if the dataset is open
+      const itemPath = await this.getPathOfItem(item);
+      const normalizedPath = itemPath?.replace(/\\/g, "/");
+      const openedTableUid = this.openDatasets.get(normalizedPath);
+      // if its open, close the old table and open the newly named view
+      if (openedTableUid) {
+        await commands.executeCommand<boolean>(
+          "SAS.closeTable",
+          openedTableUid,
+        );
+        const commandPrefix = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}`;
+        await commands.executeCommand(`${commandPrefix}.openResource`, newItem);
+      }
       return newItem.vscUri;
     } else {
       const newUri = newItem.vscUri;
@@ -998,22 +1010,6 @@ export default ContentDataProvider;
 
 const isDatasetFile = (name: string | undefined): boolean =>
   !!name?.toLowerCase().endsWith(".sas7bdat");
-
-// Dataset files open in a data viewer webview whose tab label is the file name.
-const closeDatasetTabsIfOpen = async (item: ContentItem): Promise<boolean> => {
-  const tabs = window.tabGroups.all
-    .flatMap((tabGroup) => tabGroup.tabs)
-    .filter(
-      (tab) =>
-        tab.input instanceof TabInputWebview &&
-        tab.label.toLowerCase() === item.name.toLowerCase(),
-    );
-  if (tabs.length === 0) {
-    return false;
-  }
-  await window.tabGroups.close(tabs);
-  return true;
-};
 
 const closeFileIfOpen = (item: ContentItem): Promise<Uri[]> | boolean => {
   const tabs = getEditorTabsForItem(item);
