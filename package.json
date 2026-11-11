@@ -300,6 +300,11 @@
                             "default": "",
                             "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationCustomRootPath%"
                           },
+                          "globalShortcuts": {
+                            "type": "object",
+                            "default": {},
+                            "description": "%configuration.SAS.connectionProfiles.profiles.globalShortcuts%"
+                          },
                           "fileNavigationRoot": {
                             "type": "string",
                             "default": "USER",
@@ -1533,10 +1538,12 @@
     "test-client": "node ./client/out/client/test/runTest.js",
     "test-server": "cross-env TS_NODE_PROJECT=./server/tsconfig.json mocha -r ts-node/register ./server/test/**/*.test.ts",
     "test": "npm run test-server && npm run test-client",
-    "pseudoLocalize": "npx @vscode/l10n-dev export -o ./l10n ./client/src && npx @vscode/l10n-dev generate-pseudo -o ./l10n/ ./l10n/bundle.l10n.json ./package.nls.json",
+    "l10n:export": "npx @vscode/l10n-dev export -o ./l10n ./client/src && node ./tools/sort-l10n-bundle.mjs && prettier --write l10n/bundle.l10n.json",
+    "l10n:check": "npm run l10n:export && git diff --exit-code -- l10n/bundle.l10n.json",
+    "pseudoLocalize": "npm run l10n:export && npx @vscode/l10n-dev generate-pseudo -o ./l10n/ ./l10n/bundle.l10n.json ./package.nls.json",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
     "copyright:check": "node ./tools/check-copyright.mjs",
-    "locale": "npx @vscode/l10n-dev export -o ./l10n ./client/src && node ./tools/locale.mjs"
+    "locale": "npm run l10n:export && node ./tools/locale.mjs"
   },
   "devDependencies": {
     "@eslint/compat": "2.1.1",

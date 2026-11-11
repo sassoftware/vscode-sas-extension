@@ -50,6 +50,7 @@
   "configuration.SAS.connectionProfiles.profiles.display.showHiddenItems": "Display hidden folders and items on the file system",
   "configuration.SAS.connectionProfiles.profiles.endpoint": "SAS Viya Connection Profile Endpoint",
   "configuration.SAS.connectionProfiles.profiles.fileNavigationCustomRootPath": "SAS Server custom root path",
+  "configuration.SAS.connectionProfiles.profiles.globalShortcuts": "Global shortcuts for SAS Content and SAS Server directories",
   "configuration.SAS.connectionProfiles.profiles.fileNavigationRoot": "SAS Server root",
   "configuration.SAS.connectionProfiles.profiles.iom.host": "SAS IOM Connection Host",
   "configuration.SAS.connectionProfiles.profiles.iom.interopLibraryFolderPath": "SAS IOM interop library path",
