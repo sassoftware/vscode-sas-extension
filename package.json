@@ -938,14 +938,22 @@
         "when": "editorTextFocus && editorLangId == 'sas'"
       },
       {
-        "when": "focusedView == contentdataprovider",
-        "command": "SAS.content.deleteResource",
-        "key": "delete"
+        "when": "focusedView == librarydataprovider",
+        "command": "SAS.deleteTable",
+        "key": "delete",
+        "mac": "cmd+backspace"
       },
       {
         "when": "focusedView == serverdataprovider",
         "command": "SAS.server.deleteResource",
-        "key": "delete"
+        "key": "delete",
+        "mac": "cmd+backspace"
+      },
+      {
+        "when": "focusedView == contentdataprovider",
+        "command": "SAS.content.deleteResource",
+        "key": "delete",
+        "mac": "cmd+backspace"
       }
     ],
     "menus": {
