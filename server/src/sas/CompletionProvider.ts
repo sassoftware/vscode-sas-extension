@@ -19,11 +19,8 @@ import { Position } from "vscode-languageserver-textdocument";
 
 import { CodeZoneManager } from "./CodeZoneManager";
 import {
-  getClientCustomMacro,
-  getClientCustomMacros,
-} from "./CustomMacroStore";
-import {
   CustomMacro,
+  ESCAPED_AFTER_PERCENT,
   isValidMacroName,
   parseMacroDefinitions,
 } from "./MacroDefinitionParser";
@@ -291,8 +288,6 @@ const NON_CODE_STYLES: Token["type"][] = [
   "hex",
   "cards-data",
 ];
-// characters that can follow "%" as a macro quoting escape, e.g. %( %,
-const ESCAPED_AFTER_PERCENT = "'\"(),;%&";
 const MACRO_QUOTING_FUNC = /^%(NR)?(STR|QUOTE|BQUOTE)$/i;
 const KEYWORD_ARG = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=/;
 
@@ -306,6 +301,10 @@ function _escapeMarkdown(text: string) {
   return text
     .replace(/[\\`*_{}[\]()#+\-.!|<>&~]/g, "\\$&")
     .replace(/\r?\n/g, "  \n");
+}
+
+function _escapeSnippetText(text: string) {
+  return text.replace(/[\\$}]/g, "\\$&");
 }
 
 /** Returns "%name", "name" or undefined for the identifier before "(". */
@@ -385,9 +384,9 @@ function _customMacroDocumentation(
   parts.push(
     getText("ce_ac_custom_macro_source_txt") +
       " " +
-      (macro.sourceLabel
-        ? _escapeMarkdown(macro.sourceLabel)
-        : "_" + getText("ce_ac_custom_macro_current_file_txt") + "_"),
+      "_" +
+      getText("ce_ac_custom_macro_current_file_txt") +
+      "_",
   );
   return { kind: MarkupKind.Markdown, value: parts.join("\n\n") };
 }
@@ -398,6 +397,7 @@ export class CompletionProvider {
   private popupContext: any = {};
   private fileMacros?: Map<string, CustomMacro>;
   private builtinMacroNames?: Set<string>;
+  private snippetSupport = false;
 
   constructor(
     private model: Model,
@@ -409,6 +409,11 @@ export class CompletionProvider {
 
   getCodeZoneManager(): CodeZoneManager {
     return this.czMgr;
+  }
+
+  /** textDocument.completion.completionItem.snippetSupport of the client */
+  setSnippetSupport(snippetSupport: boolean): void {
+    this.snippetSupport = snippetSupport;
   }
 
   getHelp(position: Position): Promise<Hover | undefined> | undefined {
@@ -2047,40 +2052,17 @@ export class CompletionProvider {
     return this.builtinMacroNames.has(name.toUpperCase());
   }
 
-  /**
-   * Precedence: current file > client-supplied > built-in autocall.
-   * Built-in macro statements and functions can never be overridden.
-   */
+  /** Current-file definitions are suggested unless they shadow built-ins. */
   private _resolveCustomMacro(name: string): CustomMacro | undefined {
     const bareName = name.replace(/^%/, "");
     if (!isValidMacroName(bareName) || this._isBuiltinMacro(bareName)) {
       return undefined;
     }
-    const fileMacro = this._getFileMacros().get(bareName.toUpperCase());
-    if (fileMacro) {
-      return fileMacro;
-    }
-    const clientMacro = getClientCustomMacro(bareName);
-    return clientMacro?.sourceUri === this.model.getUri()
-      ? undefined
-      : clientMacro;
+    return this._getFileMacros().get(bareName.toUpperCase());
   }
 
   private _getCustomMacros(): CustomMacro[] {
-    const macros = new Map<string, CustomMacro>();
-    for (const macro of getClientCustomMacros()) {
-      // The client snapshot can briefly lag behind unsaved edits. The open
-      // document is authoritative for its own file, so don't surface stale
-      // names from that file while its next workspace scan is pending.
-      if (macro.sourceUri === this.model.getUri()) {
-        continue;
-      }
-      macros.set(macro.name.toUpperCase(), macro);
-    }
-    for (const [key, macro] of this._getFileMacros()) {
-      macros.set(key, macro);
-    }
-    return Array.from(macros.values()).filter(
+    return Array.from(this._getFileMacros().values()).filter(
       (macro) => !this._isBuiltinMacro(macro.name),
     );
   }
@@ -2088,9 +2070,6 @@ export class CompletionProvider {
   private _getCustomMacroSignatureHelp(
     position: Position,
   ): SignatureHelp | undefined {
-    if (this._getFileMacros().size === 0 && !getClientCustomMacros().length) {
-      return undefined;
-    }
     // a macro call can span several lines; comments and quoted text are
     // blanked out so that their parentheses and commas are ignored
     const text = this._buildRelevantTextWindow(position, 100, true);
@@ -2239,38 +2218,59 @@ export class CompletionProvider {
   private _customMacroCompletionItem(macro: CustomMacro): CompletionItem {
     const parameters = macro.parameters ?? [];
     const positional = parameters.filter((parameter) => !parameter.keyword);
+    const keyword = parameters.filter((parameter) => parameter.keyword);
     const label = "%" + macro.name;
-    let insertText = label;
-    // Only positional parameters become snippet tab stops: they are required
-    // and must be given in order. Keyword parameters are optional and already
-    // have defaults, so pre-filling them would force the user to delete the
-    // ones they do not want. Macros with only keyword parameters (or
-    // PARMBUFF) get empty parentheses with the cursor inside, and signature
-    // help lists every parameter while the call is typed.
-    if (positional.length > 0) {
-      insertText +=
-        "(" +
-        positional
-          .map(
-            (parameter, index) =>
-              "${" + (index + 1) + ":" + parameter.name + "}",
-          )
-          .join(", ") +
-        ")";
-    } else if (parameters.length > 0 || macro.parmbuff) {
-      insertText += "($0)";
-    }
-    return {
+    const item: CompletionItem = {
       label,
       kind: CompletionItemKind.Function,
-      detail: macro.sourceLabel ?? getText("ce_ac_custom_macro_txt"),
+      detail: getText("ce_ac_custom_macro_txt"),
       documentation: _customMacroDocumentation(
         macro,
         _customMacroSignature(macro).label,
       ),
-      insertText,
-      insertTextFormat: InsertTextFormat.Snippet,
       data: { customMacro: true },
+    };
+    if (macro.parameters === undefined && !macro.parmbuff) {
+      // "%macro m;" has no parameter list, so "()" would become macro text
+      return {
+        ...item,
+        insertText: label,
+        insertTextFormat: InsertTextFormat.PlainText,
+      };
+    }
+    if (!this.snippetSupport) {
+      // the client cannot expand snippets: insert a plain, valid call
+      const plainArgs = [
+        ...positional.map((parameter) => parameter.name),
+        ...keyword.map(
+          (parameter) => parameter.name + "=" + (parameter.defaultValue ?? ""),
+        ),
+      ];
+      return {
+        ...item,
+        insertText: label + "(" + plainArgs.join(", ") + ")",
+        insertTextFormat: InsertTextFormat.PlainText,
+      };
+    }
+    let placeholder = 1;
+    const args = [
+      ...positional.map(
+        (parameter) => "${" + placeholder++ + ":" + parameter.name + "}",
+      ),
+      ...keyword.map(
+        (parameter) =>
+          parameter.name +
+          "=${" +
+          placeholder++ +
+          ":" +
+          _escapeSnippetText(parameter.defaultValue ?? "") +
+          "}",
+      ),
+    ];
+    return {
+      ...item,
+      insertText: label + "(" + args.join(", ") + ")$0",
+      insertTextFormat: InsertTextFormat.Snippet,
     };
   }
 

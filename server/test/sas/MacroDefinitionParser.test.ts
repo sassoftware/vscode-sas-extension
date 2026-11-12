@@ -166,14 +166,6 @@ describe("parseMacroDefinitions", () => {
     );
   });
 
-  it("attaches the source label", () => {
-    const macros = parseMacroDefinitions(
-      "%macro m;%mend;",
-      "My Folder/util.sas",
-    );
-    assert.equal(macros[0].sourceLabel, "My Folder/util.sas");
-  });
-
   it("does not treat %macro as part of a longer word", () => {
     const macros = parseMacroDefinitions("%macros(x);\n%macro ok;%mend;");
     assert.deepEqual(

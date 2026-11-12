@@ -41,10 +41,6 @@ import { ParseFileResults } from "pyright-internal-node/dist/packages/pyright-in
 
 import { PyrightLanguageProvider } from "./python/PyrightLanguageProvider";
 import { CodeZoneManager } from "./sas/CodeZoneManager";
-import {
-  sanitizeCustomMacrosResult,
-  setClientCustomMacros,
-} from "./sas/CustomMacroStore";
 import { LanguageServiceProvider, legend } from "./sas/LanguageServiceProvider";
 import type { LibCompleteItem } from "./sas/SyntaxDataProvider";
 import { isCustomRegionStartComment } from "./sas/utils";
@@ -55,24 +51,6 @@ interface DocumentInfo {
   service?: LanguageServiceProvider;
 }
 
-const GET_CUSTOM_MACROS_TIMEOUT = 10000;
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("Request timed out")), ms);
-    promise.then(
-      (value) => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      (error) => {
-        clearTimeout(timer);
-        reject(error);
-      },
-    );
-  });
-}
-
 export const runServer = (
   connection: Connection,
   _pyrightLanguageProvider: PyrightLanguageProvider,
@@ -81,8 +59,7 @@ export const runServer = (
   const sasSel: DocumentSelector = [{ language: "sas" }];
 
   let supportSASGetLibList = false;
-  let supportSASCustomMacros = false;
-  let customMacrosRequestId = 0;
+  let snippetSupport = false;
   let registeredAdvancedCapabilities = false;
 
   _pyrightLanguageProvider.setSasLspProvider(getLanguageService);
@@ -94,9 +71,9 @@ export const runServer = (
     ) {
       supportSASGetLibList = true;
     }
-    if (params.initializationOptions?.supportSASCustomMacros === true) {
-      supportSASCustomMacros = true;
-    }
+    snippetSupport =
+      params.capabilities.textDocument?.completion?.completionItem
+        ?.snippetSupport === true;
     _pyrightLanguageProvider.initialize(params, [], []);
 
     const completionOpts: CompletionRegistrationOptions = {
@@ -152,19 +129,7 @@ export const runServer = (
     return result;
   });
 
-  connection.onInitialized(() => {
-    _pyrightLanguageProvider.onInitialized();
-    if (supportSASCustomMacros) {
-      refreshCustomMacros();
-    }
-  });
-
-  // The client tells the server that its custom macro sources changed.
-  connection.onNotification("sas/customMacrosChanged", () => {
-    if (supportSASCustomMacros) {
-      refreshCustomMacros();
-    }
-  });
+  connection.onInitialized(() => _pyrightLanguageProvider.onInitialized());
 
   connection.onRequest(
     "sas/pythonFinalExpression",
@@ -632,6 +597,7 @@ export const runServer = (
     // re-create LanguageServer if document changed
     if (!docInfo.service) {
       docInfo.service = new LanguageServiceProvider(docInfo.document);
+      docInfo.service.completionProvider.setSnippetSupport(snippetSupport);
 
       if (supportSASGetLibList) {
         docInfo.service.setLibService((libId, resolve) =>
@@ -642,29 +608,6 @@ export const runServer = (
       }
     }
     return docInfo.service!;
-  }
-
-  // Completion and signature help never wait for this request; they always
-  // answer from the cached list. A failing or silent client keeps the
-  // previous list, and a late answer to an older request is ignored.
-  function refreshCustomMacros() {
-    const requestId = ++customMacrosRequestId;
-    withTimeout(
-      connection.sendRequest<unknown>("sas/getCustomMacros"),
-      GET_CUSTOM_MACROS_TIMEOUT,
-    )
-      .then((result) => {
-        if (requestId !== customMacrosRequestId) {
-          return;
-        }
-        const macros = sanitizeCustomMacrosResult(result);
-        if (macros) {
-          setClientCustomMacros(macros);
-        }
-      })
-      .catch(() => {
-        // keep the previous list
-      });
   }
 
   const dispatch = async <Ret>(

@@ -1,18 +1,15 @@
 // Copyright © 2026, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { MarkupContent, SignatureHelp } from "vscode-languageserver";
+import {
+  InsertTextFormat,
+  MarkupContent,
+  SignatureHelp,
+} from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 import { assert } from "chai";
 import { readFileSync } from "fs";
 
-import {
-  clearClientCustomMacros,
-  getClientCustomMacro,
-  getClientCustomMacros,
-  sanitizeCustomMacrosResult,
-  setClientCustomMacros,
-} from "../../src/sas/CustomMacroStore";
 import { LanguageServiceProvider } from "../../src/sas/LanguageServiceProvider";
 
 // the build loads messagebundle.properties as text (esbuild "text" loader);
@@ -32,6 +29,7 @@ function setup(code: string) {
   const text = offset === -1 ? code : code.replace(CURSOR, "");
   const doc = TextDocument.create("file:///custom-macro.sas", "sas", 1, text);
   const service = new LanguageServiceProvider(doc);
+  service.completionProvider.setSnippetSupport(true);
   const position = doc.positionAt(offset === -1 ? text.length : offset);
   return { doc, service, position };
 }
@@ -78,83 +76,7 @@ const REPORT_DEF = [
   "%mend report;",
 ].join("\n");
 
-describe("custom macro store", () => {
-  afterEach(() => clearClientCustomMacros());
-
-  it("rejects malformed responses", () => {
-    assert.isUndefined(sanitizeCustomMacrosResult(undefined));
-    assert.isUndefined(sanitizeCustomMacrosResult(null));
-    assert.isUndefined(sanitizeCustomMacrosResult([]));
-    assert.isUndefined(sanitizeCustomMacrosResult({ macros: "x" }));
-    assert.deepEqual(sanitizeCustomMacrosResult({ macros: [] }), []);
-  });
-
-  it("drops invalid entries and fields", () => {
-    const result = sanitizeCustomMacrosResult({
-      macros: [
-        { name: "1bad" },
-        { name: "a".repeat(33) },
-        "string",
-        null,
-        {
-          name: "good",
-          parameters: [
-            { name: "p", keyword: "yes", defaultValue: "ignored" },
-            { name: "k", keyword: true, defaultValue: "  1  " },
-            { name: "bad name" },
-            { keyword: true },
-          ],
-          parmbuff: "true",
-          description: 42,
-          sourceLabel: "My Folder/a.sas",
-          sourceUri: "file:///workspace/a.sas",
-          extra: "dropped",
-        },
-      ],
-    });
-    assert.deepEqual(result, [
-      {
-        name: "good",
-        parameters: [
-          { name: "p", keyword: false },
-          { name: "k", keyword: true, defaultValue: "1" },
-        ],
-        sourceLabel: "My Folder/a.sas",
-        sourceUri: "file:///workspace/a.sas",
-      },
-    ]);
-  });
-
-  it("caps long text", () => {
-    const result = sanitizeCustomMacrosResult({
-      macros: [{ name: "m", description: "x".repeat(5000) }],
-    });
-    assert.equal(result?.[0].description?.length, 2000);
-  });
-
-  it("stores macros case-insensitively, later duplicates win", () => {
-    setClientCustomMacros([
-      { name: "Util", description: "first" },
-      { name: "UTIL", description: "second" },
-    ]);
-    assert.equal(getClientCustomMacros().length, 1);
-    assert.equal(getClientCustomMacro("%util")?.description, "second");
-    clearClientCustomMacros();
-    assert.isUndefined(getClientCustomMacro("util"));
-  });
-
-  it("removes renamed macros when the client replaces its snapshot", () => {
-    setClientCustomMacros([{ name: "addition1", sourceLabel: "add1.sas" }]);
-    setClientCustomMacros([{ name: "additionA1", sourceLabel: "add1.sas" }]);
-
-    assert.isUndefined(getClientCustomMacro("addition1"));
-    assert.equal(getClientCustomMacro("additionA1")?.sourceLabel, "add1.sas");
-  });
-});
-
 describe("custom macro signature help", () => {
-  afterEach(() => clearClientCustomMacros());
-
   it("shows the signature of a macro defined in the current file", async () => {
     const help = await signatureAt(REPORT_DEF + "\n%report(|");
     assert.isDefined(help);
@@ -228,30 +150,6 @@ describe("custom macro signature help", () => {
     assert.isUndefined(activeParameterLabel(help));
   });
 
-  it("uses client-supplied macros", async () => {
-    setClientCustomMacros([
-      {
-        name: "remote",
-        parameters: [{ name: "x", keyword: false }],
-        sourceLabel: "My Folder/lib/remote.sas",
-      },
-    ]);
-    const help = await signatureAt("%remote(|");
-    assert.equal(help?.signatures[0].label, "%remote(x)");
-    assert.include(
-      markdown(help?.signatures[0].documentation),
-      "My Folder/lib/remote\\.sas",
-    );
-  });
-
-  it("prefers the current file over client-supplied macros", async () => {
-    setClientCustomMacros([
-      { name: "dup", parameters: [{ name: "remote", keyword: false }] },
-    ]);
-    const help = await signatureAt("%macro dup(local);%mend;\n%dup(|");
-    assert.equal(help?.signatures[0].label, "%dup(local)");
-  });
-
   it("uses the last definition in the current file", async () => {
     const help = await signatureAt(
       "%macro m(a);%mend;\n%macro m(b);%mend;\n%m(|",
@@ -260,63 +158,58 @@ describe("custom macro signature help", () => {
   });
 
   it("never overrides built-in macro functions", async () => {
-    setClientCustomMacros([
-      { name: "scan", parameters: [{ name: "custom", keyword: false }] },
-    ]);
     const help = await signatureAt("%macro scan(local);%mend;\n%scan(|");
     if (help) {
-      assert.notInclude(help.signatures[0].label, "custom");
       assert.notInclude(help.signatures[0].label, "local");
     }
   });
 
   it("returns nothing outside of a call", async () => {
-    setClientCustomMacros([{ name: "remote" }]);
-    const help = await signatureAt("%remote(a);\ndata x; set y;|");
+    const help = await signatureAt(
+      "%macro remote(x);%mend;\n%remote(a);\ndata x; set y;|",
+    );
     assert.isUndefined(help);
   });
 
   it("does not show custom help for a macro name inside a string", async () => {
-    setClientCustomMacros([
-      { name: "remote", parameters: [{ name: "x", keyword: false }] },
-    ]);
-    const help = await signatureAt("title '%remote(|");
+    const help = await signatureAt("%macro remote(x);%mend;\ntitle '%remote(|");
     assert.isUndefined(help);
+  });
+
+  it("does not show signature help for macros outside the current document", async () => {
+    const help = await signatureAt("%remote(|");
+    assert.isUndefined(help);
+  });
+
+  it("does not parse the document for non-macro calls", async () => {
+    const { service, position } = setup(
+      "%macro m(a);%mend;\ndata x; y = substr(|",
+    );
+    await service.completionProvider.getSignatureHelp(position);
+    assert.isUndefined(service.completionProvider["fileMacros"]);
   });
 });
 
 describe("custom macro completion", () => {
-  afterEach(() => clearClientCustomMacros());
-
   it("suggests matching custom macros for a % prefix", async () => {
-    setClientCustomMacros([
-      {
-        name: "remote",
-        parameters: [
-          { name: "a", keyword: false },
-          { name: "b", keyword: false },
-          { name: "k", keyword: true, defaultValue: "1" },
-        ],
-        sourceLabel: "My Folder/remote.sas",
-      },
-      { name: "kwonly", parameters: [{ name: "k", keyword: true }] },
-      { name: "noparm" },
-    ]);
-    const result = await complete("data _null_;\n%re|");
+    const result = await complete(
+      "%macro remote(a, b, k=1);%mend;\n%macro kwonly(k=);%mend;\n%macro noparm;%mend;\ndata _null_;\n%re|",
+    );
     const item = result?.items.find((i) => i.label === "%remote");
     assert.isDefined(item);
-    assert.equal(item?.insertText, "%remote(${1:a}, ${2:b})");
+    assert.equal(item?.insertText, "%remote(${1:a}, ${2:b}, k=${3:1})$0");
     assert.equal(item?.insertTextFormat, 2);
-    assert.equal(item?.detail, "My Folder/remote.sas");
     assert.include(markdown(item?.documentation), "%remote(a, b, k=1)");
     assert.isUndefined(result?.items.find((i) => i.label === "%kwonly"));
 
-    const all = await complete("%|");
+    const all = await complete(
+      "%macro remote(a, b, k=1);%mend;\n%macro kwonly(k=);%mend;\n%macro noparm;%mend;\n%|",
+    );
     const labels = all?.items.map((i) => i.label) ?? [];
     assert.includeMembers(labels, ["%remote", "%kwonly", "%noparm"]);
     assert.equal(
       all?.items.find((i) => i.label === "%kwonly")?.insertText,
-      "%kwonly($0)",
+      "%kwonly(k=${1:})$0",
     );
     assert.equal(
       all?.items.find((i) => i.label === "%noparm")?.insertText,
@@ -328,64 +221,24 @@ describe("custom macro completion", () => {
     const result = await complete(REPORT_DEF + "\n%rep|");
     const item = result?.items.find((i) => i.label === "%report");
     assert.isDefined(item);
-    assert.equal(item?.insertText, "%report(${1:ds}, ${2:var})");
-  });
-
-  it("suggests custom macros from other SAS files", async () => {
-    setClientCustomMacros([
-      {
-        name: "addition1",
-        sourceLabel: "add1.sas",
-        sourceUri: "file:///add1.sas",
-      },
-      {
-        name: "addition2",
-        sourceLabel: "add2.sas",
-        sourceUri: "file:///add2.sas",
-      },
-    ]);
-
-    const result = await complete("%addi|");
-    const labels = result?.items.map((item) => item.label) ?? [];
-    assert.includeMembers(labels, ["%addition1", "%addition2"]);
-  });
-
-  it("does not offer the stale name while the client snapshot refreshes", async () => {
-    setClientCustomMacros([
-      {
-        name: "addition1",
-        sourceLabel: "custom-macro.sas",
-        sourceUri: "file:///custom-macro.sas",
-      },
-      {
-        name: "addition2",
-        sourceLabel: "add2.sas",
-        sourceUri: "file:///add2.sas",
-      },
-    ]);
-
-    const result = await complete("%macro additionA1; %mend;\n%addi|");
-    const labels = result?.items.map((item) => item.label) ?? [];
-    assert.include(labels, "%additionA1");
-    assert.include(labels, "%addition2");
-    assert.notInclude(labels, "%addition1");
+    assert.equal(
+      item?.insertText,
+      "%report(${1:ds}, ${2:var}, out=${3:work.result}, title=${4:})$0",
+    );
   });
 
   it("does not suggest custom macros without a % prefix", async () => {
-    setClientCustomMacros([{ name: "remote" }]);
-    const result = await complete("data _null_;\nre|");
+    const result = await complete("%macro remote;%mend;\ndata _null_;\nre|");
     assert.isUndefined(result?.items.find((i) => i.label === "%remote"));
   });
 
   it("does not suggest custom macros in comments", async () => {
-    setClientCustomMacros([{ name: "remote" }]);
-    const result = await complete("/* %re|");
+    const result = await complete("%macro remote;%mend;\n/* %re|");
     assert.isUndefined(result?.items.find((i) => i.label === "%remote"));
   });
 
   it("does not replace built-in macro statements", async () => {
-    setClientCustomMacros([{ name: "let", description: "custom let" }]);
-    const result = await complete("%le|");
+    const result = await complete("%macro let(custom);%mend;\n%le|");
     const items = result?.items.filter((i) => i.label.toUpperCase() === "%LET");
     for (const item of items ?? []) {
       assert.notEqual(item.data?.customMacro, true);
@@ -404,30 +257,84 @@ describe("custom macro completion", () => {
   });
 });
 
-describe("custom macro hover", () => {
-  afterEach(() => clearClientCustomMacros());
+describe("custom macro completion snippets", () => {
+  async function itemFor(definition: string, name: string) {
+    const result = await complete(definition + "\n%" + name + "|");
+    const item = result?.items.find((i) => i.label === "%" + name);
+    assert.isDefined(item);
+    return item;
+  }
 
-  it("shows the signature and source of a custom macro call", async () => {
-    setClientCustomMacros([
-      {
-        name: "remote",
-        parameters: [{ name: "x", keyword: false }],
-        description: "Remote <b>macro</b>",
-        sourceLabel: "My Folder/remote.sas",
-      },
-    ]);
-    const { service } = setup("%remote(1);");
-    const hover = await service.completionProvider.getHelp({
-      line: 0,
-      character: 3,
-    });
-    assert.isDefined(hover);
-    const value = markdown(hover?.contents);
-    assert.include(value, "%remote(x)");
-    assert.include(value, "Remote \\<b\\>macro\\</b\\>");
-    assert.include(value, "My Folder/remote\\.sas");
+  it("A: positional parameters become numbered placeholders", async () => {
+    const item = await itemFor("%macro addition1(a, b);%mend;", "addition1");
+    assert.equal(item?.label, "%addition1");
+    assert.equal(item?.insertText, "%addition1(${1:a}, ${2:b})$0");
+    assert.equal(item?.insertTextFormat, InsertTextFormat.Snippet);
   });
 
+  it("B: keyword parameters become named-argument placeholders", async () => {
+    const item = await itemFor("%macro addition2(a=, b=);%mend;", "addition2");
+    assert.equal(item?.label, "%addition2");
+    assert.equal(item?.insertText, "%addition2(a=${1:}, b=${2:})$0");
+    assert.equal(item?.insertTextFormat, InsertTextFormat.Snippet);
+  });
+
+  it("C: mixed parameters keep positional first and use defaults", async () => {
+    const item = await itemFor("%macro addition3(a, b=20);%mend;", "addition3");
+    assert.equal(item?.label, "%addition3");
+    assert.equal(item?.insertText, "%addition3(${1:a}, b=${2:20})$0");
+    assert.equal(item?.insertTextFormat, InsertTextFormat.Snippet);
+  });
+
+  it("D: no parameters produce no placeholders", async () => {
+    const item = await itemFor("%macro addition4();%mend;", "addition4");
+    assert.equal(item?.label, "%addition4");
+    assert.equal(item?.insertText, "%addition4()$0");
+    assert.notInclude(String(item?.insertText), "${");
+  });
+
+  it("does not add a placeholder for PARMBUFF", async () => {
+    const item = await itemFor("%macro list(first) / parmbuff;%mend;", "list");
+    assert.equal(item?.insertText, "%list(${1:first})$0");
+  });
+
+  it("never puts snippet syntax in the label", async () => {
+    const result = await complete(
+      "%macro addition1(a, b);%mend;\n%macro addition3(a, b=20);%mend;\n%add|",
+    );
+    const items = result?.items.filter((i) => i.data?.customMacro) ?? [];
+    assert.isNotEmpty(items);
+    for (const item of items) {
+      assert.notInclude(item.label, "${");
+      assert.notInclude(item.filterText ?? "", "${");
+      assert.equal(item.insertTextFormat, InsertTextFormat.Snippet);
+    }
+  });
+
+  it("escapes snippet special characters in default values", async () => {
+    const item = await itemFor("%macro esc(a=$x, b=y}, c=\\z);%mend;", "esc");
+    assert.equal(
+      item?.insertText,
+      "%esc(a=${1:\\$x}, b=${2:y\\}}, c=${3:\\\\z})$0",
+    );
+  });
+
+  it("inserts a plain call when the client has no snippet support", async () => {
+    const { doc, service, position } = setup(
+      "%macro addition3(a, b=20);%mend;\n%add|",
+    );
+    service.completionProvider.setSnippetSupport(false);
+    const result = await service.completionProvider.getCompleteItems({
+      textDocument: { uri: doc.uri },
+      position,
+    });
+    const item = result?.items.find((i) => i.label === "%addition3");
+    assert.equal(item?.insertText, "%addition3(a, b=20)");
+    assert.equal(item?.insertTextFormat, InsertTextFormat.PlainText);
+  });
+});
+
+describe("custom macro hover", () => {
   it("shows a macro defined in the current file", async () => {
     const { service } = setup(REPORT_DEF + "\n%report(a, b);");
     const hover = await service.completionProvider.getHelp({

@@ -1,10 +1,7 @@
 // Copyright © 2026, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-// Shared, dependency-free scanner for custom %macro definitions.
-// It is used by the SAS LSP server (current document) and imported by LSP
-// clients (e.g. the VS Code extension) to scan external .sas files, so that
-// every client produces exactly the same CustomMacro data.
+// Dependency-free scanner for custom %macro definitions in the current document.
 
 export interface CustomMacroParameter {
   name: string;
@@ -17,8 +14,6 @@ export interface CustomMacro {
   parameters?: CustomMacroParameter[];
   parmbuff?: boolean; // %macro ... / PARMBUFF (or /PBUFF)
   description?: string; // e.g. leading comment or /DES= text
-  sourceLabel?: string; // display text only, e.g. "My Folder/util/dates.sas"
-  sourceUri?: string; // stable identity used to exclude stale entries for the open file
 }
 
 const MACRO_NAME_REGEX = /^[A-Za-z_][A-Za-z0-9_]{0,31}$/;
@@ -30,7 +25,7 @@ export function isValidMacroName(name: unknown): name is string {
 const WORD_CHAR = /[A-Za-z0-9_]/;
 const WHITESPACE = /\s/;
 // characters that can follow "%" as a macro quoting escape, e.g. %' %( %,
-const ESCAPED_AFTER_PERCENT = "'\"(),;%&";
+export const ESCAPED_AFTER_PERCENT = "'\"(),;%&";
 // how far to look past "%" when reading the keyword that follows it;
 // only needs to cover the longest macro keyword we care about ("macro")
 const MACRO_KEYWORD_LOOKAHEAD = 40;
@@ -361,10 +356,7 @@ function parseDefinition(
  * Not handled: dynamic names (%macro &name), compiled stored macros without
  * source.
  */
-export function parseMacroDefinitions(
-  text: string,
-  sourceLabel?: string,
-): CustomMacro[] {
+export function parseMacroDefinitions(text: string): CustomMacro[] {
   const macros: CustomMacro[] = [];
   if (typeof text !== "string" || text.length === 0) {
     return macros;
@@ -431,9 +423,6 @@ export function parseMacroDefinitions(
           }
           if (description) {
             macro.description = description;
-          }
-          if (sourceLabel) {
-            macro.sourceLabel = sourceLabel;
           }
           macros.push(macro);
         }
