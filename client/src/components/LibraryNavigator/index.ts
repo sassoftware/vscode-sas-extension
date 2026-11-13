@@ -103,7 +103,11 @@ class LibraryNavigator implements SubscriptionProvider {
         }
 
         const result = await window.showWarningMessage(
-          l10n.t(Messages.TablesDeletionWarning),
+          l10n.t(
+            selectedItems.length > 1
+              ? Messages.TablesDeletionWarning
+              : Messages.TableDeletionWarning,
+          ),
           { modal: true },
           "Delete",
         );
