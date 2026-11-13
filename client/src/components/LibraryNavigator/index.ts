@@ -63,6 +63,7 @@ class LibraryNavigator implements SubscriptionProvider {
         Object.values(this.webviewManager.panels).forEach((viewer) => {
           if (viewer instanceof DataViewer) {
             viewer.invalidateColumns();
+            viewer.invalidateSession();
           }
         });
       }),
@@ -76,19 +77,25 @@ class LibraryNavigator implements SubscriptionProvider {
           const attributes = await getSession().contextAttributes?.();
           const allowDownload =
             attributes?.allowDownload?.toLowerCase() !== "false";
-          this.webviewManager.render(
-            new DataViewer(
-              this.extensionUri,
-              item.uid,
-              paginator,
-              fetchColumns,
-              (columnName: string) => {
-                this.displayTableProperties(item, true, columnName);
-              },
-              allowDownload,
-            ),
+          const viewer = new DataViewer(
+            this.extensionUri,
             item.uid,
+            paginator,
+            fetchColumns,
+            (columnName: string) => {
+              this.displayTableProperties(item, true, columnName);
+            },
+            allowDownload,
+            () => this.libraryDataProvider.getTableInfo(item),
           );
+
+          try {
+            await viewer.initializeModifiedTimeStamp();
+          } catch {
+            // Allow the Table Viewer to open if metadata retrieval fails.
+          }
+
+          this.webviewManager.render(viewer, item.uid);
         },
       ),
       commands.registerCommand("SAS.refreshLibraries", () => this.refresh()),
