@@ -59,6 +59,7 @@ export const runServer = (
   const sasSel: DocumentSelector = [{ language: "sas" }];
 
   let supportSASGetLibList = false;
+  let snippetSupport = false;
   let registeredAdvancedCapabilities = false;
 
   _pyrightLanguageProvider.setSasLspProvider(getLanguageService);
@@ -70,6 +71,9 @@ export const runServer = (
     ) {
       supportSASGetLibList = true;
     }
+    snippetSupport =
+      params.capabilities.textDocument?.completion?.completionItem
+        ?.snippetSupport === true;
     _pyrightLanguageProvider.initialize(params, [], []);
 
     const completionOpts: CompletionRegistrationOptions = {
@@ -593,6 +597,7 @@ export const runServer = (
     // re-create LanguageServer if document changed
     if (!docInfo.service) {
       docInfo.service = new LanguageServiceProvider(docInfo.document);
+      docInfo.service.completionProvider.setSnippetSupport(snippetSupport);
 
       if (supportSASGetLibList) {
         docInfo.service.setLibService((libId, resolve) =>
