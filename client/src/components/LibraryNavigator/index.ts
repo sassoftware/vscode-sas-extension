@@ -116,6 +116,8 @@ class LibraryNavigator implements SubscriptionProvider {
           return;
         }
 
+        this.closeTableViewers(selectedItems);
+
         try {
           await this.libraryDataProvider.deleteTables(selectedItems);
         } catch (error) {
@@ -200,6 +202,14 @@ class LibraryNavigator implements SubscriptionProvider {
         panel.refreshData();
       }
     });
+  }
+
+  private closeTableViewers(items: LibraryItem[]): void {
+    for (const item of items) {
+      [item.uid, `properties-${item.uid}`].forEach((key) =>
+        this.webviewManager.panels[key]?.dispose(),
+      );
+    }
   }
 
   private async displayTableProperties(
