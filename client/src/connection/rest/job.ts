@@ -166,7 +166,7 @@ export class ComputeJob extends Compute {
   async isDone(state?: string): Promise<boolean> {
     const doneStates = ["done", "canceled", "error", "warning", "completed"];
 
-    return doneStates.indexOf(state || (await this.getState())) === -1;
+    return doneStates.includes(state || (await this.getState()));
   }
 
   /*
