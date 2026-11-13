@@ -79,6 +79,7 @@ class ContentDataProvider
   private _treeView: TreeView<ContentItem>;
   private _dropEditProvider: Disposable;
   private model: ContentModel;
+  private openDatasets: Map<string, string>;
   private extensionUri: Uri;
   private mimeType: string;
   private sourceType: ContentSourceType;
@@ -94,6 +95,7 @@ class ContentDataProvider
 
   constructor(
     model: ContentModel,
+    openDatasets: Map<string, string>,
     extensionUri: Uri,
     { mimeType, treeIdentifier, sourceType }: ContentNavigatorConfig,
   ) {
@@ -102,6 +104,7 @@ class ContentDataProvider
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
     this._onDidChange = new EventEmitter<Uri>();
     this.model = model;
+    this.openDatasets = openDatasets;
     this.extensionUri = extensionUri;
     this.dropMimeTypes = [mimeType, "text/uri-list"];
     this.dragMimeTypes = [mimeType];
@@ -318,54 +321,71 @@ class ContentDataProvider
       return;
     }
 
-    const newUri = newItem.vscUri;
-    const oldUriToNewUriMap = [[item.vscUri, newUri]];
-    const newItemIsContainer = getIsContainer(newItem);
-    if (closing !== true && !newItemIsContainer) {
-      await commands.executeCommand("vscode.open", newUri);
-    }
-    if (closing !== true && newItemIsContainer) {
-      const urisToOpen = getPreviouslyOpenedChildItems(
-        await this.getChildren(newItem),
-      );
-      for (const [, newUri] of urisToOpen) {
+    if (isDatasetFile(item.name)) {
+      // check if the dataset is open
+      const itemPath = await this.getPathOfItem(item);
+      const normalizedPath = itemPath?.replace(/\\/g, "/");
+      const openedTableUid = this.openDatasets.get(normalizedPath);
+      // if its open, close the old table and open the newly named view
+      if (openedTableUid) {
+        await commands.executeCommand<boolean>(
+          "SAS.closeTable",
+          openedTableUid,
+        );
+        const commandPrefix = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}`;
+        await commands.executeCommand(`${commandPrefix}.openResource`, newItem);
+      }
+      return newItem.vscUri;
+    } else {
+      const newUri = newItem.vscUri;
+      const oldUriToNewUriMap = [[item.vscUri, newUri]];
+      const newItemIsContainer = getIsContainer(newItem);
+      if (closing !== true && !newItemIsContainer) {
         await commands.executeCommand("vscode.open", newUri);
       }
-      oldUriToNewUriMap.push(...urisToOpen);
-    }
-    oldUriToNewUriMap.forEach(([uri, newUri]) =>
-      this._onDidManipulateFile.fire({
-        type: "rename",
-        uri,
-        newUri,
-      }),
-    );
-    return newUri;
-
-    function getPreviouslyOpenedChildItems(childItems: ContentItem[]) {
-      const loadChildItems = closing !== true && newItemIsContainer;
-      if (!Array.isArray(removedTabUris) || !loadChildItems) {
-        return [];
+      if (closing !== true && newItemIsContainer) {
+        const urisToOpen = getPreviouslyOpenedChildItems(
+          await this.getChildren(newItem),
+        );
+        for (const [, newUri] of urisToOpen) {
+          await commands.executeCommand("vscode.open", newUri);
+        }
+        oldUriToNewUriMap.push(...urisToOpen);
       }
-      // Here's where things get a little weird. When we rename folders in
-      // sas content, we _don't_ close those files. It doesn't matter since
-      // their path isn't hierarchical. In sas file system, the path is hierarchical,
-      // thus we need to re-open all the closed files. This does that by getting
-      // children and comparing the removedTabUris
-      const filteredChildItems = childItems
-        .map((childItem) => {
-          const matchingUri = removedTabUris.find((uri) =>
-            uri.path.endsWith(childItem.name),
-          );
-          if (!matchingUri) {
-            return;
-          }
+      oldUriToNewUriMap.forEach(([uri, newUri]) =>
+        this._onDidManipulateFile.fire({
+          type: "rename",
+          uri,
+          newUri,
+        }),
+      );
+      return newUri;
 
-          return [matchingUri, childItem.vscUri];
-        })
-        .filter((exists) => exists);
+      function getPreviouslyOpenedChildItems(childItems: ContentItem[]) {
+        const loadChildItems = closing !== true && newItemIsContainer;
+        if (!Array.isArray(removedTabUris) || !loadChildItems) {
+          return [];
+        }
+        // Here's where things get a little weird. When we rename folders in
+        // sas content, we _don't_ close those files. It doesn't matter since
+        // their path isn't hierarchical. In sas file system, the path is hierarchical,
+        // thus we need to re-open all the closed files. This does that by getting
+        // children and comparing the removedTabUris
+        const filteredChildItems = childItems
+          .map((childItem) => {
+            const matchingUri = removedTabUris.find((uri) =>
+              uri.path.endsWith(childItem.name),
+            );
+            if (!matchingUri) {
+              return;
+            }
 
-      return filteredChildItems;
+            return [matchingUri, childItem.vscUri];
+          })
+          .filter((exists) => exists);
+
+        return filteredChildItems;
+      }
     }
   }
 
@@ -987,6 +1007,9 @@ class ContentDataProvider
 }
 
 export default ContentDataProvider;
+
+const isDatasetFile = (name: string | undefined): boolean =>
+  !!name?.toLowerCase().endsWith(".sas7bdat");
 
 const closeFileIfOpen = (item: ContentItem): Promise<Uri[]> | boolean => {
   const tabs = getEditorTabsForItem(item);

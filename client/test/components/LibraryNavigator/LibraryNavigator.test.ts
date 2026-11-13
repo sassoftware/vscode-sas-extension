@@ -19,6 +19,9 @@ interface WebviewMessagePanel {
 class RefreshTrackingPanel {
   public readonly refreshData = sinon.spy();
   public readonly invalidateColumns = sinon.spy();
+  public getPanel() {
+    return undefined;
+  }
 }
 
 class MockSession extends Session {
