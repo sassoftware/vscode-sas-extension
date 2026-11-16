@@ -1,0 +1,25 @@
+{
+  "reporter": ["text", "html", "lcov"],
+  "exclude-after-remap": true,
+  "clean": true,
+  "exclude": [
+    "**/*.d.ts",
+    "client/test/**",
+    "client/test-webview/**",
+    "server/test/**",
+    "client/testFixture/**",
+    "server/testFixture/**",
+    "client/out/**",
+    "client/dist/**",
+    "server/out/**",
+    "server/dist/**",
+    "**/node_modules/**",
+    "tools/**",
+    "coverage/**",
+    "coverage-client/**",
+    "coverage-server/**",
+    "coverage-webview/**",
+    "client/src/connection/rest/api/**"
+  ],
+  "extension": [".ts", ".tsx"]
+}
