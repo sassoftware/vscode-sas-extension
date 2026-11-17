@@ -602,7 +602,9 @@ export class ProfileConfig {
     };
 
     if (activeProfileParam in profileList) {
-      commands.executeCommand("SAS.close", true);
+      void Promise.resolve(commands.executeCommand("SAS.close", true)).catch(
+        () => undefined,
+      );
     } else {
       profiles.activeProfile = "";
     }
