@@ -12,6 +12,21 @@ import {
   LibraryItem,
 } from "../../../src/components/LibraryNavigator/types";
 
+const createAdapter = (
+  overrides: Partial<LibraryAdapter> = {},
+): LibraryAdapter => ({
+  connect: async () => {},
+  deleteTable: async () => {},
+  getColumns: async () => ({ count: 0, items: [] }),
+  getLibraries: async () => ({ count: 0, items: [] }),
+  getRows: async () => ({ count: 0, rows: [] }),
+  getRowsAsCSV: async () => ({ count: 0, rows: [] }),
+  getTableRowCount: async () => ({ maxNumberOfRowsToRead: 0, rowCount: 0 }),
+  getTables: async () => ({ count: 0, items: [] }),
+  setup: async () => {},
+  ...overrides,
+});
+
 const item: LibraryItem = {
   uid: "WORK.TABLE",
   id: "TABLE",
@@ -48,13 +63,10 @@ describe("LibraryModel table download streaming", () => {
       stream: Readable.from(["header\n", '"1","value"\n']),
       dispose,
     });
-    const exporterAdapter = {
+    const adapter = createAdapter({
       supportsTableExport: true,
       createTableExport,
-    };
-    // This exporter-only mock is sufficient for this branch of LibraryModel.
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const adapter = exporterAdapter as unknown as LibraryAdapter;
+    });
     const model = new LibraryModel(adapter);
     const chunks: string[] = [];
     let writeCount = 0;
@@ -86,17 +98,15 @@ describe("LibraryModel table download streaming", () => {
         { cells: ["1", 'quoted "value"'] },
       ],
     });
-    const pagedAdapter = {
+    const getTableRowCount = sinon.stub().resolves({
+      rowCount: 1,
+      maxNumberOfRowsToRead: 10,
+    });
+    const adapter = createAdapter({
       setup: sinon.stub().resolves(),
-      getTableRowCount: sinon.stub().resolves({
-        rowCount: 1,
-        maxNumberOfRowsToRead: 10,
-      }),
+      getTableRowCount,
       getRowsAsCSV,
-    };
-    // This mock only supplies the adapter's paging methods.
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const adapter = pagedAdapter as unknown as LibraryAdapter;
+    });
     const model = new LibraryModel(adapter);
     const chunks: string[] = [];
 
@@ -115,16 +125,13 @@ describe("LibraryModel table download streaming", () => {
       writeStarted = resolve;
     });
     const dispose = sinon.stub().resolves();
-    const exporterAdapter = {
+    const adapter = createAdapter({
       supportsTableExport: true,
       createTableExport: sinon.stub().resolves({
         stream: Readable.from(["csv"]),
         dispose,
       }),
-    };
-    // This exporter-only mock is sufficient for this branch of LibraryModel.
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const adapter = exporterAdapter as unknown as LibraryAdapter;
+    });
     const model = new LibraryModel(adapter);
     const controller = new AbortController();
     const operation = model.writeTableContents(

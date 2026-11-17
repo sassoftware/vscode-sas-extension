@@ -91,7 +91,7 @@ describe("BrowserFileWriter", () => {
   it("selects a browser file and retains its handle for transfer setup", async () => {
     const fileHandle = {
       name: "selected.csv",
-      queryPermission: async () => "granted" as PermissionState,
+      queryPermission: async (): Promise<PermissionState> => "granted",
       createWritable: async () => ({
         write: async () => undefined,
         close: async () => undefined,
@@ -153,7 +153,7 @@ describe("BrowserFileWriter", () => {
     let closed = false;
     const fileHandle = {
       name: "selected.csv",
-      queryPermission: async () => "granted" as PermissionState,
+      queryPermission: async (): Promise<PermissionState> => "granted",
       createWritable: async (): Promise<BrowserWritableFile> => ({
         write: async (data) => {
           writes.push(data);
@@ -207,7 +207,7 @@ describe("BrowserFileWriter", () => {
     let aborted = false;
     const fileHandle = {
       name: "selected.csv",
-      queryPermission: async () => "granted" as PermissionState,
+      queryPermission: async (): Promise<PermissionState> => "granted",
       createWritable: async (): Promise<BrowserWritableFile> => ({
         write: async () => {
           throw new Error("Malformed chunk was written.");

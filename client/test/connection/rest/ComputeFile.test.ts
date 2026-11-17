@@ -3,8 +3,10 @@ import * as sinon from "sinon";
 import { Readable } from "stream";
 
 import * as computeApi from "../../../src/connection/rest/api/compute";
+import { Configuration } from "../../../src/connection/rest/api/configuration";
 import * as restCommon from "../../../src/connection/rest/common";
 import { ComputeFile } from "../../../src/connection/rest/file";
+import { ComputeJob } from "../../../src/connection/rest/job";
 import { ComputeSession } from "../../../src/connection/rest/session";
 
 const errorMessage = (error: unknown) =>
@@ -12,74 +14,66 @@ const errorMessage = (error: unknown) =>
 
 describe("ComputeFile table exports", () => {
   let sandbox: sinon.SinonSandbox;
-  let files: {
-    deleteFile: sinon.SinonStub;
-    deleteFileref: sinon.SinonStub;
-    getFile: sinon.SinonStub;
-  };
-  let jobs: {
-    deleteJob: sinon.SinonStub;
-    getJobState: sinon.SinonStub;
-    updateJobState: sinon.SinonStub;
-  };
-  let logs: { getJobLog: sinon.SinonStub };
-  let variables: { getVariable: sinon.SinonStub };
+  let files: ReturnType<typeof computeApi.FilesApi>;
+  let jobs: ReturnType<typeof computeApi.JobsApi>;
+  let logs: ReturnType<typeof computeApi.LogsApi>;
+  let variables: ReturnType<typeof computeApi.VariablesApi>;
+  let deleteFile: sinon.SinonStub;
+  let deleteFileref: sinon.SinonStub;
+  let getFile: sinon.SinonStub;
+  let deleteJob: sinon.SinonStub;
+  let getJobState: sinon.SinonStub;
+  let updateJobState: sinon.SinonStub;
+  let getJobLog: sinon.SinonStub;
+  let getVariable: sinon.SinonStub;
   let execute: sinon.SinonStub;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
+    deleteFile = sandbox.stub().resolves();
+    deleteFileref = sandbox.stub().resolves();
+    getFile = sandbox.stub().resolves({
+      data: Readable.from(["csv-data"]),
+    });
     files = {
-      deleteFile: sandbox.stub().resolves(),
-      deleteFileref: sandbox.stub().resolves(),
-      getFile: sandbox.stub().resolves({
-        data: Readable.from(["csv-data"]),
-      }),
+      ...computeApi.FilesApi(),
+      deleteFile,
+      deleteFileref,
+      getFile,
     };
+    deleteJob = sandbox.stub().resolves();
+    getJobState = sandbox.stub().resolves({
+      data: "completed",
+      headers: { etag: "etag-2" },
+    });
+    updateJobState = sandbox.stub().resolves();
     jobs = {
-      deleteJob: sandbox.stub().resolves(),
-      getJobState: sandbox.stub().resolves({
-        data: "completed",
-        headers: { etag: "etag-2" },
-      }),
-      updateJobState: sandbox.stub().resolves(),
+      ...computeApi.JobsApi(),
+      deleteJob,
+      getJobState,
+      updateJobState,
     };
-    logs = {
-      getJobLog: sandbox.stub().resolves({
-        data: { items: [], count: 0, links: [] },
-      }),
-    };
-    variables = {
-      getVariable: sandbox.stub().resolves({ data: { value: "1" } }),
-    };
+    getJobLog = sandbox.stub().resolves({
+      data: { items: [], count: 0, links: [] },
+    });
+    logs = { ...computeApi.LogsApi(), getJobLog };
+    getVariable = sandbox.stub().resolves({
+      data: { value: "1" },
+    });
+    variables = { ...computeApi.VariablesApi(), getVariable };
     sandbox
       .stub(restCommon, "getApiConfig")
       // Stub API factories with only the methods exercised by the exporter.
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      .returns({} as ReturnType<typeof restCommon.getApiConfig>);
-    sandbox
-      .stub(computeApi, "FilesApi")
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      .returns(files as unknown as ReturnType<typeof computeApi.FilesApi>);
-    sandbox
-      .stub(computeApi, "JobsApi")
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      .returns(jobs as unknown as ReturnType<typeof computeApi.JobsApi>);
-    sandbox
-      .stub(computeApi, "LogsApi")
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      .returns(logs as unknown as ReturnType<typeof computeApi.LogsApi>);
-    sandbox
-      .stub(computeApi, "VariablesApi")
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      .returns(
-        variables as unknown as ReturnType<typeof computeApi.VariablesApi>,
-      );
+      .returns(new Configuration({ baseOptions: {} }));
+    sandbox.stub(computeApi, "FilesApi").returns(files);
+    sandbox.stub(computeApi, "JobsApi").returns(jobs);
+    sandbox.stub(computeApi, "LogsApi").returns(logs);
+    sandbox.stub(computeApi, "VariablesApi").returns(variables);
+    const completedJob = new ComputeJob("job-1");
+    completedJob.etag = "etag-1";
     execute = sandbox
       .stub(ComputeSession.prototype, "execute")
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      .resolves({ id: "job-1", etag: "etag-1" } as Awaited<
-        ReturnType<ComputeSession["execute"]>
-      >);
+      .resolves(completedJob);
   });
 
   afterEach(() => sandbox.restore());
@@ -113,21 +107,19 @@ describe("ComputeFile table exports", () => {
     expect(submittedCode).to.contain(`put '""'`);
 
     await exported.dispose();
-    expect(files.deleteFile.calledOnce).to.equal(true);
-    expect(files.deleteFile.firstCall.args[0].sessionId).to.equal("session-1");
-    expect(files.deleteFile.firstCall.args[0].fileref).to.match(
-      /^dl[0-9a-f]{6}$/,
-    );
-    expect(files.deleteFileref.calledOnce).to.equal(true);
-    expect(jobs.deleteJob.calledOnce).to.equal(true);
-    expect(jobs.deleteJob.firstCall.args[0]).to.deep.equal({
+    expect(deleteFile.calledOnce).to.equal(true);
+    expect(deleteFile.firstCall.args[0].sessionId).to.equal("session-1");
+    expect(deleteFile.firstCall.args[0].fileref).to.match(/^dl[0-9a-f]{6}$/);
+    expect(deleteFileref.calledOnce).to.equal(true);
+    expect(deleteJob.calledOnce).to.equal(true);
+    expect(deleteJob.firstCall.args[0]).to.deep.equal({
       sessionId: "session-1",
       jobId: "job-1",
     });
   });
 
   it("requires the producer success variable before downloading the file", async () => {
-    variables.getVariable.resolves({ data: { value: "0" } });
+    getVariable.resolves({ data: { value: "0" } });
 
     let failure: unknown;
     try {
@@ -140,20 +132,20 @@ describe("ComputeFile table exports", () => {
     }
 
     expect(errorMessage(failure)).to.contain("producer did not complete");
-    expect(files.getFile.called).to.equal(false);
-    expect(files.deleteFile.calledOnce).to.equal(true);
-    expect(files.deleteFileref.calledOnce).to.equal(true);
-    expect(jobs.deleteJob.calledOnce).to.equal(true);
+    expect(getFile.called).to.equal(false);
+    expect(deleteFile.calledOnce).to.equal(true);
+    expect(deleteFileref.calledOnce).to.equal(true);
+    expect(deleteJob.calledOnce).to.equal(true);
   });
 
   it("uses conditional long polling while waiting for the export job", async () => {
-    jobs.getJobState
+    getJobState
       .onFirstCall()
       .resolves({ status: 200, data: "running", headers: { etag: "etag-2" } });
-    jobs.getJobState
+    getJobState
       .onSecondCall()
       .resolves({ status: 304, data: "", headers: { etag: "etag-2" } });
-    jobs.getJobState.onThirdCall().resolves({
+    getJobState.onThirdCall().resolves({
       status: 200,
       data: "completed",
       headers: { etag: "etag-3" },
@@ -164,19 +156,15 @@ describe("ComputeFile table exports", () => {
       new AbortController().signal,
     );
 
-    expect(jobs.getJobState.callCount).to.equal(3);
-    expect(jobs.getJobState.secondCall.args[0]).to.deep.equal({
+    expect(getJobState.callCount).to.equal(3);
+    expect(getJobState.secondCall.args[0]).to.deep.equal({
       sessionId: "session-1",
       jobId: "job-1",
       wait: 1,
       ifNoneMatch: "etag-2",
     });
-    expect(jobs.getJobState.secondCall.args[1].validateStatus(304)).to.equal(
-      true,
-    );
-    expect(jobs.getJobState.secondCall.args[1].validateStatus(200)).to.equal(
-      true,
-    );
+    expect(getJobState.secondCall.args[1].validateStatus(304)).to.equal(true);
+    expect(getJobState.secondCall.args[1].validateStatus(200)).to.equal(true);
     await exported.dispose();
   });
 
@@ -184,10 +172,9 @@ describe("ComputeFile table exports", () => {
     const controller = new AbortController();
     execute.callsFake(async () => {
       controller.abort(new Error("canceled"));
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return { id: "job-1", etag: "etag-1" } as Awaited<
-        ReturnType<ComputeSession["execute"]>
-      >;
+      const job = new ComputeJob("job-1");
+      job.etag = "etag-1";
+      return job;
     });
 
     let failure: unknown;
@@ -201,14 +188,14 @@ describe("ComputeFile table exports", () => {
     }
 
     expect(errorMessage(failure)).to.equal("canceled");
-    expect(jobs.updateJobState.calledOnce).to.equal(true);
-    expect(files.deleteFile.calledOnce).to.equal(true);
-    expect(files.deleteFileref.calledOnce).to.equal(true);
-    expect(jobs.deleteJob.calledOnce).to.equal(true);
+    expect(updateJobState.calledOnce).to.equal(true);
+    expect(deleteFile.calledOnce).to.equal(true);
+    expect(deleteFileref.calledOnce).to.equal(true);
+    expect(deleteJob.calledOnce).to.equal(true);
   });
 
   it("surfaces SAS log failures and still cleans export resources", async () => {
-    logs.getJobLog.resolves({
+    getJobLog.resolves({
       data: {
         items: [{ type: "error" }],
         count: 1,
@@ -227,8 +214,8 @@ describe("ComputeFile table exports", () => {
     }
 
     expect(errorMessage(failure)).to.contain("Check the SAS log");
-    expect(files.deleteFile.calledOnce).to.equal(true);
-    expect(files.deleteFileref.calledOnce).to.equal(true);
-    expect(jobs.deleteJob.calledOnce).to.equal(true);
+    expect(deleteFile.calledOnce).to.equal(true);
+    expect(deleteFileref.calledOnce).to.equal(true);
+    expect(deleteJob.calledOnce).to.equal(true);
   });
 });

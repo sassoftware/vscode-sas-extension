@@ -1,4 +1,10 @@
-import { CancellationTokenSource, env, window, workspace } from "vscode";
+import {
+  CancellationTokenSource,
+  type WorkspaceConfiguration,
+  env,
+  window,
+  workspace,
+} from "vscode";
 
 import { expect } from "chai";
 import { get } from "http";
@@ -24,6 +30,22 @@ async function getAvailablePort(): Promise<number> {
   return address.port;
 }
 
+function getConfiguration<T>(section: string): T | undefined;
+function getConfiguration<T>(section: string, defaultValue: T): T;
+function getConfiguration<T>(
+  _section: string,
+  defaultValue?: T,
+): T | undefined {
+  return defaultValue;
+}
+
+const configuration = (): WorkspaceConfiguration => ({
+  get: getConfiguration,
+  has: () => false,
+  inspect: () => undefined,
+  update: async () => {},
+});
+
 describe("HostAttachmentDownloadTarget", () => {
   let sandbox: sinon.SinonSandbox;
 
@@ -40,9 +62,7 @@ describe("HostAttachmentDownloadTarget", () => {
   afterEach(() => sandbox.restore());
 
   it("selects fixed-proxy mode when all proxy environment variables are set", () => {
-    sandbox.stub(workspace, "getConfiguration").returns({
-      get: (_key: string, defaultValue: unknown) => defaultValue,
-    } as ReturnType<typeof workspace.getConfiguration>);
+    sandbox.stub(workspace, "getConfiguration").returns(configuration());
 
     expect(
       readHostAttachmentDownloadConfiguration({
@@ -79,9 +99,7 @@ describe("HostAttachmentDownloadTarget", () => {
     ],
   ] as const) {
     it(`rejects incomplete proxy environment configuration without ${name}`, () => {
-      sandbox.stub(workspace, "getConfiguration").returns({
-        get: (_key: string, defaultValue: unknown) => defaultValue,
-      } as ReturnType<typeof workspace.getConfiguration>);
+      sandbox.stub(workspace, "getConfiguration").returns(configuration());
 
       expect(() =>
         readHostAttachmentDownloadConfiguration(environment),
@@ -90,9 +108,7 @@ describe("HostAttachmentDownloadTarget", () => {
   }
 
   it("rejects empty proxy environment values", () => {
-    sandbox.stub(workspace, "getConfiguration").returns({
-      get: (_key: string, defaultValue: unknown) => defaultValue,
-    } as ReturnType<typeof workspace.getConfiguration>);
+    sandbox.stub(workspace, "getConfiguration").returns(configuration());
 
     expect(() =>
       readHostAttachmentDownloadConfiguration({
@@ -106,10 +122,7 @@ describe("HostAttachmentDownloadTarget", () => {
   it("uses built-in defaults when environment variables are absent", () => {
     const getConfiguration = sandbox
       .stub(workspace, "getConfiguration")
-      .returns({
-        get: (key: string, defaultValue: unknown) =>
-          key === "hostAttachment.listenPort" ? 46005 : defaultValue,
-      } as ReturnType<typeof workspace.getConfiguration>);
+      .returns(configuration());
 
     expect(readHostAttachmentDownloadConfiguration({})).to.include({
       mode: "external-uri",
@@ -121,15 +134,7 @@ describe("HostAttachmentDownloadTarget", () => {
   });
 
   it("overrides conflicting settings with complete deployment environment variables", () => {
-    sandbox.stub(workspace, "getConfiguration").returns({
-      get: (key: string, defaultValue: unknown) =>
-        ({
-          "hostAttachment.mode": "external-uri",
-          "hostAttachment.listenHost": "127.0.0.1",
-          "hostAttachment.listenPort": 1234,
-          "hostAttachment.externalBaseUrl": "",
-        })[key] ?? defaultValue,
-    } as ReturnType<typeof workspace.getConfiguration>);
+    sandbox.stub(workspace, "getConfiguration").returns(configuration());
 
     expect(
       readHostAttachmentDownloadConfiguration({
@@ -147,10 +152,7 @@ describe("HostAttachmentDownloadTarget", () => {
   it("ignores the removed VS Code route mode setting", () => {
     const getConfiguration = sandbox
       .stub(workspace, "getConfiguration")
-      .returns({
-        get: (key: string, defaultValue: unknown) =>
-          key === "hostAttachment.mode" ? "invalid" : defaultValue,
-      } as ReturnType<typeof workspace.getConfiguration>);
+      .returns(configuration());
 
     expect(readHostAttachmentDownloadConfiguration({}).mode).to.equal(
       "external-uri",

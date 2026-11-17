@@ -26,9 +26,12 @@ import {
 } from "../../../src/webview/BrowserDownload/BrowserDownloadMessages";
 
 interface MockPanel {
+  viewType: string;
   visible: boolean;
   active: boolean;
   title: string;
+  options: { enableScripts?: boolean; retainContextWhenHidden?: boolean };
+  viewColumn: ViewColumn | undefined;
   webview: {
     options: WebviewOptions;
     html: string;
@@ -36,13 +39,13 @@ interface MockPanel {
     asWebviewUri: (uri: Uri) => Uri;
     onDidReceiveMessage: (
       listener: (message: Record<string, unknown>) => void,
-    ) => void;
+    ) => Disposable;
     postMessage: (message: Record<string, unknown>) => Promise<boolean>;
   };
-  onDidDispose: (listener: () => void) => void;
+  onDidDispose: (listener: () => void) => Disposable;
   onDidChangeViewState: (
     listener: (event: { webviewPanel: MockPanel }) => void,
-  ) => void;
+  ) => Disposable;
   reveal: (viewColumn?: ViewColumn, preserveFocus?: boolean) => void;
   dispose: () => void;
 }
@@ -118,6 +121,7 @@ describe("BrowserFileDownloadTarget", () => {
   let maximumActiveWrites = 0;
   let createWebviewPanelStub: sinon.SinonStub;
   let revealCalls: [ViewColumn | undefined, boolean | undefined][];
+  let vscodePanel: WebviewPanel;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
@@ -132,9 +136,12 @@ describe("BrowserFileDownloadTarget", () => {
     signalReady = () => receiveMessage({ type: "ready" });
     disposed = false;
     panel = {
+      viewType: "sasBrowserFileDownload",
       visible: true,
       active: true,
       title: "",
+      options: { enableScripts: true, retainContextWhenHidden: true },
+      viewColumn: ViewColumn.Beside,
       webview: {
         options: { enableScripts: false, enableForms: true },
         html: "",
@@ -145,6 +152,7 @@ describe("BrowserFileDownloadTarget", () => {
           if (automaticReady) {
             queueMicrotask(() => receiveMessage({ type: "ready" }));
           }
+          return new Disposable(() => {});
         },
         postMessage: async (message) => {
           postedMessages.push(message);
@@ -191,6 +199,7 @@ describe("BrowserFileDownloadTarget", () => {
           previous();
           listener();
         };
+        return new Disposable(() => {});
       },
       onDidChangeViewState: (listener) => {
         const previous = onViewState;
@@ -198,6 +207,7 @@ describe("BrowserFileDownloadTarget", () => {
           previous(event);
           listener(event);
         };
+        return new Disposable(() => {});
       },
       reveal: (viewColumn, preserveFocus) =>
         revealCalls.push([viewColumn, preserveFocus]),
@@ -209,11 +219,11 @@ describe("BrowserFileDownloadTarget", () => {
         onDispose();
       },
     };
+    vscodePanel = panel;
     createWebviewPanelStub = sandbox
       .stub(window, "createWebviewPanel")
       // The test panel supplies only the webview lifecycle used by this bridge.
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      .returns(panel as unknown as WebviewPanel);
+      .returns(vscodePanel);
     sandbox
       .stub(window, "registerWebviewPanelSerializer")
       .callsFake((_viewType, value) => {
@@ -327,7 +337,7 @@ describe("BrowserFileDownloadTarget", () => {
       throw new Error("The browser download serializer was not registered.");
     }
 
-    await serializer.deserializeWebviewPanel(panel as unknown as WebviewPanel, {
+    await serializer.deserializeWebviewPanel(vscodePanel, {
       tableName: "WORK.TABLE",
       fileName: "work.table.csv",
       result: "inProgress",
@@ -353,7 +363,7 @@ describe("BrowserFileDownloadTarget", () => {
 
     automaticReady = false;
     const deserialization = serializer
-      .deserializeWebviewPanel(panel as unknown as WebviewPanel, {
+      .deserializeWebviewPanel(vscodePanel, {
         tableName: "WORK.TABLE",
         fileName: "work.table.csv",
         result: "completed",
@@ -538,21 +548,23 @@ describe("BrowserFileDownloadTarget", () => {
 
   it("rejects binary message delivery when the webview cannot post the chunk", async () => {
     await chooseFile();
-    sandbox.stub(panel.webview, "postMessage").callsFake(async (message) => {
-      if (message.type === "write") {
-        return false;
-      }
-      if (message.requestId) {
-        queueMicrotask(() =>
-          receiveMessage({
-            type: "ack",
-            requestId: message.requestId,
-            ok: true,
-          }),
-        );
-      }
-      return true;
-    });
+    sandbox
+      .stub(panel.webview, "postMessage")
+      .callsFake(async (message: Record<string, unknown>) => {
+        if (message.type === "write") {
+          return false;
+        }
+        if (message.requestId) {
+          queueMicrotask(() =>
+            receiveMessage({
+              type: "ack",
+              requestId: message.requestId,
+              ok: true,
+            }),
+          );
+        }
+        return true;
+      });
 
     let failure: unknown;
     try {

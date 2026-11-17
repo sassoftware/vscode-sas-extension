@@ -90,8 +90,15 @@ const createTablePropertiesViewer = () =>
 
 const createNavigatorForSessionChange = (
   panels: Record<string, unknown>,
-): LibraryNavigator => {
-  const navigator: LibraryNavigator = Object.create(LibraryNavigator.prototype);
+): Pick<LibraryNavigator, "getSubscriptions"> => {
+  const navigator = {
+    getSubscriptions: () =>
+      Reflect.apply(
+        Reflect.get(LibraryNavigator.prototype, "getSubscriptions"),
+        navigator,
+        [],
+      ),
+  };
 
   Object.defineProperty(navigator, "libraryDataProvider", {
     value: {
@@ -139,9 +146,14 @@ describe("LibraryNavigator refresh flow", async function () {
   });
 
   it("refreshOpenTableViewers refreshes open DataViewer and TablePropertiesViewer panels", () => {
-    const navigator: LibraryNavigator = Object.create(
-      LibraryNavigator.prototype,
-    );
+    const navigator = {
+      refreshOpenTableViewers: () =>
+        Reflect.apply(
+          Reflect.get(LibraryNavigator.prototype, "refreshOpenTableViewers"),
+          navigator,
+          [],
+        ),
+    };
 
     const tableViewer = createDataViewer();
     const tableViewerRefresh = sinon.stub(tableViewer, "refreshData");
@@ -229,10 +241,15 @@ describe("LibraryNavigator browser-file export guard", () => {
   it("allows one export at a time and reports when another is already active", async () => {
     const sandbox = sinon.createSandbox();
     // Exercise the private guard without constructing VS Code-dependent collaborators.
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const navigator = Object.create(
-      LibraryNavigator.prototype,
-    ) as LibraryNavigator;
+    const navigator = {};
+    Object.defineProperty(navigator, "runSingleBrowserFileExport", {
+      value: (...args: unknown[]) =>
+        Reflect.apply(
+          Reflect.get(LibraryNavigator.prototype, "runSingleBrowserFileExport"),
+          navigator,
+          args,
+        ),
+    });
     const showInformationMessage = sandbox.stub(
       window,
       "showInformationMessage",
@@ -276,10 +293,18 @@ describe("LibraryNavigator remote workspace download destination", () => {
   it("directs local destinations to This Computer instead of streaming remotely", async () => {
     const sandbox = sinon.createSandbox();
     // Exercise the destination guard without constructing VS Code-dependent collaborators.
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const navigator = Object.create(
-      LibraryNavigator.prototype,
-    ) as LibraryNavigator;
+    const navigator = {};
+    Object.defineProperty(navigator, "redirectLocalComputerDestination", {
+      value: (...args: unknown[]) =>
+        Reflect.apply(
+          Reflect.get(
+            LibraryNavigator.prototype,
+            "redirectLocalComputerDestination",
+          ),
+          navigator,
+          args,
+        ),
+    });
     const showInformationMessage = sandbox.stub(
       window,
       "showInformationMessage",
@@ -323,10 +348,18 @@ describe("LibraryNavigator remote workspace download destination", () => {
   it("keeps remote workspace destinations on the existing streaming path", async () => {
     const sandbox = sinon.createSandbox();
     // Exercise the destination guard without constructing VS Code-dependent collaborators.
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const navigator = Object.create(
-      LibraryNavigator.prototype,
-    ) as LibraryNavigator;
+    const navigator = {};
+    Object.defineProperty(navigator, "redirectLocalComputerDestination", {
+      value: (...args: unknown[]) =>
+        Reflect.apply(
+          Reflect.get(
+            LibraryNavigator.prototype,
+            "redirectLocalComputerDestination",
+          ),
+          navigator,
+          args,
+        ),
+    });
     const showInformationMessage = sandbox.stub(
       window,
       "showInformationMessage",
@@ -369,10 +402,7 @@ describe("LibraryNavigator unsupported picker fallback", () => {
   it("automatically downloads through the Node host when file picking is unsupported", async () => {
     const sandbox = sinon.createSandbox();
     // Exercise the download handoff without constructing VS Code-dependent collaborators.
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const navigator = Object.create(
-      LibraryNavigator.prototype,
-    ) as LibraryNavigator;
+    const navigator = {};
     const item: LibraryItem = {
       uid: "WORK.TABLE",
       id: "TABLE",
@@ -400,6 +430,14 @@ describe("LibraryNavigator unsupported picker fallback", () => {
         },
       );
     Object.defineProperties(navigator, {
+      downloadTableToComputer: {
+        value: (...args: unknown[]) =>
+          Reflect.apply(
+            Reflect.get(LibraryNavigator.prototype, "downloadTableToComputer"),
+            navigator,
+            args,
+          ),
+      },
       libraryDataProvider: {
         value: {
           assertTableExportSupported: () => {},
