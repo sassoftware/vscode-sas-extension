@@ -53,7 +53,7 @@ export class BrowserFileTableDownloadTarget implements TableDownloadTarget {
             );
             opened = true;
             await this.browser.setStatus(
-              l10n.t("Streaming the CSV to your computer..."),
+              l10n.t("Streaming the CSV to your device..."),
               "inProgress",
             );
             exported = await createExport(controller.signal);

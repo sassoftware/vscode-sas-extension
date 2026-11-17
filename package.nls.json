@@ -13,7 +13,7 @@
   "commands.SAS.deleteTable": "Delete",
   "commands.SAS.download": "Download",
   "commands.SAS.downloadTableRemoteWorkspace": "Remote Workspace",
-  "commands.SAS.downloadTableToComputer": "This Computer",
+  "commands.SAS.downloadTableToComputer": "This Device",
   "commands.SAS.emptyRecycleBin": "Empty Recycle Bin",
   "commands.SAS.file.new": "New SAS File",
   "commands.SAS.file.new.short": "SAS File",

@@ -311,7 +311,7 @@ class LibraryNavigator implements SubscriptionProvider {
 
     await window.showInformationMessage(
       l10n.t(
-        'To download this table locally, cancel this dialog and choose "This Computer" from the Download menu.',
+        'To download this table locally, cancel this dialog and choose "This Device" from the Download menu.',
       ),
     );
     return true;
@@ -344,7 +344,7 @@ class LibraryNavigator implements SubscriptionProvider {
     if (env.uiKind !== UIKind.Web) {
       throw new Error(
         l10n.t(
-          "This Computer table download is only supported in VS Code for the Web.",
+          "This Device table download is only supported in VS Code for the Web.",
         ),
       );
     }

@@ -1,9 +1,9 @@
 // Copyright © 2026, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 export const browserDownloadMessages = {
-  panelTitle: "Download SAS Table to This Computer",
+  panelTitle: "Download SAS Table to This Device",
   downloadTable: "Download Table",
-  saveToLocalMachine: "Save to Local Machine",
+  saveToLocalMachine: "Save to This Device",
   chooseLocationIntro:
     "Choose a location for the CSV file. Keep this tab open while the download is in progress.",
   fileName: "File name",

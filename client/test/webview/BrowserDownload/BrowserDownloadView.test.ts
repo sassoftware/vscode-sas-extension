@@ -56,6 +56,9 @@ describe("BrowserDownload content view", () => {
       localizedMessages[browserDownloadMessages.downloadTable],
     );
     expect(html).to.include(
+      localizedMessages[browserDownloadMessages.saveToLocalMachine],
+    );
+    expect(html).to.include(
       localizedMessages[browserDownloadMessages.chooseFileLocation],
     );
   });

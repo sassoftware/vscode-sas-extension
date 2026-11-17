@@ -607,7 +607,7 @@ describe("BrowserFileDownloadTarget", () => {
 
     expect(panel.title).to.equal("localized:Download Table: {tableName}");
     expect(panel.webview.html).to.include(
-      "<title>localized:Download SAS Table to This Computer</title>",
+      "<title>localized:Download SAS Table to This Device</title>",
     );
     expect(panel.webview.html).to.include(
       "localized:This browser does not support choosing a local file from this webview.",

@@ -396,7 +396,7 @@ describe("LibraryNavigator remote workspace download destination", () => {
     }
   });
 
-  it("directs local destinations to This Computer instead of streaming remotely", async () => {
+  it("directs local destinations to This Device instead of streaming remotely", async () => {
     const sandbox = sinon.createSandbox();
     const showInformationMessage = sandbox.stub(
       window,
@@ -423,7 +423,7 @@ describe("LibraryNavigator remote workspace download destination", () => {
       expect(showSaveDialog.calledOnce).to.equal(true);
       expect(showInformationMessage.calledOnce).to.equal(true);
       expect(showInformationMessage.firstCall.args[0]).to.equal(
-        'To download this table locally, cancel this dialog and choose "This Computer" from the Download menu.',
+        'To download this table locally, cancel this dialog and choose "This Device" from the Download menu.',
       );
       dispose();
     } finally {
