@@ -23,6 +23,7 @@ describe("ComputeFile table exports", () => {
     updateJobState: sinon.SinonStub;
   };
   let logs: { getJobLog: sinon.SinonStub };
+  let variables: { getVariable: sinon.SinonStub };
   let execute: sinon.SinonStub;
 
   beforeEach(() => {
@@ -47,6 +48,9 @@ describe("ComputeFile table exports", () => {
         data: { items: [], count: 0, links: [] },
       }),
     };
+    variables = {
+      getVariable: sandbox.stub().resolves({ data: { value: "1" } }),
+    };
     sandbox
       .stub(restCommon, "getApiConfig")
       // Stub API factories with only the methods exercised by the exporter.
@@ -64,6 +68,12 @@ describe("ComputeFile table exports", () => {
       .stub(computeApi, "LogsApi")
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       .returns(logs as unknown as ReturnType<typeof computeApi.LogsApi>);
+    sandbox
+      .stub(computeApi, "VariablesApi")
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      .returns(
+        variables as unknown as ReturnType<typeof computeApi.VariablesApi>,
+      );
     execute = sandbox
       .stub(ComputeSession.prototype, "execute")
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -74,7 +84,7 @@ describe("ComputeFile table exports", () => {
 
   afterEach(() => sandbox.restore());
 
-  it("generates metadata-driven CSV and removes the staged file, fileref, and job", async () => {
+  it("generates metadata-driven CSV and removes the file, fileref, and job", async () => {
     const exported = await new ComputeFile("session-1").createTableExport(
       { library: "WORK", name: "TABLE" },
       new AbortController().signal,
@@ -88,18 +98,52 @@ describe("ComputeFile table exports", () => {
     const submittedCode = execute.firstCall.args[0].code.join("\n");
     expect(submittedCode).to.contain("varfmt(source, column)");
     expect(submittedCode).to.contain("formats[column]='BEST12.'");
+    expect(submittedCode).to.contain("link te_js");
+    expect(submittedCode).to.contain("length te");
+    expect(submittedCode).not.to.contain("_te_mantissa");
+    expect(submittedCode).to.contain(
+      "if missing(getvarn(source, column)) then cell='';",
+    );
+    expect(submittedCode).to.contain("prxparse");
+    expect(submittedCode).to.contain(
+      "round(getvarn(source, column), 10**(floor(log10(abs(getvarn(source, column))))-5))",
+    );
     expect(submittedCode).to.contain("encoding='utf-8'");
     expect(submittedCode).to.contain("row_index+1");
     expect(submittedCode).to.contain(`put '""'`);
 
     await exported.dispose();
     expect(files.deleteFile.calledOnce).to.equal(true);
+    expect(files.deleteFile.firstCall.args[0].sessionId).to.equal("session-1");
+    expect(files.deleteFile.firstCall.args[0].fileref).to.match(
+      /^dl[0-9a-f]{6}$/,
+    );
     expect(files.deleteFileref.calledOnce).to.equal(true);
     expect(jobs.deleteJob.calledOnce).to.equal(true);
     expect(jobs.deleteJob.firstCall.args[0]).to.deep.equal({
       sessionId: "session-1",
       jobId: "job-1",
     });
+  });
+
+  it("requires the producer success variable before downloading the file", async () => {
+    variables.getVariable.resolves({ data: { value: "0" } });
+
+    let failure: unknown;
+    try {
+      await new ComputeFile("session-1").createTableExport(
+        { library: "WORK", name: "TABLE" },
+        new AbortController().signal,
+      );
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(errorMessage(failure)).to.contain("producer did not complete");
+    expect(files.getFile.called).to.equal(false);
+    expect(files.deleteFile.calledOnce).to.equal(true);
+    expect(files.deleteFileref.calledOnce).to.equal(true);
+    expect(jobs.deleteJob.calledOnce).to.equal(true);
   });
 
   it("uses conditional long polling while waiting for the export job", async () => {

@@ -9,7 +9,7 @@ import {
   LibraryItem,
   TableExport,
 } from "../../components/LibraryNavigator/types";
-import { FilesApi, JobsApi, LogsApi } from "./api/compute";
+import { FilesApi, JobsApi, LogsApi, VariablesApi } from "./api/compute";
 import { getApiConfig } from "./common";
 import { ComputeSession } from "./session";
 
@@ -27,6 +27,13 @@ export class ComputeFile {
     const suffix = randomBytes(16).toString("hex");
     const fileref = `dl${suffix.slice(0, 6)}`;
     const macro = fileref;
+    const statusMacro = `${macro}ok`;
+    const helper = `te${suffix.slice(0, 16)}`;
+    const helperMantissa = `${helper}m`;
+    const helperText = `${helper}t`;
+    const helperExponent = `${helper}e`;
+    const helperNumber = `${helper}n`;
+    const helperValue = `${helper}v`;
     const api = FilesApi(getApiConfig());
     const session = new ComputeSession(this.sessionId);
     const parameters = { sessionId: this.sessionId, fileref };
@@ -42,6 +49,7 @@ export class ComputeFile {
       !state || ["pending", "running", "queued"].includes(state);
 
     const jobs = JobsApi(getApiConfig());
+    const variables = VariablesApi(getApiConfig());
 
     const dispose = async () => {
       if (disposed) {
@@ -86,6 +94,8 @@ export class ComputeFile {
         code: [
           `filename ${fileref} "%sysfunc(pathname(work))/sas-table-download-${suffix}.csv" recfm=n encoding='utf-8';`,
           `%macro ${macro}(data=, out=);`,
+          `%global ${statusMacro};`,
+          `%let ${statusMacro}=0;`,
           `%local source columns array_columns close_rc;`,
           `%let source=%sysfunc(open(%superq(data),I));`,
           `%if &source=0 %then %do;`,
@@ -100,7 +110,10 @@ export class ComputeFile {
           `%return;`,
           `%end;`,
           `data _null_;`,
-          `  length cell segment $32767 message $1024;`,
+          `  length cell segment ${helperMantissa} $32767 message $1024;`,
+          `  length ${helperText} $32767 ${helperExponent} ${helperNumber} ${helperValue} 8;`,
+          `  retain ${helper}overflow;`,
+          `  if _n_=1 then ${helper}overflow=prxparse('/\\*|\\dE[+-]?\\d/');`,
           `  array names[&array_columns] $32 _temporary_;`,
           `  array formats[&array_columns] $64 _temporary_;`,
           `  array types[&array_columns] $1 _temporary_;`,
@@ -138,7 +151,17 @@ export class ComputeFile {
           `    cell=strip(put(row_index, best32.));`,
           `    link csv_field;`,
           `    do column=1 to &columns;`,
-          `      if types[column]='N' then cell=strip(putn(getvarn(source, column), formats[column]));`,
+          `      if types[column]='N' then do;`,
+          `        if missing(getvarn(source, column)) then cell='';`,
+          `        else do;`,
+          `          cell=strip(putn(getvarn(source, column), formats[column]));`,
+          `          if prxmatch(${helper}overflow, cell) and getvarn(source, column) ne 0 then do;`,
+          `            cell=strip(put(round(getvarn(source, column), 10**(floor(log10(abs(getvarn(source, column))))-5)), best16.));`,
+          `            link te_js;`,
+          `          end;`,
+          `          else if upcase(compress(scan(formats[column], 1, '.'), '0123456789')) in ('', 'F', 'BEST', 'E') then link te_js;`,
+          `        end;`,
+          `      end;`,
           `      else do;`,
           `        cell=getvarc(source, column);`,
           `        if formats[column] ne '' then cell=putc(cell, formats[column]);`,
@@ -157,6 +180,7 @@ export class ComputeFile {
           `  close_rc=close(source);`,
           `  if close_rc ne 0 then putlog 'ERROR: Could not close table after export.';`,
           `  if _error_ then putlog 'ERROR: Table export failed while writing CSV.';`,
+          `  if fetch_rc=-1 and close_rc=0 and not _error_ then call symputx('${statusMacro}', 1, 'G');`,
           `  stop;`,
           ``,
           `  csv_field:`,
@@ -178,9 +202,56 @@ export class ComputeFile {
           `    end;`,
           `    put '"';`,
           `    return;`,
+          ``,
+          `  te_js:`,
+          `    ${helperText}=cell;`,
+          `    if lengthn(${helperText})<=21 and indexc(${helperText}, 'Ee')=0 and (index(${helperText}, '.')=0 or char(${helperText}, lengthn(${helperText})) ne '0') then return;`,
+          `    ${helperValue}=input(${helperText}, ?? best32.);`,
+          `    if ${helperValue}=0 then do; cell='0'; return; end;`,
+          `    ${helperExponent}=indexc(${helperText}, 'Ee');`,
+          `    if ${helperExponent} then do;`,
+          `      ${helperMantissa}=substr(${helperText}, 1, ${helperExponent}-1);`,
+          `      ${helperExponent}=input(substr(${helperText}, ${helperExponent}+1), ?? best32.);`,
+          `    end;`,
+          `    else do;`,
+          `      ${helperMantissa}=${helperText};`,
+          `      ${helperExponent}=0;`,
+          `    end;`,
+          `    ${helperMantissa}=compress(${helperMantissa}, '-+ ');`,
+          `    ${helperNumber}=index(${helperMantissa}, '.');`,
+          `    if ${helperNumber}=0 then ${helperNumber}=lengthn(${helperMantissa})+1;`,
+          `    else ${helperMantissa}=compress(${helperMantissa}, '.');`,
+          `    ${helperExponent}=${helperNumber}-1+${helperExponent};`,
+          `    do while (char(${helperMantissa}, 1)='0');`,
+          `      ${helperMantissa}=substr(${helperMantissa}, 2);`,
+          `      ${helperExponent}-1;`,
+          `    end;`,
+          `    ${helperNumber}=lengthn(${helperMantissa});`,
+          `    do while (char(${helperMantissa}, ${helperNumber})='0');`,
+          `      ${helperNumber}-1;`,
+          `    end;`,
+          `    ${helperMantissa}=substr(${helperMantissa}, 1, ${helperNumber});`,
+          `    if ${helperNumber}<=${helperExponent} and ${helperExponent}<=21 then do;`,
+          `      cell=${helperMantissa};`,
+          `      if ${helperExponent}>${helperNumber} then cell=cats(cell, repeat('0', ${helperExponent}-${helperNumber}));`,
+          `    end;`,
+          `    else if 0<${helperExponent} and ${helperExponent}<=21 then cell=cats(substr(${helperMantissa}, 1, ${helperExponent}), '.', substr(${helperMantissa}, ${helperExponent}+1));`,
+          `    else if -6<${helperExponent} and ${helperExponent}<=0 then do;`,
+          `      cell='0.';`,
+          `      if ${helperExponent}<0 then cell=cats(cell, repeat('0', -${helperExponent}-1));`,
+          `      cell=cats(cell, ${helperMantissa});`,
+          `    end;`,
+          `    else do;`,
+          `      cell=char(${helperMantissa}, 1);`,
+          `      if ${helperNumber}>1 then cell=cats(cell, '.', substr(${helperMantissa}, 2));`,
+          `      cell=cats(cell, 'e', ifc(${helperExponent}>=0, '+', '-'), abs(${helperExponent}));`,
+          `    end;`,
+          `    if ${helperValue}<0 then cell=cats('-', cell);`,
+          `    return;`,
           `run;`,
           `%mend;`,
           `%${macro}(data=%nrstr(${sasName(item.library || "WORK")}.${sasName(item.name)}),out=${fileref});`,
+          `%if &${statusMacro} ne 1 %then %put ERROR: Table export did not complete successfully.;`,
           `%sysmacdelete ${macro} / nowarn;`,
         ],
       });
@@ -234,6 +305,16 @@ export class ComputeFile {
           (start < data.count ||
             data.links?.some((link) => link.rel === "next"));
       } while (more);
+
+      const { data: producer } = await variables.getVariable(
+        { sessionId: this.sessionId, variableName: statusMacro },
+        { signal, timeout: REQUEST_TIMEOUT_MS },
+      );
+      if (producer.value !== "1") {
+        throw new Error(
+          l10n.t("SAS table export producer did not complete successfully."),
+        );
+      }
 
       const response = await api.getFile(parameters, {
         signal,
