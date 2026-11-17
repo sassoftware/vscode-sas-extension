@@ -4,11 +4,18 @@ import { ExtensionContext, Uri, commands } from "vscode";
 import { LanguageClientOptions } from "vscode-languageclient";
 import { LanguageClient } from "vscode-languageclient/browser";
 
+import { closeSession } from "../commands/closeSession";
+
 let client: LanguageClient;
 
 // this method is called when vs code is activated
 export function activate(context: ExtensionContext): void {
   commands.executeCommand("setContext", "SAS.hideRunMenuItem", true);
+  context.subscriptions.push(
+    commands.registerCommand("SAS.close", (silent) => {
+      closeSession(silent === true ? undefined : "The SAS session has closed.");
+    }),
+  );
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {

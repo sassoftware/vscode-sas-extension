@@ -127,7 +127,6 @@ class RestSession extends Session {
     }
 
     //Start a new session
-    this.notifySessionChanged();
     if (this._config.serverId) {
       const server1 = new ComputeServer(this._config.serverId);
       server1.options = formattedOpts;
@@ -162,6 +161,7 @@ class RestSession extends Session {
     //Save the current sessionId
     setContextValue("SAS.sessionId", this._computeSession.sessionId);
     updateStatusBarItem(true);
+    this.notifySessionChanged();
   };
 
   protected _run = async (code: string) => {
@@ -212,8 +212,11 @@ class RestSession extends Session {
   protected _close = async () => {
     this._cachedContext = undefined;
     if (this.sessionId()) {
-      this._computeSession.delete();
-      this._computeSession = undefined;
+      try {
+        await this._computeSession.delete().catch(() => undefined);
+      } finally {
+        this._computeSession = undefined;
+      }
 
       //Since the session is being closed, remove the cached session id
       setContextValue("SAS.sessionId", undefined);
