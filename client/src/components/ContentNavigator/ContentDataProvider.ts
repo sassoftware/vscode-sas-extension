@@ -322,16 +322,9 @@ class ContentDataProvider
     }
 
     if (isDatasetFile(item.name)) {
-      // check if the dataset is open
-      const itemPath = await this.getPathOfItem(item);
-      const normalizedPath = itemPath?.replace(/\\/g, "/");
-      const openedTableUid = this.openDatasets.get(normalizedPath);
-      // if its open, close the old table and open the newly named view
-      if (openedTableUid) {
-        await commands.executeCommand<boolean>(
-          "SAS.closeTable",
-          openedTableUid,
-        );
+      const tableFoundAndRemoved = await this.closeTableIfOpen(item);
+      // if an opened tab was found and closed, open the newly named view
+      if (tableFoundAndRemoved) {
         const commandPrefix = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}`;
         await commands.executeCommand(`${commandPrefix}.openResource`, newItem);
       }
@@ -408,37 +401,44 @@ class ContentDataProvider
   private async closeItemAndDescendantTabs(
     item: ContentItem,
   ): Promise<boolean> {
-    const resourceIds = await this.getItemAndDescendantResourceIds(item);
-    const allTabs = window.tabGroups.all
-      .flatMap((tg) => tg.tabs)
-      .filter(
-        (tab) =>
-          tab.input instanceof TabInputText ||
-          tab.input instanceof TabInputNotebook,
-      );
+    if (isDatasetFile(item.name)) {
+      await this.closeTableIfOpen(item);
+      // whether an open tab was found or not,
+      // we still want to continue with the delete
+      return true;
+    } else {
+      const resourceIds = await this.getItemAndDescendantResourceIds(item);
+      const allTabs = window.tabGroups.all
+        .flatMap((tg) => tg.tabs)
+        .filter(
+          (tab) =>
+            tab.input instanceof TabInputText ||
+            tab.input instanceof TabInputNotebook,
+        );
 
-    const tabsToClose: (typeof allTabs)[number][] = [];
-    for (const tab of allTabs) {
-      if (
-        tab.input instanceof TabInputText ||
-        tab.input instanceof TabInputNotebook
-      ) {
-        const resourceId = getResourceId(tab.input.uri);
-        if (resourceIds.has(resourceId)) {
-          tabsToClose.push(tab);
+      const tabsToClose: (typeof allTabs)[number][] = [];
+      for (const tab of allTabs) {
+        if (
+          tab.input instanceof TabInputText ||
+          tab.input instanceof TabInputNotebook
+        ) {
+          const resourceId = getResourceId(tab.input.uri);
+          if (resourceIds.has(resourceId)) {
+            tabsToClose.push(tab);
+          }
         }
       }
-    }
 
-    if (!tabsToClose.length) {
-      return true;
-    }
+      if (!tabsToClose.length) {
+        return true;
+      }
 
-    const results: boolean[] = [];
-    for (const tab of tabsToClose) {
-      results.push(await this.closeTab(tab));
+      const results: boolean[] = [];
+      for (const tab of tabsToClose) {
+        results.push(await this.closeTab(tab));
+      }
+      return results.every((r) => r !== false);
     }
-    return results.every((r) => r !== false);
   }
 
   private async getItemAndDescendantResourceIds(
@@ -1004,6 +1004,20 @@ class ContentDataProvider
         }
       : undefined;
   }
+
+  // returns true if an open table was found and closed, returns false if no table was found
+  private closeTableIfOpen = async (item: ContentItem): Promise<boolean> => {
+    // check if the dataset is open
+    const itemPath = await this.getPathOfItem(item);
+    const normalizedPath = itemPath?.replace(/\\/g, "/");
+    const openedTableUid = this.openDatasets.get(normalizedPath);
+    // if its open, close the old table
+    if (openedTableUid) {
+      await commands.executeCommand<boolean>("SAS.closeTable", openedTableUid);
+      return true;
+    }
+    return false;
+  };
 }
 
 export default ContentDataProvider;
