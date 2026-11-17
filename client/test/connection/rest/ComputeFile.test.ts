@@ -95,16 +95,10 @@ describe("ComputeFile table exports", () => {
     expect(submittedCode).to.contain("link te_js");
     expect(submittedCode).to.contain("length te");
     expect(submittedCode).not.to.contain("_te_mantissa");
-    expect(submittedCode).to.contain(
-      "if missing(getvarn(source, column)) then cell='';",
-    );
-    expect(submittedCode).to.contain("prxparse");
-    expect(submittedCode).to.contain(
-      "round(getvarn(source, column), 10**(floor(log10(abs(getvarn(source, column))))-5))",
-    );
-    expect(submittedCode).to.contain(
-      "te_js:"
-    );
+    expect(submittedCode).to.contain("=getvarn(source, column);");
+    expect(submittedCode).not.to.contain("prxparse");
+    expect(submittedCode).to.contain("round(te");
+    expect(submittedCode).to.contain("te_js:");
     expect(submittedCode).to.match(/te[a-f0-9]{16}e=te[a-f0-9]{16}e-1;/);
     expect(submittedCode).to.match(/te[a-f0-9]{16}n=te[a-f0-9]{16}n-1;/);
     expect(submittedCode).to.contain("encoding='utf-8'");

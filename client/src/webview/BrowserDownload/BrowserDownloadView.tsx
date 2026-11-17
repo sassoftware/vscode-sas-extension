@@ -37,31 +37,44 @@ export function BrowserDownloadContent({
       <p className="eyebrow">
         {localizeMessage(browserDownloadMessages.downloadTable)}
       </p>
-      <h1>{localizeMessage(browserDownloadMessages.saveToLocalMachine)}</h1>
-      <p className="intro">
+      <h1 aria-describedby="download-instructions">
+        {localizeMessage(browserDownloadMessages.saveToLocalMachine)}
+      </h1>
+      <p className="intro" id="download-instructions">
         {state.kind === "restored"
           ? localizeMessage(browserDownloadMessages.startNewDownload)
           : localizeMessage(browserDownloadMessages.chooseLocationIntro)}
       </p>
       {(tableName || fileName) && (
-        <div className="file-summary">
+        <section
+          className="file-summary"
+          aria-labelledby="file-summary-heading"
+        >
           <span className="file-type" aria-hidden="true">
             CSV
           </span>
-          <div>
-            <span className="file-label">
-              {localizeMessage(browserDownloadMessages.table)}
-            </span>
-            <strong className="file-value">{tableName}</strong>
-            <span className="file-label">
-              {localizeMessage(browserDownloadMessages.fileName)}
-            </span>
-            <strong className="file-value">{fileName}</strong>
+          <div className="file-details">
+            <h2 id="file-summary-heading" className="section-label">
+              {localizeMessage(browserDownloadMessages.downloadTable)}
+            </h2>
+            <dl>
+              <div>
+                <dt>{localizeMessage(browserDownloadMessages.table)}</dt>
+                <dd className="file-value">{tableName}</dd>
+              </div>
+              <div>
+                <dt>{localizeMessage(browserDownloadMessages.fileName)}</dt>
+                <dd className="file-value">{fileName}</dd>
+              </div>
+            </dl>
           </div>
-        </div>
+        </section>
       )}
       {canChoose && (
-        <div className="choices">
+        <section className="choices" aria-labelledby="destination-heading">
+          <h2 id="destination-heading" className="section-label">
+            {localizeMessage(browserDownloadMessages.chooseDestination)}
+          </h2>
           <button
             className="destination-choice"
             type="button"
@@ -85,11 +98,14 @@ export function BrowserDownloadContent({
               ›
             </span>
           </button>
-        </div>
+        </section>
       )}
       <div className="footer">
         <p id="status" role="status" aria-live="polite">
-          {status}
+          <span className="status-label">
+            {localizeMessage(browserDownloadMessages.downloadTable)}
+          </span>
+          <span>{status}</span>
         </p>
         {canChoose && (
           <button className="cancel" type="button" onClick={onCancel}>

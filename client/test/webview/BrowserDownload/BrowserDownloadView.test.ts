@@ -48,7 +48,11 @@ describe("BrowserDownload content view", () => {
 
     expect(html).to.include("&lt;img src=x onerror=alert(1)&gt;");
     expect(html).to.include('role="status" aria-live="polite"');
+    expect(html).to.include('aria-describedby="download-instructions"');
     expect(html).to.include('class="destination-choice"');
+    expect(html).to.include('aria-labelledby="destination-heading"');
+    expect(html).to.include('aria-labelledby="file-summary-heading"');
+    expect(html).to.include("<dt>");
     expect(html).to.include(
       `${localizedMessages[browserDownloadMessages.cancel]}</button>`,
     );

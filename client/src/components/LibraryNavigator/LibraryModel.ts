@@ -27,7 +27,7 @@ class LibraryModel {
 
   public assertTableExportSupported(): void {
     if (
-      !this.libraryAdapter?.createTableExport ||
+      !this.libraryAdapter ||
       this.libraryAdapter.supportsTableExport === false
     ) {
       throw new Error(

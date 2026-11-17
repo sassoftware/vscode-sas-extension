@@ -34,6 +34,7 @@ export class ComputeFile {
     const helperExponent = `${helper}e`;
     const helperNumber = `${helper}n`;
     const helperValue = `${helper}v`;
+    const helperNormalize = `${helper}r`;
     const api = FilesApi(getApiConfig());
     const session = new ComputeSession(this.sessionId);
     const parameters = { sessionId: this.sessionId, fileref };
@@ -132,11 +133,10 @@ export class ComputeFile {
           `data _null_;`,
           `  length cell segment ${helperMantissa} $32767 message $1024;`,
           `  length ${helperText} $32767 ${helperExponent} ${helperNumber} ${helperValue} 8;`,
-          `  retain ${helper}overflow;`,
-          `  if _n_=1 then ${helper}overflow=prxparse('/\\*|\\dE[+-]?\\d/');`,
           `  array names[&array_columns] $32 _temporary_;`,
           `  array formats[&array_columns] $64 _temporary_;`,
           `  array types[&array_columns] $1 _temporary_;`,
+          `  array ${helperNormalize}[&array_columns] $1 _temporary_;`,
           `  source=open(symget('data'), 'I');`,
           `  if source=0 then do;`,
           `    message=sysmsg();`,
@@ -152,7 +152,10 @@ export class ComputeFile {
           `    names[column]=varname(source, column);`,
           `    formats[column]=varfmt(source, column);`,
           `    types[column]=vartype(source, column);`,
-          `    if types[column]='N' and formats[column]='' then formats[column]='BEST12.';`,
+          `    if types[column]='N' then do;`,
+          `      if formats[column]='' then formats[column]='BEST12.';`,
+          `      if upcase(compress(scan(formats[column], 1, '.'), '0123456789')) in ('', 'F', 'BEST', 'E') then ${helperNormalize}[column]='Y';`,
+          `    end;`,
           `  end;`,
           `  file &out recfm=n;`,
           `  field_index=0;`,
@@ -172,14 +175,15 @@ export class ComputeFile {
           `    link csv_field;`,
           `    do column=1 to &columns;`,
           `      if types[column]='N' then do;`,
-          `        if missing(getvarn(source, column)) then cell='';`,
+          `        ${helperValue}=getvarn(source, column);`,
+          `        if missing(${helperValue}) then cell='';`,
           `        else do;`,
-          `          cell=strip(putn(getvarn(source, column), formats[column]));`,
-          `          if prxmatch(${helper}overflow, cell) and getvarn(source, column) ne 0 then do;`,
-          `            cell=strip(put(round(getvarn(source, column), 10**(floor(log10(abs(getvarn(source, column))))-5)), best16.));`,
+          `          cell=strip(putn(${helperValue}, formats[column]));`,
+          `          if indexc(cell, '*') and ${helperValue} ne 0 then do;`,
+          `            cell=strip(put(round(${helperValue}, 10**(floor(log10(abs(${helperValue})))-5)), best16.));`,
           `            link te_js;`,
           `          end;`,
-          `          else if upcase(compress(scan(formats[column], 1, '.'), '0123456789')) in ('', 'F', 'BEST', 'E') then link te_js;`,
+          `          else if ${helperNormalize}[column]='Y' and indexc(cell, '.Ee') then link te_js;`,
           `        end;`,
           `      end;`,
           `      else do;`,
@@ -269,9 +273,9 @@ export class ComputeFile {
           `    if ${helperValue}<0 then cell=cats('-', cell);`,
           `    return;`,
           `run;`,
+          `%if &${statusMacro} ne 1 %then %put ERROR: Table export did not complete successfully.;`,
           `%mend;`,
           `%${macro}(data=%nrstr(${sasName(item.library || "WORK")}.${sasName(item.name)}),out=${fileref});`,
-          `%if &${statusMacro} ne 1 %then %put ERROR: Table export did not complete successfully.;`,
           `%sysmacdelete ${macro} / nowarn;`,
         ],
       });

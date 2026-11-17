@@ -91,7 +91,7 @@ describe("LibraryModel table download streaming", () => {
     expect(dispose.calledOnce).to.equal(true);
   });
 
-  it("retains the paged export path for desktop IOM/COM adapters", async () => {
+  it("uses the native paged export path with the adapter page size", async () => {
     const getRowsAsCSV = sinon.stub().resolves({
       rows: [
         { columns: ["INDEX", "NAME"] },
@@ -100,7 +100,7 @@ describe("LibraryModel table download streaming", () => {
     });
     const getTableRowCount = sinon.stub().resolves({
       rowCount: 1,
-      maxNumberOfRowsToRead: 10,
+      maxNumberOfRowsToRead: 100,
     });
     const adapter = createAdapter({
       setup: sinon.stub().resolves(),
@@ -117,6 +117,28 @@ describe("LibraryModel table download streaming", () => {
     ).to.equal(true);
     expect(chunks.join("")).to.equal('"INDEX","NAME"\n"1","quoted ""value"""');
     expect(getRowsAsCSV.calledOnce).to.equal(true);
+    expect(getRowsAsCSV.firstCall.args).to.deep.equal([item, 0, 100]);
+  });
+
+  it("propagates native export failures", async () => {
+    const failure = new Error("native CSV export failed");
+    const adapter = createAdapter({
+      getTableRowCount: sinon.stub().resolves({
+        rowCount: 1,
+        maxNumberOfRowsToRead: 100,
+      }),
+      getRowsAsCSV: sinon.stub().rejects(failure),
+    });
+    const model = new LibraryModel(adapter);
+
+    let thrown: unknown;
+    try {
+      await model.writeTableContents(item, async () => {});
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).to.equal(failure);
   });
 
   it("disposes the remote exporter when the destination cancels", async () => {
