@@ -102,6 +102,11 @@ describe("ComputeFile table exports", () => {
     expect(submittedCode).to.contain(
       "round(getvarn(source, column), 10**(floor(log10(abs(getvarn(source, column))))-5))",
     );
+    expect(submittedCode).to.contain(
+      "te_js:"
+    );
+    expect(submittedCode).to.match(/te[a-f0-9]{16}e=te[a-f0-9]{16}e-1;/);
+    expect(submittedCode).to.match(/te[a-f0-9]{16}n=te[a-f0-9]{16}n-1;/);
     expect(submittedCode).to.contain("encoding='utf-8'");
     expect(submittedCode).to.contain("row_index+1");
     expect(submittedCode).to.contain(`put '""'`);
@@ -215,6 +220,27 @@ describe("ComputeFile table exports", () => {
 
     expect(errorMessage(failure)).to.contain("Check the SAS log");
     expect(deleteFile.calledOnce).to.equal(true);
+    expect(deleteFileref.calledOnce).to.equal(true);
+    expect(deleteJob.calledOnce).to.equal(true);
+  });
+
+  it("attempts every cleanup resource when one deletion fails", async () => {
+    getVariable.resolves({ data: { value: "0" } });
+    deleteFile.rejects(new Error("file cleanup failed"));
+
+    let failure: unknown;
+    try {
+      await new ComputeFile("session-1").createTableExport(
+        { library: "WORK", name: "TABLE" },
+        new AbortController().signal,
+      );
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(errorMessage(failure)).to.contain("producer did not complete");
+    expect(errorMessage(failure)).to.contain("Could not clean up");
+    expect(deleteFile.callCount).to.equal(3);
     expect(deleteFileref.calledOnce).to.equal(true);
     expect(deleteJob.calledOnce).to.equal(true);
   });

@@ -39,6 +39,7 @@ export class ComputeFile {
     const parameters = { sessionId: this.sessionId, fileref };
     let disposed = false;
     let fileDeleted = false;
+    let filerefDeleted = false;
     let jobDeleted = false;
     let stream: Readable;
     let jobId: string | undefined;
@@ -55,25 +56,38 @@ export class ComputeFile {
       if (disposed) {
         return;
       }
+      let cleanupFailure: unknown;
       stream?.destroy();
       if (!fileDeleted) {
+        let failed = false;
         try {
           await api.deleteFile(parameters, { timeout: REQUEST_TIMEOUT_MS });
         } catch (error) {
           if (error.response?.status !== 404) {
-            throw error;
+            failed = true;
+            cleanupFailure ??= error;
           }
         }
-        fileDeleted = true;
+        if (!failed) {
+          fileDeleted = true;
+        }
       }
-      try {
-        await api.deleteFileref(parameters, { timeout: REQUEST_TIMEOUT_MS });
-      } catch (error) {
-        if (error.response?.status !== 404) {
-          throw error;
+      if (!filerefDeleted) {
+        let failed = false;
+        try {
+          await api.deleteFileref(parameters, { timeout: REQUEST_TIMEOUT_MS });
+        } catch (error) {
+          if (error.response?.status !== 404) {
+            failed = true;
+            cleanupFailure ??= error;
+          }
+        }
+        if (!failed) {
+          filerefDeleted = true;
         }
       }
       if (jobId && !jobDeleted) {
+        let failed = false;
         try {
           await jobs.deleteJob(
             { sessionId: this.sessionId, jobId },
@@ -81,10 +95,16 @@ export class ComputeFile {
           );
         } catch (error) {
           if (error.response?.status !== 404) {
-            throw error;
+            failed = true;
+            cleanupFailure ??= error;
           }
         }
-        jobDeleted = true;
+        if (!failed) {
+          jobDeleted = true;
+        }
+      }
+      if (cleanupFailure) {
+        throw cleanupFailure;
       }
       disposed = true;
     };
@@ -224,11 +244,11 @@ export class ComputeFile {
           `    ${helperExponent}=${helperNumber}-1+${helperExponent};`,
           `    do while (char(${helperMantissa}, 1)='0');`,
           `      ${helperMantissa}=substr(${helperMantissa}, 2);`,
-          `      ${helperExponent}-1;`,
+          `      ${helperExponent}=${helperExponent}-1;`,
           `    end;`,
           `    ${helperNumber}=lengthn(${helperMantissa});`,
           `    do while (char(${helperMantissa}, ${helperNumber})='0');`,
-          `      ${helperNumber}-1;`,
+          `      ${helperNumber}=${helperNumber}-1;`,
           `    end;`,
           `    ${helperMantissa}=substr(${helperMantissa}, 1, ${helperNumber});`,
           `    if ${helperNumber}<=${helperExponent} and ${helperExponent}<=21 then do;`,
@@ -280,9 +300,7 @@ export class ComputeFile {
         }
       } while (active());
       if (!["completed", "done", "warning"].includes(state)) {
-        throw new Error(
-          l10n.t("SAS table export failed ({state}).", { state }),
-        );
+        throw new Error(l10n.t("SAS table export failed. Check the SAS log."));
       }
 
       const logs = LogsApi(getApiConfig());
