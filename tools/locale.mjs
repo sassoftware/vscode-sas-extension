@@ -98,7 +98,9 @@ const omitMissingTerms = (newMap, translationSourceMap) =>
   }, {});
 
 const cleanupUnusedPackageKeys = (packageNlsJson) => {
-  const allFiles = glob.sync(`${packagePath}/**/*.{ts,json,tsx}`, {
+  const allFiles = glob.sync("**/*.{ts,json,tsx}", {
+    cwd: packagePath,
+    absolute: true,
     ignore: [
       "**/node_modules/**",
       "**/package.nls.*",
@@ -192,7 +194,9 @@ if (localeToUpdate) {
 }
 
 if (updateAllLocales) {
-  const packageNlsFiles = glob.sync(join(packagePath, "package.nls.*.json"));
+  const packageNlsFiles = glob.sync("package.nls.*.json", {
+    cwd: packagePath,
+  });
 
   const locales = packageNlsFiles.map(
     (filePath) => filePath.match(/package\.nls\.(.*)\.json/)[1],

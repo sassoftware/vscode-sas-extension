@@ -301,6 +301,11 @@
                             "default": "",
                             "description": "%configuration.SAS.connectionProfiles.profiles.fileNavigationCustomRootPath%"
                           },
+                          "globalShortcuts": {
+                            "type": "object",
+                            "default": {},
+                            "description": "%configuration.SAS.connectionProfiles.profiles.globalShortcuts%"
+                          },
                           "fileNavigationRoot": {
                             "type": "string",
                             "default": "USER",
@@ -611,33 +616,11 @@
               }
             }
           },
-          "SAS.notebook.outputVisibility": {
+          "SAS.notebook.cleanOutput": {
             "order": 11,
-            "type": "string",
-            "default": "clean",
-            "enum": [
-              "clean",
-              "raw"
-            ],
-            "enumDescriptions": [
-              "%configuration.SAS.notebook.outputVisibility.clean%",
-              "%configuration.SAS.notebook.outputVisibility.raw%"
-            ],
-            "description": "%configuration.SAS.notebook.outputVisibility%"
-          },
-          "SAS.notebook.python.autoPrintMethod": {
-            "order": 12,
-            "type": "string",
-            "default": "(auto)",
-            "enum": [
-              "(auto)",
-              "SAS.show"
-            ],
-            "enumDescriptions": [
-              "%configuration.SAS.notebook.python.autoPrintMethod.auto%",
-              "%configuration.SAS.notebook.python.autoPrintMethod.SAS.show%"
-            ],
-            "description": "%configuration.SAS.notebook.python.autoPrintMethod%"
+            "type": "boolean",
+            "default": false,
+            "description": "%configuration.SAS.notebook.cleanOutput%"
           }
         }
       }
@@ -972,14 +955,22 @@
         "when": "editorTextFocus && editorLangId == 'sas'"
       },
       {
-        "when": "focusedView == contentdataprovider",
-        "command": "SAS.content.deleteResource",
-        "key": "delete"
+        "when": "focusedView == librarydataprovider",
+        "command": "SAS.deleteTable",
+        "key": "delete",
+        "mac": "cmd+backspace"
       },
       {
         "when": "focusedView == serverdataprovider",
         "command": "SAS.server.deleteResource",
-        "key": "delete"
+        "key": "delete",
+        "mac": "cmd+backspace"
+      },
+      {
+        "when": "focusedView == contentdataprovider",
+        "command": "SAS.content.deleteResource",
+        "key": "delete",
+        "mac": "cmd+backspace"
       }
     ],
     "menus": {
@@ -1587,10 +1578,12 @@
     "test-client": "node ./client/out/test/runTest.js",
     "test-server": "cross-env TS_NODE_PROJECT=./server/tsconfig.json mocha -r ts-node/register ./server/test/**/*.test.ts",
     "test": "npm run test-server && npm run test-client",
-    "pseudoLocalize": "npx @vscode/l10n-dev export -o ./l10n ./client/src && npx @vscode/l10n-dev generate-pseudo -o ./l10n/ ./l10n/bundle.l10n.json ./package.nls.json",
+    "l10n:export": "npx @vscode/l10n-dev export -o ./l10n ./client/src && node ./tools/sort-l10n-bundle.mjs && prettier --write l10n/bundle.l10n.json",
+    "l10n:check": "npm run l10n:export && git diff --exit-code -- l10n/bundle.l10n.json",
+    "pseudoLocalize": "npm run l10n:export && npx @vscode/l10n-dev generate-pseudo -o ./l10n/ ./l10n/bundle.l10n.json ./package.nls.json",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
     "copyright:check": "node ./tools/check-copyright.mjs",
-    "locale": "npx @vscode/l10n-dev export -o ./l10n ./client/src && node ./tools/locale.mjs"
+    "locale": "npm run l10n:export && node ./tools/locale.mjs"
   },
   "devDependencies": {
     "@eslint/compat": "2.1.1",
@@ -1604,7 +1597,7 @@
     "@vscode/l10n-dev": "^0.0.35",
     "buffer": "6.0.3",
     "chai": "^4.4.1",
-    "concurrently": "^10.0.5",
+    "concurrently": "^10.0.6",
     "cross-env": "^10.1.0",
     "esbuild": "^0.28.1",
     "eslint": "^9.39.2",
@@ -1621,7 +1614,7 @@
     "ts-node": "^10.9.2",
     "ts-sinon": "^2.0.2",
     "typescript": "^5.5.3",
-    "webpack": "^5.111.1",
+    "webpack": "^5.112.2",
     "webpack-cli": "^7.2.3"
   }
 }

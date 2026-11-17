@@ -1,6 +1,10 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { CancellationTokenSource } from "vscode";
+
 import assert from "assert";
+import { spawnSync } from "child_process";
+import sinon from "sinon";
 
 import {
   SASCodeDocument,
@@ -46,6 +50,564 @@ run;
 `;
 
     assert.equal(sasCodeDoc.getWrappedCode(), expected);
+  });
+
+  describe("Python notebook autodisplay", () => {
+    const code = "a = 1\na + 2\n# trailing comment\n";
+    const expression = {
+      isExpression: true,
+      expressionText: "a + 2",
+      startOffset: 6,
+      endOffset: 11,
+    };
+
+    function createDocument(source = code, languageId = "python") {
+      return new SASCodeDocument({
+        languageId,
+        code: source,
+        selectedCode: "",
+        checkKeyword: async () => false,
+      });
+    }
+
+    function createClient() {
+      return {
+        isRunning: sinon.stub().returns(true),
+        sendRequest: sinon.stub().resolves(expression),
+      };
+    }
+
+    it("rewrites only notebook execution and preserves trailing comments", async () => {
+      const document = createDocument();
+      const original = document.getWrappedCode();
+      const client = createClient();
+      const wrapped = await document.getWrappedNotebookCode(client);
+      assert.strictEqual(client.sendRequest.callCount, 1);
+      assert.strictEqual(
+        client.sendRequest.firstCall.args[0],
+        "sas/pythonFinalExpression",
+      );
+      assert.deepStrictEqual(client.sendRequest.firstCall.args[1], { code });
+      assert.ok(wrapped.includes("proc python;\nsubmit;\na = 1\n__sas_"));
+      assert.ok(wrapped.includes("__SAS_AUTODISPLAY_"));
+      assert.ok(wrapped.includes(" = ((a + 2))\n# trailing comment\n"));
+      assert.strictEqual(document.getWrappedCode(), original);
+      assert.ok(!original.includes("__SAS_AUTODISPLAY_"));
+    });
+
+    it("preserves ordinary Python wrapping", () => {
+      assert.strictEqual(
+        createDocument("a = 1").getWrappedCode(),
+        `/** LOG_START_INDICATOR **/
+%symdel _SASPROGRAMDIR / nowarn;
+proc python;
+submit;
+a = 1
+endsubmit;
+run;`,
+      );
+    });
+
+    for (const source of [
+      "a = 1",
+      "def f():\n    pass\n",
+      "class A:\n    pass\n",
+      "a +",
+    ]) {
+      it(`preserves a non-expression cell ${JSON.stringify(source)}`, async () => {
+        const document = createDocument(source);
+        const client = createClient();
+        client.sendRequest.resolves({ isExpression: false });
+        assert.strictEqual(
+          await document.getWrappedNotebookCode(client),
+          document.getWrappedCode(),
+        );
+      });
+    }
+
+    for (const [source, expressionText] of [
+      ["a = 1; a, 2 # comment\n", "a, 2"],
+      ["a = 1\n(a +\n 2)\n# comment", "(a +\n 2)"],
+      ["None\n", "None"],
+      ["side_effect()\n", "side_effect()"],
+    ]) {
+      it(`rewrites ${JSON.stringify(expressionText)} once and preserves its source lines`, async () => {
+        const document = createDocument(source);
+        const client = createClient();
+        const startOffset = source.indexOf(expressionText);
+        client.sendRequest.resolves({
+          isExpression: true,
+          expressionText,
+          startOffset,
+          endOffset: startOffset + expressionText.length,
+        });
+        const wrapped = await document.getWrappedNotebookCode(client);
+        assert.ok(wrapped.includes(` = ((${expressionText}))`));
+        assert.strictEqual(wrapped.split(` = ((${expressionText}))`).length, 2);
+      });
+    }
+
+    it("detects the selected source rather than the whole document", async () => {
+      const document = new SASCodeDocument({
+        languageId: "python",
+        code: "a = 1\na + 2",
+        selectedCode: "a + 2",
+        checkKeyword: async () => false,
+      });
+      const client = createClient();
+      client.sendRequest.resolves({
+        ...expression,
+        startOffset: 0,
+        endOffset: 5,
+      });
+      const wrapped = await document.getWrappedNotebookCode(client);
+      assert.deepStrictEqual(client.sendRequest.firstCall.args[1], {
+        code: "a + 2",
+      });
+      assert.ok(!wrapped.includes("a = 1"));
+      assert.ok(wrapped.includes("__SAS_AUTODISPLAY_"));
+    });
+
+    it("does not request detection for other languages or empty cells", async () => {
+      for (const [source, languageId] of [
+        ["a + 2", "sas"],
+        [" \n", "python"],
+      ]) {
+        const document = createDocument(source, languageId);
+        const client = createClient();
+        assert.strictEqual(
+          await document.getWrappedNotebookCode(client),
+          document.getWrappedCode(),
+        );
+        assert.strictEqual(client.sendRequest.callCount, 0);
+      }
+    });
+
+    it("does not wait for a stopped or absent language client", async () => {
+      const document = createDocument();
+      const client = createClient();
+      client.isRunning.returns(false);
+      assert.strictEqual(
+        await document.getWrappedNotebookCode(client),
+        document.getWrappedCode(),
+      );
+      assert.strictEqual(
+        await document.getWrappedNotebookCode(),
+        document.getWrappedCode(),
+      );
+      assert.strictEqual(client.sendRequest.callCount, 0);
+    });
+
+    for (const result of [
+      { isExpression: false },
+      undefined,
+      { ...expression, startOffset: -1 },
+      { ...expression, startOffset: 6.5 },
+      { ...expression, endOffset: 1000 },
+      { ...expression, endOffset: 6 },
+      { ...expression, expressionText: "different source" },
+      { isExpression: true },
+    ]) {
+      it(`preserves code for response ${JSON.stringify(result)}`, async () => {
+        const document = createDocument();
+        const client = createClient();
+        client.sendRequest.resolves(result);
+        assert.strictEqual(
+          await document.getWrappedNotebookCode(client),
+          document.getWrappedCode(),
+        );
+      });
+    }
+
+    it("retries on a subsequent execution after a failed request", async () => {
+      const document = createDocument();
+      const client = createClient();
+      client.sendRequest.onFirstCall().rejects(new Error("server stopped"));
+      assert.strictEqual(
+        await document.getWrappedNotebookCode(client),
+        document.getWrappedCode(),
+      );
+      assert.ok(
+        (await document.getWrappedNotebookCode(client)).includes(
+          "__SAS_AUTODISPLAY_",
+        ),
+      );
+      assert.strictEqual(client.sendRequest.callCount, 2);
+    });
+
+    it("cancels timed-out detection and ignores a late response", async () => {
+      const clock = sinon.useFakeTimers();
+      try {
+        const document = createDocument();
+        const client = createClient();
+        let resolveRequest!: (value: typeof expression) => void;
+        client.sendRequest.returns(
+          new Promise((resolve) => {
+            resolveRequest = resolve;
+          }),
+        );
+        const pending = document.getWrappedNotebookCode(client);
+        const token = client.sendRequest.firstCall.args[2];
+        await clock.tickAsync(1000);
+        assert.strictEqual(await pending, document.getWrappedCode());
+        assert.strictEqual(token.isCancellationRequested, true);
+        resolveRequest(expression);
+        await clock.tickAsync(0);
+        assert.ok(!document.getWrappedCode().includes("__SAS_AUTODISPLAY_"));
+        client.sendRequest.resolves(expression);
+        assert.ok(
+          (await document.getWrappedNotebookCode(client)).includes(
+            "__SAS_AUTODISPLAY_",
+          ),
+        );
+      } finally {
+        clock.restore();
+      }
+    });
+
+    it("skips oversized cells", async () => {
+      const document = createDocument("a".repeat(100_001));
+      const client = createClient();
+      assert.strictEqual(
+        await document.getWrappedNotebookCode(client),
+        document.getWrappedCode(),
+      );
+      assert.strictEqual(client.sendRequest.callCount, 0);
+    });
+
+    it("skips dense and deeply nested cells before sending a request", async () => {
+      const client = createClient();
+      for (const source of [
+        "a = 1\n".repeat(700) + "42",
+        "(".repeat(129) + "42" + ")".repeat(129),
+        "1+".repeat(1025) + "1",
+      ]) {
+        const document = createDocument(source);
+        assert.strictEqual(
+          await document.getWrappedNotebookCode(client),
+          document.getWrappedCode(),
+        );
+      }
+      assert.strictEqual(client.sendRequest.callCount, 0);
+    });
+
+    it("accepts the exact character limit", async () => {
+      const source = "#" + "x".repeat(99_996) + "\n42";
+      const client = createClient();
+      client.sendRequest.resolves({
+        isExpression: true,
+        expressionText: "42",
+        startOffset: 99_998,
+        endOffset: 100_000,
+      });
+      const document = createDocument(source);
+      assert.ok(
+        (await document.getWrappedNotebookCode(client)).includes(" = ((42))"),
+      );
+      assert.strictEqual(client.sendRequest.callCount, 1);
+    });
+
+    it("recovers after a language-server restart", async () => {
+      const document = createDocument();
+      const client = createClient();
+      client.isRunning.returns(false);
+      assert.strictEqual(
+        await document.getWrappedNotebookCode(client),
+        document.getWrappedCode(),
+      );
+      client.isRunning.returns(true);
+      assert.ok(
+        (await document.getWrappedNotebookCode(client)).includes(
+          " = ((a + 2))",
+        ),
+      );
+    });
+
+    it("bounds outstanding requests even when the server ignores cancellation", async () => {
+      const clock = sinon.useFakeTimers();
+      try {
+        const document = createDocument();
+        const client = createClient();
+        client.sendRequest.returns(new Promise(() => {}));
+        const pending = document.getWrappedNotebookCode(client);
+        await clock.tickAsync(1000);
+        assert.strictEqual(await pending, document.getWrappedCode());
+        for (let request = 0; request < 20; request++) {
+          assert.strictEqual(
+            await document.getWrappedNotebookCode(client),
+            document.getWrappedCode(),
+          );
+        }
+        assert.strictEqual(client.sendRequest.callCount, 1);
+      } finally {
+        clock.restore();
+      }
+    });
+
+    it("cancels detection immediately with its execution token", async () => {
+      const document = createDocument();
+      const client = createClient();
+      client.sendRequest.returns(new Promise(() => {}));
+      const cancellation = new CancellationTokenSource();
+      try {
+        const pending = document.getWrappedNotebookCode(
+          client,
+          cancellation.token,
+        );
+        assert.notStrictEqual(
+          client.sendRequest.firstCall.args[2],
+          cancellation.token,
+        );
+        cancellation.cancel();
+        assert.strictEqual(await pending, document.getWrappedCode());
+        assert.strictEqual(
+          client.sendRequest.firstCall.args[2].isCancellationRequested,
+          true,
+        );
+        assert.strictEqual(document.getPythonAutodisplayId(), undefined);
+      } finally {
+        cancellation.dispose();
+      }
+    });
+
+    it("times out the request token without cancelling the parent execution", async () => {
+      const clock = sinon.useFakeTimers();
+      const parent = new CancellationTokenSource();
+      try {
+        const document = createDocument();
+        const client = createClient();
+        client.sendRequest.returns(new Promise(() => {}));
+        const pending = document.getWrappedNotebookCode(client, parent.token);
+        const requestToken = client.sendRequest.firstCall.args[2];
+        assert.ok(requestToken);
+        assert.notStrictEqual(requestToken, parent.token);
+        await clock.tickAsync(1000);
+        assert.strictEqual(await pending, document.getWrappedCode());
+        assert.strictEqual(requestToken.isCancellationRequested, true);
+        assert.strictEqual(parent.token.isCancellationRequested, false);
+        assert.strictEqual(document.getPythonAutodisplayId(), undefined);
+      } finally {
+        parent.dispose();
+        clock.restore();
+      }
+    });
+
+    it("does not request detection when the parent is already cancelled", async () => {
+      const parent = new CancellationTokenSource();
+      try {
+        parent.cancel();
+        const document = createDocument();
+        const client = createClient();
+        assert.strictEqual(
+          await document.getWrappedNotebookCode(client, parent.token),
+          document.getWrappedCode(),
+        );
+        assert.strictEqual(client.sendRequest.callCount, 0);
+      } finally {
+        parent.dispose();
+      }
+    });
+
+    it("keeps an occupied detection slot and ignores late results across documents", async () => {
+      const clock = sinon.useFakeTimers();
+      try {
+        const first = createDocument();
+        const second = createDocument("99");
+        const client = createClient();
+        let resolveRequest!: (value: typeof expression) => void;
+        client.sendRequest.returns(
+          new Promise((resolve) => {
+            resolveRequest = resolve;
+          }),
+        );
+        const pending = first.getWrappedNotebookCode(client);
+        assert.strictEqual(
+          await second.getWrappedNotebookCode(client),
+          second.getWrappedCode(),
+        );
+        assert.strictEqual(client.sendRequest.callCount, 1);
+        await clock.tickAsync(1000);
+        assert.strictEqual(await pending, first.getWrappedCode());
+        assert.strictEqual(
+          await second.getWrappedNotebookCode(client),
+          second.getWrappedCode(),
+        );
+        assert.strictEqual(client.sendRequest.callCount, 1);
+        resolveRequest(expression);
+        await clock.tickAsync(0);
+        assert.strictEqual(first.getPythonAutodisplayId(), undefined);
+        assert.strictEqual(second.getPythonAutodisplayId(), undefined);
+        client.sendRequest.resolves({
+          isExpression: true,
+          expressionText: "99",
+          startOffset: 0,
+          endOffset: 2,
+        });
+        assert.ok(
+          (await second.getWrappedNotebookCode(client)).includes(" = ((99))"),
+        );
+        assert.ok(second.getPythonAutodisplayId());
+        assert.strictEqual(first.getPythonAutodisplayId(), undefined);
+      } finally {
+        clock.restore();
+      }
+    });
+
+    function executePython(source: string) {
+      const command = process.platform === "win32" ? "py" : "python3";
+      const args = process.platform === "win32" ? ["-3"] : [];
+      return spawnSync(command, [...args, "-c", source], { encoding: "utf8" });
+    }
+
+    for (const source of [
+      'f"{side_effect()}"',
+      '"prefix " f"{side_effect()}"',
+    ]) {
+      it(`evaluates a first-cell f-string exactly once: ${source}`, async () => {
+        const document = createDocument(source);
+        const client = createClient();
+        client.sendRequest.resolves({
+          isExpression: true,
+          expressionText: source,
+          startOffset: 0,
+          endOffset: source.length,
+        });
+        const wrapped = await document.getWrappedNotebookCode(client);
+        const python = wrapped.split("\nsubmit;\n")[1].split("\nendsubmit;")[0];
+        const executed = executePython(`import io, contextlib
+namespace = {}
+exec("calls = []\\ndef side_effect():\\n    calls.append(1)\\n    return 1", namespace)
+with contextlib.redirect_stdout(io.StringIO()) as stdout:
+    exec(${JSON.stringify(python)}, namespace)
+assert namespace["calls"] == [1], namespace["calls"]
+assert "__doc__" not in namespace
+assert not any(name.startswith("__sas_") for name in namespace)
+assert "_BEGIN__" in stdout.getvalue()
+`);
+        assert.ifError(executed.error);
+        assert.strictEqual(executed.status, 0, executed.stderr);
+      });
+    }
+
+    for (const [source, finalExpression, expected, isModuleDocstring] of [
+      ["a = 7\na,", "a,", "(7,)"],
+      ["items = [1, 2]\n*items,", "*items,", "(1, 2)"],
+      ["a = 7\n(a,)", "(a,)", "(7,)"],
+      ['"hello"', '"hello"', "'hello'", true],
+      ["[1, 2, 3]", "[1, 2, 3]", "[1, 2, 3]"],
+      ['{"a": 1}', '{"a": 1}', "{'a': 1}"],
+      ["a = 1\na + 1", "a + 1", "2"],
+      ["a = 7; a, # comment", "a,", "(7,)"],
+      ["a = 7\r\n(a +\r\n 1) # comment", "(a +\r\n 1)", "8"],
+      ["__import__ = None\nrepr = None\nprint = None\n42", "42", "42"],
+      [
+        "calls = []\ndef f():\n    calls.append(1)\n    return len(calls)\nf()",
+        "f()",
+        "1",
+      ],
+      ["(a := 1)", "(a := 1)", "1"],
+      ["None", "None", ""],
+      [
+        "class Bad:\n    def __repr__(self):\n        raise Exception('bad repr')\nBad()",
+        "Bad()",
+        "",
+      ],
+      [
+        "class Bad:\n    def __repr__(self):\n        raise KeyboardInterrupt()\nBad()",
+        "Bad()",
+        "",
+      ],
+      ["print('prefix', end='')\n42", "42", "prefix42"],
+      [
+        "print('__SAS_AUTODISPLAY__hello')\n42",
+        "42",
+        "__SAS_AUTODISPLAY__hello\n42",
+      ],
+      [
+        "class Multi:\n    def __repr__(self):\n        return 'first\\nsecond'\nMulti()",
+        "Multi()",
+        "first\nsecond",
+      ],
+      ["import sys\nprint('warning', file=sys.stderr)\n42", "42", "42"],
+      ['"docstring"\nfrom __future__ import annotations\n42', "42", "42"],
+      ["y = [1, 2]\n[x for x in y]", "[x for x in y]", "[1, 2]"],
+      ['{\n "*": 1\n}', '{\n "*": 1\n}', "{'*': 1}"],
+      ["True", "True", "True"],
+      ["...", "...", "Ellipsis"],
+      ['pass\n"a"', '"a"', "'a'"],
+    ] as const) {
+      it(`executes safely: ${JSON.stringify(source)}`, async function () {
+        const document = createDocument(source);
+        const client = createClient();
+        const startOffset = source.lastIndexOf(finalExpression);
+        client.sendRequest.resolves({
+          isExpression: true,
+          expressionText: finalExpression,
+          startOffset,
+          endOffset: startOffset + finalExpression.length,
+          ...(isModuleDocstring ? { isModuleDocstring: true } : {}),
+        });
+        const wrapped = await document.getWrappedNotebookCode(client);
+        const python = wrapped.split("\nsubmit;\n")[1].split("\nendsubmit;")[0];
+        const executed = executePython(`import json, io, contextlib, builtins
+namespace = {"__builtins__": dict(vars(builtins))}
+original_namespace = {"__builtins__": dict(vars(builtins))}
+with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+  exec(${JSON.stringify(source)}, original_namespace)
+stdout, stderr = io.StringIO(), io.StringIO()
+with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+    exec(${JSON.stringify(python)}, namespace)
+assert not any(name.startswith("__sas_") for name in namespace)
+assert set(namespace) == set(original_namespace)
+for name, value in original_namespace.items():
+  if isinstance(value, (str, int, bool, type(None), tuple, list, dict)):
+    assert namespace[name] == value, name
+assert namespace.get("calls", [1]) == [1]
+assert namespace.get("a", 1) in (1, 7)
+print(json.dumps({"stdout": stdout.getvalue(), "stderr": stderr.getvalue()}))`);
+        assert.ifError(executed.error);
+        assert.strictEqual(executed.status, 0, executed.stderr);
+        const output = JSON.parse(executed.stdout);
+        const { processPythonLog } =
+          await import("../../../src/components/notebook/PythonOutputProcessor");
+        const lines = output.stdout
+          ? output.stdout.replace(/\n$/, "").split("\n")
+          : [];
+        const processed = processPythonLog(
+          [
+            { type: "normal", line: ">>> " },
+            ...lines.map((line: string) => ({ type: "normal" as const, line })),
+            { type: "normal", line: ">>> " },
+          ],
+          document.getPythonAutodisplayId(),
+        );
+        assert.strictEqual(
+          processed.outputLines.map((line) => line.line).join("\n"),
+          expected,
+        );
+        assert.strictEqual(
+          output.stderr,
+          source.includes("file=sys.stderr") ? "warning\n" : "",
+        );
+      });
+    }
+
+    it("does not swallow expression evaluation failures", async () => {
+      const document = createDocument("1 / 0");
+      const client = createClient();
+      client.sendRequest.resolves({
+        isExpression: true,
+        expressionText: "1 / 0",
+        startOffset: 0,
+        endOffset: 5,
+      });
+      const wrapped = await document.getWrappedNotebookCode(client);
+      const python = wrapped.split("\nsubmit;\n")[1].split("\nendsubmit;")[0];
+      const executed = executePython(python);
+      assert.ifError(executed.error);
+      assert.notStrictEqual(executed.status, 0);
+      assert.match(executed.stderr, /ZeroDivisionError/);
+    });
   });
 
   it("wrap r code", () => {

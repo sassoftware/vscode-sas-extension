@@ -21,6 +21,7 @@ import {
   setFileName,
 } from "../components/logViewer";
 import { sasDiagnostic } from "../components/logViewer/sasDiagnostics";
+import { ConnectionType } from "../components/profile";
 import { SASCodeDocument } from "../components/utils/SASCodeDocument";
 import { getCodeDocumentConstructionParameters } from "../components/utils/SASCodeDocumentHelper";
 import { isOutputHtmlEnabled } from "../components/utils/settings";
@@ -120,6 +121,20 @@ async function runCode(selected?: boolean, uri?: Uri) {
   setFileName(fileName);
 
   await session.setup();
+
+  const activeProfile = profileConfig.getProfileByName(
+    profileConfig.getActiveProfile(),
+  );
+
+  if (
+    activeProfile?.connectionType === ConnectionType.IOM ||
+    activeProfile?.connectionType === ConnectionType.COM
+  ) {
+    await Promise.all([
+      commands.executeCommand("setContext", "SAS.librariesDisplayed", true),
+      commands.executeCommand("setContext", "SAS.serverDisplayed", true),
+    ]);
+  }
 
   await window.withProgress(
     {

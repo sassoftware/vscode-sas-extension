@@ -46,6 +46,7 @@ import {
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 import { IPythonMode } from "pyright-internal-node/dist/packages/pyright-internal/src/analyzer/sourceFile";
+import { DiagnosticSink } from "pyright-internal-node/dist/packages/pyright-internal/src/common/diagnosticSink";
 import {
   FileSystem,
   ReadOnlyFileSystem,
@@ -54,10 +55,22 @@ import { ClientCapabilities } from "pyright-internal-node/dist/packages/pyright-
 import { DocumentRange } from "pyright-internal-node/dist/packages/pyright-internal/src/common/textRange";
 import { Uri } from "pyright-internal-node/dist/packages/pyright-internal/src/common/uri/uri";
 import { CollectionResult } from "pyright-internal-node/dist/packages/pyright-internal/src/languageService/documentSymbolCollector";
-import { ParseFileResults } from "pyright-internal-node/dist/packages/pyright-internal/src/parser/parser";
+import {
+  ParseNode,
+  isExpressionNode,
+} from "pyright-internal-node/dist/packages/pyright-internal/src/parser/parseNodes";
+import {
+  ParseFileResults,
+  ParseOptions,
+  Parser,
+} from "pyright-internal-node/dist/packages/pyright-internal/src/parser/parser";
 import { PyrightServer } from "pyright-internal-node/dist/packages/pyright-internal/src/server";
 
 import { LanguageServiceProvider } from "../../sas/LanguageServiceProvider";
+import {
+  PyrightParseNodeType,
+  analyzePythonFinalExpression as analyzeFinalExpressionHelper,
+} from "../finalExpression";
 import { extractPythonCodes } from "../utils";
 
 export class PyrightLanguageProviderNode extends PyrightServer {
@@ -80,6 +93,35 @@ export class PyrightLanguageProviderNode extends PyrightServer {
 
   public getClientCapabilities(): ClientCapabilities {
     return this.client;
+  }
+
+  public analyzePythonFinalExpression(code: string, token?: CancellationToken) {
+    return analyzeFinalExpressionHelper(
+      code,
+      (source) => {
+        const diagnostics = new DiagnosticSink();
+        const result = new Parser().parseSourceFile(
+          source,
+          new ParseOptions(),
+          diagnostics,
+        );
+        return {
+          parseTree: result.parserOutput.parseTree,
+          hasErrors: diagnostics.getErrors().length > 0,
+        };
+      },
+      PyrightParseNodeType.StatementList,
+      (node: ParseNode) =>
+        isExpressionNode(node) &&
+        node.nodeType !== PyrightParseNodeType.TypeAnnotation &&
+        node.nodeType !== PyrightParseNodeType.Assignment &&
+        node.nodeType !== PyrightParseNodeType.AugmentedAssignment &&
+        node.nodeType !== PyrightParseNodeType.Await &&
+        node.nodeType !== PyrightParseNodeType.Yield &&
+        node.nodeType !== PyrightParseNodeType.YieldFrom,
+      PyrightParseNodeType.StringList,
+      token,
+    );
   }
 
   protected setupConnection(
