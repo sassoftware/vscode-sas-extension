@@ -111,14 +111,11 @@ const createDownloadCommandHandlers = (
   options: DownloadCommandOptions = {},
 ) => {
   const handlers = new Map<string, DownloadCommand>();
-  const commandSubscriptions: Disposable[] = [];
   sandbox.stub(commands, "registerCommand").callsFake((command, handler) => {
     if (typeof handler === "function") {
       handlers.set(command, handler);
     }
-    const subscription = new Disposable(() => {});
-    commandSubscriptions.push(subscription);
-    return subscription;
+    return new Disposable(() => {});
   });
   const createTableExport =
     options.createTableExport ?? sandbox.stub().resolves();
@@ -140,11 +137,15 @@ const createDownloadCommandHandlers = (
     },
     webviewManager: { value: { panels: {} } },
     browserFileExportInProgress: { value: false, writable: true },
-    browserFileDownloadTarget: { value: { chooseLocalFile } },
-    hostAttachmentDownloadTarget: { value: { download: hostDownload } },
+    browserFileDownloadTarget: {
+      value: { chooseLocalFile, dispose: () => {} },
+    },
+    hostAttachmentDownloadTarget: {
+      value: { download: hostDownload, dispose: () => {} },
+    },
   });
 
-  navigator.getSubscriptions();
+  const subscriptions = navigator.getSubscriptions();
   return {
     handler: (command: string, item: LibraryItem) => {
       const handler = handlers.get(command);
@@ -156,7 +157,7 @@ const createDownloadCommandHandlers = (
     hostDownload,
     fileSystemDownload,
     dispose: () =>
-      commandSubscriptions.forEach((subscription) => subscription.dispose()),
+      subscriptions.forEach((subscription) => subscription.dispose()),
   };
 };
 
