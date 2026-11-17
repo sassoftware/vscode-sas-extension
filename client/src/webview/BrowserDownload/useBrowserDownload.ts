@@ -12,6 +12,7 @@ import {
   BrowserFileWriter,
   type BrowserFileWriterMessages,
 } from "../../components/LibraryNavigator/BrowserFileDownloadTarget/BrowserFileWriter";
+import localize from "../localize";
 import {
   type BrowserDownloadMessageLocalizer,
   browserDownloadMessages,
@@ -22,7 +23,6 @@ import {
   browserDownloadReducer,
   initialBrowserDownloadState,
 } from "./BrowserDownloadState";
-import localize from "../localize";
 
 interface VsCodeApi extends BrowserDownloadClientApi {
   setState(state: {

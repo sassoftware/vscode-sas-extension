@@ -5,7 +5,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { expect } from "chai";
 
-import { BrowserDownloadContent } from "../../../src/webview/BrowserDownload/BrowserDownloadView";
 import {
   type BrowserDownloadMessageLocalizer,
   browserDownloadMessages,
@@ -15,6 +14,7 @@ import {
   browserDownloadReducer,
   initialBrowserDownloadState,
 } from "../../../src/webview/BrowserDownload/BrowserDownloadState";
+import { BrowserDownloadContent } from "../../../src/webview/BrowserDownload/BrowserDownloadView";
 
 const localizedMessages = createBrowserDownloadLocalizedMessages(
   (message, args) => {
