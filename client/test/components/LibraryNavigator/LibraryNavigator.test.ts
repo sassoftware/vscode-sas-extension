@@ -13,6 +13,7 @@ import * as sinon from "sinon";
 import { Readable } from "stream";
 
 import LibraryNavigator from "../../../src/components/LibraryNavigator";
+import { FileSystemTableDownloadTarget } from "../../../src/components/LibraryNavigator/FileSystemTableDownloadTarget";
 import PaginatedResultSet from "../../../src/components/LibraryNavigator/PaginatedResultSet";
 import type {
   LibraryItem,
@@ -87,6 +88,77 @@ const createTablePropertiesViewer = () =>
       },
     ],
   );
+
+const createItem = (): LibraryItem => ({
+  uid: "WORK.TABLE",
+  id: "TABLE",
+  library: "WORK",
+  name: "TABLE",
+  type: "table",
+  readOnly: false,
+});
+
+type DownloadCommand = (item: LibraryItem) => Promise<void>;
+
+interface DownloadCommandOptions {
+  createTableExport?: sinon.SinonStub;
+  chooseLocalFile?: sinon.SinonStub;
+  hostDownload?: sinon.SinonStub;
+}
+
+const createDownloadCommandHandlers = (
+  sandbox: sinon.SinonSandbox,
+  options: DownloadCommandOptions = {},
+) => {
+  const handlers = new Map<string, DownloadCommand>();
+  const commandSubscriptions: Disposable[] = [];
+  sandbox.stub(commands, "registerCommand").callsFake((command, handler) => {
+    if (typeof handler === "function") {
+      handlers.set(command, handler);
+    }
+    const subscription = new Disposable(() => {});
+    commandSubscriptions.push(subscription);
+    return subscription;
+  });
+  const createTableExport =
+    options.createTableExport ?? sandbox.stub().resolves();
+  const chooseLocalFile =
+    options.chooseLocalFile ?? sandbox.stub().resolves({ kind: "cancelled" });
+  const hostDownload = options.hostDownload ?? sandbox.stub().resolves();
+  const fileSystemDownload = sandbox
+    .stub(FileSystemTableDownloadTarget.prototype, "download")
+    .resolves();
+  const navigator = Object.create(LibraryNavigator.prototype);
+
+  Object.defineProperties(navigator, {
+    libraryDataProvider: {
+      value: {
+        getSubscriptions: () => [],
+        assertTableExportSupported: () => {},
+        createTableExport,
+      },
+    },
+    webviewManager: { value: { panels: {} } },
+    browserFileExportInProgress: { value: false, writable: true },
+    browserFileDownloadTarget: { value: { chooseLocalFile } },
+    hostAttachmentDownloadTarget: { value: { download: hostDownload } },
+  });
+
+  navigator.getSubscriptions();
+  return {
+    handler: (command: string, item: LibraryItem) => {
+      const handler = handlers.get(command);
+      if (!handler) {
+        throw new Error(`Command not registered: ${command}`);
+      }
+      return handler(item);
+    },
+    hostDownload,
+    fileSystemDownload,
+    dispose: () =>
+      commandSubscriptions.forEach((subscription) => subscription.dispose()),
+  };
+};
 
 const createNavigatorForSessionChange = (
   panels: Record<string, unknown>,
@@ -240,49 +312,45 @@ describe("LibraryNavigator refresh flow", async function () {
 describe("LibraryNavigator browser-file export guard", () => {
   it("allows one export at a time and reports when another is already active", async () => {
     const sandbox = sinon.createSandbox();
-    // Exercise the private guard without constructing VS Code-dependent collaborators.
-    const navigator = {};
-    Object.defineProperty(navigator, "runSingleBrowserFileExport", {
-      value: (...args: unknown[]) =>
-        Reflect.apply(
-          Reflect.get(LibraryNavigator.prototype, "runSingleBrowserFileExport"),
-          navigator,
-          args,
-        ),
-    });
     const showInformationMessage = sandbox.stub(
       window,
       "showInformationMessage",
     );
-    const runExport = async (exportTable: () => Promise<void>) => {
-      await Reflect.apply(
-        Reflect.get(navigator, "runSingleBrowserFileExport"),
-        navigator,
-        [exportTable],
-      );
-    };
-    let finishExport!: () => void;
-    const activeExport = new Promise<void>((resolve) => {
-      finishExport = resolve;
+    sandbox.stub(env, "uiKind").value(UIKind.Web);
+    let chooseFile!: (choice: { kind: "unsupported" }) => void;
+    const fileChoice = new Promise<{ kind: "unsupported" }>((resolve) => {
+      chooseFile = resolve;
     });
-    const duplicateExport = sinon.spy(async () => {});
-
+    let pickerStarted!: () => void;
+    const pickerInvoked = new Promise<void>((resolve) => {
+      pickerStarted = resolve;
+    });
     try {
-      const firstExport = runExport(() => activeExport);
-      await runExport(duplicateExport);
+      const { handler, dispose, hostDownload } = createDownloadCommandHandlers(
+        sandbox,
+        {
+          chooseLocalFile: sandbox.stub().callsFake(() => {
+            pickerStarted();
+            return fileChoice;
+          }),
+        },
+      );
+      const firstExport = handler("SAS.downloadTableToComputer", createItem());
+      await pickerInvoked;
+      const duplicateExport = handler(
+        "SAS.downloadTableToComputer",
+        createItem(),
+      );
 
-      expect(duplicateExport.called).to.equal(false);
       expect(showInformationMessage.calledOnce).to.equal(true);
       expect(showInformationMessage.firstCall.args[0]).to.equal(
         "A browser file export is already in progress. Wait for it to finish before starting another.",
       );
 
-      finishExport();
-      await firstExport;
-
-      const nextExport = sinon.spy(async () => {});
-      await runExport(nextExport);
-      expect(nextExport.calledOnce).to.equal(true);
+      chooseFile({ kind: "unsupported" });
+      await Promise.all([firstExport, duplicateExport]);
+      expect(hostDownload.calledOnce).to.equal(true);
+      dispose();
     } finally {
       sandbox.restore();
     }
@@ -290,21 +358,45 @@ describe("LibraryNavigator browser-file export guard", () => {
 });
 
 describe("LibraryNavigator remote workspace download destination", () => {
+  it("delegates the Remote Workspace command to the standard download command", async () => {
+    const sandbox = sinon.createSandbox();
+    sandbox.stub(env, "uiKind").value(UIKind.Web);
+    const workspaceFoldersDescriptor = Object.getOwnPropertyDescriptor(
+      workspace,
+      "workspaceFolders",
+    );
+    Object.defineProperty(workspace, "workspaceFolders", {
+      configurable: true,
+      value: [{ uri: Uri.parse("vscode-remote://ssh-remote+host/workspace") }],
+    });
+    const executeCommand = sandbox.stub(commands, "executeCommand").resolves();
+
+    try {
+      const { handler, dispose } = createDownloadCommandHandlers(sandbox);
+      const item = createItem();
+
+      await handler("SAS.downloadTableRemoteWorkspace", item);
+
+      expect(
+        executeCommand.calledOnceWithExactly("SAS.downloadTable", item),
+      ).to.equal(true);
+      dispose();
+    } finally {
+      if (workspaceFoldersDescriptor) {
+        Object.defineProperty(
+          workspace,
+          "workspaceFolders",
+          workspaceFoldersDescriptor,
+        );
+      } else {
+        Reflect.deleteProperty(workspace, "workspaceFolders");
+      }
+      sandbox.restore();
+    }
+  });
+
   it("directs local destinations to This Computer instead of streaming remotely", async () => {
     const sandbox = sinon.createSandbox();
-    // Exercise the destination guard without constructing VS Code-dependent collaborators.
-    const navigator = {};
-    Object.defineProperty(navigator, "redirectLocalComputerDestination", {
-      value: (...args: unknown[]) =>
-        Reflect.apply(
-          Reflect.get(
-            LibraryNavigator.prototype,
-            "redirectLocalComputerDestination",
-          ),
-          navigator,
-          args,
-        ),
-    });
     const showInformationMessage = sandbox.stub(
       window,
       "showInformationMessage",
@@ -320,17 +412,19 @@ describe("LibraryNavigator remote workspace download destination", () => {
     });
 
     try {
-      const shouldRedirect = await Reflect.apply(
-        Reflect.get(navigator, "redirectLocalComputerDestination"),
-        navigator,
-        [Uri.file("/local/work.table.csv")],
-      );
+      const { handler, dispose } = createDownloadCommandHandlers(sandbox);
+      const showSaveDialog = sandbox
+        .stub(window, "showSaveDialog")
+        .resolves(Uri.file("/local/work.table.csv"));
 
-      expect(shouldRedirect).to.equal(true);
+      await handler("SAS.downloadTable", createItem());
+
+      expect(showSaveDialog.calledOnce).to.equal(true);
       expect(showInformationMessage.calledOnce).to.equal(true);
       expect(showInformationMessage.firstCall.args[0]).to.equal(
         'To download this table locally, cancel this dialog and choose "This Computer" from the Download menu.',
       );
+      dispose();
     } finally {
       if (workspaceFoldersDescriptor) {
         Object.defineProperty(
@@ -347,19 +441,6 @@ describe("LibraryNavigator remote workspace download destination", () => {
 
   it("keeps remote workspace destinations on the existing streaming path", async () => {
     const sandbox = sinon.createSandbox();
-    // Exercise the destination guard without constructing VS Code-dependent collaborators.
-    const navigator = {};
-    Object.defineProperty(navigator, "redirectLocalComputerDestination", {
-      value: (...args: unknown[]) =>
-        Reflect.apply(
-          Reflect.get(
-            LibraryNavigator.prototype,
-            "redirectLocalComputerDestination",
-          ),
-          navigator,
-          args,
-        ),
-    });
     const showInformationMessage = sandbox.stub(
       window,
       "showInformationMessage",
@@ -375,14 +456,19 @@ describe("LibraryNavigator remote workspace download destination", () => {
     });
 
     try {
-      const shouldRedirect = await Reflect.apply(
-        Reflect.get(navigator, "redirectLocalComputerDestination"),
-        navigator,
-        [Uri.parse("vscode-remote://ssh-remote+host/work.table.csv")],
-      );
+      const { handler, dispose, fileSystemDownload } =
+        createDownloadCommandHandlers(sandbox);
+      const showSaveDialog = sandbox
+        .stub(window, "showSaveDialog")
+        .resolves(Uri.parse("vscode-remote://ssh-remote+host/work.table.csv"));
+      sandbox.stub(window, "withProgress").resolves();
 
-      expect(shouldRedirect).to.equal(false);
+      await handler("SAS.downloadTable", createItem());
+
+      expect(showSaveDialog.calledOnce).to.equal(true);
+      expect(fileSystemDownload.calledOnce).to.equal(true);
       expect(showInformationMessage.called).to.equal(false);
+      dispose();
     } finally {
       if (workspaceFoldersDescriptor) {
         Object.defineProperty(
@@ -401,16 +487,7 @@ describe("LibraryNavigator remote workspace download destination", () => {
 describe("LibraryNavigator unsupported picker fallback", () => {
   it("automatically downloads through the Node host when file picking is unsupported", async () => {
     const sandbox = sinon.createSandbox();
-    // Exercise the download handoff without constructing VS Code-dependent collaborators.
-    const navigator = {};
-    const item: LibraryItem = {
-      uid: "WORK.TABLE",
-      id: "TABLE",
-      library: "WORK",
-      name: "TABLE",
-      type: "table",
-      readOnly: false,
-    };
+    const item = createItem();
     const exportResult: TableExport = {
       stream: Readable.from([]),
       dispose: async () => {},
@@ -429,45 +506,24 @@ describe("LibraryNavigator unsupported picker fallback", () => {
           await exported.dispose();
         },
       );
-    Object.defineProperties(navigator, {
-      downloadTableToComputer: {
-        value: (...args: unknown[]) =>
-          Reflect.apply(
-            Reflect.get(LibraryNavigator.prototype, "downloadTableToComputer"),
-            navigator,
-            args,
-          ),
-      },
-      libraryDataProvider: {
-        value: {
-          assertTableExportSupported: () => {},
-          createTableExport,
-        },
-      },
-      browserFileDownloadTarget: {
-        value: { chooseLocalFile },
-      },
-      hostAttachmentDownloadTarget: { value: { download } },
-    });
     sandbox.stub(env, "uiKind").value(UIKind.Web);
 
     try {
-      await Reflect.apply(
-        Reflect.get(navigator, "downloadTableToComputer"),
-        navigator,
-        [item],
-      );
+      const { handler, dispose } = createDownloadCommandHandlers(sandbox, {
+        createTableExport,
+        chooseLocalFile,
+        hostDownload: download,
+      });
+
+      await handler("SAS.downloadTableToComputer", item);
 
       expect(download.calledOnce).to.equal(true);
+      dispose();
       expect(createTableExport.calledOnce).to.equal(true);
       expect(createTableExport.firstCall.args[0]).to.equal(item);
 
       chooseLocalFile.resolves({ kind: "cancelled" });
-      await Reflect.apply(
-        Reflect.get(navigator, "downloadTableToComputer"),
-        navigator,
-        [item],
-      );
+      await handler("SAS.downloadTableToComputer", item);
       expect(download.calledOnce).to.equal(true);
     } finally {
       sandbox.restore();
