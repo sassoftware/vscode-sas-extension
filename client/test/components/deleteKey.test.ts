@@ -272,7 +272,7 @@ describe("Navigator Delete key routing", () => {
 
     expect(
       warning.calledOnceWithExactly(
-        l10n.t(LibraryMessages.TablesDeletionWarning),
+        l10n.t(LibraryMessages.TableDeletionWarning),
         { modal: true },
         "Delete",
       ),
