@@ -15,7 +15,10 @@ import {
 
 import { profileConfig } from "../../commands/profile";
 import { getSession } from "../../connection";
-import { onDidChangeSession } from "../../connection/session";
+import {
+  onDidChangeSession,
+  SessionContextAttributes,
+} from "../../connection/session";
 import DataViewer from "../../panels/DataViewer";
 import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
@@ -23,6 +26,8 @@ import { SubscriptionProvider } from "../SubscriptionProvider";
 import {
   type ActiveProfileSnapshot,
   hasActiveProfileChanged,
+  isDirectRestProfile,
+  Profile,
 } from "../profile";
 import { treeViewSelections } from "../utils/treeViewSelections";
 import { BrowserFileDownloadTarget } from "./BrowserFileDownloadTarget/BrowserFileDownloadTarget";
@@ -41,6 +46,12 @@ import {
   TableData,
   TableType,
 } from "./types";
+
+export const getTableViewerContextAttributes = async (
+  profile: Profile | undefined,
+  contextAttributes: () => Promise<SessionContextAttributes>,
+): Promise<SessionContextAttributes> =>
+  isDirectRestProfile(profile) ? undefined : await contextAttributes();
 
 class LibraryNavigator implements SubscriptionProvider {
   private libraryDataProvider: LibraryDataProvider;
@@ -123,7 +134,13 @@ class LibraryNavigator implements SubscriptionProvider {
           paginator: PaginatedResultSet<{ data: TableData; error?: Error }>,
           fetchColumns: () => TableColumn[],
         ) => {
-          const attributes = await getSession().contextAttributes?.();
+          const activeProfile = profileConfig.getProfileByName(
+            profileConfig.getActiveProfile(),
+          );
+          const attributes = await getTableViewerContextAttributes(
+            activeProfile,
+            () => getSession().contextAttributes?.(),
+          );
           const allowDownload =
             attributes?.allowDownload?.toLowerCase() !== "false";
           this.webviewManager.render(

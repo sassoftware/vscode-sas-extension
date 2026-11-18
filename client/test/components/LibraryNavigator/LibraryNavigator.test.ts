@@ -14,6 +14,7 @@ import { Readable } from "stream";
 
 import LibraryNavigator from "../../../src/components/LibraryNavigator";
 import { FileSystemTableDownloadTarget } from "../../../src/components/LibraryNavigator/FileSystemTableDownloadTarget";
+import { getTableViewerContextAttributes } from "../../../src/components/LibraryNavigator";
 import PaginatedResultSet from "../../../src/components/LibraryNavigator/PaginatedResultSet";
 import type {
   LibraryItem,
@@ -23,6 +24,10 @@ import type { RunResult } from "../../../src/connection";
 import { Session } from "../../../src/connection/session";
 import DataViewer from "../../../src/panels/DataViewer";
 import TablePropertiesViewer from "../../../src/panels/TablePropertiesViewer";
+import {
+  ConnectionType,
+  isDirectRestProfile,
+} from "../../../src/components/profile";
 
 interface WebviewMessagePanel {
   webview: {
@@ -195,6 +200,41 @@ const createNavigatorForSessionChange = (
 };
 
 describe("LibraryNavigator refresh flow", async function () {
+  it("identifies REST profiles with a server ID as direct connections", () => {
+    expect(
+      isDirectRestProfile({
+        connectionType: ConnectionType.Rest,
+        endpoint: "http://example.test",
+        serverId: "0001",
+      }),
+    ).to.equal(true);
+  });
+
+  it("does not identify REST profiles without a server ID as direct connections", () => {
+    expect(
+      isDirectRestProfile({
+        connectionType: ConnectionType.Rest,
+        endpoint: "http://example.test",
+      }),
+    ).to.equal(false);
+  });
+
+  it("does not request context attributes for direct REST profiles", async () => {
+    const contextAttributes = sinon.stub().resolves({ allowDownload: "false" });
+
+    const attributes = await getTableViewerContextAttributes(
+      {
+        connectionType: ConnectionType.Rest,
+        endpoint: "http://example.test",
+        serverId: "0001",
+      },
+      contextAttributes,
+    );
+
+    expect(attributes).to.equal(undefined);
+    expect(contextAttributes.called).to.equal(false);
+  });
+
   it("DataViewer.refreshData posts panel refresh message", () => {
     const dataViewer = createDataViewer();
     const postMessage = sinon.spy();
