@@ -243,22 +243,18 @@ class RestLibraryAdapter implements LibraryAdapter {
     const entries = await Promise.all(
       formatNames.map(async (formatName) => {
         try {
-          const formatResp = await this.retryOnFail(() =>
-            this.FormatsApi.getFormat({
-              sessionId: this.sessionId,
-              formatName,
-            }),
-          );
+          const formatResp = await this.FormatsApi.getFormat({
+            sessionId: this.sessionId,
+            formatName,
+          });
 
           let category = formatResp?.data?.category || "";
 
           if (!category) {
-            const informatResp = await this.retryOnFail(() =>
-              this.InformatsApi.getInformat({
-                sessionId: this.sessionId,
-                informatName: formatName,
-              }),
-            );
+            const informatResp = await this.InformatsApi.getInformat({
+              sessionId: this.sessionId,
+              informatName: formatName,
+            });
 
             category = informatResp?.data?.category || "";
           }
