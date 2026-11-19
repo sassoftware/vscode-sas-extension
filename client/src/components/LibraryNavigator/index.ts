@@ -328,7 +328,7 @@ class LibraryNavigator implements SubscriptionProvider {
 
     await window.showInformationMessage(
       l10n.t(
-        'To download this table locally, cancel this dialog and choose "This Device" from the Download menu.',
+        'To download this table locally, choose "This Device" from the Download menu.',
       ),
     );
     return true;
