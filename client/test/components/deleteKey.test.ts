@@ -153,6 +153,8 @@ describe("Navigator Delete key routing", () => {
     Object.defineProperties(navigator, {
       libraryDataProvider: { value: provider },
       webviewManager: { value: new WebViewManager() },
+      browserFileDownloadTarget: { value: new Disposable(() => {}) },
+      hostAttachmentDownloadTarget: { value: new Disposable(() => {}) },
     });
     subscriptions = navigator.getSubscriptions();
     return adapter;
@@ -272,7 +274,7 @@ describe("Navigator Delete key routing", () => {
 
     expect(
       warning.calledOnceWithExactly(
-        l10n.t(LibraryMessages.TablesDeletionWarning),
+        l10n.t(LibraryMessages.TableDeletionWarning),
         { modal: true },
         "Delete",
       ),
