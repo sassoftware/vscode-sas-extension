@@ -3,13 +3,17 @@
 import * as vscode from "vscode";
 import type { BaseLanguageClient } from "vscode-languageclient";
 
+import { isAxiosError } from "axios";
+
 import { LogLine, RunResult } from "../../connection";
 import { getSession } from "../../connection";
+import { appendExecutionLogFn } from "../logViewer";
 import { SASCodeDocument } from "../utils/SASCodeDocument";
 import { getCodeDocumentConstructionParameters } from "../utils/SASCodeDocumentHelper";
 import { Deferred, deferred } from "../utils/deferred";
 import { getNotebookCleanOutput } from "../utils/settings";
 import { buildPythonError, processPythonLog } from "./PythonOutputProcessor";
+import { SAS_LOG_METADATA_KEY } from "./Serializer";
 
 export class NotebookController {
   readonly controllerId = "sas-notebook-controller-id";
@@ -103,6 +107,7 @@ export class NotebookController {
 
     const isPythonCell = cell.document.languageId === "python";
     const cleanOutput = getNotebookCleanOutput();
+    let executionSuccess: boolean | undefined;
 
     try {
       const code =
@@ -112,13 +117,16 @@ export class NotebookController {
               this._cancellation?.token,
             )
           : codeDoc.getWrappedCode();
-      if (this.endInterruptedExecution(execution)) {
+      if (this._interrupted || this._disposed) {
         return;
       }
       collecting = true;
       session.onExecutionLogFn = (logLines) => {
         if (collecting) {
           logs = logs.concat(logLines);
+          if (!isPythonCell) {
+            appendExecutionLogFn(logLines);
+          }
         }
       };
       this._running = true;
@@ -131,7 +139,7 @@ export class NotebookController {
         this._running = false;
         collecting = false;
       }
-      if (this.endInterruptedExecution(execution)) {
+      if (this._interrupted || this._disposed) {
         return;
       }
 
@@ -188,51 +196,101 @@ export class NotebookController {
           }
         }
       } else {
-        // Existing SAS / SQL / R behavior
-        this.appendRawOutput(result, logs, outputItems);
+        if (isPythonCell) {
+          this.appendRawOutput(result, logs, outputItems);
+        } else {
+          if (result.html5?.length) {
+            outputItems.push(
+              vscode.NotebookCellOutputItem.text(
+                result.html5,
+                "application/vnd.sas.ods.html5",
+              ),
+            );
+          }
+          success = !logs.some((line) => line.type === "error");
+        }
       }
 
-      // Only create a NotebookCellOutput when there is something to show.
-      // Passing an empty array to replaceOutput removes all output and avoids
-      // the blank gap that VS Code renders when a cell has an empty output item.
-      if (outputItems.length > 0) {
-        execution.replaceOutput([new vscode.NotebookCellOutput(outputItems)]);
-      } else {
-        execution.replaceOutput([]);
-      }
-      execution.end(success, Date.now());
+      execution.replaceOutput(
+        outputItems.length > 0
+          ? [new vscode.NotebookCellOutput(outputItems)]
+          : [],
+      );
+      executionSuccess = success;
     } catch (error) {
-      if (this.endInterruptedExecution(execution)) {
+      if (this._interrupted || this._disposed) {
         return;
       }
-      execution.replaceOutput([
-        new vscode.NotebookCellOutput([
-          vscode.NotebookCellOutputItem.error(error),
-        ]),
-      ]);
-      execution.end(false, Date.now());
+      if (isPythonCell) {
+        execution.replaceOutput([
+          new vscode.NotebookCellOutput([
+            vscode.NotebookCellOutputItem.error(error),
+          ]),
+        ]);
+      } else {
+        const context = [vscode.l10n.t("Execution failed.")];
+        if (isAxiosError(error)) {
+          if (error.response?.status) {
+            context.push(`HTTP ${error.response.status}`);
+          }
+          const data = error.response?.data;
+          if (typeof data?.errorCode === "number") {
+            context.push(`Compute error ${data.errorCode}`);
+          }
+        }
+        appendExecutionLogFn([{ type: "error", line: context.join("\n") }]);
+        execution.appendOutput(
+          new vscode.NotebookCellOutput([
+            vscode.NotebookCellOutputItem.text(
+              vscode.l10n.t("Execution failed. See SAS Log for details."),
+            ),
+          ]),
+        );
+      }
+      executionSuccess = false;
       if (!this._interrupted) {
         this._interrupted = deferred();
       }
     } finally {
       collecting = false;
       cellCancellation?.dispose();
+      try {
+        if (!isPythonCell && !cell.notebook.isClosed && cell.index >= 0) {
+          let saved = false;
+          try {
+            const edit = new vscode.WorkspaceEdit();
+            edit.set(cell.notebook.uri, [
+              vscode.NotebookEdit.updateCellMetadata(cell.index, {
+                ...cell.metadata,
+                [SAS_LOG_METADATA_KEY]: logs,
+              }),
+            ]);
+            saved = await vscode.workspace.applyEdit(edit);
+          } catch {
+            saved = false;
+          }
+          if (!saved) {
+            appendExecutionLogFn([
+              {
+                type: "warning",
+                line: vscode.l10n.t(
+                  "Unable to retain the SAS log for notebook export.",
+                ),
+              },
+            ]);
+          }
+        }
+      } finally {
+        if (
+          this._disposed ||
+          this._cancellation?.token.isCancellationRequested
+        ) {
+          executionSuccess = undefined;
+        }
+        execution.end(executionSuccess, Date.now());
+        this._interrupted?.resolve();
+      }
     }
-    if (this._interrupted) {
-      this._interrupted.resolve();
-    }
-  }
-
-  private endInterruptedExecution(
-    execution: vscode.NotebookCellExecution,
-  ): boolean {
-    const interruption = this._interrupted;
-    if (!interruption && !this._disposed) {
-      return false;
-    }
-    execution.end(undefined, Date.now());
-    interruption?.resolve();
-    return true;
   }
 
   private appendRawOutput(

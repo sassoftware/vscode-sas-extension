@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { LanguageClient } from "vscode-languageclient/node";
 
 import assert from "assert";
+import { AxiosError } from "axios";
 import proxyquire from "proxyquire";
 import sinon from "sinon";
 
@@ -14,6 +15,7 @@ describe("Notebook execution preparation", () => {
       start: sinon.stub(),
       clearOutput: sinon.stub(),
       replaceOutput: sinon.stub(),
+      appendOutput: sinon.stub(),
       end: sinon.stub(),
     };
     const controller = {
@@ -36,6 +38,15 @@ describe("Notebook execution preparation", () => {
     const prepare = sinon.stub().resolves("prepared notebook code");
     const cleanOutput = sinon.stub().returns(true);
     const progress = sinon.stub().callsFake((_options, task) => task());
+    const appendExecutionLog = sinon.stub();
+    const applyEdit = sinon.stub().resolves(true);
+    const updateCellMetadata = sinon.stub().callsFake((index, metadata) => ({
+      index,
+      metadata,
+    }));
+    class WorkspaceEdit {
+      set = sinon.stub();
+    }
     class CodeDocument {
       getWrappedNotebookCode = prepare;
       getPythonAutodisplayId() {
@@ -59,12 +70,19 @@ describe("Notebook execution preparation", () => {
           CancellationTokenSource: vscode.CancellationTokenSource,
           NotebookCellOutput: vscode.NotebookCellOutput,
           NotebookCellOutputItem: vscode.NotebookCellOutputItem,
+          NotebookEdit: { updateCellMetadata },
+          WorkspaceEdit,
+          workspace: { applyEdit },
           notebooks: {
             createNotebookController: sinon.stub().returns(controller),
           },
           window: { withProgress: progress, showErrorMessage: sinon.stub() },
         },
         "../../connection": { getSession: () => session },
+        "../logViewer": {
+          "@noCallThru": true,
+          appendExecutionLogFn: appendExecutionLog,
+        },
         "../utils/SASCodeDocument": {
           SASCodeDocument:
             source === undefined ? CodeDocument : SASCodeDocument,
@@ -87,6 +105,19 @@ describe("Notebook execution preparation", () => {
       });
     const client = sinon.createStubInstance(LanguageClient);
     const provider = new NotebookController(client);
+    const executeHandler = controller.executeHandler;
+    controller.executeHandler = sinon
+      .stub()
+      .callsFake((cells: Array<{ document: { languageId: string } }>) =>
+        executeHandler(
+          cells.map((cell, index) => ({
+            index,
+            metadata: { existing: "kept" },
+            notebook: { uri: "notebook", isClosed: false },
+            ...cell,
+          })),
+        ),
+      );
     return {
       provider,
       controller,
@@ -96,6 +127,9 @@ describe("Notebook execution preparation", () => {
       cleanOutput,
       progress,
       client,
+      appendExecutionLog,
+      applyEdit,
+      updateCellMetadata,
     };
   }
 
@@ -375,8 +409,15 @@ describe("Notebook execution preparation", () => {
   for (const clean of [true, false]) {
     for (const languageId of ["python", "sas", "sql", "r"]) {
       it(`preserves output rendering for ${languageId} when cleanOutput is ${clean}`, async () => {
-        const { controller, prepare, session, cleanOutput, execution } =
-          createController();
+        const {
+          controller,
+          prepare,
+          session,
+          cleanOutput,
+          execution,
+          appendExecutionLog,
+          updateCellMetadata,
+        } = createController();
         cleanOutput.returns(clean);
         const logs: LogLine[] = [
           { type: "note", line: "SAS boilerplate" },
@@ -401,14 +442,26 @@ describe("Notebook execution preparation", () => {
           new TextDecoder().decode(items[0].data),
           "<p>ODS output</p>",
         );
-        assert.strictEqual(
-          items[1].mime,
-          "application/vnd.sas.compute.log.lines",
-        );
-        assert.deepStrictEqual(
-          JSON.parse(new TextDecoder().decode(items[1].data)),
-          languageId === "python" && clean ? logs.slice(2, 4) : logs,
-        );
+        if (languageId === "python") {
+          assert.strictEqual(items.length, 2);
+          assert.strictEqual(
+            items[1].mime,
+            "application/vnd.sas.compute.log.lines",
+          );
+          assert.deepStrictEqual(
+            JSON.parse(new TextDecoder().decode(items[1].data)),
+            clean ? logs.slice(2, 4) : logs,
+          );
+          assert.strictEqual(appendExecutionLog.callCount, 0);
+          assert.strictEqual(updateCellMetadata.callCount, 0);
+        } else {
+          assert.strictEqual(items.length, 1);
+          assert.deepStrictEqual(appendExecutionLog.firstCall.args, [logs]);
+          assert.deepStrictEqual(updateCellMetadata.firstCall.args, [
+            0,
+            { existing: "kept", sasExecutionLog: logs },
+          ]);
+        }
         assert.strictEqual(execution.end.firstCall.args[0], true);
       });
     }
@@ -473,6 +526,260 @@ describe("Notebook execution preparation", () => {
       assert.strictEqual(execution.end.firstCall.args[0], false);
     });
   }
+
+  for (const languageId of ["sas", "sql", "r"]) {
+    for (const html5 of ["", "<p>Partial results</p>"]) {
+      it(`routes ${languageId} errors to SAS Log with HTML: ${!!html5}`, async () => {
+        const {
+          controller,
+          session,
+          execution,
+          appendExecutionLog,
+          updateCellMetadata,
+        } = createController();
+        const logs: LogLine[] = [
+          { type: "note", line: "NOTE: Step completed" },
+          { type: "error", line: "ERROR 79-322: Expecting a FROM." },
+        ];
+        session.run.callsFake(async () => {
+          assert.ok(session.onExecutionLogFn);
+          session.onExecutionLogFn(logs);
+          return { html5 };
+        });
+
+        await controller.executeHandler([{ document: { languageId } }]);
+
+        const outputs: vscode.NotebookCellOutput[] =
+          execution.replaceOutput.firstCall.args[0];
+        assert.strictEqual(outputs.length, html5 ? 1 : 0);
+        if (html5) {
+          assert.strictEqual(outputs[0].items.length, 1);
+          assert.strictEqual(
+            outputs[0].items[0].mime,
+            "application/vnd.sas.ods.html5",
+          );
+        }
+        assert.deepStrictEqual(appendExecutionLog.firstCall.args, [logs]);
+        assert.deepStrictEqual(updateCellMetadata.firstCall.args, [
+          0,
+          { existing: "kept", sasExecutionLog: logs },
+        ]);
+        assert.strictEqual(execution.end.firstCall.args[0], false);
+      });
+    }
+
+    it(`shows a concise ${languageId} ABEND failure and retains diagnostics`, async () => {
+      const {
+        controller,
+        session,
+        execution,
+        appendExecutionLog,
+        updateCellMetadata,
+      } = createController();
+      const logs: LogLine[] = [
+        {
+          type: "error",
+          line: "ERROR: Execution terminated by an ABORT statement.",
+        },
+      ];
+      const error = Object.assign(
+        new AxiosError("Request failed with status code 400"),
+        {
+          response: {
+            status: 400,
+            data: { errorCode: 5113, message: "secret-token" },
+          },
+        },
+      );
+      error.stack = "AxiosError: failure\n    at internalClientStack";
+      session.run.callsFake(async () => {
+        assert.ok(session.onExecutionLogFn);
+        session.onExecutionLogFn(logs);
+        throw error;
+      });
+
+      await controller.executeHandler([{ document: { languageId } }]);
+
+      assert.strictEqual(execution.replaceOutput.callCount, 0);
+      const output: vscode.NotebookCellOutput =
+        execution.appendOutput.firstCall.args[0];
+      assert.strictEqual(output.items.length, 1);
+      assert.strictEqual(output.items[0].mime, "text/plain");
+      assert.strictEqual(
+        new TextDecoder().decode(output.items[0].data),
+        "Execution failed. See SAS Log for details.",
+      );
+      assert.deepStrictEqual(appendExecutionLog.firstCall.args, [logs]);
+      assert.deepStrictEqual(appendExecutionLog.secondCall.args, [
+        [
+          {
+            type: "error",
+            line: "Execution failed.\nHTTP 400\nCompute error 5113",
+          },
+        ],
+      ]);
+      assert.deepStrictEqual(updateCellMetadata.firstCall.args, [
+        0,
+        { existing: "kept", sasExecutionLog: logs },
+      ]);
+      assert.strictEqual(execution.end.firstCall.args[0], false);
+    });
+  }
+
+  it("keeps Python exception output and logging unchanged", async () => {
+    const {
+      controller,
+      session,
+      execution,
+      appendExecutionLog,
+      updateCellMetadata,
+    } = createController();
+    session.run.callsFake(async () => {
+      assert.ok(session.onExecutionLogFn);
+      session.onExecutionLogFn([{ type: "normal", line: "Python text" }]);
+      throw new Error("Python execution failed");
+    });
+
+    await controller.executeHandler([{ document: { languageId: "python" } }]);
+
+    const outputs: vscode.NotebookCellOutput[] =
+      execution.replaceOutput.firstCall.args[0];
+    assert.strictEqual(outputs.length, 1);
+    assert.strictEqual(outputs[0].items.length, 1);
+    assert.strictEqual(
+      outputs[0].items[0].mime,
+      "application/vnd.code.notebook.error",
+    );
+    assert.strictEqual(appendExecutionLog.callCount, 0);
+    assert.strictEqual(updateCellMetadata.callCount, 0);
+    assert.strictEqual(execution.end.firstCall.args[0], false);
+  });
+
+  it("keeps the original empty raw Python log output", async () => {
+    const { controller, session, cleanOutput, execution, appendExecutionLog } =
+      createController();
+    cleanOutput.returns(false);
+    session.run.resolves({ html5: "<p>Result</p>" });
+
+    await controller.executeHandler([{ document: { languageId: "python" } }]);
+
+    const outputs: vscode.NotebookCellOutput[] =
+      execution.replaceOutput.firstCall.args[0];
+    assert.strictEqual(outputs.length, 1);
+    assert.deepStrictEqual(
+      outputs[0].items.map((item) => item.mime),
+      [
+        "application/vnd.sas.ods.html5",
+        "application/vnd.sas.compute.log.lines",
+      ],
+    );
+    assert.deepStrictEqual(
+      JSON.parse(new TextDecoder().decode(outputs[0].items[1].data)),
+      [],
+    );
+    assert.strictEqual(appendExecutionLog.callCount, 0);
+  });
+
+  for (const outcome of ["success", "sas error", "exception"]) {
+    it(`waits for log metadata before completing a ${outcome} execution`, async () => {
+      const { controller, session, execution, applyEdit } = createController();
+      let finishEdit!: (value: boolean) => void;
+      let notifyEditStarted!: () => void;
+      const editStarted = new Promise<void>((resolve) => {
+        notifyEditStarted = resolve;
+      });
+      applyEdit.callsFake(() => {
+        notifyEditStarted();
+        return new Promise<boolean>((resolve) => {
+          finishEdit = resolve;
+        });
+      });
+      session.run.callsFake(async () => {
+        assert.ok(session.onExecutionLogFn);
+        session.onExecutionLogFn([
+          { type: outcome === "sas error" ? "error" : "note", line: "Log" },
+        ]);
+        if (outcome === "exception") {
+          throw new Error("Execution failed");
+        }
+        return {};
+      });
+
+      const pending = controller.executeHandler([
+        { document: { languageId: "sas" } },
+      ]);
+      await editStarted;
+      assert.strictEqual(execution.end.callCount, 0);
+      finishEdit(true);
+      await pending;
+
+      assert.strictEqual(execution.end.callCount, 1);
+      assert.strictEqual(
+        execution.end.firstCall.args[0],
+        outcome === "success",
+      );
+    });
+  }
+
+  it("completes an interrupted cell after its metadata edit settles", async () => {
+    const { controller, session, execution, applyEdit, progress } =
+      createController();
+    let finishEdit!: (value: boolean) => void;
+    let notifyEditStarted!: () => void;
+    const editStarted = new Promise<void>((resolve) => {
+      notifyEditStarted = resolve;
+    });
+    applyEdit.callsFake(() => {
+      notifyEditStarted();
+      return new Promise<boolean>((resolve) => {
+        finishEdit = resolve;
+      });
+    });
+
+    const pending = controller.executeHandler([
+      { document: { languageId: "sas" } },
+    ]);
+    await editStarted;
+    controller.interruptHandler();
+    assert.strictEqual(execution.end.callCount, 0);
+    assert.strictEqual(session.cancel.callCount, 0);
+    finishEdit(true);
+    await pending;
+    await progress.firstCall.returnValue;
+
+    assert.strictEqual(execution.end.callCount, 1);
+    assert.strictEqual(execution.end.firstCall.args[0], undefined);
+  });
+
+  it("ends execution when the metadata edit throws", async () => {
+    const { controller, execution, appendExecutionLog, applyEdit } =
+      createController();
+    applyEdit.throws(new Error("Edit failed"));
+
+    await controller.executeHandler([{ document: { languageId: "sas" } }]);
+
+    assert.strictEqual(execution.end.callCount, 1);
+    assert.strictEqual(execution.end.firstCall.args[0], true);
+    assert.strictEqual(appendExecutionLog.firstCall.args[0][0].type, "warning");
+  });
+
+  it("warns in SAS Log when export metadata cannot be saved", async () => {
+    const { controller, session, appendExecutionLog, applyEdit } =
+      createController();
+    applyEdit.resolves(false);
+    session.run.resolves({});
+
+    await controller.executeHandler([{ document: { languageId: "sas" } }]);
+
+    assert.deepStrictEqual(appendExecutionLog.firstCall.args, [
+      [
+        {
+          type: "warning",
+          line: "Unable to retain the SAS log for notebook export.",
+        },
+      ],
+    ]);
+  });
 
   for (const languageId of ["sas", "r", "sql"]) {
     it(`preserves ${languageId} execution`, async () => {

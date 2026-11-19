@@ -4,10 +4,25 @@ import * as vscode from "vscode";
 
 import { TextDecoder, TextEncoder } from "util";
 
+import type { LogLine } from "../../connection";
+
+export const SAS_LOG_METADATA_KEY = "sasExecutionLog";
+
+export function getStoredSasLog(
+  cell: vscode.NotebookCell,
+): LogLine[] | undefined {
+  if (!["sas", "sql", "r"].includes(cell.document.languageId)) {
+    return undefined;
+  }
+  const logs = cell.metadata?.[SAS_LOG_METADATA_KEY];
+  return Array.isArray(logs) ? logs : undefined;
+}
+
 interface RawNotebookCell {
   language: string;
   value: string;
   kind: vscode.NotebookCellKind;
+  sasExecutionLog?: LogLine[];
   outputs?: {
     items: {
       data: string;
@@ -47,6 +62,15 @@ export class NotebookSerializer implements vscode.NotebookSerializer {
             ),
         );
       }
+      if (
+        ["sas", "sql", "r"].includes(item.language) &&
+        Array.isArray(item.sasExecutionLog)
+      ) {
+        cell.metadata = {
+          ...cell.metadata,
+          [SAS_LOG_METADATA_KEY]: item.sasExecutionLog,
+        };
+      }
       return cell;
     });
 
@@ -69,6 +93,12 @@ export class NotebookSerializer implements vscode.NotebookSerializer {
             mime: item.mime,
           })),
         }));
+      }
+      if (
+        ["sas", "sql", "r"].includes(cell.languageId) &&
+        Array.isArray(cell.metadata?.[SAS_LOG_METADATA_KEY])
+      ) {
+        content.sasExecutionLog = cell.metadata[SAS_LOG_METADATA_KEY];
       }
       contents.push(content);
     }
