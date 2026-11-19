@@ -45,6 +45,19 @@ Your sign in status will persist in VS Code. You can view it and sign out from V
 
 3. The results, log, and error status are displayed in the application.
 
+## Macro Variables
+
+There are pre-defined macro variables that are available when you run SAS Code:
+
+- `_SASPROGRAMFILE` - The URI of your current file. For example:
+  - SAS Content: sascontent:/files/files/id
+  - SAS Server: /path/to/filename.sas
+  - Local file system: /Users/username/Documents/localFile.sas
+- `_SASPROGRAMDIR` - The directory for your current file. For example:
+  - SAS Content: Not supported for SAS Content files
+  - SAS Server: /path/to
+  - Local file system: /Users/username/Documents
+
 ## Additional notes
 
 To run a selection of SAS code:
