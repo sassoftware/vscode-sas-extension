@@ -181,7 +181,7 @@ class LibraryDataProvider
     item: LibraryItem,
     signal: AbortSignal,
   ): Promise<TableExport> {
-    return this.model.createTableExport(item, signal);
+    return Promise.resolve(this.model.createTableExport(item, signal));
   }
 
   public assertTableExportSupported(): void {

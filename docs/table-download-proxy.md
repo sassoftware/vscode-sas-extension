@@ -56,7 +56,7 @@ The administrator-managed proxy must:
 - preserve the authenticated user/session boundary used by the workbench; and
 - make client disconnects observable by the extension listener.
 
-The producer independently authorizes the SAS table export. A transfer token is
+The SAS service independently authorizes the table export. A transfer token is
 not a replacement for SAS authorization. The route must not add SAS credentials,
 connection tokens, bearer tokens, or long-lived secrets to the public URL.
 
@@ -71,8 +71,8 @@ the listener port directly to users.
 Any proxy product may satisfy this contract. For Caddy, configure the route and
 prefix rewrite explicitly and use its low-latency streaming configuration as
 appropriate for the deployed version. Proxy flushing does not itself guarantee
-producer cancellation; the extension listener must observe response closure and
-abort the producer.
+request cancellation; the extension listener must observe response closure and
+abort the export stream.
 
 ## Support Matrix
 

@@ -26,26 +26,17 @@ class LibraryModel {
   }
 
   public assertTableExportSupported(): void {
-    if (
-      !this.libraryAdapter ||
-      this.libraryAdapter.supportsTableExport === false
-    ) {
+    if (!this.libraryAdapter) {
       throw new Error(
         l10n.t("This table download is not supported by this connection."),
       );
     }
   }
 
-  public async createTableExport(
+  public createTableExport(
     item: LibraryItem,
     signal: AbortSignal,
-  ): Promise<TableExport> {
-    if (
-      this.libraryAdapter?.createTableExport &&
-      this.libraryAdapter.supportsTableExport !== false
-    ) {
-      return this.libraryAdapter.createTableExport(item, signal);
-    }
+  ): TableExport {
     return this.createPagedTableExport(item, signal);
   }
 
@@ -182,11 +173,7 @@ class LibraryModel {
         }
         let exported: TableExport | undefined;
         try {
-          exported =
-            this.libraryAdapter?.createTableExport &&
-            this.libraryAdapter.supportsTableExport !== false
-              ? await this.createTableExport(item, controller.signal)
-              : this.createPagedTableExport(item, controller.signal);
+          exported = this.createTableExport(item, controller.signal);
           for await (const chunk of exported.stream) {
             controller.signal.throwIfAborted();
             await writeChunk(

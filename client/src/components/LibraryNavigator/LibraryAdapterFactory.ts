@@ -17,7 +17,7 @@ class LibraryAdapterFactory {
       case ConnectionType.Rest:
         return new RestLibraryAdapter(onConnect);
       default:
-        return new RestLibraryAdapter(onConnect, false);
+        return new RestLibraryAdapter(onConnect);
     }
   }
 }

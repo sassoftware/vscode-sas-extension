@@ -36,10 +36,7 @@ class RestLibraryAdapter implements LibraryAdapter {
     (formatNames) => this.fetchFormatCategories(formatNames),
   );
 
-  public constructor(
-    private readonly onConnect?: () => void,
-    public readonly supportsTableExport = true,
-  ) {}
+  public constructor(private readonly onConnect?: () => void) {}
 
   public async connect(): Promise<void> {
     const session = getSession();

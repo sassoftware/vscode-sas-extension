@@ -45,11 +45,6 @@ export interface TableQuery {
 }
 
 export interface LibraryAdapter {
-  readonly supportsTableExport?: boolean;
-  createTableExport?(
-    item: LibraryItem,
-    signal: AbortSignal,
-  ): Promise<TableExport>;
   connect(): Promise<void>;
   deleteTable(item: LibraryItem): Promise<void>;
   getColumns(

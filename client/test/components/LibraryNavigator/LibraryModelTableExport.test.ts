@@ -4,7 +4,6 @@ import { expect } from "chai";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import * as sinon from "sinon";
-import { Readable } from "stream";
 
 import LibraryModel from "../../../src/components/LibraryNavigator/LibraryModel";
 import {
@@ -49,7 +48,7 @@ describe("LibraryModel table download streaming", () => {
 
   afterEach(() => sandbox.restore());
 
-  it("uses the metadata exporter and waits for each slow destination write", async () => {
+  it("waits for each slow destination write", async () => {
     let releaseFirstWrite = () => {};
     let enterFirstWrite = () => {};
     const firstWriteStarted = new Promise<void>((resolve) => {
@@ -58,14 +57,15 @@ describe("LibraryModel table download streaming", () => {
     const firstWriteGate = new Promise<void>((resolve) => {
       releaseFirstWrite = resolve;
     });
-    const dispose = sinon.stub().resolves();
-    const createTableExport = sinon.stub().resolves({
-      stream: Readable.from(["header\n", '"1","value"\n']),
-      dispose,
-    });
     const adapter = createAdapter({
-      supportsTableExport: true,
-      createTableExport,
+      setup: sinon.stub().resolves(),
+      getTableRowCount: sinon.stub().resolves({
+        rowCount: 1,
+        maxNumberOfRowsToRead: 100,
+      }),
+      getRowsAsCSV: sinon.stub().resolves({
+        rows: [{ columns: ["HEADER"] }, { cells: ["value"] }],
+      }),
     });
     const model = new LibraryModel(adapter);
     const chunks: string[] = [];
@@ -86,9 +86,7 @@ describe("LibraryModel table download streaming", () => {
     releaseFirstWrite();
 
     expect(await operation).to.equal(true);
-    expect(createTableExport.calledOnce).to.equal(true);
-    expect(chunks.join("")).to.equal('header\n"1","value"\n');
-    expect(dispose.calledOnce).to.equal(true);
+    expect(chunks.join("")).to.equal('"HEADER"\n"value"');
   });
 
   it("uses the native paged export path with the adapter page size", async () => {
@@ -141,17 +139,19 @@ describe("LibraryModel table download streaming", () => {
     expect(thrown).to.equal(failure);
   });
 
-  it("disposes the remote exporter when the destination cancels", async () => {
+  it("cancels the paged export when the destination cancels", async () => {
     let writeStarted = () => {};
     const started = new Promise<void>((resolve) => {
       writeStarted = resolve;
     });
-    const dispose = sinon.stub().resolves();
     const adapter = createAdapter({
-      supportsTableExport: true,
-      createTableExport: sinon.stub().resolves({
-        stream: Readable.from(["csv"]),
-        dispose,
+      setup: sinon.stub().resolves(),
+      getTableRowCount: sinon.stub().resolves({
+        rowCount: 1,
+        maxNumberOfRowsToRead: 100,
+      }),
+      getRowsAsCSV: sinon.stub().resolves({
+        rows: [{ columns: ["INDEX"] }, { cells: ["1"] }],
       }),
     });
     const model = new LibraryModel(adapter);
@@ -179,7 +179,6 @@ describe("LibraryModel table download streaming", () => {
     expect(
       failure instanceof Error ? failure.message : String(failure),
     ).to.equal("destination canceled");
-    expect(dispose.calledOnce).to.equal(true);
   });
 
   it("uses canonical web download command IDs and preserves submenu placements", () => {
