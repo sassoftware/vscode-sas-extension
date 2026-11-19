@@ -36,7 +36,10 @@ export abstract class Session {
   async setup(silent?: boolean): Promise<void> {
     // If we already have a connection promise we're awaiting, lets use that.
     // Otherwise, establish a new connection
-    this._connectionPromise ||= this.establishConnection();
+    this._connectionPromise ||= this.establishConnection().catch((error) => {
+      this._connectionPromise = undefined;
+      throw error;
+    });
     if (silent) {
       const resolvedData = await this._connectionPromise;
       this._connectionPromise = undefined;
