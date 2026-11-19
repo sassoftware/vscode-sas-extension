@@ -18,9 +18,59 @@ import { CodeZoneManager } from "./CodeZoneManager";
 import { Model } from "./Model";
 import { HelpData, LibCompleteItem, OptionValues } from "./SyntaxDataProvider";
 import { SyntaxProvider } from "./SyntaxProvider";
+import type {
+  CustomMacroStore,
+  RegisteredCustomMacro,
+} from "./macros/CustomMacroStore";
+import { isKeywordParameter } from "./macros/CustomMacroStore";
+import {
+  getCompletionItem,
+  getMacroDocumentation,
+  getSignatureInformation,
+} from "./macros/customMacroCompletion";
 import { arrayToMap, getText } from "./utils";
 
 const ZONE_TYPE = CodeZoneManager.ZONE_TYPE;
+
+// token styles whose text must not be read as code when scanning a call
+const NON_CODE_STYLES = [
+  "comment",
+  "macro-comment",
+  "string",
+  "date",
+  "time",
+  "dt",
+  "bitmask",
+  "namelit",
+  "hex",
+  "cards-data",
+];
+const MACRO_QUOTING_FUNC = /^%(NR)?(STR|QUOTE|BQUOTE)$/i;
+const KEYWORD_ARG = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=/;
+const ESCAPED_AFTER_PERCENT = "'\"(),;%&";
+
+interface CallFrame {
+  name?: string;
+  start: number;
+  commas: number[];
+}
+
+/** Returns "%name", "name" or undefined for the identifier before "(". */
+function _callNameBefore(text: string, parenIndex: number) {
+  let j = parenIndex - 1;
+  while (j >= 0 && /\s/.test(text[j])) {
+    j--;
+  }
+  const end = j + 1;
+  while (j >= 0 && /[A-Za-z0-9_]/.test(text[j])) {
+    j--;
+  }
+  if (j + 1 === end) {
+    return undefined;
+  }
+  const name = text.substring(j + 1, end);
+  return text[j] === "%" ? "%" + name : name;
+}
 
 //TODO: please improve tagsets, that's dup.
 const tagsets = arrayToMap([
@@ -269,6 +319,7 @@ export class CompletionProvider {
   private czMgr;
   private loader;
   private popupContext: any = {};
+  private customMacroStore?: CustomMacroStore;
 
   constructor(
     private model: Model,
@@ -282,6 +333,13 @@ export class CompletionProvider {
     return this.czMgr;
   }
 
+  /**
+   * @param store custom macro definitions supplied by the LSP consumer
+   */
+  setCustomMacroSupport(store: CustomMacroStore): void {
+    this.customMacroStore = store;
+  }
+
   getHelp(position: Position): Promise<Hover | undefined> | undefined {
     const line = this.model.getLine(position.line);
     const tokens = this.syntaxProvider.getSyntax(position.line);
@@ -293,6 +351,22 @@ export class CompletionProvider {
           start: { line: position.line, column: start },
           end: { line: position.line, column: end },
         });
+        if (tokens[j].style === "macro-ref") {
+          const macro = this._resolveCustomMacro(keyword);
+          if (macro) {
+            const documentation = getMacroDocumentation(macro);
+            if (!documentation) {
+              return undefined;
+            }
+            return Promise.resolve({
+              contents: documentation,
+              range: {
+                start: { line: position.line, character: start },
+                end: { line: position.line, character: end },
+              },
+            });
+          }
+        }
         // zone resolution looks one column to the left of the given position,
         // so hovering on the very first character of a token (e.g. the "%" of
         // "%SCAN") must be nudged forward to stay within the token's range.
@@ -345,6 +419,10 @@ export class CompletionProvider {
     position: Position,
     activeSignature?: uinteger,
   ): Promise<SignatureHelp | undefined> {
+    const customMacroHelp = this._getCustomMacroSignatureHelp(position);
+    if (customMacroHelp) {
+      return Promise.resolve(customMacroHelp);
+    }
     const line = this.model.getLine(position.line);
     const tokens = this.syntaxProvider.getSyntax(position.line);
     let keyword: string;
@@ -625,6 +703,14 @@ export class CompletionProvider {
   getCompleteItems(
     params: CompletionParams,
   ): Promise<CompletionList | undefined> {
+    return this._getBuiltinCompleteItems(params).then((list) =>
+      this._addCustomMacroItems(list, params),
+    );
+  }
+
+  private _getBuiltinCompleteItems(
+    params: CompletionParams,
+  ): Promise<CompletionList | undefined> {
     return new Promise((resolve) => {
       this._getZone(params.position);
       const prefix = this.popupContext.prefix;
@@ -706,6 +792,10 @@ export class CompletionProvider {
   }
 
   getCompleteItemHelp(item: CompletionItem): Promise<CompletionItem> {
+    if (item.data?.customMacro) {
+      // documentation is set when the item is created
+      return Promise.resolve(item);
+    }
     return new Promise((resolve) => {
       if (["endsubmit", "endinteractive"].includes(item.label?.toLowerCase())) {
         const procName = this.czMgr.getProcName()?.toUpperCase();
@@ -972,7 +1062,7 @@ export class CompletionProvider {
         //_getMacroDef();
         break;
       case ZONE_TYPE.MACRO_DEF:
-        this.loader.getMacroDefinitions();
+        this.loader.getMacroDefinitions(cb);
         break;
       case ZONE_TYPE.MACRO_DEF_OPT:
         this.loader.getProcedureOptions("MACRO", cb);
@@ -1857,7 +1947,218 @@ export class CompletionProvider {
     return this._toOptionIdentifier(text.substring(j + 1, end + 1));
   }
 
-  private _buildRelevantTextWindow(position: Position, maxLines = 50): string {
+  private _resolveCustomMacro(name: string): RegisteredCustomMacro | undefined {
+    const bareName = name.trim().replace(/^%/, "");
+    if (!this.customMacroStore || !bareName) {
+      return undefined;
+    }
+    return this.customMacroStore.get(bareName);
+  }
+
+  private _isInComment(position: Position): boolean {
+    const tokens = this.syntaxProvider.getSyntax(position.line);
+    for (let i = tokens.length - 1; i >= 0; i--) {
+      if (tokens[i].start < position.character) {
+        return (
+          tokens[i].style === "comment" || tokens[i].style === "macro-comment"
+        );
+      }
+    }
+    return false;
+  }
+
+  private _loadBuiltinMacroNames(): Promise<{
+    statements: string[];
+    functions: string[];
+    armMacros: string[];
+    autocallMacros: string[];
+  }> {
+    const load = (loader: (callback: (data: string[]) => void) => void) =>
+      new Promise<string[]>((resolve) => loader((data) => resolve(data ?? [])));
+    return Promise.all([
+      load((callback) => this.loader.getMacroStatements(callback)),
+      load((callback) => this.loader.getMacroFunctions(callback)),
+      load((callback) => this.loader.getARMMacros(callback)),
+      load((callback) => this.loader.getAutocallMacros(callback)),
+    ]).then(([statements, functions, armMacros, autocallMacros]) => ({
+      statements,
+      functions,
+      armMacros,
+      autocallMacros,
+    }));
+  }
+
+  private async _addCustomMacroItems(
+    list: CompletionList | undefined,
+    params: CompletionParams,
+  ): Promise<CompletionList | undefined> {
+    const prefix: string = this.popupContext.prefix ?? "";
+    const zone = this.popupContext.zone;
+    if (
+      !prefix.startsWith("%") ||
+      zone === ZONE_TYPE.COMMENT ||
+      zone === ZONE_TYPE.DATALINES ||
+      zone === ZONE_TYPE.EMBEDDED_LANG ||
+      this._isInComment(params.position)
+    ) {
+      return list;
+    }
+    const prefixName = prefix.slice(1).toLowerCase();
+    const builtins = await this._loadBuiltinMacroNames();
+    const itemsByName = new Map<string, CompletionItem>();
+    const addBuiltin = (name: string, kind: CompletionItemKind) => {
+      const bareName = name.replace(/^%/, "");
+      if (!bareName.toLowerCase().startsWith(prefixName)) {
+        return;
+      }
+      const label = name.startsWith("%") ? name : `%${name}`;
+      const item: CompletionItem = {
+        label: processLabelCase(label, prefix),
+        kind,
+        filterText: label,
+      };
+      itemsByName.set(bareName.toLowerCase(), item);
+    };
+    for (const name of builtins.statements) {
+      addBuiltin(name, getItemKind(ZONE_TYPE.MACRO_STMT));
+    }
+    for (const name of builtins.armMacros) {
+      addBuiltin(name, getItemKind(ZONE_TYPE.MACRO_STMT));
+    }
+    for (const name of builtins.functions) {
+      addBuiltin(name, getItemKind(ZONE_TYPE.MACRO_FUNC));
+    }
+    for (const name of builtins.autocallMacros) {
+      addBuiltin(name, getItemKind(ZONE_TYPE.MACRO_FUNC));
+    }
+    for (const item of list?.items ?? []) {
+      if (typeof item.label === "string" && item.label.startsWith("%")) {
+        const name = item.label.slice(1);
+        if (name.toLowerCase().startsWith(prefixName)) {
+          itemsByName.set(name.toLowerCase(), item);
+        }
+      }
+    }
+    const customMacros = this.customMacroStore?.findByPrefix(prefixName) ?? [];
+    const { line, character } = params.position;
+    const range = {
+      start: { line, character: character - prefix.length },
+      end: { line, character },
+    };
+    for (const macro of customMacros) {
+      itemsByName.set(
+        macro.name.toLowerCase(),
+        getCompletionItem(macro, range),
+      );
+    }
+    return { isIncomplete: true, items: [...itemsByName.values()] };
+  }
+
+  private _getCustomMacroSignatureHelp(
+    position: Position,
+  ): SignatureHelp | undefined {
+    if (!this.customMacroStore) {
+      return undefined;
+    }
+    // a macro call can span several lines; comments and quoted text are
+    // blanked out so that their parentheses and commas are ignored
+    const text = this._buildRelevantTextWindow(position, 100, true);
+    const stack: CallFrame[] = [];
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (ch === "%" && ESCAPED_AFTER_PERCENT.includes(text[i + 1] ?? "")) {
+        i++;
+      } else if (ch === "(") {
+        stack.push({
+          name: _callNameBefore(text, i),
+          start: i + 1,
+          commas: [],
+        });
+      } else if (ch === ")") {
+        stack.pop();
+      } else if (ch === "," && stack.length > 0) {
+        stack[stack.length - 1].commas.push(i);
+      } else if (ch === ";") {
+        // ";" ends the statement unless it is quoted, e.g. %str(;)
+        const top = stack[stack.length - 1];
+        if (!top || !MACRO_QUOTING_FUNC.test(top.name ?? "")) {
+          stack.length = 0;
+        }
+      }
+    }
+
+    for (let k = stack.length - 1; k >= 0; k--) {
+      const frame = stack[k];
+      if (!frame.name) {
+        // a bare "(" inside an argument, e.g. %m(a=(1,2)), look outward
+        continue;
+      }
+      const macro = frame.name.startsWith("%")
+        ? this._resolveCustomMacro(frame.name)
+        : undefined;
+      if (!macro) {
+        // innermost call is a function or built-in macro: use default help
+        return undefined;
+      }
+      const signature = getSignatureInformation(macro);
+      return {
+        signatures: [signature],
+        activeSignature: 0,
+        activeParameter: this._getCustomMacroActiveParameter(
+          macro,
+          text,
+          frame,
+          signature.parameters?.length ?? 0,
+        ),
+      };
+    }
+    return undefined;
+  }
+
+  private _getCustomMacroActiveParameter(
+    macro: RegisteredCustomMacro,
+    text: string,
+    frame: CallFrame,
+    parameterCount: number,
+  ): number {
+    const parameters = macro.parameters;
+    const previousArgs: string[] = [];
+    let from = frame.start;
+    for (const comma of frame.commas) {
+      previousArgs.push(text.substring(from, comma));
+      from = comma + 1;
+    }
+    const currentArg = text.substring(from);
+    // index of the "..." parameter of a PARMBUFF macro
+    // out of range: no parameter is highlighted
+    const none = parameterCount;
+
+    const keyword = KEYWORD_ARG.exec(currentArg)?.[1]?.toUpperCase();
+    if (keyword) {
+      const index = parameters.findIndex(
+        (parameter) =>
+          isKeywordParameter(parameter) &&
+          parameter.name.toUpperCase() === keyword,
+      );
+      return index !== -1 ? index : none;
+    }
+    const positionalIndex = previousArgs.filter(
+      (arg) => !KEYWORD_ARG.test(arg),
+    ).length;
+    const positional = parameters
+      .map((parameter, index) => (!isKeywordParameter(parameter) ? index : -1))
+      .filter((index) => index !== -1);
+    if (positionalIndex < positional.length) {
+      return positional[positionalIndex];
+    }
+    return none;
+  }
+
+  private _buildRelevantTextWindow(
+    position: Position,
+    maxLines = 50,
+    maskQuotedText = false,
+  ): string {
     const startLine = Math.max(0, position.line - maxLines);
     let text = "";
 
@@ -1886,7 +2187,8 @@ export class CompletionProvider {
 
         if (
           syntax[i].style === "comment" ||
-          syntax[i].style === "macro-comment"
+          syntax[i].style === "macro-comment" ||
+          (maskQuotedText && NON_CODE_STYLES.includes(syntax[i].style))
         ) {
           text += " ";
           continue;
