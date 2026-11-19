@@ -70,15 +70,13 @@ export abstract class Session {
 
   cancel?(): Promise<void>;
 
-  close(notifySessionChange = true): Promise<void> | void {
+  close(): Promise<void> | void {
     if (this._rejectRun) {
       this._rejectRun({ message: l10n.t("The SAS session has closed.") });
       this._rejectRun = undefined;
     }
     this._connectionPromise = undefined;
-    if (notifySessionChange) {
-      this.notifySessionChanged();
-    }
+    this.notifySessionChanged();
     return this._close();
   }
   protected abstract _close(): Promise<void> | void;

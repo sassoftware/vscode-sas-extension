@@ -3,7 +3,7 @@
 import type { SortModelItem } from "ag-grid-community";
 import { AxiosResponse } from "axios";
 
-import { getSession as getConnectionSession } from "..";
+import { getSession } from "..";
 import {
   LibraryAdapter,
   LibraryItem,
@@ -32,31 +32,14 @@ class RestLibraryAdapter implements LibraryAdapter {
   protected InformatsApi: ReturnType<typeof InformatsApi>;
   protected FormatsApi: ReturnType<typeof FormatsApi>;
   protected sessionId: string;
-  private connectionPromise: Promise<void> | undefined;
-  private recoveryPromise: Promise<void> | undefined;
-  private suppressTreeRefresh = false;
   protected formatCategories: FormatCategoryCache = new FormatCategoryCache(
     (formatNames) => this.fetchFormatCategories(formatNames),
   );
 
   public constructor(private readonly onConnect?: () => void) {}
 
-  public async connect(refreshTree = true): Promise<void> {
-    if (this.connectionPromise) {
-      await this.connectionPromise;
-      return;
-    }
-
-    this.connectionPromise = this.establishConnection(refreshTree);
-    try {
-      await this.connectionPromise;
-    } finally {
-      this.connectionPromise = undefined;
-    }
-  }
-
-  private async establishConnection(refreshTree: boolean): Promise<void> {
-    const session = this.getSession();
+  public async connect(): Promise<void> {
+    const session = getSession();
     session.onSessionLogFn = appendSessionLogFn;
 
     await session.setup();
@@ -68,15 +51,12 @@ class RestLibraryAdapter implements LibraryAdapter {
     // Format definitions are session scoped, so previously resolved categories no longer apply.
     this.formatCategories.clear();
 
-    if (refreshTree && !this.suppressTreeRefresh && this.onConnect) {
+    if (this.onConnect) {
       this.onConnect();
     }
   }
 
   public async setup(): Promise<void> {
-    if (this.recoveryPromise) {
-      await this.recoveryPromise;
-    }
     if (this.sessionId && this.dataAccessApi) {
       return;
     }
@@ -305,70 +285,19 @@ class RestLibraryAdapter implements LibraryAdapter {
   private async retryOnFail<T>(
     callbackFn: () => Promise<AxiosResponse<T>>,
   ): Promise<AxiosResponse<T>> {
-    let attemptedSessionId: string;
     try {
-      await this.setup();
-      attemptedSessionId = this.sessionId;
       return await callbackFn();
     } catch (error) {
       // If it's not a 404, we can't retry it
-      if (
-        error.response?.status !== 404 ||
-        error.response?.data?.errorCode !== 5105
-      ) {
+      if (error.response?.status !== 404) {
         throw error;
       }
 
-      if (this.sessionId === attemptedSessionId) {
-        await this.recoverSession();
-      } else if (this.recoveryPromise) {
-        await this.recoveryPromise;
-      }
+      await this.connect();
 
       // If it fails a second time, we give up
-      await this.setup();
-      try {
-        return await callbackFn();
-      } catch (retryError) {
-        if (
-          retryError.response?.status === 404 &&
-          retryError.response?.data?.errorCode === 5105
-        ) {
-          throw new Error("Unable to recover the SAS Compute session.");
-        }
-        throw retryError;
-      }
+      return await callbackFn();
     }
-  }
-
-  private async recoverSession(): Promise<void> {
-    if (this.recoveryPromise) {
-      await this.recoveryPromise;
-      return;
-    }
-
-    this.sessionId = undefined;
-    this.dataAccessApi = undefined;
-    this.InformatsApi = undefined;
-    this.FormatsApi = undefined;
-    this.formatCategories.clear();
-    this.suppressTreeRefresh = true;
-
-    this.recoveryPromise = (async () => {
-      const session = this.getSession();
-      await session.close(false);
-      await this.connect(false);
-    })();
-    try {
-      await this.recoveryPromise;
-    } finally {
-      this.recoveryPromise = undefined;
-      this.suppressTreeRefresh = false;
-    }
-  }
-
-  protected getSession() {
-    return getConnectionSession();
   }
 
   public async deleteTable({

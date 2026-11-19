@@ -212,11 +212,8 @@ class RestSession extends Session {
   protected _close = async () => {
     this._cachedContext = undefined;
     if (this.sessionId()) {
-      try {
-        await this._computeSession.delete().catch(() => undefined);
-      } finally {
-        this._computeSession = undefined;
-      }
+      this._computeSession.delete();
+      this._computeSession = undefined;
 
       //Since the session is being closed, remove the cached session id
       setContextValue("SAS.sessionId", undefined);
