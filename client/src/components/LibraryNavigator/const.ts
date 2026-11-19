@@ -3,6 +3,7 @@
 import { l10n } from "vscode";
 
 export const Messages = {
+  ColumnFetchError: l10n.t("Unable to fetch columns for table {tableName}."),
   TableDeletionError: l10n.t("Unable to delete table {tableName}."),
   TableDeletionWarning: l10n.t(
     "Are you sure you want to delete the selected table?",
