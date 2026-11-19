@@ -2053,7 +2053,7 @@ export class CompletionProvider {
     }
 
     const text = this._buildRelevantTextWindow(position);
-    let statement = "";
+    const scopes = [""];
     let quote: "'" | '"' | undefined;
 
     for (let i = 0; i < text.length; i++) {
@@ -2066,21 +2066,29 @@ export class CompletionProvider {
             quote = undefined;
           }
         }
-        statement += " ";
+        scopes[scopes.length - 1] += " ";
       } else if (char === "'" || char === '"') {
         quote = char;
-        statement += " ";
+        scopes[scopes.length - 1] += " ";
+      } else if (char === "(") {
+        scopes[scopes.length - 1] += " ";
+        scopes.push("");
+      } else if (char === ")") {
+        if (scopes.length > 1) {
+          scopes.pop();
+        }
+        scopes[scopes.length - 1] += " ";
       } else if (char === ";") {
-        statement = "";
+        scopes.splice(0, scopes.length, "");
       } else {
-        statement += char;
+        scopes[scopes.length - 1] += char;
       }
     }
 
     const selectedOptions = new Set<string>();
     const assignments = /([A-Za-z_][\w.]*)\s*=/g;
     let match;
-    while ((match = assignments.exec(statement)) !== null) {
+    while ((match = assignments.exec(scopes[scopes.length - 1])) !== null) {
       selectedOptions.add(match[1].toUpperCase());
     }
 
