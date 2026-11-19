@@ -436,7 +436,7 @@ describe("LibraryNavigator remote workspace download destination", () => {
     }
   });
 
-  it("directs local destinations to This Device instead of streaming remotely", async () => {
+  it("directs browser-local destinations to This Device instead of streaming remotely", async () => {
     const sandbox = sinon.createSandbox();
     const showInformationMessage = sandbox.stub(
       window,
@@ -456,7 +456,7 @@ describe("LibraryNavigator remote workspace download destination", () => {
       const { handler, dispose } = createDownloadCommandHandlers(sandbox);
       const showSaveDialog = sandbox
         .stub(window, "showSaveDialog")
-        .resolves(Uri.file("/local/work.table.csv"));
+        .resolves(Uri.parse("vscode-local://browser/local/work.table.csv"));
 
       await handler("SAS.downloadTable", createItem());
 
@@ -465,6 +465,49 @@ describe("LibraryNavigator remote workspace download destination", () => {
       expect(showInformationMessage.firstCall.args[0]).to.equal(
         'To download this table locally, choose "This Device" from the Download menu.',
       );
+      dispose();
+    } finally {
+      if (workspaceFoldersDescriptor) {
+        Object.defineProperty(
+          workspace,
+          "workspaceFolders",
+          workspaceFoldersDescriptor,
+        );
+      } else {
+        Reflect.deleteProperty(workspace, "workspaceFolders");
+      }
+      sandbox.restore();
+    }
+  });
+
+  it("keeps file destinations on the remote workspace streaming path", async () => {
+    const sandbox = sinon.createSandbox();
+    const showInformationMessage = sandbox.stub(
+      window,
+      "showInformationMessage",
+    );
+    sandbox.stub(env, "uiKind").value(UIKind.Web);
+    const workspaceFoldersDescriptor = Object.getOwnPropertyDescriptor(
+      workspace,
+      "workspaceFolders",
+    );
+    Object.defineProperty(workspace, "workspaceFolders", {
+      configurable: true,
+      value: [{ uri: Uri.parse("vscode-remote://ssh-remote+host/workspace") }],
+    });
+
+    try {
+      const { handler, dispose, fileSystemDownload } =
+        createDownloadCommandHandlers(sandbox);
+      const showSaveDialog = sandbox
+        .stub(window, "showSaveDialog")
+        .resolves(Uri.file("/workspace/work.table.csv"));
+
+      await handler("SAS.downloadTable", createItem());
+
+      expect(showSaveDialog.calledOnce).to.equal(true);
+      expect(fileSystemDownload.calledOnce).to.equal(true);
+      expect(showInformationMessage.called).to.equal(false);
       dispose();
     } finally {
       if (workspaceFoldersDescriptor) {

@@ -320,7 +320,7 @@ class LibraryNavigator implements SubscriptionProvider {
       ) === true;
     if (
       env.uiKind !== UIKind.Web ||
-      destination.scheme !== "file" ||
+      destination.scheme !== "vscode-local" ||
       !isRemoteWorkspace
     ) {
       return false;
