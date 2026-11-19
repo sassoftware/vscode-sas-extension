@@ -13,21 +13,21 @@ import * as sinon from "sinon";
 import { Readable } from "stream";
 
 import LibraryNavigator from "../../../src/components/LibraryNavigator";
-import { FileSystemTableDownloadTarget } from "../../../src/components/LibraryNavigator/FileSystemTableDownloadTarget";
 import { getTableViewerContextAttributes } from "../../../src/components/LibraryNavigator";
+import { FileSystemTableDownloadTarget } from "../../../src/components/LibraryNavigator/FileSystemTableDownloadTarget";
 import PaginatedResultSet from "../../../src/components/LibraryNavigator/PaginatedResultSet";
 import type {
   LibraryItem,
   TableExport,
 } from "../../../src/components/LibraryNavigator/types";
-import type { RunResult } from "../../../src/connection";
-import { Session } from "../../../src/connection/session";
-import DataViewer from "../../../src/panels/DataViewer";
-import TablePropertiesViewer from "../../../src/panels/TablePropertiesViewer";
 import {
   ConnectionType,
   isDirectRestProfile,
 } from "../../../src/components/profile";
+import type { RunResult } from "../../../src/connection";
+import { Session } from "../../../src/connection/session";
+import DataViewer from "../../../src/panels/DataViewer";
+import TablePropertiesViewer from "../../../src/panels/TablePropertiesViewer";
 
 interface WebviewMessagePanel {
   webview: {

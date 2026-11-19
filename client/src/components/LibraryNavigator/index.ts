@@ -16,8 +16,8 @@ import {
 import { profileConfig } from "../../commands/profile";
 import { getSession } from "../../connection";
 import {
-  onDidChangeSession,
   SessionContextAttributes,
+  onDidChangeSession,
 } from "../../connection/session";
 import DataViewer from "../../panels/DataViewer";
 import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
@@ -25,9 +25,9 @@ import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import {
   type ActiveProfileSnapshot,
+  Profile,
   hasActiveProfileChanged,
   isDirectRestProfile,
-  Profile,
 } from "../profile";
 import { treeViewSelections } from "../utils/treeViewSelections";
 import { BrowserFileDownloadTarget } from "./BrowserFileDownloadTarget/BrowserFileDownloadTarget";
