@@ -43,8 +43,15 @@ export interface TableQuery {
   filterValue: string;
 }
 
+export const TEMP_TABLE_PREFIX = "_TEMP";
+export interface TemporaryLibrary {
+  name: string;
+  delete(): Promise<void>;
+}
+
 export interface LibraryAdapter {
   connect(): Promise<void>;
+  acquireTemporaryLibrary?(path: string): Promise<TemporaryLibrary>;
   deleteTable(item: LibraryItem): Promise<void>;
   getColumns(
     item: LibraryItem,
