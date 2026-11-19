@@ -19,6 +19,65 @@ Starting with Visual Studio Code version 1.93, [the language for SQL files has b
 
 :::
 
+## Python notebook output
+
+By default, Python notebook cells display the raw output produced during execution, including SAS log content. Enable `SAS.notebook.cleanOutput` to provide a cleaner notebook experience for Python cells.
+
+When enabled:
+
+- SAS log boilerplate is filtered from notebook output.
+- Python exceptions are displayed as notebook errors.
+- The final Python expression is automatically displayed without requiring a `print()` statement.
+- ODS and graphical output generated through `SAS.show()` and related APIs remain available.
+
+The setting is disabled by default. You can enable it from VS Code Settings by selecting:
+
+`SAS > Notebook: Clean Output`
+
+or by updating your `settings.json`:
+
+```json
+{
+  "SAS.notebook.cleanOutput": true
+}
+```
+
+### Automatic display of final expressions
+
+When clean output is enabled, the final Python expression in a notebook cell is automatically displayed.
+
+For example:
+
+```python
+values = [1, 2, 3]
+values
+```
+
+produces:
+
+```text
+[1, 2, 3]
+```
+
+without requiring:
+
+```python
+print(values)
+```
+
+The final expression is displayed using its Python text representation. A final expression that evaluates to `None` is not displayed.
+
+Assignments and other statements are not automatically displayed:
+
+```python
+x = 10
+```
+
+### Notes
+
+- The setting affects Python notebook cells only.
+- If expression analysis cannot be completed, execution falls back to normal notebook behavior.
+
 ## Export
 
 To export your SAS Notebook to other formats, click the **More Actions** (`...`) button on the notebook toolbar at top, and select `Export`. The following formats are supported.

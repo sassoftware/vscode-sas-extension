@@ -1027,17 +1027,17 @@
         },
         {
           "command": "SAS.downloadTable",
-          "when": "viewItem =~ /table-/ && view == librarydataprovider && SAS.allowDownload && !isWeb",
+          "when": "viewItem =~ /table-/ && view == librarydataprovider && SAS.allowDownload && !isWeb && !listMultiSelection",
           "group": "download@0"
         },
         {
           "submenu": "sas.library.download",
-          "when": "viewItem =~ /table-/ && view == librarydataprovider && SAS.allowDownload && isWeb",
+          "when": "viewItem =~ /table-/ && view == librarydataprovider && SAS.allowDownload && isWeb && !listMultiSelection",
           "group": "download@0"
         },
         {
           "command": "SAS.showTableProperties",
-          "when": "viewItem =~ /table-/ && view == librarydataprovider",
+          "when": "viewItem =~ /table-/ && view == librarydataprovider && !listMultiSelection",
           "group": "properties@0"
         },
         {
