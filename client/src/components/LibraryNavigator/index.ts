@@ -16,22 +16,35 @@ import { createWriteStream } from "fs";
 import * as path from "path";
 
 import { profileConfig } from "../../commands/profile";
+import { getSession } from "../../connection";
+import { onDidChangeSession } from "../../connection/session";
 import DataViewer from "../../panels/DataViewer";
 import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
+import {
+  type ActiveProfileSnapshot,
+  hasActiveProfileChanged,
+} from "../profile";
 import { treeViewSelections } from "../utils/treeViewSelections";
 import LibraryAdapterFactory from "./LibraryAdapterFactory";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
 import PaginatedResultSet from "./PaginatedResultSet";
 import { Messages } from "./const";
-import { LibraryAdapter, LibraryItem, TableColumn, TableData } from "./types";
+import {
+  LibraryAdapter,
+  LibraryItem,
+  TableColumn,
+  TableData,
+  TableType,
+} from "./types";
 
 class LibraryNavigator implements SubscriptionProvider {
   private libraryDataProvider: LibraryDataProvider;
   private extensionUri: Uri;
   private webviewManager: WebViewManager;
+  private previousActiveProfile: ActiveProfileSnapshot;
 
   constructor(context: ExtensionContext) {
     this.extensionUri = context.extensionUri;
@@ -40,11 +53,19 @@ class LibraryNavigator implements SubscriptionProvider {
       context.extensionUri,
     );
     this.webviewManager = new WebViewManager();
+    this.previousActiveProfile = profileConfig.getActiveProfileSnapshot();
   }
 
   public getSubscriptions(): Disposable[] {
     return [
       ...this.libraryDataProvider.getSubscriptions(),
+      onDidChangeSession(() => {
+        Object.values(this.webviewManager.panels).forEach((viewer) => {
+          if (viewer instanceof DataViewer) {
+            viewer.invalidateColumns();
+          }
+        });
+      }),
       commands.registerCommand(
         "SAS.viewTable",
         async (
@@ -52,6 +73,9 @@ class LibraryNavigator implements SubscriptionProvider {
           paginator: PaginatedResultSet<{ data: TableData; error?: Error }>,
           fetchColumns: () => TableColumn[],
         ) => {
+          const attributes = await getSession().contextAttributes?.();
+          const allowDownload =
+            attributes?.allowDownload?.toLowerCase() !== "false";
           this.webviewManager.render(
             new DataViewer(
               this.extensionUri,
@@ -61,6 +85,7 @@ class LibraryNavigator implements SubscriptionProvider {
               (columnName: string) => {
                 this.displayTableProperties(item, true, columnName);
               },
+              allowDownload,
             ),
             item.uid,
           );
@@ -71,14 +96,18 @@ class LibraryNavigator implements SubscriptionProvider {
         const selectedItems = treeViewSelections(
           this.libraryDataProvider.treeView,
           item,
-        );
+        ).filter((item) => item.type === TableType && !item.readOnly);
 
         if (selectedItems.length === 0) {
           return;
         }
 
         const result = await window.showWarningMessage(
-          l10n.t(Messages.TablesDeletionWarning),
+          l10n.t(
+            selectedItems.length > 1
+              ? Messages.TablesDeletionWarning
+              : Messages.TableDeletionWarning,
+          ),
           { modal: true },
           "Delete",
         );
@@ -86,6 +115,8 @@ class LibraryNavigator implements SubscriptionProvider {
         if (result !== "Delete") {
           return;
         }
+
+        this.closeTableViewers(selectedItems);
 
         try {
           await this.libraryDataProvider.deleteTables(selectedItems);
@@ -138,7 +169,20 @@ class LibraryNavigator implements SubscriptionProvider {
         );
       }),
       workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-        if (event.affectsConfiguration("SAS.connectionProfiles")) {
+        if (!event.affectsConfiguration("SAS.connectionProfiles")) {
+          return;
+        }
+
+        const currentActiveProfile = profileConfig.getActiveProfileSnapshot();
+
+        const activeProfileChanged = hasActiveProfileChanged(
+          this.previousActiveProfile,
+          currentActiveProfile,
+        );
+
+        this.previousActiveProfile = currentActiveProfile;
+
+        if (activeProfileChanged) {
           this.refresh();
         }
       }),
@@ -158,6 +202,14 @@ class LibraryNavigator implements SubscriptionProvider {
         panel.refreshData();
       }
     });
+  }
+
+  private closeTableViewers(items: LibraryItem[]): void {
+    for (const item of items) {
+      [item.uid, `properties-${item.uid}`].forEach((key) =>
+        this.webviewManager.panels[key]?.dispose(),
+      );
+    }
   }
 
   private async displayTableProperties(

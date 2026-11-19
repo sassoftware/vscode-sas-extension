@@ -46,10 +46,23 @@ import {
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 import { IPythonMode } from "pyright-internal-browser/dist/packages/pyright-internal/src/analyzer/sourceFile";
+import { DiagnosticSink } from "pyright-internal-browser/dist/packages/pyright-internal/src/common/diagnosticSink";
 import { FileSystem } from "pyright-internal-browser/dist/packages/pyright-internal/src/common/fileSystem";
+import {
+  ParseNode,
+  isExpressionNode,
+} from "pyright-internal-browser/dist/packages/pyright-internal/src/parser/parseNodes";
+import {
+  ParseOptions,
+  Parser,
+} from "pyright-internal-browser/dist/packages/pyright-internal/src/parser/parser";
 import { PyrightServer } from "pyright-internal-browser/dist/packages/pyright-internal/src/server";
 
 import { LanguageServiceProvider } from "../../sas/LanguageServiceProvider";
+import {
+  PyrightParseNodeType,
+  analyzePythonFinalExpression,
+} from "../finalExpression";
 import { extractPythonCodes } from "../utils";
 
 export class PyrightLanguageProviderBrowser extends PyrightServer {
@@ -72,6 +85,35 @@ export class PyrightLanguageProviderBrowser extends PyrightServer {
 
   public getClientCapabilities() {
     return this.client;
+  }
+
+  public analyzePythonFinalExpression(code: string, token?: CancellationToken) {
+    return analyzePythonFinalExpression(
+      code,
+      (source) => {
+        const diagnostics = new DiagnosticSink();
+        const result = new Parser().parseSourceFile(
+          source,
+          new ParseOptions(),
+          diagnostics,
+        );
+        return {
+          parseTree: result.parserOutput.parseTree,
+          hasErrors: diagnostics.getErrors().length > 0,
+        };
+      },
+      PyrightParseNodeType.StatementList,
+      (node: ParseNode) =>
+        isExpressionNode(node) &&
+        node.nodeType !== PyrightParseNodeType.TypeAnnotation &&
+        node.nodeType !== PyrightParseNodeType.Assignment &&
+        node.nodeType !== PyrightParseNodeType.AugmentedAssignment &&
+        node.nodeType !== PyrightParseNodeType.Await &&
+        node.nodeType !== PyrightParseNodeType.Yield &&
+        node.nodeType !== PyrightParseNodeType.YieldFrom,
+      PyrightParseNodeType.StringList,
+      token,
+    );
   }
 
   protected setupConnection(

@@ -27,7 +27,7 @@ For more information about Client IDs and the authentication process, please see
 
 ## Context Properties
 
-In Viya environments, SAS Administrators have the option to specify the `allowDownload` property on the context definition for the SAS Compute Server. This property determines the appearance of the `Download` menu item in these areas:
+In SAS Viya environments, SAS administrators have the option to specify the `allowDownload` property on the context definition for the SAS Compute Server. This Boolean property shows or hides the `Download` menu item in these areas:
 
 - Tables in the Libraries pane.
 
