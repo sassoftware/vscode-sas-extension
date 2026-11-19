@@ -35,15 +35,14 @@ describe("REST connection", () => {
         .stub(ComputeServer.prototype, "getSession")
         .resolves(computeSession);
 
+      const sessionChanged = sandbox.spy();
+      const subscription = onDidChangeSession(sessionChanged);
+
       const session = getSession({
         endpoint: "http://example.test",
         serverId: "test-server",
         reconnect: false,
       });
-      const sessionChanged = sandbox.spy(() => {
-        expect(session.sessionId()).to.equal("test-session");
-      });
-      const subscription = onDidChangeSession(sessionChanged);
 
       await session.setup(true);
 

@@ -154,16 +154,6 @@ export function activate(context: ExtensionContext) {
 
   setContext(context);
 
-  // Profile initialization can close the previous session before the rest of
-  // the extension subscriptions have been registered.
-  context.subscriptions.push(
-    commands.registerCommand("SAS.close", (silent) => {
-      closeSession(
-        silent === true ? undefined : l10n.t("The SAS session has closed."),
-      );
-    }),
-  );
-
   const libraryNavigator = new LibraryNavigator(context);
 
   // Below we have two content navigators. We'll have one to navigate
@@ -218,6 +208,11 @@ export function activate(context: ExtensionContext) {
       await runRegion(client);
       await libraryNavigator.refresh();
       libraryNavigator.refreshOpenTableViewers();
+    }),
+    commands.registerCommand("SAS.close", (silent) => {
+      closeSession(
+        silent === true ? undefined : l10n.t("The SAS session has closed."),
+      );
     }),
     commands.registerCommand("SAS.switchProfile", switchProfile),
     commands.registerCommand("SAS.addProfile", addProfile),
