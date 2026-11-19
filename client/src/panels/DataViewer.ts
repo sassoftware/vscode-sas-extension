@@ -13,6 +13,9 @@ import {
 import { WebView } from "./WebviewManager";
 
 class DataViewer extends WebView {
+  private previousModifiedTimeStamp?: string;
+  private isRefreshing = false;
+  private forceRefresh = false;
   public constructor(
     extensionUri: Uri,
     uid: string,
@@ -23,6 +26,9 @@ class DataViewer extends WebView {
     protected readonly fetchColumns: () => TableColumn[],
     protected readonly loadColumnProperties: (columnName: string) => void,
     protected readonly allowDownload: boolean = true,
+    protected readonly getTableInfo: () => Promise<{
+      modifiedTimeStamp?: string;
+    }>,
   ) {
     super(extensionUri, uid);
   }
@@ -83,6 +89,7 @@ class DataViewer extends WebView {
       Undo: l10n.t("Undo"),
       "Move down": l10n.t("Move down"),
       "Move up": l10n.t("Move up"),
+      "Refresh Data": l10n.t("Refresh Data"),
     };
   }
 
@@ -104,10 +111,71 @@ class DataViewer extends WebView {
     });
   }
 
-  public refreshData() {
-    this.panel.webview.postMessage({
-      command: "panel:refreshData",
-    });
+  // Common helper to compare and synchronize the table timestamp.
+  private async updateModifiedTimeStamp(): Promise<{
+    hasChanged: boolean;
+    modifiedTimeStamp?: string;
+  }> {
+    const tableInfo = await this.getTableInfo();
+    const modifiedTimeStamp = tableInfo.modifiedTimeStamp;
+
+    const hasChanged = this.previousModifiedTimeStamp !== modifiedTimeStamp;
+
+    this.previousModifiedTimeStamp = modifiedTimeStamp;
+
+    return { hasChanged, modifiedTimeStamp };
+  }
+
+  public async initializeModifiedTimeStamp(): Promise<void> {
+    await this.updateModifiedTimeStamp();
+  }
+
+  public invalidateSession(): void {
+    this.forceRefresh = true;
+  }
+
+  public async refreshData(checkTimeStamp = false): Promise<void> {
+    if (!checkTimeStamp) {
+      this.panel.webview.postMessage({
+        command: "panel:refreshData",
+      });
+
+      try {
+        await this.updateModifiedTimeStamp();
+      } catch {
+        // Preserve existing refresh behavior if metadata retrieval fails.
+      }
+
+      return;
+    }
+
+    if (this.isRefreshing) {
+      return;
+    }
+
+    this.isRefreshing = true;
+
+    try {
+      const { hasChanged: timestampChanged, modifiedTimeStamp } =
+        await this.updateModifiedTimeStamp();
+
+      const hasChanged = this.forceRefresh || timestampChanged;
+      this.forceRefresh = false;
+
+      this.panel.webview.postMessage({
+        command: "panel:refreshData",
+        data: {
+          hasChanged,
+          modifiedTimeStamp,
+        },
+      });
+    } catch (error) {
+      await window.showErrorMessage(
+        error instanceof Error ? error.message : String(error),
+      );
+    } finally {
+      this.isRefreshing = false;
+    }
   }
 
   public async processMessage(
@@ -125,6 +193,10 @@ class DataViewer extends WebView {
     },
   ): Promise<void> {
     switch (event.command) {
+      case "request:refreshData": {
+        await this.refreshData(true);
+        break;
+      }
       case "request:loadData": {
         const { data, error } = await this.paginator.getData(
           event.data!.start!,

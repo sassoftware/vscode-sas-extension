@@ -11,7 +11,7 @@ import ColumnMenu from "./ColumnMenu";
 import ManageColumns from "./ManageColumns";
 import TableFilter from "./TableFilter";
 import localize from "./localize";
-import useDataViewer from "./useDataViewer";
+import useDataViewer, { requestRefreshData } from "./useDataViewer";
 import useSelectionRectangle from "./useSelectionRectangle";
 import useTheme from "./useTheme";
 
@@ -59,6 +59,7 @@ export const DataViewer = () => {
     refreshResults,
     setColumns,
     setManageColumnsOpen,
+    resetViewerState,
   } = useDataViewer();
   const [gridDragging, setGridDragging] = useState(false);
   const [focusedCell, setFocusedCell] = useState(null);
@@ -113,9 +114,22 @@ export const DataViewer = () => {
   const panelMessageHandler = useCallback(
     (event: MessageEvent) => {
       if (event.data.command === "panel:refreshData") {
-        refreshResults(undefined);
-        setColumns([]);
-        setAllColumnsHidden(false);
+        // The Refresh Data button in the Table Viewer always sends hasChanged as
+        // true or false based on the table's modification timestamp. If it's undefined,
+        // the message comes from the existing refresh flow, so preserve the original behavior.
+        const hasChanged = event.data.data?.hasChanged;
+
+        if (hasChanged === true) {
+          // New refresh: timestamp changed.
+          resetViewerState();
+          setColumns([]);
+          setAllColumnsHidden(false);
+        } else if (hasChanged === undefined) {
+          // Existing refresh: preserve original behavior.
+          refreshResults(undefined);
+          setColumns([]);
+          setAllColumnsHidden(false);
+        }
       }
 
       if (event.data.command === "panel:changeFocus") {
@@ -129,7 +143,7 @@ export const DataViewer = () => {
         }
       }
     },
-    [gridRef, refreshResults, resetSelection, setColumns],
+    [gridRef, refreshResults, resetViewerState, resetSelection, setColumns],
   );
   useEffect(() => {
     document.addEventListener("keydown", handleKeydown);
@@ -149,13 +163,22 @@ export const DataViewer = () => {
   return (
     <div className="data-viewer">
       <h1>{title}</h1>
-      <TableFilter
-        onCommit={(value) => {
-          resetSelection();
-          refreshResults({ filterValue: value });
-        }}
-        initialValue={""}
-      />
+      <div className="filter-refresh-container">
+        <TableFilter
+          onCommit={(value) => {
+            resetSelection();
+            refreshResults({ filterValue: value });
+          }}
+          initialValue={""}
+        />
+        <button
+          type="button"
+          className="refresh-data-button"
+          title={localize("Refresh Data")}
+          aria-label={localize("Refresh Data")}
+          onClick={requestRefreshData}
+        />
+      </div>
       {columnMenu && <ColumnMenu {...columnMenu} />}
       <div
         className={`ag-grid-wrapper ${theme}`}

@@ -42,6 +42,8 @@ const createDataViewer = () =>
     new PaginatedResultSet(async () => ({ data: { rows: [], count: 0 } })),
     () => [],
     () => {},
+    false,
+    async () => ({ modifiedTimeStamp: "2026-11-03T00:00:00" }),
   );
 
 const createTablePropertiesViewer = () =>
