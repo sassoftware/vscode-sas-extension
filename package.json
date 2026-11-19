@@ -17,6 +17,7 @@
   },
   "activationEvents": [
     "onWebviewPanel:SASResultPanel",
+    "onWebviewPanel:sasBrowserFileDownload",
     "onLanguage:sas",
     "onNotebook:sas-notebook"
   ],
@@ -883,6 +884,16 @@
         "category": "SAS"
       },
       {
+        "command": "SAS.downloadTableRemoteWorkspace",
+        "title": "%commands.SAS.downloadTableRemoteWorkspace%",
+        "category": "SAS"
+      },
+      {
+        "command": "SAS.downloadTableToComputer",
+        "title": "%commands.SAS.downloadTableToComputer%",
+        "category": "SAS"
+      },
+      {
         "command": "SAS.showTableProperties",
         "title": "%commands.SAS.showTableProperties%",
         "category": "SAS"
@@ -918,6 +929,12 @@
         "command": "SAS.toggleLineComment",
         "title": "%commands.SAS.toggleLineComment%",
         "category": "SAS"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "sas.library.download",
+        "label": "Download"
       }
     ],
     "keybindings": [
@@ -1010,7 +1027,12 @@
         },
         {
           "command": "SAS.downloadTable",
-          "when": "viewItem =~ /table-/ && view == librarydataprovider && SAS.allowDownload && !listMultiSelection",
+          "when": "viewItem =~ /table-/ && view == librarydataprovider && SAS.allowDownload && !isWeb && !listMultiSelection",
+          "group": "download@0"
+        },
+        {
+          "submenu": "sas.library.download",
+          "when": "viewItem =~ /table-/ && view == librarydataprovider && SAS.allowDownload && isWeb && !listMultiSelection",
           "group": "download@0"
         },
         {
@@ -1157,6 +1179,16 @@
           "command": "SAS.server.uploadFolderResource",
           "when": "(viewItem =~ /update/ || viewItem =~ /createChild/) && view == serverdataprovider && !listMultiSelection && workspacePlatform != mac",
           "group": "uploaddownloadgroup@1"
+        }
+      ],
+      "sas.library.download": [
+        {
+          "command": "SAS.downloadTableRemoteWorkspace",
+          "group": "download@0"
+        },
+        {
+          "command": "SAS.downloadTableToComputer",
+          "group": "download@1"
         }
       ],
       "editor/title/run": [

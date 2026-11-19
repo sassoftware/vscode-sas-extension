@@ -4,6 +4,7 @@ import {
   ConfigurationChangeEvent,
   Disposable,
   ExtensionContext,
+  UIKind,
   Uri,
   commands,
   env,
@@ -12,21 +13,27 @@ import {
   workspace,
 } from "vscode";
 
-import { createWriteStream } from "fs";
-import * as path from "path";
-
 import { profileConfig } from "../../commands/profile";
 import { getSession } from "../../connection";
-import { onDidChangeSession } from "../../connection/session";
+import {
+  SessionContextAttributes,
+  onDidChangeSession,
+} from "../../connection/session";
 import DataViewer from "../../panels/DataViewer";
 import TablePropertiesViewer from "../../panels/TablePropertiesViewer";
 import { WebViewManager } from "../../panels/WebviewManager";
 import { SubscriptionProvider } from "../SubscriptionProvider";
 import {
   type ActiveProfileSnapshot,
+  Profile,
   hasActiveProfileChanged,
+  isDirectRestProfile,
 } from "../profile";
 import { treeViewSelections } from "../utils/treeViewSelections";
+import { BrowserFileDownloadTarget } from "./BrowserFileDownloadTarget/BrowserFileDownloadTarget";
+import { BrowserFileTableDownloadTarget } from "./BrowserFileTableDownloadTarget";
+import { FileSystemTableDownloadTarget } from "./FileSystemTableDownloadTarget";
+import { HostAttachmentDownloadTarget } from "./HostAttachmentDownloadTarget";
 import LibraryAdapterFactory from "./LibraryAdapterFactory";
 import LibraryDataProvider from "./LibraryDataProvider";
 import LibraryModel from "./LibraryModel";
@@ -40,10 +47,19 @@ import {
   TableType,
 } from "./types";
 
+export const getTableViewerContextAttributes = async (
+  profile: Profile | undefined,
+  contextAttributes: () => Promise<SessionContextAttributes>,
+): Promise<SessionContextAttributes> =>
+  isDirectRestProfile(profile) ? undefined : await contextAttributes();
+
 class LibraryNavigator implements SubscriptionProvider {
   private libraryDataProvider: LibraryDataProvider;
   private extensionUri: Uri;
   private webviewManager: WebViewManager;
+  private browserFileDownloadTarget: BrowserFileDownloadTarget;
+  private hostAttachmentDownloadTarget: HostAttachmentDownloadTarget;
+  private browserFileExportInProgress = false;
   private previousActiveProfile: ActiveProfileSnapshot;
 
   constructor(context: ExtensionContext) {
@@ -53,12 +69,57 @@ class LibraryNavigator implements SubscriptionProvider {
       context.extensionUri,
     );
     this.webviewManager = new WebViewManager();
+    this.browserFileDownloadTarget = new BrowserFileDownloadTarget(
+      this.extensionUri,
+      this.webviewManager,
+    );
+    this.hostAttachmentDownloadTarget = new HostAttachmentDownloadTarget();
     this.previousActiveProfile = profileConfig.getActiveProfileSnapshot();
   }
 
   public getSubscriptions(): Disposable[] {
     return [
       ...this.libraryDataProvider.getSubscriptions(),
+      this.browserFileDownloadTarget,
+      this.hostAttachmentDownloadTarget,
+      commands.registerCommand(
+        "SAS.downloadTableRemoteWorkspace",
+        async (item: LibraryItem) => {
+          if (env.uiKind === UIKind.Web) {
+            try {
+              this.libraryDataProvider.assertTableExportSupported();
+            } catch (error) {
+              await window.showErrorMessage(
+                error instanceof Error ? error.message : String(error),
+              );
+              return;
+            }
+            if (!workspace.workspaceFolders?.length) {
+              await window.showErrorMessage(
+                l10n.t(
+                  "Remote Workspace table download requires an open workspace.",
+                ),
+              );
+              return;
+            }
+          }
+          await commands.executeCommand("SAS.downloadTable", item);
+        },
+      ),
+      commands.registerCommand(
+        "SAS.downloadTableToComputer",
+        async (item: LibraryItem) => {
+          try {
+            await this.runSingleBrowserFileExport(() =>
+              this.downloadTableToComputer(item),
+            );
+          } catch (error) {
+            await window.showErrorMessage(
+              error instanceof Error ? error.message : String(error),
+            );
+          }
+        },
+      ),
       onDidChangeSession(() => {
         Object.values(this.webviewManager.panels).forEach((viewer) => {
           if (viewer instanceof DataViewer) {
@@ -73,7 +134,13 @@ class LibraryNavigator implements SubscriptionProvider {
           paginator: PaginatedResultSet<{ data: TableData; error?: Error }>,
           fetchColumns: () => TableColumn[],
         ) => {
-          const attributes = await getSession().contextAttributes?.();
+          const activeProfile = profileConfig.getProfileByName(
+            profileConfig.getActiveProfile(),
+          );
+          const attributes = await getTableViewerContextAttributes(
+            activeProfile,
+            () => getSession().contextAttributes?.(),
+          );
           const allowDownload =
             attributes?.allowDownload?.toLowerCase() !== "false";
           this.webviewManager.render(
@@ -127,34 +194,39 @@ class LibraryNavigator implements SubscriptionProvider {
       commands.registerCommand(
         "SAS.downloadTable",
         async (item: LibraryItem) => {
-          let dataFilePath: string = "";
-          if (
-            env.remoteName !== undefined &&
-            workspace.workspaceFolders &&
-            workspace.workspaceFolders.length > 0
-          ) {
-            // start from 'rootPath' workspace folder
-            dataFilePath = workspace.workspaceFolders[0].uri.fsPath;
+          if (env.uiKind === UIKind.Web) {
+            try {
+              this.libraryDataProvider.assertTableExportSupported();
+            } catch (error) {
+              await window.showErrorMessage(
+                error instanceof Error ? error.message : String(error),
+              );
+              return;
+            }
           }
-          dataFilePath = path.join(
-            dataFilePath,
-            `${item.library}.${item.name}.csv`.toLocaleLowerCase(),
-          );
+          try {
+            const fileName =
+              `${item.library}.${item.name}.csv`.toLocaleLowerCase();
+            const uri = await window.showSaveDialog({
+              defaultUri: this.defaultDownloadUri(fileName),
+            });
+            if (!uri) {
+              return;
+            }
+            if (await this.redirectLocalComputerDestination(uri)) {
+              return;
+            }
 
-          // display save file dialog
-          const uri = await window.showSaveDialog({
-            defaultUri: Uri.file(dataFilePath),
-          });
-
-          if (!uri) {
-            return;
+            await new FileSystemTableDownloadTarget(uri).download(
+              fileName,
+              (signal) =>
+                this.libraryDataProvider.createTableExport(item, signal),
+            );
+          } catch (error) {
+            await window.showErrorMessage(
+              error instanceof Error ? error.message : String(error),
+            );
           }
-
-          const stream = createWriteStream(uri.fsPath);
-          await this.libraryDataProvider.writeTableContentsToStream(
-            stream,
-            item,
-          );
         },
       ),
       commands.registerCommand(
@@ -174,12 +246,10 @@ class LibraryNavigator implements SubscriptionProvider {
         }
 
         const currentActiveProfile = profileConfig.getActiveProfileSnapshot();
-
         const activeProfileChanged = hasActiveProfileChanged(
           this.previousActiveProfile,
           currentActiveProfile,
         );
-
         this.previousActiveProfile = currentActiveProfile;
 
         if (activeProfileChanged) {
@@ -240,6 +310,108 @@ class LibraryNavigator implements SubscriptionProvider {
         `Failed to load table properties: ${error.message}`,
       );
     }
+  }
+
+  private async redirectLocalComputerDestination(destination: Uri) {
+    const isRemoteWorkspace =
+      env.remoteName !== undefined ||
+      workspace.workspaceFolders?.some(
+        (folder) => folder.uri.scheme !== "file",
+      ) === true;
+    if (
+      env.uiKind !== UIKind.Web ||
+      destination.scheme !== "vscode-local" ||
+      !isRemoteWorkspace
+    ) {
+      return false;
+    }
+
+    await window.showInformationMessage(
+      l10n.t(
+        'To download this table locally, choose "This Device" from the Download menu.',
+      ),
+    );
+    return true;
+  }
+
+  private async runSingleBrowserFileExport(
+    exportTable: () => Promise<void>,
+  ): Promise<void> {
+    if (this.browserFileExportInProgress) {
+      await window.showInformationMessage(
+        l10n.t(
+          "A browser file export is already in progress. Wait for it to finish before starting another.",
+        ),
+      );
+      return;
+    }
+
+    this.browserFileExportInProgress = true;
+    try {
+      await exportTable();
+    } finally {
+      this.browserFileExportInProgress = false;
+    }
+  }
+
+  private async downloadTableToComputer(item: LibraryItem): Promise<void> {
+    const defaultFileName =
+      `${item.library}.${item.name}.csv`.toLocaleLowerCase();
+
+    if (env.uiKind !== UIKind.Web) {
+      throw new Error(
+        l10n.t(
+          "This Device table download is only supported in VS Code for the Web.",
+        ),
+      );
+    }
+    this.libraryDataProvider.assertTableExportSupported();
+
+    if (
+      workspace
+        .getConfiguration("SAS.tableDownload")
+        .get("hostAttachment.force", false)
+    ) {
+      await this.hostAttachmentDownloadTarget.download(
+        defaultFileName,
+        (signal) => this.libraryDataProvider.createTableExport(item, signal),
+      );
+      return;
+    }
+
+    const choice = await this.browserFileDownloadTarget.chooseLocalFile(
+      defaultFileName,
+      `${item.library}.${item.name}`,
+    );
+    if (choice.kind === "cancelled") {
+      return;
+    }
+    if (choice.kind === "unsupported") {
+      await this.hostAttachmentDownloadTarget.download(
+        defaultFileName,
+        (signal) => this.libraryDataProvider.createTableExport(item, signal),
+      );
+      return;
+    }
+    const destination = choice;
+
+    await new BrowserFileTableDownloadTarget(
+      this.browserFileDownloadTarget,
+      destination,
+    ).download(defaultFileName, (signal) =>
+      this.libraryDataProvider.createTableExport(item, signal),
+    );
+  }
+
+  private defaultDownloadUri(fileName: string): Uri {
+    if (
+      (env.remoteName !== undefined || env.uiKind === UIKind.Web) &&
+      workspace.workspaceFolders &&
+      workspace.workspaceFolders.length > 0
+    ) {
+      return Uri.joinPath(workspace.workspaceFolders[0].uri, fileName);
+    }
+    return Uri.file(fileName);
   }
 
   private libraryAdapterForConnectionType(): LibraryAdapter | undefined {

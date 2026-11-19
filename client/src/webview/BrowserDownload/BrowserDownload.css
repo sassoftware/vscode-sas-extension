@@ -1,0 +1,232 @@
+/* Copyright © 2026, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+:root {
+  color-scheme: light dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 32px 24px 40px;
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+main {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.85em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.7em;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.intro {
+  max-width: 52ch;
+  margin: 10px 0 28px;
+  color: var(--vscode-descriptionForeground);
+  line-height: 1.5;
+}
+
+.file-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+  border-radius: 8px;
+  background: var(--vscode-sideBar-background, transparent);
+}
+
+.file-type {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  margin-top: 2px;
+  border-radius: 4px;
+  color: var(--vscode-badge-foreground);
+  background: var(--vscode-badge-background);
+  font-size: 0.8em;
+  font-weight: 700;
+}
+
+.file-details {
+  min-width: 0;
+  flex: 1;
+}
+
+.section-label {
+  margin: 0 0 10px;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+dl > div {
+  display: grid;
+  grid-template-columns: minmax(72px, max-content) minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+}
+
+dt {
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+}
+
+.file-value {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.choices {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.destination-choice {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 16px;
+  border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+  border-radius: 6px;
+  color: var(--vscode-foreground);
+  background: var(--vscode-button-secondaryBackground, transparent);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.destination-choice:hover {
+  background: var(
+    --vscode-button-secondaryHoverBackground,
+    var(--vscode-list-hoverBackground)
+  );
+}
+
+.destination-choice:focus-visible,
+.cancel:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 2px;
+}
+
+.destination-choice:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.choice-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 4px;
+  color: var(--vscode-button-foreground);
+  background: var(--vscode-button-background);
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.choice-copy {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  line-height: 1.4;
+}
+
+.choice-description {
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+}
+
+.choice-arrow {
+  color: var(--vscode-descriptionForeground);
+  font-size: 1.2em;
+}
+
+.footer {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+#status {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.95em;
+  line-height: 1.4;
+}
+
+.status-label {
+  color: var(--vscode-foreground);
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.cancel {
+  padding: 6px 10px;
+  border: 0;
+  color: var(--vscode-textLink-foreground);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.cancel:hover {
+  color: var(
+    --vscode-textLink-activeForeground,
+    var(--vscode-textLink-foreground)
+  );
+}
+
+@media (max-width: 420px) {
+  body {
+    padding: 24px 16px 32px;
+  }
+
+  dl > div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .footer {
+    align-items: flex-start;
+  }
+}

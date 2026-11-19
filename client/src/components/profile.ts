@@ -83,6 +83,13 @@ export interface ViyaProfile
   serverId?: string;
 }
 
+export const isDirectRestProfile = (
+  profile: Profile | undefined,
+): profile is ViyaProfile & { serverId: string } =>
+  profile?.connectionType === ConnectionType.Rest &&
+  typeof profile.serverId === "string" &&
+  profile.serverId.length > 0;
+
 export interface SSHProfile extends BaseProfile {
   connectionType: ConnectionType.SSH;
   host: string;
@@ -602,7 +609,9 @@ export class ProfileConfig {
     };
 
     if (activeProfileParam in profileList) {
-      commands.executeCommand("SAS.close", true);
+      void Promise.resolve(commands.executeCommand("SAS.close", true)).catch(
+        () => undefined,
+      );
     } else {
       profiles.activeProfile = "";
     }

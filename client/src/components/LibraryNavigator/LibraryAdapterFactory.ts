@@ -15,6 +15,7 @@ class LibraryAdapterFactory {
       case ConnectionType.COM:
         return new ItcLibraryAdapter(onConnect);
       case ConnectionType.Rest:
+        return new RestLibraryAdapter(onConnect);
       default:
         return new RestLibraryAdapter(onConnect);
     }
