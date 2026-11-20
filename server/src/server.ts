@@ -302,6 +302,7 @@ export const runServer = (
   });
 
   connection.onRequest("sas/getFoldingBlock", async (params) => {
+    syncIfDocChange(params.textDocument.uri);
     const languageService = getLanguageService(params.textDocument.uri);
     const block = languageService.getFoldingBlock(
       params.line,
