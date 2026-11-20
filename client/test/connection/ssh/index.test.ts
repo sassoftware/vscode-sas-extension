@@ -189,7 +189,10 @@ describe("ssh connection", () => {
         assert.fail(error.message);
       }
 
-      streamStub.write.callsFake((chunk, cb) => {
+      streamStub.write.callsFake((chunk, ...rest: unknown[]) => {
+        const cb = rest.find(
+          (a): a is (err?: Error | null) => void => typeof a === "function",
+        );
         if (chunk === "%put --vscode-sas-extension-submit-end--;\n") {
           if (cb) {
             cb(null);
@@ -230,7 +233,10 @@ describe("ssh connection", () => {
         assert.fail(error.message);
       }
 
-      streamStub.write.callsFake((chunk, cb) => {
+      streamStub.write.callsFake((chunk, ...rest: unknown[]) => {
+        const cb = rest.find(
+          (a): a is (err?: Error | null) => void => typeof a === "function",
+        );
         if (chunk === "%put --vscode-sas-extension-submit-end--;\n") {
           if (cb) {
             cb(null);
@@ -281,7 +287,10 @@ describe("ssh connection", () => {
     });
 
     it("writes closing commands to ssh session", async () => {
-      streamStub.write.callsFake((chunk, cb) => {
+      streamStub.write.callsFake((chunk, ...rest: unknown[]) => {
+        const cb = rest.find(
+          (a): a is (err?: Error | null) => void => typeof a === "function",
+        );
         if (chunk === "%put --vscode-sas-extension-submit-end--;\n") {
           if (cb) {
             cb(null);

@@ -1586,8 +1586,5 @@
     "typescript": "^5.5.3",
     "webpack": "^5.112.2",
     "webpack-cli": "^7.2.3"
-  },
-  "overrides": {
-    "minipass": "7.1.2"
   }
 }
