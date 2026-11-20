@@ -18,6 +18,53 @@ For SAS files, Find All References and Rename Symbol support DATA step variables
 
 <img src="website/static/images/featuresGlance.png"/>
 
+## DATA Step Debugger (Experimental)
+
+In desktop VS Code, select a SAS Viya connection profile, place the cursor
+inside a DATA step in a SAS file, and run **SAS: Debug DATA Step** from the
+Command Palette or the SAS editor's right-click menu. The debugger submits only that DATA step, including unsaved
+edits. It opens a separate copy in a new SAS editor tab named **DATA Step
+Debugger** and highlights debugger locations in that copy, leaving the
+original document untouched. The copy is closed without saving when the
+debugger stops.
+
+To choose a different file, use a launch configuration:
+
+```json
+{
+  "type": "sas",
+  "request": "launch",
+  "name": "Debug SAS DATA Step",
+  "program": "${workspaceFolder}/example.sas"
+}
+```
+
+`program` accepts a file path or document URI; omit it to use the active editor.
+Place the cursor in the DATA step of the specified file, or set `position` to a
+zero-based `{ "line": 0, "character": 0 }` position inside that step.
+The extension adds the debugger options and initial `describe _all_;` and
+`examine _all_;` commands without modifying the source document. The code runs
+on your Viya session and can modify data. **Step Over** and **Step Into** both
+submit `step;` to advance one DATA step statement. **Continue** submits `go;`
+to resume execution. Verified breakpoints are not implemented yet.
+
+While paused, setting a breakpoint submits `break <lineNumber>;` and displays
+the command's log without advancing execution. Breakpoint verification and
+removal on the SAS server are not implemented yet.
+
+After each debugger Compute job finishes, its complete log is fetched,
+including all paginated log entries. Automatic `describe _all_;` and
+`examine _all_;` commands marked with `/*hideInLog*/` and their responses are
+hidden in the Debug Console but still used to update variables. Errors and
+warnings remain visible. Logs are not streamed while a job is running.
+
+The log is then parsed, and the debugger pauses at the last statement where SAS
+stopped. The **Variables** view shows the values `examine` reported at that
+stop, with types and lengths from `describe`, and SAS automatic variables such
+as `_N_` and `_ERROR_` are listed under **Automatic Variables**. If the stop
+cannot be matched to a line in the document, it is shown without a source
+location.
+
 ## Support
 
 ### FAQs
