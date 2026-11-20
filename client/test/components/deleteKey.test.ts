@@ -130,6 +130,7 @@ describe("Navigator Delete key routing", () => {
     Object.defineProperties(navigator, {
       contentDataProvider: { value: provider },
       contentModel: { value: model },
+      registrationSubscriptions: { value: [] },
       sourceType: { value: ContentSourceType.SASContent },
       temporaryImageUris: { value: new Map<string, Uri>() },
     });
