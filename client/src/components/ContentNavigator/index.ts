@@ -18,8 +18,15 @@ import {
 
 import { profileConfig } from "../../commands/profile";
 import { getGlobalStorageUri } from "../ExtensionContext";
+import LibraryAdapterFactory from "../LibraryNavigator/LibraryAdapterFactory";
+import LibraryModel from "../LibraryNavigator/LibraryModel";
 import { SubscriptionProvider } from "../SubscriptionProvider";
-import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
+import {
+  type ActiveProfileSnapshot,
+  ConnectionType,
+  ProfileWithFileRootOptions,
+  hasActiveProfileChanged,
+} from "../profile";
 import { treeViewSelections } from "../utils/treeViewSelections";
 import ContentAdapterFactory from "./ContentAdapterFactory";
 import ContentDataProvider from "./ContentDataProvider";
@@ -79,7 +86,10 @@ class ContentNavigator implements SubscriptionProvider {
   private registrationSubscriptions: Disposable[];
   private sourceType: ContentNavigatorConfig["sourceType"];
   private temporaryImageUris = new Map<string, Uri>();
+  // Maps a dataset's server path to the uid of its open DataViewer panel.
+  private openDatasetViewers = new Map<string, string>();
   private treeIdentifier: ContentNavigatorConfig["treeIdentifier"];
+  private previousActiveProfile: ActiveProfileSnapshot;
 
   constructor(context: ExtensionContext, config: ContentNavigatorConfig) {
     this.sourceType = config.sourceType;
@@ -89,9 +99,11 @@ class ContentNavigator implements SubscriptionProvider {
     );
     this.contentDataProvider = new ContentDataProvider(
       this.contentModel,
+      this.openDatasetViewers,
       context.extensionUri,
       config,
     );
+    this.previousActiveProfile = profileConfig.getActiveProfileSnapshot();
 
     this.registrationSubscriptions = [
       workspace.registerFileSystemProvider(
@@ -145,6 +157,10 @@ class ContentNavigator implements SubscriptionProvider {
           }
           const extension =
             resource.name?.split(".").pop()?.toLowerCase() || "";
+          if (extension === "sas7bdat") {
+            await this.openDataset(resource);
+            return;
+          }
           const isImage = imageExtensions.includes(extension);
 
           if (!isImage) {
@@ -505,19 +521,34 @@ class ContentNavigator implements SubscriptionProvider {
       ),
       workspace.onDidChangeConfiguration(
         async (event: ConfigurationChangeEvent) => {
-          if (event.affectsConfiguration("SAS.connectionProfiles")) {
-            const endpoint = this.viyaEndpoint();
-            this.collapseAllContent();
-            const contentModel = new ContentModel(
-              this.contentAdapterForConnectionType(),
-            );
-            this.contentDataProvider.useModel(contentModel);
-            this.contentModel = contentModel;
-            if (endpoint) {
-              await this.contentDataProvider.connect(endpoint);
-            } else {
-              await this.contentDataProvider.refresh();
-            }
+          if (!event.affectsConfiguration("SAS.connectionProfiles")) {
+            return;
+          }
+
+          const currentActiveProfile = profileConfig.getActiveProfileSnapshot();
+
+          const activeProfileChanged = hasActiveProfileChanged(
+            this.previousActiveProfile,
+            currentActiveProfile,
+          );
+
+          this.previousActiveProfile = currentActiveProfile;
+
+          if (!activeProfileChanged) {
+            return;
+          }
+
+          const endpoint = this.viyaEndpoint();
+          this.collapseAllContent();
+          const contentModel = new ContentModel(
+            this.contentAdapterForConnectionType(),
+          );
+          this.contentDataProvider.useModel(contentModel);
+          this.contentModel = contentModel;
+          if (endpoint) {
+            await this.contentDataProvider.connect(endpoint);
+          } else {
+            await this.contentDataProvider.refresh();
           }
         },
       ),
@@ -527,6 +558,92 @@ class ContentNavigator implements SubscriptionProvider {
   private async defaultOpenResource(item: ContentItem): Promise<void> {
     const itemUri = await this.contentModel.getUri(item, false);
     await commands.executeCommand("vscode.open", itemUri);
+  }
+
+  private async openDataset(item: ContentItem): Promise<void> {
+    try {
+      const profile = profileConfig.getProfileByName(
+        profileConfig.getActiveProfile(),
+      );
+      if (
+        this.sourceType !== ContentSourceType.SASServer ||
+        profile?.connectionType !== ConnectionType.Rest
+      ) {
+        throw new Error(
+          l10n.t(
+            "Opening dataset files requires SAS Server navigation with a REST connection.",
+          ),
+        );
+      }
+
+      const itemPath = await this.contentDataProvider.getPathOfItem(item);
+      const normalizedPath = itemPath?.replace(/\\/g, "/");
+      const separator = normalizedPath?.lastIndexOf("/") ?? -1;
+      if (separator < 0) {
+        throw new Error(l10n.t("Unable to determine the dataset folder."));
+      }
+
+      const openViewerUid = this.openDatasetViewers.get(normalizedPath);
+      if (
+        openViewerUid &&
+        (await commands.executeCommand<boolean>(
+          "SAS.revealTable",
+          openViewerUid,
+        ))
+      ) {
+        return;
+      }
+      this.openDatasetViewers.delete(normalizedPath);
+
+      const folderPath =
+        separator === 0 ? "/" : normalizedPath.slice(0, separator);
+      const adapter = new LibraryAdapterFactory().create(
+        profile.connectionType,
+      );
+      const library = await adapter.acquireTemporaryLibrary(folderPath);
+      const model = new LibraryModel(adapter);
+      const tables = await model.getTables({
+        uid: library.name,
+        id: library.name,
+        name: library.name,
+        type: "library",
+        readOnly: true,
+      });
+      const tableName = item.name.slice(0, -".sas7bdat".length);
+      const table = tables.find(
+        (table) => table.name.toLowerCase() === tableName.toLowerCase(),
+      );
+      if (!table) {
+        throw new Error(
+          l10n.t("Dataset {name} was not found in its server folder.", {
+            name: item.name,
+          }),
+        );
+      }
+
+      this.openDatasetViewers.set(normalizedPath, table.uid);
+      await commands.executeCommand(
+        "SAS.viewTable",
+        table,
+        model.getTableResultSet(table),
+        () => model.fetchColumns(table),
+        {
+          fileName: item.name,
+          onClose: async () => {
+            if (this.openDatasetViewers.get(normalizedPath) === table.uid) {
+              this.openDatasetViewers.delete(normalizedPath);
+            }
+            await library.delete();
+          },
+        },
+      );
+    } catch (error) {
+      void window.showErrorMessage(
+        l10n.t("Unable to open dataset: {message}", {
+          message: error instanceof Error ? error.message : String(error),
+        }),
+      );
+    }
   }
 
   private imagePreviewCacheUri(): Uri {

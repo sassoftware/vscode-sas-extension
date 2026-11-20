@@ -140,6 +140,7 @@ const createDataProvider = () => {
 
   return new ContentDataProvider(
     new ContentModel(adapter),
+    new Map(),
     Uri.from({ scheme: "http" }),
     defaultConfig,
   );
@@ -630,6 +631,51 @@ describe("ContentDataProvider", async function () {
     expect(uri).to.deep.equal(getUri(newItem));
   });
 
+  it("renameResource - closes only the matching dataset viewer and opens the renamed dataset", async function () {
+    const origItem = mockContentItem({
+      name: "class.sas7bdat",
+      uri: "uri://data/class.sas7bdat",
+    });
+    const newItem = mockContentItem({
+      name: "renamed.sas7bdat",
+      uri: "uri://data/renamed.sas7bdat",
+    });
+    const model = new ContentModel(new RestContentAdapter());
+    const renameStub = sinon.stub(model, "renameResource").resolves(newItem);
+    sinon
+      .stub(model, "getPathOfItem")
+      .withArgs(origItem)
+      .resolves("\\data\\class.sas7bdat");
+    const openDatasets = new Map<string, string>();
+    openDatasets.set("/data/class.sas7bdat", "dataset-uid");
+    openDatasets.set("/other/class.sas7bdat", "other-dataset-uid");
+    const dataProvider = new ContentDataProvider(
+      model,
+      openDatasets,
+      Uri.from({ scheme: "http" }),
+      { ...defaultConfig, sourceType: ContentSourceType.SASServer },
+    );
+    const executeCommandStub = sinon
+      .stub(commands, "executeCommand")
+      .resolves(true);
+
+    const uri = await dataProvider.renameResource(origItem, newItem.name);
+
+    expect(uri).to.deep.equal(newItem.vscUri);
+    sinon.assert.calledOnceWithExactly(renameStub, origItem, newItem.name);
+    sinon.assert.calledTwice(executeCommandStub);
+    sinon.assert.calledWithExactly(
+      executeCommandStub.firstCall,
+      "SAS.closeTable",
+      "dataset-uid",
+    );
+    sinon.assert.calledWithExactly(
+      executeCommandStub.secondCall,
+      "SAS.server.openResource",
+      newItem,
+    );
+  });
+
   it("renameResource - renames reference resource and returns uri of referenced item", async function () {
     const item = mockContentItem({
       type: "reference",
@@ -1060,6 +1106,7 @@ describe("ContentDataProvider", async function () {
 
     const dataProvider = new ContentDataProvider(
       model,
+      new Map(),
       Uri.from({ scheme: "http" }),
       defaultConfig,
     );
@@ -1095,6 +1142,7 @@ describe("ContentDataProvider", async function () {
 
     const dataProvider = new ContentDataProvider(
       model,
+      new Map(),
       Uri.from({ scheme: "http" }),
       defaultConfig,
     );
@@ -1169,6 +1217,7 @@ describe("ContentDataProvider", async function () {
 
     const dataProvider = new ContentDataProvider(
       model,
+      new Map(),
       Uri.from({ scheme: "http" }),
       defaultConfig,
     );
@@ -1221,6 +1270,7 @@ describe("ContentDataProvider", async function () {
 
     const dataProvider = new ContentDataProvider(
       model,
+      new Map(),
       Uri.from({ scheme: "http" }),
       defaultConfig,
     );
@@ -1264,6 +1314,7 @@ describe("ContentDataProvider", async function () {
 
     const dataProvider = new ContentDataProvider(
       model,
+      new Map(),
       Uri.from({ scheme: "http" }),
       defaultConfig,
     );
@@ -1289,6 +1340,7 @@ describe("ContentDataProvider", async function () {
     const model = new ContentModel(new RestContentAdapter());
     const dataProvider = new ContentDataProvider(
       model,
+      new Map(),
       Uri.from({ scheme: "http" }),
       defaultConfig,
     );
@@ -1325,6 +1377,7 @@ describe("ContentDataProvider", async function () {
     const model = new ContentModel(new RestContentAdapter());
     const dataProvider = new ContentDataProvider(
       model,
+      new Map(),
       Uri.from({ scheme: "http" }),
       defaultConfig,
     );

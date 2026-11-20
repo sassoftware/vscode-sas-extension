@@ -16,6 +16,7 @@ jobs:
       - run: npm ci
       - run: npm run format:check
       - run: npm run copyright:check
+      - run: npm run l10n:check
       - run: xvfb-run -a npm run test
         if: runner.os == 'Linux'
       - run: npx @vscode/vsce package

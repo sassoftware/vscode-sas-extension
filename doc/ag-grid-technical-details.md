@@ -9,6 +9,12 @@ This summarizes how ag grid functionality is being used in this code base.
 - Context menu actions (sort, etc) make use of AG Grid column state to update the underlying table data. For AG grid data changes, our internal code calls [`applyColumnState`](https://www.ag-grid.com/javascript-data-grid/column-state/#reference-state-applyColumnState)
 - The html used for the context menu roughly matches what is found on the [AG Grid's example page](https://ag-grid.com/example/)
 
+## Managing columns
+
+The Table Viewer provides a Manage Columns dialog for changing column visibility and order. The dialog uses AG Grid column state to keep the displayed columns synchronized with the grid.
+
+When the SAS session changes, the existing column state is considered stale. The grid is reset after the next successful column fetch before Manage Columns is opened.
+
 ## Data filtering
 
 The SAS extension currently supports a where style filter for filtering table data. This sets a filter property and updates AG Grids datasource to fetch table data based on the filter value. The implementation can be found in the `refreshResults` callback in See [useDataViewer.ts](../client/src/webview/useDataViewer.ts).

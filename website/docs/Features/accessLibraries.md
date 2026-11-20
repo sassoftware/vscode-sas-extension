@@ -15,9 +15,36 @@ When viewing table data, you have the following options available for each colum
 - Column pinning: Each column can be pinned to the left or the right of the data viewer to have an always on-screen view of important columns.
 - Sort: Each column can be sorted ascending or descending. To add multiple columns to a sort, click the menu for each column and select the sort type. Sort priority will be displayed next to each column's direction icon.
 - Properties: Clicking properties will reveal the properties for the specific column chosen.
+- Manage columns: Select Manage Columns to choose which columns are displayed and change their order.
 - Filtering results: Results can be filtered by specifying where conditions in the filter bar and pressing enter. To reset the filter, click the clear (X) button.
 
 ![Table Viewing](/images/tableViewing.gif)
+
+## Copying Table Data
+
+When viewing table data, you have the ability to copy/paste cells as needed. You can do this by dragging your selection across multiple cells and pressing "Copy" or Ctrl + C (Cmd + C on Mac). You can also do this by holding Shift and using the Arrow keys to make your selection. This will copy the headers along with selected columns/rows. There are a few things to note about copy/paste functionality:
+
+- At the moment, you cannot scroll left to right to select more columns.
+- You can drag up or down to select offscreen rows, up to 800. Going beyond this number may result in an error when attempting to copy.
+- You can only make contiguous selections.
+
+![Table Copy/Paste](/images/tableCopyPaste.gif)
+
+## Managing Columns
+
+To open Manage Columns, hover over a column header in the Table Viewer, click the menu button, and select "Manage Columns".
+
+The Manage Columns dialog allows you to:
+
+- Show or hide columns by moving them between the "Displayed" and "Hidden" lists.
+- Search for columns in either list.
+- Change the order of displayed columns using the move up, down, top, and bottom buttons.
+- Select multiple columns or move all filtered columns at once.
+- Click "OK" to apply the changes or "Cancel" to discard them.
+
+If all columns are hidden, use the "Manage Columns" button in the Table Viewer to restore them.
+
+![Manage Columns](/images/manageColumns.gif)
 
 ## Table Properties
 
