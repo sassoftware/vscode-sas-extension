@@ -40,10 +40,6 @@ export function getParameterListLabel(macro: RegisteredCustomMacro): string {
     : "";
 }
 
-export function getSignatureLabel(macro: RegisteredCustomMacro): string {
-  return `%${macro.name}${getParameterListLabel(macro)}`;
-}
-
 export function getMacroDocumentation(
   macro: RegisteredCustomMacro,
 ): MarkupContent | undefined {

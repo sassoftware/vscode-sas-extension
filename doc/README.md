@@ -7,7 +7,6 @@
 - [General Architecture](#general-architecture)
   - [Top level folder structure](#top-level-folder-structure)
   - [Connection setup](#connection-setup)
-  - [Custom macro completion protocol](#custom-macro-completion-protocol)
   - [Model/adapter strategy for tree views](#modeladapter-strategy-for-tree-views)
   - [Working with webviews](#working-with-webviews)
 - [Procedure For Bugfixes And Features](#procedure-for-bugfixes-and-features)
@@ -62,48 +61,6 @@ The following is a high level view of how this project is organized. The majorit
 ### Connection setup
 
 Various connection types can be found in `client/src/connection`. These are `itc` (Windows-only based IOM/COM connections), `rest` (Viya connections), and `ssh` (SSH). Each folder has an `index.ts` file responsible for managing the connection. Additionally, there are connection-specific adapters in each of these folders for SAS Content, SAS Server, and Libraries/Tables.
-
-### Custom macro completion protocol
-
-LSP consumers can supply custom macro definitions to the server with the
-`sas/setCustomMacros` notification. Each notification replaces the complete
-custom macro map; it is not a delta. The server does not scan files or parse
-macro source text for this feature.
-
-The payload is `{ macros: Record<string, CustomMacro> }`. Each map key is the
-macro name as written (for example, `SortDS`); the server normalizes it for
-lookup and prefix matching. Each definition contains a `parameters` array and
-optional `documentation`. Each parameter has a `name`. A string `defaultValue`
-(including `""`) identifies a keyword parameter. A missing, `null`, or
-non-string `defaultValue` identifies a positional parameter. A keyword
-parameter with no declared default MUST send
-`defaultValue: ""`; omitting it or sending `null` makes the parameter positional.
-The server ignores any `kind` field. Parameters remain in their declared order.
-
-```typescript
-client.sendNotification("sas/setCustomMacros", {
-  macros: {
-    sortds: {
-      parameters: [
-        { name: "ds" },
-        { name: "by", defaultValue: "id" },
-        { name: "out", defaultValue: "" },
-      ],
-      documentation: "Sort a dataset",
-    },
-    cleanup: { parameters: [] },
-  },
-});
-```
-
-After `%` and while typing its name, completion returns matching built-in and
-custom macro names case-insensitively. A custom macro replaces a built-in
-completion with the same name. Custom items show their parameter signature;
-accepting one inserts parameters in their declared order, one per line, as
-snippet tab stops. Keyword parameters use `name = ${n:default}` (or
-`name = ${n}` for an empty default); positional parameters use `${n:name}`.
-The closing parenthesis is followed by `$0;`. A macro without parameters
-inserts `%name;`.
 
 ### Model/adapter strategy for tree views
 
