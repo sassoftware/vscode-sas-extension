@@ -258,6 +258,28 @@ export function activate(context: ExtensionContext) {
         if (activeProfileChanged) {
           await triggerProfileUpdate();
           updateViewSettings();
+
+          const activeProfile = profileConfig.getProfileByName(
+            profileConfig.getActiveProfile(),
+          );
+
+          if (
+            activeProfile?.connectionType === ConnectionType.IOM ||
+            activeProfile?.connectionType === ConnectionType.COM
+          ) {
+            await Promise.all([
+              commands.executeCommand(
+                "setContext",
+                "SAS.librariesDisplayed",
+                true,
+              ),
+              commands.executeCommand(
+                "setContext",
+                "SAS.serverDisplayed",
+                true,
+              ),
+            ]);
+          }
         }
       },
     ),

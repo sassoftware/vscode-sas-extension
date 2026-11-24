@@ -102,6 +102,8 @@ export const runServer = (
           workDoneProgress: true,
         },
         workspaceSymbolProvider: { workDoneProgress: true },
+        referencesProvider: true,
+        renameProvider: { prepareProvider: true },
         hoverProvider: { workDoneProgress: true },
         completionProvider: completionOpts,
         signatureHelpProvider: {
@@ -444,6 +446,13 @@ export const runServer = (
       ) => Location | undefined,
     ) => {
       return await dispatch(params, {
+        async sas(languageService) {
+          return languageService.symbolProvider.getReferences(
+            params.textDocument.uri,
+            params.position,
+            params.context.includeDeclaration,
+          );
+        },
         async python(pyrightLanguageService) {
           return await pyrightLanguageService.onReferences(
             params,
@@ -490,6 +499,9 @@ export const runServer = (
   connection.onPrepareRename(
     async (params: PrepareRenameParams, token: CancellationToken) => {
       return await dispatch(params, {
+        async sas(languageService) {
+          return languageService.symbolProvider.prepareRename(params.position);
+        },
         async python(pyrightLanguageService) {
           return await pyrightLanguageService.onPrepareRenameRequest(
             params,
@@ -503,6 +515,13 @@ export const runServer = (
   connection.onRenameRequest(
     async (params: RenameParams, token: CancellationToken) => {
       return await dispatch(params, {
+        async sas(languageService) {
+          return languageService.symbolProvider.rename(
+            params.textDocument.uri,
+            params.position,
+            params.newName,
+          );
+        },
         async python(pyrightLanguageService) {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           return (await pyrightLanguageService.onRenameRequest(
@@ -698,8 +717,6 @@ export const runServer = (
     "textDocument/declaration",
     "textDocument/definition",
     "textDocument/typeDefinition",
-    "textDocument/references",
-    "textDocument/rename",
     "textDocument/documentHighlight",
     "textDocument/prepareCallHierarchy",
   ];

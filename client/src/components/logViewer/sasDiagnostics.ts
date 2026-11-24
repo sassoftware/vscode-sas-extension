@@ -198,9 +198,9 @@ function getSubscriptions(): Disposable[] {
     }),
     workspace.onDidSaveTextDocument((e) => {
       // the new file
-      const uri = window.activeTextEditor.document.uri;
+      const uri = window.activeTextEditor?.document.uri;
       const isNewFileSaved =
-        uri.scheme === "untitled" && e.languageId === "sas";
+        uri?.scheme === "untitled" && e.languageId === "sas";
       if (isNewFileSaved) {
         // clear diagnostics on new file
         ignoreAll(uri);
