@@ -112,17 +112,25 @@ class LibraryModel {
     let offset = 0;
     let items = [];
     let totalItemCount = Infinity;
-    do {
-      const data = await this.libraryAdapter.getColumns(
-        item,
-        offset,
-        DefaultRecordLimit,
-      );
+    try {
+      do {
+        const data = await this.libraryAdapter.getColumns(
+          item,
+          offset,
+          DefaultRecordLimit,
+        );
 
-      items = [...items, ...data.items];
-      totalItemCount = data.count;
-      offset += DefaultRecordLimit;
-    } while (offset < totalItemCount && totalItemCount !== -1);
+        items = [...items, ...data.items];
+        totalItemCount = data.count;
+        offset += DefaultRecordLimit;
+      } while (offset < totalItemCount && totalItemCount !== -1);
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : String(e);
+      throw new Error(
+        l10n.t(Messages.ColumnFetchError, { tableName: item.uid }) +
+          ` ${reason}`,
+      );
+    }
 
     return items;
   }
