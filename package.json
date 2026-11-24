@@ -846,6 +846,11 @@
         "category": "SAS"
       },
       {
+        "command": "SAS.server.openLocalDataset",
+        "title": "%commands.SAS.openLocalDataset%",
+        "category": "SAS"
+      },
+      {
         "command": "SAS.server.uploadResource",
         "title": "%commands.SAS.upload%",
         "category": "SAS"
@@ -1000,6 +1005,11 @@
           "command": "SAS.content.convertNotebookToFlow",
           "when": "resourceExtname == .sasnb && SAS.connectionType == rest && !SAS.connection.direct",
           "group": "actionsgroup@0"
+        },
+        {
+          "command": "SAS.server.openLocalDataset",
+          "when": "resourceExtname =~ /^\\.sas7bdat$/i && SAS.connectionType == rest",
+          "group": "navigation@999"
         }
       ],
       "view/item/context": [
@@ -1334,6 +1344,10 @@
         {
           "when": "false",
           "command": "SAS.server.downloadResource"
+        },
+        {
+          "when": "false",
+          "command": "SAS.server.openLocalDataset"
         },
         {
           "when": "false",
