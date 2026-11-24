@@ -1,15 +1,18 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
+import type { GridApi } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
 import ".";
 import ColumnMenu from "./ColumnMenu";
+import ManageColumns from "./ManageColumns";
 import TableFilter from "./TableFilter";
 import localize from "./localize";
 import useDataViewer from "./useDataViewer";
+import useSelectionRectangle from "./useSelectionRectangle";
 import useTheme from "./useTheme";
 
 import "./DataViewer.css";
@@ -23,57 +26,121 @@ const gridStyles = {
   width: "100%",
 };
 
-const DataViewer = () => {
+export const DataViewer = () => {
+  const allowDownload =
+    document
+      .querySelector(".data-viewer-container")
+      ?.getAttribute("data-allow-download") === "true";
   const title = document
-    .querySelector("[data-title]")
+    .querySelector("[data-title]")!
     .getAttribute("data-title");
   const theme = useTheme();
+  const [allColumnsHidden, setAllColumnsHidden] = useState(false);
+
+  const updateAllColumnsHidden = useCallback((api: GridApi) => {
+    const columns = api
+      .getColumnState()
+      .filter((column) => column.colId !== "#");
+
+    setAllColumnsHidden(
+      columns.length > 0 && columns.every((column) => column.hide === true),
+    );
+  }, []);
+
   const {
     columnMenu,
     columns,
     dismissMenu,
     gridRef,
+    initialColumnState,
+    openManageColumns,
+    manageColumnsOpen,
     onGridReady,
     refreshResults,
+    setColumns,
+    setManageColumnsOpen,
   } = useDataViewer();
+  const [gridDragging, setGridDragging] = useState(false);
+  const [focusedCell, setFocusedCell] = useState(null);
+  const { onKeyDown, resetSelection, ...selectionRectangleHooks } =
+    useSelectionRectangle({
+      onSelectionStarted: () => {
+        setFocusedCell(gridRef.current?.api.getFocusedCell());
+        gridRef.current?.api.clearFocusedCell();
+        gridRef.current?.api.updateGridOptions({
+          suppressCellFocus: true,
+          suppressHeaderFocus: true,
+        });
+      },
+      onSelectionEnded: () => {
+        gridRef.current?.api.updateGridOptions({
+          suppressCellFocus: false,
+          suppressHeaderFocus: false,
+        });
+        if (focusedCell) {
+          gridRef.current?.api.setFocusedCell(
+            focusedCell?.rowIndex,
+            focusedCell?.column,
+          );
+          setFocusedCell(null);
+        }
+      },
+      getRowData: (rowIndex: string) =>
+        gridRef.current?.api.getRowNode(rowIndex),
+      enabled: !gridDragging && allowDownload,
+      scrollContainer: ".ag-grid-scrolling-container",
+      scrollViewport: ".ag-grid-viewport",
+    });
 
   const handleKeydown = useCallback(
-    (event) => {
+    (event: KeyboardEvent) => {
+      onKeyDown(event);
       if (event.key === "Escape" && columnMenu) {
         dismissMenu();
       }
     },
-    [columnMenu, dismissMenu],
+    [columnMenu, dismissMenu, onKeyDown],
   );
   const dismissMenuWithoutFocus = useCallback(
     () => dismissMenu(false),
     [dismissMenu],
   );
+  const handleWindowBlur = useCallback(() => {
+    dismissMenuWithoutFocus();
+    resetSelection();
+  }, [dismissMenuWithoutFocus, resetSelection]);
 
-  const focusChanged = useCallback(
+  const panelMessageHandler = useCallback(
     (event: MessageEvent) => {
-      if (
-        event.data.command === "panel:changeFocus" &&
-        event.data.data.focused
-      ) {
-        const cell = gridRef.current?.api.getFocusedCell();
-        if (cell) {
-          gridRef.current?.api.setFocusedCell(cell.rowIndex, cell.column);
+      if (event.data.command === "panel:refreshData") {
+        refreshResults(undefined);
+        setColumns([]);
+        setAllColumnsHidden(false);
+      }
+
+      if (event.data.command === "panel:changeFocus") {
+        if (event.data.data.focused) {
+          const cell = gridRef.current?.api.getFocusedCell();
+          if (cell) {
+            gridRef.current?.api.setFocusedCell(cell.rowIndex, cell.column);
+          }
+        } else {
+          resetSelection();
         }
       }
     },
-    [gridRef],
+    [gridRef, refreshResults, resetSelection, setColumns],
   );
   useEffect(() => {
     document.addEventListener("keydown", handleKeydown);
-    window.addEventListener("blur", dismissMenuWithoutFocus);
-    window.addEventListener("message", focusChanged);
+    window.addEventListener("blur", handleWindowBlur);
+    window.addEventListener("message", panelMessageHandler);
     return () => {
       document.removeEventListener("keydown", handleKeydown);
-      window.removeEventListener("blur", dismissMenuWithoutFocus);
-      window.removeEventListener("message", focusChanged);
+      window.removeEventListener("blur", handleWindowBlur);
+      window.removeEventListener("message", panelMessageHandler);
     };
-  }, [handleKeydown, dismissMenuWithoutFocus, focusChanged]);
+  }, [handleKeydown, handleWindowBlur, panelMessageHandler]);
 
   if (columns.length === 0) {
     return null;
@@ -84,6 +151,7 @@ const DataViewer = () => {
       <h1>{title}</h1>
       <TableFilter
         onCommit={(value) => {
+          resetSelection();
           refreshResults({ filterValue: value });
         }}
         initialValue={""}
@@ -93,25 +161,71 @@ const DataViewer = () => {
         className={`ag-grid-wrapper ${theme}`}
         style={gridStyles}
         onClick={() => columnMenu && dismissMenuWithoutFocus()}
+        {...selectionRectangleHooks}
       >
         <AgGridReact
           ref={gridRef}
           cacheBlockSize={100}
           columnDefs={columns}
-          defaultColDef={{
-            sortable: true,
-          }}
+          defaultColDef={{ sortable: true }}
           maintainColumnOrder
           infiniteInitialRowCount={100}
           maxBlocksInCache={10}
           onGridReady={onGridReady}
+          onColumnVisible={(event) => updateAllColumnsHidden(event.api)}
           rowModelType="infinite"
           theme="legacy"
           noRowsOverlayComponent={() =>
             localize("No data matches the current filters.")
           }
+          onDragStarted={() => setGridDragging(true)}
+          onDragCancelled={() => setGridDragging(false)}
+          onDragStopped={() => setGridDragging(false)}
           suppressDragLeaveHidesColumns
         />
+
+        {allColumnsHidden && (
+          <div className="all-columns-hidden-overlay">
+            <div className="all-columns-hidden-message">
+              {localize("All columns are hidden.")}
+            </div>
+
+            <button
+              type="button"
+              className="all-columns-hidden-button"
+              onClick={() => void openManageColumns()}
+            >
+              {localize("Manage Columns")}
+            </button>
+          </div>
+        )}
+
+        {manageColumnsOpen && (
+          <ManageColumns
+            columnState={initialColumnState}
+            onClose={() => setManageColumnsOpen(false)}
+            onApply={(updatedColumnState) => {
+              const api = gridRef.current?.api;
+              if (api) {
+                api.applyColumnState({
+                  state: [
+                    {
+                      colId: "#",
+                    },
+                    ...updatedColumnState.map((column) => ({
+                      colId: column.colId,
+                      hide: column.hide,
+                    })),
+                  ],
+                  applyOrder: true,
+                });
+                updateAllColumnsHidden(api);
+              }
+
+              setManageColumnsOpen(false);
+            }}
+          />
+        )}
       </div>
     </div>
   );

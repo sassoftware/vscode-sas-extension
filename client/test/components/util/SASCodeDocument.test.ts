@@ -1,11 +1,24 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { CancellationTokenSource } from "vscode";
+
 import assert from "assert";
+import { spawnSync } from "child_process";
+import sinon from "sinon";
 
 import {
   SASCodeDocument,
   SASCodeDocumentParameters,
 } from "../../../src/components/utils/SASCodeDocument";
+
+const windowsDirname = (filePath: string): string => {
+  const separatorIndex = Math.max(
+    filePath.lastIndexOf("\\"),
+    filePath.lastIndexOf("/"),
+  );
+
+  return separatorIndex === -1 ? "." : filePath.slice(0, separatorIndex);
+};
 
 describe("sas code document", () => {
   it("wrap python code", () => {
@@ -26,6 +39,7 @@ selected python code`,
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
+%symdel _SASPROGRAMDIR / nowarn;
 proc python;
 submit;
 python code
@@ -36,6 +50,564 @@ run;
 `;
 
     assert.equal(sasCodeDoc.getWrappedCode(), expected);
+  });
+
+  describe("Python notebook autodisplay", () => {
+    const code = "a = 1\na + 2\n# trailing comment\n";
+    const expression = {
+      isExpression: true,
+      expressionText: "a + 2",
+      startOffset: 6,
+      endOffset: 11,
+    };
+
+    function createDocument(source = code, languageId = "python") {
+      return new SASCodeDocument({
+        languageId,
+        code: source,
+        selectedCode: "",
+        checkKeyword: async () => false,
+      });
+    }
+
+    function createClient() {
+      return {
+        isRunning: sinon.stub().returns(true),
+        sendRequest: sinon.stub().resolves(expression),
+      };
+    }
+
+    it("rewrites only notebook execution and preserves trailing comments", async () => {
+      const document = createDocument();
+      const original = document.getWrappedCode();
+      const client = createClient();
+      const wrapped = await document.getWrappedNotebookCode(client);
+      assert.strictEqual(client.sendRequest.callCount, 1);
+      assert.strictEqual(
+        client.sendRequest.firstCall.args[0],
+        "sas/pythonFinalExpression",
+      );
+      assert.deepStrictEqual(client.sendRequest.firstCall.args[1], { code });
+      assert.ok(wrapped.includes("proc python;\nsubmit;\na = 1\n__sas_"));
+      assert.ok(wrapped.includes("__SAS_AUTODISPLAY_"));
+      assert.ok(wrapped.includes(" = ((a + 2))\n# trailing comment\n"));
+      assert.strictEqual(document.getWrappedCode(), original);
+      assert.ok(!original.includes("__SAS_AUTODISPLAY_"));
+    });
+
+    it("preserves ordinary Python wrapping", () => {
+      assert.strictEqual(
+        createDocument("a = 1").getWrappedCode(),
+        `/** LOG_START_INDICATOR **/
+%symdel _SASPROGRAMDIR / nowarn;
+proc python;
+submit;
+a = 1
+endsubmit;
+run;`,
+      );
+    });
+
+    for (const source of [
+      "a = 1",
+      "def f():\n    pass\n",
+      "class A:\n    pass\n",
+      "a +",
+    ]) {
+      it(`preserves a non-expression cell ${JSON.stringify(source)}`, async () => {
+        const document = createDocument(source);
+        const client = createClient();
+        client.sendRequest.resolves({ isExpression: false });
+        assert.strictEqual(
+          await document.getWrappedNotebookCode(client),
+          document.getWrappedCode(),
+        );
+      });
+    }
+
+    for (const [source, expressionText] of [
+      ["a = 1; a, 2 # comment\n", "a, 2"],
+      ["a = 1\n(a +\n 2)\n# comment", "(a +\n 2)"],
+      ["None\n", "None"],
+      ["side_effect()\n", "side_effect()"],
+    ]) {
+      it(`rewrites ${JSON.stringify(expressionText)} once and preserves its source lines`, async () => {
+        const document = createDocument(source);
+        const client = createClient();
+        const startOffset = source.indexOf(expressionText);
+        client.sendRequest.resolves({
+          isExpression: true,
+          expressionText,
+          startOffset,
+          endOffset: startOffset + expressionText.length,
+        });
+        const wrapped = await document.getWrappedNotebookCode(client);
+        assert.ok(wrapped.includes(` = ((${expressionText}))`));
+        assert.strictEqual(wrapped.split(` = ((${expressionText}))`).length, 2);
+      });
+    }
+
+    it("detects the selected source rather than the whole document", async () => {
+      const document = new SASCodeDocument({
+        languageId: "python",
+        code: "a = 1\na + 2",
+        selectedCode: "a + 2",
+        checkKeyword: async () => false,
+      });
+      const client = createClient();
+      client.sendRequest.resolves({
+        ...expression,
+        startOffset: 0,
+        endOffset: 5,
+      });
+      const wrapped = await document.getWrappedNotebookCode(client);
+      assert.deepStrictEqual(client.sendRequest.firstCall.args[1], {
+        code: "a + 2",
+      });
+      assert.ok(!wrapped.includes("a = 1"));
+      assert.ok(wrapped.includes("__SAS_AUTODISPLAY_"));
+    });
+
+    it("does not request detection for other languages or empty cells", async () => {
+      for (const [source, languageId] of [
+        ["a + 2", "sas"],
+        [" \n", "python"],
+      ]) {
+        const document = createDocument(source, languageId);
+        const client = createClient();
+        assert.strictEqual(
+          await document.getWrappedNotebookCode(client),
+          document.getWrappedCode(),
+        );
+        assert.strictEqual(client.sendRequest.callCount, 0);
+      }
+    });
+
+    it("does not wait for a stopped or absent language client", async () => {
+      const document = createDocument();
+      const client = createClient();
+      client.isRunning.returns(false);
+      assert.strictEqual(
+        await document.getWrappedNotebookCode(client),
+        document.getWrappedCode(),
+      );
+      assert.strictEqual(
+        await document.getWrappedNotebookCode(),
+        document.getWrappedCode(),
+      );
+      assert.strictEqual(client.sendRequest.callCount, 0);
+    });
+
+    for (const result of [
+      { isExpression: false },
+      undefined,
+      { ...expression, startOffset: -1 },
+      { ...expression, startOffset: 6.5 },
+      { ...expression, endOffset: 1000 },
+      { ...expression, endOffset: 6 },
+      { ...expression, expressionText: "different source" },
+      { isExpression: true },
+    ]) {
+      it(`preserves code for response ${JSON.stringify(result)}`, async () => {
+        const document = createDocument();
+        const client = createClient();
+        client.sendRequest.resolves(result);
+        assert.strictEqual(
+          await document.getWrappedNotebookCode(client),
+          document.getWrappedCode(),
+        );
+      });
+    }
+
+    it("retries on a subsequent execution after a failed request", async () => {
+      const document = createDocument();
+      const client = createClient();
+      client.sendRequest.onFirstCall().rejects(new Error("server stopped"));
+      assert.strictEqual(
+        await document.getWrappedNotebookCode(client),
+        document.getWrappedCode(),
+      );
+      assert.ok(
+        (await document.getWrappedNotebookCode(client)).includes(
+          "__SAS_AUTODISPLAY_",
+        ),
+      );
+      assert.strictEqual(client.sendRequest.callCount, 2);
+    });
+
+    it("cancels timed-out detection and ignores a late response", async () => {
+      const clock = sinon.useFakeTimers();
+      try {
+        const document = createDocument();
+        const client = createClient();
+        let resolveRequest!: (value: typeof expression) => void;
+        client.sendRequest.returns(
+          new Promise((resolve) => {
+            resolveRequest = resolve;
+          }),
+        );
+        const pending = document.getWrappedNotebookCode(client);
+        const token = client.sendRequest.firstCall.args[2];
+        await clock.tickAsync(1000);
+        assert.strictEqual(await pending, document.getWrappedCode());
+        assert.strictEqual(token.isCancellationRequested, true);
+        resolveRequest(expression);
+        await clock.tickAsync(0);
+        assert.ok(!document.getWrappedCode().includes("__SAS_AUTODISPLAY_"));
+        client.sendRequest.resolves(expression);
+        assert.ok(
+          (await document.getWrappedNotebookCode(client)).includes(
+            "__SAS_AUTODISPLAY_",
+          ),
+        );
+      } finally {
+        clock.restore();
+      }
+    });
+
+    it("skips oversized cells", async () => {
+      const document = createDocument("a".repeat(100_001));
+      const client = createClient();
+      assert.strictEqual(
+        await document.getWrappedNotebookCode(client),
+        document.getWrappedCode(),
+      );
+      assert.strictEqual(client.sendRequest.callCount, 0);
+    });
+
+    it("skips dense and deeply nested cells before sending a request", async () => {
+      const client = createClient();
+      for (const source of [
+        "a = 1\n".repeat(700) + "42",
+        "(".repeat(129) + "42" + ")".repeat(129),
+        "1+".repeat(1025) + "1",
+      ]) {
+        const document = createDocument(source);
+        assert.strictEqual(
+          await document.getWrappedNotebookCode(client),
+          document.getWrappedCode(),
+        );
+      }
+      assert.strictEqual(client.sendRequest.callCount, 0);
+    });
+
+    it("accepts the exact character limit", async () => {
+      const source = "#" + "x".repeat(99_996) + "\n42";
+      const client = createClient();
+      client.sendRequest.resolves({
+        isExpression: true,
+        expressionText: "42",
+        startOffset: 99_998,
+        endOffset: 100_000,
+      });
+      const document = createDocument(source);
+      assert.ok(
+        (await document.getWrappedNotebookCode(client)).includes(" = ((42))"),
+      );
+      assert.strictEqual(client.sendRequest.callCount, 1);
+    });
+
+    it("recovers after a language-server restart", async () => {
+      const document = createDocument();
+      const client = createClient();
+      client.isRunning.returns(false);
+      assert.strictEqual(
+        await document.getWrappedNotebookCode(client),
+        document.getWrappedCode(),
+      );
+      client.isRunning.returns(true);
+      assert.ok(
+        (await document.getWrappedNotebookCode(client)).includes(
+          " = ((a + 2))",
+        ),
+      );
+    });
+
+    it("bounds outstanding requests even when the server ignores cancellation", async () => {
+      const clock = sinon.useFakeTimers();
+      try {
+        const document = createDocument();
+        const client = createClient();
+        client.sendRequest.returns(new Promise(() => {}));
+        const pending = document.getWrappedNotebookCode(client);
+        await clock.tickAsync(1000);
+        assert.strictEqual(await pending, document.getWrappedCode());
+        for (let request = 0; request < 20; request++) {
+          assert.strictEqual(
+            await document.getWrappedNotebookCode(client),
+            document.getWrappedCode(),
+          );
+        }
+        assert.strictEqual(client.sendRequest.callCount, 1);
+      } finally {
+        clock.restore();
+      }
+    });
+
+    it("cancels detection immediately with its execution token", async () => {
+      const document = createDocument();
+      const client = createClient();
+      client.sendRequest.returns(new Promise(() => {}));
+      const cancellation = new CancellationTokenSource();
+      try {
+        const pending = document.getWrappedNotebookCode(
+          client,
+          cancellation.token,
+        );
+        assert.notStrictEqual(
+          client.sendRequest.firstCall.args[2],
+          cancellation.token,
+        );
+        cancellation.cancel();
+        assert.strictEqual(await pending, document.getWrappedCode());
+        assert.strictEqual(
+          client.sendRequest.firstCall.args[2].isCancellationRequested,
+          true,
+        );
+        assert.strictEqual(document.getPythonAutodisplayId(), undefined);
+      } finally {
+        cancellation.dispose();
+      }
+    });
+
+    it("times out the request token without cancelling the parent execution", async () => {
+      const clock = sinon.useFakeTimers();
+      const parent = new CancellationTokenSource();
+      try {
+        const document = createDocument();
+        const client = createClient();
+        client.sendRequest.returns(new Promise(() => {}));
+        const pending = document.getWrappedNotebookCode(client, parent.token);
+        const requestToken = client.sendRequest.firstCall.args[2];
+        assert.ok(requestToken);
+        assert.notStrictEqual(requestToken, parent.token);
+        await clock.tickAsync(1000);
+        assert.strictEqual(await pending, document.getWrappedCode());
+        assert.strictEqual(requestToken.isCancellationRequested, true);
+        assert.strictEqual(parent.token.isCancellationRequested, false);
+        assert.strictEqual(document.getPythonAutodisplayId(), undefined);
+      } finally {
+        parent.dispose();
+        clock.restore();
+      }
+    });
+
+    it("does not request detection when the parent is already cancelled", async () => {
+      const parent = new CancellationTokenSource();
+      try {
+        parent.cancel();
+        const document = createDocument();
+        const client = createClient();
+        assert.strictEqual(
+          await document.getWrappedNotebookCode(client, parent.token),
+          document.getWrappedCode(),
+        );
+        assert.strictEqual(client.sendRequest.callCount, 0);
+      } finally {
+        parent.dispose();
+      }
+    });
+
+    it("keeps an occupied detection slot and ignores late results across documents", async () => {
+      const clock = sinon.useFakeTimers();
+      try {
+        const first = createDocument();
+        const second = createDocument("99");
+        const client = createClient();
+        let resolveRequest!: (value: typeof expression) => void;
+        client.sendRequest.returns(
+          new Promise((resolve) => {
+            resolveRequest = resolve;
+          }),
+        );
+        const pending = first.getWrappedNotebookCode(client);
+        assert.strictEqual(
+          await second.getWrappedNotebookCode(client),
+          second.getWrappedCode(),
+        );
+        assert.strictEqual(client.sendRequest.callCount, 1);
+        await clock.tickAsync(1000);
+        assert.strictEqual(await pending, first.getWrappedCode());
+        assert.strictEqual(
+          await second.getWrappedNotebookCode(client),
+          second.getWrappedCode(),
+        );
+        assert.strictEqual(client.sendRequest.callCount, 1);
+        resolveRequest(expression);
+        await clock.tickAsync(0);
+        assert.strictEqual(first.getPythonAutodisplayId(), undefined);
+        assert.strictEqual(second.getPythonAutodisplayId(), undefined);
+        client.sendRequest.resolves({
+          isExpression: true,
+          expressionText: "99",
+          startOffset: 0,
+          endOffset: 2,
+        });
+        assert.ok(
+          (await second.getWrappedNotebookCode(client)).includes(" = ((99))"),
+        );
+        assert.ok(second.getPythonAutodisplayId());
+        assert.strictEqual(first.getPythonAutodisplayId(), undefined);
+      } finally {
+        clock.restore();
+      }
+    });
+
+    function executePython(source: string) {
+      const command = process.platform === "win32" ? "py" : "python3";
+      const args = process.platform === "win32" ? ["-3"] : [];
+      return spawnSync(command, [...args, "-c", source], { encoding: "utf8" });
+    }
+
+    for (const source of [
+      'f"{side_effect()}"',
+      '"prefix " f"{side_effect()}"',
+    ]) {
+      it(`evaluates a first-cell f-string exactly once: ${source}`, async () => {
+        const document = createDocument(source);
+        const client = createClient();
+        client.sendRequest.resolves({
+          isExpression: true,
+          expressionText: source,
+          startOffset: 0,
+          endOffset: source.length,
+        });
+        const wrapped = await document.getWrappedNotebookCode(client);
+        const python = wrapped.split("\nsubmit;\n")[1].split("\nendsubmit;")[0];
+        const executed = executePython(`import io, contextlib
+namespace = {}
+exec("calls = []\\ndef side_effect():\\n    calls.append(1)\\n    return 1", namespace)
+with contextlib.redirect_stdout(io.StringIO()) as stdout:
+    exec(${JSON.stringify(python)}, namespace)
+assert namespace["calls"] == [1], namespace["calls"]
+assert "__doc__" not in namespace
+assert not any(name.startswith("__sas_") for name in namespace)
+assert "_BEGIN__" in stdout.getvalue()
+`);
+        assert.ifError(executed.error);
+        assert.strictEqual(executed.status, 0, executed.stderr);
+      });
+    }
+
+    for (const [source, finalExpression, expected, isModuleDocstring] of [
+      ["a = 7\na,", "a,", "(7,)"],
+      ["items = [1, 2]\n*items,", "*items,", "(1, 2)"],
+      ["a = 7\n(a,)", "(a,)", "(7,)"],
+      ['"hello"', '"hello"', "'hello'", true],
+      ["[1, 2, 3]", "[1, 2, 3]", "[1, 2, 3]"],
+      ['{"a": 1}', '{"a": 1}', "{'a': 1}"],
+      ["a = 1\na + 1", "a + 1", "2"],
+      ["a = 7; a, # comment", "a,", "(7,)"],
+      ["a = 7\r\n(a +\r\n 1) # comment", "(a +\r\n 1)", "8"],
+      ["__import__ = None\nrepr = None\nprint = None\n42", "42", "42"],
+      [
+        "calls = []\ndef f():\n    calls.append(1)\n    return len(calls)\nf()",
+        "f()",
+        "1",
+      ],
+      ["(a := 1)", "(a := 1)", "1"],
+      ["None", "None", ""],
+      [
+        "class Bad:\n    def __repr__(self):\n        raise Exception('bad repr')\nBad()",
+        "Bad()",
+        "",
+      ],
+      [
+        "class Bad:\n    def __repr__(self):\n        raise KeyboardInterrupt()\nBad()",
+        "Bad()",
+        "",
+      ],
+      ["print('prefix', end='')\n42", "42", "prefix42"],
+      [
+        "print('__SAS_AUTODISPLAY__hello')\n42",
+        "42",
+        "__SAS_AUTODISPLAY__hello\n42",
+      ],
+      [
+        "class Multi:\n    def __repr__(self):\n        return 'first\\nsecond'\nMulti()",
+        "Multi()",
+        "first\nsecond",
+      ],
+      ["import sys\nprint('warning', file=sys.stderr)\n42", "42", "42"],
+      ['"docstring"\nfrom __future__ import annotations\n42', "42", "42"],
+      ["y = [1, 2]\n[x for x in y]", "[x for x in y]", "[1, 2]"],
+      ['{\n "*": 1\n}', '{\n "*": 1\n}', "{'*': 1}"],
+      ["True", "True", "True"],
+      ["...", "...", "Ellipsis"],
+      ['pass\n"a"', '"a"', "'a'"],
+    ] as const) {
+      it(`executes safely: ${JSON.stringify(source)}`, async function () {
+        const document = createDocument(source);
+        const client = createClient();
+        const startOffset = source.lastIndexOf(finalExpression);
+        client.sendRequest.resolves({
+          isExpression: true,
+          expressionText: finalExpression,
+          startOffset,
+          endOffset: startOffset + finalExpression.length,
+          ...(isModuleDocstring ? { isModuleDocstring: true } : {}),
+        });
+        const wrapped = await document.getWrappedNotebookCode(client);
+        const python = wrapped.split("\nsubmit;\n")[1].split("\nendsubmit;")[0];
+        const executed = executePython(`import json, io, contextlib, builtins
+namespace = {"__builtins__": dict(vars(builtins))}
+original_namespace = {"__builtins__": dict(vars(builtins))}
+with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+  exec(${JSON.stringify(source)}, original_namespace)
+stdout, stderr = io.StringIO(), io.StringIO()
+with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+    exec(${JSON.stringify(python)}, namespace)
+assert not any(name.startswith("__sas_") for name in namespace)
+assert set(namespace) == set(original_namespace)
+for name, value in original_namespace.items():
+  if isinstance(value, (str, int, bool, type(None), tuple, list, dict)):
+    assert namespace[name] == value, name
+assert namespace.get("calls", [1]) == [1]
+assert namespace.get("a", 1) in (1, 7)
+print(json.dumps({"stdout": stdout.getvalue(), "stderr": stderr.getvalue()}))`);
+        assert.ifError(executed.error);
+        assert.strictEqual(executed.status, 0, executed.stderr);
+        const output = JSON.parse(executed.stdout);
+        const { processPythonLog } =
+          await import("../../../src/components/notebook/PythonOutputProcessor");
+        const lines = output.stdout
+          ? output.stdout.replace(/\n$/, "").split("\n")
+          : [];
+        const processed = processPythonLog(
+          [
+            { type: "normal", line: ">>> " },
+            ...lines.map((line: string) => ({ type: "normal" as const, line })),
+            { type: "normal", line: ">>> " },
+          ],
+          document.getPythonAutodisplayId(),
+        );
+        assert.strictEqual(
+          processed.outputLines.map((line) => line.line).join("\n"),
+          expected,
+        );
+        assert.strictEqual(
+          output.stderr,
+          source.includes("file=sys.stderr") ? "warning\n" : "",
+        );
+      });
+    }
+
+    it("does not swallow expression evaluation failures", async () => {
+      const document = createDocument("1 / 0");
+      const client = createClient();
+      client.sendRequest.resolves({
+        isExpression: true,
+        expressionText: "1 / 0",
+        startOffset: 0,
+        endOffset: 5,
+      });
+      const wrapped = await document.getWrappedNotebookCode(client);
+      const python = wrapped.split("\nsubmit;\n")[1].split("\nendsubmit;")[0];
+      const executed = executePython(python);
+      assert.ifError(executed.error);
+      assert.notStrictEqual(executed.status, 0);
+      assert.match(executed.stderr, /ZeroDivisionError/);
+    });
   });
 
   it("wrap r code", () => {
@@ -58,6 +630,7 @@ print("test")`,
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
+%symdel _SASPROGRAMDIR / nowarn;
 proc r;
 submit;
 for (x in 1:6) {
@@ -89,6 +662,7 @@ run;
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
+%symdel _SASPROGRAMDIR / nowarn;
 proc sql;
 SELECT * FROM issues WHERE issue.developer = 'scnjdl'
 ;quit;
@@ -98,27 +672,36 @@ SELECT * FROM issues WHERE issue.developer = 'scnjdl'
     assert.equal(sasCodeDoc.getWrappedCode(), expected);
   });
 
-  it("wrap sas code", () => {
-    const parameters: SASCodeDocumentParameters = {
-      languageId: "sas",
-      code: `proc sgplot data=sashelp.class;
+  it("wrap sas code", function () {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require needed for Sinon stubbing
+    const path = require("path");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require needed for Sinon stubbing
+    const { createSandbox } = require("sinon");
+    const sandbox = createSandbox();
+    sandbox.stub(path, "dirname").callsFake(windowsDirname);
+
+    try {
+      const parameters: SASCodeDocumentParameters = {
+        languageId: "sas",
+        code: `proc sgplot data=sashelp.class;
   histogram age;
 run;`,
-      selectedCode: "",
-      uri: "file:///c%3A/SAS/GIT/GitHub/TestData/run.sas",
-      fileName: "c:\\SAS\\GIT\\GitHub\\TestData\\run.sas",
-      htmlStyle: "Illuminate",
-      outputHtml: true,
-      uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
-      checkKeyword: async () => false,
-    };
+        selectedCode: "",
+        uri: "file:///c%3A/SAS/GIT/GitHub/TestData/run.sas",
+        fileName: "c:\\SAS\\GIT\\GitHub\\TestData\\run.sas",
+        htmlStyle: "Illuminate",
+        outputHtml: true,
+        uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
+        checkKeyword: async () => false,
+      };
 
-    const sasCodeDoc = new SASCodeDocument(parameters);
+      const sasCodeDoc = new SASCodeDocument(parameters);
 
-    const expected = `/** LOG_START_INDICATOR **/
+      const expected = `/** LOG_START_INDICATOR **/
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
+%let _SASPROGRAMDIR = %nrquote(%nrstr(c:\\SAS\\GIT\\GitHub\\TestData));
 %let _SASPROGRAMFILE = %nrquote(%nrstr(c:\\SAS\\GIT\\GitHub\\TestData\\run.sas));
 proc sgplot data=sashelp.class;
   histogram age;
@@ -126,37 +709,52 @@ run;
 ;*';*";*/;run;quit;ods html5(id=vscode) close;
 `;
 
-    assert.equal(sasCodeDoc.getWrappedCode(), expected);
+      assert.equal(sasCodeDoc.getWrappedCode(), expected);
+    } finally {
+      sandbox.restore();
+    }
   });
 
-  it("wrap sas code with correct windows style file path to &_SASPROGRAMFILE", () => {
-    const parameters: SASCodeDocumentParameters = {
-      languageId: "sas",
-      code: "%put &=_SASPROGRAMFILE;",
-      selectedCode: "",
-      uri: "file:///c%3A/SAS/GIT/GitHub/TestData/run.sas",
-      fileName: `c:\\temp\\My Test\\R&D\\mean(95%CI)\\Parkinson's Disease example.sas`,
-      htmlStyle: "Illuminate",
-      outputHtml: true,
-      uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
-      checkKeyword: async () => false,
-    };
-    const sasCodeDoc = new SASCodeDocument(parameters);
+  it("wrap sas code with correct windows style file path to &_SASPROGRAMFILE", function () {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require needed for Sinon stubbing
+    const path = require("path");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- require needed for Sinon stubbing
+    const { createSandbox } = require("sinon");
+    const sandbox = createSandbox();
+    sandbox.stub(path, "dirname").callsFake(windowsDirname);
 
-    const expected = `/** LOG_START_INDICATOR **/
+    try {
+      const parameters: SASCodeDocumentParameters = {
+        languageId: "sas",
+        code: "%put &=_SASPROGRAMFILE;",
+        selectedCode: "",
+        uri: "file:///c%3A/SAS/GIT/GitHub/TestData/run.sas",
+        fileName: `c:\\temp\\My Test\\R&D\\mean(95%CI)\\Parkinson's Disease example.sas`,
+        htmlStyle: "Illuminate",
+        outputHtml: true,
+        uuid: "519058ad-d33b-4b5c-9d23-4cc8d6ffb163",
+        checkKeyword: async () => false,
+      };
+      const sasCodeDoc = new SASCodeDocument(parameters);
+
+      const expected = `/** LOG_START_INDICATOR **/
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
-%let _SASPROGRAMFILE = %nrquote(%nrstr(c:\\temp\\My Test\\R&D\\mean%(95%CI%)\\Parkinson%'s Disease example.sas));
+%let _SASPROGRAMDIR = %nrquote(%nrstr(c:\\temp\\My Test\\R&D\\mean%(95%%CI%)));
+%let _SASPROGRAMFILE = %nrquote(%nrstr(c:\\temp\\My Test\\R&D\\mean%(95%%CI%)\\Parkinson%'s Disease example.sas));
 %put &=_SASPROGRAMFILE;
 ;*';*";*/;run;quit;ods html5(id=vscode) close;
 `;
 
-    assert.equal(
-      sasCodeDoc.getWrappedCode(),
-      expected,
-      "assign_SASProgramFile returned unexpected string",
-    );
+      assert.equal(
+        sasCodeDoc.getWrappedCode(),
+        expected,
+        "assign_SASProgramFile returned unexpected string",
+      );
+    } finally {
+      sandbox.restore();
+    }
   });
 
   it("wrap sas code with correct unix style file path to &_SASPROGRAMFILE", () => {
@@ -177,7 +775,8 @@ ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inl
 title;footnote;ods _all_ close;
 ods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
-%let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)/Parkinson%'s Disease example.sas));
+%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)));
+%let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)/Parkinson%'s Disease example.sas));
 %put &=_SASPROGRAMFILE;
 ;*';*";*/;run;quit;ods html5(id=vscode) close;
 `;
@@ -210,7 +809,8 @@ ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inl
     const expected = `/** LOG_START_INDICATOR **/
 title;footnote;ods _all_ close;\nods graphics on;
 ods html5(id=vscode) style=Illuminate options(bitmap_mode='inline' svg_mode='inline') body="519058ad-d33b-4b5c-9d23-4cc8d6ffb163.htm";
-%let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%CI%)/Parkinson%'s Disease example.sas));
+%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)));
+%let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)/Parkinson%'s Disease example.sas));
 cas; caslib _all_ assign;
 
   data casuser.cascars; set sashelp.cars; run;
@@ -223,6 +823,162 @@ cas; caslib _all_ assign;
       sasCodeDoc.getWrappedCode(),
       expected,
       "returns unexpected string",
+    );
+  });
+
+  it("wrapCodeWithSASProgramFileName with no fileName or uri", () => {
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "data test; run;",
+      selectedCode: "",
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      !wrappedCode.includes("_SASPROGRAMFILE"),
+      "wrapped code should not include _SASPROGRAMFILE when fileName and uri are not provided",
+    );
+    assert(
+      wrappedCode.includes("%symdel _SASPROGRAMDIR / nowarn;"),
+      "wrapped code should clear _SASPROGRAMDIR when fileName and uri are not provided",
+    );
+    assert(
+      wrappedCode.includes("data test; run;"),
+      "wrapped code should include the original code",
+    );
+  });
+
+  it("wrapCodeWithSASProgramDir with local fileName", () => {
+    const fileName =
+      "/tmp/My Test/R&D/mean(95%CI)/Parkinson's Disease example.sas";
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "data test; run;",
+      selectedCode: "",
+      fileName,
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)));",
+      ),
+      "wrapped code should include _SASPROGRAMDIR with the directory of fileName",
+    );
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(/tmp/My Test/R&D/mean%(95%%CI%)/Parkinson%'s Disease example.sas));",
+      ),
+      "wrapped code should include _SASPROGRAMFILE with the full fileName",
+    );
+  });
+
+  it("escapes a percent at the end of a directory", () => {
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "%put &=_SASPROGRAMDIR;",
+      selectedCode: "",
+      fileName: "/tmp/100%/macro_test.sas",
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMDIR = %nrquote(%nrstr(/tmp/100%%));",
+      ),
+      "wrapped code should escape a trailing percent in the directory",
+    );
+  });
+
+  it("wrapCodeWithSASProgramDir is skipped for sasContent URI", () => {
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "this is the code",
+      selectedCode: "",
+      uri: "sasContent:/test.sas?id%3D%2Ffiles%2Ffiles%2F349be085-146d-4e0e-9fdc-99d330fa18d1",
+      fileName: "filename.sas",
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      wrappedCode.includes("%symdel _SASPROGRAMDIR / nowarn;"),
+      "wrapped code should clear _SASPROGRAMDIR for sasContent URIs",
+    );
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(sascontent:/files/files/349be085-146d-4e0e-9fdc-99d330fa18d1));",
+      ),
+      "wrapped code should include _SASPROGRAMFILE for sasContent URIs",
+    );
+  });
+
+  it("wrapCodeWithSASProgramFileName with sasContent URI", () => {
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "this is the code",
+      selectedCode: "",
+      uri: "sasContent:/test.sas?id%3D%2Ffiles%2Ffiles%2F349be085-146d-4e0e-9fdc-99d330fa18d1",
+      fileName: "filename.sas",
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(sascontent:/files/files/349be085-146d-4e0e-9fdc-99d330fa18d1));",
+      ),
+      "wrapped code should include _SASPROGRAMFILE with sascontent: prefix from sasContent URI",
+    );
+  });
+
+  it("wrapCodeWithSASProgramFileName with sas notebook URI", () => {
+    const parameters: SASCodeDocumentParameters = {
+      languageId: "sas",
+      code: "this is the code",
+      selectedCode: "",
+      uri: "vscode-notebook-cell:/testContent.sasnb?id%3D%2Ffiles%2Ffiles%2F916e7678-a1c9-4f5b-9d72-5af9f19fae87#W0sc2FzQ29udGVudA%3D%3D",
+      fileName: "filename.sas",
+      htmlStyle: "Illuminate",
+      outputHtml: false,
+      checkKeyword: async () => false,
+    };
+
+    const sasCodeDoc = new SASCodeDocument(parameters);
+    const wrappedCode = sasCodeDoc.getWrappedCode();
+
+    assert(
+      wrappedCode.includes(
+        "%let _SASPROGRAMFILE = %nrquote(%nrstr(sascontent:/files/files/916e7678-a1c9-4f5b-9d72-5af9f19fae87));",
+      ),
+      "wrapped code should include _SASPROGRAMFILE with sascontent: prefix from sasContent URI",
+    );
+    assert(
+      wrappedCode.includes("%symdel _SASPROGRAMDIR / nowarn;"),
+      "wrapped code should clear _SASPROGRAMDIR for sasContent notebook URIs",
     );
   });
 
@@ -244,7 +1000,7 @@ cas; caslib _all_ assign;
 
     const sasCodeDoc = new SASCodeDocument(parameters);
     const problem = {
-      lineNumber: 72,
+      lineNumber: 73,
       startColumn: 2,
       endColumn: 57,
       message:
@@ -295,8 +1051,7 @@ cas; caslib _all_ assign;
     const { createSandbox } = require("sinon");
     const sandbox = createSandbox();
 
-    const win32Dirname = path.win32.dirname.bind(path.win32);
-    sandbox.stub(path, "dirname").callsFake(win32Dirname);
+    sandbox.stub(path, "dirname").callsFake(windowsDirname);
 
     try {
       const parameters: SASCodeDocumentParameters = {
@@ -325,8 +1080,7 @@ cas; caslib _all_ assign;
     const { createSandbox } = require("sinon");
     const sandbox = createSandbox();
 
-    const win32Dirname = path.win32.dirname.bind(path.win32);
-    sandbox.stub(path, "dirname").callsFake(win32Dirname);
+    sandbox.stub(path, "dirname").callsFake(windowsDirname);
 
     try {
       const parameters: SASCodeDocumentParameters = {
@@ -347,60 +1101,61 @@ cas; caslib _all_ assign;
       sandbox.restore();
     }
   });
-});
 
-const codeLinesInLog = [
-  "1    /** LOG_START_INDICATOR **/",
-  "2    title;footnote;ods _all_ close;",
-  "3    ods graphics on;",
-  "4    ods html5(id=vscode) style=Ignite options(bitmap_mode='inline' svg_mode='inline');",
-  "5    %let _SASPROGRAMFILE = %nrquote(%nrstr(c:\\SAS\\Workspace\\SAS-EXTENSION\\TestData\\samples\\temp.sas));",
-  "6    ",
-  "7    ",
-  "8    /* I am comment */",
-  "9    options ls=72;",
-  "10   ",
-  "11   data pf70 pm70 pf80 pm80;",
-  "12       input state $ pop_f70 pop_m70 pop_f80 pop_m80 @@;",
-  "13       drop pop_m70 pop_f70 pop_m80 pop_f80;",
-  "14       decade= 70;",
-  "15       sex= 'Female'",
-  "16       pop= pop_f70;  output pf70;",
-  "17       sex= 'Male';",
-  "18       pop= pop_m70;  output pm70;",
-  "19   ",
-  "20       decade= 80;",
-  "21       pop= pop_m80;  output pm80;",
-  "22       sex= 'Female';",
-  "23       pop= pop_f80;  output pf80;",
-  "24       decade= 70;",
-  "25       sex= 'Female'",
-  "26       pop= pop_f70;  output pf70;",
-  "27       sex= 'Male';",
-  "28       pop= pop_m70;  output pm70;",
-  "29       decade= 80;",
-  "30       pop= pop_m80;  output pm80;",
-  "31       sex= 'Female';",
-  "32       pop= pop_f80;  output pf80;",
-  "33       cards;",
-  "61   ;",
-  "62   ",
-  "63   data popstate;",
-  "64       set pf70 pm70 pf80 pm80;",
-  "65       label pop= 'Census Population In Millions';",
-  "66   title 'The SAS System';",
-  "67   ",
-  "68   proc univariate data=popstate freq plot normal;",
-  "69       var2 pop;",
-  "70       id state;",
-  "71       by decade sex;",
-  "72       output out= univout mean= popnmean median= popn50",
-  "73           pctlpre= pop_  pctlpts= 50, 95 to 100 by 2.5;",
-  "74   ",
-  "75   proc print data= univout;",
-  "76       title 'Output Dataset From PROC UNIVARIATE';",
-  "77       format popn50 pop_50 pop_95 pop_97_5 pop_100 best8.;",
-  "78   ",
-  `79   ;*';*";*/;run;`,
-  "80   ",
-];
+  const codeLinesInLog = [
+    "1    /** LOG_START_INDICATOR **/",
+    "2    title;footnote;ods _all_ close;",
+    "3    ods graphics on;",
+    "4    ods html5(id=vscode) style=Ignite options(bitmap_mode='inline' svg_mode='inline');",
+    "5    %let _SASPROGRAMDIR = %nrquote(%nrstr(c:\\SAS\\Workspace\\SAS-EXTENSION\\TestData\\samples));",
+    "6    %let _SASPROGRAMFILE = %nrquote(%nrstr(c:\\SAS\\Workspace\\SAS-EXTENSION\\TestData\\samples\\temp.sas));",
+    "7    ",
+    "8    ",
+    "9    /* I am comment */",
+    "10   options ls=72;",
+    "11   ",
+    "12   data pf70 pm70 pf80 pm80;",
+    "13       input state $ pop_f70 pop_m70 pop_f80 pop_m80 @@;",
+    "14       drop pop_m70 pop_f70 pop_m80 pop_f80;",
+    "15       decade= 70;",
+    "16       sex= 'Female'",
+    "17       pop= pop_f70;  output pf70;",
+    "18       sex= 'Male';",
+    "19       pop= pop_m70;  output pm70;",
+    "20   ",
+    "21       decade= 80;",
+    "22       pop= pop_m80;  output pm80;",
+    "23       sex= 'Female';",
+    "24       pop= pop_f80;  output pf80;",
+    "25       decade= 70;",
+    "26       sex= 'Female'",
+    "27       pop= pop_f70;  output pf70;",
+    "28       sex= 'Male';",
+    "29       pop= pop_m70;  output pm70;",
+    "30       decade= 80;",
+    "31       pop= pop_m80;  output pm80;",
+    "32       sex= 'Female';",
+    "33       pop= pop_f80;  output pf80;",
+    "34       cards;",
+    "62   ;",
+    "63   ",
+    "64   data popstate;",
+    "65       set pf70 pm70 pf80 pm80;",
+    "66       label pop= 'Census Population In Millions';",
+    "67   title 'The SAS System';",
+    "68   ",
+    "69   proc univariate data=popstate freq plot normal;",
+    "70       var2 pop;",
+    "71       id state;",
+    "72       by decade sex;",
+    "73       output out= univout mean= popnmean median= popn50",
+    "74           pctlpre= pop_  pctlpts= 50, 95 to 100 by 2.5;",
+    "75   ",
+    "76   proc print data= univout;",
+    "77       title 'Output Dataset From PROC UNIVARIATE';",
+    "78       format popn50 pop_50 pop_95 pop_97_5 pop_100 best8.;",
+    "79   ",
+    `80   ;*';*";*/;run;`,
+    "81   ",
+  ];
+});

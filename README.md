@@ -12,6 +12,10 @@ The SAS extension includes many [features](https://sassoftware.github.io/vscode-
 - Navigate SAS Content and libraries, including table viewer
 - Create notebooks for SAS, SQL, Python, R, and other languages
 
+## Find All References and Rename Symbol
+
+For SAS files, Find All References and Rename Symbol support DATA step variables, datasets, macro variables, macro parameters, and macro programs. Results and rename edits are limited to the active SAS file. DATA step variables are scoped to their DATA step, and datasets are distinguished by library reference and member name. Statically recognizable names in macro constructs such as `%SYMDEL`, `%SYSLPUT`, `%SYSRPUT`, `%SYSEXIST`, `%SYMGLOBAL`, `%SYMLOCAL`, `%SYSMACDELETE`, `%SYSMACEXEC`, and `%SYSMACEXIST` are supported. Dynamically computed names and runtime macro resolution are not evaluated.
+
 <img src="website/static/images/featuresGlance.png"/>
 
 ## Support

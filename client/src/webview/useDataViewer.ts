@@ -18,16 +18,15 @@ import { AgGridReact } from "ag-grid-react";
 import { v4 } from "uuid";
 
 import type {
+  TableColumn,
   TableData,
   TableQuery,
 } from "../components/LibraryNavigator/types";
-import { Column } from "../connection/rest/api/compute";
 import ColumnHeader from "./ColumnHeader";
 import { ColumnMenuProps, getColumnMenu } from "./ColumnMenu";
 import localize from "./localize";
-
-declare const acquireVsCodeApi;
-const vscode = acquireVsCodeApi();
+import useManageColumns from "./useManageColumns";
+import vscode from "./vscode";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -90,7 +89,7 @@ let fetchColumnsTimeoutId: ReturnType<typeof setTimeout> | null = null;
 const clearFetchColumnsTimeout = () =>
   fetchColumnsTimeoutId && clearTimeout(fetchColumnsTimeoutId);
 const fetchColumns = (): Promise<{
-  columns: Column[];
+  columns: TableColumn[];
 }> => {
   const requestKey = v4();
   vscode.postMessage({ command: "request:loadColumns", key: requestKey });
@@ -133,6 +132,16 @@ const useDataViewer = () => {
   useEffect(() => {
     columnMenuRef.current = columnMenu;
   }, [columnMenu]);
+
+  const {
+    initialColumnState,
+    manageColumnsOpen,
+    setManageColumnsOpen,
+    openManageColumns,
+  } = useManageColumns({
+    gridRef,
+    fetchColumns,
+  });
 
   const dataSource = useCallback(
     (incomingQueryParams?: TableQuery) => ({
@@ -182,7 +191,7 @@ const useDataViewer = () => {
     [dataSource],
   );
 
-  const dismissMenu = (focusColumn: boolean = true) => {
+  const dismissMenu = useCallback((focusColumn: boolean = true) => {
     if (focusColumn && columnMenuRef.current?.column.colId) {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const headerElement = document.querySelector(
@@ -193,7 +202,7 @@ const useDataViewer = () => {
       }
     }
     setColumnMenu(undefined);
-  };
+  }, []);
 
   const refreshResults = useCallback(
     (query: TableQuery | undefined) => {
@@ -210,15 +219,27 @@ const useDataViewer = () => {
         return setColumnMenu(undefined);
       }
       setColumnMenu(
-        getColumnMenu(api, column, rect, dismissMenu, (columnName: string) => {
-          vscode.postMessage({
-            command: "request:loadColumnProperties",
-            data: { columnName },
-          });
-        }),
+        getColumnMenu(
+          api,
+          column,
+          rect,
+          dismissMenu,
+          (columnName: string) => {
+            vscode.postMessage({
+              command: "request:loadColumnProperties",
+              data: { columnName },
+            });
+          },
+          async () => {
+            const opened = await openManageColumns();
+            if (opened) {
+              dismissMenu(false);
+            }
+          },
+        ),
       );
     },
-    [],
+    [dismissMenu, openManageColumns],
   );
 
   useEffect(() => {
@@ -231,7 +252,8 @@ const useDataViewer = () => {
         field: column.name,
         headerComponent: ColumnHeader,
         headerComponentParams: {
-          columnType: column.type,
+          columnType: column.type || "",
+          columnFormatCategory: column.formatCategory,
           currentColumn: () => columnMenuRef.current?.column,
           displayMenuForColumn,
         },
@@ -247,10 +269,9 @@ const useDataViewer = () => {
             params.event.key === "Enter" ||
             (params.event.key === "F10" && params.event.shiftKey)
           ) {
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            const dropdown = (params.event.target as HTMLElement).querySelector(
-              ".dropdown",
-            );
+            const dropdown =
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              (params.event.target as HTMLElement).querySelector(".dropdown");
             if (!dropdown) {
               return true;
             }
@@ -296,10 +317,15 @@ const useDataViewer = () => {
   return {
     columnMenu,
     columns,
+    setColumns,
     dismissMenu,
     gridRef,
+    initialColumnState,
+    openManageColumns,
+    manageColumnsOpen,
     onGridReady,
     refreshResults,
+    setManageColumnsOpen,
   };
 };
 

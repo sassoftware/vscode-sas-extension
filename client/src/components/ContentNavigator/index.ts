@@ -7,6 +7,7 @@ import {
   ExtensionContext,
   OpenDialogOptions,
   ProgressLocation,
+  TabInputCustom,
   Uri,
   commands,
   env,
@@ -16,8 +17,16 @@ import {
 } from "vscode";
 
 import { profileConfig } from "../../commands/profile";
+import { getGlobalStorageUri } from "../ExtensionContext";
+import LibraryAdapterFactory from "../LibraryNavigator/LibraryAdapterFactory";
+import LibraryModel from "../LibraryNavigator/LibraryModel";
 import { SubscriptionProvider } from "../SubscriptionProvider";
-import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
+import {
+  type ActiveProfileSnapshot,
+  ConnectionType,
+  ProfileWithFileRootOptions,
+  hasActiveProfileChanged,
+} from "../profile";
 import { treeViewSelections } from "../utils/treeViewSelections";
 import ContentAdapterFactory from "./ContentAdapterFactory";
 import ContentDataProvider from "./ContentDataProvider";
@@ -31,7 +40,7 @@ import {
   ContentSourceType,
   FileManipulationEvent,
 } from "./types";
-import { isContainer as getIsContainer } from "./utils";
+import { isContainer as getIsContainer, isItemInRecycleBin } from "./utils";
 
 const fileValidator = (value: string): string | null =>
   /^([^/<>;\\{}]+)\.\w+$/.test(
@@ -67,7 +76,11 @@ class ContentNavigator implements SubscriptionProvider {
   private contentDataProvider: ContentDataProvider;
   private contentModel: ContentModel;
   private sourceType: ContentNavigatorConfig["sourceType"];
+  private temporaryImageUris = new Map<string, Uri>();
+  // Maps a dataset's server path to the uid of its open DataViewer panel.
+  private openDatasetViewers = new Map<string, string>();
   private treeIdentifier: ContentNavigatorConfig["treeIdentifier"];
+  private previousActiveProfile: ActiveProfileSnapshot;
 
   constructor(context: ExtensionContext, config: ContentNavigatorConfig) {
     this.sourceType = config.sourceType;
@@ -77,9 +90,11 @@ class ContentNavigator implements SubscriptionProvider {
     );
     this.contentDataProvider = new ContentDataProvider(
       this.contentModel,
+      this.openDatasetViewers,
       context.extensionUri,
       config,
     );
+    this.previousActiveProfile = profileConfig.getActiveProfileSnapshot();
 
     workspace.registerFileSystemProvider(
       config.sourceType,
@@ -89,6 +104,11 @@ class ContentNavigator implements SubscriptionProvider {
       `${config.sourceType}ReadOnly`,
       this.contentDataProvider,
     );
+
+    // Remove any image preview cache files left behind by a previous session
+    // (e.g. VS Code was force-closed or the extension host crashed/timed-out
+    // before the tab-close/dispose cleanup could run).
+    void this.purgeImagePreviewCache();
   }
 
   get onDidManipulateFile(): Event<FileManipulationEvent> {
@@ -97,59 +117,119 @@ class ContentNavigator implements SubscriptionProvider {
 
   public getSubscriptions(): Disposable[] {
     const SAS = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}`;
+    const imageExtensions = [
+      "png",
+      "jpg",
+      "jpeg",
+      "gif",
+      "bmp",
+      "tiff",
+      "webp",
+      "svg",
+    ];
     return [
       ...this.contentDataProvider.getSubscriptions(),
+      window.tabGroups.onDidChangeTabs(async ({ closed }) => {
+        await Promise.all(
+          closed.map((tab) => this.deleteTemporaryImageUri(tab.input)),
+        );
+      }),
+      new Disposable(() => {
+        void this.purgeImagePreviewCache();
+      }),
+      commands.registerCommand(
+        `${SAS}.openResource`,
+        async (resource: ContentItem) => {
+          if (!resource) {
+            return;
+          }
+          const extension =
+            resource.name?.split(".").pop()?.toLowerCase() || "";
+          if (extension === "sas7bdat") {
+            await this.openDataset(resource);
+            return;
+          }
+          const isImage = imageExtensions.includes(extension);
+
+          if (!isImage) {
+            await this.defaultOpenResource(resource);
+            return;
+          }
+
+          const imagePreviewCacheUri = this.imagePreviewCacheUri();
+          try {
+            await workspace.fs.readDirectory(imagePreviewCacheUri);
+          } catch {
+            await workspace.fs.createDirectory(imagePreviewCacheUri);
+          }
+
+          const safeName =
+            resource.name?.replace(/[\\/:*?"<>|]/g, "_") || "image.png";
+          const localUri = Uri.joinPath(
+            imagePreviewCacheUri,
+            `${Date.now()}-${safeName}`,
+          );
+
+          const bytes = await this.contentModel.getContentByUri(
+            resource.vscUri,
+          );
+          await workspace.fs.writeFile(localUri, bytes);
+          this.temporaryImageUris.set(localUri.toString(), localUri);
+          try {
+            await commands.executeCommand(
+              "vscode.openWith",
+              localUri,
+              "imagePreview.previewEditor",
+            );
+          } catch {
+            await this.deleteTemporaryImageUri(localUri);
+          }
+        },
+      ),
       commands.registerCommand(
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
-          this.getTreeViewSelections(item).forEach(
-            async (resource: ContentItem) => {
-              if (!resource.contextValue.includes("delete")) {
-                return;
-              }
-              const isContainer = getIsContainer(resource);
-              const hasUnsavedFiles = isContainer
-                ? await this.contentDataProvider.checkFolderDirty(resource)
-                : false;
-              const moveToRecycleBin =
-                this.contentDataProvider.canRecycleResource(resource);
-
-              if (
-                !moveToRecycleBin &&
-                !(await window.showWarningMessage(
-                  l10n.t(Messages.DeleteWarningMessage, {
-                    name: resource.name,
-                  }),
-                  { modal: true },
-                  Messages.DeleteButtonLabel,
-                ))
-              ) {
-                return;
-              } else if (moveToRecycleBin && hasUnsavedFiles) {
-                if (
-                  !(await window.showWarningMessage(
-                    l10n.t(Messages.RecycleDirtyFolderWarning, {
-                      name: resource.name,
-                    }),
-                    { modal: true },
-                    Messages.MoveToRecycleBinLabel,
-                  ))
-                ) {
-                  return;
-                }
-              }
-              const deleteResult = moveToRecycleBin
-                ? await this.contentDataProvider.recycleResource(resource)
-                : await this.contentDataProvider.deleteResource(resource);
-              if (!deleteResult) {
-                window.showErrorMessage(
-                  isContainer
-                    ? Messages.FolderDeletionError
-                    : Messages.FileDeletionError,
-                );
-              }
-            },
+          const resource = this.getTreeViewSelections(item).filter((resource) =>
+            resource.contextValue?.includes("delete"),
           );
+          if (!resource.length) {
+            return;
+          }
+
+          const deleteStates = await Promise.all(
+            resource.map(async (resource) => {
+              const isContainer = getIsContainer(resource);
+              return {
+                resource,
+                isContainer,
+                // skip dirty check for items already in Recycle Bin
+                hasUnsavedFiles:
+                  isContainer && !isItemInRecycleBin(resource)
+                    ? await this.contentDataProvider.checkFolderDirty(resource)
+                    : false,
+                moveToRecycleBin:
+                  this.contentDataProvider.canRecycleResource(resource),
+              };
+            }),
+          );
+
+          if (!(await this.confirmDelete(deleteStates))) {
+            return;
+          }
+
+          for (const deleteState of deleteStates) {
+            const { resource, isContainer, moveToRecycleBin } = deleteState;
+            const deleteResult = moveToRecycleBin
+              ? await this.contentDataProvider.recycleResource(resource)
+              : await this.contentDataProvider.deleteResource(resource);
+            if (!deleteResult) {
+              window.showErrorMessage(
+                isContainer
+                  ? Messages.FolderDeletionError
+                  : Messages.FileDeletionError,
+              );
+            }
+          }
         },
       ),
       commands.registerCommand(
@@ -428,23 +508,170 @@ class ContentNavigator implements SubscriptionProvider {
       ),
       workspace.onDidChangeConfiguration(
         async (event: ConfigurationChangeEvent) => {
-          if (event.affectsConfiguration("SAS.connectionProfiles")) {
-            const endpoint = this.viyaEndpoint();
-            this.collapseAllContent();
-            const contentModel = new ContentModel(
-              this.contentAdapterForConnectionType(),
-            );
-            this.contentDataProvider.useModel(contentModel);
-            this.contentModel = contentModel;
-            if (endpoint) {
-              await this.contentDataProvider.connect(endpoint);
-            } else {
-              await this.contentDataProvider.refresh();
-            }
+          if (!event.affectsConfiguration("SAS.connectionProfiles")) {
+            return;
+          }
+
+          const currentActiveProfile = profileConfig.getActiveProfileSnapshot();
+
+          const activeProfileChanged = hasActiveProfileChanged(
+            this.previousActiveProfile,
+            currentActiveProfile,
+          );
+
+          this.previousActiveProfile = currentActiveProfile;
+
+          if (!activeProfileChanged) {
+            return;
+          }
+
+          const endpoint = this.viyaEndpoint();
+          this.collapseAllContent();
+          const contentModel = new ContentModel(
+            this.contentAdapterForConnectionType(),
+          );
+          this.contentDataProvider.useModel(contentModel);
+          this.contentModel = contentModel;
+          if (endpoint) {
+            await this.contentDataProvider.connect(endpoint);
+          } else {
+            await this.contentDataProvider.refresh();
           }
         },
       ),
     ];
+  }
+
+  private async defaultOpenResource(item: ContentItem): Promise<void> {
+    const itemUri = await this.contentModel.getUri(item, false);
+    await commands.executeCommand("vscode.open", itemUri);
+  }
+
+  private async openDataset(item: ContentItem): Promise<void> {
+    try {
+      const profile = profileConfig.getProfileByName(
+        profileConfig.getActiveProfile(),
+      );
+      if (
+        this.sourceType !== ContentSourceType.SASServer ||
+        profile?.connectionType !== ConnectionType.Rest
+      ) {
+        throw new Error(
+          l10n.t(
+            "Opening dataset files requires SAS Server navigation with a REST connection.",
+          ),
+        );
+      }
+
+      const itemPath = await this.contentDataProvider.getPathOfItem(item);
+      const normalizedPath = itemPath?.replace(/\\/g, "/");
+      const separator = normalizedPath?.lastIndexOf("/") ?? -1;
+      if (separator < 0) {
+        throw new Error(l10n.t("Unable to determine the dataset folder."));
+      }
+
+      const openViewerUid = this.openDatasetViewers.get(normalizedPath);
+      if (
+        openViewerUid &&
+        (await commands.executeCommand<boolean>(
+          "SAS.revealTable",
+          openViewerUid,
+        ))
+      ) {
+        return;
+      }
+      this.openDatasetViewers.delete(normalizedPath);
+
+      const folderPath =
+        separator === 0 ? "/" : normalizedPath.slice(0, separator);
+      const adapter = new LibraryAdapterFactory().create(
+        profile.connectionType,
+      );
+      const library = await adapter.acquireTemporaryLibrary(folderPath);
+      const model = new LibraryModel(adapter);
+      const tables = await model.getTables({
+        uid: library.name,
+        id: library.name,
+        name: library.name,
+        type: "library",
+        readOnly: true,
+      });
+      const tableName = item.name.slice(0, -".sas7bdat".length);
+      const table = tables.find(
+        (table) => table.name.toLowerCase() === tableName.toLowerCase(),
+      );
+      if (!table) {
+        throw new Error(
+          l10n.t("Dataset {name} was not found in its server folder.", {
+            name: item.name,
+          }),
+        );
+      }
+
+      this.openDatasetViewers.set(normalizedPath, table.uid);
+      await commands.executeCommand(
+        "SAS.viewTable",
+        table,
+        model.getTableResultSet(table),
+        () => model.fetchColumns(table),
+        {
+          fileName: item.name,
+          onClose: async () => {
+            if (this.openDatasetViewers.get(normalizedPath) === table.uid) {
+              this.openDatasetViewers.delete(normalizedPath);
+            }
+            await library.delete();
+          },
+        },
+      );
+    } catch (error) {
+      void window.showErrorMessage(
+        l10n.t("Unable to open dataset: {message}", {
+          message: error instanceof Error ? error.message : String(error),
+        }),
+      );
+    }
+  }
+
+  private imagePreviewCacheUri(): Uri {
+    return Uri.joinPath(getGlobalStorageUri(), "imagePreviewCache");
+  }
+
+  private async deleteTemporaryImageUri(input: unknown): Promise<void> {
+    const uri =
+      input instanceof Uri
+        ? input
+        : input instanceof TabInputCustom
+          ? input.uri
+          : undefined;
+    if (!uri) {
+      return;
+    }
+
+    const key = uri.toString();
+    const temporaryUri = this.temporaryImageUris.get(key);
+    if (!temporaryUri) {
+      return;
+    }
+
+    this.temporaryImageUris.delete(key);
+    try {
+      await workspace.fs.delete(temporaryUri);
+    } catch {
+      // Ignore cleanup failures for preview cache files.
+    }
+  }
+
+  private async purgeImagePreviewCache(): Promise<void> {
+    this.temporaryImageUris.clear();
+    try {
+      await workspace.fs.delete(this.imagePreviewCacheUri(), {
+        recursive: true,
+        useTrash: false,
+      });
+    } catch {
+      // Nothing to clean up if the cache directory does not exist.
+    }
   }
 
   private async collapseAllContent() {
@@ -455,6 +682,57 @@ class ContentNavigator implements SubscriptionProvider {
     if (commandExists) {
       commands.executeCommand(collapeAllCmd);
     }
+  }
+
+  private async confirmDelete(
+    deleteStates: {
+      resource: ContentItem;
+      isContainer: boolean;
+      hasUnsavedFiles: boolean;
+      moveToRecycleBin: boolean;
+    }[],
+  ): Promise<boolean> {
+    const requiresPermanentDelete = deleteStates.some(
+      ({ moveToRecycleBin }) => !moveToRecycleBin,
+    );
+    const hasDirtyFolders = deleteStates.some(
+      ({ hasUnsavedFiles }) => hasUnsavedFiles,
+    );
+    const selectedFolderCount = deleteStates.filter(
+      ({ isContainer }) => isContainer,
+    ).length;
+
+    let confirmed = true;
+    if (hasDirtyFolders) {
+      confirmed = !!(await window.showWarningMessage(
+        l10n.t(
+          selectedFolderCount === 1
+            ? Messages.DirtyFolderWarningSingle
+            : Messages.DirtyFolderWarning,
+        ),
+        { modal: true },
+        requiresPermanentDelete
+          ? Messages.DeleteButtonLabel
+          : Messages.MoveToRecycleBinLabel,
+      ));
+    } else if (requiresPermanentDelete) {
+      const message =
+        deleteStates.length === 1
+          ? l10n.t(Messages.DeleteWarningMessage, {
+              name: deleteStates[0].resource.name,
+            })
+          : l10n.t(Messages.DeleteDirtyItemsWarningMessage, {
+              count: deleteStates.length,
+            });
+
+      confirmed = !!(await window.showWarningMessage(
+        message,
+        { modal: true },
+        Messages.DeleteButtonLabel,
+      ));
+    }
+
+    return confirmed;
   }
 
   private async uploadResource(
@@ -519,12 +797,15 @@ class ContentNavigator implements SubscriptionProvider {
       activeProfile.connectionType,
       profileWithFileRootOptions?.fileNavigationCustomRootPath,
       profileWithFileRootOptions?.fileNavigationRoot,
+      profileWithFileRootOptions?.globalShortcuts,
       this.sourceType,
+      activeProfile.connectionType === ConnectionType.Rest
+        ? activeProfile.display
+        : undefined,
     );
 
     function getProfileWithFileRootOptions():
-      | ProfileWithFileRootOptions
-      | undefined {
+      ProfileWithFileRootOptions | undefined {
       switch (activeProfile.connectionType) {
         case ConnectionType.Rest:
         case ConnectionType.IOM:

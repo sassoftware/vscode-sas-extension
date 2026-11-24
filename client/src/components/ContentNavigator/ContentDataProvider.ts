@@ -38,20 +38,24 @@ import { promisify } from "util";
 import { profileConfig } from "../../commands/profile";
 import { getResourceId } from "../../connection/rest/util";
 import { SubscriptionProvider } from "../SubscriptionProvider";
-import { ViyaProfile } from "../profile";
+import { ConnectionType } from "../profile";
 import { ContentModel } from "./ContentModel";
 import {
   FAVORITES_FOLDER_TYPE,
+  GLOBAL_SHORTCUT_TYPE,
   Messages,
   ROOT_FOLDER_TYPE,
+  ROOT_SHORTCUT_FOLDER_TYPE,
   SERVER_HOME_FOLDER_TYPE,
   SERVER_ROOT_FOLDER_TYPE,
+  SERVER_SHORTCUT_FOLDER_TYPE,
   STOP_SIGN,
   TRASH_FOLDER_TYPE,
 } from "./const";
 import {
   ContentItem,
   ContentNavigatorConfig,
+  ContentSourceType,
   FileManipulationEvent,
 } from "./types";
 import {
@@ -75,8 +79,10 @@ class ContentDataProvider
   private _treeView: TreeView<ContentItem>;
   private _dropEditProvider: Disposable;
   private model: ContentModel;
+  private openDatasets: Map<string, string>;
   private extensionUri: Uri;
   private mimeType: string;
+  private sourceType: ContentSourceType;
 
   public dropMimeTypes: string[];
   public dragMimeTypes: string[];
@@ -89,18 +95,21 @@ class ContentDataProvider
 
   constructor(
     model: ContentModel,
+    openDatasets: Map<string, string>,
     extensionUri: Uri,
-    { mimeType, treeIdentifier }: ContentNavigatorConfig,
+    { mimeType, treeIdentifier, sourceType }: ContentNavigatorConfig,
   ) {
     this._onDidManipulateFile = new EventEmitter<FileManipulationEvent>();
     this._onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
     this._onDidChangeTreeData = new EventEmitter<ContentItem | undefined>();
     this._onDidChange = new EventEmitter<Uri>();
     this.model = model;
+    this.openDatasets = openDatasets;
     this.extensionUri = extensionUri;
     this.dropMimeTypes = [mimeType, "text/uri-list"];
     this.dragMimeTypes = [mimeType];
     this.mimeType = mimeType;
+    this.sourceType = sourceType;
 
     this._treeView = window.createTreeView(treeIdentifier, {
       treeDataProvider: this,
@@ -113,10 +122,15 @@ class ContentDataProvider
     );
 
     this._treeView.onDidChangeVisibility(async () => {
-      if (this._treeView.visible) {
-        const activeProfile: ViyaProfile = profileConfig.getProfileByName(
-          profileConfig.getActiveProfile(),
-        );
+      if (!this._treeView.visible) {
+        return;
+      }
+
+      const activeProfile = profileConfig.getProfileByName(
+        profileConfig.getActiveProfile(),
+      );
+
+      if (activeProfile?.connectionType === ConnectionType.Rest) {
         await this.connect(activeProfile.endpoint);
       }
     });
@@ -224,6 +238,8 @@ class ContentDataProvider
       item.parentFolderUri ? item.parentFolderUri : STOP_SIGN,
     );
 
+    const openResourceCommand = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}.openResource`;
+
     return {
       collapsibleState: isContainer
         ? TreeItemCollapsibleState.Collapsed
@@ -231,8 +247,8 @@ class ContentDataProvider
       command: isContainer
         ? undefined
         : {
-            command: "vscode.open",
-            arguments: [uri],
+            command: openResourceCommand,
+            arguments: [item],
             title: "Open SAS File",
           },
       contextValue: item.contextValue || undefined,
@@ -245,7 +261,7 @@ class ContentDataProvider
 
   public async provideTextDocumentContent(uri: Uri): Promise<string> {
     // use text document content provider to display the readonly editor for the files in the recycle bin
-    return await this.model.getContentByUri(uri);
+    return (await this.model.getContentByUri(uri)).toString();
   }
 
   public getChildren(item?: ContentItem): ProviderResult<ContentItem[]> {
@@ -264,9 +280,7 @@ class ContentDataProvider
   }
 
   public async readFile(uri: Uri): Promise<Uint8Array> {
-    return await this.model
-      .getContentByUri(uri)
-      .then((content) => new TextEncoder().encode(content));
+    return await this.model.getContentByUri(uri);
   }
 
   public async createFolder(
@@ -307,63 +321,73 @@ class ContentDataProvider
       return;
     }
 
-    const newUri = newItem.vscUri;
-    const oldUriToNewUriMap = [[item.vscUri, newUri]];
-    const newItemIsContainer = getIsContainer(newItem);
-    if (closing !== true && !newItemIsContainer) {
-      await commands.executeCommand("vscode.open", newUri);
-    }
-    if (closing !== true && newItemIsContainer) {
-      const urisToOpen = getPreviouslyOpenedChildItems(
-        await this.getChildren(newItem),
-      );
-      for (const [, newUri] of urisToOpen) {
+    if (isDatasetFile(item.name)) {
+      const tableFoundAndRemoved = await this.closeTableIfOpen(item);
+      // if an opened tab was found and closed, open the newly named view
+      if (tableFoundAndRemoved) {
+        const commandPrefix = `SAS.${this.sourceType === ContentSourceType.SASContent ? "content" : "server"}`;
+        await commands.executeCommand(`${commandPrefix}.openResource`, newItem);
+      }
+      return newItem.vscUri;
+    } else {
+      const newUri = newItem.vscUri;
+      const oldUriToNewUriMap = [[item.vscUri, newUri]];
+      const newItemIsContainer = getIsContainer(newItem);
+      if (closing !== true && !newItemIsContainer) {
         await commands.executeCommand("vscode.open", newUri);
       }
-      oldUriToNewUriMap.push(...urisToOpen);
-    }
-    oldUriToNewUriMap.forEach(([uri, newUri]) =>
-      this._onDidManipulateFile.fire({
-        type: "rename",
-        uri,
-        newUri,
-      }),
-    );
-    return newUri;
-
-    function getPreviouslyOpenedChildItems(childItems: ContentItem[]) {
-      const loadChildItems = closing !== true && newItemIsContainer;
-      if (!Array.isArray(removedTabUris) || !loadChildItems) {
-        return [];
+      if (closing !== true && newItemIsContainer) {
+        const urisToOpen = getPreviouslyOpenedChildItems(
+          await this.getChildren(newItem),
+        );
+        for (const [, newUri] of urisToOpen) {
+          await commands.executeCommand("vscode.open", newUri);
+        }
+        oldUriToNewUriMap.push(...urisToOpen);
       }
-      // Here's where things get a little weird. When we rename folders in
-      // sas content, we _don't_ close those files. It doesn't matter since
-      // their path isn't hierarchical. In sas file system, the path is hierarchical,
-      // thus we need to re-open all the closed files. This does that by getting
-      // children and comparing the removedTabUris
-      const filteredChildItems = childItems
-        .map((childItem) => {
-          const matchingUri = removedTabUris.find((uri) =>
-            uri.path.endsWith(childItem.name),
-          );
-          if (!matchingUri) {
-            return;
-          }
+      oldUriToNewUriMap.forEach(([uri, newUri]) =>
+        this._onDidManipulateFile.fire({
+          type: "rename",
+          uri,
+          newUri,
+        }),
+      );
+      return newUri;
 
-          return [matchingUri, childItem.vscUri];
-        })
-        .filter((exists) => exists);
+      function getPreviouslyOpenedChildItems(childItems: ContentItem[]) {
+        const loadChildItems = closing !== true && newItemIsContainer;
+        if (!Array.isArray(removedTabUris) || !loadChildItems) {
+          return [];
+        }
+        // Here's where things get a little weird. When we rename folders in
+        // sas content, we _don't_ close those files. It doesn't matter since
+        // their path isn't hierarchical. In sas file system, the path is hierarchical,
+        // thus we need to re-open all the closed files. This does that by getting
+        // children and comparing the removedTabUris
+        const filteredChildItems = childItems
+          .map((childItem) => {
+            const matchingUri = removedTabUris.find((uri) =>
+              uri.path.endsWith(childItem.name),
+            );
+            if (!matchingUri) {
+              return;
+            }
 
-      return filteredChildItems;
+            return [matchingUri, childItem.vscUri];
+          })
+          .filter((exists) => exists);
+
+        return filteredChildItems;
+      }
     }
   }
 
   public writeFile(uri: Uri, content: Uint8Array): void | Promise<void> {
-    return this.model.saveContentToUri(uri, new TextDecoder().decode(content));
+    return this.model.saveContentToUri(uri, content);
   }
 
   public async deleteResource(item: ContentItem): Promise<boolean> {
-    if (!(await closeFileIfOpen(item))) {
+    if (!(await this.closeItemAndDescendantTabs(item))) {
       return false;
     }
     const success = await this.model.delete(item);
@@ -374,12 +398,120 @@ class ContentDataProvider
     return success;
   }
 
+  private async closeItemAndDescendantTabs(
+    item: ContentItem,
+  ): Promise<boolean> {
+    if (isDatasetFile(item.name)) {
+      await this.closeTableIfOpen(item);
+      // whether an open tab was found or not,
+      // we still want to continue with the delete
+      return true;
+    } else {
+      const resourceIds = await this.getItemAndDescendantResourceIds(item);
+      const allTabs = window.tabGroups.all
+        .flatMap((tg) => tg.tabs)
+        .filter(
+          (tab) =>
+            tab.input instanceof TabInputText ||
+            tab.input instanceof TabInputNotebook,
+        );
+
+      const tabsToClose: (typeof allTabs)[number][] = [];
+      for (const tab of allTabs) {
+        if (
+          tab.input instanceof TabInputText ||
+          tab.input instanceof TabInputNotebook
+        ) {
+          const resourceId = getResourceId(tab.input.uri);
+          if (resourceIds.has(resourceId)) {
+            tabsToClose.push(tab);
+          }
+        }
+      }
+
+      if (!tabsToClose.length) {
+        return true;
+      }
+
+      const results: boolean[] = [];
+      for (const tab of tabsToClose) {
+        results.push(await this.closeTab(tab));
+      }
+      return results.every((r) => r !== false);
+    }
+  }
+
+  private async getItemAndDescendantResourceIds(
+    item: ContentItem,
+  ): Promise<Set<string>> {
+    const resourceIds = new Set<string>([item.uri]);
+    if (!getIsContainer(item)) {
+      return resourceIds;
+    }
+
+    const pendingItems = [item];
+    while (pendingItems.length > 0) {
+      const currentItem = pendingItems.pop();
+      if (!currentItem) {
+        continue;
+      }
+
+      const children = await this.model.getChildren(currentItem);
+      for (const child of children ?? []) {
+        if (!resourceIds.has(child.uri)) {
+          resourceIds.add(child.uri);
+          if (getIsContainer(child)) {
+            pendingItems.push(child);
+          }
+        }
+      }
+    }
+
+    return resourceIds;
+  }
+
+  private async closeTab(
+    tab: (typeof window.tabGroups.all)[number]["tabs"][number],
+  ): Promise<boolean> {
+    const input = tab.input;
+    const textDocument =
+      input instanceof TabInputText
+        ? workspace.textDocuments.find(
+            (doc) => doc.uri.toString() === input.uri.toString(),
+          )
+        : undefined;
+    const notebookDocument =
+      input instanceof TabInputNotebook
+        ? workspace.notebookDocuments.find(
+            (notebook) => notebook.uri.toString() === input.uri.toString(),
+          )
+        : undefined;
+
+    if (textDocument?.isDirty) {
+      await window.showTextDocument(textDocument, { preview: false });
+      await commands.executeCommand(
+        "workbench.action.revertAndCloseActiveEditor",
+      );
+      return !window.tabGroups.all.some((group) => group.tabs.includes(tab));
+    }
+
+    if (notebookDocument?.isDirty) {
+      await window.showNotebookDocument(notebookDocument, { preview: false });
+      await commands.executeCommand(
+        "workbench.action.revertAndCloseActiveEditor",
+      );
+      return !window.tabGroups.all.some((group) => group.tabs.includes(tab));
+    }
+
+    return (await window.tabGroups.close(tab)) !== false;
+  }
+
   public canRecycleResource(item: ContentItem): boolean {
     return this.model.canRecycleResource(item);
   }
 
   public async recycleResource(item: ContentItem): Promise<boolean> {
-    if (!(await closeFileIfOpen(item))) {
+    if (!(await this.closeItemAndDescendantTabs(item))) {
       return false;
     }
 
@@ -472,8 +604,7 @@ class ContentDataProvider
   }
 
   public readDirectory():
-    | [string, FileType][]
-    | Thenable<[string, FileType][]> {
+    [string, FileType][] | Thenable<[string, FileType][]> {
     throw new Error("Method not implemented.");
   }
 
@@ -494,17 +625,35 @@ class ContentDataProvider
     target: ContentItem,
   ): Promise<void> {
     const failedUploads = [];
+    let folderUploadSucceeded = false;
     for (let i = 0; i < uris.length; ++i) {
       const uri = uris[i];
       const fileName = basename(uri.fsPath);
       if (lstatSync(uri.fsPath).isDirectory()) {
-        const success = await this.handleFolderDrop(target, uri.fsPath, false);
-        !success && failedUploads.push(fileName);
+        const createdFolder = await this.handleFolderDrop(
+          target,
+          uri.fsPath,
+          false,
+        );
+        if (!createdFolder) {
+          failedUploads.push(fileName);
+        } else {
+          folderUploadSucceeded = true;
+          await this.handleCreationResponse(
+            target,
+            createdFolder.vscUri,
+            l10n.t(Messages.FileUploadError),
+          );
+        }
       } else {
         const file = await workspace.fs.readFile(uri);
         const newUri = await this.createFile(target, fileName, file);
         !newUri && failedUploads.push(fileName);
       }
+    }
+
+    if (folderUploadSucceeded) {
+      this.refresh();
     }
 
     if (failedUploads.length > 0) {
@@ -716,7 +865,7 @@ class ContentDataProvider
     target: ContentItem,
     path: string,
     displayErrorMessages: boolean = true,
-  ): Promise<boolean> {
+  ): Promise<ContentItem | undefined> {
     const folderName = basename(path);
     const folder = await this.model.createFolder(target, folderName);
     let success = true;
@@ -728,7 +877,7 @@ class ContentDataProvider
           }),
         );
 
-      return false;
+      return;
     }
 
     // Read all the files in the folder and upload them
@@ -740,7 +889,7 @@ class ContentDataProvider
           await promisify(lstat)(fileOrFolder)
         ).isDirectory();
         if (isDirectory) {
-          success = await this.handleFolderDrop(folder, fileOrFolder);
+          success = !!(await this.handleFolderDrop(folder, fileOrFolder));
         } else {
           const name = basename(fileOrFolder);
           const fileCreated = await this.createFile(
@@ -761,7 +910,7 @@ class ContentDataProvider
       }),
     );
 
-    return success;
+    return success ? folder : undefined;
   }
 
   private async handleDataTransferItemDrop(
@@ -779,8 +928,11 @@ class ContentDataProvider
         ).isDirectory();
 
         if (isDirectory) {
-          const success = await this.handleFolderDrop(target, itemUri.fsPath);
-          if (success) {
+          const createdFolder = await this.handleFolderDrop(
+            target,
+            itemUri.fsPath,
+          );
+          if (createdFolder) {
             this.refresh();
           }
 
@@ -821,6 +973,15 @@ class ContentDataProvider
         case FAVORITES_FOLDER_TYPE:
           icon = "favoritesFolder";
           break;
+        case ROOT_SHORTCUT_FOLDER_TYPE:
+          icon = "shortcutsFolder";
+          break;
+        case SERVER_SHORTCUT_FOLDER_TYPE:
+          icon = "shortcutsServerContent";
+          break;
+        case GLOBAL_SHORTCUT_TYPE:
+          icon = "webDAVRepository";
+          break;
         case SERVER_HOME_FOLDER_TYPE:
           icon = "userWorkspace";
           break;
@@ -843,9 +1004,26 @@ class ContentDataProvider
         }
       : undefined;
   }
+
+  // returns true if an open table was found and closed, returns false if no table was found
+  private closeTableIfOpen = async (item: ContentItem): Promise<boolean> => {
+    // check if the dataset is open
+    const itemPath = await this.getPathOfItem(item);
+    const normalizedPath = itemPath?.replace(/\\/g, "/");
+    const openedTableUid = this.openDatasets.get(normalizedPath);
+    // if its open, close the old table
+    if (openedTableUid) {
+      await commands.executeCommand<boolean>("SAS.closeTable", openedTableUid);
+      return true;
+    }
+    return false;
+  };
 }
 
 export default ContentDataProvider;
+
+const isDatasetFile = (name: string | undefined): boolean =>
+  !!name?.toLowerCase().endsWith(".sas7bdat");
 
 const closeFileIfOpen = (item: ContentItem): Promise<Uri[]> | boolean => {
   const tabs = getEditorTabsForItem(item);

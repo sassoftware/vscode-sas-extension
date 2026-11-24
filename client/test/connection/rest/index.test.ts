@@ -1,92 +1,58 @@
-// Copyright © 2022-2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+// Copyright © 2026, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import { expect } from "chai";
 import { SinonSandbox, createSandbox } from "sinon";
 
-// Test the baseDirectory argument handling logic in isolation
-// This mirrors the logic from RestSession._run without requiring VS Code APIs
+import * as extensionContext from "../../../src/components/ExtensionContext";
+import { getSession } from "../../../src/connection/rest";
+import { ComputeServer } from "../../../src/connection/rest/server";
+import { ComputeSession } from "../../../src/connection/rest/session";
+import { onDidChangeSession } from "../../../src/connection/session";
 
-interface RunArgs {
-  baseDirectory?: string;
-}
-
-function processRunArgs(args: unknown[]): Record<string, string> {
-  const variables: Record<string, string> = {};
-
-  // If baseDirectory is passed in, use it as a sas variable
-  const runArgs = (args[0] as RunArgs) || {};
-  const basePath = runArgs.baseDirectory || undefined;
-  if (basePath) {
-    variables._SASPROGRAMDIR = basePath;
-  }
-
-  return variables;
-}
-
-describe("REST Session _run", () => {
+describe("REST connection", () => {
   let sandbox: SinonSandbox;
 
   beforeEach(() => {
-    sandbox = createSandbox({});
+    sandbox = createSandbox();
+    sandbox.stub(extensionContext, "setContextValue").resolves();
   });
 
   afterEach(() => {
     sandbox.restore();
   });
 
-  describe("baseDirectory argument handling", () => {
-    it("should set _SASPROGRAMDIR variable when baseDirectory is provided", () => {
-      const baseDirectory = "/home/user/projects/sas";
+  describe("setup", () => {
+    it("notifies session change when a new session is created", async () => {
+      const computeSession = new ComputeSession("test-session");
 
-      const variables = processRunArgs([{ baseDirectory }]);
+      sandbox
+        .stub(computeSession, "getLogStream")
+        .callsFake(async function* () {
+          yield [];
+        });
 
-      expect(variables).to.deep.equal({
-        _SASPROGRAMDIR: baseDirectory,
+      sandbox.stub(computeSession, "delete").resolves();
+
+      sandbox
+        .stub(ComputeServer.prototype, "getSession")
+        .resolves(computeSession);
+
+      const sessionChanged = sandbox.spy();
+      const subscription = onDidChangeSession(sessionChanged);
+
+      const session = getSession({
+        endpoint: "http://example.test",
+        serverId: "test-server",
+        reconnect: false,
       });
-    });
 
-    it("should not set _SASPROGRAMDIR variable when baseDirectory is not provided", () => {
-      const variables = processRunArgs([]);
+      await session.setup(true);
 
-      expect(variables).to.deep.equal({});
-    });
+      expect(sessionChanged.calledOnce).to.equal(true);
 
-    it("should not set _SASPROGRAMDIR variable when args object is empty", () => {
-      const variables = processRunArgs([{}]);
+      subscription.dispose();
 
-      expect(variables).to.deep.equal({});
-    });
-
-    it("should not set _SASPROGRAMDIR variable when baseDirectory is undefined", () => {
-      const variables = processRunArgs([{ baseDirectory: undefined }]);
-
-      expect(variables).to.deep.equal({});
-    });
-
-    it("should not set _SASPROGRAMDIR variable when baseDirectory is empty string", () => {
-      const variables = processRunArgs([{ baseDirectory: "" }]);
-
-      expect(variables).to.deep.equal({});
-    });
-
-    it("should handle Windows-style paths for baseDirectory", () => {
-      const baseDirectory = "C:\\Users\\user\\projects\\sas";
-
-      const variables = processRunArgs([{ baseDirectory }]);
-
-      expect(variables).to.deep.equal({
-        _SASPROGRAMDIR: baseDirectory,
-      });
-    });
-
-    it("should handle Unix-style paths for baseDirectory", () => {
-      const baseDirectory = "/usr/local/sas/programs";
-
-      const variables = processRunArgs([{ baseDirectory }]);
-
-      expect(variables).to.deep.equal({
-        _SASPROGRAMDIR: baseDirectory,
-      });
+      await session.close();
     });
   });
 });

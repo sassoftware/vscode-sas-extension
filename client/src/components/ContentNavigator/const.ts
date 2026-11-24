@@ -15,6 +15,31 @@ export const ROOT_FOLDER = createStaticFolder(
   "/folders/folders",
 );
 
+export const ROOT_SHORTCUT_FOLDER_TYPE = "rootShortcutFolder";
+export const SERVER_SHORTCUT_FOLDER_TYPE = "serverShortcutFolder";
+export const GLOBAL_SHORTCUT_TYPE = "globalShortcutfolder";
+
+export const FOLDER_SHORTCUT_ID = "FOLDER_SHORTCUTS_ID";
+export const GLOBAL_SHORTCUT_ID = "GLOBAL_SHORTCUTS_ID";
+export const FOLDER_SHORTCUTS = createStaticFolder(
+  FOLDER_SHORTCUT_ID,
+  "Folder Shortcuts",
+  ROOT_SHORTCUT_FOLDER_TYPE,
+  FOLDER_SHORTCUT_ID,
+);
+export const SERVER_FOLDER_SHORTCUTS = createStaticFolder(
+  FOLDER_SHORTCUT_ID,
+  "Folder Shortcuts",
+  SERVER_SHORTCUT_FOLDER_TYPE,
+  FOLDER_SHORTCUT_ID,
+);
+export const GLOBAL_SHORTCUTS = createStaticFolder(
+  GLOBAL_SHORTCUT_ID,
+  "Global Shortcuts",
+  GLOBAL_SHORTCUT_TYPE,
+  GLOBAL_SHORTCUT_ID,
+);
+
 export const SERVER_FOLDER_ID = "SERVER_FOLDER_ID";
 export const SERVER_ROOT_FOLDER_TYPE = "ServerRootFolder";
 export const SERVER_HOME_FOLDER_TYPE = "ServerHomeFolder";
@@ -34,11 +59,16 @@ export const FOLDER_TYPE = "folder";
 export const MYFOLDER_TYPE = "myFolder";
 export const TRASH_FOLDER_TYPE = "trashFolder";
 export const FAVORITES_FOLDER_TYPE = "favoritesFolder";
+export const SHORTCUTS_FOLDER_TYPE = "shortcutsFolder";
 export const FOLDER_TYPES = [
   ROOT_FOLDER_TYPE,
   FOLDER_TYPE,
   MYFOLDER_TYPE,
   FAVORITES_FOLDER_TYPE,
+  ROOT_SHORTCUT_FOLDER_TYPE,
+  SERVER_SHORTCUT_FOLDER_TYPE,
+  GLOBAL_SHORTCUT_TYPE,
+  SHORTCUTS_FOLDER_TYPE,
   "userFolder",
   "userRoot",
   TRASH_FOLDER_TYPE,
@@ -47,11 +77,12 @@ export const FOLDER_TYPES = [
 export const SAS_CONTENT_ROOT_FOLDERS = [
   "@myFavorites",
   "@myFolder",
+  "@myShortcuts",
   "@sasRoot",
   "@myRecycleBin",
 ];
 
-export const SAS_SERVER_ROOT_FOLDERS = ["@sasServerRoot"];
+export const SAS_SERVER_ROOT_FOLDERS = ["@sasServerRoot", "@myShortcuts"];
 
 export const ALL_ROOT_FOLDERS = [
   ...SAS_CONTENT_ROOT_FOLDERS,
@@ -64,11 +95,17 @@ export const Messages = {
   AddToFavoritesError: l10n.t("The item could not be added to My Favorites."),
   DeleteButtonLabel: l10n.t("Delete"),
   MoveToRecycleBinLabel: l10n.t("Move to Recycle Bin"),
+  DeleteDirtyItemsWarningMessage: l10n.t(
+    "Are you sure you want to permanently delete {count} items?",
+  ),
   DeleteWarningMessage: l10n.t(
     'Are you sure you want to permanently delete the item "{name}"?',
   ),
-  RecycleDirtyFolderWarning: l10n.t(
-    "This folder contains unsaved files, are you sure you want to delete?",
+  DirtyFolderWarningSingle: l10n.t(
+    "The selected folder contains unsaved files, are you sure you want to delete?",
+  ),
+  DirtyFolderWarning: l10n.t(
+    "The selected folders contain unsaved files, are you sure you want to delete?",
   ),
   EmptyRecycleBinError: l10n.t("Unable to empty the recycle bin."),
   EmptyRecycleBinWarningMessage: l10n.t(

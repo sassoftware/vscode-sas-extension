@@ -1,19 +1,25 @@
 // Copyright © 2024, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import type { SortModelItem } from "ag-grid-community";
-import { AxiosResponse } from "axios";
+import { AxiosResponse, isAxiosError } from "axios";
 
 import { getSession } from "..";
 import {
   LibraryAdapter,
   LibraryItem,
+  TEMP_TABLE_PREFIX,
+  TableColumnCollection,
   TableData,
   TableQuery,
+  TemporaryLibrary,
 } from "../../components/LibraryNavigator/types";
 import { appendSessionLogFn } from "../../components/logViewer";
+import { baseFormatName } from "../../panels/columnIconClassifier";
+import { FormatCategoryCache } from "../formatCategory";
 import {
-  ColumnCollection,
   DataAccessApi,
+  FormatsApi,
+  InformatsApi,
   RowCollection,
   TableInfo,
 } from "./api/compute";
@@ -25,9 +31,14 @@ const requestOptions = {
 
 class RestLibraryAdapter implements LibraryAdapter {
   protected dataAccessApi: ReturnType<typeof DataAccessApi>;
+  protected InformatsApi: ReturnType<typeof InformatsApi>;
+  protected FormatsApi: ReturnType<typeof FormatsApi>;
   protected sessionId: string;
+  protected formatCategories: FormatCategoryCache = new FormatCategoryCache(
+    (formatNames) => this.fetchFormatCategories(formatNames),
+  );
 
-  public constructor() {}
+  public constructor(private readonly onConnect?: () => void) {}
 
   public async connect(): Promise<void> {
     const session = getSession();
@@ -37,6 +48,14 @@ class RestLibraryAdapter implements LibraryAdapter {
 
     this.sessionId = session?.sessionId();
     this.dataAccessApi = DataAccessApi(getApiConfig());
+    this.InformatsApi = InformatsApi(getApiConfig());
+    this.FormatsApi = FormatsApi(getApiConfig());
+    // Format definitions are session scoped, so previously resolved categories no longer apply.
+    this.formatCategories.clear();
+
+    if (this.onConnect) {
+      this.onConnect();
+    }
   }
 
   public async setup(): Promise<void> {
@@ -45,6 +64,51 @@ class RestLibraryAdapter implements LibraryAdapter {
     }
 
     await this.connect();
+  }
+
+  public async acquireTemporaryLibrary(
+    path: string,
+  ): Promise<TemporaryLibrary> {
+    await this.setup();
+    const { data } = await this.dataAccessApi.getLibraries(
+      { sessionId: this.sessionId, start: 0, limit: 1000 },
+      {
+        ...requestOptions,
+        params: { filter: `startsWith($primary,name,'${TEMP_TABLE_PREFIX}')` },
+      },
+    );
+    const nextNumber =
+      data.items.reduce((greatest, library) => {
+        const match = /^_TEMP(\d+)$/i.exec(library.id || library.name);
+        return match ? Math.max(greatest, Number(match[1])) : greatest;
+      }, 0) + 1;
+
+    const name = `${TEMP_TABLE_PREFIX}${nextNumber}`;
+    await this.dataAccessApi.createLibrary({
+      sessionId: this.sessionId,
+      libraryRequest: {
+        name,
+        engine: "V9",
+        path,
+        options: ["ACCESS=READONLY"],
+      },
+    });
+    return {
+      name,
+      delete: async () => {
+        try {
+          await this.dataAccessApi.deleteLibrary({
+            sessionId: this.sessionId,
+            libref: name,
+          });
+        } catch (error) {
+          // A closed session or already released library needs no further cleanup.
+          if (!isAxiosError(error) || error.response?.status !== 404) {
+            throw error;
+          }
+        }
+      },
+    };
   }
 
   public async getRows(
@@ -157,7 +221,8 @@ class RestLibraryAdapter implements LibraryAdapter {
     item: LibraryItem,
     start: number,
     limit: number,
-  ): Promise<ColumnCollection> {
+  ): Promise<TableColumnCollection> {
+    await this.setup();
     const { data } = await this.retryOnFail(
       async () =>
         await this.dataAccessApi.getColumns(
@@ -172,7 +237,60 @@ class RestLibraryAdapter implements LibraryAdapter {
         ),
     );
 
-    return data;
+    const items = data.items ?? [];
+    const categories = await this.formatCategories.resolve(
+      items.map((column) => column.format),
+    );
+
+    const columns = items.map((column) => ({
+      ...column,
+      formatCategory: categories.get(baseFormatName(column.format)) ?? "",
+    }));
+
+    return {
+      ...data,
+      items: columns,
+    };
+  }
+
+  // The Compute service reports a format's category (char, date, datetime, time, curr, num, ...),
+  // which getColumns cannot provide because every non-character column is reported as FLOAT.
+  private async fetchFormatCategories(
+    formatNames: string[],
+  ): Promise<Record<string, string>> {
+    return await this.requestFormatCategories(formatNames);
+  }
+
+  private async requestFormatCategories(
+    formatNames: string[],
+  ): Promise<Record<string, string>> {
+    const entries = await Promise.all(
+      formatNames.map(async (formatName) => {
+        try {
+          const formatResp = await this.FormatsApi.getFormat({
+            sessionId: this.sessionId,
+            formatName,
+          });
+
+          let category = formatResp?.data?.category || "";
+
+          if (!category) {
+            const informatResp = await this.InformatsApi.getInformat({
+              sessionId: this.sessionId,
+              informatName: formatName,
+            });
+
+            category = informatResp?.data?.category || "";
+          }
+
+          return [formatName, category];
+        } catch {
+          return [formatName, ""];
+        }
+      }),
+    );
+
+    return Object.fromEntries(entries);
   }
 
   public async getTableRowCount(

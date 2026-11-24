@@ -33,13 +33,14 @@ import {
 } from "../commands/profile";
 import { run, runRegion, runSelected } from "../commands/run";
 import { toggleLineComment } from "../commands/toggleLineComment";
-import { getRestAPIs } from "../components/APIProvider";
+import { getAPI, getRestAPIs } from "../components/APIProvider";
 import { SASAuthProvider } from "../components/AuthProvider";
 import { installCAs } from "../components/CAHelper";
 import ContentNavigator from "../components/ContentNavigator";
 import { ContentSourceType } from "../components/ContentNavigator/types";
 import { setContext } from "../components/ExtensionContext";
 import LibraryNavigator from "../components/LibraryNavigator";
+import { LibraryItem } from "../components/LibraryNavigator/types";
 import {
   ResultPanelSubscriptionProvider,
   SAS_RESULT_PANEL,
@@ -55,7 +56,7 @@ import { sasDiagnostic } from "../components/logViewer/sasDiagnostics";
 import { NotebookController } from "../components/notebook/Controller";
 import { NotebookSerializer } from "../components/notebook/Serializer";
 import { exportNotebook, saveOutput } from "../components/notebook/exporters";
-import { ConnectionType } from "../components/profile";
+import { ConnectionType, hasActiveProfileChanged } from "../components/profile";
 import { SasTaskProvider } from "../components/tasks/SasTaskProvider";
 import { SAS_TASK_TYPE } from "../components/tasks/SasTasks";
 
@@ -88,6 +89,7 @@ export function activate(context: ExtensionContext) {
   const clientOptions: LanguageClientOptions = {
     // Register the server for sas file
     documentSelector: [{ language: "sas" }],
+    initializationOptions: { supportSASGetLibList: true },
   };
 
   // Create the language client and start the client.
@@ -100,6 +102,53 @@ export function activate(context: ExtensionContext) {
 
   // Start the client. This will also launch the server
   client.start();
+
+  client.onRequest(
+    "sas/getLibList",
+    async ({
+      libId,
+    }: {
+      libId: string | null;
+    }): Promise<{ id: string; name: string; type: string }[]> => {
+      try {
+        if (libId) {
+          const getTables = getAPI("getTables");
+          if (!getTables) {
+            return [];
+          }
+          const library: LibraryItem = {
+            uid: libId,
+            id: libId,
+            name: libId,
+            type: "library",
+            readOnly: true,
+          };
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const tables = (await getTables(library)) as LibraryItem[];
+          return tables.map((table) => ({
+            id: table.id,
+            name: table.name,
+            type: "DATA",
+          }));
+        }
+
+        const getLibraries = getAPI("getLibraries");
+        if (!getLibraries) {
+          return [];
+        }
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const libraries = (await getLibraries()) as LibraryItem[];
+        return libraries.map((library) => ({
+          id: library.id,
+          name: library.name,
+          type: "LIBRARY",
+        }));
+      } catch {
+        // no active connection, or the request failed - fall back to no library completions
+        return [];
+      }
+    },
+  );
 
   installCAs();
 
@@ -142,18 +191,23 @@ export function activate(context: ExtensionContext) {
     deserializeWebviewPanel,
   });
 
+  let previousActiveProfile = profileConfig.getActiveProfileSnapshot();
+
   context.subscriptions.push(
     commands.registerCommand("SAS.run", async () => {
       await run();
       await libraryNavigator.refresh();
+      libraryNavigator.refreshOpenTableViewers();
     }),
     commands.registerCommand("SAS.runSelected", async (uri: Uri) => {
       await runSelected(uri);
       await libraryNavigator.refresh();
+      libraryNavigator.refreshOpenTableViewers();
     }),
     commands.registerCommand("SAS.runRegion", async () => {
       await runRegion(client);
       await libraryNavigator.refresh();
+      libraryNavigator.refreshOpenTableViewers();
     }),
     commands.registerCommand("SAS.close", (silent) => {
       closeSession(
@@ -186,17 +240,54 @@ export function activate(context: ExtensionContext) {
     sasContentNavigator.onDidManipulateFile(handleFileUpdated),
     sasServerNavigator.onDidManipulateFile(handleFileUpdated),
     // If configFile setting is changed, update watcher to watch new configuration file
-    workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-      if (event.affectsConfiguration("SAS.connectionProfiles")) {
-        triggerProfileUpdate();
-        updateViewSettings();
-      }
-    }),
+    workspace.onDidChangeConfiguration(
+      async (event: ConfigurationChangeEvent) => {
+        if (!event.affectsConfiguration("SAS.connectionProfiles")) {
+          return;
+        }
+
+        const currentActiveProfile = profileConfig.getActiveProfileSnapshot();
+
+        const activeProfileChanged = hasActiveProfileChanged(
+          previousActiveProfile,
+          currentActiveProfile,
+        );
+
+        previousActiveProfile = currentActiveProfile;
+
+        if (activeProfileChanged) {
+          await triggerProfileUpdate();
+          updateViewSettings();
+
+          const activeProfile = profileConfig.getProfileByName(
+            profileConfig.getActiveProfile(),
+          );
+
+          if (
+            activeProfile?.connectionType === ConnectionType.IOM ||
+            activeProfile?.connectionType === ConnectionType.COM
+          ) {
+            await Promise.all([
+              commands.executeCommand(
+                "setContext",
+                "SAS.librariesDisplayed",
+                true,
+              ),
+              commands.executeCommand(
+                "setContext",
+                "SAS.serverDisplayed",
+                true,
+              ),
+            ]);
+          }
+        }
+      },
+    ),
     workspace.registerNotebookSerializer(
       "sas-notebook",
       new NotebookSerializer(),
     ),
-    new NotebookController(),
+    new NotebookController(client),
     commands.registerCommand("SAS.notebook.new", newSASNotebook),
     commands.registerCommand("SAS.file.new", newSASFile),
     commands.registerCommand("SAS.notebook.export", () =>
@@ -216,8 +307,10 @@ export function activate(context: ExtensionContext) {
   updateStatusBarItem();
 
   profileConfig.migrateLegacyProfiles();
-  triggerProfileUpdate();
-  updateViewSettings();
+
+  triggerProfileUpdate().then(() => {
+    updateViewSettings();
+  });
 
   return {
     getRestAPIs,
@@ -237,6 +330,7 @@ function updateViewSettings(): void {
     librariesDisplayed: false,
     serverEnabled: false,
     serverDisplayed: false,
+    allowDownload: true,
   };
   if (activeProfile) {
     settings.librariesEnabled =
@@ -252,7 +346,7 @@ function updateViewSettings(): void {
   );
 }
 
-function triggerProfileUpdate(): void {
+async function triggerProfileUpdate(): Promise<void> {
   commands.executeCommand("SAS.close", true);
   const profileList = profileConfig.getAllProfiles();
   const activeProfileName = profileConfig.getActiveProfile();
@@ -273,7 +367,10 @@ function triggerProfileUpdate(): void {
         "serverId" in profileList[activeProfileName],
     );
   } else {
-    profileConfig.updateActiveProfileSetting("");
+    await profileConfig.updateActiveProfileSetting("");
+
+    updateStatusBarItem();
+
     commands.executeCommand(
       "setContext",
       "SAS.connectionType",

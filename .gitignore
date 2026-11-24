@@ -5,5 +5,4 @@ node_modules
 *.vsix
 *.node
 *.qps-ploc.json
-l10n/bundle.l10n.json
 .history

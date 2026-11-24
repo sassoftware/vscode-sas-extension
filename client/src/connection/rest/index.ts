@@ -127,6 +127,7 @@ class RestSession extends Session {
     }
 
     //Start a new session
+    this.notifySessionChanged();
     if (this._config.serverId) {
       const server1 = new ComputeServer(this._config.serverId);
       server1.options = formattedOpts;
@@ -163,25 +164,15 @@ class RestSession extends Session {
     updateStatusBarItem(true);
   };
 
-  protected _run = async (code: string, ...args) => {
+  protected _run = async (code: string) => {
     if (!this._computeSession?.sessionId) {
       throw new Error();
-    }
-
-    //Check the args for extra information
-    const variables: { [key: string]: string } = {};
-
-    //If baseDirectory is passed in, use it as a sas variable
-    const runArgs = args[0] || {};
-    const basePath = runArgs.baseDirectory || undefined;
-    if (basePath) {
-      variables._SASPROGRAMDIR = basePath;
     }
 
     //Get the job
     const job = await this._computeSession.execute({
       code: [code],
-      variables: variables,
+      variables: {},
     });
 
     //Clear out the logs

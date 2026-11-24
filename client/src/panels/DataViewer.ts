@@ -5,8 +5,11 @@ import { Uri, l10n, window } from "vscode";
 import type { SortModelItem } from "ag-grid-community";
 
 import PaginatedResultSet from "../components/LibraryNavigator/PaginatedResultSet";
-import { TableData, TableQuery } from "../components/LibraryNavigator/types";
-import { Column } from "../connection/rest/api/compute";
+import {
+  TableColumn,
+  TableData,
+  TableQuery,
+} from "../components/LibraryNavigator/types";
 import { WebView } from "./WebviewManager";
 
 class DataViewer extends WebView {
@@ -17,41 +20,69 @@ class DataViewer extends WebView {
       data: TableData;
       error?: Error;
     }>,
-    protected readonly fetchColumns: () => Column[],
+    protected readonly fetchColumns: () => TableColumn[],
     protected readonly loadColumnProperties: (columnName: string) => void,
+    protected readonly allowDownload: boolean = true,
   ) {
     super(extensionUri, uid);
   }
 
   public l10nMessages() {
     return {
+      "All columns are hidden.": l10n.t("All columns are hidden."),
+      "An error was encountered when copying data.": l10n.t(
+        "An error was encountered when copying data.",
+      ),
       "Ascending (add to sorting)": l10n.t("Ascending (add to sorting)"),
+      "Column order controls": l10n.t("Column order controls"),
+      "Column visibility controls": l10n.t("Column visibility controls"),
       "Descending (add to sorting)": l10n.t("Descending (add to sorting)"),
+      "Displayed columns": l10n.t("Displayed columns"),
+      "Displayed columns ({count}):": l10n.t("Displayed columns ({count}):"),
       "Enter expression": l10n.t("Enter expression"),
+      "Hidden columns": l10n.t("Hidden columns"),
+      "Hidden columns ({count}):": l10n.t("Hidden columns ({count}):"),
+      "Manage Columns": l10n.t("Manage Columns"),
+      "Move to the bottom": l10n.t("Move to the bottom"),
+      "Move to the top": l10n.t("Move to the top"),
       "No data matches the current filters.": l10n.t(
         "No data matches the current filters.",
       ),
+      "No items are available.": l10n.t("No items are available."),
       "Not pinned": l10n.t("Not pinned"),
       "Pinned to the left": l10n.t("Pinned to the left"),
       "Pinned to the right": l10n.t("Pinned to the right"),
       "Remove all sorting": l10n.t("Remove all sorting"),
       "Remove sorting": l10n.t("Remove sorting"),
+      "Resize column panels": l10n.t("Resize column panels"),
       "Row number": l10n.t("Row number"),
       "Sorted, Ascending": l10n.t("Sorted, Ascending"),
       "Sorted, Descending": l10n.t("Sorted, Descending"),
+      Add: l10n.t("Add"),
+      "Add all": l10n.t("Add all"),
       Ascending: l10n.t("Ascending"),
+      Cancel: l10n.t("Cancel"),
       Character: l10n.t("Character"),
       Clear: l10n.t("Clear"),
+      Close: l10n.t("Close"),
+      Copy: l10n.t("Copy"),
       Currency: l10n.t("Currency"),
       Date: l10n.t("Date"),
       Datetime: l10n.t("Datetime"),
       Descending: l10n.t("Descending"),
+      Filter: l10n.t("Filter"),
       Numeric: l10n.t("Numeric"),
+      OK: l10n.t("OK"),
       Options: l10n.t("Options"),
       Pin: l10n.t("Pin"),
       Properties: l10n.t("Properties"),
+      Remove: l10n.t("Remove"),
+      "Remove all": l10n.t("Remove all"),
       Search: l10n.t("Search"),
       Sort: l10n.t("Sort"),
+      Undo: l10n.t("Undo"),
+      "Move down": l10n.t("Move down"),
+      "Move up": l10n.t("Move up"),
     };
   }
 
@@ -64,7 +95,19 @@ class DataViewer extends WebView {
   }
 
   public body() {
-    return `<div class="data-viewer-container" data-title="${this.title}"></div>`;
+    return `<div class="data-viewer-container" data-title="${this.title}" data-allow-download="${this.allowDownload}"></div>`;
+  }
+
+  public invalidateColumns(): void {
+    this.panel.webview.postMessage({
+      command: "panel:invalidateColumns",
+    });
+  }
+
+  public refreshData() {
+    this.panel.webview.postMessage({
+      command: "panel:refreshData",
+    });
   }
 
   public async processMessage(
@@ -77,6 +120,7 @@ class DataViewer extends WebView {
         sortModel?: SortModelItem[];
         columnName?: string;
         query: TableQuery | undefined;
+        error?: string;
       };
     },
   ): Promise<void> {
@@ -98,18 +142,29 @@ class DataViewer extends WebView {
         }
         break;
       }
-      case "request:loadColumns":
-        this.panel.webview.postMessage({
-          key: event.key,
-          command: "response:loadColumns",
-          data: {
-            columns: await this.fetchColumns(),
-          },
-        });
+      case "request:loadColumns": {
+        try {
+          const columns = await this.fetchColumns();
+          this.panel.webview.postMessage({
+            key: event.key,
+            command: "response:loadColumns",
+            data: {
+              columns,
+            },
+          });
+        } catch (error) {
+          window.showErrorMessage(error.message);
+        }
         break;
+      }
       case "request:loadColumnProperties":
-        if (event.data.columnName) {
+        if (event.data && event.data.columnName) {
           this.loadColumnProperties(event.data.columnName);
+        }
+        break;
+      case "displayError":
+        if (event.data && event.data.error) {
+          window.showErrorMessage(event.data.error);
         }
         break;
       default:

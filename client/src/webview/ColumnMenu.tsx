@@ -18,6 +18,7 @@ export interface ColumnMenuProps {
   removeFromSort: () => void;
   sortColumn: (direction: "asc" | "desc") => void;
   top: number;
+  onManageColumns?: () => void | Promise<void>;
 }
 
 // Lets pick off only the column properties we care about.
@@ -33,6 +34,7 @@ export const getColumnMenu = (
   { height, top, left }: DOMRect,
   dismissMenu: () => void,
   loadColumnProperties: (columnName: string) => void,
+  onManageColumns?: () => void | Promise<void>,
 ): ColumnMenuProps => ({
   column,
   dismissMenu,
@@ -54,15 +56,20 @@ export const getColumnMenu = (
       foundColumn.sortIndex = api.getColumnState().filter((c) => c.sort).length;
     }
     applyColumnState(api, columnState);
+    // With AGGRID v36.0.0 the column header no longer is redrawn with sort,
+    // so manually refresh the header to get the updated icon
+    api.refreshHeader();
   },
-  removeAllSorting: () =>
+  removeAllSorting: () => {
     applyColumnState(
       api,
       filteredColumnState(api.getColumnState()).map((c) => ({
         ...c,
         sort: null,
       })),
-    ),
+    );
+    api.refreshHeader();
+  },
   removeFromSort: () => {
     // First, lets remove from sort
     let newColumnState = filteredColumnState(api.getColumnState())
@@ -82,10 +89,12 @@ export const getColumnMenu = (
     });
 
     applyColumnState(api, newColumnState);
+    api.refreshHeader();
   },
   loadColumnProperties: () => {
     loadColumnProperties(column.colId);
   },
+  onManageColumns: () => onManageColumns?.(),
 });
 
 const ColumnMenu = ({
@@ -94,6 +103,7 @@ const ColumnMenu = ({
   hasSort,
   left,
   loadColumnProperties,
+  onManageColumns,
   pinColumn,
   removeAllSorting,
   removeFromSort,
@@ -182,6 +192,13 @@ const ColumnMenu = ({
     {
       name: localize("Properties"),
       onPress: loadColumnProperties,
+    },
+    "separator",
+    {
+      name: localize("Manage Columns"),
+      onPress: () => {
+        void onManageColumns?.();
+      },
     },
   ];
 

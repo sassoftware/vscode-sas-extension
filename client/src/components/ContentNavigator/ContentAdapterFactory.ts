@@ -3,7 +3,11 @@
 import ItcServerAdapter from "../../connection/itc/ItcServerAdapter";
 import RestContentAdapter from "../../connection/rest/RestContentAdapter";
 import RestServerAdapter from "../../connection/rest/RestServerAdapter";
-import { ConnectionType, ProfileWithFileRootOptions } from "../profile";
+import {
+  ConnectionType,
+  DisplayOptions,
+  ProfileWithFileRootOptions,
+} from "../profile";
 import {
   ContentAdapter,
   ContentNavigatorConfig,
@@ -15,7 +19,9 @@ class ContentAdapterFactory {
     connectionType: ConnectionType,
     fileNavigationCustomRootPath: ProfileWithFileRootOptions["fileNavigationCustomRootPath"],
     fileNavigationRoot: ProfileWithFileRootOptions["fileNavigationRoot"],
+    globalShortcuts: ProfileWithFileRootOptions["globalShortcuts"],
     sourceType: ContentNavigatorConfig["sourceType"],
+    display?: DisplayOptions["display"],
   ): ContentAdapter {
     const key = `${connectionType}.${sourceType}`;
     switch (key) {
@@ -23,6 +29,8 @@ class ContentAdapterFactory {
         return new RestServerAdapter(
           fileNavigationCustomRootPath,
           fileNavigationRoot,
+          globalShortcuts,
+          display,
         );
       case `${ConnectionType.IOM}.${ContentSourceType.SASServer}`:
       case `${ConnectionType.COM}.${ContentSourceType.SASServer}`:
@@ -32,7 +40,7 @@ class ContentAdapterFactory {
         );
       case `${ConnectionType.Rest}.${ContentSourceType.SASContent}`:
       default:
-        return new RestContentAdapter();
+        return new RestContentAdapter(globalShortcuts);
     }
   }
 }

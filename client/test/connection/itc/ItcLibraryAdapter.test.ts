@@ -18,8 +18,8 @@ const mockOutput = () => ({
 class DatasetMockSession extends MockSession {
   private outputs: Array<string>;
   private calls = 0;
-  public constructor(outputs: Array<string>) {
-    super();
+  public constructor(outputs: Array<string>, runMap?: Record<string, string>) {
+    super(runMap);
     this.outputs = outputs;
   }
   protected async execute(): Promise<void> {
@@ -70,28 +70,106 @@ describe("ItcLibraryAdapter tests", () => {
       {
         name: "first",
         type: "char",
-        format: "$8.",
+        format: "$CHAR8.",
         index: 1,
+        formatCategory: "char",
       },
       {
         name: "date",
-        type: "date",
+        type: "num",
         format: "YYMMDD10.",
         index: 2,
+        formatCategory: "date",
       },
     ];
 
     const mockOutput = JSON.stringify([
-      { index: 1, name: "first", type: "char", format: "$8." },
+      { index: 1, name: "first", type: "char", format: "$CHAR8." },
       { index: 2, name: "date", type: "num", format: "YYMMDD10." },
     ]);
 
-    sessionStub.returns(new DatasetMockSession([mockOutput]));
+    sessionStub.returns(
+      new DatasetMockSession([mockOutput], {
+        fmtinfo:
+          "<FormatCategories>\n[$CHAR=char]\n[YYMMDD=date]\n</FormatCategories>",
+      }),
+    );
 
     const response = await libraryAdapter.getColumns(item);
 
     expect(response.items).to.eql(expectedColumns);
     expect(response.count).to.equal(-1);
+  });
+
+  it("parses every fmtinfo category from a concatenated log", async () => {
+    const item: LibraryItem = {
+      uid: "test",
+      type: "table",
+      id: "test",
+      name: "test",
+      readOnly: true,
+    };
+
+    const libraryAdapter = new ItcLibraryAdapter();
+    const mockOutput = JSON.stringify([
+      { index: 1, name: "d", type: "num", format: "DATE9." },
+      { index: 2, name: "t", type: "num", format: "TIME8." },
+      { index: 3, name: "dt", type: "num", format: "DATETIME20." },
+      { index: 4, name: "amt", type: "num", format: "DOLLAR15.2" },
+      { index: 5, name: "s", type: "char", format: "$CHAR20." },
+    ]);
+
+    // SAS log lines arrive concatenated without separators, hence the bracketed entries.
+    sessionStub.returns(
+      new DatasetMockSession([mockOutput], {
+        fmtinfo:
+          "<FormatCategories>[DATE=date][TIME=time][DATETIME=datetime]" +
+          "[DOLLAR=curr][$CHAR=char]</FormatCategories>",
+      }),
+    );
+
+    const response = await libraryAdapter.getColumns(item);
+
+    expect(response.items.map((column) => column.formatCategory)).to.eql([
+      "date",
+      "time",
+      "datetime",
+      "curr",
+      "char",
+    ]);
+  });
+
+  it("leaves the format category empty when fmtinfo reports nothing", async () => {
+    const item: LibraryItem = {
+      uid: "test",
+      type: "table",
+      id: "test",
+      name: "test",
+      readOnly: true,
+    };
+
+    const libraryAdapter = new ItcLibraryAdapter();
+    const mockOutput = JSON.stringify([
+      { index: 1, name: "mystery", type: "num", format: "MYFMT12.2" },
+    ]);
+
+    sessionStub.returns(
+      new DatasetMockSession([mockOutput], {
+        fmtinfo: "<FormatCategories>\n[MYFMT=]\n</FormatCategories>",
+      }),
+    );
+
+    const response = await libraryAdapter.getColumns(item);
+
+    expect(response.items).to.eql([
+      {
+        index: 1,
+        name: "mystery",
+        type: "num",
+        format: "MYFMT12.2",
+        formatCategory: "",
+      },
+    ]);
   });
 
   it("loads libraries", async () => {

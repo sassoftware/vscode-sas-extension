@@ -448,16 +448,37 @@ export class CodeZoneManager {
     if (tmpToken && tmpToken.type === Lexer.TOKEN_TYPES.MREF) {
       // skip macro-ref S1405245
       const mRefToken = tmpToken;
-      tmpToken = this._getNext(context);
-      if (tmpToken && tmpToken.text === "(") {
-        while (
-          tmpToken &&
-          tmpToken.text !== ")" &&
-          this._pos(context.cursor, tmpToken) === -1
-        ) {
-          tmpToken = this._getNext(context);
+
+      const tmpContext = this._cloneContext(context);
+
+      let lookAhead = this._getNext(tmpContext);
+
+      // Skip over an entire macro function call when the cursor is outside it.
+      // Track nested parentheses so macro calls such as
+      // %SYSFUNC(DATEPART(DATETIME())) are handled correctly.
+      if (lookAhead && lookAhead.text === "(") {
+        let depth = 1;
+
+        while (lookAhead && this._pos(context.cursor, lookAhead) === -1) {
+          lookAhead = this._getNext(tmpContext);
+
+          if (!lookAhead) {
+            break;
+          }
+
+          if (lookAhead.text === "(") {
+            depth++;
+          } else if (lookAhead.text === ")") {
+            depth--;
+
+            if (depth === 0) {
+              break;
+            }
+          }
         }
-        if (this._pos(context.cursor, tmpToken!) === -1) {
+
+        if (this._pos(context.cursor, lookAhead!) === -1) {
+          this._copyContext(tmpContext, context);
           tmpToken = this._getNext(context);
         } else {
           tmpToken = mRefToken;
@@ -712,12 +733,48 @@ export class CodeZoneManager {
       context.syntaxIdx = -1;
       context.lastStmtEnd = { line: token.line, col: token.col };
     }
-    // ignore label
     len = tokens.length;
+    // A macro invocation such as `%test` is a complete statement on its own and
+    // needs no terminating semicolon, so skip over any leading macro calls to
+    // find the real start of the statement holding the cursor.
+    let startIdx = len - 2; // tokens are in reverse order, len-1 is the terminator
+    while (startIdx > 0 && tokens[startIdx]!.type === Lexer.TOKEN_TYPES.MREF) {
+      let next = startIdx - 1;
+      if (tokens[next]!.text === "(") {
+        let depth = 1;
+        while (depth > 0 && next > 0) {
+          next--;
+          if (tokens[next]!.text === "(") {
+            depth++;
+          } else if (tokens[next]!.text === ")") {
+            depth--;
+          }
+        }
+        if (depth > 0) {
+          break; // unbalanced, the cursor is inside the macro call
+        }
+        next--;
+      }
+      if (next > 0 && tokens[next]!.text === ";") {
+        next--;
+      }
+      if (next < 0) {
+        break;
+      }
+      context.lastStmtEnd = {
+        line: tokens[next + 1]!.line,
+        col: tokens[next + 1]!.col,
+      };
+      context.line = tokens[next]!.line;
+      context.col = tokens[next]!.col;
+      context.syntaxIdx = -1;
+      startIdx = next;
+    }
+    // ignore label
     if (
-      len > 3 &&
-      Lexer.isWord[tokens[len - 2]!.type] &&
-      tokens[len - 3]!.text === ":"
+      startIdx >= 2 &&
+      Lexer.isWord[tokens[startIdx]!.type] &&
+      tokens[startIdx - 1]!.text === ":"
     ) {
       this._getNext(context);
       this._getNext(context);
@@ -802,6 +859,26 @@ export class CodeZoneManager {
     );
     return null;
   }
+
+  /**
+   * Determines whether a '%' token represents a macro function call.
+   * Macro functions are identified by an immediately following '(' token,
+   * for example: %SCAN(...), %LENGTH(...), %SYSFUNC(...).
+   */
+  private _isMacroFunction(token: TokenWithPos, context: Context): boolean {
+    if (!token.text.startsWith("%")) {
+      return false;
+    }
+
+    if (this._syntaxDb.getMacroStatements()?.includes(token.text)) {
+      return false;
+    }
+
+    const tmpContext = this._cloneContext(context);
+    const next = this._getNextEx(tmpContext);
+
+    return next.text === "(";
+  }
   private _globalStmt(context: Context) {
     let tmpContext = null,
       block = null;
@@ -824,7 +901,12 @@ export class CodeZoneManager {
       if (block) {
         if (this._inBlock(block, token)! < 0 && !this._endedReally(block)) {
           //not in block
-          if (token.text === "%MACRO") {
+          if (token.text[0] === "%") {
+            if (this._isMacroFunction(token, context)) {
+              this._stmtName = token.text;
+              return CodeZoneManager.ZONE_TYPE.MACRO_FUNC;
+            }
+
             return CodeZoneManager.ZONE_TYPE.MACRO_STMT;
           }
           switch (block.type) {
@@ -843,11 +925,14 @@ export class CodeZoneManager {
         }
       }
       if (token.text[0] === "%") {
-        // if (token.text.toUpperCase() === "%MACRO") {
-        //   return CodeZoneManager.ZONE_TYPE.MACRO_DEF;
-        // } else {
-        return CodeZoneManager.ZONE_TYPE.MACRO_STMT; //TODO: need to differ among ARM macro, autocall macro, macro function, macro statement
-        // }
+        // Distinguish macro functions (e.g. %SCAN(...), %LENGTH(...))
+        // from macro statements (e.g. %LET, %IF, %DO, %MACRO).
+        if (this._isMacroFunction(token, context)) {
+          this._stmtName = token.text;
+          return CodeZoneManager.ZONE_TYPE.MACRO_FUNC;
+        }
+
+        return CodeZoneManager.ZONE_TYPE.MACRO_STMT;
       } else {
         return CodeZoneManager.ZONE_TYPE.GBL_STMT;
       }
@@ -909,6 +994,10 @@ export class CodeZoneManager {
           //not really end the last block
           this._procName = this._blockName(context.block);
           if (text[0] === "%") {
+            if (this._isMacroFunction(token, context)) {
+              this._stmtName = token.text;
+              return CodeZoneManager.ZONE_TYPE.MACRO_FUNC;
+            }
             return CodeZoneManager.ZONE_TYPE.MACRO_STMT;
           } else {
             if (this._isStatgraph(context.block, context.cursor, text)) {
@@ -1384,12 +1473,19 @@ export class CodeZoneManager {
     }
     this._emit(stmt, CodeZoneManager.ZONE_TYPE.STMT_NAME);
     this._stmtName = stmt.text;
-    if (this._specialStmt[this._stmtName]) {
-      return this._specialStmt[this._stmtName].call(
+    // macro statements (e.g. "%IF") are keyed in _specialStmt without the leading "%"
+    const isMacroStmt = this._stmtName[0] === "%";
+    const specialStmtKey = isMacroStmt
+      ? this._stmtName.substring(1)
+      : this._stmtName;
+    if (this._specialStmt[specialStmtKey]) {
+      return this._specialStmt[specialStmtKey].call(
         this,
         context,
         stmt,
-        CodeZoneManager.ZONE_TYPE.DATA_STEP_STMT_OPT,
+        isMacroStmt
+          ? CodeZoneManager.ZONE_TYPE.MACRO_STMT_OPT
+          : CodeZoneManager.ZONE_TYPE.DATA_STEP_STMT_OPT,
       );
     } else if (this._needOptionDelimiter()) {
       token = ret.token;
@@ -1842,7 +1938,8 @@ export class CodeZoneManager {
         this._copyContext(ret.context, context);
         item = { op: ret.token, op1: item, op2: this._expr(context, ends) };
       } else if (_isScopeBeginMark[text]) {
-        this._emit(token1, this._checkFuncType(token1)); //call or config
+        // Treat token followed by '(' as a function call or configuration object.
+        this._emit(token1, this._checkFuncType(token1));
         item = { op: token1, op1: this._argList(context, token1) };
       } else {
         return item;
@@ -1871,6 +1968,11 @@ export class CodeZoneManager {
           //not really end the last block
           this._procName = this._blockName(context.block);
           if (text[0] === "%") {
+            if (this._isMacroFunction(token, context)) {
+              this._stmtName = token.text;
+              return CodeZoneManager.ZONE_TYPE.MACRO_FUNC;
+            }
+
             return CodeZoneManager.ZONE_TYPE.MACRO_STMT;
           } else {
             return CodeZoneManager.ZONE_TYPE.DATA_STEP_STMT;
@@ -2289,6 +2391,11 @@ export class CodeZoneManager {
           }
         }
         if (text[0] === "%") {
+          if (this._isMacroFunction(token, context)) {
+            this._stmtName = token.text;
+            return CodeZoneManager.ZONE_TYPE.MACRO_FUNC;
+          }
+
           return CodeZoneManager.ZONE_TYPE.MACRO_STMT;
         } else {
           return CodeZoneManager.ZONE_TYPE.GBL_STMT;

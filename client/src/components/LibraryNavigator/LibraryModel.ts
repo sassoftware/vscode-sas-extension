@@ -5,6 +5,7 @@ import { ProgressLocation, l10n, window } from "vscode";
 import type { SortModelItem } from "ag-grid-community";
 import { Writable } from "stream";
 
+import { stringArrayToCsvString } from "../utils/csv";
 import PaginatedResultSet from "./PaginatedResultSet";
 import { DefaultRecordLimit, Messages } from "./const";
 import {
@@ -67,12 +68,6 @@ class LibraryModel {
     const { rowCount: totalItemCount, maxNumberOfRowsToRead: limit } =
       await this.libraryAdapter.getTableRowCount(item);
     let hasWrittenHeader: boolean = false;
-    const stringArrayToCsvString = (strings: string[]): string =>
-      `"${strings
-        .map((item: string | number) =>
-          (item ?? "").toString().replace(/"/g, '""'),
-        )
-        .join('","')}"`;
 
     await window.withProgress(
       {
@@ -117,17 +112,25 @@ class LibraryModel {
     let offset = 0;
     let items = [];
     let totalItemCount = Infinity;
-    do {
-      const data = await this.libraryAdapter.getColumns(
-        item,
-        offset,
-        DefaultRecordLimit,
-      );
+    try {
+      do {
+        const data = await this.libraryAdapter.getColumns(
+          item,
+          offset,
+          DefaultRecordLimit,
+        );
 
-      items = [...items, ...data.items];
-      totalItemCount = data.count;
-      offset += DefaultRecordLimit;
-    } while (offset < totalItemCount && totalItemCount !== -1);
+        items = [...items, ...data.items];
+        totalItemCount = data.count;
+        offset += DefaultRecordLimit;
+      } while (offset < totalItemCount && totalItemCount !== -1);
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : String(e);
+      throw new Error(
+        l10n.t(Messages.ColumnFetchError, { tableName: item.uid }) +
+          ` ${reason}`,
+      );
+    }
 
     return items;
   }
@@ -217,18 +220,16 @@ class LibraryModel {
     library: LibraryItem | undefined,
   ): LibraryItem[] {
     return items
-      .map(
-        (libraryItem: LibraryItem): LibraryItem => ({
-          ...libraryItem,
-          uid: `${library?.id || ""}.${libraryItem.id}`,
-          library: library?.id,
-          readOnly:
-            libraryItem.readOnly !== undefined
-              ? libraryItem.readOnly
-              : library?.readOnly || false,
-          type,
-        }),
-      )
+      .map((libraryItem: LibraryItem): LibraryItem => ({
+        ...libraryItem,
+        uid: `${library?.id || ""}.${libraryItem.id}`,
+        library: library?.id,
+        readOnly:
+          libraryItem.readOnly !== undefined
+            ? libraryItem.readOnly
+            : library?.readOnly || false,
+        type,
+      }))
       .sort(sortById);
   }
 }

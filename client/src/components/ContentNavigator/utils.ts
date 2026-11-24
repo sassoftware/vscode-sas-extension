@@ -17,7 +17,11 @@ import {
   FILE_TYPES,
   FOLDER_TYPE,
   FOLDER_TYPES,
+  GLOBAL_SHORTCUT_TYPE,
+  ROOT_SHORTCUT_FOLDER_TYPE,
   SERVER_HOME_FOLDER_TYPE,
+  SERVER_SHORTCUT_FOLDER_TYPE,
+  SHORTCUTS_FOLDER_TYPE,
   TRASH_FOLDER_TYPE,
 } from "./const";
 import mimeTypes from "./mime-types";
@@ -27,7 +31,14 @@ export const isContainer = (item: ContentItem): boolean =>
   item.fileStat.type === FileType.Directory;
 
 export const isReference = (item: ContentItem): boolean =>
-  !!item && item?.type === "reference";
+  !!item &&
+  [
+    "reference",
+    ROOT_SHORTCUT_FOLDER_TYPE,
+    SERVER_SHORTCUT_FOLDER_TYPE,
+    GLOBAL_SHORTCUT_TYPE,
+    SHORTCUTS_FOLDER_TYPE,
+  ].includes(item?.type);
 
 export const isValidItem = (item: ContentItem): boolean =>
   !!item && !!item.id && !!item.name && !!item.links;
