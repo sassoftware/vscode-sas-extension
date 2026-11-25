@@ -15,6 +15,7 @@ import {
   ExecuteCommandParams,
   InitializeResult,
   Location,
+  NotificationType,
   Position,
   PrepareRenameParams,
   Range,
@@ -43,7 +44,12 @@ import { PyrightLanguageProvider } from "./python/PyrightLanguageProvider";
 import { CodeZoneManager } from "./sas/CodeZoneManager";
 import { LanguageServiceProvider, legend } from "./sas/LanguageServiceProvider";
 import type { LibCompleteItem } from "./sas/SyntaxDataProvider";
+import { CustomMacroStore } from "./sas/macros/CustomMacroStore";
 import { isCustomRegionStartComment } from "./sas/utils";
+
+const SetCustomMacrosNotification = new NotificationType<unknown>(
+  "sas/setCustomMacros",
+);
 
 interface DocumentInfo {
   document: TextDocument;
@@ -60,6 +66,7 @@ export const runServer = (
 
   let supportSASGetLibList = false;
   let registeredAdvancedCapabilities = false;
+  const customMacroStore = new CustomMacroStore();
 
   _pyrightLanguageProvider.setSasLspProvider(getLanguageService);
 
@@ -76,8 +83,8 @@ export const runServer = (
       documentSelector: sasSel,
       triggerCharacters: _pyrightLanguageProvider.getClientCapabilities()
         .hasVisualStudioExtensionsCapability
-        ? [".", "[", "@", '"', "'", " "]
-        : [".", "[", '"', "'", " "],
+        ? [".", "[", "@", '"', "'", " ", "%"]
+        : [".", "[", '"', "'", " ", "%"],
       resolveProvider: true,
       workDoneProgress: true,
       completionItem: {
@@ -129,6 +136,14 @@ export const runServer = (
 
   connection.onInitialized(() => _pyrightLanguageProvider.onInitialized());
 
+  connection.onNotification(SetCustomMacrosNotification, (payload) => {
+    try {
+      customMacroStore.set(payload);
+    } catch {
+      customMacroStore.set(undefined);
+    }
+  });
+
   connection.onRequest(
     "sas/pythonFinalExpression",
     (params: { code: string }, token) => {
@@ -165,7 +180,8 @@ export const runServer = (
         if (
           params.context?.triggerCharacter &&
           params.context.triggerCharacter !== " " &&
-          params.context.triggerCharacter !== "."
+          params.context.triggerCharacter !== "." &&
+          params.context.triggerCharacter !== "%"
         ) {
           return undefined;
         }
@@ -183,6 +199,10 @@ export const runServer = (
         return completionList;
       },
       async python(pyrightLanguageService) {
+        if (params.context?.triggerCharacter === "%") {
+          // "%" is a SAS macro trigger, not a Python one
+          return undefined;
+        }
         const completionList = await pyrightLanguageService.onCompletion(
           params,
           token,
@@ -612,6 +632,9 @@ export const runServer = (
     // re-create LanguageServer if document changed
     if (!docInfo.service) {
       docInfo.service = new LanguageServiceProvider(docInfo.document);
+      docInfo.service.completionProvider.setCustomMacroSupport(
+        customMacroStore,
+      );
 
       if (supportSASGetLibList) {
         docInfo.service.setLibService((libId, resolve) =>
