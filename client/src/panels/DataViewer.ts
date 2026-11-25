@@ -143,14 +143,18 @@ class DataViewer extends WebView {
         break;
       }
       case "request:loadColumns": {
-        const columns = await this.fetchColumns();
-        this.panel.webview.postMessage({
-          key: event.key,
-          command: "response:loadColumns",
-          data: {
-            columns,
-          },
-        });
+        try {
+          const columns = await this.fetchColumns();
+          this.panel.webview.postMessage({
+            key: event.key,
+            command: "response:loadColumns",
+            data: {
+              columns,
+            },
+          });
+        } catch (error) {
+          window.showErrorMessage(error.message);
+        }
         break;
       }
       case "request:loadColumnProperties":
