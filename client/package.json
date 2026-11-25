@@ -16,7 +16,7 @@
     "katex": "^0.18.11",
     "marked": "^17.0.5",
     "marked-katex-extension": "^5.1.13",
-    "media-typer": "^1.1.0",
+    "media-typer": "^2.0.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "ssh2": "^1.17.0",
