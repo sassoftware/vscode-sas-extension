@@ -6,3 +6,5 @@ node_modules
 *.node
 *.qps-ploc.json
 .history
+.nyc_output/
+coverage-server/
