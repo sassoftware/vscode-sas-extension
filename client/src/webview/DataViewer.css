@@ -285,6 +285,10 @@ button,
   overflow: hidden;
 }
 
+.ag-grid-wrapper.all-columns-hidden .ag-overlay {
+  display: none;
+}
+
 .all-columns-hidden-overlay {
   position: absolute;
   inset: 0;
