@@ -173,11 +173,14 @@ const useDataViewer = () => {
 
         params.successCallback(
           rowData,
+          // Handle empty results without accessing an undefined row.
           // If we've returned less than 100 rows, we can assume that's the last page
           // of the data and stop searching.
-          rowData.length < 100 && count === undefined
-            ? rowData[rowData.length - 1]["#"]
-            : count,
+          rowData.length === 0
+            ? (count ?? params.startRow)
+            : rowData.length < 100 && count === undefined
+              ? rowData[rowData.length - 1]["#"]
+              : count,
         );
       },
     }),
