@@ -39,6 +39,12 @@ export const applyColumnState = (api: GridApi, state: ColumnState[]) => {
   api.ensureIndexVisible(0);
 };
 
+export const requestRefreshData = () => {
+  vscode.postMessage({
+    command: "request:refreshData",
+  });
+};
+
 const defaultTimeout = 60 * 1000; // 60 seconds (accounting for compute session expiration)
 
 let queryTableDataTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -213,6 +219,19 @@ const useDataViewer = () => {
     [dataSource, queryParams],
   );
 
+  const resetViewerState = useCallback(() => {
+    const api = gridRef.current?.api;
+
+    if (api) {
+      api.resetColumnState();
+      api.setFilterModel(null);
+    }
+
+    setQueryParams(undefined);
+    setColumnMenu(undefined);
+    setManageColumnsOpen(false);
+  }, [setManageColumnsOpen]);
+
   const displayMenuForColumn = useCallback(
     (api: GridApi, column: AgColumn, rect: DOMRect) => {
       if (columnMenuRef.current?.column) {
@@ -326,6 +345,7 @@ const useDataViewer = () => {
     onGridReady,
     refreshResults,
     setManageColumnsOpen,
+    resetViewerState,
   };
 };
 

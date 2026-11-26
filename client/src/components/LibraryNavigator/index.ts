@@ -65,6 +65,7 @@ class LibraryNavigator implements SubscriptionProvider {
             viewer.dispose();
           } else if (viewer instanceof DataViewer) {
             viewer.invalidateColumns();
+            viewer.invalidateSession();
           }
         });
       }),
@@ -80,19 +81,25 @@ class LibraryNavigator implements SubscriptionProvider {
           const allowDownload =
             attributes?.allowDownload?.toLowerCase() !== "false";
           const existing = this.webviewManager.panels[item.uid];
-          this.webviewManager.render(
-            new DataViewer(
-              this.extensionUri,
-              item.uid,
-              paginator,
-              fetchColumns,
-              (columnName: string) => {
-                this.displayTableProperties(item, true, columnName);
-              },
-              allowDownload,
-            ),
+          const viewer = new DataViewer(
+            this.extensionUri,
             item.uid,
+            paginator,
+            fetchColumns,
+            (columnName: string) => {
+              this.displayTableProperties(item, true, columnName);
+            },
+            allowDownload,
+            () => this.libraryDataProvider.getTableInfo(item),
           );
+
+          try {
+            await viewer.initializeModifiedTimeStamp();
+          } catch {
+            // Allow the Table Viewer to open if metadata retrieval fails.
+          }
+
+          this.webviewManager.render(viewer, item.uid);
           // if we are opening a .sas7bdat file, we want the tab label
           // to match the file name that was just opened, not our
           // temp table that we create on the fly
