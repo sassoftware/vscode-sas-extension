@@ -48,6 +48,14 @@ class DataViewer extends WebView {
       "No data matches the current filters.": l10n.t(
         "No data matches the current filters.",
       ),
+
+      "Hidden columns ({count} of {total}):": l10n.t(
+        "Hidden columns ({count} of {total}):",
+      ),
+
+      "Displayed columns ({count} of {total}):": l10n.t(
+        "Displayed columns ({count} of {total}):",
+      ),
       "No items are available.": l10n.t("No items are available."),
       "Not pinned": l10n.t("Not pinned"),
       "Pinned to the left": l10n.t("Pinned to the left"),

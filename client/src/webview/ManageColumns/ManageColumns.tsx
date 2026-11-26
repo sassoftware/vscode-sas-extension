@@ -170,6 +170,7 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected) {
         previousFocus.focus();
       }
+      window.getSelection()?.removeAllRanges();
     };
   }, []);
 
@@ -303,6 +304,15 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
         aria-label={label}
         aria-multiselectable="true"
         onKeyDown={(event) => {
+          if (
+            (event.ctrlKey || event.metaKey) &&
+            event.key.toLowerCase() === "a"
+          ) {
+            event.preventDefault();
+            event.stopPropagation();
+            setSelectedItems(new Set(items.map(getColumnId)));
+            return;
+          }
           let next = activeIndex;
 
           if (event.key === "ArrowDown") {
@@ -479,9 +489,16 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
       <div className="dialog-content">
         <div ref={leftPanelRef} className="columns-panel">
           <ColumnPanel
-            title={localize("Hidden columns ({count}):", {
-              count: hiddenColumns.length.toString(),
-            })}
+            title={
+              filterHidden.trim()
+                ? localize("Hidden columns ({count} of {total}):", {
+                    count: filteredHidden.length.toString(),
+                    total: hiddenColumns.length.toString(),
+                  })
+                : localize("Hidden columns ({count}):", {
+                    count: hiddenColumns.length.toString(),
+                  })
+            }
             value={filterHidden}
             disabled={hiddenColumns.length === 0}
             onChange={(value) => {
@@ -525,9 +542,16 @@ export const ManageColumns: React.FC<ManageColumnsProps> = ({
 
         <div ref={rightPanelRef} className="columns-panel">
           <ColumnPanel
-            title={localize("Displayed columns ({count}):", {
-              count: displayedColumns.length.toString(),
-            })}
+            title={
+              filterDisplayed.trim()
+                ? localize("Displayed columns ({count} of {total}):", {
+                    count: filteredDisplayed.length.toString(),
+                    total: displayedColumns.length.toString(),
+                  })
+                : localize("Displayed columns ({count}):", {
+                    count: displayedColumns.length.toString(),
+                  })
+            }
             value={filterDisplayed}
             disabled={displayedColumns.length === 0}
             onChange={(value) => {
