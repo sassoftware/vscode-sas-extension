@@ -276,6 +276,19 @@ button,
   overflow: hidden;
 }
 
+.ag-grid-wrapper.all-columns-hidden .ag-body-vertical-scroll,
+.ag-grid-wrapper.all-columns-hidden .ag-body-horizontal-scroll {
+  display: none;
+}
+
+.ag-grid-wrapper.all-columns-hidden .ag-body-viewport {
+  overflow: hidden;
+}
+
+.ag-grid-wrapper.all-columns-hidden .ag-overlay {
+  display: none;
+}
+
 .all-columns-hidden-overlay {
   position: absolute;
   inset: 0;

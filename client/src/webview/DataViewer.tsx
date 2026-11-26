@@ -1,6 +1,6 @@
 // Copyright © 2023, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import type { GridApi } from "ag-grid-community";
@@ -60,6 +60,18 @@ export const DataViewer = () => {
     setColumns,
     setManageColumnsOpen,
   } = useDataViewer();
+
+  // Restore the no-results message when columns become visible again without reapplying the filter
+
+  const wasAllColumnsHidden = useRef(allColumnsHidden);
+
+  useEffect(() => {
+    if (wasAllColumnsHidden.current && !allColumnsHidden) {
+      refreshResults(undefined);
+    }
+
+    wasAllColumnsHidden.current = allColumnsHidden;
+  }, [allColumnsHidden, refreshResults]);
   const [gridDragging, setGridDragging] = useState(false);
   const [focusedCell, setFocusedCell] = useState(null);
   const { onKeyDown, resetSelection, ...selectionRectangleHooks } =
@@ -158,7 +170,7 @@ export const DataViewer = () => {
       />
       {columnMenu && <ColumnMenu {...columnMenu} />}
       <div
-        className={`ag-grid-wrapper ${theme}`}
+        className={`ag-grid-wrapper ${theme} ${allColumnsHidden ? "all-columns-hidden" : ""}`}
         style={gridStyles}
         onClick={() => columnMenu && dismissMenuWithoutFocus()}
         {...selectionRectangleHooks}
@@ -176,7 +188,9 @@ export const DataViewer = () => {
           rowModelType="infinite"
           theme="legacy"
           noRowsOverlayComponent={() =>
-            localize("No data matches the current filters.")
+            allColumnsHidden
+              ? null
+              : localize("No data matches the current filters.")
           }
           onDragStarted={() => setGridDragging(true)}
           onDragCancelled={() => setGridDragging(false)}
