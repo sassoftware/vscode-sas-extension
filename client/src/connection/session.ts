@@ -70,6 +70,22 @@ export abstract class Session {
 
   cancel?(): Promise<void>;
 
+  /**
+   * Starts an interactive DATA step debugging session.
+   * Only implemented by connection types that support the DATA step debugger.
+   * @returns the id of the job that started the debugger.
+   */
+  executeDebuggerCode?(code: string, onLog: OnLogFn): Promise<string>;
+
+  /**
+   * Runs a command in the active DATA step debugger and returns its job ID.
+   */
+  executeDebuggerCommand?(
+    command: string,
+    checkVariableChanges: boolean,
+    onLog: OnLogFn,
+  ): Promise<string>;
+
   close(): Promise<void> | void {
     if (this._rejectRun) {
       this._rejectRun({ message: l10n.t("The SAS session has closed.") });
