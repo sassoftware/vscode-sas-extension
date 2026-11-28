@@ -7,11 +7,13 @@ import { onRunError } from "../../commands/run";
 import {
   LibraryAdapter,
   LibraryItem,
+  TEMP_TABLE_PREFIX,
   TableColumn,
   TableColumnCollection,
   TableData,
   TableQuery,
   TableRow,
+  TemporaryLibrary,
 } from "../../components/LibraryNavigator/types";
 import { baseFormatName } from "../../panels/columnIconClassifier";
 import { FormatCategoryCache } from "../formatCategory";
@@ -51,6 +53,28 @@ class ItcLibraryAdapter implements LibraryAdapter {
     }
 
     await this.connect();
+  }
+
+  public async acquireTemporaryLibrary(
+    path: string,
+  ): Promise<TemporaryLibrary> {
+    await this.setup();
+
+    const currentLibs = await this.getLibraries();
+    const nextNumber =
+      currentLibs.items.reduce((greatest, library) => {
+        const match = /^_TEMP(\d+)$/i.exec(library.id || library.name);
+        return match ? Math.max(greatest, Number(match[1])) : greatest;
+      }, 0) + 1;
+
+    const name = `${TEMP_TABLE_PREFIX}${nextNumber}`;
+    await runCode(`libname ${name} '${path}';`);
+    return {
+      name,
+      delete: async () => {
+        await runCode(`libname ${name} clear;`);
+      },
+    };
   }
 
   public async deleteTable(item: LibraryItem): Promise<void> {

@@ -186,6 +186,9 @@ class ContentNavigator implements SubscriptionProvider {
           }
         },
       ),
+      commands.registerCommand(`${SAS}.openLocalDataset`, (uri: Uri) =>
+        this.openLocalDataset(uri),
+      ),
       commands.registerCommand(
         `${SAS}.deleteResource`,
         async (item: ContentItem) => {
@@ -547,7 +550,10 @@ class ContentNavigator implements SubscriptionProvider {
     await commands.executeCommand("vscode.open", itemUri);
   }
 
-  private async openDataset(item: ContentItem): Promise<void> {
+  private async openDataset(
+    item: ContentItem,
+    onClose?: () => Promise<void>,
+  ): Promise<void> {
     try {
       const profile = profileConfig.getProfileByName(
         profileConfig.getActiveProfile(),
@@ -621,16 +627,113 @@ class ContentNavigator implements SubscriptionProvider {
               this.openDatasetViewers.delete(normalizedPath);
             }
             await library.delete();
+            await onClose?.();
           },
         },
       );
     } catch (error) {
-      void window.showErrorMessage(
-        l10n.t("Unable to open dataset: {message}", {
-          message: error instanceof Error ? error.message : String(error),
-        }),
-      );
+      this.showOpenDatasetError(error);
     }
+  }
+
+  private async openLocalDataset(uri: Uri): Promise<void> {
+    if (!uri) {
+      return;
+    }
+    let uploadedFile: ContentItem | undefined;
+    let uploadFolder: ContentItem | undefined;
+    const cleanUpUpload = async () => {
+      try {
+        if (uploadedFile) {
+          await this.contentModel.delete(uploadedFile);
+        }
+        if (uploadFolder) {
+          await this.contentModel.delete(uploadFolder);
+        }
+      } catch {
+        // Ignore cleanup failures for uploaded temporary datasets.
+      }
+    };
+
+    try {
+      const uriPath = uri.path.split("/");
+      const fileName = uriPath.pop() || "";
+      const folderName = uriPath.pop() || "";
+      const tmpFolderName = `local-table-${folderName}-${fileName.split(".")[0]}`;
+
+      const tmpUri = `/tmp/${tmpFolderName}/${fileName}`;
+      const openViewerUid = this.openDatasetViewers.get(tmpUri);
+      if (
+        openViewerUid &&
+        (await commands.executeCommand<boolean>(
+          "SAS.revealTable",
+          openViewerUid,
+        ))
+      ) {
+        return;
+      }
+      this.openDatasetViewers.delete(tmpUri);
+
+      const item = await window.withProgress(
+        {
+          location: ProgressLocation.Notification,
+          title: l10n.t("Uploading {name} to SAS server...", {
+            name: fileName,
+          }),
+        },
+        async () => {
+          const adapter = this.contentModel.getAdapter();
+          if ("setup" in adapter && typeof adapter.setup === "function") {
+            await adapter.setup();
+          }
+
+          // A unique folder keeps the original file name (and therefore the
+          // table name) while avoiding collisions with other files in /tmp.
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const tmpFolder = { uri: "~fs~tmp" } as ContentItem;
+
+          uploadFolder = await this.contentModel.createFolder(
+            tmpFolder,
+            tmpFolderName,
+          );
+
+          if (!uploadFolder) {
+            throw new Error(
+              l10n.t("Unable to create a temporary folder in /tmp."),
+            );
+          }
+
+          const contents = await workspace.fs.readFile(uri);
+          uploadedFile = await this.contentModel.createFile(
+            uploadFolder,
+            fileName,
+            contents,
+          );
+          if (!uploadedFile) {
+            throw new Error(
+              l10n.t("Unable to upload {name} to SAS server.", {
+                name: fileName,
+              }),
+            );
+          }
+
+          return uploadedFile;
+        },
+      );
+
+      await this.openDataset(item, cleanUpUpload);
+    } catch (error) {
+      await cleanUpUpload();
+      this.showOpenDatasetError(error);
+    }
+  }
+
+  private showOpenDatasetError(error: unknown): void {
+    void window.showErrorMessage(
+      l10n.t("Unable to open dataset: {message}", {
+        message: error instanceof Error ? error.message : String(error),
+      }),
+    );
   }
 
   private imagePreviewCacheUri(): Uri {
